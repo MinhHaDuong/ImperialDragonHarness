@@ -1,5 +1,7 @@
-"""Ticket 1227: one call cleans, reports containment and posts the comment."""
+"""Ticket 1227: one call cleans, reports containment and records the result; since ticket
+1301 the result lives on notes and the PR comment is a one-line pointer to it."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -34,6 +36,20 @@ SEAT = ("reviewer: step=review · seat: a · runtime=claude · family=anthropic 
         "model=m · status: ran")
 
 
+POINTER = re.compile(r"^/gaze review on notes: (rv-\S+), verdict (REVIEWED|FINDINGS|ESCALATE)$")
+
+
+def answer_text(primary, f):
+    """The text of the review's latest answer: where the result lives (ticket 1301)."""
+    rn = _notes()
+    return [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]["text"]
+
+
+def posted(tmp_path):
+    log = tmp_path / "gh.log"
+    return log.read_text() if log.exists() else ""
+
+
 def opened(tmp_path):
     primary, env = make_repo(tmp_path)
     r = run(SETUP, ["7"], primary, env)
@@ -49,9 +65,9 @@ def test_clean_tree_is_removed_and_comment_posted(tmp_path):
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert not (primary / ".claude" / "worktrees" / "review-7").exists()
-    posted = (tmp_path / "gh.log").read_text()
-    assert "result: REVIEWED" in posted and "duration:" in posted and "containment: toplevel" in posted
-    assert "{{" not in posted
+    text = answer_text(primary, f)
+    assert "result: REVIEWED" in text and "duration:" in text and "containment: toplevel" in text
+    assert "{{" not in text
 
 
 def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
@@ -63,7 +79,9 @@ def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
     assert (tree / "f.txt").read_text() == "real wip\n"
-    assert not (tmp_path / "gh.log").exists()
+    (line,) = posted(tmp_path).splitlines()
+    assert POINTER.match(line).group(2) == "ESCALATE"
+    assert answer_text(primary, f).startswith("result: ESCALATE\nreason: cleanup blocked")
 
 
 def test_foreign_file_in_session_tree_is_flagged(tmp_path):
@@ -80,10 +98,10 @@ def test_blocked_cleanup_still_appends_attribution(tmp_path):
     (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
-    assert "calling gaze posts the ESCALATE comment" in r.stderr
+    assert "ESCALATE" in r.stderr
     assert "attribution: appended" in r.stdout
     assert "seat: a" in body.read_text()
-    assert not (tmp_path / "gh.log").exists()
+    assert "seat:" not in posted(tmp_path)
 
 
 def test_clean_close_appends_attribution_before_the_comment(tmp_path):
@@ -174,8 +192,8 @@ def panel(primary, manifest, reports=None):
         (d / f"{name}.md").write_text(text)
 
 
-def plan_line(tmp_path):
-    return [ln for ln in (tmp_path / "gh.log").read_text().splitlines() if ln.startswith("plan check:")]
+def plan_line(primary, f):
+    return [ln for ln in answer_text(primary, f).splitlines() if ln.startswith("plan check:")]
 
 
 def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
@@ -187,9 +205,9 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
     comment.write_text("result: REVIEWED\n{{plan_check}} — the model's reason\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    (line,) = plan_line(tmp_path)
+    (line,) = plan_line(primary, f)
     assert line.startswith("plan check: FAIL") and line.endswith("— the model's reason"), line
-    assert "{{" not in (tmp_path / "gh.log").read_text()
+    assert "{{" not in answer_text(primary, f)
 
 
 def test_missing_panel_is_a_failed_plan_check(tmp_path):
@@ -198,7 +216,7 @@ def test_missing_panel_is_a_failed_plan_check(tmp_path):
     comment.write_text("{{plan_check}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert plan_line(tmp_path) == ["plan check: FAIL — manifest unreadable"]
+    assert plan_line(primary, f) == ["plan check: FAIL — manifest unreadable"]
 
 
 def test_valid_plan_check_reaches_the_comment_as_pass(tmp_path):
@@ -211,7 +229,7 @@ def test_valid_plan_check_reaches_the_comment_as_pass(tmp_path):
     comment.write_text("{{plan_check}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert plan_line(tmp_path) == ["plan check: PASS"]
+    assert plan_line(primary, f) == ["plan check: PASS"]
 
 
 @pytest.mark.parametrize("text", ["result: REVIEWED\n", "{{plan_check}}\nplan check: PASS\n"])
@@ -244,7 +262,7 @@ def test_documented_template_filled_as_documented_is_accepted(tmp_path, doc):
     comment.write_text("result: REVIEWED\n" + re.sub(r"<[^>]*>", "none", tmpl) + "\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    (line,) = plan_line(tmp_path)
+    (line,) = plan_line(primary, f)
     assert line.startswith("plan check: FAIL") and "plan check: plan check" not in line
 
 
@@ -292,7 +310,8 @@ def seats_shim(tmp_path, env):
         'comments=[{\'body\':open(sys.argv[2]).read()}])))" "$MOCK_BODY" "$MOCK_RESULT" "$MOCK_PR_JSON"; exit 0; fi\n'
         'if [ "$1" = api ]; then\n'
         '  case "$*" in *PATCH*) python3 -c "import json,sys;open(sys.argv[1],\'w\').write(json.load(sys.stdin)[\'body\'])" "$MOCK_BODY" ;;\n'
-        '  *) cat "$MOCK_BODY" ;; esac; exit 0; fi\n')
+        '  *) cat "$MOCK_BODY" ;; esac; exit 0; fi\n'
+        'if [ "$2" = comment ]; then printf \'%s\\n\' "$5" >> "$MOCK_GH_LOG"; fi\n')
     env["MOCK_BODY"], env["MOCK_RESULT"] = str(body), str(result)
     return body
 
@@ -397,14 +416,15 @@ def _notes():
     return mod
 
 
-def test_pr_answer_written_to_notes_and_comment(tmp_path):
+def test_pr_answer_written_to_notes_and_pointer(tmp_path):
     rn = _notes()
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n{{{{plan_check}}}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "result: REVIEWED" in (tmp_path / "gh.log").read_text()  # dual-write: the comment still posts
+    (line,) = posted(tmp_path).splitlines()  # the comment is the pointer alone (ticket 1301)
+    assert POINTER.match(line).groups() == (f["review_id"], "REVIEWED")
     answers = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"]
     assert len(answers) == 1 and answers[0]["result"] == "REVIEWED"
     assert answers[0]["request_id"] == f["request_id"] and answers[0]["run_id"] == f["run_id"]
@@ -485,3 +505,43 @@ def test_failed_background_push_does_not_block_close(tmp_path):
     assert elapsed < 7, elapsed
     answers = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"]
     assert answers and answers[-1]["result"] == "FINDINGS"
+
+
+# --- ticket 1301: the PR comment is a pointer; readers move to notes ------------------------------
+
+def test_pr_close_posts_only_pointer(tmp_path):
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text("## /gaze result\n\nresult: FINDINGS\n{{plan_check}}\nFindings: one\n"
+                       "seat: a · runtime=claude · family=anthropic · route=r · model=anthropic/x · status: ran\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert "pointer: posted" in r.stdout, r.stdout + r.stderr
+    assert posted(tmp_path) == f"/gaze review on notes: {f['review_id']}, verdict FINDINGS\n"
+    assert "Findings: one" in answer_text(primary, f)
+
+
+def test_pointer_failure_ignored_exit_zero(tmp_path):
+    primary, env, f = opened(tmp_path)
+    shim = tmp_path / "bin" / "gh"
+    shim.write_text(shim.read_text().replace('  comment) printf', '  comment) echo refused >&2; exit 1; printf'))
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "pointer: not posted" in r.stdout and "result: REVIEWED" in answer_text(primary, f)
+
+
+def test_seats_appended_to_body_without_comment(tmp_path):
+    """The seat lines come from the notes answer: the PR's comments carry none, yet the body
+    gets the reviewer line, and the posted pointer holds no `seat:` line."""
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    seat = Path(env["MOCK_RESULT"]).read_text().splitlines()[1]
+    Path(env["MOCK_RESULT"]).write_text("an unrelated comment\n")
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\n{{{{plan_check}}}}\n{seat}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "attribution: seats appended" in r.stdout
+    assert "seat=a" in body.read_text()
+    assert "seat:" not in posted(tmp_path)

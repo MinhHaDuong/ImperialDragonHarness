@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Gaze closing in one call (ticket 1227): scratch cleanup, review-worktree
-removal, containment report, duration line, attribution append, result comment.
+removal, containment report, duration line, attribution append, result on notes and,
+for a PR, a one-line pointer comment.
 
     gaze_close.py <pr> --branch <pr-branch> [--token T] [--entry-branch B]
                   --attribution-file F [--comment-file F]
@@ -11,12 +12,14 @@ scratch `.panel/<pr>` and `build/panel-head` are removed only when untracked,
 after `worktree-tmp-guard.py removal`; `worktree-exit-preflight.sh --removal
 --branch` must pass, else the review worktree stays registered (cleanup blocked,
 exit 1) and the result is ESCALATE naming the files; attribution is appended
-before cleanup so a blocked cleanup still records the review, and the script
-posts nothing then: the calling gaze posts the ESCALATE comment itself. A tree with real uncommitted
-files is never force-removed.
+before cleanup so a blocked cleanup still records the review, as an ESCALATE answer
+on notes with its pointer on the PR. A tree with real uncommitted files is never force-removed.
 
 `--attribution-file` is required (an empty file records nothing); a call
 without it fails at argument parsing rather than skipping attribution.
+
+`--comment-file` holds the result text (the output shape of skills/gaze/references/output.md);
+it is the answer's text on notes, never posted whole.
 
 A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed or
 posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
@@ -31,17 +34,20 @@ never the model's to write; the line is also printed on stdout, before
 cleanup, for the caller's return text and a blocked-cleanup ESCALATE. The line is also printed on stdout, before cleanup, so a blocked cleanup
 still gives the calling gaze the line to paste. It may also hold `{{duration}}` and
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
-(attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
+(attribution appended, ESCALATE answer recorded; 2 when the append or the answer also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (result still recorded).
 
 Every unit records its result in refs/notes/review (ticket 1273 for `branch:<name>`,
 ticket 1300 for a PR number): the attribution lines and the result text go into one
 `answer` entry through review_notes.py, bound to the request and run id gaze_setup froze in
 the entry state (ticket 1281). The write is local and makes no network call: a remote gets
 a detached background sync whose result is ignored (exit 2 only when the entry could not be
-written); a blocked cleanup records an ESCALATE answer. A PR unit (`pr:<n>`) also keeps
-today's PR comment and `--append-pr`/`--seats-pr` attribution (dual-write until ticket
-1301), the answer first, then the comment; a failed comment still exits 2. The `branch:`
-unit's paths use `unit_key`, and its attribution lives only in the answer.
+written); a blocked cleanup records an ESCALATE answer. The answer is the evidence for a PR
+unit (`pr:<n>`) too (ticket 1301): the PR comment is one line, `/gaze review on notes: <review_id>,
+verdict <V>`, posted best-effort after the answer (a failure is printed, never an exit code),
+and none when the answer failed. A PR unit's attribution goes to the PR body through
+`--append-pr`, and the `seat:` lines of the answer through `attribution_record.py --seats-pr`,
+which reads the notes answers; a failed append exits 2. The `branch:` unit's paths use
+`unit_key`, and its attribution lives only in the answer.
 """
 import argparse
 import json
@@ -247,6 +253,21 @@ def record_answer(primary, pr, text, attribution, identity=None):
     return 0
 
 
+def pointer(primary, pr, result, identity=None):
+    """Post the one-line pointer to the answer on notes (ticket 1301); best-effort, never a
+    status. The review id is the one gaze_setup froze, else the PR unit's, read locally."""
+    unit = review_unit(pr)
+    rid = (identity or {}).get("review_id") or rn.find_unit(str(primary), unit)
+    if not rid:
+        print("pointer: not posted (no review id)")
+        return
+    try:
+        forge.get_forge(None, pr).comment(pr, f"/gaze review on notes: {rid}, verdict {result}", strict=True)
+        print("pointer: posted")
+    except forge.ForgeRefusal as exc:
+        print(f"pointer: not posted ({exc}); the answer on notes is the result")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pr")
@@ -295,12 +316,14 @@ def main():
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
     if not ok:
-        status = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
-                               lines, entry) or status
-    if not ok:
-        print(f"/gaze cleanup blocked: {msg}; nothing posted: the calling gaze posts the "
-              "ESCALATE comment (gh pr comment) naming these files", file=sys.stderr)
-        return 2 if status else 1
+        answered = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
+                                 lines, entry)
+        if answered == 0 and not local:
+            pointer(primary, a.pr, "ESCALATE", entry)
+        print(f"/gaze cleanup blocked: {msg}; ESCALATE "
+              + ("recorded on notes: the calling gaze returns it naming these files" if answered == 0 else
+                 "NOT recorded: the calling gaze returns it naming these files"), file=sys.stderr)
+        return 2 if (status or answered) else 1
     flags, report = containment(primary, entry_branch, entry["status"], entry["primary"])
     print(report)
     r = subprocess.run([sys.executable, str(HERE / "step_clock.py"), "end", a.token or ""],
@@ -310,22 +333,19 @@ def main():
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{duration}}", duration).replace("{{containment}}", report))
-        status = record_answer(primary, a.pr, text, lines, entry) or status  # notes first, every unit
-        if local:
+        answered = record_answer(primary, a.pr, text, lines, entry)  # the evidence, every unit
+        status = answered or status
+        if local or answered:
             return 4 if flags and status == 0 else status
-        try:  # dual-write (ticket 1300): the PR comment stays until its readers move (ticket 1301)
-            forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
-            print("comment: posted")
-            if re.search(r"^seat: ", text, re.M):  # derive the reviewer lines the file lacks from the posted result (ticket 1286)
-                r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
-                                    "--seats-pr", a.pr, "--project", primary.name],
-                                   capture_output=True, text=True)
-                print("attribution: " + ("seats appended" if r.returncode == 0 else "seats FAILED " + r.stderr.strip()))
-                if r.returncode:
-                    status = 2
-        except forge.ForgeRefusal as exc:
-            print("comment: FAILED " + str(exc))
-            status = 2
+        result = _field(text, "result")
+        pointer(primary, a.pr, result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE", entry)
+        if re.search(r"^seat: ", text, re.M):  # the reviewer lines the file lacks, from the notes answers (1286, 1301)
+            r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
+                                "--seats-pr", a.pr, "--project", primary.name],
+                               capture_output=True, text=True, cwd=str(primary))
+            print("attribution: " + ("seats appended" if r.returncode == 0 else "seats FAILED " + r.stderr.strip()))
+            if r.returncode:
+                status = 2
     return 4 if flags and status == 0 else status
 
 
