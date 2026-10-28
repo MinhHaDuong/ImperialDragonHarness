@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Task memory for subagents: workers read the memory index, the orchestrator names relevant topics in the brief
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T09:29Z reviewer created
+2026-10-28T09:29Z reviewer note author 2026-10-28 picked option C of three (A inject all topics, ~22K tokens per spawn, estimated from 86 KB; B profile line only; C = B + orchestrator names topics in the brief).
+
+--- body ---
+## Context
+Subagents start without project memory. No `profiles/*/PROFILE.md` mentions it, and the instruction to
+read `memory/MEMORY.md` at task start lives in `AGENTS.md`, which bare profiles do not load. Injecting every
+topic costs about 22K tokens per spawn (86 KB of `memory/MEMORY.md` + `memory/topics/`, estimated at 4 bytes per
+token); the index alone is about 2 KB. Author's pick (2026-10-28): option C.
+
+## Design
+- Each worker profile (`coder`, `code-reviewer`, `gate-seat`, `prose-reviewer`, `team-lead`) gains one line:
+  read the project's `memory/MEMORY.md` at task start and open the topics the brief names or that match the task.
+  Missing memory never blocks work (as in AGENTS.md § Project memory).
+- The delegation rule (`rules/workflow.md` § Delegation, "Delegate intent, not procedure") adds: a brief names
+  the memory topics relevant to the task, as paths, when any apply.
+- README: the Subagents component section states the mechanism in one or two sentences, cross-referenced from
+  the Memory section (layer 3, Topics). (Author asked "README section 3 subagents"; Subagents is component 7,
+  Memory component 3: mention in Subagents, link from Memory.)
+- Runtime-agnostic: the mechanism is text in profiles and rules, so Claude Code, Codex and Pi get it alike.
+
+## Exit criteria
+- [ ] Every `profiles/*/PROFILE.md` carries the memory-index line; `tests/test_profile_tool_grants.py` still passes (Read is granted).
+- [ ] `rules/workflow.md` § Delegation names topics-in-the-brief in one line.
+- [ ] README Subagents section describes the mechanism; Memory section links to it.
+- [ ] `make check` passes.
