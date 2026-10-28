@@ -259,14 +259,11 @@ def seats_claim(text):
 
 
 def answer_scope(text):
-    """Spec §4: a narrow intent is never widened. `scope:` when given, else full only for the
-    default intent (`intent: default`); any other intent, or none, records delta."""
-    scope = _field(text, "scope")
-    if scope in ("full", "delta"):
-        return scope
-    first = re.search(r"^intent:[ \t]*(.*?)[ \t]*$", text, re.MULTILINE)  # the field, not a quote below
-    value = first.group(1) if first else ""
-    return "full" if value == "default" or value.startswith("default:") else "delta"
+    """Scope is a fact of the reviewed range, never read from the intent (ticket 1305, author's
+    ruling 2026-10-28): the intent is the review's focus, and gaze_setup reviews the whole PR
+    diff. `delta` only when the result states `scope: delta` (gaze reviewed only the changes
+    since an earlier reviewed head), else full."""
+    return "delta" if _field(text, "scope") == "delta" else "full"
 
 
 def record_answer(primary, pr, text, attribution, identity=None):
@@ -292,6 +289,9 @@ def record_answer(primary, pr, text, attribution, identity=None):
         cov = {"scope": scope}
         if scope == "delta":  # spec §4: a delta counts only through the answer it carries (ticket 1274)
             cov["carried"] = rn.carry_target(cwd, rid)
+            if cov["carried"] is None:  # nothing earlier to be a delta of: the review covered it all
+                cov = {"scope": "full"}
+                print("answer: scope delta with no earlier answer to carry, recorded full (ticket 1305)")
         entry = rn.add(cwd, "answer", rid, {
             "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",

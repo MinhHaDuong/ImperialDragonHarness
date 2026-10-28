@@ -95,14 +95,15 @@ def close_with(tmp_path, primary, env, f, intent_line):
 
 @pytest.mark.parametrize("intent_line,scope,match", [
     ("intent: default\n", "full", "equal"),
-    ("intent: verify the fixes because they were the findings\n", "delta", "delta"),
-    ("", "delta", "delta"),  # no intent line: never widened to full
-    ("intent: default branch protections only\n", "delta", "delta"),  # a narrow intent starting "default"
-    ("intent: default: the whole merge request\n", "full", "equal"),
-    ("intent: verify x because y\nFindings:\nintent: default: quoted from an earlier result\n",
-     "delta", "delta"),  # only the first intent line is the field
+    ("intent: verify the fixes because they were the findings\n", "full", "equal"),
+    ("", "full", "equal"),
+    ("intent: default branch protections only\n", "full", "equal"),
+    ("scope: delta\nintent: default\n", "full", "equal"),  # a delta with nothing earlier to carry
 ])
-def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
+def test_answer_scope_is_the_reviewed_range_not_the_intent(tmp_path, intent_line, scope, match):
+    """Ticket 1305, author's ruling 2026-10-28: the intent is the review's focus, never its
+    coverage. gaze reviews the whole PR diff, so an answer is full unless it states `scope:
+    delta` and an earlier answer exists for it to carry."""
     primary, env = branch_repo(tmp_path)
     r = run(SETUP, ["branch:feature"], primary, env)
     assert r.returncode == 0, r.stderr
@@ -112,6 +113,21 @@ def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
     answer = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
     assert answer["coverage"]["scope"] == scope
     assert rn.coverage(primary, f["review_id"], f["head"])["match"] == match
+
+
+def test_first_review_with_a_caller_intent_admits_the_gate(tmp_path):
+    """The padme PR #133 shape (ticket 1305): no prior answer, a caller intent that is not
+    `default`, result REVIEWED; `review_notes.py gate` then admits the head."""
+    primary, env = branch_repo(tmp_path)
+    r = run(SETUP, ["branch:feature"], primary, env)
+    assert r.returncode == 0, r.stderr
+    f = fields(r.stdout)
+    r = close_with(tmp_path, primary, env, f,
+                   "intent: verify the measurement-only change because it touches the log\n")
+    assert r.returncode == 0, r.stdout + r.stderr
+    gate = subprocess.run(["python3", str(SCRIPTS / "review_notes.py"), "gate", f["review_id"], f["head"]],
+                          cwd=primary, env=env, capture_output=True, text=True)
+    assert gate.returncode == 0, gate.stdout + gate.stderr
 
 
 def test_malformed_trailer_claim_blocks_and_opens_nothing(tmp_path):
@@ -143,7 +159,8 @@ def test_a_delta_answer_carries_the_earlier_full_one(tmp_path):
     assert close_with(tmp_path, primary, env, f, "intent: default\n").returncode == 0
     full = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
     f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
-    r = close_with(tmp_path, primary, env, f, "intent: verify the fixes because they were the findings\n")
+    r = close_with(tmp_path, primary, env, f,  # an explicit delta (ticket 1305), not the intent
+                   "scope: delta\nintent: verify the fixes because they were the findings\n")
     assert r.returncode == 0, r.stdout + r.stderr
     delta = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
     assert delta["coverage"] == {"scope": "delta", "carried": full["id"]}
