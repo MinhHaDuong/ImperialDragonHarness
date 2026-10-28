@@ -101,13 +101,18 @@ Start the step clock before step 0 and end it after step 8 (`skills/gaze/referen
 on the request (`gh pr comment N --body "merge <head>: duration: …"`). <!-- harness-extension-point -->
 
 <!-- harness-extension-point -->
-Forge commands below use the current forge CLI; another forge needs the same
-reads and writes in its own spelling.
+Reads below go through `forge.py` (`resolve`, `list`, `read-back`; for `list` and
+`read-back` exit 3 means no forge and 2 could not look, `resolve` refuses with exit 1;
+`forge.py` docstring). Any non-zero exit is a stop, never an empty answer. Writes with no `forge.py`
+verb (comment, ready, disarm, merge) keep the current forge CLI's spelling behind a
+marker; another forge needs the same writes in its own spelling.
 
 0. **Read it, on its branch.** `git rev-parse --abbrev-ref HEAD` must print
    `<branch>`; otherwise stop. Read the request once:
-   `gh pr view N --json state,isDraft,headRefName,baseRefName,headRefOid,body` <!-- harness-extension-point -->
-   It must be OPEN. Parse the body's close claims (`references/claims.md`)
+   `python3 "$IDH_ROOT/scripts/forge.py" resolve N`
+   (its `state`, `draft`, `branch`, `base`, `head` and `body`). It must be open,
+   and read from the forge: an answer with `cached: true` (or `forge: unread …`) comes
+   from the offline cache, not a landing read, so stop and read again later. Parse the body's close claims (`references/claims.md`)
    and run the attribution check there; its warning never refuses.
 1. **Close.** For each claimed ticket not already in `tickets/closed/` with
    a `Closed:` header:
@@ -145,9 +150,10 @@ reads and writes in its own spelling.
    round. 1 fail or stale scope, 3 unreadable: do not merge.
 5. **Disarm (gated base only).** Never arm auto-merge: an armed request
    could land a later head than the record covers. Read
-   `gh pr view N --json autoMergeRequest -q '.autoMergeRequest != null'`; <!-- harness-extension-point -->
+   `python3 "$IDH_ROOT/scripts/forge.py" list --state open --head <branch>`; take the row with
+   `cross_repository` false (a fork may reuse the branch name); its `auto` is `true` when armed;
    on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
-   do not merge.
+   do not merge. A non-zero exit or no row for `<branch>` is not "not armed": do not merge.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
    pushes `refs/notes/review` and the review-heads of the requests naming `<branch>`, never
    forced. It prints the refs pushed and does nothing when the branch has no review notes
@@ -162,7 +168,7 @@ reads and writes in its own spelling.
    `gh pr merge N --merge --auto`, or without `--auto` where the repo has <!-- harness-extension-point -->
    auto-merge off and every check is done.
 7. **Read back.**
-   `gh pr view N --json state,headRefOid,autoMergeRequest -q '"\(.state) \(.headRefOid) \(if .autoMergeRequest then "queued" else "-" end)"'` <!-- harness-extension-point -->
+   `python3 "$IDH_ROOT/scripts/forge.py" read-back N`
    must read `MERGED <the head of step 3> -`. MERGED at another head is not a
    gated merge: report it. `OPEN … queued` (ungated base): § Waiting for a
    queued merge; `OPEN … -` is not queued. A read that fails or prints
@@ -199,7 +205,8 @@ one background command. A `check` that answers 2 again after one re-record
 chain itself. Step 7's read-back is the single-read status command. The
 caller arms exactly one wake,
 `python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "$poll"`, whose
-`$poll` (below, read through a quoted heredoc so nothing in it expands early)
+`$poll` (below, read through a quoted heredoc so nothing in it expands early; write `N` and
+`$IDH_ROOT` as their values before arming)
 has a hard time bound of about 25 minutes,
 polls this single-read status command at an interval inside the command
 and exits as soon as the status is no longer pending; the runtime wakes the
@@ -212,8 +219,8 @@ next step and reports the PR as pending.
 
 ```bash
 poll=$(cat <<'POLL'
-end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ] && [ "$(gh pr view N --json state,autoMergeRequest -q '.state == "OPEN" and .autoMergeRequest != null')" = true ]; do sleep 60; done  # <!-- harness-extension-point -->
-gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OPEN: still queued at the bound (a failing check leaves auto-merge armed: read the checks) or not queued <!-- harness-extension-point -->
+end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ]; do s=$(python3 "$IDH_ROOT/scripts/forge.py" read-back N) || break; case "$s" in "OPEN "*" queued") sleep 60;; *) break;; esac; done
+python3 "$IDH_ROOT/scripts/forge.py" read-back N  # MERGED: sync (step 8); CLOSED: failed; OPEN: still queued at the bound (a failing check leaves auto-merge armed: read the checks) or not queued; exit 2 or 3: unreadable, stop
 POLL
 )
 python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "$poll"
