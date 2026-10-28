@@ -30,3 +30,28 @@ test_gaze_never_approves, test_merge_gate_plan, test_verify_fork_contracts. Re-g
 - [ ] gaze on a PR number writes no full answer as a PR comment (tracker criterion 1, comment half).
 - [ ] Every reader listed above reads notes; tests updated.
 - [ ] Skill texts (gaze, verify-gate, merge, raid) and STATE describe one F1 evidence path; `make check` passes (tracker criterion 5).
+
+## Actions (raid plan phase, 2026-10-28; Sonnet draft, read against 1300's PR head)
+Rule: notes first; comments only as read-only history for merged PRs. A reader resolves `review_notes.py find --unit pr:<n>` after refresh; review found → use it; none and PR merged → read legacy `## /gaze result` comments read-only; none and PR open → pre-switch PR, re-gaze (verify-gate treats it as "no review"); stale with nothing local → Refusal, never a fallback. Nothing writes a full comment any more.
+1. `scripts/review_notes.py`: `answer_texts(cwd, review_id)` (text of every `answer` entry), `latest_answer(cwd, review_id)` (result, reviewed_head_sha, seats of the newest); CLI `answers --unit pr:<n> [--latest] [--json]` (resolves with refresh; stale and nothing local refuses).
+2. `scripts/gaze_close.py` `main`: after `record_answer`, post only `review on notes: <id>, verdict <V>` via `forge.comment(strict=False)`, failure ignored (no status 2). Blocked-cleanup ESCALATE posts the same pointer. `--seats-pr` runs regardless of comment posting; its failure still status 2.
+3. `scripts/attribution_record.py` `append_seats` with `--seats-pr`: results from `answer_texts` of `find --unit pr:<n>`; comment fallback only when no review and PR state MERGED. Body edit stays (raid_land step 0 checks it).
+4. `scripts/trace-pr-join.py` `gh_fetch_pr`: keeps `gh api` (foreign repos hold no local notes); counts `verdict REROLL|ESCALATE` in pointer lines and legacy headers; docstring notes a failed pointer undercounts.
+5. `skills/roar/runbooks/capture.md`: `--seats-pr` reads notes answers, merged-PR comment fallback.
+6. `skills/merge/references/claims.md` (~68): seat lines come from notes answers via `--seats-pr`.
+7. `skills/raid/references/detached-gaze.md`, `skills/raid/SKILL.md` Phase 6: poll `review_notes.py answers --unit pr:<n> --latest`; accept only a non-stale `reviewed_head_sha` with seats `panel`; liveness marker = answer entry present.
+8. `skills/verify-gate/SKILL.md`: findings and latest result from `answers`/`show`/`gate`; drop the comment-path fallback 1300 kept; the `/verify-gate round=<n>` comment becomes the one-line pointer; rounds from `gate`.
+9. `skills/gaze/SKILL.md`, `skills/gaze/references/output.md`, `skills/merge/SKILL.md`: one evidence path (notes), pointer as courtesy.
+10. `STATE.md` handoff: F1 evidence on notes (1298-1301); PR comment is a pointer; web sessions stay outcome B.
+11. Ticket 1297 (trace-doctor design): log that counts come from pointers/notes.
+
+## Test
+- test_attribution_seats.py: test_seats_pr_reads_notes_answers_not_comments; test_seats_pr_open_pr_without_review_refuses_no_comment_fallback.
+- test_attribution_capture_pr.py: test_merged_pre_switch_pr_falls_back_to_comments.
+- test_gaze_close.py: test_pr_close_posts_only_pointer (body equals the pointer, no `seat:` line); test_pointer_failure_ignored_exit_zero; test_seats_appended_to_body_without_comment.
+- test_review_notes.py: test_answers_latest_matches_stale_head.
+- test_trace_pr_join.py: test_counts_pointer_verdicts_and_legacy_headers.
+- test_verify_fork_contracts.py, test_gaze_never_approves.py, test_merge_gate_plan.py: rewrite pinned strings; add test_no_skill_text_names_full_result_comment_as_evidence.
+
+## Feasibility
+WARN: ~21 files (4 scripts, 9 texts, ~8 tests). The draft proposed splitting code (1301a) from texts (1301b); the orchestrator keeps one PR: a code/text split would leave skills describing the full comment while code posts a pointer, the incoherent intermediate state the tracker's order was built to avoid, and many touched tests pin those texts. Review can be split by seat instead (rules/workflow.md: a large diff splits the review, not necessarily the PR).
