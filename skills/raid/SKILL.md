@@ -271,7 +271,8 @@ Phase 7 on its mechanical checks. Everything below is the full tier.
 
 **Per-ticket:** ensure a REVIEWED gaze record on the branch tip, then run
 the verify-gate skill on the head it reviewed. Hunt's Verify phase already ran gaze and
-fixed its findings, so the raid reads that record first and re-runs gaze
+fixed its findings, so the raid reads that record first (the review's latest
+answer on notes, `review_notes.py answers --unit pr:<n> --latest --json`) and re-runs gaze
 only when it is missing, ESCALATE, or stale against the tip
 (`skills/merge/SKILL.md` § Gating tiers, which also counts a `seats:
 self-only` record as missing); a second review of a head gaze

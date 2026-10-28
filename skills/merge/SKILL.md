@@ -42,7 +42,10 @@ new tip of main; a red there is reported, never reverted (Trust, Verify,
 Monitor). A change to the gate itself is therefore fully tested only once
 it is on main.
 
-**A gaze record with `seats: self-only`, or with no `seats:` line, counts
+**The review evidence is on notes** (F1, ticket 1301): a gaze record is the
+review's latest `answer` entry (`review_notes.py answers --unit pr:<n> --latest`)
+and a verdict is its `verdict` entry; the PR comments are one-line pointers to
+them. **A gaze record with `seats: self-only`, or with no `seats:` line, counts
 as no record** (definition: `skills/gaze/SKILL.md` § 4): gaze runs again, from
 a session that can launch seats. A second self-only record on the same head
 goes to the author.

@@ -21,8 +21,10 @@ answers that question and nothing wider.
 - **Size.** The changed lines inside the what, not the whole merge request.
 - **Location.** The risk rows of `skills/route/references/decorrelation.md`:
   rules, gates, credentials and deletion are high risk.
-- **History.** Earlier gaze result comments on this merge request: what
-  they covered, on which head, and what changed since.
+- **History.** Earlier gaze answers of this merge request's review
+  (`review_notes.py answers --unit pr:<n>`; a PR gazed before notes evidence:
+  its gaze result comments): what they covered, on which head, and what
+  changed since.
 
 #### Methods, cheapest first
 

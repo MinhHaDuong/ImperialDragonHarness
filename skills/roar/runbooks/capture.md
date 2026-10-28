@@ -60,7 +60,9 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
 
    Before reading the body, run `attribution_record.py --seats-pr <N>
    --project <name> [--masked-evidence <path>:<line>]` (ticket 1155): it joins
-   all the PR's `/gaze result` comments, each `seat:` line one attempt, appends
+   the gaze answers of the PR's review on notes (ticket 1301; a merged PR gazed
+   before notes evidence: its `/gaze result` comments; an open PR with no notes
+   review is refused), each `seat:` line one attempt, appends
    the `reviewer:` lines the block lacks (creating the block if absent), and
    exits 1 naming each capture failure; carry them into step 11's report. The
    evidence anchor is the durable runtime-masked evidence described below;

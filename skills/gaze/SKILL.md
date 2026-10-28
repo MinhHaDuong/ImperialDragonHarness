@@ -21,7 +21,7 @@ why (`verify <what> because <why>`), read leniently. With none, the what is the
 whole merge request against its ticket's exit criteria. A forge-less project
 names the unit `branch:<name> [base=<ref>]` in place of the number; every
 phase runs the same. Either way the result goes to `refs/notes/review`; a PR
-also gets it as a comment (§ 5). With neither, return ESCALATE with reason "no PR argument".
+also gets a one-line pointer comment to it (§ 5). With neither, return ESCALATE with reason "no PR argument".
 Gaze resolves the forge from its cwd, so launch it from the PR's repository.
 
 ## Invariants
@@ -31,9 +31,9 @@ Gaze resolves the forge from its cwd, so launch it from the PR's repository.
   or fix loop. Within the pass, gaze checks each finding before reporting it
   (reproduces it or reads the code it cites) and drops what does not hold.
 - **Read-only on the code.** Gaze makes no commits and no pushes, and writes
-  nothing in the caller's worktree. It writes only its report: the result
-  comment and its attribution lines on the PR, and the same text returned to
-  the caller. Checks run in gaze's own review worktree, removed with its
+  nothing in the caller's worktree. It writes only its report: the answer on
+  notes, its attribution lines and a one-line pointer on the PR, and the same
+  text returned to the caller. Checks run in gaze's own review worktree, removed with its
   scratch before returning (§ Cleanup and containment).
 - Never returns APPROVED (pinned by `tests/test_gaze_never_approves.py`).
   REVIEWED means no blocking finding on the reviewed head, nothing more.
@@ -137,8 +137,9 @@ that cannot launch is `no report`, never replaced by gaze's own read.
 ### 5. Output
 
 Run the cleanup (`references/cleanup.md`) first, since it can downgrade the
-result to ESCALATE. Then post one PR comment and return the same text; its
-full template is `references/output.md`:
+result to ESCALATE. `gaze_close.py` then records the result as the review's
+answer on notes (on a PR, plus a one-line pointer comment); return the same
+text. Its full template is `references/output.md`:
 
 ```yaml
 result: REVIEWED | FINDINGS | ESCALATE
@@ -158,17 +159,19 @@ deviations — ...`, or `FAIL — ...`). You append only the reason after it,
 never relabel a FAIL, and never type the line yourself: a comment file with a
 typed `plan check:` line or no placeholder is refused. `gaze_close.py` is the
 only closing path; it prints the line (`plan check: ...`) on stdout, before
-cleanup. The text you return to your caller, and the ESCALATE comment you post
-on a blocked cleanup, carry that printed line, copied as printed.
+cleanup. The text you return to your caller, an ESCALATE on a blocked cleanup
+included, carries that printed line, copied as printed.
 
 **Notes answer, every unit.** `gaze_close.py` records the same text, with
 the attribution lines, as one `answer` entry of the review in
 `refs/notes/review` through the `review_notes.py` helper, the store verify-gate
 reads. The write is local, with no network call; a remote gets a detached
 background sync whose result nobody waits for (the landing push delivers). A PR's
-review is keyed `pr:<n>`, never by its branch name, which merge may reuse; on a
-PR the comment is still posted after the answer (dual-write while its readers
-move to notes). On `branch:<name>` nothing goes to a forge. A narrow
+review is keyed `pr:<n>`, never by its branch name, which merge may reuse. The
+answer is the one evidence path (F1, ticket 1301): verify-gate, raid's polling
+and attribution read it. On a PR the script then posts one pointer line,
+`/gaze review on notes: <review_id>, verdict <V>`, best-effort: a failed post
+is printed and changes nothing. On `branch:<name>` nothing goes to a forge. A narrow
 intent records `scope: delta`, carrying the review's latest non-ESCALATE
 answer, only the default intent a full review. The answer binds to the request
 and run id `gaze_setup.py` printed (`request_id=`, `run_id=`): the request on
@@ -181,8 +184,8 @@ write those notes by hand.
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`
 appends them to the PR body through `attribution_record.py --append-pr`.
 Seats never edit the body; a failed append is reported, not skipped. For each seat
-in the posted result's `seat:` lines that the file lacks, `gaze_close.py`
-derives the reviewer line. Line fields:
+in the result's `seat:` lines that the file lacks, `gaze_close.py` derives the
+reviewer line (`attribution_record.py --seats-pr`, reading the notes answers). Line fields:
 `skills/merge/references/claims.md` § Line formats.
 
 ## Cleanup and containment
@@ -192,9 +195,9 @@ On every exit path run `references/cleanup.md` through the one closing call
 the attribution file is required, empty when no seat ran):
 it appends attribution first, then removes this run's review scratch and the review worktree, checks the
 containment postcondition (cwd, branch, foreign files)
-and posts the comment. On a blocked cleanup (exit 1) attribution is already
-appended, the script posts nothing, and the calling gaze posts the ESCALATE
-comment itself.
+and records the answer, then posts the pointer. On a blocked cleanup (exit 1)
+attribution is already appended and the script records an ESCALATE answer with
+its pointer; return ESCALATE naming the files.
 
 <!-- inline: references/cleanup.md -->
 

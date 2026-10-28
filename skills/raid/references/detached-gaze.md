@@ -11,10 +11,11 @@ CLI session per PR, launched like a headless seat
 pinned to the PR's worktree, prompt asking it to load the gaze skill with `<pr-number> <intent>`, the
 intent passed verbatim on every runtime (Claude Code, Codex, Pi), plus the
 caller prerequisites and the containment rails (no merges, no writes outside
-the PR branch); the result is observed by polling the written artifact — the
-`## /gaze result` PR comment per the output shape in
-`skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
-is not stale against the branch tip and its `seats:` is `panel`
+the PR branch); the result is observed by polling the written artifact — the review's latest
+answer on notes, `review_notes.py answers --unit pr:<n> --latest --json --head <branch tip>`
+(the output shape in `skills/gaze/SKILL.md` § Output shape; the PR comment is a
+pointer only), accepted only when its `reviewed_head_sha` is not stale against
+the branch tip (`current`, or a bookkeeping delta) and its `seats` is `panel`
 (`skills/raid/SKILL.md` § Phase 6) — under that contract's bounded wait, never a spawn exit status,
 and the structured result must return to the orchestrator. Inside it, gaze
 launches its own seats through the same headless door, so neither level
@@ -29,10 +30,10 @@ gaze on `<pr>` once more if the liveness window allows; otherwise park the
 merge request and escalate (`rules/workflow.md` § Escalation protocol).
 
 **Fork liveness:** once the review comment has posted, the gaze result
-(returned, or posted as a PR comment) is due within `fork_liveness_seconds`
+(returned, or recorded as an answer on notes) is due within `fork_liveness_seconds`
 (`skills/gaze/telemetry.yml`, env override `GAZE_LIVENESS_WINDOW_S`). On
 expiry, do not re-run gaze's pass: check the three completion
-markers, a posted gaze result comment, branch-tip motion on the PR branch
+markers, a gaze answer entry on notes, branch-tip motion on the PR branch
 and the review worktree's file mtime. All stale or absent: no accepted gaze
 result, so no gate; park the merge request and escalate (`rules/workflow.md`
 § Escalation protocol). Never
