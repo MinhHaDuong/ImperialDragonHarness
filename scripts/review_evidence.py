@@ -9,6 +9,10 @@ version must not change. Check, gate and adherence results are never reused.
 
 Forge-read reviews (human, Copilot) are admitted only from three pinned actor
 IDs and only when the forge reports them unedited; anything else fails closed.
+The forge read waits forge.read_timeout() (ticket 1308): exit 4 when the forge is unreachable
+(unread, the gate proceeds saying so and landing rechecks), exit 3 when it answered but the
+answer is incomplete or refused (Missing Data). A complete read prints `forge-read: <UTC ISO>`
+first, the time the gate's verdict records for the landing recheck.
 
 Subcommands: `identity`, `record`, `gate`, `forge`.
 Ticket 1142; design in conception/discussions/2026-10-14-1096-design.md.
@@ -480,6 +484,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
 
 
 EXIT_READ_FAILED = 3  # forge read failed or truncated: Missing Data, not a rejection
+EXIT_UNREACHABLE = 4  # forge did not answer (timeout, network): unread, never "no reviews" (ticket 1308)
 FORGE_QUERY = """query($owner:String!,$name:String!,$pr:Int!){repository(owner:$owner,name:$name){
 pullRequest(number:$pr){
 reviews(first:100){pageInfo{hasNextPage endCursor}
@@ -492,11 +497,24 @@ reviewThreads(first:100){pageInfo{hasNextPage endCursor}
 
 
 def cmd_forge(args: argparse.Namespace) -> int:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import forge  # same directory: the one read bound and network classifier (ticket 1308)
     owner, name = args.forge_repo.split("/", 1)
-    out = subprocess.run(
-        ["gh", "api", "graphql", "--hostname", args.host, "-f", f"query={FORGE_QUERY}",
-         "-F", f"owner={owner}", "-F", f"name={name}", "-F", f"pr={args.pr}"],
-        capture_output=True, text=True, timeout=60)
+    read_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    try:
+        out = subprocess.run(
+            ["gh", "api", "graphql", "--hostname", args.host, "-f", f"query={FORGE_QUERY}",
+             "-F", f"owner={owner}", "-F", f"name={name}", "-F", f"pr={args.pr}"],
+            capture_output=True, text=True, timeout=forge.read_timeout())
+    except subprocess.TimeoutExpired as exc:
+        print(f"forge: unread (offline: gh timed out after {exc.timeout}s)")
+        return EXIT_UNREACHABLE
+    except OSError as exc:
+        print(f"forge: unread (offline: gh unavailable: {exc})")
+        return EXIT_UNREACHABLE
+    if out.returncode != 0 and forge.NET_ERR.search(out.stderr or ""):
+        print(f"forge: unread (offline: {out.stderr.strip().splitlines()[-1]})")
+        return EXIT_UNREACHABLE
     if out.returncode != 0:
         print(f"forge: read failed, evidence invalid: {out.stderr.strip()}")
         return EXIT_READ_FAILED
@@ -505,6 +523,7 @@ def cmd_forge(args: argparse.Namespace) -> int:
     except (ForgeReadError, json.JSONDecodeError) as exc:
         print(f"forge: read incomplete, evidence invalid: {exc}")
         return EXIT_READ_FAILED
+    print(f"forge-read: {read_at}")
     for r in rows:
         extra = f" {r['state']} at {r['commit'][:12]}" if r["commit"] else ""
         if r["resolved"] is not None:

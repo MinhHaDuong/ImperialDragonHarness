@@ -923,13 +923,15 @@ def gate_state(cwd, review_id, head, remote="origin"):
 
 
 def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_candidate="", text="",
-                   author=None, remote="origin"):
+                   author=None, remote="origin", forge_read="unread"):
     """Append the gate's `verdict` entry; the round is derived here from the review's recorded
     verdicts (all sessions), never passed, and only when `gate_state` admits the head.
     The write is local; a remote gets a background sync, never waited (ticket 1300). Returns
     {entry, level, remote, conflict, stale}: level is `local`; `conflict` lists other verdicts of
     the same round already in the local ref (two gate runs ruling at once; once both meet, the
-    next `gate` refuses, past the cap); `stale` is gate_state's."""
+    next `gate` refuses, past the cap); `stale` is gate_state's. `forge_read` is when the gate
+    read the human and Copilot reviews (`review_evidence.py forge`'s `forge-read:`), or `unread`:
+    the landing recheck counts only reviews newer than it, every one when unread (ticket 1308)."""
     if verdict not in VERDICTS:
         raise Refusal(f"verdict must be one of {'|'.join(VERDICTS)}, got {verdict!r}")
     try:
@@ -945,7 +947,8 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
     has_remote = _has_remote(cwd, remote)
     entry = _append(cwd, "verdict", review_id,
                     {"gate_session_id": session, "round": rnd, "verdict": verdict,
-                     "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text},
+                     "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text,
+                     "forge_read": forge_read or "unread"},
                     head=state["head"], author=author or {"role": "verify-gate"}, skill="verify-gate")
     sync_background(cwd, remote)
     conflict = [v["id"] for v in _verdicts(cwd, review_id)
@@ -1036,6 +1039,8 @@ def main(argv=None):
     s.add_argument("--evidence", nargs="*", default=[], help="entry ids the ruling rests on")
     s.add_argument("--candidate", default="", help="the gate record's candidate OID")
     s.add_argument("--text-file", type=Path, help="the human-readable verdict summary")
+    s.add_argument("--forge-read", default="unread",
+                   help="the forge-read: time review_evidence.py forge printed, else unread (ticket 1308)")
     s = sub.add_parser("keep-head")
     s.add_argument("review")
     s.add_argument("request")
@@ -1117,7 +1122,8 @@ def main(argv=None):
             return 0 if state["ready"] else 1
         elif a.cmd == "verdict":
             done = record_verdict(cwd, a.review, a.session, a.verdict, a.head, a.evidence, a.candidate,
-                                  a.text_file.read_text() if a.text_file else "", remote=remote)
+                                  a.text_file.read_text() if a.text_file else "", remote=remote,
+                                  forge_read=a.forge_read)
             print(done["entry"]["id"], done["level"], f"round={done['entry']['round']}")
             if done["stale"]:
                 print(f"review_notes: notes: stale ({done['stale']}); the round may be undercounted",

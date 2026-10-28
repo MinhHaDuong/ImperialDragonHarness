@@ -422,6 +422,9 @@ class MergingForge:
         state = "MERGED" if pr in self.merged else "OPEN"
         return f"{state} {self._head(pr)} -"
 
+    def review_state(self, pr):
+        return []
+
     def comment(self, pr, body):
         pass
 

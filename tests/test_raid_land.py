@@ -28,6 +28,7 @@ class StubForge:
         self.head, self.body, self.armed, self.state = head, body, armed, state
         self.readback = readback if readback is not None else f"MERGED {head} -"
         self.calls = []
+        self.blocking = []
 
     def resolve(self, pr):
         return {"id": pr, "state": self.state, "draft": False, "branch": "feat", "base": "main",
@@ -46,6 +47,11 @@ class StubForge:
         return self.readback
 
     def comment(self, pr, body): self.calls.append("comment")
+
+    def review_state(self, pr):
+        if isinstance(self.blocking, Exception):
+            raise self.blocking
+        return self.blocking
 
 
 @pytest.fixture
