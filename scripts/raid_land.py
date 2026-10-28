@@ -242,7 +242,7 @@ def gate_read(cwd: Path, pr: str, ruled: str):
         verdicts = [e for e in review_notes.entries(str(cwd), rid) if e["kind"] == "verdict"] if rid else []
     except review_notes.Refusal:
         return None
-    ruled_on = [v for v in verdicts if v.get("head") == ruled] or verdicts
+    ruled_on = [v for v in verdicts if v.get("head") == ruled]  # another head's read never stands in
     return _when(ruled_on[-1].get("forge_read")) if ruled_on else None
 
 

@@ -180,6 +180,14 @@ def test_landing_after_offline_gate_counts_every_unresolved(tmp_path):
     rl.recheck_reviews(Forge([]), "7", primary, head)
 
 
+def test_landing_ignores_a_verdict_on_another_head(tmp_path):
+    """Gaze round on #1876: a verdict ruled on another head is not the gate's read of this one; with
+    no verdict on the ruled head in the local notes, every unresolved review counts."""
+    primary, head = verdict_at(tmp_path, "2026-10-28T12:00:00Z")
+    with pytest.raises(rl.Refusal, match="never read the forge.*unresolved thread"):
+        rl.recheck_reviews(Forge([THREAD]), "7", primary, "0" * 40)
+
+
 def test_landing_recheck_unreadable_refuses(tmp_path):
     primary, head = verdict_at(tmp_path, "2026-10-28T12:00:00Z")
     with pytest.raises(rl.Refusal, match="unreadable at landing"):
