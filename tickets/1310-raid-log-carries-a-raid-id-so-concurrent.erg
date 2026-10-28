@@ -27,3 +27,44 @@ checking ticket 1246's cadence (cadence itself held: about 15 min, one
 - [ ] Test: two interleaved raids in one fixture log give two separate sitreps
 - [ ] `references/sitrep.md` documents the field
 - [ ] `make check` passes
+
+## Raid annotation (Imagine+Plan+Feasibility, 2026-10-28, sonnet seat)
+
+**Premise: holds, worse than stated.** `scripts/raid_log.py:18,33-41` has no
+raid field; `scripts/raid-sitrep.py` takes `starts[-1]` for time (70-74) and
+reads ALL events for PRs, waves, SITREP marks, breakers and queue (85-142), so a
+sitrep lists every earlier raid's PRs (reproduced 2026-10-28 in raid 1310's
+own first sitrep). No merged fix.
+
+**Path.** `raid=<id>` is one more key=value. `append RAID_START` mints
+`secrets.token_hex(3)` unless `raid=` is given, and prints the line (the
+coordinator reads the id there). Any other event without `raid` raises → exit 2.
+`raid-sitrep.py --raid <id>` (required; missing → UNREADABLE raid, exit 2)
+filters events before every derived list; no RAID_START for the id → existing
+UNREADABLE RAID_START path, also when the log holds only other raids; the SITREP
+mark carries the raid. Legacy lines without `raid=` are ignored, never
+UNREADABLE. Refuse: env-only id (Bash exports do not persist; the background
+`sleep 900; sitrep` needs the id baked in), per-raid files, registry/locks,
+backfill, "latest raid" guessing, a Raid class.
+
+**Actions.** (a) first failing test
+`test_two_interleaved_raids_give_separate_sitreps`; (b) raid_log.py; (c)
+raid-sitrep.py; (d) fixture and existing tests carry `raid=`; (e)
+references/sitrep.md (field row, Reading note) and SKILL.md line 54 and
+§ Sitrep cadence ("read the id RAID_START prints; `raid=<id>` on every append;
+arm `sleep 900; raid-sitrep.py --raid <id>`"); keep the phrase "write
+`RAID_START` and arm the sitrep cadence" (tests/test_raid_sitrep.py:203). Check
+how the `<!-- inline: references/sitrep.md -->` copy is kept in sync. (f) `make check`.
+
+**Tests that catch a wrong implementation.** One fixture, two interleaved raids
+with distinct data (A: PR 10 at gate_round_1, a breaker, queue 2; B: PR 20
+merged, a SITREP mark, queue 0, a later RAID_START). Assert each output has its
+own PR and NEXT line and not the other's; B's later RAID_START does not cut A's
+time line; B's SITREP mark does not hide A's breakers; legacy raid-less lines
+appear in neither and cause no UNREADABLE; unknown/missing `--raid` exit 2;
+append without raid raises; two mints differ and match LINE.
+
+**Feasibility: PASS.** No open PR touches these files. WARN: the raid running
+this ticket logged its RAID_START without an id; its sitrep becomes UNREADABLE
+once this lands (the coordinator re-logs with an id). Related: tracker 1309
+(runtime.py) will later carry the wake for this cadence.
