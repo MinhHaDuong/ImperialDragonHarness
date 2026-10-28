@@ -18,7 +18,7 @@ oversize context, uncleared content, or a cross-family need).
 | Ordinary review | `sonnet` | Anthropic | same family: replication, not independence |
 | Hard implementation, cross-cutting judgment | `opus` | Anthropic | |
 | One-shot deep problem, adversarial judgment | `fable` | Anthropic | never orchestration or bulk |
-| Independent review of a risky change | `pi -p` / `codex exec -m` | other | headless seat from bash |
+| Independent review of a risky change | `codex exec -m` (OpenAI), `vibe` (Mistral) | other | headless seat from bash; on padme `pi -p` serves only the local seats and huggingface |
 | Cheap work, different family wanted | `codex exec -m gpt-6-luna` | OpenAI | headless seat |
 | Uncleared content | local model via `pi -p` | local | never a hosted door |
 | Context over 256K | none | n/a | split the work |

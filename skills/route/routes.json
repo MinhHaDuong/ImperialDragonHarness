@@ -1,32 +1,32 @@
 {
   "_comment": "Route-state cache owned by skills/route. Key NAMES only, never values. Update on every route state change; stale cache burns attempts and money.",
-  "updated": "2026-10-15",
+  "updated": "2026-10-28",
   "routes": {
     "anthropic": {
       "endpoint": "api.anthropic.com (pi built-in)",
       "key_env": "ANTHROPIC_API_KEY",
-      "status": "live",
+      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): launch this family through its own CLI door",
       "note": "opus-5-5, sonnet-5-5, haiku-5-5 (arm N, added 2026-10-08, effort medium; 0.10/0.50 per M in/out up to 100K prompt tokens, 0.50/2.50 above, so the price multiplies by 5 past 100K). @low vs @medium: paired median quality difference -0.5; measured cost and latency lower. See corrected cumulative grid.",
       "last_verified": "2026-10-08"
     },
     "openai": {
       "endpoint": "api.openai.com (pi built-in)",
       "key_env": "OPENAI_API_KEY",
-      "status": "live",
+      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): launch this family through its own CLI door",
       "note": "gpt-6.1-sol, gpt-6-luna. Hit 'no credits remaining' wall 2026-10-06 03:00Z, topped up same morning. No GPT-6 Terra exists; the GPT-6 lineup is Astra / Sol 6.1 / Luna.",
       "last_verified": "2026-10-06"
     },
     "mistral": {
       "endpoint": "api.mistral.ai (pi built-in)",
       "key_env": "MISTRAL_API_KEY",
-      "status": "live",
+      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): launch this family through its own CLI door",
       "note": "Vibe (2.26.0) reaches Mistral through the Le Chat plan login in the OS keyring, default model mistral-vibe-cli-latest (mistral-medium-3.5 alias); the earlier note naming zai-glm-5-3 here was stale (ticket 1279). NEW 2026-10-06: mistral-large-4 public preview (~1T MoE, 49B active, vision) at 0.68/2.09 per M (-50% preview, expiry unannounced; 0.07 cached input); context 1M claimed vs ~524K evaluator-side (262K max output); weights due Oct 27 (open-weight, red-team pending); pi's generic custom provider sends the OpenAI 'store' param (422) — use the NATIVE mistral provider, which accepts unknown model ids; pi resolves catalog-unknown mistral models at thinking OFF.",
       "last_verified": "2026-10-06"
     },
     "deepseek": {
       "endpoint": "api.deepseek.com (pi built-in)",
       "key_env": "DEEPSEEK_API_KEY",
-      "status": "live",
+      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): launch this family through its own CLI door",
       "note": "deepseek-flash. pi catalog bills flat PEAK; real time-of-use halves it off-peak (01-04 & 06-10 UTC weekdays). pi catalog default thinking is HIGH, not pi's default medium.",
       "last_verified": "2026-10-06"
     },
