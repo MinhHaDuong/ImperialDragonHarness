@@ -4,6 +4,7 @@ metadata:
   order: 2
 name: trace-doctor
 description: "Surveying doctor of session-trace costs and waits over all sessions; refers cases to /test-doctor, /harness-doctor or tickets. Never auto-applies."
+disable-model-invocation: true
 user-invocable: true
 argument-hint: "[--days N]"
 ---
