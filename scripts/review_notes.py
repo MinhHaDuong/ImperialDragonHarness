@@ -15,7 +15,9 @@ matches). A request keeps its head at refs/review-heads/<review_id>/<request_id>
 
 Transport (spec §2). `setup` writes the two fetch refspecs and the cat_sort_uniq
 merge strategy (no push refspec, no rewriteRef); with no remote it is a no-op and
-everything stays local. `sync` = fetch into refs/notes/origin/review, fast-forward
+everything stays local. Both refspecs are globs (ticket 1300): an exact
+refs/notes/review refspec made a plain `git fetch origin` exit 128 while the remote had no
+notes; setup replaces that exact spec where an older setup wrote it. `sync` = fetch into refs/notes/origin/review, fast-forward
 or `notes merge -s cat_sort_uniq`, push, at most 5 attempts; never forced.
 `publish` = sync, refetch, then the remote tip must equal the local one, every
 named entry must be readable from it, and the review-head of each named entry's
@@ -24,12 +26,27 @@ missing or moved one is reported on stderr): prints done-unpublished | published
 retrievable and exits non-zero below retrievable. `refresh` = the reader half:
 fetch, check and integrate, no push; `resolve` (CLI `find`) refreshes before
 looking a branch up, so a fresh clone after setup + `git fetch` finds the
-published review, and an unreachable remote is a refusal, never "no review".
+published review. A remote that cannot be read leaves refresh `stale`, a warning,
+never a refusal (ticket 1300): `resolve` then answers from the local entries, and
+with none refuses ("remote unreadable, no local review"), never "no review"; a
+Tamper still raises. `gate` reports a stale read in its `stale` field.
+
+Units (ticket 1300). A request may carry `unit`: `pr:<n>` for a forge merge request,
+inherited by the later requests of its review. A PR number is never reused, while a
+branch name is (merge never deletes branches), so a PR review is found by `find_unit`
+(CLI `find --unit pr:<n>`), never by branch; `find <branch>` skips PR reviews. Fork
+PRs are out of scope: the harness takes none.
+
+Writes stay local (ticket 1300, author 2026-10-28): gaze's answer and the gate's verdict
+are written to the local ref, then `sync_background` starts a detached `sync --if-idle`
+whose result nobody waits for or reads; `--if-idle` gives up at once when another sync
+holds <git-common-dir>/idh-review-sync.lock. Delivery is the landing push.
 
 Landing (ticket 1299). `push_for_landing` (CLI `push-landing <branch>`) runs before a merge:
 refresh, then push refs/notes/review and the review-heads of the requests naming the branch
 (never the HEADS/* glob), never forced; a failed push is a Refusal, no remote or no request
-for the branch pushes nothing.
+for the branch pushes nothing. A head missing locally for the latest review of the branch, the
+one landing, is a Refusal (ticket 1300); older reviews' missing heads are skipped.
 
 Locking (ticket 1282). Every local write to refs/notes/review (`notes append`, `notes merge`)
 is a read-modify-write, so writers hold an exclusive flock on
@@ -86,7 +103,8 @@ from pathlib import Path
 REF = "refs/notes/review"
 TRACK = "refs/notes/origin/review"
 HEADS = "refs/review-heads"
-FETCH_NOTES = f"+{REF}:{TRACK}"
+FETCH_NOTES = f"+{REF}:{TRACK}"  # explicit fetches only, after ls-remote saw the ref
+FETCH_NOTES_GLOB = f"+{REF}*:{TRACK}*"  # the persistent spec: a glob tolerates a notes-less remote
 FETCH_HEADS = f"{HEADS}/*:{HEADS}/*"
 KINDS = ("request", "plan", "report", "answer", "verdict", "link")
 REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publisher",
@@ -266,7 +284,9 @@ def setup(cwd, remote="origin"):
     if not _has_remote(cwd, remote):
         return None
     fetch = _out(cwd, "config", "--get-all", f"remote.{remote}.fetch", check=False).splitlines()
-    for spec in (FETCH_NOTES, FETCH_HEADS):
+    if FETCH_NOTES in fetch:  # written by setups before ticket 1300; breaks a plain fetch
+        _git(cwd, "config", "--fixed-value", "--unset-all", f"remote.{remote}.fetch", FETCH_NOTES)
+    for spec in (FETCH_NOTES_GLOB, FETCH_HEADS):
         if spec not in fetch:
             _git(cwd, "config", "--add", f"remote.{remote}.fetch", spec)
     _git(cwd, "config", "notes.review.mergeStrategy", "cat_sort_uniq")
@@ -375,11 +395,18 @@ def refresh(cwd, remote="origin"):
     """Reader bootstrap (ticket 1281): fetch the remote notes and review-heads, check them,
     and bring them into the local ref; never pushes, so a read-only remote suffices. Local
     unpublished entries survive (merge, never a forced fetch into the live ref). A failed
-    fetch raises Refusal: an unreachable store is not an empty one. No remote: nothing to do."""
+    fetch is `stale` with a warning, never a refusal and never an empty store (ticket 1300):
+    the caller reads the local entries and says they may be behind. A Tamper still raises.
+    No remote: nothing to do."""
     if not setup(cwd, remote):
         return {"status": "local", "warnings": []}
     warnings = []
-    tip = _fetch(cwd, remote)
+    try:
+        tip = _fetch(cwd, remote)
+    except Tamper:
+        raise
+    except Refusal as exc:
+        return {"status": "stale", "warnings": [f"remote {remote} unreadable, local entries only: {exc}"]}
     _check_remote(cwd, remote, tip, warnings)
     before = {e["id"]: e for e in all_entries(cwd)}
     _integrate(cwd)
@@ -387,7 +414,12 @@ def refresh(cwd, remote="origin"):
     for eid, entry in before.items():
         if eid not in after:
             _write(cwd, entry)
-    _check_heads(cwd, remote, warnings)
+    try:
+        _check_heads(cwd, remote, warnings)
+    except Tamper:
+        raise
+    except Refusal as exc:  # the notes were read; only the review-head check went unread
+        warnings.append(f"review-heads on {remote} unread: {exc}")
     return {"status": "fetched", "warnings": list(dict.fromkeys(warnings))}
 
 
@@ -424,6 +456,39 @@ def sync(cwd, remote="origin"):
     _check_remote(cwd, remote, tip, warnings)  # a replacement in the push-to-fetch window
     _save_state(cwd, remote, tip, _all_lines(cwd, TRACK)[0] if tip else {})
     return {"status": "synced", "warnings": list(dict.fromkeys(warnings))}
+
+
+def _sync_lock_path(cwd):
+    return Path(_out(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "idh-review-sync.lock"
+
+
+def sync_if_idle(cwd, remote="origin"):
+    """`sync` unless another sync holds the sync lock: one try, never a wait (ticket 1300).
+    The sync lock is not the write lock, so local writers never wait on a network push."""
+    with open(_sync_lock_path(cwd), "a") as fh:
+        try:
+            fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return {"status": "skipped: lock busy", "warnings": []}
+        try:
+            return sync(cwd, remote)
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def sync_background(cwd, remote="origin"):
+    """Start a detached `sync --if-idle` and return at once: never waited, result ignored
+    (ticket 1300). Delivery is the landing push's; this only shortens the wait for readers
+    on other clones. No remote: nothing started. Returns whether a sync was started."""
+    if not _has_remote(cwd, remote):
+        return False
+    try:
+        subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "-C", str(cwd), "--remote", remote,
+                          "sync", "--if-idle"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError:
+        return False
+    return True
 
 
 def _retention_problems(cwd, remote, ids):
@@ -475,6 +540,7 @@ def push_for_landing(cwd, branch, remote="origin"):
     no request for the branch: nothing pushed, []. Returns the refs pushed."""
     def requests():
         return [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
+    # Notes are merge evidence (ticket 1300): the landing review's retained heads must exist.
 
     if not _has_remote(cwd, remote) or not requests():
         return []  # decided from local entries: no config write, no fetch
@@ -483,11 +549,15 @@ def push_for_landing(cwd, branch, remote="origin"):
     reqs = requests()
     if not reqs:
         return []
+    landing = reqs[-1]["review_id"]
     _push_notes(cwd, remote, [])
     pushed = [REF]
     for key in dict.fromkeys((e["review_id"], e["request_id"]) for e in reqs):
         ref = f"{HEADS}/{key[0]}/{key[1]}"
         if not _has_ref(cwd, ref):
+            if key[0] == landing:
+                raise Refusal(f"review-head {ref} of the landing review is missing locally; "
+                              "the reviewed head is merge evidence, refusing to land without it")
             continue
         if _git(cwd, "push", "-q", remote, f"{ref}:{ref}", check=False).returncode != 0:
             raise Refusal(f"push of {ref} to {remote} rejected")
@@ -558,13 +628,17 @@ def _request_what(cwd, base, branch, remote):
 
 
 def request(cwd, review_id, branch, base_ref="origin/main", why="", intent="", tickets=(),
-            responses=(), author=None, skill="hunt", remote="origin", head=None):
+            responses=(), author=None, skill="hunt", remote="origin", head=None, unit=None):
     """A new request (round) on the branch's current head, or on `head` when the caller already
-    pinned the commit under review (gaze setup, ticket 1281); keeps the head."""
+    pinned the commit under review (gaze setup, ticket 1281); keeps the head. `unit` (`pr:<n>`,
+    ticket 1300) is stored on the request; a later request of the review inherits it."""
     binding = _binding(cwd, head or branch, base_ref)
     prior = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
     extra = {"branch": branch, "what": _request_what(cwd, binding["base"], branch, remote),
              "why": why, "intent": intent, "tickets": list(tickets), "responses": list(responses)}
+    unit = unit or next((e["unit"] for e in reversed(prior) if e.get("unit")), None)
+    if unit:
+        extra["unit"] = unit
     links = []
     if prior:
         prev = prior[-1]
@@ -581,10 +655,10 @@ def request(cwd, review_id, branch, base_ref="origin/main", why="", intent="", t
     return _write(cwd, entry)
 
 
-def open_review(cwd, branch, base_ref="origin/main", **kw):
+def open_review(cwd, branch, base_ref="origin/main", unit=None, **kw):
     """Mint a review id and write its first request; returns the review id."""
-    rid = f"rv-{datetime.now(timezone.utc):%Y%m%d}-{_slug(branch)}-{_hex(4)}"
-    request(cwd, rid, branch, base_ref, **kw)
+    rid = f"rv-{datetime.now(timezone.utc):%Y%m%d}-{_slug(unit or branch)}-{_hex(4)}"
+    request(cwd, rid, branch, base_ref, unit=unit, **kw)
     return rid
 
 
@@ -629,16 +703,43 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
 # --- reading ---------------------------------------------------------------------
 
 def find(cwd, branch):
-    """The review id of the latest request naming `branch` in the local ref, else None."""
-    hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
+    """The review id of the latest request naming `branch` in the local ref, else None. A PR
+    review (`unit: pr:<n>`) is never a branch unit's, so it is skipped (ticket 1300)."""
+    hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch
+            and not str(e.get("unit") or "").startswith("pr:")]
     return hits[-1]["review_id"] if hits else None
+
+
+def find_unit(cwd, unit):
+    """The review id of the latest request carrying `unit` (`pr:<n>`), local ref only; matches
+    the unit, never the branch, so a reused branch name never inherits old rounds (ticket 1300).
+    Fork PRs are out of scope: the harness takes none."""
+    hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("unit") == unit]
+    return hits[-1]["review_id"] if hits else None
+
+
+def _resolved(cwd, remote, finder, key):
+    """Refresh, then look up: a stale read answers from local entries (warning on stderr) and,
+    with nothing local, refuses naming the remote; never None for an unread store (1281, 1300)."""
+    report = refresh(cwd, remote)
+    rid = finder(cwd, key)
+    if report["status"] == "stale":
+        if not rid:
+            raise Refusal(f"remote unreadable, no local review: {'; '.join(report['warnings'])}")
+        for w in report["warnings"]:
+            print(f"review_notes: warning: stale read: {w}", file=sys.stderr)
+    return rid
 
 
 def resolve(cwd, branch, remote="origin"):
     """`find` after `refresh`: the resolver every reader uses, so a fresh clone sees the reviews
-    already published (ticket 1281). Raises Refusal when the remote cannot be read."""
-    refresh(cwd, remote)
-    return find(cwd, branch)
+    already published (ticket 1281)."""
+    return _resolved(cwd, remote, find, branch)
+
+
+def resolve_unit(cwd, unit, remote="origin"):
+    """`find_unit` after `refresh` (ticket 1300), with resolve's stale rules."""
+    return _resolved(cwd, remote, find_unit, unit)
 
 
 def open_findings(cwd, review_id):
@@ -727,12 +828,15 @@ def gate_state(cwd, review_id, head, remote="origin"):
     only bookkeeping to the latest reviewed head, whose answer is full or chained; or it is
     the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head.
     Refused: no answer, an ESCALATE answer (the latest, or the one
-    covering the head), a recorded ESCALATE verdict, more than two rounds."""
-    refresh(cwd, remote)
+    covering the head), a recorded ESCALATE verdict, more than two rounds.
+    `stale` is empty after a good read; after a failed fetch it names the failure: the state
+    rests on local entries and the round may be undercounted (ticket 1300)."""
+    report = refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
     answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
     state = {"review_id": review_id, "head": head, "round": len(verdicts) + 1, "ready": False,
+             "stale": "; ".join(report["warnings"]) if report["status"] == "stale" else "",
              "reason": "", "match": "none", "answer": None, "result": None,
              "reviewed_head": answers[-1]["head"] if answers else None,
              "verdicts": [{"round": v.get("round"), "verdict": v.get("verdict"),
@@ -775,9 +879,10 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
                    author=None, remote="origin"):
     """Append the gate's `verdict` entry; the round is derived here from the review's recorded
     verdicts (all sessions), never passed, and only when `gate_state` admits the head.
-    Publishes with read-back when there is a remote. Returns {entry, level, remote, conflict}:
-    `conflict` lists other verdicts of the same round found after publishing (two gate runs
-    ruling at once; the next `gate` then refuses, past the cap)."""
+    The write is local; a remote gets a background sync, never waited (ticket 1300). Returns
+    {entry, level, remote, conflict, stale}: level is `local`; `conflict` lists other verdicts of
+    the same round already in the local ref (two gate runs ruling at once; once both meet, the
+    next `gate` refuses, past the cap); `stale` is gate_state's."""
     if verdict not in VERDICTS:
         raise Refusal(f"verdict must be one of {'|'.join(VERDICTS)}, got {verdict!r}")
     try:
@@ -790,15 +895,16 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
     rnd = state["round"]
     if rnd == MAX_ROUNDS and verdict == "REROLL":
         raise Refusal("round 2 cannot REROLL (never a third round): rule ESCALATE")
-    has_remote = setup(cwd, remote) is not None
+    has_remote = _has_remote(cwd, remote)
     entry = _append(cwd, "verdict", review_id,
                     {"gate_session_id": session, "round": rnd, "verdict": verdict,
                      "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text},
                     head=state["head"], author=author or {"role": "verify-gate"}, skill="verify-gate")
-    level = publish(cwd, [entry["id"]], remote) if has_remote else "done-unpublished"
+    sync_background(cwd, remote)
     conflict = [v["id"] for v in _verdicts(cwd, review_id)
                 if v.get("round") == rnd and v["id"] != entry["id"]]
-    return {"entry": entry, "level": level, "remote": has_remote, "conflict": conflict}
+    return {"entry": entry, "level": "local", "remote": has_remote, "conflict": conflict,
+            "stale": state["stale"]}
 
 
 def export(cwd, review_id):
@@ -853,13 +959,16 @@ def main(argv=None):
     s.add_argument("--links", nargs="*", default=[])
     s.add_argument("--skill", default="gaze")
     s.add_argument("--request", help="the request id the run was launched on (gaze setup's request_id)")
-    sub.add_parser("sync")
+    sub.add_parser("sync").add_argument("--if-idle", action="store_true",
+                                        help="give up at once when another sync runs (background use)")
     sub.add_parser("refresh")
     sub.add_parser("publish").add_argument("ids", nargs="*")
     sub.add_parser("push-landing").add_argument("branch")
     sub.add_parser("show").add_argument("review")
     sub.add_parser("history").add_argument("review", nargs="?")
-    sub.add_parser("find").add_argument("branch")
+    s = sub.add_parser("find")
+    s.add_argument("branch", nargs="?")
+    s.add_argument("--unit", help="pr:<n>: a forge merge request's review, never matched by branch")
     sub.add_parser("findings").add_argument("review")
     s = sub.add_parser("coverage")
     s.add_argument("review")
@@ -903,7 +1012,7 @@ def main(argv=None):
                       author=json.loads(a.author) if a.author else None, skill=a.skill,
                       links=a.links, request_id=a.request)["id"])
         elif a.cmd in ("sync", "refresh"):
-            report = (sync if a.cmd == "sync" else refresh)(cwd, remote)
+            report = (refresh if a.cmd == "refresh" else sync_if_idle if a.if_idle else sync)(cwd, remote)
             print(report["status"])
             for w in report["warnings"]:
                 print(f"warning: {w}", file=sys.stderr)
@@ -920,7 +1029,10 @@ def main(argv=None):
             for e in entries(cwd, a.review) if a.review else all_entries(cwd):
                 print(e["ts"], e["review_id"], e["kind"], e["id"], e.get("result") or e.get("verdict") or "")
         elif a.cmd == "find":
-            rid = resolve(cwd, a.branch, remote)
+            if bool(a.branch) == bool(a.unit):
+                print("review_notes: find takes a branch or --unit, exactly one", file=sys.stderr)
+                return 2
+            rid = resolve_unit(cwd, a.unit, remote) if a.unit else resolve(cwd, a.branch, remote)
             if not rid:
                 return 1
             print(rid)
@@ -937,12 +1049,15 @@ def main(argv=None):
             done = record_verdict(cwd, a.review, a.session, a.verdict, a.head, a.evidence, a.candidate,
                                   a.text_file.read_text() if a.text_file else "", remote=remote)
             print(done["entry"]["id"], done["level"], f"round={done['entry']['round']}")
+            if done["stale"]:
+                print(f"review_notes: notes: stale ({done['stale']}); the round may be undercounted",
+                      file=sys.stderr)
             if done["conflict"]:
                 print(f"review_notes: round {done['entry']['round']} also recorded by "
                       f"{', '.join(done['conflict'])}: two gate runs ruled at once; ESCALATE to the author",
                       file=sys.stderr)
                 return 1
-            return 1 if done["remote"] and done["level"] != "retrievable" else 0
+            return 0
         elif a.cmd == "keep-head":
             print(keep_head(cwd, a.review, a.request, _rev(cwd, a.head)))
         elif a.cmd == "export":

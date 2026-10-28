@@ -102,7 +102,8 @@ def test_setup_is_idempotent_and_a_no_op_without_remote(world, tmp_path):
     assert rn.setup(a) == "origin"
     rn.setup(a)
     fetch = sh(a, "config", "--get-all", "remote.origin.fetch").splitlines()
-    assert fetch.count("+refs/notes/review:refs/notes/origin/review") == 1
+    assert fetch.count("+refs/notes/review*:refs/notes/origin/review*") == 1
+    assert "+refs/notes/review:refs/notes/origin/review" not in fetch  # ticket 1300: no exact spec
     assert fetch.count("refs/review-heads/*:refs/review-heads/*") == 1
     assert sh(a, "config", "notes.review.mergeStrategy") == "cat_sort_uniq"
     assert sh(a, "config", "--get-all", "remote.origin.push", check=False) == ""
@@ -577,3 +578,99 @@ def test_push_for_landing_no_remote_and_no_notes_are_no_ops(world, tmp_path):
     sh(lone, "add", ".")
     sh(lone, "commit", "-qm", "x")
     assert rn.push_for_landing(str(lone), "main") == []
+
+
+# --- ticket 1300: PR units, lenient readers, background sync ----------------------------------
+
+def test_setup_fetch_refspecs_tolerate_a_notes_less_origin(world):
+    """PR #1852: an exact refs/notes/review refspec made every plain `git fetch origin` exit 128
+    while origin had no notes. The positive control shows the old spec failing on this origin."""
+    _, a, b, _ = world
+    sh(b, "config", "--add", "remote.origin.fetch", "+refs/notes/review:refs/notes/origin/review")
+    assert subprocess.run(["git", "-C", str(b), "fetch", "-q", "origin"], capture_output=True).returncode
+    rn.setup(b)  # migrates the exact spec away
+    assert subprocess.run(["git", "-C", str(b), "fetch", "-q", "origin"], capture_output=True).returncode == 0
+    rn.setup(a)
+    assert subprocess.run(["git", "-C", str(a), "fetch", "-q", "origin"], capture_output=True).returncode == 0
+
+
+def test_refresh_unreachable_remote_is_stale_not_refusal(world, tmp_path):
+    _, a, _, _ = world
+    sh(a, "remote", "set-url", "origin", str(tmp_path / "gone.git"))
+    report = rn.refresh(a)
+    assert report["status"] == "stale" and report["warnings"]
+
+
+def test_resolve_stale_returns_local_review(world, tmp_path, capsys):
+    _, a, _, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    pr = rn.open_review(a, "feature", "origin/main", unit="pr:7")
+    sh(a, "remote", "set-url", "origin", str(tmp_path / "gone.git"))
+    assert rn.resolve(a, "feature") == rid
+    assert rn.resolve_unit(a, "pr:7") == pr
+    assert "stale" in capsys.readouterr().err
+
+
+def test_resolve_stale_without_local_refuses_naming_remote(world, tmp_path):
+    _, _, b, _ = world
+    sh(b, "remote", "set-url", "origin", str(tmp_path / "gone.git"))
+    with pytest.raises(rn.Refusal, match="remote unreadable, no local review"):
+        rn.resolve(b, "feature")
+    with pytest.raises(rn.Refusal, match="remote unreadable, no local review"):
+        rn.resolve_unit(b, "pr:7")
+
+
+def test_tamper_still_raises_under_lenient_refresh(world):
+    origin, a, b, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    rn.add(a, "answer", rid, {"run_id": "gz-1", "result": "FINDINGS", "seats": "panel",
+                              "coverage": {"scope": "full"}})
+    rn.sync(a)
+    rn.sync(b)
+    forged = raw_note(b, rid).replace('"FINDINGS"', '"REVIEWED"')
+    sh(b, "notes", "--ref=review", "add", "-f", "-m", forged, rn.anchor(b, rid))
+    sh(b, "push", "-q", "origin", "refs/notes/review:refs/notes/review")
+    with pytest.raises(rn.Tamper):
+        rn.refresh(a)
+
+
+def test_find_unit_ignores_reused_branch_name(world):
+    """A PR number is never reused; a branch name is (merge never deletes branches)."""
+    _, a, _, _ = world
+    plain = rn.open_review(a, "feature", "origin/main")
+    old = rn.open_review(a, "feature", "origin/main", unit="pr:6")
+    assert rn.find_unit(a, "pr:7") is None
+    new = rn.open_review(a, "feature", "origin/main", unit="pr:7")
+    assert rn.find_unit(a, "pr:7") == new and rn.find_unit(a, "pr:6") == old
+    assert rn.find(a, "feature") == plain  # a branch unit never binds a PR review
+    later = rn.request(a, new, "feature", "origin/main")
+    assert later["unit"] == "pr:7"  # a later round inherits its review's unit
+    r = subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(a), "find",
+                        "--unit", "pr:6"], capture_output=True, text=True)
+    assert r.returncode == 0 and r.stdout.strip() == old
+
+
+def test_sync_if_idle_skips_busy_lock(world):
+    import fcntl
+    import time
+    _, a, _, _ = world
+    rn.open_review(a, "feature", "origin/main")
+    lock = Path(sh(a, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "idh-review-sync.lock"
+    with open(lock, "a") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        t0 = time.monotonic()
+        done = subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(a), "sync",
+                               "--if-idle"], capture_output=True, text=True)
+        elapsed = time.monotonic() - t0
+    assert done.returncode == 0 and "skipped: lock busy" in done.stdout
+    assert elapsed < 2
+
+
+def test_push_for_landing_refuses_a_missing_review_head(world):
+    """gaze on PR #1852: once notes are merge evidence, a landed review's head ref must exist."""
+    _, a, _, _ = world
+    rid = rn.open_review(str(a), "feature", "origin/main")
+    rq = rn.entries(a, rid)[0]["request_id"]
+    sh(a, "update-ref", "-d", f"{rn.HEADS}/{rid}/{rq}")
+    with pytest.raises(rn.Refusal, match="missing"):
+        rn.push_for_landing(str(a), "feature")
