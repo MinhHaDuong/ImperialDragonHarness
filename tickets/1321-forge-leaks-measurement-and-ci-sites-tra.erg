@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T17:48Z claude created
+2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 
 --- body ---
 ## Context
@@ -22,6 +23,16 @@ Sites on main 2026-10-28:
   `scripts/trace-wall-time.py`.
 
 Parent: tracker 1317.
+
+## Plan (raid f7fa41: Imagine, Blind-Spot, feasibility PASS)
+Recommendation: keep all four, with a one-line reason comment at each call site and a log line.
+- trace-pr-join.py ~80, ~87: GitHub PR and paginated comment measurement; a port would add a verb
+  for one analytics script.
+- trace_merge_path.py ~40: a regex over trace text, not a call.
+- review_evidence.py ~505: GraphQL with pinned GitHub actor ids keyed by forge host; already uses
+  forge.read_timeout and NET_ERR and fails closed; no-forge evidence goes through notes.
+- local-ci.sh ~101: `act` is a GitHub Actions runner; it already skips forge-secret jobs when no
+  forge (~89, ~167).
 
 ## Exit criteria
 - [ ] Each site above is either ported to `forge.py` (with a `none`-backend test: typed NOOP or

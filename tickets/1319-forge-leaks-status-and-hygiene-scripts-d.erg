@@ -6,6 +6,7 @@ Blocked-by: 1318
 
 --- log ---
 2026-10-28T17:48Z claude created
+2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 
 --- body ---
 ## Context
@@ -23,6 +24,21 @@ Sites on main 2026-10-28:
   tracker's original list.
 
 Parent: tracker 1317.
+
+## Plan (raid f7fa41: Imagine, Blind-Spot, feasibility PASS)
+- Consume 1318's `forge.py list` (Python `get_forge(...).list` or the CLI from dashboard.sh); do
+  not edit forge.py or tests/test_forge.py. Exit 3 (no origin) → each caller prints its own
+  "not inspected: no forge"; exit 2 → today's fail-closed path.
+- dashboard.sh already degrades to "NOT inspected" (~23-30): keep that shape. project-state.py
+  already returns `open: None` with an error (~404). worktree-tmp-guard.py (~206) already raises
+  Blocked on failure: port to `list --head`, keep fail-closed. tmp_report.py (~717) needs
+  `list --state all` with body.
+- slow_tickets.py (~82): residue with reason (needs createdAt, comments, checks; no forge verb;
+  already degrades to unknown duration), recorded in the log and at the call site.
+- Budget shim updates: tests/gaze_fixture.py, tests/test_gaze_close.py, tests/test_raid_sitrep.py
+  stub raw `gh pr list`.
+- First test: dashboard.sh on a git-only PATH says "NOT inspected" and prints no empty
+  "open merge requests" list.
 
 ## Exit criteria
 - [ ] The six sites above call `forge.py` instead of `gh`, or are listed in this ticket's log as
