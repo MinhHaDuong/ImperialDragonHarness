@@ -24,7 +24,8 @@ contract that `tests/test_review_panel_cleanup_contract.py` pins): the
 `git worktree remove`, never `--force`. A blocked step exits 1 and leaves the
 review worktree registered; the script records an ESCALATE answer on notes and
 posts its pointer: return ESCALATE naming the files. Attribution was appended
-before cleanup, so the review is recorded either way.
+before cleanup, so the review is recorded either way, and the ESCALATE answer
+carries the generated `seat:` lines, read before the panel was removed.
 
 ## Containment postcondition
 

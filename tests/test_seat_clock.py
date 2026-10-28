@@ -276,3 +276,39 @@ def test_consent_follows_the_billing_provider_not_the_family_label(tmp_path):
     home = ('xfam', 'anthropic/claude-x', 'anthropic', 'headless pi')  # consented, but the home family
     result, manifest = plan(tmp_path, SELF, home, providers=['Mistral', 'anthropic'])
     assert result.returncode == 2 and not manifest.exists()
+
+
+# --- ticket 1303: identities, the seat: lines built from the plan and the headers -------------------
+
+def _plan(tmp_path, rows, reports):
+    panel = tmp_path / 'panel'
+    panel.mkdir()
+    (panel / 'manifest.txt').write_text('# budget: 10m\n' + ''.join(row + '\n' for row in rows))
+    for name, text in reports.items():
+        (panel / f'{name}.md').write_text(text)
+    return panel
+
+
+def test_identities_map_status_route_and_provider(tmp_path):
+    headless = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nverdict: clear\n'
+    panel = _plan(tmp_path, [
+        'consistency\tgpt-6-luna\topenai\theadless codex',
+        'late\tgpt-6-luna\topenai\theadless codex',
+        'skip\tclaude-x\tanthropic\tskipped: no door',
+        'check\tscript\tnone\tfails on base',
+        'self\tself\tanthropic\tgaze',
+    ], {'consistency': headless, 'check': 'ran\n', 'self': 'worker: self · family=anthropic\nok\n'})
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', '--session-model', 'claude-x')
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        'seat: consistency · runtime=codex · family=openai · route=gpt-6-luna · model=openai/gpt-6-luna · status: ran',
+        'seat: late · runtime=codex · family=openai · route=gpt-6-luna · model=openai/gpt-6-luna · status: failed',
+        'seat: skip · runtime=claude-code · family=anthropic · route=subagent · model=anthropic/claude-x · status: skipped',
+        'seat: self · runtime=claude-code · family=anthropic · route=self · model=anthropic/claude-x · status: ran',
+    ]
+
+
+def test_identities_skip_free_text_and_fail_loudly_without_a_manifest(tmp_path):
+    panel = _plan(tmp_path, ['One seat reads the diff.'], {})
+    assert run('identities', str(panel)).stdout.strip() == ''
+    assert run('identities', str(tmp_path / 'nowhere')).returncode == 2

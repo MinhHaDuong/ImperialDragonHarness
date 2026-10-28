@@ -32,6 +32,19 @@ too, so the posted line shows it. Exit 1 on FAIL only.
 `seats <panel>` prints `seats: panel` when an item other than self (name or
 model `self`) filed a report the plan check accepts, else `seats: self-only`.
 
+`identities <panel> [--session-runtime R] [--session-model M]` prints one `seat:` line
+per worker item of the manifest (ticket 1303), built from the plan and the
+launcher-set `worker:` header, never typed by the model: `seat: <item> ·
+runtime=<id> · family=<family> · route=<token> · model=<provider/id | not
+observed> · status: ran|failed|skipped`. A header with `door=headless` is the
+launcher's (its runtime and model); a subagent seat types its own header, so
+its line takes the manifest pin and the session's runtime (`route=subagent`);
+self takes the session's runtime and model (`route=self`); a seat with no
+report keeps its planned pin and the runtime its reason names, status `failed`.
+Items of family `none` (scripts) are not workers and print nothing. The model id
+is provider-qualified by the door's billed provider (`gaze_seat.billed_provider`).
+Session values default from `IDH_SESSION_RUNTIME` and `IDH_SESSION_MODEL`.
+
 `plan-write <panel> --intent T --method T --budget <n>m [--spend T]
 --home-family F [--no-door T] [--no-cross-family T] --item NAME MODEL FAMILY
 REASON ...` writes `<panel>/manifest.txt` (ticket 1267): the header and TAB
@@ -108,11 +121,16 @@ def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
     return True, f'reported in {wall}s'
 
 
+def manifest_items(panel: Path) -> list[list[str]]:
+    """The plan items of `<panel>/manifest.txt`, each as its tab-separated cells."""
+    return [line.split('\t') for line in (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
+            if line.strip() and not line.startswith('#')]
+
+
 def roster(panel: Path) -> tuple[bool, list[str]]:
     manifest = panel / 'manifest.txt'
     launched = manifest.stat().st_mtime
-    seats = [line.split('\t')[0] for line in manifest.read_text(encoding='utf-8-sig').splitlines()
-             if line.strip() and not line.startswith('#')]
+    seats = [cells[0] for cells in manifest_items(panel)]
     if not seats:
         return False, ['no seats in manifest']
 
@@ -146,25 +164,31 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
     return ok, lines
 
 
+def assess(panel: Path) -> tuple[bool, list[str], list[str]]:
+    """The plan check, plus the non-self items whose report it accepted."""
+    ok, lines, reported, _ = _assess(panel)
+    return ok, lines, reported
+
+
 def seats(panel: Path) -> str:
     """`seats: panel` when an item other than self filed a report the plan check accepts."""
     _, _, reported = assess(panel)
     return 'seats: panel' if reported else 'seats: self-only'
 
 
-def assess(panel: Path) -> tuple[bool, list[str], list[str]]:
-    """The plan check, plus the non-self items whose report it accepted."""
+def _assess(panel: Path) -> tuple[bool, list[str], list[str], list[str]]:
+    """The plan check, the non-self items whose report it accepted, and every item it accepted."""
     complete, lines = roster(panel)
     manifest = (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
     budget = next((int(m.group(1)) * 60 for line in manifest
                    if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
-    missing, deviations, reported = [], [], []
+    missing, deviations, reported, accepted = [], [], [], []
     deviations += [f'no cross-family seat: {line.split(":", 1)[1].strip()}' for line in manifest
                    if line.startswith('# no-cross-family:')]
     deviations += [f'no door launched: {line.split(":", 1)[1].strip()}' for line in manifest
                    if line.startswith('# no-door:')]
     by_name = {line.split(': ', 1)[0]: line for line in lines}
-    for cells in (line.split('\t') for line in manifest if line.strip() and not line.startswith('#')):
+    for cells in manifest_items(panel):
         name, planned = cells[0], cells[2].strip() if len(cells) > 2 else ''
         line = by_name.get(name, f'{name}: no report')
         timed = re.search(r': reported in (\d+)s', line)
@@ -180,6 +204,7 @@ def assess(panel: Path) -> tuple[bool, list[str], list[str]]:
         if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
             missing.append(f'{name}: no report (empty, unsigned, or the worker line alone)')
             continue
+        accepted.append(name)
         if not is_self(cells):
             reported.append(name)
         if planned == 'none':
@@ -195,7 +220,72 @@ def assess(panel: Path) -> tuple[bool, list[str], list[str]]:
         head = 'plan check: PASS with deviations — ' + '; '.join(deviations)
     else:
         head = 'plan check: PASS'
-    return not missing and complete, [head, *lines], reported
+    return not missing and complete, [head, *lines], reported, accepted
+
+
+def worker_header(report: Path) -> dict[str, str]:
+    """The `key=value` fields of a report's first line when it is a `worker:` line, else {}."""
+    try:
+        text = report.read_text(encoding='utf-8-sig', errors='replace')
+    except OSError:
+        return {}
+    first = next((ln.strip().strip('*').strip() for ln in text.splitlines() if re.search(r'\w', ln)), '')
+    if not first.lower().startswith('worker:'):
+        return {}
+    return {m.group(1).lower(): m.group(2) for m in re.finditer(r'(\w+)=([^\s·]+)', first)}
+
+
+def _token(value: str) -> str:
+    return re.sub(r'[\s·=:]+', '-', value.strip()) or 'not-stated'
+
+
+def qualify(model: str, runtime: str) -> str:
+    """Provider-qualify a bare model id with the provider that bills it on `runtime`'s door."""
+    if '/' in model or model == 'not observed':
+        return model
+    spec = importlib.util.spec_from_file_location('gaze_seat', Path(__file__).with_name('gaze_seat.py'))
+    gaze_seat = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gaze_seat)
+    try:
+        door = gaze_seat.load_doors(gaze_seat.ROUTES).get(runtime)
+    except (OSError, ValueError, KeyError):
+        door = None
+    provider = gaze_seat.billed_provider(door, model) if door else None
+    return f'{provider.lower()}/{model}' if provider else model
+
+
+def identities(panel: Path, session_runtime: str = '', session_model: str = '') -> list[dict[str, str]]:
+    """One identity per worker item of the plan, from the plan and the launcher's header (ticket 1303)."""
+    _, _, _, accepted = _assess(panel)
+    session_runtime = session_runtime.strip() or 'not-stated'
+    out = []
+    for cells in manifest_items(panel):
+        name, pin = cells[0], (cells[1].strip() if len(cells) > 1 else '')
+        family = cells[2].strip() if len(cells) > 2 else ''
+        reason = cells[3] if len(cells) > 3 else ''
+        if len(cells) < 3 or family == 'none':
+            continue  # free text is no plan item (the plan check fails it); a script is not a worker
+        header = worker_header(panel / f'{name}.md')
+        door = re.search(r'headless[ ]+(\S+)', reason)
+        if is_self(cells):
+            runtime, model, route = session_runtime, session_model.strip() or 'not observed', 'self'
+        elif header.get('door') == 'headless' and header.get('runtime'):
+            runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
+        elif door:
+            runtime, model, route = door.group(1).strip('.,;)('), pin, _token(pin)
+        else:
+            runtime, model, route = session_runtime, pin, 'subagent'
+        status = ('skipped' if reason.strip().lower().startswith('skipped')
+                  else 'ran' if name in accepted else 'failed')
+        out.append({'seat': name, 'runtime': _token(runtime), 'family': _token(family or header.get('family', '')),
+                    'route': route, 'model': qualify(model, runtime) if model else 'not observed',
+                    'status': status})
+    return out
+
+
+def format_seat(ident: dict[str, str]) -> str:
+    return (f"seat: {ident['seat']} · runtime={ident['runtime']} · family={ident['family']} · "
+            f"route={ident['route']} · model={ident['model']} · status: {ident['status']}")
 
 
 def cross_family_problems(items: list[list[str]], home_family: str, no_door: str | None,
@@ -284,6 +374,10 @@ def main(argv: list[str]) -> int:
     plan_p.add_argument('panel', type=Path)
     seats_p = sub.add_parser('seats', help='panel or self-only, from the reports')
     seats_p.add_argument('panel', type=Path)
+    ident_p = sub.add_parser('identities', help='the seat: lines, built from the plan and the headers')
+    ident_p.add_argument('panel', type=Path)
+    ident_p.add_argument('--session-runtime', default=os.environ.get('IDH_SESSION_RUNTIME', ''))
+    ident_p.add_argument('--session-model', default=os.environ.get('IDH_SESSION_MODEL', ''))
     write_p = sub.add_parser('plan-write', help='write a validated manifest')
     write_p.add_argument('panel', type=Path)
     write_p.add_argument('--intent', required=True)
@@ -313,6 +407,13 @@ def main(argv: list[str]) -> int:
             pass  # the printed line still names the seat
         print(line)
         return 0 if ok else 1
+    if args.mode == 'identities':
+        try:
+            print('\n'.join(format_seat(i) for i in identities(args.panel, args.session_runtime, args.session_model)))
+        except OSError as error:
+            print(f'seat_clock: cannot read {args.panel}/manifest.txt: {error}', file=sys.stderr)
+            return 2
+        return 0
     if args.mode == 'seats':
         try:
             print(seats(args.panel))

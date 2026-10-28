@@ -180,19 +180,24 @@ while the review ran. Setup fetches the review store first; a configured but
 unreachable remote stops it (exit 2) rather than opening a duplicate review. Never
 write those notes by hand.
 
-**Attribution.** As each seat returns, collect its `reviewer: step=review`
-line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`
-appends them to the PR body through `attribution_record.py --append-pr`.
-Seats never edit the body; a failed append is reported, not skipped. For each seat
-in the result's `seat:` lines that the file lacks, `gaze_close.py` derives the
-reviewer line (`attribution_record.py --seats-pr`, reading the notes answers). Line fields:
+**Attribution.** The `seat:` lines of the result and the `reviewer: step=review`
+lines of the PR body are generated, never typed (ticket 1303): `{{seats}}` in the
+result file and `gaze_close.py` build them from the plan's item names and the
+launcher-set `worker:` headers. As each seat returns, collect its findings, one
+line each, `finding: <seat> · verifiable|consider · <path:line> · adopted: yes|no`
+(`<seat>` is the plan item name), in the attribution file;
+`gaze_close.py --attribution-file` puts each under its seat's reviewer line and
+appends them to the PR body through `attribution_record.py --append-pr`. It refuses
+the call (exit 2, nothing removed or posted) for a finding naming a seat absent from the plan
+or one that did not run, and for any other line in the file. Seats never edit the body;
+a failed append is reported, not skipped. Line fields:
 `skills/merge/references/claims.md` § Line formats.
 
 ## Cleanup and containment
 
 On every exit path run `references/cleanup.md` through the one closing call
-(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --attribution-file <file> --comment-file <file>`;
-the attribution file is required, empty when no seat ran):
+(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --attribution-file <file> --comment-file <file> --session-runtime <runtime> --session-model <model>`;
+the attribution file is required, empty when no seat ran; the session flags give a `self` item its identity):
 it appends attribution first, then removes this run's review scratch and the review worktree, checks the
 containment postcondition (cwd, branch, foreign files)
 and records the answer, then posts the pointer. On a blocked cleanup (exit 1)
