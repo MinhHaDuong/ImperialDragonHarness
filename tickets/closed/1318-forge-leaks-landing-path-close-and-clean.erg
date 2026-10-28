@@ -9,6 +9,7 @@ Closed: autoclosed — PR #1912
 2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 2026-10-28T18:04Z reviewer ported: close-and-clean, check-close-claims, check-cross-pr-ticket-collision through forge.py list/files/read-back (exit 0/2/3); review-anchor only its error text. No residue.
 2026-10-28T18:07Z reviewer closed — autoclosed — PR #1912
+2026-10-28T18:13Z reviewer note verify-reroll — round 1: tests/test_close_claim_grammar.sh fails on the branch, passes on main
 
 --- body ---
 ## Context

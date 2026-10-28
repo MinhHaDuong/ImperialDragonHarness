@@ -39,7 +39,7 @@ for arg in "$@"; do
     [[ "$previous" == --jq ]] && expr="$arg"
     previous="$arg"
 done
-jq "$expr" < "$GH_STUB_PAYLOAD"
+if [[ -n "$expr" ]]; then jq "$expr" < "$GH_STUB_PAYLOAD"; else cat "$GH_STUB_PAYLOAD"; fi
 STUB
     chmod +x "$1/bin/gh"
 }
@@ -51,6 +51,9 @@ while IFS='|' read -r label expected escaped_body; do
     body=$(printf '%b' "$escaped_body")
     detector="$TMP/detector-$label"
     mkdir -p "$detector/tickets"
+    # check-close-claims reads merged requests through forge.py, which answers
+    # "no forge" (exit 3) without an origin remote: give the fixture one.
+    git init -q "$detector" && git -C "$detector" remote add origin https://example.invalid/o/r.git
     make_detector_gh "$detector"
     expected_count=0
     if [[ "$expected" != '-' ]]; then
