@@ -2,10 +2,12 @@
 Title: Offline forge mode: lazy async forge reads in gaze and verify-gate, human and Copilot reviews rechecked at landing
 Created: 2026-10-28
 Author: reviewer
+Closed: autoclosed — PR #1876
 
 --- log ---
 2026-10-28T11:34Z reviewer created
 2026-10-28T11:52Z reviewer note raid imagine/plan+blind-spot: bounded short read timeout (IDH_FORGE_READ_TIMEOUT, default 5 s) instead of background refresh; landing reads (read_back, merged_at, auto_merge_armed, the render's body read) keep 120 s. Cache = existing request entries (cached_mapping filters kind=request) plus the claims/body needed for exit criteria, recorded at first contact; missing claims offline fail closed. Bound or skip the git fetches on the offline path. verify-gate: review_evidence.py cmd_forge bypasses forge.py (timeout=60, uncaught TimeoutExpired): split exit codes unreachable vs truncated, offline-proceed only on unreachable, verdict records forge read status. Landing recheck: CHANGES_REQUESTED reviews and unresolved review threads only (not harness pointer comments from the pinned actor), window from the verdict's recorded forge read (offline verdict = everything unread), recheck read failure refuses; needs timestamps in the query. Feasibility WARN (likely >220 lines). Rebase onto 1307 before gating.
+2026-10-28T12:43Z reviewer closed — autoclosed — PR #1876
 
 --- body ---
 ## Context
