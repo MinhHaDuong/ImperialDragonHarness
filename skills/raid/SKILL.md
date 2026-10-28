@@ -437,11 +437,14 @@ declines an APPROVED PR's merge.
 <!-- inline: references/merge-permission-denial.md -->
 
 After all waves, in one compound so the `cd` persists across the sync:
-`cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`, then
-`make check` in a checkout of the synced main (the primary checkout, or a
-throwaway `git worktree add --detach <dir> main`). The sync script always exits 0
-and leaves a diverged main untouched: read its output, and stop if a line says
-`left untouched`, `diverged` or `skipped`. New failures → revert last merge + ticket.
+`cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`. The
+sync script always exits 0 and leaves a diverged main untouched: read its
+output, and stop if a line says `left untouched`, `diverged` or `skipped`.
+A red on main is reported and ticketed, never reverted (`skills/merge/SKILL.md`
+step 9). Gated base: the after-merge runner the sync started covers the tip
+and opens the ticket; read its log, never wait on it. Ungated base: `make check`
+in a checkout of the synced main (the primary checkout, or a throwaway
+`git worktree add --detach <dir> main`); new failures → ticket.
 
 ## Phase 8: Celebrate (per-merged-PR)
 
