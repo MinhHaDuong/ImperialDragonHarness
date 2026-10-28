@@ -1,0 +1,25 @@
+%erg 0.1
+Title: runtime.py notify verb and an out-of-session raid supervisor (arena watchdog pattern)
+Created: 2026-10-28
+Author: claude
+Blocked-by: 1311
+
+--- log ---
+2026-10-28T14:17Z claude created
+
+--- body ---
+## Context
+Child of tracker 1309. Adds `runtime.py notify --title --body` (desktop
+`notify-send` where present, plus an alert file under the git common dir, rate
+limited per condition, the pattern of the arena's `scripts/arena-watchdog.py`)
+and decides on an out-of-session raid supervisor: a systemd user timer that runs
+`raid-sitrep.py` and calls `notify` when the queue is not empty and no SITREP has
+been written for 30 minutes (coordinator presumed dead). `notify` is also the
+documented fallback whenever `can wake` answers no.
+
+## Exit criteria
+- [ ] `notify` verb with a rate limit and a test (stubbed notify-send, alert file written)
+- [ ] Decision recorded: build the supervisor or drop it, with raid-log evidence
+      (as of 2026-10-28, 8 raids and no dead coordinator)
+- [ ] If built: unit + timer installed by `bin/idh install`, documented in raid § Sitrep cadence
+- [ ] `make check` passes

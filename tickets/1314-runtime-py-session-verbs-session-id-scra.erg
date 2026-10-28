@@ -1,0 +1,25 @@
+%erg 0.1
+Title: runtime.py session verbs: session id, scratch dir and project dir behind one read, replacing CLAUDE_* env reads in hooks and skills
+Created: 2026-10-28
+Author: claude
+Blocked-by: 1311
+
+--- log ---
+2026-10-28T14:17Z claude created
+
+--- body ---
+## Context
+Child of tracker 1309. Hooks and skills read Claude Code environment directly:
+scripts/on-end.sh:41-82 (`session_id` from the payload,
+`CLAUDE_CODE_CHILD_SESSION`, `CLAUDE_SESSION_SCRATCH_ROOT`,
+`CLAUDE_CODE_TMPDIR`), on-start-sync.sh:6 and on-start-context.sh:10-15
+(`CLAUDE_PROJECT_DIR`), skills/yawn:104, skills/molt:165 (`CLAUDE_NIGHT_SWEEP`),
+skills/lair/log-agent-metrics:6. `runtime.py session id|scratch|project-dir|headless`
+answers from whichever runtime is running; Codex and Pi equivalents from their
+own hook payloads and environment.
+
+## Exit criteria
+- [ ] `session` verbs with tests per backend, including "not available" answers
+- [ ] The listed sites read through runtime.py; check-agnostic patterns for
+      `CLAUDE_CODE_*` hold with fewer extension-point markers
+- [ ] `make check` passes
