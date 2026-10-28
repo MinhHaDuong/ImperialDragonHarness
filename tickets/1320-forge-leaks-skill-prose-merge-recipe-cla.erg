@@ -6,6 +6,7 @@ Blocked-by: 1318
 
 --- log ---
 2026-10-28T17:48Z claude created
+2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 
 --- body ---
 ## Context
@@ -25,6 +26,14 @@ Needs the forge.py CLI from 1318. `rules/git.md`'s example (`gh pr edit … && g
 documents forge mechanics concretely by design (scripts/check-agnostic.sh note); leave it.
 
 Parent: tracker 1317.
+
+## Plan (raid f7fa41: Imagine, Blind-Spot, feasibility PASS)
+- Name `raid_land.py` and 1318's `forge.py` subcommands (`list`, `files`, `read-back`); the
+  queued-merge wait (merge/SKILL.md ~215) becomes a `forge.py read-back` loop. Do not invent a
+  `forge.py merge` CLI; a step with no forge.py spelling keeps its marker, reason in the log.
+- lair/SKILL.md ~71 (repository auto-merge setting): no verb, keep behind its marker.
+- First test: every `forge.py <sub>` named in the four files answers `--help` with exit 0
+  (catches prose naming a subcommand that does not exist, which check-agnostic cannot).
 
 ## Exit criteria
 - [ ] The four files above name forge.py commands where a forge.py verb exists, and keep a

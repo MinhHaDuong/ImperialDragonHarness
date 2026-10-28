@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T17:48Z claude created
+2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 
 --- body ---
 ## Context
@@ -24,6 +25,29 @@ Shell callers need a CLI: today `forge.py` exposes only `resolve`. This child se
 shape (subcommands over the existing backend methods) that 1319 and 1320 build on.
 
 Parent: tracker 1317.
+
+## Plan (raid f7fa41: Imagine, Blind-Spot, feasibility PASS)
+- Add three `forge.py` CLI subcommands, the whole tracker's CLI (1319 and 1320 consume them, never
+  edit forge.py): `list --state open|merged|all [--head B] [--limit N]` (JSON rows fixed up front:
+  number, branch, title, body, auto, mergedAt, cross_repository), `files <ref>`, `read-back <ref>`
+  (exposes the existing verb: `STATE head queued|-`). No CLI per backend method.
+- Backend routing for ref-less verbs (Blind-Spot 1): today `get_forge(ref="")` returns NoneForge
+  even with gh installed (forge.py ~607, an empty ref is not numeric). A ref-less verb routes to gh
+  when the repository has an origin remote and gh is on PATH.
+- Three-row contract (Blind-Spot 2), mirroring `get_forge(landing=True)`'s `_has_origin` split:
+  no origin remote → exit 3, typed NOOP "no forge" (stdout empty, never `[]`); origin but no gh,
+  unauthed or unreachable → exit 2, could not look; origin with gh → the rows.
+  The collision check may answer "skipped: no forge" exit 0 only on exit 3; on exit 2 it keeps its
+  fail-closed exit 2. check-close-claims keeps its "NOT an all-clear" path.
+- `read-back` reads with `landing=True` (no offline mark, no cache; Blind-Spot 3) and
+  close-and-clean maps unreadable or exit 3 to today's COULD-NOT-LOOK (exit 2), never to a pass or
+  a new KEEP-PENDING (pinned by tests/test_roar_close_and_clean.sh, tests/test_roar_armed_exit.py).
+- review-anchor.py already resolves through forge (~29); only its error string (~31) names gh.
+- Remove each ported site's `harness-extension-point` marker, so check-agnostic tells ported from
+  residue (Blind-Spot 4).
+- First test: `--forge none list --state open` in a repo with no origin and no gh exits 3 with
+  empty stdout and "no forge" on stderr (catches the `[]`-and-exit-0 all-clear); second, an origin
+  repo with no gh exits 2; third, a gh shim with an empty ref routes to gh.
 
 ## Exit criteria
 - [ ] The four sites above call `forge.py` (Python API or CLI) instead of `gh`, or are listed
