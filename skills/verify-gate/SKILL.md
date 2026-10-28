@@ -415,10 +415,10 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 
 ## Output destinations
 
-1. Structured verdict returned to the caller (raid, or the author).
-2. On a unit with a notes review, the `verdict` entry (§ Notes review), written
-   before the comment.
-3. On a PR, the comment below, human-readable summary:
+1. Structured verdict returned to the caller (raid, or the author). On a unit
+   with a notes review, also its `verdict` entry (§ Notes review), written
+   before any comment.
+2. PR comment posted with human-readable summary (on a PR only):
 
    Take the `gate_session_id` from the caller's `session=` argument; with
    none (standalone), generate a fresh UUID. The review worktree path is the gate's
