@@ -96,12 +96,13 @@ def parse_record(text, strict=False):
             if line == "kind: review-attribution" and "kind" not in record:
                 record["kind"] = "review-attribution"
             elif line.startswith("pr: ") and "pr" not in record:
-                match = re.fullmatch(r"pr: ([1-9][0-9]*) · merged (\d{4}-\d{2}-\d{2}|pending) · project: (\S.*)", line)
+                # a no-forge unit has no number: `pr: branch:<name>` (ticket 1307)
+                match = re.fullmatch(r"pr: ([1-9][0-9]*|branch:[^\s·]+) · merged (\d{4}-\d{2}-\d{2}|pending) · project: (\S.*)", line)
                 if not match or (match[2] == "pending" and not strict):
                     raise ValueError("invalid pr line")
                 if match[2] != "pending":
                     datetime.date.fromisoformat(match[2])
-                record.update(pr=int(match[1]), merged=match[2], project=match[3])
+                record.update(pr=int(match[1]) if match[1].isdigit() else match[1], merged=match[2], project=match[3])
             elif line.startswith("writer: "):
                 writer = identity(line[8:], writer=True, strict=strict)
                 step = writer.get("step")
@@ -170,9 +171,17 @@ def runtime_masked(record):
                for identity in [*(record.get("steps") or [record["writer"]]), *record["reviewers"]])
 
 
+def capture_slug(record):
+    """The journal slug: `review-attribution-pr<n>`, or `-branch-<name>` for a no-forge unit."""
+    pr = record["pr"]
+    if isinstance(pr, int):
+        return f"review-attribution-pr{pr}"
+    return "review-attribution-branch-" + re.sub(r"[^A-Za-z0-9._-]+", "-", pr[len("branch:"):])
+
+
 def capture_record(text, record, repository, audience):
     helper = Path(__file__).resolve().with_name("memory-capture.sh")
-    result = subprocess.run([str(helper), str(repository), audience, f"review-attribution-pr{record['pr']}"],
+    result = subprocess.run([str(helper), str(repository), audience, capture_slug(record)],
                             input=text, text=True, capture_output=True)
     if result.returncode:
         raise ValueError(result.stderr.strip() or "memory capture failed")
@@ -330,6 +339,164 @@ def review_results(pr, fg, cwd="."):
                      if c.get("body", "").startswith("## /gaze result"))
 
 
+# --- notes: the one attribution record (ticket 1307) -----------------------------------------
+# Writer lines are `writer` entries of the review, reviewer lines ride in each gaze answer's
+# `attribution` field. The block is assembled from them for landing and for roar's capture;
+# the review path writes nothing to a PR body.
+
+ENTRY_ATTRIBUTION = ("answer", "verdict")  # entries whose `attribution` lines join the block
+
+
+def split_unit(unit):
+    """(kind, key, base): `pr:<n>` or a bare number -> ("pr", "<n>", None); `branch:<name>
+    [base=<ref>]` -> ("branch", name, ref or None); an `rv-` review id -> ("review", id, None)."""
+    unit = str(unit).strip()
+    if re.fullmatch(r"(pr:)?#?[1-9][0-9]*", unit):
+        return "pr", re.sub(r"\D", "", unit), None
+    m = re.fullmatch(r"branch:(\S+?)(?:\s+base=(\S+))?", unit)
+    if m:
+        return "branch", m[1], m[2]
+    if unit.startswith("rv-"):
+        return "review", unit, None
+    raise ValueError(f"unknown unit {unit!r} (pr:<n>, branch:<name> or a review id)")
+
+
+def review_for(cwd, unit):
+    """The review id of `unit` from the local notes ref only: no fetch, no forge (find_unit
+    for a PR, find for a branch, which skips PR reviews). None when there is none."""
+    kind, key, _ = split_unit(unit)
+    if kind == "review":
+        return key if review_notes.entries(cwd, key) else None
+    return review_notes.find_unit(cwd, f"pr:{key}") if kind == "pr" else review_notes.find(cwd, key)
+
+
+def _git_out(cwd, *args):
+    done = subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True)
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
+def record_writer(cwd, line, unit, branch=None, base_ref=None, skill="raid"):
+    """Append one `writer:` line to the unit's review on notes, locally: no fetch, no push, no
+    forge call. A unit with no review yet gets one opened on the branch head (a PR unit keeps
+    `unit: pr:<n>`, so gaze_setup finds it), with the request's What read from the local
+    repository path. Returns the review id; a malformed line raises ValueError."""
+    if not line.startswith("writer: "):
+        raise ValueError("a writer line starts with `writer: `")
+    identity(line[len("writer: "):], writer=True, strict=True)
+    kind, key, base = split_unit(unit)
+    try:
+        rid = review_for(cwd, unit)
+        if not rid:
+            if kind == "review":
+                raise ValueError(f"no review {key} on notes")
+            branch = branch or (key if kind == "branch" else _git_out(cwd, "rev-parse", "--abbrev-ref", "HEAD"))
+            if not branch or branch == "HEAD":
+                raise ValueError("no review yet and no branch to open one on (pass --branch)")
+            base_ref = base_ref or base or ("origin/main" if _git_out(cwd, "rev-parse", "-q", "--verify",
+                                                                       "refs/remotes/origin/main") else "main")
+            rid = review_notes.open_review(cwd, branch, base_ref, unit=f"pr:{key}" if kind == "pr" else None,
+                                           skill=skill, remote="", why="writer attribution before any review")
+        review_notes.add(cwd, "writer", rid, {"line": line}, skill=skill)
+    except review_notes.Refusal as exc:
+        raise ValueError(str(exc)) from exc
+    return rid
+
+
+STEP_ORDER = ("plan", "execute", "roar")
+
+
+def notes_record(cwd, review_id, project, merged="pending"):
+    """The record text of a review, from notes: the header, the latest writer line per step,
+    then every answer's (and verdict's) attribution lines in order, one block per attempt."""
+    entries = review_notes.entries(cwd, review_id)
+    requests = [e for e in entries if e["kind"] == "request"]
+    if not requests:
+        raise ValueError(f"review {review_id} has no request")
+    unit = next((e["unit"] for e in reversed(requests) if e.get("unit")), None)
+    pr = unit[len("pr:"):] if unit else f"branch:{requests[-1]['branch']}"
+    writers = {}
+    for e in entries:
+        if e["kind"] == "writer" and e.get("line"):
+            step = re.search(r"\bstep=(\S+)", e["line"])
+            writers[step[1] if step else ""] = e["line"]
+    ordered = [writers[k] for k in STEP_ORDER if k in writers] + \
+              [v for k, v in writers.items() if k not in STEP_ORDER]
+    reviewers = [ln for e in entries if e["kind"] in ENTRY_ATTRIBUTION for ln in e.get("attribution") or []]
+    lines = ["kind: review-attribution", f"pr: {pr} · merged {merged} · project: {project}", *ordered, *reviewers]
+    return "\n".join(lines) + "\n"
+
+
+def notes_block(cwd, unit, project):
+    """(text, status) of the unit's block on notes: status `ok`, `missing` (no review) or
+    `invalid: <reason>` (the strict parser's); text only when ok. Local reads only."""
+    try:
+        rid = review_for(cwd, unit)
+        if not rid:
+            return None, "missing"
+        text = notes_record(cwd, rid, project)
+        parse_record(text, strict=True)
+    except (ValueError, review_notes.Refusal) as exc:
+        return None, f"invalid: {exc}"
+    return text, "ok"
+
+
+def put_block(body, text):
+    """The body with its attribution block replaced by `text` (one fenced block), or with the
+    block appended when it has none. The rest of the body, close claims included, is kept."""
+    lines, out, i = body.splitlines(), [], 0
+    fenced = ["```attribution", *text.rstrip("\n").splitlines(), "```"]
+    placed = False
+    while i < len(lines):
+        if OPEN.fullmatch(lines[i]):
+            end = next((j for j in range(i + 1, len(lines)) if CLOSE.fullmatch(lines[j])), None)
+            if end is None:
+                raise ValueError(f"attribution block opened at line {i + 1} is never closed")
+            if not placed:
+                out += fenced
+                placed = True
+            i = end + 1
+            continue
+        out.append(lines[i])
+        i += 1
+    if not placed:
+        out += ([""] if out and out[-1].strip() else []) + fenced
+    return "\n".join(out) + "\n"
+
+
+def render_to_pr(pr, text):
+    """Landing (raid_land, merge step 5a): write the notes block into the PR body in one edit,
+    read back by the adapter (append_body_line with a whole-block `edit`)."""
+    forge_call(forge_for(pr).append_body_line, str(pr), text.rstrip("\n"),
+               edit=lambda body: put_block(body, text))
+
+
+def merged_date(cwd, unit):
+    """The merge date (YYYY-MM-DD) of a landed unit, from the forge or, with none, from git."""
+    kind, key, base = split_unit(unit)
+    if kind == "review":
+        raise ValueError("capture takes a pr:<n> or branch:<name> unit, not a review id")
+    fg = forge_for(key) if kind == "pr" else forge.get_forge("none", str(unit), cwd)
+    ref = key if kind == "pr" else str(unit)
+    at = forge_call(fg.merged_at, ref)
+    return at[:10] if at else None
+
+
+def capture_unit(args):
+    """--capture-unit UNIT: the block from notes, its merge date, validated, captured."""
+    cwd = "."
+    merged = merged_date(cwd, args.capture_unit)
+    if not merged:
+        raise ValueError(f"{args.capture_unit} is not merged")
+    rid = review_for(cwd, args.capture_unit)
+    if not rid:
+        raise ValueError(f"{args.capture_unit} has no review on notes (a pre-switch PR: --capture-pr)")
+    project = args.project or Path(_git_out(cwd, "rev-parse", "--path-format=absolute",
+                                            "--git-common-dir") or "./.git").parent.name
+    text = notes_record(cwd, rid, project, merged)
+    LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
+    return 0
+
+
 def append_seats(args):
     """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
     if args.seats_pr:
@@ -372,6 +539,38 @@ def capture_pr(args):
     return 0
 
 
+def notes_main(parser, args):
+    """--record-writer, --from-notes, --render-pr and --capture-unit: the notes modes (ticket 1307)."""
+    modes = [m for m in (args.record_writer is not None, bool(args.from_notes), bool(args.capture_unit),
+                         bool(args.render_pr)) if m]
+    others = (args.record or args.pr_body or args.append is not None or args.extract or args.seats
+              or args.seats_pr or args.capture_pr)
+    if len(modes) > 1 or others:
+        parser.error("--record-writer, --from-notes, --render-pr and --capture-unit take no other mode")
+    try:
+        if args.record_writer is not None:
+            if not args.unit:
+                parser.error("--record-writer needs --unit pr:<n> or branch:<name>")
+            print(record_writer(".", args.record_writer, args.unit, args.branch, args.base_ref, args.skill))
+            return 0
+        if args.from_notes or args.render_pr:
+            project = args.project or Path(_git_out(".", "rev-parse", "--path-format=absolute",
+                                                    "--git-common-dir") or "./.git").parent.name
+            text, status = notes_block(".", args.from_notes or f"pr:{args.render_pr}", project)
+            if args.from_notes or not text:
+                sys.stdout.write(text if text else status + "\n")
+                return 0 if text else 1
+            render_to_pr(args.render_pr, text)
+            sys.stdout.write("rendered\n")
+            return 0
+        if not args.capture or not args.audience:
+            parser.error("--capture-unit needs --capture PROJECT and --audience")
+        return capture_unit(args)
+    except ValueError as error:
+        LOG.error("attribution-record: %s", error)
+        return 1
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("record", nargs="?", type=Path, help="record file; default stdin")
@@ -380,7 +579,6 @@ def main():
     parser.add_argument("--pr-body", action="store_true",
                         help="read a PR body from stdin; print ok, missing or invalid: <reason> (exit 0 only on ok)")
     parser.add_argument("--append", metavar="LINE", help="read a PR body on stdin, print it with LINE added to the attribution block (created if absent)")
-    parser.add_argument("--append-pr", type=int, metavar="PR", help="with --append: edit the live PR body through gh, read back, retry once")
     parser.add_argument("--pr", type=int, help="PR number for a block --append creates")
     parser.add_argument("--project", help="project name for a block --append creates")
     parser.add_argument("--extract", action="store_true",
@@ -396,7 +594,26 @@ def main():
     parser.add_argument("--capture-pr", type=int, metavar="PR",
                         help="one call for a merged PR: --seats-pr, then --extract with its merge date, then --capture"
                              " (needs --capture PROJECT and --audience)")
+    parser.add_argument("--record-writer", metavar="LINE",
+                        help="append a writer: line to the --unit's review on notes, locally (ticket 1307)")
+    parser.add_argument("--unit", help="with --record-writer: pr:<n> or branch:<name>")
+    parser.add_argument("--branch", help="with --record-writer: the branch a review is opened on when the unit has none")
+    parser.add_argument("--base-ref", help="with --record-writer: the base of a review it opens (default origin/main)")
+    parser.add_argument("--skill", default="raid", help="with --record-writer: the recording skill")
+    parser.add_argument("--from-notes", metavar="UNIT",
+                        help="print the block of a pr:<n>, branch:<name> or rv- review from notes; "
+                             "exit 1 printing missing or invalid: <reason>")
+    parser.add_argument("--render-pr", type=int, metavar="PR",
+                        help="landing (merge step 5a): write PR's notes block into its body, read back; "
+                             "exit 1 is a warning, never a refusal")
+    parser.add_argument("--capture-unit", metavar="UNIT",
+                        help="capture a merged pr:<n> or branch:<name> unit's block from notes "
+                             "(needs --capture PROJECT and --audience)")
     args = parser.parse_args()
+    if args.record_writer is not None or args.from_notes or args.capture_unit or args.render_pr:
+        return notes_main(parser, args)
+    if args.unit or args.branch or args.base_ref:
+        parser.error("--unit, --branch and --base-ref go with --record-writer")
     if args.capture_pr:
         if not args.capture or not args.audience or args.record or args.seats or args.seats_pr \
                 or args.pr_body or args.append is not None or args.extract or args.merged:
@@ -422,16 +639,14 @@ def main():
                 if not args.merged:
                     parser.error("--extract requires --merged DATE")
                 sys.stdout.write(extract_record(sys.stdin.read(), args.merged))
-            elif args.append_pr:
-                append_to_pr(args.append_pr, args.append, args.project)
             else:
                 sys.stdout.write(append_line(sys.stdin.read(), args.append, args.pr, args.project))
         except ValueError as error:
             LOG.error("attribution-record: %s", error)
             return 1
         return 0
-    if args.append_pr or args.merged:
-        parser.error("--append-pr needs --append; --merged needs --extract")
+    if args.merged:
+        parser.error("--merged needs --extract")
     if args.pr_body:
         if args.record or args.capture or args.audience:
             parser.error("--pr-body reads stdin and takes no other mode")
