@@ -52,6 +52,10 @@ elif args[0] == "api" and args[1].endswith("/files"):
 elif args[:2] == ["api", "repos/{owner}/{repo}/pulls/7"]:
     state["body"] = json.loads(sys.stdin.read())["body"]
     json.dump(state, open(os.environ["STUB_STATE"], "w"))
+elif args[:2] == ["repo", "view"]:
+    if state.get("origin_fail"):
+        sys.exit(1)
+    print(state.get("origin", "o/r"))
 elif args[:2] == ["pr", "merge"] and state.get("refuse"):
     print("not mergeable", file=sys.stderr)
     sys.exit(1)
@@ -322,7 +326,8 @@ def test_landing_without_origin_numeric_ref_is_local_even_with_gh(repo, stub):
 
 CLI = [sys.executable, str(SCRIPTS / "forge.py")]
 ROW = {"number": 9, "headRefName": "t9-x", "title": "T", "body": "B", "mergedAt": None,
-       "isCrossRepository": False, "autoMergeRequest": {"enabledAt": "x"}}
+       "isCrossRepository": False, "autoMergeRequest": {"enabledAt": "x"},
+       "headRepository": {"nameWithOwner": "o/r"}}
 
 
 def git_only_env(tmp_path):
@@ -363,8 +368,10 @@ def test_cli_list_empty_ref_routes_to_gh_with_origin(stub, tmp_path):
     done = cli(cwd, "list", "--state", "open", "--head", "t9-x", "--limit", "5")
     assert done.returncode == 0, done.stderr
     assert json.loads(done.stdout) == [{"number": 9, "branch": "t9-x", "title": "T", "body": "B", "auto": True,
-                                        "mergedAt": None, "cross_repository": False}]
+                                        "mergedAt": None, "cross_repository": False,
+                                        "head_repository": "o/r"}]
     call = [json.loads(line) for line in (tmp_path / "log").read_text().splitlines()][0]
+    assert "headRepository" in call[call.index("--json") + 1].split(",")
     assert call[:4] == ["pr", "list", "--state", "open"] and call[call.index("--head") + 1] == "t9-x"
     assert call[call.index("--limit") + 1] == "5"
     stub.write_text(json.dumps({"head": HEAD, "body": "", "rows": []}))
@@ -402,3 +409,18 @@ def test_cli_read_back_three_rows(stub, tmp_path, repo):
     gone = subprocess.run([*CLI, "read-back", "7"], cwd=repo, capture_output=True, text=True,
                           env=git_only_env(tmp_path))
     assert gone.returncode == 2 and gone.stdout == ""
+
+
+def test_cli_origin_names_the_local_origin_repository(stub, tmp_path, repo):
+    """Ticket 1325: self detection compares a row's head repository with the local origin's."""
+    cwd = tmp_path / "cwd"
+    assert cli(cwd, "origin").returncode == 3  # no origin: no forge
+    sh(cwd, "remote", "add", "origin", "https://example.invalid/me/fork.git")
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "origin": "me/fork"}))
+    done = cli(cwd, "origin")
+    assert done.returncode == 0 and done.stdout.strip() == "me/fork"
+    call = [json.loads(line) for line in (tmp_path / "log").read_text().splitlines()][-1]
+    assert call[:3] == ["repo", "view", "https://example.invalid/me/fork.git"]
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "origin_fail": True}))
+    failed = cli(cwd, "origin")
+    assert failed.returncode == 2 and failed.stdout == ""

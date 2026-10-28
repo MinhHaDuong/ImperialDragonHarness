@@ -64,6 +64,10 @@ case "$1 $2" in
     # Emulate `gh api ... --jq '...'`: forge.py asks for "filename<TAB>status" lines.
     [[ -n "${STUB_API_FAIL:-}" ]] && exit 1
     for f in ${STUB_SIBLING_FILES:-}; do printf '%s\tadded\n' "$f"; done ;;
+  "repo view")
+    # forge.py origin: the local origin's owner/name (ticket 1325)
+    [[ -n "${STUB_REPO_VIEW_FAIL:-}" ]] && exit 1
+    printf '%s\n' "${STUB_ORIGIN_REPO:-me/repo}" ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
 esac
@@ -136,6 +140,8 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
+      STUB_ORIGIN_REPO="${STUB_ORIGIN_REPO:-me/repo}" \
+      STUB_REPO_VIEW_FAIL="${STUB_REPO_VIEW_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
       bash "$SCRIPT" )
 }
@@ -309,7 +315,7 @@ seed_repo inferred 0300
 GHLOG="$WORK/inferred.log"; : > "$GHLOG"
 rc=0
 out=$(STUB_GH_LOG="$GHLOG" \
-      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 0 ]] && ! grep -q 'api repos' "$GHLOG"; then
     echo "PASS: inferred self PR excluded without fetching its files"
@@ -320,7 +326,7 @@ fi
 # Inferred own PR is excluded while a genuine sibling collision fails.
 rc=0
 out=$(\
-      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":77,"headRefName":"sibling"}]' \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}},{"number":77,"headRefName":"sibling"}]' \
       STUB_SIBLING_FILES='tickets/0300-sibling.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 1 ]] && grep -q '#77' <<< "$out" && ! grep -q '#99' <<< "$out"; then
     echo "PASS: inferred self excluded and genuine sibling collision fails"
@@ -341,7 +347,7 @@ fi
 # Ambiguous self claims are uncertainty, never a renumber recommendation.
 rc=0
 out=$(\
-      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":88,"headRefName":"pr-inferred"}]' \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}},{"number":88,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
     echo "PASS: ambiguous self fails closed without renumber advice"
@@ -350,7 +356,7 @@ else echo "FAIL: ambiguous self produced unsafe verdict (rc=$rc)"; echo "$out"; 
 # A foreign fork's same-named branch is a sibling, never self.
 rc=0
 out=$(\
-      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","isCrossRepository":true}]' \
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","isCrossRepository":true,"headRepository":{"nameWithOwner":"other/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out"; then
     echo "PASS: foreign fork with same branch name remains a collision"
@@ -359,16 +365,35 @@ else echo "FAIL: foreign same-name PR excluded (rc=$rc)"; echo "$out"; fail=1; f
 # Same-named own and foreign branches: exclude only the proven own source.
 rc=0
 out=$(\
-      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","isCrossRepository":true},{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","isCrossRepository":true,"headRepository":{"nameWithOwner":"other/repo"}},{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out" && ! grep -q '#99' <<< "$out"; then
     echo "PASS: same-name own source excluded while foreign sibling collides"
 else echo "FAIL: same-name source verification incorrect (rc=$rc)"; echo "$out"; fail=1; fi
 
+# Ticket 1325: from a fork checkout the PR's own head is cross-repository relative to the base,
+# yet its head repository is the local origin: it is self, never a rival claim.
+rc=0
+out=$(STUB_ORIGIN_REPO='me/fork' \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","isCrossRepository":true,"headRepository":{"nameWithOwner":"me/fork"}}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 0 ]] && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: fork checkout excludes its own cross-repository PR"
+else echo "FAIL: fork checkout took its own PR for a rival (rc=$rc)"; echo "$out"; fail=1; fi
+
+# The local origin's identity unreadable: self cannot be established, fail closed.
+rc=0
+out=$(STUB_REPO_VIEW_FAIL=1 \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: unreadable origin identity fails closed without renumber advice"
+else echo "FAIL: unreadable origin identity unsafe (rc=$rc)"; echo "$out"; fail=1; fi
+
 # A detached HEAD cannot establish self: fail closed without renumber advice.
 git -C "$REPO" switch -q --detach
 rc=0
-out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
 git -C "$REPO" switch -q "$BRANCH"
 if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
@@ -404,6 +429,16 @@ rc=0; out=$(run_nogh 2>&1) || rc=$?
 if [[ "$rc" == 0 ]] && grep -qF 'skipped: no forge' <<< "$out" && ! grep -q ' OK\.' <<< "$out"; then
     echo "PASS: no origin remote answers a typed 'skipped: no forge', not an all-clear"
 else echo "FAIL: no forge should skip legibly (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Ticket 1325: no forge never discards a base-tip collision already counted.
+seed_repo noforge_basecol 0300
+land_on_base "0300-merged-sibling.erg"
+git -C "$REPO" remote remove origin
+git -C "$REPO" update-ref refs/remotes/origin/"$BASE" "$BASE"
+rc=0; out=$(run_nogh 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '0300-merged-sibling' <<< "$out" && grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: no forge still fails a base-tip collision (exit 1)"
+else echo "FAIL: no forge discarded a base-tip collision (rc=$rc)"; echo "$out"; fail=1; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught, renames pass"
