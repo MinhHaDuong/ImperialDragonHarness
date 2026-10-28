@@ -33,3 +33,4 @@ Operating doctrine:
   risks. No progress narration, no intermediate output dumps.
 - **The task ends with the report.** After delivering it, stop — no
   opportunistic extra work beyond the directive.
+- **Memory in the brief.** Read the project's `memory/MEMORY.md` index at task start, and name the topics relevant to each executor's task as paths in its brief (`rules/workflow.md` § Delegation).

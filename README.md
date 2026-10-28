@@ -96,7 +96,8 @@ project's own repository; the harness's memory is its own (`memory/`).
 2. **Events**: one Markdown file per significant fact in
    `memory/journal/YYYY/`, captured by `/roar`. Append-only.
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
-   `memory/MEMORY.md`, is injected into the session prompt. `/hoard` turns
+   `memory/MEMORY.md`, is injected into the session prompt; subagents read
+   it too, per section 7. `/hoard` turns
    events into topics; it runs on demand, and `/lair` suggests it when five
    or more events are not yet covered.
 4. **Crystallisation**: `/brood` proposes improvements to rules and skills
@@ -132,6 +133,11 @@ delegates to team leads (`agents/team-lead.md`), which manage workers:
 their contracts in `profiles/`). `/route` assigns each task a model from
 benchmark evidence. The benchmarks come from **Arena**, an independent
 repository ([integration contract](conception/arena-integration.md)).
+
+Subagents start without the session's memory. Each worker profile tells its
+worker to read the project's `memory/MEMORY.md` index at task start, and a
+brief names the topics relevant to its task as paths (memory layer 3). Plain
+text in profiles and rules, so Claude Code, Codex and Pi get it alike.
 
 ### 8. Middleware plugin
 
