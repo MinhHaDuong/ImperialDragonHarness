@@ -483,7 +483,8 @@ or the failing read first.
 ## Wrap up
 
 1. Main against baseline: on a gated base, the after-merge log of the newest
-   tip (§ Phase 7); on an ungated base, `make check` on main. New failures → ticket.
+   tip (§ Phase 7), whose runner opens the ticket itself; on an ungated base,
+   `make check` on main, new failures → ticket.
 1b. Scan ticket log sections for current bump notes and legacy bump entries;
     print counts by ticket and category (author names may contain spaces):
     ```bash
