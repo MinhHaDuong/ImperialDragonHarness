@@ -545,3 +545,21 @@ def test_seats_appended_to_body_without_comment(tmp_path):
     assert "attribution: seats appended" in r.stdout
     assert "seat=a" in body.read_text()
     assert "seat:" not in posted(tmp_path)
+
+
+def test_pointer_timeout_ignored_and_seats_still_run(monkeypatch, capsys):
+    """A `gh pr comment` that times out is a refused pointer, not a crash: pointer() returns, so
+    main() keeps its exit code and goes on to the --seats-pr step."""
+    import subprocess
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import forge
+    import gaze_close
+
+    def slow(cmd, **kw):
+        raise subprocess.TimeoutExpired(cmd, kw.get("timeout", 120))
+
+    monkeypatch.setattr(forge.subprocess, "run", slow)
+    monkeypatch.setattr(gaze_close.forge, "get_forge", lambda cwd, pr: forge.GhForge())
+    gaze_close.pointer("/nowhere", "7", "REVIEWED", identity={"review_id": "r1"})
+    assert "pointer: not posted" in capsys.readouterr().out

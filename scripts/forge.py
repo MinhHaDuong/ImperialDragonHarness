@@ -108,6 +108,8 @@ class GhForge:
                                   cwd=self.cwd)
         except OSError as exc:
             raise ForgeRefusal(f"gh unavailable: {exc}") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise ForgeRefusal(f"gh timed out after {exc.timeout}s") from exc
 
     def _view(self, ref: str, fields: str) -> dict:
         done = self._gh("pr", "view", str(ref), "--json", fields)
