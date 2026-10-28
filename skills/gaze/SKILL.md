@@ -19,7 +19,9 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 
 **Input.** A PR number, then optional free text saying what to verify and
 why (`verify <what> because <why>`), read leniently. With none, the what is the
-whole merge request against its ticket's exit criteria. A forge-less project
+whole merge request against its ticket's exit criteria. That text is the
+review's focus, never its coverage: every run reviews the whole PR diff and
+records a full answer, whatever the intent says. A forge-less project
 names the unit `branch:<name> [base=<ref>]` in place of the number; every
 phase runs the same. Either way the result goes to `refs/notes/review`; a PR
 also gets a one-line pointer comment to it (§ 5). With neither, return ESCALATE with reason "no PR argument".
@@ -172,9 +174,13 @@ review is keyed `pr:<n>`, never by its branch name, which merge may reuse. The
 answer is the one evidence path (F1, ticket 1301): verify-gate, raid's polling
 and attribution read it. On a PR the script then posts one pointer line,
 `/gaze review on notes: <review_id>, verdict <V>`, best-effort: a failed post
-is printed and changes nothing. On `branch:<name>` nothing goes to a forge. A narrow
-intent records `scope: delta`, carrying the review's latest non-ESCALATE
-answer, only the default intent a full review. The answer binds to the request
+is printed and changes nothing. On `branch:<name>` nothing goes to a forge. Scope
+is a fact of the reviewed range, never read from the intent (ticket 1305): an
+answer is `scope: full` unless the result states `scope: delta`, meaning gaze
+reviewed only the changes since an earlier reviewed head; a delta carries the
+review's latest non-ESCALATE answer, and with none to carry it is recorded full
+and the script says so. No setup path reviews a partial range today, so leave
+`scope:` out. The answer binds to the request
 and run id `gaze_setup.py` printed (`request_id=`, `run_id=`): the request on
 the reviewed head (setup writes one when none names it), never one written
 while the review ran. Setup fetches the review store first; a configured but

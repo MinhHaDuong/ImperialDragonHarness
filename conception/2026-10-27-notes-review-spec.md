@@ -148,6 +148,11 @@ REVIEWED|FINDINGS|ESCALATE`, `seats panel|self-only`, `coverage` {scope full|del
 - `what` = verbatim `git request-pull <base> <url> <head>`; `<url>` is the remote URL, or the repo path with no remote.
   hunt pushes the branch (or the review-head ref) first, since request-pull checks the head exists at the URL [I].
   `why` and `intent` are hunt's text (note §2.1); a narrow intent is stated, never widened by default.
+  *Amended 2026-10-28 (author's ruling, ticket 1305):* the intent is the review's focus, not its coverage.
+  `answer.coverage.scope` is a fact of the reviewed range: `full` unless gaze reviewed only the changes since an
+  earlier reviewed head (an explicit `scope: delta`); a delta with no earlier answer to carry is recorded full.
+  Reading scope from the intent's wording recorded every first review with a caller intent as an uncarried delta,
+  which the gate could never admit (7 of 15 gate runs refused on 2026-10-28).
 - Round n>1: hunt writes a new `request` on the new head with `links` to the previous request and answer,
   `delta = git range-diff <prev_merge_base>..<prev_head> <merge_base>..<head>` (needs §1's review-heads), and
   `responses` naming each prior finding by id with its disposition (note §4).
@@ -217,7 +222,7 @@ none), `keep-head`, `export`, `import`. Note §6.2's `review run` is gaze itself
 
 ## 9. Validation (note §8.3) mapped
 
-Several runs on one head: distinct `run_id`, append-only. Findings survive fixes: §4 open set. Narrow intent: §4.
+Several runs on one head: distinct `run_id`, append-only. Findings survive fixes: §4 open set. Narrow intent: §4 (focus only since 2026-10-28).
 Missing/failed seats: `report.status`, `answer.seats`. Gate budget: §5. Failed publication keeps reports: §2
 `publish` + local ref + `export`. Resume without blind rerun: `plan`/`report` entries per seat. Rebase and cleanup:
 §1 anchors and review-heads, prune forbidden. Full no-forge path: 1276. Historic evidence: refs/notes/gate untouched.
