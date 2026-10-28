@@ -534,3 +534,46 @@ def test_integrate_creating_the_ref_takes_the_lock(world, monkeypatch):
         with pytest.raises(rn.Refusal, match="idh-review-notes.lock"):
             rn._integrate(a)
     assert sh(a, "rev-parse", "--verify", "-q", rn.REF, check=False) == ""
+
+
+# --- ticket 1299: push_for_landing -------------------------------------------------
+
+def _two_reviews(a):
+    sh(a, "branch", "-q", "other", "feature")
+    r1 = rn.open_review(str(a), "feature", "origin/main")
+    r2 = rn.open_review(str(a), "other", "origin/main")
+    return r1, r2
+
+
+def test_push_for_landing_pushes_only_the_branchs_review_heads(world):
+    origin, a, _b, _seed = world
+    r1, r2 = _two_reviews(a)
+    pushed = rn.push_for_landing(str(a), "feature")
+    assert rn.REF in pushed and len(pushed) == 2
+    heads = sh(origin, "for-each-ref", "--format=%(refname)", f"{rn.HEADS}/").splitlines()
+    assert len(heads) == 1 and f"/{r1}/" in heads[0] and r2 not in heads[0]
+    assert sh(origin, "rev-parse", rn.REF) == sh(a, "rev-parse", rn.REF)
+
+
+def test_push_for_landing_raises_when_the_remote_rejects(world, no_backoff):
+    origin, a, _b, _seed = world
+    _two_reviews(a)
+    hook = origin / "hooks" / "pre-receive"
+    hook.parent.mkdir(exist_ok=True)
+    hook.write_text("#!/bin/sh\nwhile read o n r; do case \"$r\" in refs/notes/*) exit 1;; esac; done\nexit 0\n")
+    hook.chmod(0o755)
+    with pytest.raises(rn.Refusal):
+        rn.push_for_landing(str(a), "feature")
+
+
+def test_push_for_landing_no_remote_and_no_notes_are_no_ops(world, tmp_path):
+    origin, a, _b, _seed = world
+    assert rn.push_for_landing(str(a), "feature") == []  # remote, no review for the branch
+    assert sh(origin, "for-each-ref", "refs/notes/", f"{rn.HEADS}/") == ""
+    lone = tmp_path / "lone"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(lone)], check=True)
+    ident(lone)
+    (lone / "x").write_text("x\n")
+    sh(lone, "add", ".")
+    sh(lone, "commit", "-qm", "x")
+    assert rn.push_for_landing(str(lone), "main") == []

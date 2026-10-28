@@ -223,3 +223,76 @@ def test_cli_with_origin_and_no_gh_refuses_cleanly(tmp_path, monkeypatch, capsys
     monkeypatch.chdir(work)
     assert rl.main(["7", "--ruled-head", "-", "--ruled-claims", "-"]) == rl.REFUSED
     assert "origin remote and gh is not available" in capsys.readouterr().err
+
+
+# --- ticket 1299: the review evidence reaches origin before the merge -------------
+
+import review_notes  # noqa: E402
+
+
+def _open(wt, branch="feat"):
+    rid = review_notes.open_review(str(wt), branch, "main")
+    req = [e for e in review_notes.all_entries(str(wt))
+           if e["kind"] == "request" and e["review_id"] == rid][0]
+    return rid, req
+
+
+def _reject(origin, pattern):
+    hook = origin / "hooks" / "pre-receive"
+    hook.parent.mkdir(exist_ok=True)
+    hook.write_text(f"#!/bin/sh\nwhile read o n r; do case \"$r\" in {pattern}) exit 1;; esac; done\nexit 0\n")
+    hook.chmod(0o755)
+
+
+def _remote_refs(origin, *patterns):
+    return git(origin, "for-each-ref", "--format=%(objectname) %(refname)", *patterns)
+
+
+def test_landing_pushes_review_notes_and_head_before_the_merge(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    rid, req = _open(wt)
+    tip = git(wt, "rev-parse", "HEAD")
+    code, out = land(wt)
+    assert code == 0, out
+    assert git(origin, "rev-parse", "refs/notes/review") == git(wt, "rev-parse", "refs/notes/review")
+    assert git(origin, "rev-parse", f"refs/review-heads/{rid}/{req['request_id']}") == tip
+    assert any(line.startswith("review notes pushed:") for line in out)
+
+
+def test_landing_refuses_on_a_rejected_notes_push_and_does_not_merge(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    _open(wt)
+    _reject(origin, "refs/notes/review")
+    before = (git(work, "rev-parse", "main"), git(origin, "rev-parse", "main"))
+    out = []
+    code = rl.main_land(forge.NoneForge(str(wt)), "branch:feat base=main", git(wt, "rev-parse", "HEAD"),
+                        [], "main", wt, out.append)
+    assert code == rl.REFUSED
+    assert (git(work, "rev-parse", "main"), git(origin, "rev-parse", "main")) == before
+    assert git(work, "rev-parse", "--verify", "-q", "main^2", check=False) == ""
+
+
+def test_landing_refuses_on_a_rejected_review_head_push(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    _open(wt)
+    _reject(origin, "refs/review-heads/*")
+    before = (git(work, "rev-parse", "main"), git(origin, "rev-parse", "main"))
+    out = []
+    code = rl.main_land(forge.NoneForge(str(wt)), "branch:feat base=main", git(wt, "rev-parse", "HEAD"),
+                        [], "main", wt, out.append)
+    assert code == rl.REFUSED
+    assert (git(work, "rev-parse", "main"), git(origin, "rev-parse", "main")) == before
+    assert git(work, "rev-parse", "--verify", "-q", "main^2", check=False) == ""
+
+
+def test_unit_without_notes_pushes_nothing(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    git(wt, "branch", "other")
+    review_notes.open_review(str(wt), "other", "main")
+    code, out = land(wt)
+    assert code == 0, out
+    assert _remote_refs(origin, "refs/notes/review", "refs/notes/origin/", "refs/review-heads/") == ""

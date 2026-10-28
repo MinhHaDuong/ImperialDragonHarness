@@ -26,6 +26,11 @@ fetch, check and integrate, no push; `resolve` (CLI `find`) refreshes before
 looking a branch up, so a fresh clone after setup + `git fetch` finds the
 published review, and an unreachable remote is a refusal, never "no review".
 
+Landing (ticket 1299). `push_for_landing` (CLI `push-landing <branch>`) runs before a merge:
+refresh, then push refs/notes/review and the review-heads of the requests naming the branch
+(never the HEADS/* glob), never forced; a failed push is a Refusal, no remote or no request
+for the branch pushes nothing.
+
 Locking (ticket 1282). Every local write to refs/notes/review (`notes append`, `notes merge`)
 is a read-modify-write, so writers hold an exclusive flock on
 <git-common-dir>/idh-review-notes.lock, polled up to IDH_NOTES_LOCK_WAIT seconds (default 30);
@@ -57,7 +62,7 @@ never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
 round, never a REROLL on round 2; `add` refuses `verdict`.
 
-Commands: setup, open, request, add, sync, refresh, publish, show, history, find,
+Commands: setup, open, request, add, sync, refresh, publish, push-landing, show, history, find,
 findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
 Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
@@ -386,11 +391,8 @@ def refresh(cwd, remote="origin"):
     return {"status": "fetched", "warnings": list(dict.fromkeys(warnings))}
 
 
-def sync(cwd, remote="origin"):
-    """Fetch, check, merge, push; never forced. Returns {status, warnings}."""
-    if not setup(cwd, remote):
-        return {"status": "local", "warnings": []}
-    warnings = []
+def _push_notes(cwd, remote, warnings):
+    """Fetch, check, integrate and push REF, at most ATTEMPTS times, never forced; Refusal after the last."""
     backoff = float(os.environ.get("IDH_REVIEW_BACKOFF", "0.5"))
     for attempt in range(1, ATTEMPTS + 1):
         tip = _fetch(cwd, remote)
@@ -405,10 +407,17 @@ def sync(cwd, remote="origin"):
         if _has_ref(cwd, REF) and _rev(cwd, REF) != tip:
             pushed = _git(cwd, "push", "-q", remote, f"{REF}:{REF}", check=False).returncode == 0
         if pushed:
-            break
+            return
         time.sleep(backoff * attempt * random.uniform(0.5, 1.5))
-    else:
-        raise Refusal(f"push of {REF} to {remote} rejected {ATTEMPTS} times")
+    raise Refusal(f"push of {REF} to {remote} rejected {ATTEMPTS} times")
+
+
+def sync(cwd, remote="origin"):
+    """Fetch, check, merge, push; never forced. Returns {status, warnings}."""
+    if not setup(cwd, remote):
+        return {"status": "local", "warnings": []}
+    warnings = []
+    _push_notes(cwd, remote, warnings)
     _check_heads(cwd, remote, warnings)
     _git(cwd, "push", "-q", remote, f"{HEADS}/*:{HEADS}/*", check=False)
     tip = _fetch(cwd, remote)
@@ -458,6 +467,28 @@ def publish(cwd, ids, remote="origin"):
     for problem in problems:
         print(f"review_notes: review-head not retrievable: {problem}", file=sys.stderr)
     return "published" if problems else "retrievable"
+
+
+def push_for_landing(cwd, branch, remote="origin"):
+    """Landing door (ticket 1299): push REF and the review-heads of the requests naming `branch`,
+    synchronously and never forced, before the merge. A failed push is a Refusal. No remote, or
+    no request for the branch: nothing pushed, []. Returns the refs pushed."""
+    if not setup(cwd, remote):
+        return []
+    refresh(cwd, remote)
+    reqs = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
+    if not reqs:
+        return []
+    _push_notes(cwd, remote, [])
+    pushed = [REF]
+    for key in dict.fromkeys((e["review_id"], e["request_id"]) for e in reqs):
+        ref = f"{HEADS}/{key[0]}/{key[1]}"
+        if not _has_ref(cwd, ref):
+            continue
+        if _git(cwd, "push", "-q", remote, f"{ref}:{ref}", check=False).returncode != 0:
+            raise Refusal(f"push of {ref} to {remote} rejected")
+        pushed.append(ref)
+    return pushed
 
 
 # --- writing ---------------------------------------------------------------------
@@ -821,6 +852,7 @@ def main(argv=None):
     sub.add_parser("sync")
     sub.add_parser("refresh")
     sub.add_parser("publish").add_argument("ids", nargs="*")
+    sub.add_parser("push-landing").add_argument("branch")
     sub.add_parser("show").add_argument("review")
     sub.add_parser("history").add_argument("review", nargs="?")
     sub.add_parser("find").add_argument("branch")
@@ -875,6 +907,9 @@ def main(argv=None):
             level = publish(cwd, a.ids, remote)
             print(level)
             return 0 if level == "retrievable" else 1
+        elif a.cmd == "push-landing":
+            for ref in push_for_landing(cwd, a.branch, remote):
+                print(ref)
         elif a.cmd == "show":
             sys.stdout.write(export(cwd, a.review))
         elif a.cmd == "history":
