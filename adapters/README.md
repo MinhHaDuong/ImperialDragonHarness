@@ -12,6 +12,35 @@ skills-only pilot. Host registration is described in the installation guide.
 - `perch.py` and `bin/idh` — the multi-harness skill installer, generalized
   from the perch pilot (tickets 0802 and 0949).
 
+## Adapter map
+
+The harness depends on three independent outside systems. Each has one
+call-time adapter, so that code and skills name a capability, never a vendor:
+
+| Axis | Question | Adapter | Backends |
+|---|---|---|---|
+| Runtime | What can the session I run in do (wake, notify, spawn, session id)? | `scripts/runtime.py` (+ `runtime_<verb>.py`) | `claude`, `codex`, `pi`; typed NOOP elsewhere |
+| Forge | Where do review, checks and merges live? | `scripts/forge.py` | `gh`, `none` (git notes: `review_notes.py`, `merge-gate.py`) |
+| Model door | Which model, through which CLI, with which rails? | `skills/route/routes.json` `launch_doors`, read by `scripts/gaze_seat.py` | one door per target CLI |
+
+The axes do not imply one another. Any runtime may work on any forge, and a
+door launches a *target* CLI whatever the current runtime is: a Claude session
+starting a Codex review seat is the normal case. `runtime.py` and `forge.py`
+share one contract: the backend is chosen by a flag (`auto` reads markers and
+never guesses), an unsupported verb answers a typed NOOP, and exit codes are
+0 done, 1 NOOP, 2 refused, 3 could not read.
+
+This directory is the install-time half of the runtime axis: it makes each
+runtime *find* the harness (skills, hooks, agents, extensions), while
+`runtime.py` lets harness code *call back* into the runtime. A runtime verb may
+depend on a registration here (Pi's wake needs its extension), never the
+reverse. Single-system adapters sit outside the three axes: `scripts/zotero.py`
+(bibliography), `scripts/memory-capture.sh` (encryption policy) and
+`scripts/local-ci.sh` (a CI runner standing in for the forge's).
+`scripts/check-agnostic.sh` keeps vendor names out of skills and rules.
+Open work: raw `gh` calls outside `forge.py` (tracker 1317); runtime verbs
+beyond `wake` (tracker 1309).
+
 ## The perch pilot
 
 One question, one skill: what do Claude Code, Codex and Pi actually require
