@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Hunt's worktree path collides with its orchestrator's session worktree when both share $PPID
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T21:13Z reviewer created
+
+--- body ---
+## Context
+Raid f642df (2026-10-28): the orchestrator created its session worktree as
+`t1326-$PPID` (`rules/claude-code.md` § Entering the session). Its coder
+subagent ran hunt § Worktree, whose `P=$PPID` resolves to the same runtime
+process, so it computed the same path. It found the tree clean, treated it as
+its own and switched it to the PR branch; `raid_land.py --cleanup` then
+removed it, leaving the orchestrator's shell in a deleted directory. Nothing
+was lost only because every change was committed: a dirty orchestrator tree
+would have been silently taken over or blocked.
+
+## Exit criteria
+- [ ] A subagent's hunt never resolves to the path of a worktree its spawner (or a sibling) holds; test with two callers sharing one `$PPID`
+- [ ] An existing tree at the computed path that the caller did not create is not adopted silently (hunt's "Owned already?" test)
+- [ ] `make check` passes
