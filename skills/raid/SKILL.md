@@ -469,10 +469,12 @@ Autonomous mode: ralph loop to next wave.
 
 The raid log has a fixed path and format (`references/sitrep.md`); append
 `RAID_START`, `WAVE_BASE`, `WAVE`, `PR` (each step change), `BREAKER` and `QUEUE` lines with
-`python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT key=value ...`. At raid
-start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py"`
+`python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT raid=<id> key=value ...`.
+`RAID_START` mints the id and prints it: read it there and put `raid=<id>` on
+every later append and on the sitrep command. At raid
+start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>`
 once and arm the cadence: <!-- harness-extension-point --> a background command
-`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py"` whose exit wakes you
+`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>` whose exit wakes you
 (Claude Code; Codex and Pi have no timed wake: run the sitrep at each wave boundary and breaker event, and say so)
 On each wake, read the sitrep, re-arm, and act on its last line: `NEXT resume
 wave` means launch the next wave now rather than ending the turn; `NEXT

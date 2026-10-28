@@ -3,13 +3,19 @@
 
 Path: `$IDH_RAID_LOG`, else `<git common dir>/idh-raid/raid.log` (untracked,
 survives worktree removal). One line per event: `<epoch> <EVENT> k=v ...`.
+Every line carries `raid=<id>`, the id of the raid that wrote it, so concurrent
+raids share the file without mixing. `append RAID_START` mints a short random id
+unless `raid=` is given and prints the line; read the id there and pass it on
+every later append.
 
-    raid_log.py append WAVE_BASE sha=abc123      # time stamped now
+    raid_log.py append RAID_START deadline=1700007200   # prints raid=<new id>
+    raid_log.py append WAVE_BASE raid=ab12cd sha=abc123  # time stamped now
     raid_log.py path
 """
 
 import os
 import re
+import secrets
 import subprocess
 import sys
 import time
@@ -31,6 +37,12 @@ def log_path(cwd: Path | None = None) -> Path:
 
 
 def append(event: str, fields: dict[str, str], path: Path, now: float | None = None) -> str:
+    fields = dict(fields)
+    if event == "RAID_START":
+        if not fields.get("raid"):
+            fields["raid"] = secrets.token_hex(3)
+    elif not fields.get("raid"):
+        raise ValueError(f"{event} needs raid=<id>, printed by the RAID_START line")
     line = f"{int(now if now is not None else time.time())} {event}"
     line += "".join(f" {k}={v}" for k, v in fields.items())
     if not LINE.match(line):
