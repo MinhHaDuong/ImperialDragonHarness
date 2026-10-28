@@ -2,11 +2,13 @@
 Title: F1 notes evidence for PR units: gaze and verify-gate write local notes, dual-write comment
 Created: 2026-10-28
 Author: reviewer
+Closed: notes are the review evidence for PR units, comment dual-written (PR #1855)
 
 --- log ---
 2026-10-28T08:43Z reviewer created
 2026-10-28T09:08Z reviewer note blocker 1299 closed — Blocked-by removed.
 2026-10-28T09:46Z reviewer note raid 2026-10-28, gaze item 3 on PR #1855: kept fail-closed. A PR gaze reads its head from origin before any notes lookup, so first-time discovery stops (exit 2) and opens no review; opening locally would let a unit hold two reviews whose verdicts split the round count. Advisor (Fable) agreed: criterion 4 governs the write path and readers of an existing local review. Reversible; author may revisit.
+2026-10-28T09:52Z reviewer closed — notes are the review evidence for PR units, comment dual-written (PR #1855)
 
 --- body ---
 ## Context

@@ -2,10 +2,10 @@
 Title: F1 cut-over: PR comment becomes a pointer, comment readers move to notes, texts and STATE
 Created: 2026-10-28
 Author: reviewer
-Blocked-by: 1300
 
 --- log ---
 2026-10-28T08:43Z reviewer created
+2026-10-28T09:52Z reviewer note blocker 1300 closed — Blocked-by removed.
 
 --- body ---
 ## Context
