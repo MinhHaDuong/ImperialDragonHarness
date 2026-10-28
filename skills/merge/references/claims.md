@@ -93,10 +93,10 @@ reviewer: step=review · seat=correctness · runtime=codex · model=<provider>/<
 A merge that skipped step 1 lands the code and drops the claim with no
 output; `erg check` passes either way. First confirm no close commit rode
 the merge request; if one did, there is nothing to do. Otherwise, on a new
-branch: `erg close <ID> <reason>` edits the ticket file but does **not**
-stage its own edit, so `git add -u tickets/` BEFORE the move to `closed/` and
-the commit — otherwise the commit carries the rename with the pre-edit blob
-and silently drops the `Closed:` header.
+branch: `erg close <ID> <reason>` edits the ticket and moves it into
+`closed/` but stages neither, so stage both sides before the commit,
+`git add -u tickets/ && git add tickets/closed/<ID>-*.erg` — `add -u` alone
+commits the deletion and silently drops the ticket.
 
 ## Where each case lives
 
