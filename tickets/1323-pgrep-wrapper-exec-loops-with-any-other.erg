@@ -1,0 +1,31 @@
+%erg 0.1
+Title: pgrep wrapper exec-loops with any other pgrep shim on PATH
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T17:58Z reviewer created
+
+--- body ---
+## Context
+
+On 2026-10-28 on padme, the `~/.local/bin/pgrep` wrapper (`scripts/self-safe-pgrep.sh`, ticket 1216) and the arena's leg rail `leg-bin/pgrep` (arena ticket 1114) exec'd each other without end. An arena adherence run (`tests/test_leg_rails.py`, PATH `arena/leg-bin:...:~/.local/bin:...:/usr/bin`) grew to ~17,000 processes in three chains orphaned under `systemd --user` and hung a `/yawn` for 20+ minutes. `pkill` could not stop it (each chain's newest child outran the scan). It stopped only once `~/.local/bin/{pgrep,pkill}` were repointed by hand to `/usr/bin`.
+
+Mechanism: the wrapper picks as "real" the first PATH candidate that is not *itself* (`-ef "$0"`). Any other shim with the same policy (first candidate outside my own dir) makes a ping-pong: A → B → A. Each level also runs `"$real" --version`, which re-enters the loop. The `idh check` RECURSION probe tests only self-recursion, so it cannot see this.
+
+The arena removed its rail (arena branch `cut-leg-pgrep-rail`); the hazard remains for any future shim (a venv, a project `bin/`, another runtime's wrapper).
+
+Current host state, not a defect: on padme `~/.local/bin/pgrep` and `pkill` point at `/usr/bin` since the incident, so `idh check` may report them FOREIGN. Reinstall only once this ticket decides.
+
+## Options (author decides)
+
+1. **Delete the wrapper** (rule `coding-bash.md` already says `pgrep -A -f` / `[p]attern`; trace-doctor counts the folly). A host-wide shim on every process's PATH has a large blast radius for a 3% stall item. Cheapest; matches "delete misfiring guards".
+2. **Resolve the real tool as an ELF binary**: skip any candidate that starts with `#!`, or hard-prefer `/usr/bin/pgrep`. Breaks every ping-pong, keeps -A.
+3. **Re-entrancy marker**: export `IDH_PGREP_WRAPPED=1` before exec; when set, exec `/usr/bin/pgrep` directly. Other shims' cooperation is not needed.
+4. Whatever stays: drop the per-call `--version` probe (two extra execs per pgrep, and the loop's trigger) in favour of a check at `idh install`.
+
+## Exit criteria
+
+- [ ] A decision among the options, recorded here.
+- [ ] If the wrapper stays: a test with a second pass-through shim ahead of it on PATH terminates (bounded `timeout`) and returns the real answer.
+- [ ] padme's `~/.local/bin/{pgrep,pkill}` restored to what the manifest then declares; `idh check` clean.
