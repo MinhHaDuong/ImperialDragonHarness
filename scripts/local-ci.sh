@@ -98,6 +98,7 @@ if [ "$forge" -eq 1 ]; then
     # Find this checkout's PR by the commit it points at, not by branch name: a
     # local branch is often pushed under another name, and an unrecognised PR
     # would then count as its own sibling in the collision job.
+    # Keep (ticket 1321): act is a GitHub Actions runner; the PR lookup is gh-only and runs only with forge access.
     open_prs=$(gh pr list --state open --json number,baseRefName,headRefOid)
     head_sha=$(git rev-parse HEAD)
     found_pr=$(jq -r --arg sha "$head_sha" '[.[] | select(.headRefOid == $sha)][0].number // empty' <<< "$open_prs")
@@ -108,6 +109,7 @@ if [ "$forge" -eq 1 ]; then
     else
         echo "local-ci: HEAD is not the head of an open PR; assuming base main, so every open PR counts as a sibling" >&2
     fi
+    # Keep (ticket 1321): act takes GITHUB_TOKEN by design; the gh token is written only when forge access exists.
     printf 'GITHUB_TOKEN=%s\n' "$(gh auth token)" > "$secrets"
 fi
 printf '{"pull_request":{"number":%s,"base":{"ref":"%s"}},"number":%s}\n' "$pr" "$base" "$pr" > "$work/event.json"

@@ -36,6 +36,7 @@ COMMAND_RE = re.compile(
 
 # A merge command at the start of a shell statement, not one quoted in a grep
 # or a commit message.
+# Keep (ticket 1321): a pattern over trace text, not a GitHub call; this script never runs gh.
 MERGE_RE = re.compile(
     r"(?:^|[;&|(]\s*|&&\s*)(?:gh pr merge(?![^\n;&|]*--disable-auto)|python3?\s+\S*raid_land\.py)",
     re.MULTILINE,

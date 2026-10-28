@@ -75,6 +75,7 @@ def count_verdicts(comments: str) -> tuple[int, int]:
 
 def gh_fetch_pr(owner: str, repo: str, n: int) -> dict:
     """Fetch one PR's stats via gh REST (GraphQL avoided: intermittently 401s)."""
+    # Keep (ticket 1321): one-off census join across foreign repos by owner/name; forge.py resolves only the cwd repo.
     pr = json.loads(
         subprocess.run(
             ["gh", "api", f"repos/{owner}/{repo}/pulls/{n}"],

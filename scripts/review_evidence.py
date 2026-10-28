@@ -500,6 +500,7 @@ def cmd_forge(args: argparse.Namespace) -> int:
     import forge  # same directory: the one read bound and network classifier (ticket 1308)
     owner, name = args.forge_repo.split("/", 1)
     read_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Keep (ticket 1321): GraphQL pinned to the forge host; pinned actor IDs, read_timeout and NET_ERR fail closed.
     try:
         out = subprocess.run(
             ["gh", "api", "graphql", "--hostname", args.host, "-f", f"query={FORGE_QUERY}",
