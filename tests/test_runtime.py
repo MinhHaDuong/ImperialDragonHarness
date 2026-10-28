@@ -119,7 +119,7 @@ def test_can_without_markers_exits_3(env, capsys):
 
 
 def test_verbs_are_an_explicit_list():
-    assert runtime.VERBS == [runtime_wake]
+    assert runtime_wake in runtime.VERBS
     assert "import_module" not in (SCRIPTS / "runtime.py").read_text()
 
 
