@@ -8,6 +8,7 @@ Label: deferred
 2026-10-28T08:28Z claude created
 2026-10-28T08:44Z reviewer note raid 2026-10-28: 1301 moves gaze/verify-gate evidence from PR comments to refs/notes/review; read notes, not comments, when this is designed
 2026-10-28T10:09Z reviewer 1301: PR comments are now one-line pointers (gaze: `/gaze review on notes: <id>, verdict <V>`; gate: `/verify-gate round=<n> verdict=<V> ...`); review evidence is on refs/notes/review. trace-pr-join.py counts `verdict <V>`/`verdict=<V>` fields and legacy `result: ESCALATE` lines (count_verdicts); a pointer that failed to post undercounts. The ex-post read should prefer notes answers/verdicts where the repo is local.
+2026-10-28T11:47Z reviewer note raid 2026-10-28 (named by ID, deferred label): returned to author, premise not yet met — the ticket itself defers the build until ~2 months of merged PRs carry the finding-tag fields (from 2026-12-28); exit criterion 'one run on real PRs' cannot classify anything today. Not executed.
 
 --- body ---
 ## Context
