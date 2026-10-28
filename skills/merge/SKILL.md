@@ -103,7 +103,9 @@ on the request (`gh pr comment N --body "merge <head>: duration: …"`). <!-- ha
 <!-- harness-extension-point -->
 Reads below go through `forge.py` (`resolve`, `list`, `read-back`; for `list` and
 `read-back` exit 3 means no forge and 2 could not look, `resolve` refuses with exit 1;
-`forge.py` docstring). Any non-zero exit is a stop, never an empty answer. Writes with no `forge.py`
+`forge.py` docstring). Any non-zero exit is a stop, never an empty answer. Exit 3 on
+`N` means the unit is no forge request: it lands as `branch:<name> [base=<ref>]`
+through `raid_land.py`, the local gated merge (`skills/raid/SKILL.md` § Phase 7, "No forge"). Writes with no `forge.py`
 verb (comment, ready, disarm, merge) keep the current forge CLI's spelling behind a
 marker; another forge needs the same writes in its own spelling.
 
@@ -149,11 +151,11 @@ marker; another forge needs the same writes in its own spelling.
    from this checkout, then `check` again; re-recording spends no review
    round. 1 fail or stale scope, 3 unreadable: do not merge.
 5. **Disarm (gated base only).** Never arm auto-merge: an armed request
-   could land a later head than the record covers. Read
-   `python3 "$IDH_ROOT/scripts/forge.py" list --state open --head <branch>`; take the row with
-   `cross_repository` false (a fork may reuse the branch name); its `auto` is `true` when armed;
-   on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
-   do not merge. A non-zero exit or no row for `<branch>` is not "not armed": do not merge.
+   could land a later head than the record covers. Read request N by its number,
+   `python3 "$IDH_ROOT/scripts/forge.py" read-back N` (never a branch lookup: two open
+   requests may share a head branch); its third field is `queued` when armed;
+   on `queued`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
+   do not merge. A non-zero exit or an empty read is not "not armed": do not merge.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
    pushes `refs/notes/review` and the review-heads of the requests naming `<branch>`, never
    forced. It prints the refs pushed and does nothing when the branch has no review notes

@@ -14,8 +14,8 @@
 # is invisible to it — the script therefore compares added IDs against the base
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
-# Forge coupling is confined to two scripts/forge.py calls (ticket 1318): `list --state open`
-# and `files <pr>`. Everything else is forge-agnostic git + text. The forge adapter owns
+# Forge coupling is confined to three scripts/forge.py calls (tickets 1318, 1325): `list --state
+# open`, `origin` and `files <pr>`. Everything else is forge-agnostic git + text. The forge adapter owns
 # the route: gh when the repository has an origin remote, none otherwise.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):
@@ -23,18 +23,27 @@
 #   SELF_PR_NUMBER  this PR's number (otherwise inferred from current branch)
 #
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
-# Exit 0 also: "skipped: no forge" when forge.py answers exit 3 (no origin remote).
+# Exit 0 also: "skipped: no forge" when forge.py answers exit 3 (no origin remote) and the
+#         base tip shows no collision; a base-tip collision still exits 1 (ticket 1325).
 # Exit 2: the open-PR list could not be fetched (origin remote but no gh
 #         auth/network), or self identity cannot be established — fails closed.
 #         Inspection failure takes precedence over any base collision already
 #         reported, and suppresses renumber advice until self identity is known.
-# Exit 1: a ticket ID this PR adds is also added by an open PR. Message names the
-#         colliding PR(s) and suggests the next free ID.
+# Exit 1: a ticket ID this PR adds is also on the base tip or added by an open PR. Message
+#         names the rival file or PR(s) and suggests the next free ID.
 
 set -euo pipefail
 
 BASE_REF="${BASE_REF:-origin/main}"
 SELF_PR="${SELF_PR_NUMBER:-}"
+
+renumber_and_fail() {  # only on failure — don't spawn erg on the clean path
+    next_id=$(tickets/erg next-id 2>/dev/null || echo "(run ./tickets/erg next-id)")
+    echo "" >&2
+    echo "Renumber your ticket(s) to a free ID and fix cross-references (git mv)." >&2
+    echo "Next free ID on this branch: ${next_id}" >&2
+    exit 1
+}
 
 # Keep only top-level tickets/NNNN-*.erg — never tickets/closed/... (a PR that
 # merely closes a ticket "adds" the archived copy under closed/, which is not a
@@ -95,13 +104,15 @@ while IFS= read -r own_path; do
 done <<< "$OWN_PATHS"
 
 # ── enumerate sibling open PRs (through the forge adapter) ────────────────────
-# forge.py list: exit 3 = no forge at all (typed NOOP; nothing to collide with, so
-# skip legibly), exit 2 = a forge exists and could not be read (fail closed).
+# forge.py list: exit 3 = no forge at all (typed NOOP; no sibling to collide with, so
+# skip the scan legibly, keeping any base-tip collision), exit 2 = a forge exists and
+# could not be read (fail closed).
 FORGE_PY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/forge.py"
 forge_rc=0
 SIBLINGS_JSON=$(python3 "$FORGE_PY" list --state open --limit 100 2>/dev/null) || forge_rc=$?
 if [[ "$forge_rc" -eq 3 ]]; then
     echo "cross-pr-collision: skipped: no forge (no origin remote), so no sibling PR to compare."
+    [[ "$collision" -ne 0 ]] && renumber_and_fail
     exit 0
 elif [[ "$forge_rc" -ne 0 ]]; then
     echo "cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)" >&2
@@ -115,8 +126,15 @@ if [[ -z "$SELF_PR" ]]; then
         echo "cross-pr-collision: cannot establish self branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
     fi
-    # A same-named head in a fork (cross_repository) is a sibling, never self.
-    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" '.[] | select(.branch == $branch and (.cross_repository | not)) | .number' <<< "$SIBLINGS_JSON")
+    # Self is the head repository AND branch of this checkout's origin, never the
+    # branch name alone (a fork may reuse it) nor cross_repository, which compares
+    # head with base and so marks a fork checkout's own PR as foreign (ticket 1325).
+    # Compared case-insensitively: GitHub owner/name are, and a clone may differ in case.
+    if ! SOURCE_REPO=$(python3 "$FORGE_PY" origin 2>/dev/null) || [[ -z "$SOURCE_REPO" ]]; then
+        echo "cross-pr-collision: cannot establish self repository; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+        exit 2
+    fi
+    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" --arg repo "$SOURCE_REPO" '.[] | select(.branch == $branch and ((.head_repository // "") | ascii_downcase) == ($repo | ascii_downcase)) | .number' <<< "$SIBLINGS_JSON")
     if [[ $(grep -c . <<< "$SELF_MATCHES" || true) -gt 1 ]]; then
         echo "cross-pr-collision: ambiguous self PR for current repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
@@ -147,16 +165,9 @@ while IFS=$'\t' read -r pr_number pr_branch; do
         echo "COLLISION: ticket ID ${id} is also added by open PR #${pr_number} (branch ${pr_branch})." >&2
         collision=$((collision + 1))
     done <<< "$shared"
-done < <(echo "$SIBLINGS_JSON" | jq -r '.[] | [.number, .headRefName] | @tsv')
+done < <(echo "$SIBLINGS_JSON" | jq -r '.[] | [.number, .branch] | @tsv')
 
-if [[ "$collision" -ne 0 ]]; then
-    # Only needed on failure — don't spawn erg on the clean path.
-    next_id=$(tickets/erg next-id 2>/dev/null || echo "(run ./tickets/erg next-id)")
-    echo "" >&2
-    echo "Renumber your ticket(s) to a free ID and fix cross-references (git mv)." >&2
-    echo "Next free ID on this branch: ${next_id}" >&2
-    exit 1
-fi
+[[ "$collision" -ne 0 ]] && renumber_and_fail
 
 echo "cross-pr-collision: no open PR claims the same ticket ID(s) — OK."
 exit 0

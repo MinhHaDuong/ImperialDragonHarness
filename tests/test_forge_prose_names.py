@@ -38,3 +38,11 @@ def test_named_verb_answers_help(verb):
         capture_output=True, text=True,
     )
     assert r.returncode == 0, r.stderr
+
+
+def test_merge_disarm_reads_request_n_by_number():
+    """Ticket 1325: two open requests can share a head branch; the disarm read names N."""
+    text = (ROOT / "skills/merge/SKILL.md").read_text()
+    step = text[text.index("**Disarm"):text.index("5a. **")]
+    assert re.search(r'forge\.py"?\s+read-back\s+N\b', step), step
+    assert "--head <branch>" not in step, step
