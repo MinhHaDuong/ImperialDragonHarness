@@ -251,16 +251,17 @@ the author instead.
 
 Wait for wave to complete.
 
-**Attribution lines.** Only the orchestrator writes the PR-body
-`attribution` block; seats return their identity and never edit the body. Once
-a wave PR exists, append the `writer: step=plan` and `writer: step=execute`
-lines (identity as the seats reported it, effort `not-stated` unless set at
-launch) with
-`python3 "$IDH_ROOT/scripts/attribution_record.py" --append-pr <pr> --append '<line>' --project <name>`.
-It creates the closed block if absent, re-fetches the body, reads it back and
-retries once; a non-zero exit is a visible capture failure, not a silent skip.
+**Attribution lines.** Only the orchestrator records the writer lines; seats
+return their identity and never write attribution. Once a wave unit exists,
+record the `writer: step=plan` and `writer: step=execute` lines (identity as
+the seats reported it, effort `not-stated` unless set at launch) on the unit's
+review on notes, locally, with no network call (ticket 1307):
+`python3 "$IDH_ROOT/scripts/attribution_record.py" --record-writer '<line>' --unit pr:<n>`
+(no forge: `--unit branch:<name>`). A non-zero exit is a visible capture
+failure, not a silent skip. Nothing edits the PR body before landing, which
+renders the block from notes (`raid_land.py`).
 Line fields and order: `skills/merge/references/claims.md` § Line formats; a
-`writer:` line may be appended after reviewer lines.
+`writer:` line may be recorded after the review's answers.
 
 ## Phase 6: Verify (per-ticket gaze, then verify-gate)
 

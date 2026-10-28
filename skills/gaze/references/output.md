@@ -72,11 +72,9 @@ a worker, built from the plan's item names and the launcher-set `worker:` header
 `reviewer:` line, and a comment with a typed `seat:` line, or without the
 placeholder, is refused. The name is the plan item's, the one name used in the
 plan, the roster, the `seat:` line and the attribution `seat=` field. The script
-also writes the PR body's `reviewer:` lines from them, and
-`attribution_record.py --seats-pr` reads them from the review's notes answers
-(tickets 1155, 1301). A `self` item takes the identity given by
+also writes the answer's `reviewer:` lines from them, on notes (tickets 1155, 1301, 1307). A `self` item takes the identity given by
 `--session-runtime` and `--session-model` of the closing call. A result with no
-`seat:` line, or a body `reviewer:` seat absent from it, is a capture failure.
+`seat:` line is a capture failure.
 A requested model name is not an observed id.
 
 `seats:` is defined once, in SKILL.md § 4.
