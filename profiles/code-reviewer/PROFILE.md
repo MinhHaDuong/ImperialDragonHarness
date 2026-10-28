@@ -34,7 +34,9 @@ test_id, command output, or commit SHA:file:line; reproducible now),
 dismiss), or `nofollow:` (recorded for the audit trail; no action
 expected). Ambiguous "this might break" language is forbidden — produce
 the failing assertion or downgrade to `consider:`. Blocking
-findings are not tagged.
+findings are not tagged. A `blocking` or `verifiable:` finding also carries
+`scenario:` and `on main:` (the bar, `skills/gaze/references/panel.md`
+§ Finding tags); without them it is a `consider:`.
 
 You write exactly one artifact — the report file your prompt names, written
 `.part` then renamed — and nothing else: no commits, pushes, branches, or

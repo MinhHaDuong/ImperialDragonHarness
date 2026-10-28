@@ -28,7 +28,8 @@ re-gate once with the same `session=`. Breakers on this loop:
 **Second fix round (author ruling, 2026-10-27).** One further round runs without
 the author when every finding of the narrower gaze (a) concerns the previous
 fixes, with no new scope, (b) is a `verifiable:` minor or a blocking finding,
-in both cases carrying a reproduction, and (c) is fixed red-test-first, the
+in both cases carrying a reproduction and clearing the bar
+(`skills/gaze/references/panel.md` § Finding tags), and (c) is fixed red-test-first, the
 red run shown failing for the targeted reason. A third round, or any judgment
 finding, escalates.
 

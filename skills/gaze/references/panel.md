@@ -136,6 +136,23 @@ not tagged. Verify-gate reads the same set.
 downgraded to `consider:`; a `verifiable:` finding without its evidence is held
 until it has some.
 
+**The bar: diminishing returns** (`rules/workflow.md` § Trust, Verify,
+Monitor). A finding reopens work only if it clears this bar. A `blocking` or
+`verifiable:` finding carries two more fields, or it is a `consider:` or
+`nofollow:`:
+
+- `scenario:` the concrete input or state, and the wrong outcome a real
+  user (caller, reader) meets: not "an adversary could", not "if someone
+  later".
+- `on main:` `no`, with the evidence (the same scenario passes on the base),
+  or `n/a` for new code. A defect `main` already has is pre-existing (table
+  below), never this PR's blocker.
+
+The bar is fixed before the findings arrive and is the same in every round:
+a finding is never judged against an earlier, larger one. Hardening a fix
+already made, or a finding on code a previous fix added for a below-bar
+reason, is `nofollow:`.
+
 | Severity | Seat verdict |
 |---|---|
 | Breaks correctness (bug, data loss), or a defect this PR introduces | `blocking` |
