@@ -95,6 +95,24 @@ def test_second_fix_at_original_anchor_with_restored_base(project):
     assert len(parse_record(entry.read_text())["defect_confirmed"]) == 2
 
 
+def test_ticket_file_anchor_is_left_out(project):
+    """Merge's close moves and edits the claimed ticket, so its anchor never resolves."""
+    repo, entry, reviewed, _ = project
+    (repo / "source.py").write_text("first\nbroken\nthird\n")
+    (repo / "tickets/closed").mkdir(parents=True)
+    (repo / "tickets/0001-x.erg").write_text("a\nb\n")
+    reviewed = commit(repo, "reviewed revision with its ticket")
+    entry.write_text(record() + "  finding: verifiable · tickets/0001-x.erg:2 · adopted: no\n")
+    commit(repo, "record with a ticket anchor")
+    git(repo, "mv", "tickets/0001-x.erg", "tickets/closed/0001-x.erg")
+    commit(repo, "ticket(0001): close and archive — PR #12")
+    (repo / "source.py").write_text("first\nfixed\nthird\n")
+    fix = commit(repo, "commissioned defect fix")
+    result = run((repo, entry, reviewed, fix))
+    assert result.returncode == 0, result.stderr
+    assert parse_record(entry.read_text())["defect_labels"] == ["source.py:2"]
+
+
 @pytest.mark.parametrize("anchor", ["source.py:1", "source.py:3"])
 def test_no_overlap_preserves_all_bytes(project, anchor):
     repo, entry, _, _ = project
