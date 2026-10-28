@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Guard blocks pgrep/pkill -f without -A; retire the PATH wrapper
+Created: 2026-10-28
+Author: claude
+Closed: autoclosed — PR #1914
+
+--- log ---
+2026-10-28T18:04Z claude created
+2026-10-28T18:16Z reviewer closed — autoclosed — PR #1914
+
+--- body ---
+
+## Context
+Ticket 1216 projected `scripts/self-safe-pgrep.sh` as `~/.local/bin/pgrep`
+and `~/.local/bin/pkill`, adding `-A` on procps-ng >= 4.0 so a waiting shell
+cannot match or kill itself. The author finds a PATH-wide shim heavy-handed:
+it changes the semantics of every program on PATH (`-A` also skips ancestors),
+costs two `--version` runs per call, and procps offers no config or env
+default to do it more narrowly. On padme the two links already point at
+`/usr/bin` (observed 2026-10-28 18:53; cause not established).
+
+All three runtimes already carry the PreToolUse guard
+(`scripts/guard-destructive-bash.sh`: Claude hook, trusted Codex hook, Pi
+`tool_call` extension) and every one honours a block (exit 2); only Claude
+Code is known to support rewriting the command. So the portable fix is a
+block on the agent's call, not a rewrite and not a PATH shim.
+
+## Exit criteria
+- [ ] The guard refuses `pgrep -f` / `pkill -f` (any spelling of `-f` /
+      `--full`, combined short flags) lacking `-A` / `--ignore-ancestors`,
+      with a reason naming `-A`, `'[p]attern'` and `timeout N tail --pid`
+- [ ] Text mentions (quoted, heredoc) and non-`-f` calls are allowed
+- [ ] `self-safe-pgrep.sh`, its two projections, its install/check probe and
+      its tests are removed; `idh check` passes without them
+- [ ] Docs propagated: guard header, README, `rules/coding-bash.md`,
+      `adapters/README.md`
+- [ ] `make check` passes

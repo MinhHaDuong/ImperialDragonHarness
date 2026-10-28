@@ -61,30 +61,6 @@
       "installer": "$IDH_ROOT/bin/idh install"
     },
     {
-      "path": "~/.local/bin/pgrep",
-      "target": "$IDH_ROOT/scripts/self-safe-pgrep.sh",
-      "runtimes": [
-        "claude",
-        "codex",
-        "pi"
-      ],
-      "required": true,
-      "probe": "self-safe-pgrep",
-      "why": "pgrep/pkill wrapper adding -A on procps-ng >= 4.0 so a waiting shell cannot match itself (ticket 1216); idh install and idh check probe its behaviour"
-    },
-    {
-      "path": "~/.local/bin/pkill",
-      "target": "$IDH_ROOT/scripts/self-safe-pgrep.sh",
-      "runtimes": [
-        "claude",
-        "codex",
-        "pi"
-      ],
-      "required": true,
-      "probe": "self-safe-pgrep",
-      "why": "pgrep/pkill wrapper adding -A on procps-ng >= 4.0 so a waiting shell cannot match itself (ticket 1216); idh install and idh check probe its behaviour"
-    },
-    {
       "path": "~/.local/bin/idh",
       "target": "$IDH_ROOT/bin/idh",
       "runtimes": [],

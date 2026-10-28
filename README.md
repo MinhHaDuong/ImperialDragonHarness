@@ -76,10 +76,10 @@ explains the layout.
 
 - `rules/guards.md`: guards for every agent role (no credentials in chat,
   skill loads are not write authorization, context ceiling).
-- A destructive-command guard on every shell call (Claude Code `PreToolUse`).
-- `pgrep` and `pkill` wrappers (`scripts/self-safe-pgrep.sh`), installed on
-  `PATH` by `idh install`: they add `-A`, so a pattern search never matches or
-  kills the calling shell and its ancestors.
+- A destructive-command guard on every shell call (Claude Code `PreToolUse`,
+  Codex hook, Pi extension): it refuses `git reset --hard` over uncommitted
+  tracked changes, and a `pgrep -f`/`pkill -f` without `-A`, which would match
+  or kill the calling shell.
 - The main-update guard (`hooks/reference-transaction`): local `main` moves
   only to `origin/main` or onto a merge carrying a passing gate record.
 - The merge gate (`.merge-gate.json`, `scripts/merge-gate.py`): checks run on

@@ -1,7 +1,16 @@
 #!/bin/bash
 set -euo pipefail
-# PreToolUse(Bash) hook: block `git reset --hard` on a dirty tree, and nothing
-# else. Exit 0 = allow, exit 2 = deny with a message on stderr.
+# PreToolUse(Bash) hook: block `git reset --hard` on a dirty tree, and a
+# `pgrep -f`/`pkill -f` that can match its own calling shell; nothing else.
+# Exit 0 = allow, exit 2 = deny with a message on stderr.
+#
+# The pgrep clause (ticket 1324) replaced the PATH-wide pgrep/pkill wrapper of
+# ticket 1216: `pgrep -f PATTERN` from a shell whose own command line holds
+# PATTERN matches that shell, so a wait loop never ends and `pkill -f` can kill
+# its caller. procps-ng has no config or environment default for `-A`
+# (--ignore-ancestors), and only Claude Code can rewrite a hooked command, so
+# the portable fix is to refuse the call and name the safe forms. Allowed:
+# `-A`/`--ignore-ancestors`, a bracketed pattern (`'[p]attern'`), or no `-f`.
 #
 # Why only this (ticket 0976): the 2026-09-24 transcript audit found one firing
 # of the former catch-all guard that prevented real damage, a `reset --hard`
@@ -40,7 +49,7 @@ import sys
 
 SEPARATORS = {";", "&&", "||", "|", "&", "(", ")", "|&", ";;", "{", "}"}
 PREFIXES = {"rtk", "command", "env", "sudo", "time", "nice", "exec"}
-HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?\s*(['\"]?)([^\s'\"<>;&|()]+)\1")
 
 
 def strip_heredocs(text):
@@ -100,6 +109,67 @@ def reset_hard_target(argv, cwd):
     return None
 
 
+LEADERS = {"while", "until", "if", "elif", "then", "do", "else", "!"}
+# Options taking a value (procps-ng 4): the next token, or the rest of the
+# short group, is that value, not more flags.
+PGREP_ARG_SHORT = set("dgGPstuUFrOq")
+PGREP_ARG_LONG = {"--delimiter", "--pgroup", "--group", "--parent", "--session",
+                  "--terminal", "--euid", "--uid", "--pidfile", "--ns", "--nslist",
+                  "--runstates", "--older", "--signal", "--queue", "--env", "--cgroup"}
+SIGNAL = re.compile(r"^-(\d+|(SIG)?[A-Z][A-Z0-9+-]*)$")
+
+
+def self_matching_pgrep(argv):
+    """`pgrep`/`pkill` when argv is a `-f` search that can match its caller."""
+    i = 0
+    while i < len(argv):
+        tok = argv[i]
+        if tok in LEADERS or tok in PREFIXES or "=" in tok and not tok.startswith("-"):
+            i += 1
+        elif tok == "timeout":
+            i += 1
+            while i < len(argv) and argv[i].startswith("-"):
+                i += 2 if argv[i] in ("-s", "-k", "--signal", "--kill-after") else 1
+            i += 1  # the duration
+        else:
+            break
+    if i >= len(argv) or os.path.basename(argv[i]) not in ("pgrep", "pkill"):
+        return None
+    tool, args, i = os.path.basename(argv[i]), argv[i + 1:], 0
+    full = ancestors = False
+    patterns = []
+    while i < len(args):
+        tok = args[i]
+        i += 1
+        if tok == "--":
+            patterns += args[i:]
+            break
+        if tok.startswith("--"):
+            name = tok.split("=", 1)[0]
+            # getopt_long takes any unambiguous prefix: --ful is --full.
+            full |= len(name) > 3 and "--full".startswith(name)
+            ancestors |= len(name) > 3 and "--ignore-ancestors".startswith(name)
+            if name in PGREP_ARG_LONG and "=" not in tok:
+                i += 1
+        elif tok == "-A":
+            ancestors = True
+        elif tok.startswith("-") and len(tok) > 1:
+            if tool == "pkill" and SIGNAL.match(tok):
+                continue  # -9, -KILL, -SIGTERM: a signal, not flags
+            for k, ch in enumerate(tok[1:]):
+                full |= ch == "f"
+                ancestors |= ch == "A"
+                if ch in PGREP_ARG_SHORT:
+                    if k == len(tok) - 2:
+                        i += 1  # value in the next token
+                    break
+        else:
+            patterns.append(tok)
+    if full and not ancestors and patterns and not any("[" in p for p in patterns):
+        return tool
+    return None
+
+
 def dirty(path):
     try:
         res = subprocess.run(
@@ -117,7 +187,8 @@ def main():
         command = payload["tool_input"]["command"]
     except Exception:
         return 0
-    if not isinstance(command, str) or "--hard" not in command:
+    if not isinstance(command, str) or not (
+            "--hard" in command or "pgrep" in command or "pkill" in command):
         return 0
     cwd = payload.get("cwd") or os.getcwd()
     try:
@@ -129,6 +200,17 @@ def main():
             dirs = [a for a in argv[1:] if not a.startswith("-")]
             cwd = resolve(cwd, dirs[0] if dirs else "~")
             continue
+        tool = self_matching_pgrep(argv)
+        if tool:
+            print(
+                f"BLOCKED: `{tool} -f PATTERN` matches the calling shell, whose own "
+                f"command line holds PATTERN: a wait never ends, a pkill can kill "
+                f"its caller. Add -A (--ignore-ancestors, procps-ng >= 4), or bracket one letter "
+                f"('[p]attern'); to wait for a job, `timeout N tail --pid=PID -f "
+                f"/dev/null`.",
+                file=sys.stderr,
+            )
+            return 2
         target = reset_hard_target(argv, cwd)
         if target and dirty(target):
             print(
