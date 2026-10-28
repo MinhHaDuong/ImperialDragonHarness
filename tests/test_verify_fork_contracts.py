@@ -202,9 +202,10 @@ def frontmatter_background(path: Path) -> str | None:
 def test_fork_skills_declare_background_explicitly():
     """Claude Code 2.1.218 made `context: fork` skills background by default.
 
-    A fork cannot wait on a background completion — its turn ends the moment it
-    stops calling tools, and the completion re-invokes the MAIN loop, not the
-    fork (ticket 0250). So whether a fork runs backgrounded is load-bearing for
+    A fork's turn ends the moment it stops calling tools, so a background
+    command started by someone else completes into the MAIN loop (ticket 0250);
+    only a background command the fork started itself re-invokes the fork
+    (1311 live control). So whether a fork runs backgrounded is load-bearing for
     the /gaze pipeline and must never be inherited from an upstream default that
     has already flipped once. Every fork skill pins it.
     """
