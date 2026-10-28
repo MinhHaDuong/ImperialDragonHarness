@@ -49,14 +49,22 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    A failed authentication is a named failed attempt, not a clean review.
    No initial `defect-confirmed:` placeholder is written.
 
-   **One call for the common case**: when the merged PR body carries the
-   attribution block, `attribution_record.py --capture-pr <N> --capture
+   **One call for the common case**: the block lives on the review's notes
+   (ticket 1307), writer entries and the gaze answers' attribution, for a PR
+   and a no-forge unit alike. `attribution_record.py --capture-unit pr:<N>
+   --capture "$PROJECT_REPO" --audience public|private --project <name>`
+   (no forge: `--capture-unit branch:<name>`) assembles it, swaps `pending` for
+   the merge date (the forge's, or the landing merge commit's) and captures it.
+   It refuses an unmerged unit and a unit with no review on notes.
+
+   **A PR merged before the switch** carries its block in the body only:
+   `attribution_record.py --capture-pr <N> --capture
    "$PROJECT_REPO" --audience public|private --project <name>
    [--masked-evidence <path>:<line>]` runs the seats join, the extract with the
    forge's merge date and the capture below, in that order. It refuses an
    unmerged PR and captures nothing while a seat fails; fix the cause and rerun
-   (appended seats are not repeated). The steps below remain the contract and
-   the path for a record that needs hand completion.
+   (appended seats are not repeated). The steps below remain the contract for
+   such a PR and the path for a record that needs hand completion.
 
    Before reading the body, run `attribution_record.py --seats-pr <N>
    --project <name> [--masked-evidence <path>:<line>]` (ticket 1155): it joins
