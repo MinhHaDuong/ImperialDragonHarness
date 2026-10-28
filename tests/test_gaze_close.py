@@ -44,6 +44,12 @@ def answer_text(primary, f):
     return [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]["text"]
 
 
+def answer_attr(primary, f):
+    """The attribution lines of the review's latest answer: their one home (ticket 1307)."""
+    rn = _notes()
+    return [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]["attribution"]
+
+
 def posted(tmp_path):
     log = tmp_path / "gh.log"
     return log.read_text() if log.exists() else ""
@@ -91,31 +97,39 @@ def test_foreign_file_in_session_tree_is_flagged(tmp_path):
     assert not (primary / ".claude" / "worktrees" / "review-7").exists()
 
 
-def test_blocked_cleanup_still_appends_attribution(tmp_path):
+def test_blocked_cleanup_still_records_attribution_on_notes(tmp_path):
     primary, env, f = opened(tmp_path)
     body = forge_shim(tmp_path, env)
+    before = body.read_text()
     one_seat(primary)
     (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
     assert "ESCALATE" in r.stderr
-    assert "attribution: appended" in r.stdout
-    assert "seat=a" in body.read_text()
+    assert "attribution: carried in the answer entry" in r.stdout
+    assert any("seat=a" in ln for ln in answer_attr(primary, f))
+    assert body.read_text() == before  # ticket 1307: no PR-body edit on the review path
     assert "seat:" not in posted(tmp_path)
     # constraint 3: the identities were read before cleanup and ride in the ESCALATE answer
     assert "seat: a · runtime=claude-code" in answer_text(primary, f)
 
 
-def test_clean_close_appends_attribution_before_the_comment(tmp_path):
+def test_clean_close_records_attribution_on_notes_and_leaves_the_body(tmp_path):
+    """Ticket 1307 exit criterion: gaze_close makes no PR-body edit; its attribution is written
+    to notes only (this test: a PR unit; the branch unit: test_gaze_branch.py)."""
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
+    before = body.read_text()
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     one_seat(primary)
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)],
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "seat=a" in body.read_text()
+    (line,) = answer_attr(primary, f)
+    assert line.startswith("reviewer: step=review · seat=a")
+    assert body.read_text() == before
+    assert "appended" not in r.stdout
 
 
 def test_call_without_attribution_file_fails_loudly(tmp_path):
@@ -125,25 +139,14 @@ def test_call_without_attribution_file_fails_loudly(tmp_path):
     assert (primary / ".claude" / "worktrees" / "review-7").exists()
 
 
-def test_attribution_creates_the_block_when_the_body_has_none(tmp_path):
+def test_body_without_a_block_stays_without_one(tmp_path):
     primary, env, f = opened(tmp_path)
     body = forge_shim(tmp_path, env)
     body.write_text("Body without a block\n")
     one_seat(primary)
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    text = body.read_text()
-    assert "```attribution" in text and "seat=a" in text and f"project: {primary.name}" in text
-
-
-def test_blocked_cleanup_with_failed_append_exits_2(tmp_path):
-    primary, env, f = opened(tmp_path)
-    one_seat(primary)
-    (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
-    # the default shim answers `pr view` with PR json, not a body: the append fails
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
-    assert "attribution: FAILED" in r.stdout and "blocked" in r.stderr
-    assert r.returncode == 2
+    assert body.read_text() == "Body without a block\n"
 
 
 def test_close_from_inside_the_review_worktree_is_refused(tmp_path):
@@ -327,21 +330,9 @@ def seats_shim(tmp_path, env):
     return body
 
 
-def test_empty_attribution_file_runs_seats_pr(tmp_path):
-    primary, env, f = opened(tmp_path)
-    body = seats_shim(tmp_path, env)
-    comment = tmp_path / "c.md"
-    one_seat(primary)
-    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
-    assert r.returncode == 0, r.stdout + r.stderr
-    assert "attribution: seats appended" in r.stdout
-    assert "reviewer: " in body.read_text() and "seat=a" in body.read_text()
-
-
 def test_findings_follow_their_generated_reviewer_line(tmp_path):
     """The file holds findings only, keyed by seat; the script writes each reviewer line and
-    puts the seat's findings under it, once (the --seats-pr step then finds the seat present)."""
+    puts the seat's findings under it, once, in the answer's attribution."""
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
     panel(primary, "# budget: 10m\na\tclaude-x\tanthropic\theadless claude-code\nb\tclaude-y\tanthropic\theadless claude-code\n",
@@ -351,9 +342,9 @@ def test_findings_follow_their_generated_reviewer_line(tmp_path):
     finding = "finding: a · verifiable · scripts/x.py:3 · adopted: yes\n"
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, finding), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    lines = [ln for ln in body.read_text().splitlines() if ln.startswith(("reviewer:", "  finding:"))]
+    lines = answer_attr(primary, f)
     assert [ln.split(" · ")[1] if ln.startswith("reviewer") else "finding" for ln in lines] == ["seat=a", "finding", "seat=b"]
-    assert body.read_text().count("seat=a") == 1
+    assert "seat=a" not in body.read_text()
 
 
 # --- ticket 1303: the identity lines are generated, never typed --------------------------------
@@ -373,19 +364,19 @@ def test_gaze_close_derives_the_1853_seat(tmp_path):
     """Replay of PR #1853: plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`.
     One name, a provider-qualified model, and the capture then raises no failure."""
     primary, env, f = opened(tmp_path)
-    body = seats_shim(tmp_path, env)
+    seats_shim(tmp_path, env)
     one_seat(primary, name="consistency", pin="gpt-6-luna", family="openai", runtime="codex")
     r = seat_close(tmp_path, primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = seat_lines_of(answer_text(primary, f))
     assert line.startswith("seat: consistency · runtime=codex") and "model=openai/gpt-6-luna" in line
     assert "code-reviewer" not in answer_text(primary, f) and "FAILED" not in r.stdout
-    reviewers = [ln for ln in body.read_text().splitlines() if ln.startswith("reviewer: ")]
+    reviewers = [ln for ln in answer_attr(primary, f) if ln.startswith("reviewer: ")]
     assert len(reviewers) == 1 and "seat=consistency" in reviewers[0] and "model=openai/gpt-6-luna" in reviewers[0]
     import sys
     sys.path.insert(0, str(Path(CLOSE).parent))
     import attribution_record
-    assert attribution_record.seat_lines(answer_text(primary, f), body.read_text()) == ([], [])
+    assert attribution_record.seat_lines(answer_text(primary, f), "\n".join(reviewers)) == ([], [])
 
 
 @pytest.mark.parametrize("typed", ["seat: a · runtime=x", "  seat: a", "> seat: a", "**seat:** a"])
@@ -462,7 +453,9 @@ def test_failed_seat_still_captures_with_its_planned_pin(tmp_path):
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = seat_lines_of(answer_text(primary, f))
     assert "runtime=codex" in line and "model=openai/gpt-6-luna" in line and line.endswith("status: failed")
-    assert "seat=late" in body.read_text() and "status: failed" in body.read_text()
+    (reviewer,) = answer_attr(primary, f)
+    assert "seat=late" in reviewer and reviewer.endswith("status: failed")
+    assert "seat=late" not in body.read_text()
 
 
 def test_pi_any_provider_seat_keeps_its_exact_qualifier(tmp_path):
@@ -686,25 +679,22 @@ def test_pointer_failure_ignored_exit_zero(tmp_path):
     assert "pointer: not posted" in r.stdout and "result: REVIEWED" in answer_text(primary, f)
 
 
-def test_seats_appended_to_body_without_comment(tmp_path):
-    """The seat lines come from the notes answer: the PR's comments carry none, yet the body
-    gets the reviewer line, and the posted pointer holds no `seat:` line."""
+def test_pointer_holds_no_seat_line(tmp_path):
+    """The seat lines live in the notes answer; the posted pointer holds no `seat:` line."""
     primary, env, f = opened(tmp_path)
-    body = seats_shim(tmp_path, env)
+    seats_shim(tmp_path, env)
     one_seat(primary)
-    Path(env["MOCK_RESULT"]).write_text("an unrelated comment\n")
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "attribution: seats appended" in r.stdout
-    assert "seat=a" in body.read_text()
+    assert "seat=a" in answer_attr(primary, f)[0]
     assert "seat:" not in posted(tmp_path)
 
 
 def test_pointer_timeout_ignored_and_seats_still_run(monkeypatch, capsys):
     """A `gh pr comment` that times out is a refused pointer, not a crash: pointer() returns, so
-    main() keeps its exit code and goes on to the --seats-pr step."""
+    main() keeps its exit code."""
     import subprocess
     import sys
     sys.path.insert(0, str(Path(CLOSE).parent))
