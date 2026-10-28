@@ -524,7 +524,7 @@ def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, cod
 @pytest.mark.parametrize("line,value", [
     ("seats: panel", "panel"), ("Seats: panel", "panel"), ("- seats: panel", "panel"),
     ("> seats: panel", "panel"), ("### seats: panel", "panel"), ("seats : panel", "panel"),
-    ("**seats:** panel", "panel"), ("seats: self-only", "self-only"), ("scope: full", None),
+    ("**seats:** panel", "panel"), ("seats: self-only", "self-only"), ("result: REVIEWED", None),
 ])
 def test_one_normaliser_reads_the_seats_claim(line, value):
     """Raid fix, ticket 1287: the claim check and the notes record read `seats:` alike."""
@@ -549,7 +549,7 @@ def test_record_answer_reads_the_claim_through_the_one_normaliser(monkeypatch):
     monkeypatch.setattr(gaze_close.rn, "add", add)
     monkeypatch.setattr(gaze_close.rn, "publish", lambda cwd, ids: "retrievable")
     monkeypatch.setattr(gaze_close.rn, "setup", lambda cwd: None)
-    text = "result: REVIEWED\nscope: full\n**seats:** panel\n"
+    text = "result: REVIEWED\nintent: default\n**seats:** panel\n"
     code = gaze_close.record_answer("/nowhere", "7", text, "", identity={"review_id": "r1"})
     assert code == 0
     assert seen["seats"] == "panel"

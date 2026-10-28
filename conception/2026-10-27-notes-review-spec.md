@@ -160,6 +160,16 @@ recorded locally by raid or hunt. An entry is never edited; a correction is a ne
 - `answer.coverage.scope = delta` never counts as full: a head is fully covered only by a full answer on that head
   or on an equal `range_patch_id`, chained with delta answers whose `carried` names it (note §4: incremental is not
   automatically full).
+- *Amended 2026-10-28 (author's ruling, ticket 1305): the scope label and its `carried` chain are deleted.* The
+  writer read scope from the intent's wording, so every first review with a caller intent (hunt and raid always pass
+  `verify <what> because <why>`) was recorded an uncarried delta the gate could never admit: 7 of 15 gate runs refused
+  on 2026-10-28, 66 of 71 answers recorded delta. A first fix (scope full unless stated) left no path writing delta,
+  so the label checked nothing; by the severity floor a misfiring guard is deleted, not grown. Coverage belongs to
+  gaze's plan check (its `review plan:` line states what a round covered) and verify-gate reads the diff against
+  the exit criteria and findings itself. Admission now rests on an answer on the head (equal head or patch-id), or
+  on the latest reviewed head when what the tip adds since is bookkeeping or nothing. The intent is the review's
+  focus only. Old entries keep their `coverage` field; readers ignore it. The bullet above and the `coverage`
+  field in §3 are historical.
 
 ## 5. Identifiers
 
@@ -218,7 +228,7 @@ none), `keep-head`, `export`, `import`. Note §6.2's `review run` is gaze itself
 
 ## 9. Validation (note §8.3) mapped
 
-Several runs on one head: distinct `run_id`, append-only. Findings survive fixes: §4 open set. Narrow intent: §4.
+Several runs on one head: distinct `run_id`, append-only. Findings survive fixes: §4 open set. Narrow intent: §4 (focus only, scope label deleted 2026-10-28).
 Missing/failed seats: `report.status`, `answer.seats`. Gate budget: §5. Failed publication keeps reports: §2
 `publish` + local ref + `export`. Resume without blind rerun: `plan`/`report` entries per seat. Rebase and cleanup:
 §1 anchors and review-heads, prune forbidden. Full no-forge path: 1276. Historic evidence: refs/notes/gate untouched.

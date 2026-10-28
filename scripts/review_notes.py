@@ -75,9 +75,8 @@ Gate (ticket 1274, spec §5, §8). verify-gate reads a review through `gate`: th
 round is the count of `verdict` entries of the review, every session and clone
 alike (synced first), plus one; the gate runs only when the latest `answer` is
 not ESCALATE and an answer covers the head (`coverage`: equal, or an equal
-non-empty verbatim patch-id after a rebase; a delta answer only through its
-`coverage.carried` chain to an earlier full one), or the head adds only
-bookkeeping to a full or chained reviewed one, or it is the round-2 re-gate
+non-empty verbatim patch-id after a rebase), or the head adds only
+bookkeeping to the latest reviewed one, or it is the round-2 re-gate
 of a REROLL fix descending from the rerolled head;
 never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
@@ -806,59 +805,26 @@ def open_findings(cwd, review_id):
 
 
 def coverage(cwd, review_id, head):
-    """Does `head` carry the review? match: equal | patch-id | delta | none, with the answer."""
+    """Does `head` carry the review? match: equal | patch-id | none, with the answer. An old
+    entry's `coverage` field is ignored (ticket 1305 deleted the scope label)."""
     head = _rev(cwd, head)
     answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
     if not answers:
         return {"match": "none", "head": head}
     binding = _binding(cwd, head, answers[-1]["base_ref"])
-    best = None
     for e in reversed(answers):
-        scope = (e.get("coverage") or {}).get("scope", "full")
         if e["head"] == head:
-            match = "equal" if scope == "full" else "delta"
+            match = "equal"
         elif e["range_patch_id"] and e["range_patch_id"] == binding["range_patch_id"]:
-            match = "patch-id" if scope == "full" else "delta"
+            match = "patch-id"
         else:
             continue
-        if match != "delta":
-            return {"match": match, "head": head, "answer": e["id"], "result": e.get("result")}
-        best = best or {"match": "delta", "head": head, "answer": e["id"], "result": e.get("result")}
-    return best or {"match": "none", "head": head}
+        return {"match": match, "head": head, "answer": e["id"], "result": e.get("result")}
+    return {"match": "none", "head": head}
 
 
 def _verdicts(cwd, review_id):
     return [e for e in entries(cwd, review_id) if e["kind"] == "verdict"]
-
-
-def _key(e):
-    return (e.get("ts", ""), e["id"])
-
-
-def carry_target(cwd, review_id):
-    """The answer a new delta answer carries (spec §4): the latest non-ESCALATE answer of the
-    review, full or itself a delta, else None. gaze_close records it as `coverage.carried`."""
-    prior = [e for e in entries(cwd, review_id)
-             if e["kind"] == "answer" and e.get("result") != "ESCALATE"]
-    return prior[-1]["id"] if prior else None
-
-
-def _chained(answers, delta):
-    """A delta answer counts only through `coverage.carried`: each link names an earlier,
-    non-ESCALATE answer of the review, ending at a full one (spec §4)."""
-    by_id = {e["id"]: e for e in answers}
-    cur = delta
-    while True:
-        target = by_id.get((cur.get("coverage") or {}).get("carried") or "")
-        if not target or _key(target) >= _key(cur) or target.get("result") == "ESCALATE":
-            return False
-        if (target.get("coverage") or {}).get("scope", "full") == "full":
-            return True
-        cur = target
-
-
-def _full_or_chained(answers, e):
-    return (e.get("coverage") or {}).get("scope", "full") == "full" or _chained(answers, e)
 
 
 def _bookkeeping_since(cwd, base_ref, head, since):
@@ -875,9 +841,8 @@ def gate_state(cwd, review_id, head, remote="origin"):
     (fetch and merge, never a push), so verdicts and answers written by other clones count
     and a read-only gate host can rule.
 
-    Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id;
-    a delta only through its `carried` chain to an earlier full answer); or the head adds
-    only bookkeeping to the latest reviewed head, whose answer is full or chained; or it is
+    Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id);
+    or the head adds only bookkeeping to the latest reviewed head; or it is
     the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head.
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds.
@@ -907,17 +872,11 @@ def gate_state(cwd, review_id, head, remote="origin"):
         state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
     elif state["result"] == "ESCALATE":
         state["reason"] = f"no completed review: the answer {state['answer']} covering the head is ESCALATE"
-    elif cov["match"] == "delta" and not _full_or_chained(answers, next(e for e in answers if e["id"] == cov["answer"])):
-        state["reason"] = ("no full review: the delta answer covering the head does not carry an "
-                           "earlier full answer (coverage.carried)")
     elif cov["match"] != "none":
         state["ready"] = True
     elif (verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS
           and _git(cwd, "merge-base", "--is-ancestor", verdicts[-1]["head"], head, check=False).returncode == 0):
         state.update(ready=True, match="reroll-fix", answer=None, result=None)
-    elif not _full_or_chained(answers, answers[-1]):
-        state["reason"] = (f"no full review: the latest answer {answers[-1]['id']} is a delta that does "
-                           "not carry an earlier full answer (coverage.carried)")
     elif _bookkeeping_since(cwd, answers[-1]["base_ref"], head, state["reviewed_head"]):
         state.update(ready=True, match="bookkeeping", answer=answers[-1]["id"],
                      result=answers[-1].get("result"))

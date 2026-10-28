@@ -257,17 +257,6 @@ def seats_claim(text):
     return "panel" if "panel" in claims else (claims[0] if claims else None)
 
 
-def answer_scope(text):
-    """Spec §4: a narrow intent is never widened. `scope:` when given, else full only for the
-    default intent (`intent: default`); any other intent, or none, records delta."""
-    scope = _field(text, "scope")
-    if scope in ("full", "delta"):
-        return scope
-    first = re.search(r"^intent:[ \t]*(.*?)[ \t]*$", text, re.MULTILINE)  # the field, not a quote below
-    value = first.group(1) if first else ""
-    return "full" if value == "default" or value.startswith("default:") else "delta"
-
-
 def record_answer(primary, pr, text, attribution, identity=None):
     """The result becomes an `answer` entry in refs/notes/review, the store verify-gate reads
     (ticket 1273; every unit since ticket 1300). `identity` is what gaze_setup froze
@@ -287,10 +276,6 @@ def record_answer(primary, pr, text, attribution, identity=None):
             print("answer: FAILED no review request for this branch (gaze_setup opens one)")
             return 2
         result = _field(text, "result")
-        scope = answer_scope(text)
-        cov = {"scope": scope}
-        if scope == "delta":  # spec §4: a delta counts only through the answer it carries (ticket 1274)
-            cov["carried"] = rn.carry_target(cwd, rid)
         forge_read = identity.get("forge") or "read"  # gaze_setup's forge read (ticket 1308)
         if forge_read != "read" and not re.search(r"^forge:", text, re.M):
             text = text.rstrip("\n") + f"\nforge: {forge_read}\n"
@@ -299,7 +284,6 @@ def record_answer(primary, pr, text, attribution, identity=None):
             "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
             "seats": seats_claim(text) or "self-only",
-            "coverage": cov,
             "attribution": attribution.splitlines() if attribution else [],
             "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze",
             request_id=identity.get("request_id"))

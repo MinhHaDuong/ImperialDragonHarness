@@ -2,6 +2,7 @@
 `answer` entry in refs/notes/review, published to a local bare remote."""
 
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
 
@@ -93,16 +94,19 @@ def close_with(tmp_path, primary, env, f, intent_line):
                        "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
 
 
-@pytest.mark.parametrize("intent_line,scope,match", [
-    ("intent: default\n", "full", "equal"),
-    ("intent: verify the fixes because they were the findings\n", "delta", "delta"),
-    ("", "delta", "delta"),  # no intent line: never widened to full
-    ("intent: default branch protections only\n", "delta", "delta"),  # a narrow intent starting "default"
-    ("intent: default: the whole merge request\n", "full", "equal"),
-    ("intent: verify x because y\nFindings:\nintent: default: quoted from an earlier result\n",
-     "delta", "delta"),  # only the first intent line is the field
+def gate(primary, env, f, head):
+    return subprocess.run(["python3", str(SCRIPTS / "review_notes.py"), "gate", f["review_id"], head],
+                          cwd=primary, env=env, capture_output=True, text=True)
+
+
+@pytest.mark.parametrize("intent_line", [
+    "intent: verify the measurement-only change because it touches the log\n",
+    "intent: default\n",
+    "",
 ])
-def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
+def test_first_review_with_any_intent_admits_the_gate(tmp_path, intent_line):
+    """The padme PR #133 shape (ticket 1305): no prior answer, a caller intent, REVIEWED; the
+    gate admits the head. The intent is focus only: the answer carries no scope label."""
     primary, env = branch_repo(tmp_path)
     r = run(SETUP, ["branch:feature"], primary, env)
     assert r.returncode == 0, r.stderr
@@ -110,8 +114,26 @@ def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
     r = close_with(tmp_path, primary, env, f, intent_line)
     assert r.returncode == 0, r.stdout + r.stderr
     answer = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
-    assert answer["coverage"]["scope"] == scope
-    assert rn.coverage(primary, f["review_id"], f["head"])["match"] == match
+    assert "coverage" not in answer
+    g = gate(primary, env, f, f["head"])
+    assert g.returncode == 0, g.stdout + g.stderr
+
+
+def test_a_head_moved_past_bookkeeping_refuses_the_gate(tmp_path):
+    """With the scope label gone, staleness still bites: a tip that adds code to the reviewed
+    head is not admitted."""
+    primary, env = branch_repo(tmp_path)
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    r = close_with(tmp_path, primary, env, f, "intent: verify x because y\n")
+    assert r.returncode == 0, r.stdout + r.stderr
+    git(primary, "switch", "-q", "feature")
+    (primary / "g.py").write_text("x = 1\n")
+    git(primary, "add", "g.py")
+    git(primary, "commit", "-q", "-m", "code after the review")
+    git(primary, "switch", "-q", "main")
+    g = gate(primary, env, f, "feature")
+    state = json.loads(g.stdout)
+    assert g.returncode == 1 and not state["ready"] and state["reason"].startswith("stale:"), g.stdout + g.stderr
 
 
 def test_malformed_trailer_claim_blocks_and_opens_nothing(tmp_path):
@@ -134,20 +156,6 @@ def test_close_still_cleans_up(tmp_path):
     assert "Traceback" not in r.stderr, r.stderr
     assert not (primary / ".claude" / "worktrees" / "review-branch-feature").exists()
     assert f["review_id"]
-
-
-def test_a_delta_answer_carries_the_earlier_full_one(tmp_path):
-    """Ticket 1274: verify-gate admits a delta answer only through `coverage.carried`."""
-    primary, env = branch_repo(tmp_path)
-    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
-    assert close_with(tmp_path, primary, env, f, "intent: default\n").returncode == 0
-    full = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
-    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
-    r = close_with(tmp_path, primary, env, f, "intent: verify the fixes because they were the findings\n")
-    assert r.returncode == 0, r.stdout + r.stderr
-    delta = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
-    assert delta["coverage"] == {"scope": "delta", "carried": full["id"]}
-    assert rn.gate_state(primary, f["review_id"], f["head"])["ready"]
 
 
 def test_a_late_gaze_answer_stays_bound_to_the_request_it_reviewed(tmp_path):

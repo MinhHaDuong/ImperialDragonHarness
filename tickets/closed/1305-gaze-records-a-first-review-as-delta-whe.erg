@@ -2,9 +2,11 @@
 Title: gaze records a first review as delta when the caller states an intent, so verify-gate cannot admit it
 Created: 2026-10-28
 Author: MinhHaDuong
+Closed: Author's ruling 2026-10-28: scope label and coverage.carried chain deleted (guard misfired: first reviews with a caller intent were unadmittable). Admission rests on an answer on the head or bookkeeping since the reviewed head; #133 replay admits, stale tip still refuses.
 
 --- log ---
 2026-10-28T11:18Z MinhHaDuong created
+2026-10-28T13:44Z reviewer closed — Author's ruling 2026-10-28: scope label and coverage.carried chain deleted (guard misfired: first reviews with a caller intent were unadmittable). Admission rests on an answer on the head or bookkeeping since the reviewed head; #133 replay admits, stale tip still refuses.
 
 --- body ---
 ## Context
