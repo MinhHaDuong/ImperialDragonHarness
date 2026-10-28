@@ -476,3 +476,13 @@ def test_cli_gate_takes_the_required_producer_family(repo):
     r = cli(repo, "gate", rid, "feature", "--require-cross-family", "anthropic")
     assert r.returncode == 1 and "no cross-family seat" in json.loads(r.stdout)["reason"]
     assert cli(repo, "gate", rid, "feature", "--require-cross-family", "unknown").returncode == 2
+
+
+def test_seat_line_reads_the_real_formatter():
+    """The gate parses the lines seat_clock.format_seat writes; a format drift fails here."""
+    sc_spec = importlib.util.spec_from_file_location("seat_clock", SCRIPTS / "seat_clock.py")
+    sc = importlib.util.module_from_spec(sc_spec)
+    sc_spec.loader.exec_module(sc)
+    line = sc.format_seat({"seat": "redteam", "runtime": "codex", "family": "openai",
+                           "route": "gpt", "model": "openai/gpt-6-luna", "status": "ran"})
+    assert rn.cross_family_seats(line + "\n", "anthropic") == ["redteam"]
