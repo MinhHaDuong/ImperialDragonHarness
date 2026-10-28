@@ -2,12 +2,14 @@
 Title: gaze_close derives seat and reviewer identity lines from the plan and worker headers; the model no longer types them
 Created: 2026-10-28
 Author: reviewer
+Closed: closed by raid — PR #1862
 
 --- log ---
 2026-10-28T09:55Z reviewer created
 2026-10-28T09:55Z reviewer note author 2026-10-28 picked option C of three (A pin the seat vocabulary + pre-post consistency check; B provider-qualify the worker pin; C derive identity lines mechanically).
 2026-10-28T10:30Z reviewer note raid Imagine+Blind-Spot: after 1301 (PR #1858) defect 2 (bare pin) is fixed by seat_lines' family prefix; 1303 now rests on 1301 and is ordered after it. Path narrowed: derive seat: lines only, --seats-pr derives reviewer: lines, attribution file keeps finding: lines. Blind-Spot: 5 design constraints added below.
 2026-10-28T10:33Z reviewer note raid Plan written; feasibility PASS (symbols exist at PR #1858 head 3f56a5ae; seat_clock.py and gaze_seat.py untouched by #1858). Execute waits for #1858 to merge.
+2026-10-28T11:14Z reviewer closed — closed by raid — PR #1862
 
 --- body ---
 ## Context
