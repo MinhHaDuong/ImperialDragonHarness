@@ -116,3 +116,14 @@ def test_pr_setup_on_reused_branch_opens_new_review(tmp_path):
     rid = fields(r.stdout)["review_id"]
     assert rid not in (old_pr, plain)
     assert len([e for e in rn.entries(primary, old_pr) if e["kind"] == "request"]) == 1
+
+
+def test_pr_first_gaze_with_unreadable_origin_stops_and_opens_nothing(tmp_path):
+    # a PR gaze reads its head from origin before any notes lookup; without origin it stops and opens
+    # no review, so a unit never holds two reviews whose verdicts would split the round count. The
+    # stale-but-local reader case is covered by test_resolve_stale_returns_local_review (raid 2026-10-28)
+    primary, env = make_repo(tmp_path)
+    git(primary, "remote", "set-url", "origin", str(tmp_path / "gone"))
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 2, r.stderr
+    assert rn.find_unit(str(primary), "pr:7") is None
