@@ -150,7 +150,8 @@ marker; another forge needs the same writes in its own spelling.
    round. 1 fail or stale scope, 3 unreadable: do not merge.
 5. **Disarm (gated base only).** Never arm auto-merge: an armed request
    could land a later head than the record covers. Read
-   `python3 "$IDH_ROOT/scripts/forge.py" list --state open --head <branch>`; the row's `auto` is `true` when armed;
+   `python3 "$IDH_ROOT/scripts/forge.py" list --state open --head <branch>`; take the row with
+   `cross_repository` false (a fork may reuse the branch name); its `auto` is `true` when armed;
    on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
    do not merge. A non-zero exit or no row for `<branch>` is not "not armed": do not merge.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
