@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Forge leaks, measurement and CI sites: trace-pr-join, trace_merge_path, review_evidence, local-ci keep-with-reason or port
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T17:48Z claude created
+
+--- body ---
+## Context
+Child of tracker 1317 (forge leaks). Sites where a GitHub dependency may be legitimate:
+measurement that joins Claude traces to GitHub PRs, review-evidence collection over the GitHub
+GraphQL API, and a local GitHub Actions runner. The tracker says: decide per site, keep with a
+reason or port. A keep decision with its reason recorded is a valid outcome.
+
+Sites on main 2026-10-28:
+- `scripts/trace-pr-join.py` (~66-87: `gh api` PR and comments)
+- `scripts/trace_merge_path.py` (~7, ~40: a regex that recognises `gh pr merge` in traces)
+- `scripts/review_evidence.py` (~505: `gh api graphql`)
+- `scripts/local-ci.sh` (~101: `gh pr list`, plus the forge token passed to `act`)
+- Not calls (pattern lists naming `gh`, keep): `scripts/census/exec-vs-mention.py`,
+  `scripts/trace-wall-time.py`.
+
+Parent: tracker 1317.
+
+## Exit criteria
+- [ ] Each site above is either ported to `forge.py` (with a `none`-backend test: typed NOOP or
+      refusal, never an empty all-clear) or recorded as keep-with-reason in this ticket's log
+      and in a one-line comment at the call site
+- [ ] Do not add a forge.py verb in this child unless a port needs it; a keep is preferred
+      when the script's purpose is GitHub measurement
+- [ ] `make check` passes

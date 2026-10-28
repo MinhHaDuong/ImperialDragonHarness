@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Forge leaks, status and hygiene scripts: dashboard, raid-sitrep, slow_tickets, project-state, tmp_report, worktree-tmp-guard through forge.py
+Created: 2026-10-28
+Author: claude
+Blocked-by: 1318
+
+--- log ---
+2026-10-28T17:48Z claude created
+
+--- body ---
+## Context
+Child of tracker 1317 (forge leaks). Status and hygiene scripts that list or view requests with
+raw `gh`; on a no-forge repository they fail or report an empty list as "no open requests".
+Builds on the forge.py CLI shape set by 1318.
+
+Sites on main 2026-10-28:
+- `skills/dashboard/dashboard.sh` (~25-28: open and recently merged PR lists)
+- `scripts/raid-sitrep.py` (~45: open PR list). A sibling raid edits raid files: before
+  touching it, check no open PR edits it (`gh pr list --json number,files`).
+- `scripts/slow_tickets.py` (~82: PR view createdAt, mergedAt, comments, checks)
+- `scripts/project-state.py` (~397), `scripts/tmp_report.py` (~717),
+  `scripts/worktree-tmp-guard.py` (~206): PR lists found by the 1317 filing sweep, not in the
+  tracker's original list.
+
+Parent: tracker 1317.
+
+## Exit criteria
+- [ ] The six sites above call `forge.py` instead of `gh`, or are listed in this ticket's log as
+      residue with a reason; on the none backend a listing answers from refs/notes/review or a
+      typed NOOP, never an empty list read as "nothing open"
+- [ ] Each ported site has a `none`-backend test (no `gh` on PATH) showing the step still
+      works or answers a typed NOOP/refusal, never an empty all-clear
+- [ ] A verb or CLI subcommand is added to `scripts/forge.py` only where a caller here needs it,
+      with its gh and none behaviour tested in `tests/test_forge.py`
+- [ ] `make check` passes
