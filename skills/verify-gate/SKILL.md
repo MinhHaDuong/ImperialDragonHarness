@@ -508,6 +508,18 @@ never `git notes` by hand.
   (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
   a recorded ESCALATE verdict, or past two rounds. On a refusal answer
   ESCALATE with its `reason`, record nothing, spend no round.
+- **Cross-family seat.** Before the `gate` call, read the change's row in
+  `skills/route/references/decorrelation.md` § Scale the review to the risk
+  from the diff. On the high-risk row, pass `--require-cross-family
+  <producer family>` to `gate` and to `verdict`: the grid `family` of the
+  writer line's model (the review's `writer` entries), never its runtime.
+  `gate` then refuses an admitting answer whose `seat:` lines show no seat of
+  another family that ran (`cross_family` lists those that count), whatever
+  the plan's `no cross-family seat:` reason: ESCALATE `no cross-family seat`,
+  spend no round; the caller parks the PR for a seat launched by the
+  interface session (`skills/raid/references/detached-gaze.md` § No
+  cross-family seat). Without a writer line, name the producer family from
+  the caller's launch line; unknown, ESCALATE `Missing Data` (ticket 1326).
 - **Review comments.** Non-negotiable 3's gaze findings are the `text` of
   every `answer` entry (`review_notes.py show <review_id>`) plus the open
   findings (`review_notes.py findings <review_id>`); attribution lines are in
