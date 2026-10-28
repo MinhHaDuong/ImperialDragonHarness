@@ -514,7 +514,9 @@ never `git notes` by hand.
   <producer family>` to `gate` and to `verdict`: the grid `family` of the
   writer line's model (the review's `writer` entries), never its runtime.
   `gate` then refuses an admitting answer whose `seat:` lines show no seat of
-  another family that ran (`cross_family` lists those that count), whatever
+  another family that ran on a headless door, its family set by the launcher
+  (`cross_family` lists those that count; a `self` or `subagent` seat never
+  does, and a REROLL-fix re-gate re-checks the latest answer), whatever
   the plan's `no cross-family seat:` reason: ESCALATE `no cross-family seat`,
   spend no round; the caller parks the PR for a seat launched by the
   interface session (`skills/raid/references/detached-gaze.md` § No

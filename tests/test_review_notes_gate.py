@@ -465,9 +465,9 @@ def test_required_cross_family_admits_a_review_whose_other_family_seat_ran(repo)
     answer_text(repo, rid, CROSS_RAN)
     state = rn.gate_state(repo, rid, "feature", producer_family="Anthropic")
     assert state["ready"] and state["cross_family"] == ["redteam"]
-    # Relative to an OpenAI producer, the Anthropic seats are the other family.
+    # Relative to an OpenAI producer, the headless Anthropic seat is the other family; self never counts.
     assert rn.gate_state(repo, rid, "feature", producer_family="openai")["cross_family"] == [
-        "self", "correctness", "redteam"]
+        "correctness", "redteam"]
 
 
 def test_cli_gate_takes_the_required_producer_family(repo):
@@ -486,3 +486,24 @@ def test_seat_line_reads_the_real_formatter():
     line = sc.format_seat({"seat": "redteam", "runtime": "codex", "family": "openai",
                            "route": "gpt", "model": "openai/gpt-6-luna", "status": "ran"})
     assert rn.cross_family_seats(line + "\n", "anthropic") == ["redteam"]
+
+
+def test_self_and_subagent_seats_never_count_as_cross_family():
+    """Gaze 1925 finding 1: only a headless seat's family is launcher-set; a plan labelling self
+    or a subagent with another family cannot satisfy the requirement."""
+    text = ("seat: self · runtime=claude-code · family=openai · route=self · model=anthropic/x · status: ran\n"
+            "seat: c · runtime=claude-code · family=openai · route=subagent · model=anthropic/y · status: ran\n")
+    assert rn.cross_family_seats(text, "anthropic") == []
+
+
+def test_reroll_fix_regate_still_needs_the_cross_family_seat(repo):
+    """Gaze 1925 finding 2: the round-2 re-gate of a REROLL fix re-checks the reviewed answer."""
+    rid = rn.open_review(repo, "feature", "main")
+    answer_text(repo, rid, SAME_FAMILY_ONLY)
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature")
+    sh(repo, "switch", "-q", "feature")
+    commit(repo, "f.py", "def f():\n    return 11\n\n\n\n\n\ndef g():\n    return 2\n", "fix")
+    sh(repo, "switch", "-q", "main")
+    assert rn.gate_state(repo, rid, "feature")["match"] == "reroll-fix"
+    state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not state["ready"] and "no cross-family seat" in state["reason"]
