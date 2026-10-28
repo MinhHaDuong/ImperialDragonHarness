@@ -41,17 +41,16 @@ conversation's language, then answer:
 - **Pin `model` on every launch** with the short token (`sonnet|opus|haiku|fable`).
   Harness agent definitions carry no `model:`, so an unpinned `Agent` child or
   `Workflow` `agent()` inherits the session model. Choose the worker per
-  `skills/route/SKILL.md`, state why; a launching skill must say so. Independence is a family question
+  `skills/route/SKILL.md` and state why; a skill that launches workers must say
+  so (`tests/test_launch_model_choice.py`). Independence is a family question
   (`skills/route/references/decorrelation.md`).
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
-  the only per-call lever. Unreliable on models with pinned effort.
+  the only per-call lever. Unreliable on models with a pinned default effort.
 - **`team-lead` delegation needs a nesting depth of at least 2**, or it
-  silently degrades into a flat agent.
+  silently degrades into a flat agent; check it before debugging the prompt.
 <!-- harness-extension-point -->
-  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (3 in `settings.shared.json`), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
-
-- **Launch door**: `runtime.py can launch.subagent|headless.<door>` answers configured, not available.
+  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (3 in `settings.shared.json`: raid, coder, gaze, seats), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
 
 ## Hook output
 

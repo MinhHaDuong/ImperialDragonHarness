@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-28T14:17Z claude created
 2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
+2026-10-28T17:42Z reviewer note raid 6530fd: the contract line moved from rules/claude-code.md to skills/route/routes-recommendations-claude-code.md § Launching; the resident-rules budget forced trims of author rule wording to fit it, and the route skill already owns launch_doors. rules/claude-code.md is unchanged by this PR.
 
 --- body ---
 ## Context
