@@ -80,3 +80,30 @@ def test_disable_auto_is_not_a_merge():
     assert not tmp_.MERGE_RE.search("gh pr merge 12 --disable-auto")
     assert tmp_.MERGE_RE.search("cd /w && gh pr merge 12 --merge")
     assert tmp_.MERGE_RE.search("git fetch origin\ngh pr merge 12 --merge --match-head-commit abc")
+
+
+def _typed(minute: int, name: str, args: str) -> dict:
+    text = f"<command-name>/{name}</command-name>\n<command-args>{args}</command-args>"
+    return {"type": "user", "timestamp": STAMP.format(minute), "message": {"content": text}}
+
+
+def test_typed_gate_without_repo_is_not_a_gate(tmp_path):
+    """A typed `/verify-gate 14` stops for want of repo=: the merge after it is ungated."""
+    _write(tmp_path / "p" / "ffffffff-typed.jsonl", [
+        _typed(1, "verify-gate", "14"), *_bash(2, "gh pr merge 14 --merge")])
+    report = tmp_.survey(tmp_path, "2026-10-21")
+    assert [s["class"] for s in report["sessions"]] == ["no gate seen"]
+    assert report["gate_loads_norepo"] == 1
+
+
+def test_quoted_pipe_is_not_a_separator():
+    assert not tmp_.MERGE_RE.search(tmp_.unquoted("rg -n 'verify-gate|gh pr merge' skills/merge/SKILL.md"))
+    assert tmp_.MERGE_RE.search(tmp_.unquoted('python3 "$IDH_ROOT/scripts/raid_land.py" 12 --ruled-head x'))
+    assert tmp_.MERGE_RE.search(tmp_.unquoted("echo 'a' && gh pr merge 1 --merge && echo 'b c'"))
+
+
+def test_tier_and_merge_in_one_call_reads_the_tier_first(tmp_path):
+    _write(tmp_path / "p" / "gggggggg-one.jsonl", [*_bash(
+        1, "python3 scripts/merge-gate.py tier --base origin/main --head HEAD && gh pr merge 13 --merge",
+        "bookkeeping: 1 path(s) changed")])
+    assert [s["class"] for s in tmp_.survey(tmp_path, "2026-10-21")["sessions"]] == ["bookkeeping"]

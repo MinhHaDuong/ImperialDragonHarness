@@ -30,7 +30,10 @@ import sys
 from pathlib import Path
 
 WATCHED_SKILLS = {"hunt", "gaze", "verify-gate", "merge", "raid"}
-COMMAND_RE = re.compile(r"<command-name>/?([\w:-]+)</command-name>")
+COMMAND_RE = re.compile(
+    r"<command-name>/?([\w:-]+)</command-name>(?:\s*<command-args>(.*?)</command-args>)?", re.DOTALL
+)
+
 # A merge command at the start of a shell statement, not one quoted in a grep
 # or a commit message.
 MERGE_RE = re.compile(
@@ -49,10 +52,36 @@ def _text(content: object) -> str:
     return ""
 
 
+def unquoted(command: str) -> str:
+    """The command with each quoted string that holds whitespace emptied: such a
+    string is an argument (a search pattern, a commit message), never a statement,
+    so its `|` or `;` separates nothing. A quoted path keeps its text."""
+    out, quote, start = [], None, 0
+    for index, char in enumerate(command):
+        if quote is None and char in "'\"":
+            quote, start = char, index
+        elif char == quote:
+            body = command[start + 1:index]
+            out.append(quote * 2 if any(c.isspace() for c in body) else quote + body + quote)
+            quote = None
+        elif quote is None:
+            out.append(char)
+    if quote is not None:
+        out.append(command[start:])
+    return "".join(out)
+
+
+def _skill_event(name: str, args: str) -> str:
+    # verify-gate stops without repo=, so such a load gates nothing.
+    if name == "verify-gate" and "repo=" not in args:
+        return "S:verify-gate!norepo"
+    return f"S:{name}"
+
+
 def session_events(path: Path) -> list[tuple[str, str]]:
     """(timestamp, event) pairs of one trace file, in file order."""
     events: list[tuple[str, str]] = []
-    pending_tier: dict[str, str] = {}
+    pending_tier: dict[str, tuple[str, bool]] = {}
     stamp = ""
     with path.open(errors="replace") as handle:
         for line in handle:
@@ -73,17 +102,13 @@ def session_events(path: Path) -> list[tuple[str, str]]:
                     continue
                 kind = block.get("type")
                 if kind == "text" and row.get("type") == "user":
-                    for name in COMMAND_RE.findall(block.get("text", "")):
+                    for name, args in COMMAND_RE.findall(block.get("text", "")):
                         if name in WATCHED_SKILLS:
-                            events.append((stamp, f"S:{name}"))
+                            events.append((stamp, _skill_event(name, args)))
                 elif kind == "tool_use":
                     tool, given = block.get("name"), block.get("input") or {}
                     if tool == "Skill" and given.get("skill") in WATCHED_SKILLS:
-                        skill = given["skill"]
-                        if skill == "verify-gate" and "repo=" not in str(given.get("args", "")):
-                            events.append((stamp, "S:verify-gate!norepo"))
-                        else:
-                            events.append((stamp, f"S:{skill}"))
+                        events.append((stamp, _skill_event(given["skill"], str(given.get("args", "")))))
                     elif tool in ("Agent", "Task"):
                         prompt = f"{given.get('prompt', '')} {given.get('description', '')}".lower()
                         if "verify-gate" in prompt:
@@ -91,15 +116,23 @@ def session_events(path: Path) -> list[tuple[str, str]]:
                         elif "gaze" in prompt:
                             events.append((stamp, "A:gaze"))
                     elif tool == "Bash":
-                        command = str(given.get("command", ""))
+                        command = unquoted(str(given.get("command", "")))
+                        merges = bool(MERGE_RE.search(command))
                         if TIER_RE.search(command):
-                            pending_tier[block.get("id", "")] = stamp
-                        if MERGE_RE.search(command):
+                            # The tier answer comes back with the result; a merge in the
+                            # same call follows it.
+                            pending_tier[block.get("id", "")] = (stamp, merges)
+                        elif merges:
                             events.append((stamp, "MERGE"))
                 elif kind == "tool_result" and block.get("tool_use_id") in pending_tier:
                     found = TIER_ANSWER_RE.search(_text(block.get("content")))
                     answer = found.group(1) if found else "unread"
-                    events.append((pending_tier.pop(block["tool_use_id"]), f"TIER:{answer}"))
+                    when, merges = pending_tier.pop(block["tool_use_id"])
+                    events.append((when, f"TIER:{answer}"))
+                    if merges:
+                        events.append((when, "MERGE"))
+    # A merge whose call never returned a result still happened.
+    events.extend((when, "MERGE") for when, merges in pending_tier.values() if merges)
     return events
 
 
