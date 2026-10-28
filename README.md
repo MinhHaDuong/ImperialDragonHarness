@@ -17,9 +17,10 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
   is a CNRS senior researcher in environment and development at
   [CIRED](https://www.centre-cired.fr/).
 - **Linux first.** The harness targets Linux (systemd, `/proc`, GNU coreutils,
-  `flock`, XDG paths), and much of it depends on `git`, `make` and Python. Some code
-  paths will not work on macOS, Windows or WSL2, and we accept that. The committed assumptions are listed in
-  [INSTALL.md § Platform contract](INSTALL.md#platform-contract).
+  `flock`, XDG paths). Some code paths will not work on macOS, Windows or
+  WSL2, and we accept that. What to install, required and optional, is in
+  [INSTALL.md § Dependencies](INSTALL.md#dependencies); the committed platform
+  assumptions are in [§ Platform contract](INSTALL.md#platform-contract).
 - **Forge optional, forge independent.** Everything works in a local
   repository with no remote. Issues live in `tickets/`
   ([git-erg](https://github.com/MinhHaDuong/git-erg)); review comments and
@@ -94,7 +95,10 @@ project's own repository; the harness's memory is its own (`memory/`).
 1. **Transcripts**: session logs written automatically by each runtime. Raw,
    never edited; read by surveys such as `/trace-doctor`.
 2. **Events**: one Markdown file per significant fact in
-   `memory/journal/YYYY/`, captured by `/roar`. Append-only.
+   `memory/journal/YYYY/`, captured by `/roar`. Append-only. An entry not
+   cleared for the repository's public audience is committed as age
+   ciphertext, never as plaintext; the key setup is in
+   [INSTALL.md § Dependencies](INSTALL.md#dependencies).
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
    `memory/MEMORY.md`, is injected into the session prompt; subagents read
    it too, per section 7. `/hoard` turns
