@@ -11,9 +11,14 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 
 ## Design case
 
+- **Research.** The harness is specialized for academic research: literature
+  reviews, manuscripts, reviewer responses, slides and bibliographies, next to
+  the code that supports them. Its author, [Minh Ha-Duong](https://minh.haduong.com),
+  is a CNRS senior researcher in environment and development at
+  [CIRED](https://www.centre-cired.fr/).
 - **Linux first.** The harness targets Linux (systemd, `/proc`, GNU coreutils,
-  `flock`, XDG paths). Some code paths will not work on macOS, Windows or
-  WSL2, and we accept that. The committed assumptions are listed in
+  `flock`, XDG paths), and much of it depends on `make` and Python. Some code
+  paths will not work on macOS, Windows or WSL2, and we accept that. The committed assumptions are listed in
   [INSTALL.md § Platform contract](INSTALL.md#platform-contract).
 - **Forge optional.** Everything works in a local repository with no remote.
   Issues live in `tickets/` ([git-erg](https://github.com/MinhHaDuong/git-erg));
