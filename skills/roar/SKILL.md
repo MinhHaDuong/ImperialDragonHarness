@@ -3,7 +3,7 @@ metadata:
   category: build
   order: 6
 name: roar
-description: "Post-task wrap-up after one or more merge(s): clean task branches, reflect, capture significant facts, update state."
+description: "Post-task wrap-up after one or more merge(s): clean task branches, reflect, capture significant facts, update state. Not for memory audits (/hoard) or the day's end (/lair)."
 disable-model-invocation: false
 user-invocable: true
 ---

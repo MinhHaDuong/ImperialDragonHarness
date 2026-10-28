@@ -2,7 +2,7 @@
 metadata:
   category: publication
 name: conference-submission-prep
-description: "Prepare a humanities and social sciences conference submission from its call for papers. Use once venue is chosen and key messages are framed."
+description: "Prepare a humanities and social sciences conference submission from its call for papers. Use once venue is chosen and key messages are framed. Not for /choose-venue or /message-framing."
 ---
 
 # Conference submission preparation

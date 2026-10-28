@@ -3,7 +3,7 @@ metadata:
   category: writing
   order: 2
 name: cut-prose
-description: "Cut a document to a word or page budget by removing whole passages before condensing anything. Fights LLM hair shaving tendencies."
+description: "Cut a document to a word or page budget by removing whole passages before condensing anything. Fights LLM hair shaving tendencies. Use for a manuscript trim, length cut or abstract."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<document-path> <word-or-page-budget>"

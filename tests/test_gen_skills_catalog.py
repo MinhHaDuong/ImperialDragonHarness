@@ -112,3 +112,9 @@ def test_catalog_orders_by_metadata_order_then_name(tmp_path):
     rows = [line for line in gen_skills_catalog.catalog_lines(str(tmp_path))
             if line.startswith("| `/")]
     assert rows == ["| `/zebra` | Zebra. |", "| `/mid` | Mid. |", "| `/alpha` | Alpha. |"]
+
+
+def test_catalog_hides_routing_hints():
+    description = ("Cut a text to budget. Use for a trim. Not for framing (/x). "
+                   "Keywords: couper, réduire. Keyword: finition.")
+    assert gen_skills_catalog.catalog_description(description) == "Cut a text to budget."

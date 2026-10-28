@@ -12,6 +12,7 @@ so its "all clear" is indistinguishable from "I could not look" — that is
 how four unparseable SKILL.md files went unnoticed (ticket 0515).
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -30,6 +31,17 @@ CATEGORIES = {
     "publication": "Submission and publication",
 }
 GENERALIST = {"build", "session", "maintenance", "memory", "runtime-review"}
+
+# Description sentences that only steer the model's skill choice: routing
+# hints and search keywords (often French). The runtime reads them; the
+# catalog, written for people, leaves them out.
+ROUTING_HINT = re.compile(r"^(Not for|Use for|Use to|Keywords?:) ")
+
+
+def catalog_description(description: str) -> str:
+    """One table row: line breaks collapsed, routing hints dropped."""
+    sentences = re.split(r"(?<=\.) ", " ".join(description.split()))
+    return " ".join(s for s in sentences if not ROUTING_HINT.match(s))
 
 
 def catalog_lines(root: str = ".") -> list[str]:
@@ -53,8 +65,6 @@ def catalog_lines(root: str = ".") -> list[str]:
         name, description = meta.get("name"), meta.get("description")
         if not isinstance(name, str) or not isinstance(description, str):
             continue
-        # Collapse the line breaks of a folded/multi-line description into
-        # one table row.
         metadata = meta.get("metadata")
         category = metadata.get("category") if isinstance(metadata, dict) else None
         if category not in CATEGORIES:
@@ -62,7 +72,7 @@ def catalog_lines(root: str = ".") -> list[str]:
         # An optional metadata.order puts a section in workflow order; skills
         # without one follow, by name.
         order = metadata.get("order", float("inf"))
-        catalog.append((category, order, name, " ".join(description.split())))
+        catalog.append((category, order, name, catalog_description(description)))
 
     lines = []
     current_family = None

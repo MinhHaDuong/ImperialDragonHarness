@@ -3,7 +3,7 @@ metadata:
   category: writing
   order: 5
 name: track-changes-pdf
-description: "Render a revision-marked PDF of a LaTeX manuscript between two git refs, marking insertions and deletions via latexdiff."
+description: "Render a revision-marked PDF of a LaTeX manuscript between two git refs, marking insertions and deletions via latexdiff. Use for revise-and-resubmit."
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "--old-ref <tag/branch/commit> [--new-ref HEAD] --main-tex <path/to/main.tex> --output <marked.pdf> [--repo .]"

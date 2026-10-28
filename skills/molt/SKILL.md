@@ -3,7 +3,7 @@ metadata:
   category: session
   order: 2
 name: molt
-description: "Repo housekeeping: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Everything /roar missed."
+description: "Repo housekeeping: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Everything /roar missed. Not for a plain check (/yawn)."
 user-invocable: true
 argument-hint:
 ---
@@ -252,7 +252,7 @@ Run full repo housekeeping and act on every finding.
 
 6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
 
-7. **Report.** Summarize what you did.
+7. **Report.** Summarize what you did, then propose: "Surface remaining nits?"
 
 ## Branch discipline
 
