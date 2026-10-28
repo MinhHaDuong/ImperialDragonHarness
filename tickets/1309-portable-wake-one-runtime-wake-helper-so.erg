@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T14:08Z claude created
+2026-10-28T14:14Z reviewer claude note roar sweep 2026-10-28: sites that hard-code the Claude-only wake, all in scope: skills/hunt/SKILL.md:36, agents/team-lead.md:30, skills/raid/references/circuit-breakers.md:53, skills/raid/SKILL.md:476, skills/raid/references/sitrep.md:37-38, plus the 'runtime that cannot wake the session' fallbacks in skills/merge/SKILL.md (Waiting for a queued merge) and skills/roar/SKILL.md (Pre-check).
 
 --- body ---
 ## Context
