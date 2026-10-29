@@ -59,3 +59,40 @@ def test_closed_ticket_pr_link_spellings():
                  'Closed: merged — PR #12'):
         assert st.pr_of(text) == 12
     assert st.pr_of('Closed: done') is None
+
+
+def _ticket(root, num, closed_at, pr):
+    (root / f'{num}-t.erg').write_text(
+        f'%erg 0.1\nTitle: t\nCreated: 2026-10-01\nClosed: autoclosed — PR #{pr}\n\n--- log ---\n'
+        f'2026-10-01T08:00Z claude created\n{closed_at} reviewer closed — autoclosed — PR #{pr}\n')
+
+
+def _fake_gh(ticket, pr):
+    return {'ticket': ticket, 'pr': pr, 'created': '2026-10-27T10:00:00Z', 'merged': '2026-10-27T11:00:00Z'}
+
+
+def test_default_output_unchanged_and_since_widens_the_window(tmp_path, monkeypatch, capsys):
+    """The bare call keeps its 24 h window and its line; --since reaches back further (ticket 1334)."""
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    recent = (now - timedelta(hours=2)).strftime('%Y-%m-%dT%H:%MZ')
+    old = (now - timedelta(days=5)).strftime('%Y-%m-%dT%H:%MZ')
+    _ticket(tmp_path, '0001', recent, 11)
+    _ticket(tmp_path, '0002', old, 12)
+    monkeypatch.setattr(st, '_gh_record', _fake_gh)
+    st.main(str(tmp_path))
+    assert capsys.readouterr().out == (
+        'slow ticket 0001: 60m [derived (PR open to merge, upper bound incl. queue wait)], PR #11; '
+        'suggest /harness-doctor with this as the complaint\n')
+    st.cli([str(tmp_path), '--since', (now - timedelta(days=7)).strftime('%Y-%m-%d')])
+    out = capsys.readouterr().out
+    assert 'slow ticket 0001' in out and 'slow ticket 0002' in out
+
+
+def test_collect_returns_every_closed_ticket_with_solve_time_and_source(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    _ticket(tmp_path, '0001', (now - timedelta(hours=2)).strftime('%Y-%m-%dT%H:%MZ'), 11)
+    monkeypatch.setattr(st, '_gh_record', lambda t, pr: {**_fake_gh(t, pr), 'merged': '2026-10-27T10:05:00Z'})
+    got = st.collect(str(tmp_path), now - timedelta(days=1))
+    assert [(r['ticket'], r['secs'], r['source'].split(' ')[0]) for r in got] == [('0001', 300.0, 'derived')]

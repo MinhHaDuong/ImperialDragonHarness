@@ -2,6 +2,7 @@
 Title: Harness doctor routine checkup: KPIs and vital signs into a long-lived health journal
 Created: 2026-10-29
 Author: claude
+Closed: autoclosed — PR #1957
 
 --- log ---
 2026-10-29T08:56Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-10-29T11:40Z claude note Author decisions: long-lived per-project JSON health journal for curves over time; cost limited to real API-key-billed spend, token estimates excluded
 2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: one stdlib script, OpenRouter the only readable billed cost
 2026-10-29T12:35Z claude note raid 94edd2 feasibility BLOCK, resolved
+2026-10-29T10:22Z reviewer closed — autoclosed — PR #1957
 
 --- body ---
 ## Context

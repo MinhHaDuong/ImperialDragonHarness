@@ -41,4 +41,7 @@ dev = [
     "httpx2>=2.13,<3",
     "bibtexparser>=1.4,<2",
     "isbnlib>=3.10,<4",
+    # scripts/health_checkup.py --plot renders the health journal's curves
+    # (ticket 1334); imported only in that mode, declared all the same.
+    "matplotlib>=3.8,<4",
 ]

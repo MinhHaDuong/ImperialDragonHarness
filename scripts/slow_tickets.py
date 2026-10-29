@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """List tickets closed in the last 24 h whose solve time exceeded the threshold (ticket 1239).
 
+    python3 scripts/slow_tickets.py [TICKET_ROOT] [--since YYYY-MM-DD[THH:MM]]
+
+`--since` widens the window (ticket 1334); `collect()` gives every closed ticket
+of a window with its solve time and source, for the health checkup.
+
 Solve time, defined once: the sum of the measured `duration:` lines that gaze,
 verify-gate and merge post on the ticket's merge request ("read from a record").
 Without any, the request's opening to its merge ("derived", an upper bound that
 includes queue wait). Without either, unknown, which is listed, never treated as fast.
 """
+import argparse
 import json
 import re
 import subprocess
-import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -45,14 +51,21 @@ def _span(created, merged):
         return None
 
 
+def solve(r):
+    """(seconds, source) of one record: measured durations, else the PR span, else (None, 'unknown')."""
+    secs = _measured(r.get('comments'))
+    if secs is not None:
+        return secs, 'read from a record (duration: comments)'
+    secs = _span(r.get('created'), r.get('merged'))
+    if secs is not None:
+        return secs, 'derived (PR open to merge, upper bound incl. queue wait)'
+    return None, 'unknown'
+
+
 def classify(records, threshold=THRESHOLD_MIN):
     out = []
     for r in records:
-        secs = _measured(r.get('comments'))
-        source = 'read from a record (duration: comments)'
-        if secs is None:
-            secs = _span(r.get('created'), r.get('merged'))
-            source = 'derived (PR open to merge, upper bound incl. queue wait)'
+        secs, source = solve(r)
         if secs is None:
             out.append({**r, 'minutes': None, 'source': 'unknown', 'doctor': '/harness-doctor'})
             continue
@@ -94,19 +107,53 @@ def _gh_record(ticket, pr):
     return rec
 
 
-def main(root='tickets/closed', hours=24):
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
-    recs = []
+def _closed_since(root, since):
+    """(ticket, pr) of every ticket under `root` whose last close falls at or after `since`."""
+    out = []
     for p in sorted(Path(root).glob('*.erg')):
         text = p.read_text()
         m = re.findall(r'^(\d{4}-\d\d-\d\dT\d\d:\d\dZ) \S+ closed\b', text, re.M)
         if not m or datetime.fromisoformat(m[-1].replace('Z', '+00:00')) < since:
             continue
-        recs.append(_gh_record(p.name.split('-')[0], pr_of(text)))
-    out = render(classify(recs))
+        out.append((p.name.split('-')[0], pr_of(text)))
+    return out
+
+
+def _records(root, since):
+    # One gh read per request, run side by side: a week of closes is otherwise minutes of serial waits.
+    pairs = _closed_since(root, since)
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        return list(pool.map(lambda tp: _gh_record(*tp), pairs))
+
+
+def collect(root, since):
+    """Every ticket closed since `since`, each with `secs` (None when unknown) and its `source`."""
+    out = []
+    for r in _records(root, since):
+        secs, source = solve(r)
+        out.append({**r, 'secs': secs, 'source': source})
+    return out
+
+
+def main(root='tickets/closed', hours=24, since=None):
+    since = since or datetime.now(timezone.utc) - timedelta(hours=hours)
+    out = render(classify(_records(root, since)))
     if out:
         print(out)
 
 
+def cli(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument('root', nargs='?', default='tickets/closed')
+    ap.add_argument('--since', help='window start, ISO date or UTC datetime (default: 24 h ago)')
+    a = ap.parse_args(argv)
+    since = None
+    if a.since:
+        since = datetime.fromisoformat(a.since.replace('Z', '+00:00'))
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=timezone.utc)
+    main(a.root, since=since)
+
+
 if __name__ == '__main__':
-    main(*sys.argv[1:2])
+    cli()
