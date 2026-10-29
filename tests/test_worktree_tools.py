@@ -772,7 +772,7 @@ def test_preflight_passes_on_ignored_setuptools_build(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-build", dirty=False)
     _exclude(primary, "build/")
-    for p in ("build/lib/pkg/m.py", "build/bdist.linux-x86_64/x", "build/temp.linux-x86_64/o"):
+    for p in ("build/lib/pkg/m.py", "build/bdist.linux-x86_64/x.py", "build/temp.linux-x86_64/o.o"):
         (wt / p).parent.mkdir(parents=True, exist_ok=True)
         (wt / p).write_text("x\n")
     res = _preflight(wt)
@@ -837,6 +837,45 @@ def test_preflight_keeps_venv_without_pyvenv_cfg_as_residue(origin):
     res = _removal(wt)
     assert res.returncode == 1 and ".venv" in res.stderr
     assert (wt / ".venv" / "mine.txt").exists()
+
+
+def test_removal_keeps_venv_holding_hand_made_top_level_file(origin):
+    """Review 7a1a: a real venv with a hand-made .venv/notes.txt is work, not disposable."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-venv-notes", dirty=False)
+    _plain_venv(wt)
+    (wt / ".venv" / "notes.txt").write_text("keep me\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and ".venv/notes.txt" in res.stderr
+    assert (wt / ".venv" / "notes.txt").exists()
+
+
+def test_removal_keeps_hand_made_file_inside_ignored_build_lib(origin):
+    """Review 7a1a: build/lib is disposable only while every file looks like build output."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-lib-notes", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "m.py").write_text("x\n")
+    (wt / "build" / "lib" / "notes.txt").write_text("keep me\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and "build/lib" in res.stderr
+    assert (wt / "build" / "lib" / "notes.txt").exists()
+
+
+def test_refused_removal_scrubs_nothing(origin):
+    """A removal blocked by other residue deletes neither the venv nor build output."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-refused-scrub", dirty=False)
+    _exclude(primary, "build/")
+    _plain_venv(wt)
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "m.py").write_text("x\n")
+    (wt / "draft.txt").write_text("mine\n")
+    res = _removal(wt)
+    assert res.returncode == 1
+    assert (wt / ".venv" / "pyvenv.cfg").exists()
+    assert (wt / "build" / "lib" / "m.py").exists()
 
 
 def test_preflight_keeps_symlinked_venv_as_residue(origin):

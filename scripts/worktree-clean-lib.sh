@@ -11,8 +11,15 @@ set -euo pipefail
 # guard decides). Git prints an ignored directory as one `!! build/` entry, so
 # that entry is expanded: only its lib*, bdist.* and temp.* children (setuptools
 # output) are tolerated, a hand-made build/notes.txt stays residue. An untracked
-# root .venv holding a regular pyvenv.cfg is tolerated too; worktree_scrub
-# deletes it, since git refuses to remove a tree holding untracked files. Ignored files count: a repo may ignore `*`, and
+# root .venv holding a regular pyvenv.cfg is tolerated too, provided its
+# top level holds only usual venv entries (pyvenv.cfg, bin, Scripts, lib, lib64,
+# include, share, .gitignore, CACHEDIR.TAG); any other entry is residue and the
+# whole .venv is kept. worktree_scrub deletes it, since git refuses to remove a
+# tree holding untracked files. A build/ child (lib*, bdist.*, temp.*) is
+# regenerable only when every file in it looks like build output: extension
+# py pyc so pyd pyi typed o a c h, or a basename that some tracked file has
+# (package data copied by setuptools); else the child is residue. Symlinks
+# inside are never build output. Ignored files count: a repo may ignore `*`, and
 # `git worktree remove` deletes them. --no-optional-locks keeps the status
 # from rewriting the index, which would restart the tree's idle clock.
 # Returns 1 when git cannot answer (an unreadable tree is never "clean").
@@ -28,7 +35,32 @@ _venv_disposable() {
     local v="$1/.venv" tracked
     [ -d "$v" ] && [ ! -L "$v" ] && [ -f "$v/pyvenv.cfg" ] && [ ! -L "$v/pyvenv.cfg" ] || return 1
     tracked=$(git -C "$1" ls-files -- .venv 2>/dev/null) || return 1
-    [ -z "$tracked" ]
+    [ -z "$tracked" ] || return 1
+    local e
+    for e in "$v"/* "$v"/.[!.]*; do
+        [ -e "$e" ] || [ -L "$e" ] || continue
+        case "${e##*/}" in
+            pyvenv.cfg|bin|Scripts|lib|lib64|include|share|.gitignore|CACHEDIR.TAG) ;;
+            *) return 1 ;;
+        esac
+    done
+}
+
+# _build_child_disposable <path> <name>: build/<name> is a real directory whose
+# files all look like build output (see header); symlinks disqualify it.
+_build_child_disposable() {
+    local d="$1/build/$2" f base names
+    [ -d "$d" ] && [ ! -L "$d" ] || return 1
+    [ -z "$(find "$d" -type l -print -quit)" ] || return 1
+    names=$(git -C "$1" ls-files 2>/dev/null | sed 's|.*/||') || return 1
+    while IFS= read -r -d '' f; do
+        base="${f##*/}"
+        case "$base" in
+            *.py|*.pyc|*.so|*.pyd|*.pyi|*.typed|typed|*.o|*.a|*.c|*.h) continue ;;
+        esac
+        printf '%s\n' "$names" | grep -qxF -- "$base" || return 1
+    done < <(find "$d" -type f -print0)
+    return 0
 }
 
 worktree_residue() {
@@ -49,7 +81,7 @@ worktree_residue() {
                     for c in "$1"/build/* "$1"/build/.[!.]*; do
                         [ -e "$c" ] || [ -L "$c" ] || continue
                         name="${c##*/}"
-                        if [ ! -L "$c" ] && _build_child_regenerable "$name"; then continue; fi
+                        if _build_child_regenerable "$name" && _build_child_disposable "$1" "$name"; then continue; fi
                         if [ -d "$c" ] && [ ! -L "$c" ]; then printf '!! build/%s/\n' "$name"
                         else printf '!! build/%s\n' "$name"; fi
                     done
@@ -75,6 +107,7 @@ worktree_scrub() {
         [ -d "$c" ] && [ ! -L "$c" ] || continue
         name="${c##*/}"
         _build_child_regenerable "$name" || continue
+        _build_child_disposable "$1" "$name" || continue
         tracked=$(git -C "$1" ls-files -- "build/$name") || continue
         [ -z "$tracked" ] || continue
         # Unignored output is untracked work in git's eyes: residue reports it, never the scrub.
