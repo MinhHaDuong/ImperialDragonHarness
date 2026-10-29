@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-29T19:54Z reviewer created
+2026-10-29T20:12Z reviewer author: native Claude Code and Codex memories become benchmark arms
 
 --- body ---
 ## Context
@@ -24,3 +25,29 @@ Recent research (VibeMemBench; "Useful Memories Become Faulty", May 2026) makes 
 ## Exit criteria
 - [ ] The census reports read counts per runtime and host, with a positive control
 - [ ] The trial result is written in `conception/` with its arithmetic and its limits
+
+## Native auto-memories as benchmarks (author, 2026-10-29)
+The author asked to treat the Claude Code and Codex auto-memories as benchmarks, both as
+outcome-trial arms and as reference designs. State on padme, 2026-10-29:
+- Claude Code: on. 1,183 notes across project dirs under `~/.claude/projects/*/memory/`,
+  for example AEDIST-technical-report 199 notes (804 KB), search-works-for-zotero 145 (640 KB),
+  climate-finance-het 123 (528 KB), the harness 28. These are directory sizes, not injected
+  bytes. Only each MEMORY.md index is loaded at start; notes are read on demand. The large
+  stores suggest the same accumulation the repository store shows; not yet checked note by note.
+- Codex: the `memories` feature reports `stable`, `false` (`codex features list`, CLI 0.165.0).
+  `~/.codex/memories_1.sqlite` holds 0 rows. Its schema has a two-phase pipeline (per-thread
+  `stage1_outputs` with `raw_memory` and `rollout_summary`, then a consolidation with
+  `selected_for_phase2`), and it keeps `usage_count`/`last_usage` per memory, a decay signal
+  the repository store lacks. Enabling it is a user-settings change: the author's act.
+
+Trial arms (the same ten harness tickets):
+1. no memory (native memories off, no repository memory);
+2. Claude Code native auto-memory only;
+3. Codex native memories only (after the author enables the feature and it has warmed up on past threads);
+4. repository memory (departments, after 1349) only;
+5. repository memory with native memory, as today.
+Judge on rework, reviewer findings and repeated incidents; report tokens injected per arm.
+
+Design comparison to report alongside: capture (automatic or roar), consolidation (Codex's two
+phases versus smelt), retirement and decay (usage counts versus none), size bounds, and
+cross-runtime reach (each native store serves one runtime; the repository store serves all three).
