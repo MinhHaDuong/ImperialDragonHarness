@@ -118,7 +118,7 @@ def verified_archival_links(root):
         if old == "memory/DREAM.md":
             assert new == "memory/HOARD.md"
             assert re.search(rb"(?m)^Prompt revision: v8-r1\b", original)
-            assert re.search(rb"(?m)^Prompt revision: v8-r2\b", current)
+            assert re.search(rb"(?m)^Prompt revision: v8-r3\b", current)
         else:
             assert new == old.replace("memory/dreams/", "memory/hoards/", 1)
             assert blob_id(current) == oid, current_path
