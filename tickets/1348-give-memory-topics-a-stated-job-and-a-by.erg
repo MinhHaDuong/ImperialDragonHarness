@@ -10,6 +10,7 @@ Author: reviewer
 2026-10-29T20:08Z reviewer author rulings: departments accepted provisionally; rename to smelt (1352); byte cap open
 2026-10-29T20:36Z reviewer borrowings: pinned rulings, recall with source
 2026-10-29T20:42Z reviewer journal as source, departments as guide (author)
+2026-10-29T20:45Z reviewer author ruling: cap option B, 4 KB per department, index 40 lines, ratchet after 1346
 
 --- body ---
 ## Context
@@ -146,3 +147,20 @@ Consequences for the department scheme:
 - The value a department adds is cheaper reading (finding the right episodes and knowing what is
   current), not better recall. 1346's verbatim-journal control arm tests exactly this: if the
   guides do not beat raw journal retrieval on reading cost or on stale-fact use, shrink them.
+
+## Author ruling: the cap (2026-10-29), option B
+- **4 KB per department page** (about 60 lines), measured in bytes, which track reading cost,
+  not in lines. The cap covers the guide sections: current guidance, hazards and open questions.
+  Across eight departments that totals about 32 KB; a delegate reading two or three pages reads
+  about 12 KB (roughly 4,000 tokens).
+- The "Retired" list (one line per retired claim) is outside the cap and moves to history at the
+  next smelt.
+- Pinned Commission rulings count against the cap but are never cut to fit. An overflowing
+  Commission page signals rules waiting for the author to promote them (brood, 1351).
+- The `MEMORY.md` index gets its own cap of 40 lines: one line per department, with its most-used fact.
+- The cap ratchets down after 1346. If the verbatim-journal control arm matches the guides on
+  stale-fact use and reading cost, move toward pointer-only pages (about 25 lines each).
+Rejected: 200 lines per page (Claude Code's index load limit); with eight pages that reproduces
+today's 1,766 lines.
+With this ruling, the open questions of this ticket are settled: departments (provisional),
+rename (smelt, 1352), and cap.
