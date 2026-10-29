@@ -35,5 +35,5 @@ Findings name both sides (`path:line`) and follow the floor of
 
 The entry is `memory/journal/YYYY/YYYY-MM-DD-docs-visit-<slug>.md`. The
 slug differs from `-harness-doctor-` so that a docs visit does not move the
-default input of the next regular visit. Lair suggests a docs visit 30 days
-after the newest `-docs-visit-` entry, or when a ROADMAP workstream closes.
+default input of the next regular visit. When lair suggests one: its step 16
+(`skills/lair/SKILL.md`).
