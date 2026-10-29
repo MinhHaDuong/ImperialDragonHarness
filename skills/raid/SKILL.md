@@ -35,6 +35,13 @@ does not configure spawned children.
   fan-out member.
 - **Per-ticket gaze and verify-gate:** follow their own launch choices.
 
+## Autonomous-day brief
+
+A raid run unattended (a team lead's day, no author in the loop) carries a
+USD cap with a per-wave ledger, a queue of the author's by-right decisions,
+a context handoff rule and a broadcast before any shared resource: read
+`references/autonomous-brief.md` at raid start.
+
 ## Balance rule
 
 **Deliverable work ≥60%, tooling ≤40%.** If two consecutive tickets were tooling, the next must advance a deliverable. Track in session log.

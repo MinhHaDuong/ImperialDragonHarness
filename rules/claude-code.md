@@ -32,6 +32,8 @@ inherit it: review seats cannot reach their review tree.
 
 The classifier refuses rule-mandated force-pushes and `git branch -D` despite
 the blanket `Bash` allow: `scripts/claude-allow-check.py` lists the narrow rules.
+A classifier denial is rewritten to match an allow rule literally (`git -C`,
+no `cd` prefix) or logged and skipped, never retried verbatim.
 
 ## Hook output
 
