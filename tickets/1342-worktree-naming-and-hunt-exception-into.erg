@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-29T13:55Z claude created
+2026-10-29T14:10Z claude note raid 815b7f imagine+plan+feasibility: WARN, resolved; on-start-context.sh added to scope
 
 --- body ---
 ## Context
@@ -46,3 +47,31 @@ to workflow.md for the rest. One home per fact; no restatement.
 Priced in the visit: about 15 resident lines moved, about 30 agent-minutes and
 5 author-minutes, odds 0.8 that it removes the orphan path. Resident rules: the
 author reviews the wording.
+
+## Plan and feasibility (raid 815b7f): WARN, resolved
+
+Premise, measured: no adapter file loads any rule. `adapters/projections.json` links
+the rules directory for Claude Code only; the Pi and Codex adapters ship guards,
+hooks and skills. Pi and Codex reach `rules/workflow.md` only through the
+`AGENTS.md` pointer, and never `rules/claude-code.md` (`rules/README.md` § resident
+set says a runtime without the auto-load gets none of it). The move gives the facts
+their runtime-neutral home; how far `workflow.md` reaches Pi and Codex is the wider,
+already documented gap. The PR states this for criterion 1.
+
+Move from `rules/claude-code.md` § Entering the session into `rules/workflow.md`
+§ Session start: the "create the worktree before answering" paragraph (keep in
+claude-code.md only that a restart resets the `cd`), the naming table with the
+`{pid}` and legacy notes, the `/hunt N` exception, and the self-presentation line,
+stated once. The recipe stays in `skills/hunt/SKILL.md` § Worktree (pointer, no
+copy). claude-code.md keeps the `EnterWorktree` ban and its reason, Subagent levers,
+Allow rules, Hook output, plus a one-line pointer to workflow.md.
+
+Also in scope: `scripts/on-start-context.sh` prints a pointer to "claude-code.md
+§ Entering the session"; repoint it to workflow.md § Session start.
+
+Constraints: `tests/test_rules_resident_budget.py` caps the four resident files at
+17800 chars (17780 now): the move must be net-neutral or smaller, never raise the
+budget. No fenced shell blocks in resident rules; no ticket numbers in the four rule
+files (`tests/test_verify_fork_contracts.py`); no vendor env names in workflow.md
+(`scripts/check-agnostic.sh`).
+
