@@ -158,5 +158,7 @@ HAL, ISTEX, EZproxy). File each downloaded PDF with
 `suggest-attachments --parent <itemKey> <file>`, and add `--edit` after reading
 the report. Never pass `--source scihub` or `--source libgen`: a source outside the
 default list is the author's own manual, per-user choice, never the harness's.
-The prerequisites are `uv` and the network. When the helper exits 127 (no `uvx`)
-or its first run cannot download DOIfetch, say which and stop; do not fetch another way.
+The prerequisites are `uv` and the network. Exit 127 means no `uvx`; 69 means
+DOIfetch itself could not be downloaded. On either, say which and stop; do not
+fetch another way. Any other nonzero exit is DOIfetch's own answer for that work
+(not found in the open sources): report it and move on to the next work.

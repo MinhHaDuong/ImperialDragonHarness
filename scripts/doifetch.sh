@@ -11,4 +11,11 @@ if ! command -v uvx >/dev/null 2>&1; then
     echo "doifetch: uvx not found; install uv (https://docs.astral.sh/uv/) and retry" >&2
     exit 127
 fi
-exec uvx --from "git+https://github.com/MinhHaDuong/DOIfetch@${DOIFETCH_REF}" doifetch "$@"
+spec="git+https://github.com/MinhHaDuong/DOIfetch@${DOIFETCH_REF}"
+# Get the tool first, so a failed download (uv exits 1, like a failed fetch)
+# gets its own code: 69, EX_UNAVAILABLE. Cached after the first run (~0.1 s).
+if ! uvx -q --from "$spec" doifetch --help >/dev/null; then
+    echo "doifetch: could not get DOIfetch at ${DOIFETCH_REF:0:12} (network or uv); nothing was fetched" >&2
+    exit 69
+fi
+exec uvx -q --from "$spec" doifetch "$@"
