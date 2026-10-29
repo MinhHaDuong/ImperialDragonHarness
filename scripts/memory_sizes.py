@@ -64,10 +64,13 @@ def net_change(before: Path, after: Path):
 
 def _checkout_ref(ref: str, repo: Path, dest: Path) -> Path:
     """Materialize memory/topics at a git ref into dest (read-only plumbing)."""
-    names = subprocess.run(
-        ["git", "-C", str(repo), "ls-tree", "--name-only", f"{ref}:memory/topics"],
-        check=True, capture_output=True, text=True,
-    ).stdout.split()
+    try:
+        names = subprocess.run(
+            ["git", "-C", str(repo), "ls-tree", "--name-only", f"{ref}:memory/topics"],
+            check=True, capture_output=True, text=True,
+        ).stdout.split()
+    except subprocess.CalledProcessError as exc:
+        sys.exit(f"memory_sizes: --before {ref!r} is neither a directory nor a git ref with memory/topics: {exc.stderr.strip()}")
     for name in names:
         blob = subprocess.run(
             ["git", "-C", str(repo), "show", f"{ref}:memory/topics/{name}"],

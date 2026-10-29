@@ -120,3 +120,9 @@ def test_net_change_cli_flags_store_growth(tmp_path, capsys):
     shrunk = _dir(tmp_path, "shrunk", **{"a.md": 2000})
     assert ms.main(shrunk, before=before) == 0
     assert "reason required" not in capsys.readouterr().out
+
+
+def test_bad_before_ref_exits_with_a_message(tmp_path):
+    with pytest.raises(SystemExit) as exc:
+        ms._checkout_ref("no-such-ref", REPO, tmp_path)
+    assert "--before" in str(exc.value)
