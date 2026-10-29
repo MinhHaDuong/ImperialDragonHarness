@@ -2,9 +2,11 @@
 Title: Rule-mandated git pushes and branch deletes need allow rules the harness does not record
 Created: 2026-10-29
 Author: reviewer
+Closed: fixed by PR #1943: rules/claude-code.md § Allow rules points to scripts/claude-allow-check.py (read-only; exit 0 present, 1 missing, 2 unreadable); update-ref -d left to the classifier
 
 --- log ---
 2026-10-29T07:49Z reviewer created
+2026-10-29T08:04Z reviewer closed — fixed by PR #1943: rules/claude-code.md § Allow rules points to scripts/claude-allow-check.py (read-only; exit 0 present, 1 missing, 2 unreadable); update-ref -d left to the classifier
 
 --- body ---
 ## Context
