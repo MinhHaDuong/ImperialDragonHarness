@@ -8,6 +8,7 @@ Author: claude
 2026-10-29T10:30Z claude respecified Author correction: not a one-off text cut but a routine measurement offered at every visit
 2026-10-29T11:10Z claude note Author: think KPIs (time per ticket), read from what monitoring already stores
 2026-10-29T11:40Z claude note Author decisions: long-lived per-project JSON health journal for curves over time; cost limited to real API-key-billed spend, token estimates excluded
+2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: one stdlib script, OpenRouter the only readable billed cost
 
 --- body ---
 ## Context
@@ -104,3 +105,36 @@ metric's series over time.
 - [ ] A first run on origin/main is committed as the journal's first record and shown in the PR
 - [ ] Cost of the run stated in the menu row (wall seconds measured, no model usage)
 - [ ] The harness gate passes
+
+## Plan (raid 94edd2)
+
+Actions: (1) `scripts/slow_tickets.py`: split a `collect(root, since)` returning every
+closed ticket with solve time and source; `main()` stays a thin wrapper, `--since`
+added, default output unchanged (regression test). (2) `scripts/health_checkup.py`,
+stdlib: one function per metric group (tickets, quality, main, timings, size,
+complexity, billed cost), each returning `{name: {value, unit, source}}` and turning an
+exception into `value: null` plus `gap`; record builder (`schema`, `ts`, `host`,
+`commit`, `window`); append; table against the previous record with the top 3 movers
+by relative change; `--plot` imports matplotlib inside the function. Hyphenated readers
+load by `importlib.util.spec_from_file_location`; no logic copied. Percentiles by
+`statistics.quantiles`. (3) Tests. (4) Menu row in skills/harness-doctor/SKILL.md (150
+line cap, 122 now) and a short metrics note in a reference. (5) First run on
+origin/main, record committed, shown in the PR.
+
+Readings fixed here: the first record's window is the last 7 days; a KPI counts as
+covered when its name is present, possibly `null` with `gap`. First-pass quality reads
+verdicts from `refs/notes/review` (trace-pr-join needs a census CSV a cold run lacks).
+Main health parses `pass:` / `fail:` lines of `idh/after-merge.log`.
+
+Billed cost: OpenRouter `GET /api/v1/key` returns the key's cumulative usage in USD;
+journal the cumulative figure and derive the window at read time (first record: gap
+for the window). Key read as `scripts/pi-openrouter` reads it, never printed. Anthropic
+and OpenAI cost endpoints need admin keys: gap unless one is held. The fetcher is
+injectable for tests; a test asserts no key string appears in a record.
+
+First test: a journal of three records with differing metric names (one `null` plus
+`gap`); `read_series` spans all three with `None` at the gap and tolerates unknown
+names; a record built with one source raising has `value: null` and a non-empty `gap`.
+
+Estimated wall time 30 to 90 s (the `gh` reads of slow_tickets dominate, 18.6 s
+measured for its 24 h window); measure and state in the menu row.
