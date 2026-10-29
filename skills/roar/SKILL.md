@@ -102,10 +102,9 @@ default branch — there are no remote branches nor merge requests to inspect.
    configuration key, a file path, a public function, a skill contract, a make
    target, a pipeline step, a data contract or the methodology. Grep the whole
    tree on the ref for each changed or renamed name and update every statement
-   of it: the root documents (README, INSTALL, AGENTS, CONTRIBUTING; ROADMAP
-   when a milestone moved), the module and function docstrings of the touched
-   scripts, and comments restating it. Edits ride in the wrap-up bundle;
-   STATE.md stays lair's. Nothing to propagate: say so in step 11.
+   of it: the root documents, the module and function docstrings of the
+   touched scripts, and comments restating it. Out of scope: STATE.md and
+   ROADMAP.md (lair step 10). Nothing to propagate: say so in step 11.
 
 ## Bundle and fast track
 
