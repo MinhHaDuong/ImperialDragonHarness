@@ -9,6 +9,7 @@ Author: reviewer
 2026-10-29T20:36Z reviewer reference designs: Claude Code docs, Qwen Code, Mistral, Chinese runtimes, ReMe
 2026-10-29T20:40Z reviewer DreamBench-SWE read; proposed as the trial's scoring method
 2026-10-29T20:56Z reviewer census padme since 2026-10-15 (scripts/census/repo-memory-reads.py, ticket 1353; sessions / reading index / reading topics / via Read / via shell-call): claude main-working 148/1/1/0/1; claude main-maintenance 70/12/5/0/14; claude subagent 2671/47/42/1/73; codex main-working 569/360/216/-/360; codex main-maintenance 165/62/38/-/62; pi main-working 3/0/0; pi main-maintenance 1/0/0. CONTROL OK (117 maintenance sessions read). doudou: not reachable from padme (ssh: No route to host); re-run there with --host doudou. Native ~/.claude/projects memory paths excluded; grep-by-content invisible.
+2026-10-29T22:20Z reviewer census padme since 2026-10-15, SUPERSEDES the 20:56Z numbers (those counted writes, apply_patch and git commands naming the path as reads, and summed index and topic readers in the control); format sessions / reading index / reading topics / via Read / via shell-call: claude main-working 148/1/0/0/1; claude main-maintenance 70/5/2/0/5; claude subagent 2682/23/24/1/40; codex main-working 570/109/70/-/142; codex main-maintenance 165/28/17/-/36; pi main-working 3/0/0; pi main-maintenance 1/0/0. CONTROL OK (41 unique maintenance sessions read). Session totals grew as live sessions continued.
 
 --- body ---
 ## Context

@@ -24,6 +24,7 @@ import glob
 import json
 import os
 import re
+import shlex
 import socket
 import sys
 
@@ -42,10 +43,64 @@ CALL_TYPES = ("function_call", "custom_tool_call", "local_shell_call")
 TS = re.compile(r'"timestamp"\s*:\s*"([0-9T:\-]+)')
 
 
+READERS = {"cat", "head", "tail", "less", "more", "grep", "egrep", "fgrep", "rg", "ls", "nl", "bat", "sed", "awk", "wc", "tac"}
+SPLIT = re.compile(r"&&|\|\||[;|\n]")
+
+
 def classify(text):
     """Return the set of repository-memory kinds named in text (native paths removed)."""
     kept = " ".join(t for t in text.split() if NATIVE not in t)
     return {k for k, p in PAT.items() if p.search(kept)}
+
+
+def shell_kinds(cmd):
+    """Return the kinds a shell command reads: reader commands only.
+
+    Redirection targets, writers (tee, apply_patch, sed -i), git subcommands and
+    any other command naming the path are not reads.
+    """
+    kinds = set()
+    for seg in SPLIT.split(cmd or ""):
+        try:
+            toks = shlex.split(seg)
+        except ValueError:
+            toks = seg.split()
+        while toks and (re.match(r"\w+=", toks[0]) or toks[0] in ("sudo", "command", "time")):
+            toks.pop(0)
+        if not toks or os.path.basename(toks[0]) not in READERS:
+            continue
+        if toks[0] == "sed" and any(t.startswith("-i") or t == "--in-place" for t in toks):
+            continue
+        args, skip = [], False
+        for t in toks[1:]:
+            if skip:
+                skip = False
+            elif re.match(r"^\d*>", t) or re.match(r"^\d*<<", t):
+                skip = re.fullmatch(r"\d*(>>?|<<-?)", t) is not None
+            else:
+                args.append(t)
+        kinds |= classify(" ".join(args))
+    return kinds
+
+
+def call_commands(payload):
+    """Return (read_paths, shell_commands) from a Codex or Pi tool call; writers yield nothing."""
+    name = str(payload.get("name") or "")
+    if name in ("apply_patch", "write", "edit", "Write", "Edit"):
+        return [], []
+    raw = payload.get("arguments", payload.get("input", payload.get("action")))
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            return [], [raw] if "apply_patch" not in raw else []
+    if not isinstance(raw, dict):
+        return [], []
+    cmd = raw.get("cmd", raw.get("command"))
+    if isinstance(cmd, list):
+        cmd = cmd[2] if len(cmd) >= 3 and cmd[1] in ("-lc", "-c") else " ".join(map(str, cmd))
+    paths = [raw[k] for k in ("path", "file_path") if isinstance(raw.get(k), str)] if name in ("read", "Read") else []
+    return paths, [cmd] if isinstance(cmd, str) else []
 
 
 def scan_claude(path):
@@ -79,11 +134,12 @@ def scan_claude(path):
                     name = c.get("name")
                     if name == "Read":
                         chan, target = "read", inp.get("file_path")
+                        kinds = classify(target or "")
                     elif name == "Bash":
-                        chan, target = "shell", inp.get("command")
+                        chan, kinds = "shell", shell_kinds(inp.get("command"))
                     else:
                         continue
-                    for k in classify(target or ""):
+                    for k in kinds:
                         hits[(chan, k)] += 1
     except OSError:
         pass
@@ -106,11 +162,13 @@ def scan_codex(path):
             if not isinstance(payload, dict):
                 continue
             text = json.dumps(payload)
-            is_call = payload.get("type") in CALL_TYPES or (
-                payload.get("role") == "assistant" and "toolCall" in text
-            )
-            if is_call:
-                for k in classify(text.replace("\\/", "/")):
+            calls = [payload] if payload.get("type") in CALL_TYPES else []
+            if payload.get("role") == "assistant" and isinstance(payload.get("content"), list):
+                calls += [c for c in payload["content"] if isinstance(c, dict) and c.get("type") == "toolCall"]
+            for call in calls:
+                paths, cmds = call_commands(call)
+                kinds = set().union(*(classify(p) for p in paths), *(shell_kinds(c) for c in cmds))
+                for k in kinds:
                     hits[("shell", k)] += 1
             if payload.get("role") == "user" and MARKER not in text and TEXT_MAINT.search(text[:4000]):
                 maint = True
@@ -123,6 +181,8 @@ def add(table, key, hits):
     kinds = {k for (_, k) in hits}
     for k in kinds:
         row[k] += 1
+    if kinds:
+        row["either"] += 1
     for chan in {c for (c, _) in hits}:
         row[chan] += 1
 
@@ -170,7 +230,7 @@ def main(argv=None):
         print(" ".join(key), "|", *[table[key][c] for c in cols])
     print("Claude Code: main and subagent transcripts. Codex, Pi: main sessions only (no subagent store).")
     print("Hosts scanned: %s. Others: run this command there with --host NAME." % args.host)
-    ctl = sum(r["index"] + r["topics"] for k, r in table.items() if k[2] == "main-maintenance")
+    ctl = sum(r["either"] for k, r in table.items() if k[2] == "main-maintenance")
     if ctl > 0:
         print("CONTROL OK: maintenance sessions with a memory read:", ctl)
         return 0

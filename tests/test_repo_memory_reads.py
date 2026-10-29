@@ -106,3 +106,55 @@ def test_control_ok_line(tmp_path, capsys):
             "--codex-root", str(tmp_path / "n"), "--pi-root", str(tmp_path / "n")]
     assert rmr.main(argv) == 0
     assert "CONTROL OK" in capsys.readouterr().out
+
+
+def test_writes_and_git_are_not_reads():
+    for cmd in ("printf x > memory/MEMORY.md", "cat <<EOF >> memory/MEMORY.md\nhi\nEOF",
+                "echo y | tee memory/topics/a.md", "git add memory/MEMORY.md", "git diff memory/topics/a.md",
+                "git log -- memory/MEMORY.md", "sed -i s/a/b/ memory/MEMORY.md",
+                "apply_patch '*** Update File: memory/MEMORY.md'"):
+        assert rmr.shell_kinds(cmd) == set(), cmd
+    for cmd in ("cat memory/MEMORY.md", "head -5 memory/MEMORY.md", "sed -n 1,5p memory/MEMORY.md",
+                "rg foo memory/topics/", "ls memory/topics/", "cd x && grep -n a memory/MEMORY.md | wc -l"):
+        assert rmr.shell_kinds(cmd), cmd
+    assert rmr.shell_kinds("cat memory/MEMORY.md > /tmp/o") == {"index"}
+
+
+def test_write_only_and_git_only_sessions_count_zero(tmp_path):
+    d = tmp_path / "cl" / "-x-agents"
+    write(d / "w.jsonl", [user("hi"), tool("Bash", command="printf x > " + REPO + "MEMORY.md"),
+                          tool("Write", file_path=REPO + "MEMORY.md"), tool("Edit", file_path=REPO + "topics/a.md")])
+    write(d / "g.jsonl", [user("hi"), tool("Bash", command="git add memory/MEMORY.md"),
+                          tool("Bash", command="git diff -- memory/topics/a.md")])
+    args = rmr.argparse.Namespace(since="2026-10-15", host="h", claude_root=str(tmp_path / "cl"),
+                                  codex_root=str(tmp_path / "n"), pi_root=str(tmp_path / "n"), project_filter="-agents")
+    w = rmr.census(args)[("claude", "h", "main-working")]
+    assert (w["sessions"], w["index"], w["topics"], w["either"]) == (2, 0, 0, 0)
+
+
+def test_codex_apply_patch_and_pi_prose(tmp_path):
+    marker = {"payload": {"role": "user", "content": "Project memory boundary"}}
+    cdx = tmp_path / "cdx"
+    write(cdx / "1.jsonl", [marker, {"payload": {"type": "custom_tool_call", "name": "apply_patch",
+                                                 "input": "*** Update File: memory/MEMORY.md"}}])
+    write(cdx / "2.jsonl", [marker, {"payload": {"type": "function_call", "name": "shell",
+                                                 "arguments": json.dumps({"command": ["bash", "-lc", "cat memory/MEMORY.md"]})}}])
+    pi = tmp_path / "pi"
+    write(pi / "p.jsonl", [marker, {"message": {"role": "assistant", "content": [
+        {"type": "text", "text": "I will read memory/MEMORY.md"},
+        {"type": "toolCall", "name": "bash", "arguments": {"command": "ls"}}]}}])
+    args = rmr.argparse.Namespace(since="2020-01-01", host="h", claude_root=str(tmp_path / "none"),
+                                  codex_root=str(cdx), pi_root=str(pi), project_filter="-agents")
+    t = rmr.census(args)
+    assert t[("codex", "h", "main-working")]["either"] == 1
+    assert t[("pi", "h", "main-working")]["either"] == 0
+
+
+def test_control_counts_unique_sessions(tmp_path, capsys):
+    d = tmp_path / "cl" / "-x-agents"
+    write(d / "m.jsonl", [user("<command-name>/roar</command-name>"),
+                          tool("Read", file_path=REPO + "MEMORY.md"), tool("Read", file_path=REPO + "topics/a.md")])
+    argv = ["--since", "2026-10-15", "--host", "h", "--claude-root", str(tmp_path / "cl"),
+            "--codex-root", str(tmp_path / "n"), "--pi-root", str(tmp_path / "n")]
+    assert rmr.main(argv) == 0
+    assert "CONTROL OK: maintenance sessions with a memory read: 1\n" in capsys.readouterr().out
