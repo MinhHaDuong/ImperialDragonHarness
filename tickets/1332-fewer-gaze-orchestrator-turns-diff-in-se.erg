@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Fewer gaze orchestrator turns: diff in setup output, seat reports in one closing call
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T08:24Z claude created
+
+--- body ---
+## Context
+
+Test-doctor visit, 2026-10-29 (`memory/journal/2026/2026-10-29-test-doctor-gate-contention.md`). Read from traces, 112 gaze runs since 2026-10-27 10:45Z, host padme: median 178 s = setup 39 s + panel 94 s + closing 37 s. Tool time is about 10 s of a run; the rest is model time. Setup and closing are orchestrator turns, about 6.5 s each in setup and 10 s in closing (derived: segment less tools, over calls).
+
+Calls per run after `gaze_setup.py`: about 1.7 `git diff/log` and 2.7 file reads (`cat/sed/grep`) before the first seat launch; about 1.5 reads of seat reports, `gaze_close.py` and 0.4 `gh` reads after the last seat. Priced in the visit: about 15 to 20 s per run (derived), 1 to 2 author-hours, 50 percent odds.
+
+Lesson from ticket 1227, which priced 60 s and delivered about 2 s: it counted calls on a structure that ticket 1225 rewrote the same morning, folded the mechanical calls but not the thinking turns, and closed on endpoints that did not match its baseline. This ticket measures first and judges on the same endpoints.
+
+## Step 0: evidence before any code (go / no-go)
+
+On the current structure, with `scripts/gaze_wall_time.py` and `scripts/gaze_wall_analysis.py` as they stand (no new tool):
+- Record the baseline: per-run medians of setup, closing, setup calls, closing calls, and model time per segment (segment less tool time), with n and the cut. Use `gaze_wall_time.endpoints` for both before and after.
+- Read 10 setup sequences and 10 closing sequences, and classify each call after `gaze_setup.py` as *mechanical* (its content is fixed by the PR: diff stat, diff, ticket text, seat reports) or *judgment* (a read chosen by the plan: a specific file, a grep).
+- Go only if the mechanical calls average at least 1.5 per run across setup and closing. Otherwise close this ticket as "no lever" with the counts: that is a valid result.
+
+## Design (KISS)
+
+Extend the two scripts' output; add nothing else.
+- `gaze_setup.py` also prints the diff stat and the diff, bounded (truncated past a fixed size with a line saying so), so the plan needs no `git diff` call.
+- `gaze_close.py`, or the call that waits for the roster, prints every seat report in the panel directory, so closing reads them in one call.
+- The SKILL.md text changes only to say the output carries these. No flags beyond what the bound needs, no config, no new script, no change to the planning judgment of ticket 1225: targeted file reads stay with the model.
+
+Risk to watch: a larger context on every later turn can slow each turn and eat the saving. The after-measurement compares model time per turn as well as the turn count.
+
+## Exit criteria
+
+- [ ] Step 0 recorded in this ticket's log with the go or no-go decision; on no-go, close here
+- [ ] `gaze_setup.py` prints the bounded diff stat and diff; a test on a temp repo checks the output and the truncation line
+- [ ] Seat reports printed in one closing call; a test checks every report in a panel directory appears
+- [ ] The harness gate passes
+- [ ] After 20 runs on the new structure: setup and closing medians, call counts and model time per turn against the Step 0 baseline, same endpoints, same scripts; reported in this ticket even if the gain is nil
+
+## Relevant files
+
+scripts/gaze_setup.py, scripts/gaze_close.py, skills/gaze/SKILL.md, skills/gaze/references/setup-and-breaker.md, skills/gaze/references/cleanup.md, scripts/gaze_wall_time.py (read only), scripts/gaze_wall_analysis.py (read only).
+
+Related: [[1227]], [[1225]], [[1197]], [[1327]].
