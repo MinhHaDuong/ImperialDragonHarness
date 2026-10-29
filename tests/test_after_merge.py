@@ -311,6 +311,34 @@ def test_the_audit_flags_a_tip_left_without_an_after_record_past_the_limit(tmp_p
     assert fresh[:12] in proc.stdout
 
 
+def _hooks_dir(work, tmp_path, mode):
+    """A hooks directory outside the repo holding a reference-transaction file of the given mode (None: absent)."""
+    d = tmp_path / "hooks"
+    d.mkdir()
+    if mode is not None:
+        (d / "reference-transaction").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (d / "reference-transaction").chmod(mode)
+    git(work, "config", "core.hooksPath", str(d))
+
+
+@pytest.mark.parametrize("mode, named", [(None, True), (0o644, True), (0o755, False)])
+def test_the_audit_names_a_missing_main_update_hook(tmp_path, mode, named):
+    """Ticket 1355: a repo with no active executable hook never starts the runner; the audit says so, advisory only."""
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    _hooks_dir(work, tmp_path, mode)
+    merge_branch(work, "gap")
+    plain = audit(work, "--after")
+    assert ("no reference-transaction hook installed" in plain.stdout) is named, plain.stdout
+    summary = audit(work, "--after", "--summary")
+    assert ("no reference-transaction hook installed" in summary.stdout) is named, summary.stdout
+    assert len(summary.stdout.splitlines()) == 1
+    (tmp_path / "hooks" / "reference-transaction").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (tmp_path / "hooks" / "reference-transaction").chmod(0o755)
+    hooked = audit(work, "--after")
+    assert "no reference-transaction hook" not in hooked.stdout
+    assert hooked.returncode == plain.returncode  # the line alone is not a finding
+
+
 def test_landing_through_raid_land_starts_the_runner_through_the_hook(tmp_path, monkeypatch, module):
     """Ticket 1265: no caller starts the runner; the main-update hook does, on the sync's move of main."""
     monkeypatch.setenv("HOME", str(tmp_path / "home"))

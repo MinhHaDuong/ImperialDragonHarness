@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-29T20:56Z reviewer created
+2026-10-29T22:51Z reviewer criterion 1 narrowed to the reported branch: main_sweep --after names a missing reference-transaction hook (advisory, exit unchanged). criterion 2 unchecked: ~/DOIfetch absent on this host
 
 --- body ---
 ## Context
