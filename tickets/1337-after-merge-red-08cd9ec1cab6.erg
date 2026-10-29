@@ -1,0 +1,26 @@
+%erg 0.1
+Title: After-merge red on main 08cd9ec1cab6: pytest-guard
+Created: 2026-10-29
+Author: merge-gate
+
+--- log ---
+2026-10-29T10:26Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: 08cd9ec1cab68aa2f809fe49cfb027dd3dfd9110
+Failing checks: pytest-guard
+Last green after-merge tip: 78ba2235d6450d994d6bd6a5d6a42f4059b8c910
+Merges since (first parent, newest first):
+- 08cd9ec1cab6 Merge pull request #1957 from MinhHaDuong/t1334-health-checkup
+
+Failed tests (check, test id):
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_shell_init_gh_agent.sh]
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
