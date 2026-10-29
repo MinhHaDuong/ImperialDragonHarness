@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Harness doctor docs visit: global consistency and organization of docs
+Created: 2026-10-29
+Author: claude
+Blocked-by: 1334
+
+--- log ---
+2026-10-29T08:56Z claude created
+
+--- body ---
+## Context
+
+Author question, 2026-10-29: when is the global consistency and organization
+of the docs audited? Survey (PR 1945, ticket 1333): every doc check is
+incremental: per change (gaze doc seat, roar step 6, `tests/test_root_doc_paths.py`),
+per day (lair STATE and ROADMAP facts, yawn docs freshness), per visit on
+skills and rules changed since the last harness-doctor entry. Nothing looks at
+the whole doc set. The global audits so far were author-led one-offs:
+`conception/2026-09-24-rules-coherence-audit.md`, the 2026-10-19 root-doc
+refresh (`memory/journal/2026/2026-10-19-docs-refresh-and-global-claude-retirement.md`).
+
+Author decision: give the global audit a home in harness-doctor, not a new
+doctor and not more guards.
+
+## Intent
+
+A harness-doctor visit whose input is the whole doc set: root docs (README,
+INSTALL, AGENTS, CONTRIBUTING, ROADMAP, STATE, RTK), `rules/`, `conception/`
+index, skill references. Questions: one home per fact; pointers, not
+restatement; does each document still hold what its role says; overlap and
+gaps between documents. Findings follow the doctor's floor (ticket, fix
+inline, or drop).
+
+Lair suggests the visit, never starts it: 30 days after the last docs visit
+journal entry, or when a ROADMAP workstream closes. Suggestion only, as for
+the other doctor offers.
+
+## Exit criteria
+
+- [ ] Harness-doctor names the docs visit (complaint area or default input) by pointer, within the body budget after the weight-loss ticket
+- [ ] Lair suggests it on the two triggers, suggestion only
+- [ ] One visit run on the current tree, its journal entry committed, findings handled by the floor
+- [ ] No new guard or test pinning wording
