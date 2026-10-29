@@ -3,7 +3,7 @@
 A rename leaves README, INSTALL or AGENTS pointing at nothing, and no other
 check reads them. Every root ``*.md`` is scanned: a backticked token or a link
 target whose first segment is a top-level entry of the repo must exist, and
-every ``make <target>`` must be a Makefile target. Placeholders (``<x>``,
+every ``make <target>`` in backticks or opening a line must be a Makefile target. Placeholders (``<x>``,
 ``*``, ``$VAR``, ``~``, ``YYYY``) are skipped. This catches renames, not drifted
 meaning; that stays with roar step 6.
 
@@ -45,7 +45,7 @@ def dangling(root: Path) -> list[str]:
                 continue
             if not (root / token).exists():
                 found.append(f"{doc.name}: {token}")
-        for target in sorted(set(re.findall(r"\bmake ([a-z][\w-]*)", text))):
+        for target in sorted(set(re.findall(r"(?:`|^\s*)make ([a-z][\w-]*)", text, re.M))):
             if target not in targets:
                 found.append(f"{doc.name}: make {target}")
     return found
@@ -62,7 +62,7 @@ def test_check_fires_on_fixture(tmp_path):
     (tmp_path / "README.md").write_text(
         "Run `scripts/here.py`, `scripts/gone.py` and [x](scripts/lost.py);\n"
         "then `make check` and `make vanished`. Skip `scripts/<name>.py`,\n"
-        "`memory/YYYY/` and `notes.txt`.\n",
+        "`memory/YYYY/` and `notes.txt`. Prose may make sense of it.\n",
         encoding="utf-8",
     )
     assert dangling(tmp_path) == [

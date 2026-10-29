@@ -97,11 +97,11 @@ default branch — there are no remote branches nor merge requests to inspect.
    wrap-up worktree; a refused or pending capture is reported in step 11.
 4-5. **Sweep and report findings**: follow `runbooks/sweep.md`; follow-up tickets go
    in the single wrap-up bundle.
-6. **Propagate the change to the docs.** Trigger: the merged diff changed
+6. **Propagate the change to the docs.** Trigger: the change altered
    something a reader or another agent relies on: a command line or option, a
    configuration key, a file path, a public function, a skill contract, a make
    target, a pipeline step, a data contract or the methodology. Grep the whole
-   tree on the ref for each changed or renamed name and update every statement
+   tree (on the ref, in git) for each changed or renamed name and update every statement
    of it: the root documents, the module and function docstrings of the
    touched scripts, and comments restating it. Out of scope: STATE.md and
    ROADMAP.md (lair step 10). Nothing to propagate: say so in step 11.
@@ -154,7 +154,7 @@ base, once a passing gate record covers the bundle's candidate.
    none. Not in a worktree: use `--phase all` with step 10's explicit cleanup
    targets and skip step 9; with no targets, cleanup deletes no branches.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
-    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR.
+    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check; step 6 greps per merge, this sweep covers the union of the children.
     - Any open → do nothing, tracker stays open.
 
     The script's `TRACKER: INTEGRATION-REVIEW-DUE <parent>` line is this
