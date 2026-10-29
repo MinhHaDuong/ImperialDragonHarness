@@ -256,10 +256,12 @@ Run full repo housekeeping and act on every finding.
 
    Shell variables do not survive Bash calls: read the literal worktree path printed at step 1 and use it verbatim; never run `git -C "$W"` with `$W` unset or unchecked.
 
-   - **No commits on the branch** (`git rev-list --count origin/main..HEAD` is 0) and a clean tree: from the primary checkout, `git worktree unlock <path> && git worktree remove <path> && git branch -d housekeeping-<date>`. `git worktree remove` refuses a dirty tree, so nothing is discarded. If the sweep ran to the end, also record it for yawn check 8, which dates housekeeping from `git log` and sees no commit here: `touch "$(git rev-parse --path-format=absolute --git-common-dir)/molt-last-run"`. A stopped or crashed sweep records nothing: it did not finish.
-   - **Commits pushed with a merge request open:** keep the worktree and branch; name both in the report as pending until the merge, when roar cleans them.
-   - **Commits but no merge request** (the push or the merge request failed): keep the worktree and branch; name both as pending, with the failure.
-   - **Dirty tree** (including step 2.5's stop, which leaves partial ticket edits): keep it and name it; the removal refused it, and the edits are not discarded.
+   Check the cases in this order; the first that matches applies.
+
+   1. **Dirty or blocked** (including step 2.5's stop, which leaves partial ticket edits): `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch housekeeping-<date> <path>` exits non-zero (it also covers ignored files such as `.tmp/`, which `git worktree remove` deletes). Keep the worktree and branch; name them and the blocker in the report.
+   2. **Commits, merge request open or failed:** `git -C <path> rev-list --count origin/main..HEAD` is above 0 and the branch is not yet merged. Keep the worktree and branch; name both as pending until the merge (roar cleans them), with the push or merge-request failure if there was one.
+   3. **Commits, merge request merged by step 6:** the branch is in `origin/main` (`git merge-base --is-ancestor <head> origin/main`). Remove as in case 4 (`git branch -d` also checks ancestry); roar's step 10 handles the remote branch.
+   4. **No commits** (`git -C <path> rev-list --count origin/main..HEAD` is 0) and the preflight passed: from the primary checkout, `git worktree unlock <path> && git worktree remove <path> && git branch -d housekeeping-<date>`. If the sweep ran to the end, also record it for yawn check 8, which dates housekeeping from `git log` and sees no commit here: `touch "$(git rev-parse --path-format=absolute --git-common-dir)/molt-last-run"`. A stopped or crashed sweep records nothing: it did not finish.
 
    Then summarize what you did, say which case applied, and propose: "Surface remaining nits?"
 
