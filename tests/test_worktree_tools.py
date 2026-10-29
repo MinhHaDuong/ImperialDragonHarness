@@ -912,6 +912,22 @@ def test_removal_scrubs_byte_copy_and_pyc_inside_ignored_build_lib(origin):
     assert not (wt / "build").exists()
 
 
+def test_removal_keeps_file_equal_to_tracked_blob_only_after_clean_filter(origin):
+    """Byte identity means raw bytes: a clean filter must not make a hand-made file match."""
+    _, primary = origin
+    (primary / ".gitattributes").write_text("build/** filter=strip\n")
+    git(primary, "add", ".gitattributes")
+    git(primary, "commit", "-m", "attributes")
+    git(primary, "config", "filter.strip.clean", "grep -v ^OUT")
+    wt = make_agent_worktree(primary, "agent-build-filter", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "README").write_text("hi\nOUT kept output\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and "build/lib" in res.stderr
+    assert (wt / "build" / "lib" / "README").exists()
+
+
 def test_refused_removal_scrubs_nothing(origin):
     """A removal blocked by other residue deletes neither the venv nor build output."""
     _, primary = origin

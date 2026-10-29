@@ -59,7 +59,7 @@ _build_child_disposable() {
     done < <(find "$d" -type f -print0)
     [ "${#cand[@]}" -gt 0 ] || return 0
     blobs=$(git -C "$1" ls-files -s 2>/dev/null | awk '{print $2}') || return 1
-    hashes=$(printf '%s\n' "${cand[@]}" | git -C "$1" hash-object --stdin-paths 2>/dev/null) || return 1
+    hashes=$(printf '%s\n' "${cand[@]}" | git -C "$1" hash-object --no-filters --stdin-paths 2>/dev/null) || return 1
     [ "$(printf '%s\n' "$hashes" | wc -l)" -eq "${#cand[@]}" ] || return 1
     while IFS= read -r f; do
         printf '%s\n' "$blobs" | grep -qxF -- "$f" || return 1
