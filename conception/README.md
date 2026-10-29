@@ -1,6 +1,8 @@
-# docs/
+# conception/
 
-Reference materials and review records for the Imperial Dragon Harness.
+Design history of the Imperial Dragon Harness: memos, audits and review records.
+This index lists the current guides and a table of references and records, not every file;
+`ls conception/` lists them all.
 
 **Dragon memory design — the authoritative document is
 [`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),

@@ -27,4 +27,4 @@ All other commands are automatically rewritten by the Claude Code hook.
 Example: `ls -la` → `rtk ls -la` (transparent, 0 tokens overhead). git is excluded
 (ticket 1078): `exclude_commands` in `~/.config/rtk/config.toml`.
 
-Refer to CLAUDE.md for full command reference.
+Full command reference: `rtk --help`.

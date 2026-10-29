@@ -132,3 +132,11 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     attach the complaint to the step 13 offer rather than making a second one.
     It prints nothing when no ticket was slow. Suggestion only: never start a
     visit, ask a question, open a ticket or wait.
+16. **Suggest a docs visit when one is due.** Only where
+    `bash "$IDH_ROOT/scripts/harness_here.sh"` exits 0 (the harness itself). Find the newest
+    `memory/journal/*/*-docs-visit-*.md` entry by the date in its name. It is due
+    when that date is 30 or more days old, when no such entry exists, or when step
+    10c2 saw a ROADMAP workstream close today (a reading, no script). Then add to
+    the final summary one line offering `/harness-doctor` with the docs visit
+    (`skills/harness-doctor/references/docs-visit.md`), naming the trigger.
+    Suggestion only: never start a visit, ask a question, open a ticket or wait.
