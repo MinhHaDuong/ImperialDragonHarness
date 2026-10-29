@@ -3,7 +3,7 @@
 removal, containment report, duration line, result and attribution on notes and,
 for a PR, a one-line pointer comment.
 
-    gaze_close.py <pr> --branch <pr-branch> [--token T] [--entry-branch B]
+    gaze_close.py <pr> --branch <pr-branch> [--repo <primary>] [--token T] [--entry-branch B]
                   --attribution-file F [--comment-file F]
 
 Review scratch contract (ticket 0948, pinned by tests/test_review_panel_cleanup_contract.py):
@@ -218,13 +218,16 @@ def read_entry(primary, pr):
         return {"branch": None, "status": [], "primary": []}
 
 
-def containment(primary, entry_branch, entry_status=(), entry_primary=()):
+def containment(primary, entry_branch, entry_status=(), entry_primary=(), session_tree=None):
     """Return (flags, report). Flags are the findings to surface; the caller's
-    own uncommitted work at entry is not contamination."""
+    own uncommitted work at entry is not contamination. The session worktree is the one
+    gaze_setup recorded (ticket 1356), never wherever the runtime moved the shell; an entry
+    state without it (legacy) reads the cwd."""
     flags = []
-    _, top = git("rev-parse", "--show-toplevel")
-    _, st = git("status", "--porcelain")
-    _, br = git("branch", "--show-current")
+    cwd = session_tree or None
+    _, top = git("rev-parse", "--show-toplevel", cwd=cwd)
+    _, st = git("status", "--porcelain", cwd=cwd)
+    _, br = git("branch", "--show-current", cwd=cwd)
     _, pst = git("-C", str(primary), "status", "--porcelain")
     new = [ln for ln in st.splitlines() if ln not in entry_status]
     if new:
@@ -305,7 +308,7 @@ def pointer(primary, pr, result, identity=None):
         print("pointer: not posted (no review id)")
         return
     try:
-        forge.get_forge(None, pr).comment(pr, f"/gaze review on notes: {rid}, verdict {result}", strict=True)
+        forge.get_forge(None, pr, cwd=str(primary)).comment(pr, f"/gaze review on notes: {rid}, verdict {result}", strict=True)
         print("pointer: posted")
     except forge.ForgeRefusal as exc:
         print(f"pointer: not posted ({exc}); the answer on notes is the result")
@@ -315,6 +318,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pr")
     ap.add_argument("--branch", required=True)
+    ap.add_argument("--repo", type=Path, help="the reviewed project's checkout, as gaze_setup printed "
+                    "`repo=` (default: the cwd's); the close never reads the project off a moved cwd")
     ap.add_argument("--token")
     ap.add_argument("--entry-branch")
     ap.add_argument("--attribution-file", type=Path, required=True)
@@ -324,7 +329,7 @@ def main():
     ap.add_argument("--session-model", default=os.environ.get("IDH_SESSION_MODEL", ""),
                     help="model of this session, for a `self` seat")
     a = ap.parse_args()
-    primary = primary_root()
+    primary = primary_root(cwd=a.repo)
     tree = (primary / ".claude" / "worktrees" / f"review-{unit_key(a.pr)}").resolve()
     here = Path.cwd().resolve()
     if here == tree or tree in here.parents:
@@ -377,7 +382,7 @@ def main():
               + ("recorded on notes: the calling gaze returns it naming these files" if answered == 0 else
                  "NOT recorded: the calling gaze returns it naming these files"), file=sys.stderr)
         return 2 if (status or answered) else 1
-    flags, report = containment(primary, entry_branch, entry["status"], entry["primary"])
+    flags, report = containment(primary, entry_branch, entry["status"], entry["primary"], entry.get("session_tree"))
     print(report)
     r = subprocess.run([sys.executable, str(HERE / "step_clock.py"), "end", a.token or ""],
                        capture_output=True, text=True)
