@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-29T19:54Z reviewer created
 2026-10-29T19:59Z reviewer proposal added for author ruling: theory of change, fixed departments, as-built (DOE) metaphor
+2026-10-29T20:04Z reviewer cross-project department scheme from a sweep of padme projects
 
 --- body ---
 ## Context
@@ -66,3 +67,45 @@ retired it), and sources (journal links).
 
 Open for the author: accept or amend the list of departments; whether to rename hoard;
 the byte cap per department.
+
+## Departments across projects: sweep of padme, 2026-10-29 (author request)
+Projects with a memory store or tickets, excluding arena copies and workloads:
+harness (`.agents`), arena (model bench), DOIfetch, git-erg, zoteus, search-works-for-zotero
+(utility tools); padme (host administration); JETP-observer (data observatory);
+climate-finance-het (corpus-driven research programme and monograph); sen-causal-reading,
+fuzzy-corpus, cadens (articles); AEDIST-technical-report (report); chemin-de-voix (literary
+translation book). Only three have topics. Existing topic names already cluster:
+- author relationship: cfh `author-working-relationship`, JETP `author-working-preferences`,
+  padme `working-in-this-repo`;
+- delivery machinery: cfh `git-and-branches`, `tickets-and-decisions`, `orchestration-and-gates`,
+  `guards-and-verification`, `build-and-pipeline`; harness ci, merge, worktrees; padme `deployment-and-systemd`;
+- the object being made: cfh `corpus-store`, `rel-corpus`, `manuscripts-and-sources`; padme
+  `gpu-driver-and-firmware`, `llm-backend`, `monitoring-architecture`.
+Review-attribution records fill the journals everywhere: cfh 75/193, JETP 37/65, padme 8/13,
+sen-causal-reading 12/45, arena 7/49, DOIfetch 2/4. Ticket 1347 fixes this for every project,
+since roar is a harness skill.
+
+Proposed scheme: a fixed core shared by every project, plus a fixed set of departments for each
+type of work (the "ouvrage"). A project combines types (cfh: analysis + book; fuzzy-corpus: article + tool).
+The total stays at 8 departments or fewer per project.
+
+Core, every project:
+1. Commission: the author's intent, rulings and working preferences (MOA side).
+2. Site practice: how work lands here (branches, tickets, gates, build). Only local deviations
+   from the harness; harness machinery is recorded once, in the harness.
+3. Environment: hosts, services, external tools and their quirks.
+4. History: journal, hoard reports and git; never a topic page.
+
+Ouvrage departments, by type:
+| Type | Examples | Departments |
+|---|---|---|
+| Tool / code | harness, DOIfetch, git-erg, zoteus, arena | architecture and contracts; interfaces and compatibility (runtimes, users); release and distribution |
+| Analysis / data | JETP-observer, cfh corpus, arena results | data and provenance; methods and measurement; results and their limits |
+| Article / report | sen-causal-reading, fuzzy-corpus, AEDIST, cadens | argument and claims; literature and sources; venue and submission |
+| Book | cfh monograph, chemin-de-voix | structure and chapters; voice and editorial decisions; sources, rights and permissions |
+| Host / infrastructure | padme | services and deployment; hardware; access and privileged operations; monitoring |
+
+For the harness, the machinery is the product: merge, review, worktrees and testing belong under
+its ouvrage (architecture and contracts), and a consumer project's site practice page only records
+its deviations. Consumer projects do not re-record harness behaviour; a harness defect becomes a
+harness ticket (`rules/workflow.md` § Cross-project work).
