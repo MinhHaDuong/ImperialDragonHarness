@@ -10,8 +10,8 @@ projects, machines and runtimes.
 ## Current priorities
 
 The three workstreams listed here on 2026-10-19 (1045 local merge gate, 1100
-review orchestration, 1099 bounded review) are closed. No open workstream is
-named. Use `erg ready tickets/` and `erg ls tickets/` for the live queue.
+review orchestration, 1099 bounded review) are closed. No open ticketed
+workstream is named; the testing subsystem below is the next design direction. Use `erg ready tickets/` and `erg ls tickets/` for the live queue.
 
 ## Next: testing subsystem
 
