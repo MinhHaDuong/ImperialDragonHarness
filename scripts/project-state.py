@@ -90,6 +90,26 @@ def git_state(project):
     }
 
 
+HOUSEKEEPING_MARKER = "molt-last-run"
+
+
+def _marker_epoch(project):
+    """mtime of the git-common-dir marker a commit-less molt touches, or None.
+
+    The common dir is shared by every worktree and survives the housekeeping
+    worktree's removal; a molt with nothing to commit leaves no commit to date.
+    """
+    r = run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], project
+    )
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    try:
+        return int((Path(r.stdout.strip()) / HOUSEKEEPING_MARKER).stat().st_mtime)
+    except OSError:
+        return None
+
+
 def housekeeping_state(project):
     br = run(["git", "branch", "--list", "claude/housekeeping-*"], project)
     branches = [
@@ -101,9 +121,18 @@ def housekeeping_state(project):
     ts_raw = log_r.stdout.strip()
     last_ts = None
     age_hours = None
+    epochs = []
     if ts_raw:
         try:
-            epoch = int(ts_raw)
+            epochs.append(int(ts_raw))
+        except ValueError:
+            pass
+    marker = _marker_epoch(project)
+    if marker is not None:
+        epochs.append(marker)
+    if epochs:
+        try:
+            epoch = max(epochs)
             last_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(epoch))
             age_hours = round((time.time() - epoch) / 3600, 1)
         except ValueError:
