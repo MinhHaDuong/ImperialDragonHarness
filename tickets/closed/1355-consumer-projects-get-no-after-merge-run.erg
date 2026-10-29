@@ -2,9 +2,14 @@
 Title: Consumer projects get no after-merge runner: hook not installed
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2020
 
 --- log ---
 2026-10-29T20:56Z reviewer created
+2026-10-29T22:51Z reviewer criterion 1 narrowed to the reported branch: main_sweep --after names a missing reference-transaction hook (advisory, exit unchanged). criterion 2 unchecked: ~/DOIfetch absent on this host
+2026-10-29T23:09Z reviewer closed — autoclosed — PR #2020
+2026-10-29T23:25Z reviewer note DOIfetch checked read-only (/home/haduong/CNRS/code/DOIfetch, gated: .merge-gate.json): hook_installed() from this branch, run with cwd=DOIfetch, returns False and the audit line reads 'no reference-transaction hook installed, the after-merge runner never starts on a main move'; core.hooksPath unset, no .git/hooks/reference-transaction; nothing written in DOIfetch
+2026-10-29T23:25Z reviewer note verify-reroll — round 1: criterion 2 unchecked; DOIfetch is present on padme at /home/haduong/CNRS/code/DOIfetch
 
 --- body ---
 ## Context
