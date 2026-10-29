@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Molt cuts its housekeeping branch in the shared primary checkout; yawn warns after a no-commit molt
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T07:49Z reviewer created
+
+--- body ---
+## Context
+Harness-doctor visit 2026-10-29 (triage), finding F1 above the floor and F4 below it; the author ruled fix both.
+
+F1: `skills/molt/SKILL.md:74` cuts `git switch -c housekeeping-<date> origin/main` "from the project root", and `:253` runs `git switch main` back. Read literally, that moves the shared primary checkout off main, against `rules/git.md:9` (main is read-only) and `rules/workflow.md` § Worktree paths / `rules/claude-code.md` § Entering the session (work in the conversation's own worktree; the primary checkout stays on main for every parallel session). The 2026-10-29 lair ran molt in a `housekeeping-*` worktree instead.
+
+Step 6 is not always reached: step 2.5 says to stop the sweep and report when `ticket-sweep.sh close` fails, and a crash or interrupted session stops anywhere. A locked worktree on an unpushed branch is never reclaimed by `worktree-gc.sh` (it removes upstream-gone branches only), so removal must not hang on step 6.
+
+F4: yawn check 8 reports `housekeeping: needed` after a molt that found nothing to commit, because `scripts/project-state.py` `housekeeping_state` dates the last housekeeping from `git log --grep=housekeeping`, and a no-commit molt leaves no commit. Observed 2026-10-29: warn at 24.2 h right after a clean molt.
+
+## Exit criteria
+- [ ] Molt never switches the primary checkout's branch: step 1 creates and locks a `housekeeping-*` worktree (hunt § Worktree recipe) and every later step runs in it
+- [ ] The worktree is removed on every exit after step 1 that leaves it without commits (including step 2.5's stop and the no-commit path), and kept, named in the report, while its merge request is open; the report step says which
+- [ ] A molt that completes with nothing to commit counts as housekeeping for yawn check 8 (no `needed` warn right after it); a test drives `housekeeping_state` through both a commit-less molt and a stale one
+- [ ] `make check` passes

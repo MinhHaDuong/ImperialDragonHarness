@@ -1,0 +1,21 @@
+%erg 0.1
+Title: Raid sitrep reports UNREADABLE on every raid without a time budget; raid Phase 7 paraphrases the merge recipe
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T07:49Z reviewer created
+
+--- body ---
+## Context
+Harness-doctor visit 2026-10-29 (triage), finding F2 above the floor and F5 below it; the author ruled fix both, F2 "if we get what we intend to get".
+
+F2: `skills/raid/SKILL.md:54` and `:472-476` append `RAID_START` with the raid id only, while `references/sitrep.md:21` lists `deadline=<epoch>` and `scripts/raid-sitrep.py:89-95` fails with `UNREADABLE deadline` (exit 2) when it is absent. SKILL.md then says UNREADABLE means "repair the log or the failing read first", so every raid that follows the skill either loops on a repair or learns to ignore UNREADABLE. Measured: raid b6aabf, three sitreps, all exit 2 on that line. Intent (ticket 1246): a progress trail for an author who steps away, "elapsed time vs. deadline/budget". No raid text defines a budget and the `NEXT` decision never reads the deadline; the missing key also skips reading `gate_max`.
+
+F5: `skills/raid/SKILL.md` § Phase 7 step 4 (about lines 395-420) restates checks the merge recipe owns (`skills/merge/SKILL.md` § The recipe, § Gating tiers, § Gated base). The author's rule: no paraphrasing other skills; point.
+
+## Exit criteria
+- [ ] A raid that sets no time budget gets a sitrep with elapsed time, no budget line claimed, exit 0 on that account; with `deadline=` set, the budget line shows as today; `gate_max=` is read whether or not `deadline=` is present; tests cover both
+- [ ] `skills/raid/SKILL.md` and `references/sitrep.md` agree that `deadline=` is optional and say when to set it (the author gave the raid a time budget)
+- [ ] Raid § Phase 7 points to the merge recipe for what `raid_land.py` checks instead of restating it; raid keeps only what is raid's own (sequencing, worktree, exit-code handling)
+- [ ] `make check` passes
