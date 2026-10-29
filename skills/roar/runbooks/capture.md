@@ -108,7 +108,10 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    `review-attribution-prNNNN` record through `memory-capture.sh`, under
    `memory/evidence/attribution/`, outside the journal: it is route-grid
    telemetry, not an experience. When the capture itself fails, also write an
-   ordinary journal entry (step 3) recording the failure and the PR.
+   ordinary journal entry (step 3) recording the failure and the PR. A
+   project whose older records still sit in the journal moves them once, on a
+   branch, bytes intact:
+   `mkdir -p memory/evidence/attribution && git ls-files -z memory/journal | grep -z review-attribution | xargs -0 -r -I{} git mv {} memory/evidence/attribution/`
    Judge the audience before constructing any file; private text stays in the
    stream, never a plaintext working-tree file. Report validation, encryption,
    overwrite or integration failures visibly. Commit successful capture in
