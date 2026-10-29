@@ -22,3 +22,94 @@ hoard's input (98 of the entries in the last run).
 - [ ] New attribution records land outside the journal; existing ones moved with history kept
 - [ ] Every reader of the records finds them at the new path (tests)
 - [ ] Hoard's input excludes them
+
+## Imagine (raid 0a53b8)
+**Why now.** The fifth hoard read 98 attribution records among its 187 sources and
+summarised some into a topic. Hoard 1349's rebuild would repeat that, so the records
+leave the input before the rebuild. The records are telemetry for the route grid,
+not experiences (audit §3.1, design v8 §4).
+
+**Simplest path: `memory/evidence/attribution/`, flat, same filenames**
+(`YYYY-MM-DD-review-attribution-pr<N>.md`, `.age` for private). The readers
+(`attribution_query.py`, `attribution_backfill.py`) find records by filesystem walk
+and filename regex; only the root changes. Git notes beside the review evidence would
+need a new reader and would break the encrypted (`.age`) case; rejected.
+`memory/evidence/` exists but holds only files and the dir `review-attribution-pr1389/`
+(different thing, no collision). Hoard and lair read `memory/journal/` only, so the
+exclusion holds by construction; lair's "new experiences" count also drops by the 183.
+
+**Premise checks.**
+- "Journal is append-only: never move" (`memory/HOARD.md:110`, hoard SKILL § Bounds)
+  contradicts the move. The ticket's exit criterion authorises it; the plan adds a
+  one-line carve-out for attribution records so the rule stays true.
+- Accepted hoard reports 2nd/3rd/4th pin 83 attribution paths by `<path> blob <sha>`.
+  `git mv` keeps blobs, so lair's blob count stays correct; old paths in frozen ledgers
+  become historical. Only `test_dream_v8.py` checks a ledger, on the pilot report and
+  non-attribution files: unaffected.
+- `hoard_migrate.py:135` skips `journal`/`hoards` dirs but not `evidence`: a migration
+  could rewrite paths inside moved records. Add `attribution` to its skip set + a test.
+
+**Consumer projects (cfh 75, JETP 37, padme 8...).** New captures reach them via the
+skill alone: `memory-capture.sh` and `attribution_record.py` run from `$IDH_ROOT` and
+write into the project repo. Their existing records stay in `journal/` until moved.
+So readers scan both roots (new, then legacy journal), and hoard's input rule skips
+any `*review-attribution-*` journal file, so nothing breaks and hoards there are
+already lighter. The move itself is per project: one ticket each, filed after landing
+(cross-project rule); the harness ships the `git mv` one-liner in the runbook, no script.
+
+## Plan (raid 0a53b8)
+**Actions.**
+1. `scripts/memory-capture.sh`: optional 4th arg `attribution` selects
+   `memory/evidence/attribution/` (flat); default unchanged; same overwrite refusal.
+2. `attribution_record.py::capture_record` passes it; `capture_slug` unchanged.
+3. `attribution_query.py`, `attribution_backfill.py`: scan new root plus legacy
+   `memory/journal` (keep the symlink guards on both); duplicate-PR logic unchanged.
+4. `skills/roar/runbooks/capture.md` (lines ~106-108 "journal entry"): new path; on
+   capture failure roar writes a normal journal entry (scope bullet 3).
+5. `memory/HOARD.md`, `skills/hoard/SKILL.md`: input excludes attribution records at
+   either path; append-only carve-out; `hoard_migrate.py` skip set.
+6. `git mv` of the 183 `memory/journal/2026/*review-attribution-*` files, own commit.
+7. `skills/harness-doctor` and `test-doctor` mention journal slugs of their own: check, likely untouched.
+
+**First failing test** (`tests/test_attribution_capture_path.py`): in a temp git repo,
+`attribution_record.py --capture` a valid record; assert it exists under
+`memory/evidence/attribution/`, that `memory/journal/` has no new file, and that
+`attribution_query.py` returns it. Companions: a legacy journal record is still read
+(catches a reader that only knows the new root); a non-attribution `memory-capture.sh`
+call still lands in the journal (catches a global path swap); private `.age` lands in
+the new root. A repo-level assertion: `git ls-files memory/journal | grep -c
+review-attribution` is 0 (catches an incomplete move). Writing to both places would
+fail the "no journal file" assertion.
+
+**Tests updated:** `test_attribution_query`, `test_attribution_backfill`,
+`test_memory_capture.sh`, `test_hoard_migrate`; check `test_attribution_record`,
+`_capture_pr`, `_notes`, `_seats`, `test_memory_stall_reproduction.sh`.
+
+**Dependencies.** None blocking. Land the code commit before the move commit in one PR.
+
+**Blast radius.** About 12 hand-edited files (3 scripts + hoard_migrate, 2 skill docs,
+HOARD.md, runbook, ~5 tests) plus 183 pure renames. Over the 15-file line by count,
+but the renames are mechanical and the review reads them as `git diff -M`; no symbol
+others depend on. Not split. Overlap with 1352 (hoard to smelt): `skills/hoard/SKILL.md`,
+`memory/HOARD.md`, `scripts/hoard_migrate.py`, `tests/test_hoard_migrate.py`, lair step 12
+and the frozen ledger paths. 1347 edits a few lines in each, so 1352 rebases over it.
+
+## Feasibility (raid 0a53b8)
+Verdict: WARN (plan sound; conflicts and one omission).
+- Count re-measured: `git ls-files memory/journal | grep -c review-attribution` = 183 of 406 journal files (ticket says 380 entries; drifted, immaterial).
+- Cited files exist: scripts/memory-capture.sh (usage is 3 args `<repo-dir> <audience> <slug>`, so a 4th arg is new), attribution_record.py (calls memory-capture.sh at line 183), attribution_query.py (`journal_entries`, line 65, root at line 94), attribution_backfill.py (journal root at line 57, rglob at 62), skills/roar/runbooks/capture.md (~106 "journal entry").
+- Append-only rule at memory/HOARD.md:110 and skills/hoard/SKILL.md:75 as stated; hoard_migrate.py skip set at ~line 135 lacks `evidence`, as stated.
+- All listed tests exist (test_attribution_*.py, test_memory_capture.sh, test_memory_stall_reproduction.sh, test_hoard_migrate.py). Also check test_memory_v8_pilot.py, test_dream_v8.py, test_folded_pending_attribution.py, test_roar_attribution_contract.py (reference journal/attribution, not in plan).
+- Omission: skills/lair/SKILL.md:88 counts `memory/journal/YYYY/*.md` blobs; the move changes its count (plan mentions only as consequence). scripts/on-start-context.sh and skills/harness-doctor reference journal: confirm untouched.
+- Overlap with 1352: skills/hoard/SKILL.md, memory/HOARD.md, hoard_migrate.py, test_hoard_migrate.py, roar capture.md, lair SKILL.md. Also 1348/1349 touch hoard files.
+- No new tool needed; no registry edited.
+
+## Blind-spot findings (raid 0a53b8), binding on the executor
+- Lair step 12 (`skills/lair/SKILL.md:88`) must apply the same filter as smelt's input, skipping
+  `*review-attribution-*` files in the journal, or lair suggests a smelt forever in consumer projects
+  whose records have not moved (cfh 75, JETP 37, padme 11). Add a case to `tests/test_lair_dream_suggestion.py`.
+- `tests/test_folded_pending_attribution.py:16` hard-codes `memory/journal/2026`; also check
+  `test_memory_v8_pilot.py`, `test_dream_v8.py` and `test_roar_attribution_contract.py` (feasibility).
+- Order: 1352 (rename) lands first. This ticket runs on the renamed tree: `skills/smelt/`,
+  `memory/SMELT.md`, `scripts/smelt_migrate.py` or whatever names 1352 merged. Read them from main
+  at execute time; the Plan's hoard paths above predate the rename.

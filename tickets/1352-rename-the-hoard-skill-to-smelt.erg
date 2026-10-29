@@ -29,3 +29,78 @@ theory of change; the name "hoard" described the defect, a store that only grows
 - [ ] `grep -rniw hoard` outside history paths (journal, conception, closed tickets, hoard reports) finds nothing
 - [ ] `make check` and `make check-skills-drift` pass
 - [ ] Per-project rename tickets filed in every repository with a memory store
+
+## Imagine (raid 0a53b8)
+Premise holds: the author ruled the name; nothing here reopens it. Evidence (git grep, 2026-10-29):
+- `git grep -i hoard` outside journal, conception, closed tickets, memory/hoards finds 38 files,
+  275 lines. Of these, 73 lines sit in `memory/evidence/2026-10-15-raid-review-evidence.md` and
+  1 in `health/journal.jsonl`: both append-only records, history. Live sites: about 28 files.
+- Path renames (`-w` misses underscores): `skills/hoard/`, `memory/HOARD.md`, `memory/hoards/`
+  (7 reports), `scripts/hoard_migrate.py`, `tests/test_hoard_migrate.py`. The ticket's "about 55
+  files" overstates; real blast radius is about 28 edited + 10 renamed paths.
+- Installed projection: only `~/.claude/skills/hoard` -> `$IDH_ROOT/skills/hoard` exists
+  (absolute symlink, would dangle after merge). No Codex or Pi hoard link found on this host;
+  `adapters/projections.json` lists no hoard entry. Refresh: `bin/idh install skill smelt`
+  (README), then remove the dangling `hoard` link.
+- Alias: not needed. Precedent is the dream->hoard rename (closed 1102-1109): "no managed
+  old-name alias" (memory/topics/memory-v8-governance.md). `smelt` does not mislead; a stale
+  `/hoard` fails loudly. The one place the old word must live on is detection of historical
+  names in corpora (`scripts/census/memory-recall.py`, `scripts/trace-stats.py` list dream and
+  hoard as past names) and lair's blob-ledger reading of old `memory/hoards/*.md`.
+- Consumer stores found under ~/CNRS (read-only): `projets/actifs/padme` (HOARD.md, versioned);
+  `JETP-observer`, `climate-finance-het` and `code/arena/repos/agents`... carry legacy
+  `DREAM.md` (never migrated to HOARD.md); `code/DOIfetch` and `code/arena` have memory/ with
+  only a journal. So the "every project carries HOARD.md" premise is wrong: one project does.
+- Overlap 1347: its text says "hoard input" in 3 lines and its scope touches hoard input
+  selection. 1348/1349 also cite `skills/hoard/SKILL.md:69-70`. Order 1352 first (ticket says so);
+  1347, 1348, 1349 then rebase and rename their prose to smelt (their tickets are edited in
+  this sweep, so only code conflicts remain).
+
+## Plan (raid 0a53b8)
+Actions, one mechanical commit (`git mv` first, then sed on the word, then fix case/grammar):
+1. `git mv skills/hoard skills/smelt; memory/HOARD.md memory/SMELT.md; memory/hoards memory/smelts;
+   scripts/hoard_migrate.py scripts/smelt_migrate.py; tests/test_hoard_migrate.py
+   tests/test_smelt_migrate.py`. Also `tests/test_lair_dream_suggestion.py` stays named, content updated.
+2. Rewrite frontmatter: name `smelt`; description first sentence the plain function (already
+   "Consolidate one project's repository memory..."); keep the "not for new facts (/roar)" hint.
+3. Edit live references in: AGENTS.md (3), README.md (3), STATE.md (2), memory/MEMORY.md (4),
+   memory/SMELT.md, skills brood/lair/roar (+lair step 12 text and the `/hoard <repo>` suggestion
+   line), skills/lair/references/session-lifecycle.md, skills-catalog.md (regenerate with
+   `make skills-catalog`), scripts (migrate, census, trace-stats), tests (10 files above), tickets
+   1346-1351 prose, memory/topics (5) only where they describe the current skill.
+   Keep the Dragon names of Brood and Roar; capitalised "Hoard" becomes "Smelt".
+4. Historical-name tables keep `hoard` and gain `smelt` (memory-recall regex, trace-stats
+   MANDATED_SKILLS); lair step 12 reads both `memory/smelts/` and legacy `memory/hoards/`
+   ledgers, or the git mv carries the ledger so only the new path is read (preferred: git mv).
+5. Install: after merge, `bin/idh install skill smelt`; delete `~/.claude/skills/hoard` link on
+   padme and doudou (and run `idh check`).
+Stays untouched: memory/journal, conception, tickets/closed, memory/evidence, health/journal.jsonl,
+report contents under memory/smelts/ (file names keep their dates and "hoard" words).
+First failing test: none new. Existing tests that name hoard paths fail after the git mv and are
+the red phase; edit them to green. Exit-criterion check goes in the PR body, not a permanent
+guard: `git grep -n -i -w hoard -- . ':!memory/journal' ':!conception' ':!tickets/closed'
+':!memory/smelts' ':!memory/evidence' ':!health'` must list only the declared historical-name
+lines (census, trace-stats, migrate docstring). Then `make check` and `make check-skills-drift`.
+Per-project tickets (file after the harness merge, cross-project rule): padme (rename
+HOARD.md/hoards; has one) and nothing else strictly; JETP-observer, climate-finance-het,
+arena/repos/agents have DREAM.md (migrate straight to SMELT.md, cheaper than two steps).
+Decisions for the orchestrator: (a) exempt memory/evidence and health/ as history in the
+exit criterion; (b) historical-name lines keep `hoard`; (c) exit criterion 3 narrows to
+padme plus the three DREAM.md projects, others carry no store file.
+
+## Feasibility (raid 0a53b8)
+Verdict: PASS (one WARN-grade note).
+- Paths exist as cited: skills/hoard, memory/HOARD.md, memory/hoards (7 reports), scripts/hoard_migrate.py, tests/test_hoard_migrate.py, tests/test_lair_dream_suggestion.py.
+- Count re-measured: `git grep -il hoard` outside journal/conception/closed/memory/hoards = 38 files (incl. 7 tickets, memory/evidence, health); about 28 live non-ticket files. Matches Imagine; "55" is overstated.
+- Tests naming hoard: 8 test files by grep (plan says "10 files above"); the suite names the rest.
+- Tools: `make skills-catalog`, `check-skills-drift`, `check` targets exist; `bin/idh` has `install skill`.
+- Lair step 12 (skills/lair/SKILL.md:81-99) reads memory/hoards/*.md and suggests `/hoard <project-repository>`: both in plan scope.
+- Conflicts: shares skills/hoard/SKILL.md, memory/HOARD.md, scripts/hoard_migrate.py, tests/test_hoard_migrate.py, skills/roar/runbooks/capture.md, skills/lair/SKILL.md with 1347. Order: 1347 says 1352 rebases over it, 1352 says it lands first; pick one (1352 first is a pure rename and rebases cheaply).
+- Registry: skills-catalog.md is regenerated (generated file, only 1352 edits it). No 3-PR shared registry.
+
+## Blind-spot finding (raid 0a53b8)
+The rename takes effect when merge step 8 syncs local main: Codex discovers skills in
+`~/.agents/skills` (the primary checkout), and `~/.claude/skills/hoard` is a symlink into it. A
+hoard, lair or roar running at that moment loses `skills/hoard/` mid-run. Merge only when none
+runs; doudou keeps the old name until it pulls. `idh install skill smelt` then repairs the
+installed link, and the dangling `hoard` link is deleted.

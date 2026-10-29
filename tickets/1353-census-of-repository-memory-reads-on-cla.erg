@@ -1,0 +1,95 @@
+%erg 0.1
+Title: Census of repository-memory reads on Claude Code, Codex and Pi, padme and doudou
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:49Z reviewer created
+
+--- body ---
+## Context
+Parent tracker: 1346.
+Child of tracker 1346, split by raid 0a53b8 (2026-10-29) under the monster checklist: 1346 bundled a
+census that can run now and a paid outcome trial that needs the author's spend approval.
+The census is 1346's first exit criterion. Evidence and scope: 1346 § Context and § Scope (first bullet).
+
+## Scope
+Extend `scripts/census/memory-recall.py` (or a sibling) to count reads of repository memory
+(`memory/MEMORY.md`, `memory/topics/`) per runtime (Claude Code, Codex, Pi) and per host
+(padme, and doudou where reachable), main sessions and subagent transcripts separately, since a
+date. Reuse the audit's scans (`conception/2026-10-29-memory-system-audit/repo_mem_reads.py`,
+`codex_mem.py`) rather than writing a third. A positive control proves the probe sees reads.
+
+## Exit criteria
+- [ ] One command prints read counts per runtime, host and session kind, with a positive control line
+- [ ] Its result for padme since 2026-10-15 is recorded on 1346
+- [ ] Tests cover the counting on fixture transcripts
+
+## Imagine (raid 0a53b8)
+Why now: 1346's census is its first exit criterion and costs no model spend. The trial (1354)
+needs a baseline of how often repository memory is read today, or its arms have no reference.
+Premise check against the tree (2026-10-29): holds.
+- `scripts/census/memory-recall.py` still accepts `memory/<name>.md` only and shell reads of native
+  prefixes only; it cannot see `memory/topics/` (audit §4.2 [O]). `memory/topics/` exists.
+- The audit scripts are one-off and frozen under `conception/`: `repo_mem_reads.py` runs its scan at
+  import (not importable), takes `since` as an argument, handles Claude Code only; `codex_mem.py`
+  covers Codex and Pi, main sessions only, filters on the harness AGENTS.md marker.
+- Pi sessions exist on padme (`~/.pi/agent/sessions/`); Codex under `~/.codex/sessions`.
+- doudou: `ssh doudou true` fails ("No route to host", 5 s). Exit criteria are met for padme;
+  the report prints "doudou: not reachable" and the run is repeatable there later.
+Simplest path (YAGNI): one new sibling `scripts/census/repo-memory-reads.py` that lifts the two
+audit scanners' logic into functions (no third scanner design; the audit copies stay as the
+frozen record) and prints one table plus a control line. No change to `memory-recall.py`
+(its native-memory question is different). No remote execution code: doudou is a re-run.
+Objection noted, not a blocker: the audit's `memory/MEMORY\.md` pattern also matches the native
+`~/.claude/projects/<slug>/memory/MEMORY.md`, which Claude Code itself reads at start, so a naive
+reuse counts native reads as repository reads. The sibling excludes paths under `.claude/projects/`.
+Verdict: proceed.
+
+## Plan (raid 0a53b8)
+Actions:
+1. Create `scripts/census/repo-memory-reads.py`: `scan_claude(path)`, `scan_codex(path)` (Codex and
+   Pi payload shapes), `classify`, `main(--since YYYY-MM-DD, --claude-root, --codex-root,
+   --pi-root, --host label)`. Output rows: runtime x host x kind (main-working, main-maintenance,
+   subagent), sessions, sessions reading index, sessions reading topics, via Read tool vs shell.
+   Subagents separate for Claude Code; Codex and Pi have no subagent transcripts in these stores
+   (stated in the output). Positive control line: maintenance arm reads > 0, else
+   "CONTROL FAILED" and exit 1. Sessions dated before `--since` are dropped (first timestamp for
+   Claude, mtime for Codex/Pi, as in the audit).
+2. Create `tests/test_repo_memory_reads.py` (fast tier, `tmp_path` fixtures, no host access).
+3. Document the command in `scripts/census/README.md` (one line).
+4. After merge, run for padme since 2026-10-15 and record the output on 1346 (exit criterion 2;
+   a ticket edit, not code).
+First failing test: builds a fixture tree and asserts the exact table. Claude main working: 4
+sessions, of which one has a Read of `repo/memory/topics/a.md` (known read), one has a Read of
+`~/.claude/projects/-x/memory/MEMORY.md` (native index, known non-read), one only mentions
+`memory/topics/a.md` in user text (non-read), one dated 2026-10-01 with a topics Read (before
+`--since 2026-10-15`, non-read). Expected: sessions 3, reading topics 1, Read-channel 1. Maintenance
+fixture with a `/roar` command and a Bash `cat memory/journal/..` plus a topics Read: control fires.
+Subagent fixture (`<slug>/<sess>/subagents/agent-1.jsonl`, 1 Read of the index): counted under
+subagent, not main. Codex fixture: one session with the AGENTS.md marker and a `function_call`
+naming `memory/topics/b.md` (read), one with the marker and no call, one without the marker
+reading it (non-harness, excluded): expected 2 harness, 1 reading. Pi fixture likewise with a
+`toolCall` assistant message. A wrong count (counting mentions, native index, pre-since, or
+non-harness sessions) fails these exact numbers. A second test: zero reads in the maintenance
+fixture gives exit 1 and "CONTROL FAILED".
+Dependencies: none (1346 context only); 1354 consumes the baseline.
+Risks: Claude trace shape varies (assistant `tool_use` input); fixtures must follow the shape
+`repo_mem_reads.py` parses. Codex/Pi "maintenance" stays a keyword heuristic. Grep-by-content is
+invisible (stated in output). Real traces are large: the scan must stream lines.
+Orchestrator decision: lifting the audit logic copies about 80 lines out of `conception/` rather
+than importing it; accepted as cheaper than refactoring a frozen record.
+
+## Feasibility (raid 0a53b8)
+Verdict: PASS.
+- scripts/census/memory-recall.py exists (has argparse, `main` at line 117); scripts/census/README.md exists for the one-line doc.
+- Audit scripts exist: conception/2026-10-29-memory-system-audit/repo_mem_reads.py (script-style, imports sys/glob, no functions: lift by copy, as plan says) and codex_mem.py (2 defs).
+- scripts/census/repo-memory-reads.py and tests/test_repo_memory_reads.py do not exist yet: no collision. tests/test_memory_recall.py is the sibling pattern for fixtures.
+- Check tiers: `make check` includes check-tests; the new file is covered with no registry edit.
+- doudou unreachable (per Imagine); plan leaves it as a re-run: acceptable.
+- Conflicts: none with 1347; with 1352 only if 1352 edits scripts/census/memory-recall.py or census README hoard words (1352 touches memory-recall.py); new files avoid it.
+
+## Blind-spot finding (raid 0a53b8), binding on the executor
+1352 renames hoard to smelt in the same wave. The maintenance-session keyword set must include
+`smelt` and `dream` beside `hoard`, `roar`, `lair` and `brood`, with one fixture, or sessions after
+the rename count as working sessions and inflate the baseline that 1354 needs.
