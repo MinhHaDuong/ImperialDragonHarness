@@ -12,6 +12,7 @@ import hashlib
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,9 @@ from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
+sys.path.insert(0, str(REPO / "scripts"))
+
+import memory_sizes  # noqa: E402
 INDEX = MEMORY / "MEMORY.md"
 
 # The ten tracked memory/ root sources inventoried by 0917 in
@@ -158,7 +162,7 @@ def test_archival_exceptions_reject_unmapped_and_current_broken_links(tmp_path):
 
 def test_index_is_bounded_and_terminated():
     text = INDEX.read_text(encoding="utf-8")
-    assert len(text.splitlines()) <= 100
+    assert memory_sizes.index_ok(text)
     assert text.endswith("\n")
 
 

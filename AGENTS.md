@@ -73,7 +73,7 @@ At Roar, commit significant facts; do not derive lessons. Smelt prunes, merges
 and refreshes themes while preserving sources. Journal entries remain
 append-only; link corrections from new entries. Review-attribution records
 live in `memory/evidence/attribution/`, outside the journal. Keep MEMORY.md at most
-100 lines; no automatic rule proposals or timer.
+40 lines; no automatic rule proposals or timer.
 
 On explicit Smelt invocation, one-way migration may mechanically update
 inventoried active path/command references in the selected project's isolated

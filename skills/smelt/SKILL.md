@@ -66,17 +66,23 @@ Apply these to consolidated `memory/topics/` and the index:
   current memory. Record the reason and retained source references in the report.
 - **Merging:** combine duplicate or overlapping entries into one accurate record,
   preserving source links, conditions, exceptions and unresolved contradictions.
-  Carry quotations verified on the page and their locators (page, folio, note
-  number) verbatim into topics; never paraphrase, condense or merge them away.
-  Keep conflicting recorded locators as an unresolved contradiction.
+  Carry quotations from manuscript sources, verified on the page, and their
+  locators (page, folio, note number) verbatim into topics; never paraphrase,
+  condense or merge them away. Keep conflicting recorded locators as an
+  unresolved contradiction. Operational memory is condensed freely.
 - **Refreshing:** update stale context that remains relevant using current
   evidence; flag uncertainty when it cannot be verified.
 
 The raw journal stays append-only. Pruning a consolidated claim never deletes
 its source experience. One carve-out: legacy review-attribution records move
 once, by `git mv` with their bytes intact, to `memory/evidence/attribution/`.
-`memory/MEMORY.md` has **at most 100 lines**, counting headings and blank
-lines. Keep details in topics rather than expanding the index.
+`memory/MEMORY.md` has **at most 40 lines**, counting headings and blank
+lines. Keep details in the journal, linked from the department page, rather
+than expanding the index.
+
+A topic is the as-built guide to one department (current claims, each linked
+to its journal episode) and holds at most 4 KB outside its Retired and Sources
+sections. Details: `memory/SMELT.md` § Job of a topic and caps.
 
 ## Coherence across indexed memories and harness rules
 
@@ -107,7 +113,7 @@ After the writing run's migration succeeds, continue sequentially:
    notes are not the canonical reference or a write destination.
 2. Apply pruning, merging and refreshing to `memory/topics/`. Link source
    episodes; distinguish hypotheses from supported observations. Update the
-   `memory/MEMORY.md` index within its 100-line maximum. Never rewrite, move or
+   `memory/MEMORY.md` index within its 40-line maximum. Never rewrite, move or
    delete journal entries. Do not propose rules.
 3. Write a report in `memory/smelts/` listing sources and revisions, changes,
    unresolved questions, runtime/model and prompt revision. Preserve the text of
@@ -115,7 +121,7 @@ After the writing run's migration succeeds, continue sequentially:
    the project's audience. A fingerprint alone cannot preserve a mutable note.
 4. Check coherence across all indexed memories and applicable harness rules,
    links, provenance, the migration/consolidation diff and the index line count.
-   Reduce the index if it exceeds 100 lines before committing. Commit the
+   Reduce the index if it exceeds 40 lines before committing. Commit the
    authorized migration edits and memory outputs on the project branch and
    submit a merge request following its integration policy. Do not merge
    automatically. Preserve and report the branch if submission fails. Only

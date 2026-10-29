@@ -89,7 +89,7 @@ def test_dream_prompt_is_versioned_and_complete():
     )
     for function in ("Pruning", "Merging", "Refreshing"):
         assert function in text, f"prompt lacks {function}"
-    assert "100 lines" in text, "prompt lacks the index cap"
+    assert "40 lines" in text, "prompt lacks the index cap"
     assert "append-only" in text, "prompt lacks the journal invariant"
     assert ".age" in text, "prompt lacks the encrypted-entry policy"
     assert "skipped" in text and "never" in text, (
