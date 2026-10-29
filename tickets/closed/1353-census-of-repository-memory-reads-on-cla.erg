@@ -2,10 +2,12 @@
 Title: Census of repository-memory reads on Claude Code, Codex and Pi, padme and doudou
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #1999
 
 --- log ---
 2026-10-29T20:49Z reviewer created
 2026-10-29T20:56Z reviewer implemented on branch; padme result recorded on 1346; doudou unreachable
+2026-10-29T21:13Z reviewer closed — autoclosed — PR #1999
 
 --- body ---
 ## Context
