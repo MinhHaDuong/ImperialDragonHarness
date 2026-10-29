@@ -36,7 +36,8 @@ The five findings that matter for a decision:
    a dated section. Deletions are 4-13 % of insertions across five runs (§3.2).
 2. Claude Code working sessions do not read repository memory: 0 `Read` calls on
    `memory/MEMORY.md` or `memory/topics/` in 148 main sessions since
-   2026-10-15, against 77 % of Codex working sessions that do (§4.2).
+   2026-10-15, against 77 % of Codex working sessions that do (§4.2; corrected to
+   about 19 %, see § Correction below).
 3. Half the journal (183 of 380 entries) is review-attribution telemetry that
    roar must write for every reviewed PR. Design v8 §4 rules out routine entries
    in general; reading attribution records as routine is this audit's inference (§3.1).
@@ -355,3 +356,16 @@ read counts. Total for the default path: about 5.5 author-hours.
   was not scanned.
 - The quality of individual topic claims. This audit measured shape and size,
   not correctness; the fifth hoard's own second pass checked 24 quotations.
+
+## Correction (2026-10-29, after ticket 1353)
+
+The §4.2 counts overstate reads. The audit's scans counted any tool call whose text named
+`memory/MEMORY.md` or `memory/topics/`, which included writes, redirections, Codex `apply_patch`
+and `git add/diff/log`. Gaze reproduced the 77 % with the same method, so its check did not catch it.
+The census built under ticket 1353 (`scripts/census/repo-memory-reads.py`, PR #1999) counts only
+read operations. On padme since 2026-10-15 it reports:
+- Codex main-working: 109 of 570 sessions read the index (about 19 %), not 360 of 468 (77 %);
+- Claude Code main-working: 1 of 148.
+The direction of the finding holds: Claude Code sessions almost never read repository memory.
+The gap between the runtimes is much smaller than stated. Ticket 1346 holds the full table.
+
