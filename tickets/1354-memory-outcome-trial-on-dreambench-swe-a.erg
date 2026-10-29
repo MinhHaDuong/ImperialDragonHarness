@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Memory outcome trial on DreamBench-SWE and ten harness tickets
+Created: 2026-10-29
+Author: reviewer
+Blocked-by: 1353
+Label: needs-human
+
+--- log ---
+2026-10-29T20:49Z reviewer created
+
+--- body ---
+## Context
+Parent tracker: 1346.
+Child of tracker 1346, split by raid 0a53b8 (2026-10-29). The design lives on 1346: arms
+(§ Native auto-memories as benchmarks; § More reference designs: ReMe), scoring (§ DreamBench-SWE),
+and the verbatim-journal control arm. 1346's second exit criterion.
+
+## Scope
+First a priced plan: arms, cells, model, tokens and USD per arm, total, for the author's approval.
+Then the run, only after approval.
+
+## Exit criteria
+- [ ] A priced plan is approved by the author
+- [ ] The trial result is written in `conception/` with its arithmetic and its limits

@@ -124,3 +124,8 @@ Use in this ticket:
   across five arms, this is the expensive part.
 - Keep a verbatim arm (raw journal only, no smelt) as a control. If smelt cannot beat verbatim
   journal retrieval, the departments must justify themselves on reading cost, not recall.
+
+## Children (raid 0a53b8, 2026-10-29)
+- 1353-census-of-repository-memory-reads-on-cla.erg: census of memory reads (exit criterion 1)
+- 1354-memory-outcome-trial-on-dreambench-swe-a.erg: outcome trial (exit criterion 2); needs the author's spend approval
+1346 is now a tracker, closed after both children and the integration review.

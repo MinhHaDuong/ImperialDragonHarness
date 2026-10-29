@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Census of repository-memory reads on Claude Code, Codex and Pi, padme and doudou
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:49Z reviewer created
+
+--- body ---
+## Context
+Parent tracker: 1346.
+Child of tracker 1346, split by raid 0a53b8 (2026-10-29) under the monster checklist: 1346 bundled a
+census that can run now and a paid outcome trial that needs the author's spend approval.
+The census is 1346's first exit criterion. Evidence and scope: 1346 § Context and § Scope (first bullet).
+
+## Scope
+Extend `scripts/census/memory-recall.py` (or a sibling) to count reads of repository memory
+(`memory/MEMORY.md`, `memory/topics/`) per runtime (Claude Code, Codex, Pi) and per host
+(padme, and doudou where reachable), main sessions and subagent transcripts separately, since a
+date. Reuse the audit's scans (`conception/2026-10-29-memory-system-audit/repo_mem_reads.py`,
+`codex_mem.py`) rather than writing a third. A positive control proves the probe sees reads.
+
+## Exit criteria
+- [ ] One command prints read counts per runtime, host and session kind, with a positive control line
+- [ ] Its result for padme since 2026-10-15 is recorded on 1346
+- [ ] Tests cover the counting on fixture transcripts
