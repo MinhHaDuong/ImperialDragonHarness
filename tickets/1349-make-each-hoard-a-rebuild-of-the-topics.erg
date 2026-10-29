@@ -83,3 +83,7 @@ Drain requirements:
 ## Orchestrator decisions (raid d2253c)
 - The PR delivers exit criterion 1 only and does not close the ticket; criterion 2 (a real harness smelt run as a rebuild, accepted by the author) stays open.
 - D2 yes: pinned Commission rulings carried verbatim and counted in the net change. D3 yes: bump to v8-r4, update the pins. D4 yes: the helper measures the net change.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS; anchors drift (Read ends near SMELT.md:32, Procedure step 2 at :114).
+- Blind spot: memory/journal is about 1.1 MB, about 275k tokens (derived at 4 bytes/token), above the 256K guard. The rebuild procedure must batch by department (journal episodes per topic, measured) so one run never holds the whole journal; measure bytes per topic before writing the prompt.

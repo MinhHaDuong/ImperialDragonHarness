@@ -38,3 +38,7 @@ should degrade (`skip` with a reason) rather than fail where a prerequisite is m
 ## Orchestrator decisions (raid d2253c)
 - The ticket itself (2026-10-29) asks for the skip, so it carries the author's intent to revise the 0953 contract; only the no-runner-declared case changes.
 - D2: a `mechanical_runner: skipped (<reason>)` key, verdict PASS. D3: phase 3 semantic review still runs. A declared but unrunnable runner stays ESCALATE.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS; anchors drift ("If none is declared" at :128).
+- Blind spot: first run runner discovery read-only in ~/DOIfetch. If DOIfetch does declare a runner that discovery misses, report that and fix discovery as the cause; the skip for a truly runner-less project still lands.

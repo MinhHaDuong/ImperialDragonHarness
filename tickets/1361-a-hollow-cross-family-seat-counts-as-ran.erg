@@ -38,3 +38,7 @@ Reported by DOIfetch (raid f9e483), PR #33: a cross-family seat (gpt-6-luna) ret
 ## Orchestrator decisions (raid d2253c)
 - D1: a headless non-self seat counts as ran only with a path:line citation or at least 200 characters of body; else `failed`. D2: status `failed`, no new value. D3: self and script seats exempt.
 - Wave 2, after 1360 merges (same function).
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS; headless fixtures near test_seat_clock.py:188.
+- Blind spot: the hollow DOIfetch seat (10 s, no reasoning) may be the 1363 failure (a codex seat that could not read the tree). Check the 1361 rule against the actual PR #33 seat report before fixing; 1363 lands first. Add one codex/pi session-runtime fixture.

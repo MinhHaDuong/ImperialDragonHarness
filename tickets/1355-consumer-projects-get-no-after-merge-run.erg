@@ -42,3 +42,6 @@ make a gated consumer project carry it, or make `main_sweep.py --after` report t
 ## Orchestrator decisions (raid d2253c)
 - Scope narrowed to the reported branch of criterion 1 (allowed: the criterion is an either-or).
 - D1: advisory line, exit status unchanged, so sweeps do not turn red on consumers without a hook. D2: a read-only run against ~/DOIfetch is allowed. D3: no yawn check.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS: main_sweep.py after_audit (:160), lair SKILL step 14, tests/test_main_sweep.py exist; `_hook_installed` is new.

@@ -34,3 +34,7 @@ Reported by the DOIfetch session (raid f9e483), DOIfetch PR #33 at 24a2ef5: a ga
 ## Orchestrator decisions (raid d2253c)
 - D1: record the real family and add a deviation line on a label mismatch. D2: `unconfirmed` when the door gives no model prefix.
 - Lands before 1361 (both edit `identities()` in scripts/seat_clock.py).
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility WARN: anchors (self branch :270, else :280).
+- Blind spot: records already written with route=subagent under a non-Anthropic family stay wrong; grep the attribution records here and in DOIfetch, name what you find in the PR body, rewrite nothing. Add one test fixture with session runtime codex or pi.

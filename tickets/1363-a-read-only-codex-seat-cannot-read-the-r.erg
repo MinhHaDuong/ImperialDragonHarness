@@ -34,3 +34,7 @@ Reported by DOIfetch's team lead (raid f9e483): a codex seat launched with `exec
 ## Orchestrator decisions (raid d2253c)
 - First reproduce through the real `gaze_seat.py` launch. If it does not reproduce, log the finding (codex refuses a non-git directory, reads a git worktree under read-only) with the evidence and land a regression test of the door argv; do not invent a fix.
 - D2: one recorded smoke run in the ticket log plus an argv rig test.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility WARN: the argv test is new (none at test_gaze_seat.py:328).
+- Blind spot: may be the cause of 1361's hollow seat; record the seat's stderr and timing in the smoke run. Add one codex/pi session-runtime fixture if the door path differs.
