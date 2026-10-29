@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-29T19:54Z reviewer created
 2026-10-29T20:12Z reviewer author: native Claude Code and Codex memories become benchmark arms
+2026-10-29T20:36Z reviewer reference designs: Claude Code docs, Qwen Code, Mistral, Chinese runtimes, ReMe
 
 --- body ---
 ## Context
@@ -51,3 +52,30 @@ Judge on rework, reviewer findings and repeated incidents; report tokens injecte
 Design comparison to report alongside: capture (automatic or roar), consolidation (Codex's two
 phases versus smelt), retirement and decay (usage counts versus none), size bounds, and
 cross-runtime reach (each native store serves one runtime; the repository store serves all three).
+
+## More reference designs (author, 2026-10-29)
+Web survey, lair session 2026-10-29 (sources: official docs unless marked).
+- **Claude Code** (code.claude.com/docs/en/memory): auto memory is keyed by git repository and
+  shared by worktrees; the first 200 lines or 25 KB of MEMORY.md load at start, topic notes on
+  demand; the only built-in upkeep is an index-size reminder ("merge or drop stale entries").
+  `autoMemoryDirectory` is read from any settings scope, project included. Subagents do not get
+  the main auto memory; an agent's `memory: user|project|local` gives it its own store
+  (`project`: `.claude/agent-memory/<agent>/`, under version control). "Auto Dream" background
+  consolidation appears only in third-party reports; the official page does not mention it.
+- **Qwen Code** (qwenlm.github.io/qwen-code-docs, users/features/memory): the most complete runtime
+  design found. Managed auto-memory (on by default, four note types, `~/.qwen/projects/<project>/memory/`);
+  `pinned/` notes that upkeep never touches; documented Dream consolidation (about daily after
+  enough sessions, `/dream`); opt-in team memory in `.qwen/team-memory/` shared through git with a
+  secret scan and per-write approval; opt-in sync that commits and pushes only that directory.
+- **Mistral**: Vibe has no built-in memory (local check of 2.26.0 and its docs). Le Chat
+  Memories (consumer, beta): explicit and automatic saves, recall shown with a link to its
+  source, every entry editable.
+- **Other Chinese runtimes**: Kimi Code has `AGENTS.md` layers and sessions, with memory through
+  plugins (secondary sources); iFlow CLI, Trae and GLM/ZCode have none found (MCP or Mem0 add-ons).
+- **ReMe** (Alibaba AgentScope, github.com/agentscope-ai/ReMe, Apache-2.0): v0.4.2.0 (2026-10-26) added automatic
+  memory plugins for Claude Code and Codex. Markdown files with frontmatter and wikilinks in a
+  local `.reme/` workspace: `session/`, `daily/`, `digest/personal|procedure|wiki/`;
+  `auto_memory` capture, `auto_dream` consolidation ("creates, corroborates, refines, or corrects"
+  digest nodes), BM25 with optional embeddings. The README shows no decay, deletion or size policy.
+  Self-reported: LongMemEval cleaned-s 89.4%, BEAM 66.1% at 100K.
+  ReMe is a candidate trial arm: it is the one off-the-shelf store that spans Claude Code and Codex.
