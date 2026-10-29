@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Rule-mandated git pushes and branch deletes need allow rules the harness does not record
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T07:49Z reviewer created
+
+--- body ---
+## Context
+Harness-doctor visit 2026-10-29 (triage), finding F3 above the floor; the author ruled fix.
+
+`rules/git.md` mandates rebase and `--force-with-lease` before every gate, and molt/lair leave superseded branches for `git branch -D`. Claude Code's auto-mode classifier refused both as "Git Destructive" twice in 24 h despite the blanket `Bash` allow (raid 6530fd, 2026-10-28: PR #1900 superseded; 2026-10-29: branch cleanup). With explicit author permission, five narrow allow rules were added on padme's `~/.claude/settings.json` (`Bash(git push --force-with-lease:*)`, `Bash(git push origin --force-with-lease:*)`, `Bash(git branch -D:*)`, `Bash(git push origin --delete:*)`, `Bash(git update-ref -d:*)`) and took effect mid-session. `git update-ref -d` was still refused as "Self-Modification". Nothing in the harness records the rules, so doudou and any reinstall still block. `scripts/adapter-claude-code-activate.sh` deliberately never edits the live settings.
+
+## Exit criteria
+- [ ] The harness names, in its Claude-Code-only place, the allow rules a rule-mandated git act needs, and what they leave to the classifier
+- [ ] A read-only check reports which of those rules are missing from the live settings, without editing them (the activation script's stance), and says so when it could not read them
+- [ ] `make check` passes
