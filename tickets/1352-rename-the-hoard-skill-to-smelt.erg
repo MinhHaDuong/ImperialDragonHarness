@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Rename the hoard skill to smelt
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:08Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-29 (lair session, after closing the fifth hoard #1975 unmerged): rename
+hoard. "Dream" is taken; the author chose **smelt** over temper, assay and anneal. Fire turns
+ore into metal and leaves the slag behind: journal entries are the ore, topics the metal, stale
+claims the slag. The output is smaller than the input, which is the point (ticket 1348's
+theory of change; the name "hoard" described the defect, a store that only grows).
+
+## Scope
+- Harness: `skills/hoard/` → `skills/smelt/`; `memory/HOARD.md` → `memory/SMELT.md`;
+  `memory/hoards/` → `memory/smelts/` (ledger history kept with `git mv`); every reference in
+  skills, rules, AGENTS.md, scripts, tests, adapters and the skills catalog (about 55 files
+  outside journal, conception and closed tickets, which keep the old word as history).
+  Lair step 12's suggestion line follows.
+- Consumer projects: each project with memory carries a versioned HOARD.md and `memory/hoards/`.
+  One ticket per project repository (cross-project rule), filed when the harness rename lands.
+- Description routing: the first sentence states the plain function (`rules/authoring-skills.md`).
+- Land before 1349, so the rebuild runs under the new name.
+
+## Exit criteria
+- [ ] `grep -rniw hoard` outside history paths (journal, conception, closed tickets, hoard reports) finds nothing
+- [ ] `make check` and `make check-skills-drift` pass
+- [ ] Per-project rename tickets filed in every repository with a memory store
