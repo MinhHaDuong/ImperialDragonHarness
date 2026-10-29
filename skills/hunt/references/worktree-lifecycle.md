@@ -31,7 +31,7 @@ first, `worktree-gc` reclaims the tree once its branch is gone upstream (merged
 and pruned) and two more things hold:
 
 1. **The tree holds no work** — no modified, untracked or ignored file (review
-   scratch counts), except regenerable caches, the root `.venv/` and `.tmp/`,
+   scratch counts), except regenerable caches and `*.egg-info/`, the root `.venv/` and `.tmp/`,
    which has its own guard.
 2. **Its git metadata** (HEAD, index, reflog, lock) has not moved for 72 h —
    three days outlast a weekend pause. `WORKTREE_GC_OWNERLESS_IDLE_HOURS`

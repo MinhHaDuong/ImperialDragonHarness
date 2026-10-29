@@ -89,6 +89,15 @@ explains the layout.
 
 ### 3. Memory
 
+> **Being reworked (2026-10-29).** The fifth consolidation was closed
+> unmerged because topics had become accumulated incident logs. The redesign
+> is ticketed: fixed departments with a 4 KB cap per page, the journal kept
+> intact as the source with the pages as guides to it, and the runtimes'
+> native memories (Claude Code, Codex) drained as inboxes. `/hoard` becomes
+> `/smelt`, and a trial measures whether memory helps. See tickets 1346–1352
+> and [the audit](conception/2026-10-29-memory-system-audit.md). Until then,
+> the description below is the current mechanism.
+
 Memory is layered, from raw to distilled. Project memory is written in each
 project's own repository; the harness's memory is its own (`memory/`).
 
@@ -101,8 +110,8 @@ project's own repository; the harness's memory is its own (`memory/`).
    remote; the key is created on first use) is in
    [INSTALL.md § Dependencies](INSTALL.md#dependencies).
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
-   `memory/MEMORY.md`, is injected into the session prompt; subagents read
-   it too, per section 7. `/hoard` turns
+   `memory/MEMORY.md`, is not injected: `AGENTS.md` asks each session to
+   read it at task start, and subagents are pointed to it per section 7. `/hoard` turns
    events into topics; it runs on demand, and `/lair` suggests it when five
    or more events are not yet covered.
 4. **Crystallisation**: `/brood` proposes improvements to rules and skills
