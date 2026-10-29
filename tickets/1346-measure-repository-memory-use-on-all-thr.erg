@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-29T19:54Z reviewer created
 2026-10-29T20:12Z reviewer author: native Claude Code and Codex memories become benchmark arms
 2026-10-29T20:36Z reviewer reference designs: Claude Code docs, Qwen Code, Mistral, Chinese runtimes, ReMe
+2026-10-29T20:40Z reviewer DreamBench-SWE read; proposed as the trial's scoring method
 
 --- body ---
 ## Context
@@ -79,3 +80,47 @@ Web survey, lair session 2026-10-29 (sources: official docs unless marked).
   digest nodes), BM25 with optional embeddings. The README shows no decay, deletion or size policy.
   Self-reported: LongMemEval cleaned-s 89.4%, BEAM 66.1% at 100K.
   ReMe is a candidate trial arm: it is the one off-the-shelf store that spans Claude Code and Codex.
+
+## DreamBench-SWE as the trial's scoring method (author, 2026-10-29)
+Sarthak Singh, "DreamBench-SWE: A Multi-Session Memory-Hygiene Benchmark for Software Agents",
+arXiv:2608.20664 (2026-08-21, single author, no affiliation given). Code, records and harness:
+github.com/iroiro147/dreambench-swe (frozen v2.0.5; preregistered successor v2.1.0). Read by
+the lair session on 2026-10-29 from the arXiv PDF.
+
+Design: a sequence is three sessions on one fixture repository. Sessions S1 and S2 set up or
+reinforce evidence, and S3 is a "trap" that needs a fact the agent can only get from earlier
+sessions (random tokens, so pretraining cannot leak it). Hidden executable oracles score each
+session, outside the agent's container. Trap families, each a failure the harness has met:
+- reviewer preference: feedback scoped correctly, and not over-generalised once it changes
+  (our Commission rulings);
+- convention learning (our site practice);
+- stale architecture: a fact becomes false later (our retirement problem);
+- generated files versus source of truth;
+- flaky test: refusing a spurious lesson.
+Hygiene metrics include RepeatedErrorRate, StaleUseRate, OverscopeRate, HarmfulMemoryRate and
+UsefulMemoryPrecision; the task metric is Pass@1.
+v2 fold: 60 traps x 3 seeds = 180 cells per condition; the wake agent, sleep pipeline and judge
+all use gpt-5.5 through the Codex CLI.
+
+Results that bear on our design:
+- v2.1 successor: no memory 21/180; verbatim event memory 82/180; typed reference probe 83/180;
+  hosted Mem0 with literal storage 97/180. Every memory arm beats none (Holm-significant).
+- The rich typed consolidation pipeline did not beat simple verbatim memory (95/180 versus 89/180,
+  p = .52). Its useful-memory precision was worse (0.264 versus 0.556). On staleness traps,
+  verbatim scored 13/21 and typed 8/21.
+  This agrees with "Useful Memories Become Faulty" in the audit: keep raw episodes; consolidation
+  has to prove itself.
+- Limits stated by the author: one model family (the GLM-5.2 transfer check failed warmup);
+  curated fixture repositories; 18 of 22 v1 traps are verbatim recall; the no-memory warmup gate
+  narrowly missed (0.797 versus 0.80); the anti-hoarding and abstention strata are invalid in
+  this fold; filesystem isolation but no network isolation; live reruns drift.
+
+Use in this ticket:
+- Score the outcome trial on DreamBench-SWE's trap families and hygiene metrics instead of a
+  home-made rubric. Our ten tickets give real repositories, and its fixtures give controlled
+  traps; report both.
+- Its harness drives the Codex CLI, so the arms (none, Claude Code native, Codex native, ReMe,
+  repository departments) can be added as conditions. Price the runs first: at 180 cells per arm
+  across five arms, this is the expensive part.
+- Keep a verbatim arm (raw journal only, no smelt) as a control. If smelt cannot beat verbatim
+  journal retrieval, the departments must justify themselves on reading cost, not recall.
