@@ -24,13 +24,13 @@ memory/MEMORY.md
 memory/SMELT.md
 memory/topics/<theme>.md
 memory/journal/YYYY/YYYY-MM-DD-<slug>.md
-memory/hoards/YYYY-MM-DD-<slug>.md
+memory/smelts/YYYY-MM-DD-<slug>.md
 ```
 
 SMELT.md and the accepted-report convention are delivered under 0916: the
 versioned consolidation prompt is the pilot's live copy at
 [memory/SMELT.md](../../memory/SMELT.md); adopting projects copy and adapt it,
-keeping its revision line, and reports live in `memory/hoards/`. Journal files stay in their original year directory. Choose a
+keeping its revision line, and reports live in `memory/smelts/`. Journal files stay in their original year directory. Choose a
 new descriptive slug or distinguishing suffix on collision; never overwrite.
 Corrections are new entries linking to the original, which remains unchanged.
 Concurrent captures preserve both files and resolve conflicting claims explicitly.
