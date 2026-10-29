@@ -2,9 +2,11 @@
 Title: Rename the hoard skill to smelt
 Created: 2026-10-29
 Author: reviewer
+Closed: resolved — PR #2000 merged; consumer tickets filed in padme, JETP-observer, climate-finance-het
 
 --- log ---
 2026-10-29T20:08Z reviewer created
+2026-10-29T21:08Z reviewer closed — resolved — PR #2000 merged; consumer tickets filed in padme, JETP-observer, climate-finance-het
 
 --- body ---
 ## Context
@@ -104,3 +106,11 @@ The rename takes effect when merge step 8 syncs local main: Codex discovers skil
 hoard, lair or roar running at that moment loses `skills/hoard/` mid-run. Merge only when none
 runs; doudou keeps the old name until it pulls. `idh install skill smelt` then repairs the
 installed link, and the dangling `hoard` link is deleted.
+
+## Consumer tickets filed (2026-10-29, author instruction: tickets in their repositories, no GitHub issue)
+- padme: tickets/0076 (PR MinhHaDuong/padme#145, merged)
+- JETP-observer: tickets/2100 (PR MinhHaDuong/JETP-observer#243, merged)
+- climate-finance-het: tickets/2721 (PR MinhHaDuong/climate-finance-het#2000, merged)
+- arena/repos/agents is a clone of the harness (origin /home/haduong/.agents) and needs none.
+Post-merge install: `idh install skill smelt` ran on padme; the dangling `~/.claude/skills/hoard`
+link was removed; `idh check: ok`. doudou was unreachable and takes the rename at its next pull.
