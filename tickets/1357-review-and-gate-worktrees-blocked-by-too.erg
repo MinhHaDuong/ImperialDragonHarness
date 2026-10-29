@@ -24,3 +24,70 @@ have the step that creates it remove it. Keep hand-made files under an ignored `
 - [ ] A review tree holding setuptools `build/` output is removed by gaze's close, by test
 - [ ] verify-gate removes its tree after touched-tests without force, by test
 - [ ] The stale liveness lock no longer blocks a re-run of the same review
+
+## Imagine (raid b7c67c)
+Premise check (read, not run; causes confirmed in code, not by repro): no intent change.
+- Gaze chain: `gaze_close.cleanup` -> `worktree-exit-preflight.sh --removal` -> `worktree_residue`
+  -> bare `git worktree remove`. Ignored `build/` is not in the residue allowlist, so preflight
+  refuses; that is blocker 1. Git itself ignores ignored files, so only the allowlist matters here.
+- Gate chain: verify-gate ends with a bare `git worktree remove` and never calls the preflight.
+  `touched-tests.py` runs `uv run --frozen` (line ~103) in the gate tree and makes `.venv`. Git
+  refuses on UNTRACKED files, not ignored ones: the gate tree only blocks when `.venv` is unignored
+  (no .gitignore entry, venv without its own `.gitignore`, or a commit hook, as in JETP-observer).
+  The existing `.venv/` allowlist covers only the ignored case; the 1345 widening does not help the gate.
+- Lock: `review-<pr>` liveness = newest mtime in the tree (`gaze_setup.newest_mtime`, 1200 s).
+  A tree left by a refused close is fresh, so a re-run answers exit 3 "another gaze is live" until
+  the window passes. Fixing blockers 1 and 2 removes the usual cause, but any refused close
+  still reproduces it: the lock is not tied to the run being alive.
+
+Decisions per artifact:
+| Artifact | Rule | Why |
+|---|---|---|
+| ignored `build/lib*`, `build/bdist.*`, `build/temp.*` (root) | allowlist in `worktree_residue` | setuptools output, rebuilt by `uv run`; same precedent as egg-info; serves gaze close AND worktree-gc |
+| other ignored `build/*` (hand-made `notes.txt`, any other name) | stays residue | protected, as scope demands |
+| root `.venv/` untracked, unignored | allowlist when `.venv/pyvenv.cfg` is a regular file and `git ls-files -- .venv` is empty; plus deleted by the removal step | a venv is rebuilt from the lock; pyvenv.cfg is the marker (venv, virtualenv, uv all write it); a hand-made `.venv` dir lacks it and stays residue |
+| gate's `.venv` | the gate's removal step removes it (preflight `--removal` scrub), then plain remove | allowlisting alone does not satisfy git; no force, as the skill requires |
+| liveness lock | close writes `.panel/<key>/closed` before cleanup; setup treats a tree with that marker as dead | the run that would hold the lock has ended; `.panel` is command-owned and removed with the tree |
+Rejected: making the gate pass `--force` (forbidden); deleting `build/` wholesale (loses hand-made
+files); shortening `fork_liveness_seconds` (a live run would lose its lock).
+Risk: symlinked `build/` or `.venv` (existing guard `! -L`): scrub must keep it; recognition must not follow symlinks.
+
+## Plan (raid b7c67c)
+Dependency: 1357 follows 1356 (wave 2). Both edit `scripts/gaze_close.py`. 1357 touches only
+`cleanup()` (marker write at the top) and 1356 changes cwd/panel resolution in the main close path;
+the shared functions to rebase onto are `cleanup(primary, pr, branch)` and `unit_key`/panel path
+helpers. Run `git diff origin/main...` after 1356 lands and keep 1356's explicit-argument signatures.
+Also shared: `tests/test_gaze_close.py` fixtures `opened`/`run`; add tests below the 1345 test.
+
+Actions:
+1. `scripts/worktree-clean-lib.sh`: in `worktree_residue`, tolerate ignored `/build/lib/*`,
+   `/build/lib.*/*`, `/build/bdist.*/*`, `/build/temp.*/*`; tolerate untracked `/.venv/*` when the
+   tree's `.venv` is a non-symlink dir with `pyvenv.cfg` and nothing tracked. Update the header comment.
+2. Same lib: new `worktree_scrub <path>`: `rm -rf` the recognised root `.venv` (above test) and root
+   `build/lib*|bdist*|temp*` when untracked and `build` is not a symlink.
+3. `scripts/worktree-exit-preflight.sh --removal`: call the scrub beside the `build/panel-head` cleanup.
+4. `skills/verify-gate/SKILL.md` § Isolation: before the final `git worktree remove`, run
+   `worktree-exit-preflight.sh --removal "$gate_tree"`; a refusal is reported, never forced.
+5. `scripts/gaze_close.py` `cleanup()`: write `.panel/<key>/closed` first (after the tree check).
+   `scripts/gaze_setup.py` (~line 156): skip the liveness refusal when that marker exists; go to cleanup.
+6. `skills/gaze/SKILL.md` line ~76 and `references/setup-and-breaker.md`: one sentence on the marker.
+
+First failing tests (one per exit criterion, written before the code):
+- E1 `tests/test_gaze_close.py::test_tree_holding_setuptools_build_is_removed`: ignored
+  `build/lib/pkg/m.py`, `build/bdist.linux-x86_64/x` -> close exits 0, tree gone. Control in
+  `tests/test_worktree_tools.py`: ignored `build/notes.txt` still reports residue.
+- E2 `tests/test_worktree_tools.py::test_preflight_removal_scrubs_unignored_venv` (+ a gate-sequence
+  test: preflight `--removal` then plain `git worktree remove`, no force, succeeds with an unignored
+  `.venv/pyvenv.cfg`); control: `.venv` without pyvenv.cfg, and a symlinked `.venv`, stay residue.
+- E3 `tests/test_gaze_setup.py::test_setup_reruns_after_closed_marker`: a fresh tree holding
+  `.panel/<key>/closed` is cleaned and re-set up instead of exit 3; control: no marker, fresh tree -> exit 3
+  (existing `test_setup_second_call_sees_live_gaze` keeps passing).
+Order: tests (red) -> action 1-3 -> 4 -> 5-6 -> `make` gate (scoped, quote selected:/skipped:).
+Open for the orchestrator: gc (`worktree-gc.sh`) inherits the residue widening via the lib; confirm it
+needs no scrub (its own removal path was not read in depth).
+
+## Orchestrator decisions (raid b7c67c)
+Plan accepted as written: setuptools `build/lib*`, `bdist.*` and `temp.*` are regenerable, and
+other content under `build/` stays protected; a `.venv` is recognised by `pyvenv.cfg`, with nothing
+tracked and no symlink, and scrubbed by the removal preflight, which the gate calls before its
+plain remove; a `closed` marker lifts the liveness refusal. Runs in wave 2, after 1356.

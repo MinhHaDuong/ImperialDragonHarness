@@ -22,3 +22,74 @@ record, never from the cwd at close time.
 ## Exit criteria
 - [ ] A test runs the close from a foreign cwd and records the real panel's seats
 - [ ] The containment check reports the review tree, not the session's moved cwd
+
+## Imagine (raid b7c67c)
+Read: gaze_close.py, gaze_setup.py, cleanup.md, SKILL.md, tests; nothing run.
+Root cause, confirmed by reading (all three candidates hold, one origin):
+- `main()` calls `primary_root()` with no argument: it reads `git rev-parse` in the cwd. Run from
+  the harness directory for a DOIfetch review, `primary` is the harness repo. Everything keyed on it
+  then misses: `panel_reading`/`seat_block`/`read_entry` build `<primary>/.claude/worktrees/review-N/
+  .panel/N` (absent), `seat_clock.py seats` prints nothing, the derived line falls to
+  `seats: self-only (panel unreadable)`, and `plan_check_line` reports FAIL. `cleanup` also finds no
+  tree ("no review worktree") and `record_answer`/`pointer` use the wrong repo's notes and, for
+  `pointer`, `forge.get_forge(None, pr)` resolves the repo from cwd too (to verify: pointer may
+  comment on the wrong repo's PR N).
+- The entry record (`entry-state.json`) lives inside that panel, so the record that could tell the
+  close where it is is itself reachable only through the primary. Chicken and egg: a cwd-free close
+  needs one explicit anchor.
+- `containment()` runs `git rev-parse --show-toplevel`, `git status`, `git branch --show-current`
+  with no `cwd=`, so it judges wherever the runtime left the shell. #1984/#1996/#2003: cwd moved to
+  the main checkout, branch `main` != entry `t...`, exit 4 though nothing was contaminated.
+  `entry-state.json` stores the entry branch and porcelain but not the entry toplevel.
+Simplest fix (one anchor, no new state store):
+1. `gaze_setup.py` prints `repo=<primary>` and records `session_tree=<toplevel at entry>` in
+   `entry-state.json` (it already records the rest).
+2. `gaze_close.py --repo <primary>` (default: cwd, so old callers behave as before; env
+   `IDH_REVIEW_REPO` not needed). `primary = primary_root(cwd=a.repo)`. SKILL.md close line passes
+   `--repo <repo>` from setup's output.
+3. `read_entry` first; `containment()` takes `session_tree` and runs every git read with
+   `cwd=session_tree` (fall back to cwd when absent: legacy entry states). The report prints the
+   session tree, not cwd.
+4. `pointer()` and `record_answer` run with the primary as cwd (chdir or `cwd=` into forge calls).
+Alternative rejected: deriving primary from `--branch`/PR by scanning worktrees (guessy, and DOIfetch
+may have several clones). Reading the setup record alone is not possible (see chicken and egg).
+Premise check: ticket's causes are "as stated, not re-verified"; verified now by reading. Not
+reproduced by running, so the first failing test below is the reproduction. One doubt on exit
+criterion 2: "the review tree" is ambiguous. Containment exists to check the invoking session's
+tree (the review tree is removed by then). I read it as the recorded entry session tree; this
+loses detection of a moved cwd, which is acceptable: a moved cwd is not contamination, and the
+foreign-files and branch reads still apply to the tree that matters.
+
+## Plan (raid b7c67c)
+Actions:
+1. Test first (tests/test_gaze_close.py, uses gaze_fixture `make_repo`, `opened`, `one_seat`):
+   a. `test_close_from_foreign_cwd_records_the_real_panel`: open review 7 in `primary`, write a
+      two-item panel with a non-self report (`one_seat` or `panel(..., reports=)` so seat_clock reads
+      `seats: panel`), make a second unrelated repo `other`, run CLOSE with cwd=`other` and
+      `--repo primary` and a comment claiming `seats: panel`. Assert exit 0, no "self-only", the seat
+      lines in the recorded answer, `plan check: PASS`, review tree removed. Fails today: exit 2
+      ("panel reads seats: self-only (panel unreadable)").
+   b. `test_containment_reports_the_session_tree_not_a_moved_cwd`: setup in `primary` on branch
+      `feature`... (make a session worktree on a branch, run SETUP there so entry-state records it),
+      then run CLOSE with cwd=`primary` on `main` and `--repo primary`; assert exit 0 and the report
+      names the session tree and branch, no "differs from entry branch". Fails today: exit 4.
+   c. Legacy: entry-state without `session_tree` still closes from cwd (existing tests keep passing).
+2. Implement items 1-4 above in gaze_setup.py (2 lines) and gaze_close.py (`--repo` arg;
+   `containment(..., tree)`; cwd for pointer).
+3. Docs: SKILL.md close command gets `--repo <repo>`; cleanup.md containment paragraph says the reads
+   run in the entry session tree. Both prose, same commit. Docstring of gaze_close.py usage line.
+4. Gate: `pytest tests/test_gaze_close.py tests/test_review_panel_cleanup_contract.py` plus the
+   gaze setup tests; run the scoped gate.
+Dependencies: none upstream. Ticket 1357 (wave 2) edits `cleanup()` and `worktree_residue`; shared
+with this ticket: `cleanup(primary, pr, branch)` (only via the primary it receives; I do not change
+its body) and `main()` around the `cleanup(...)` call and the `containment` call just after it.
+Rebase order: land 1356 first (small); 1357 then rebases over the `--repo` line in main().
+Open points for the orchestrator: (a) accept the "session tree" reading of criterion 2; (b) confirm
+`pointer` really resolves the repo from cwd (forge.py grep above); if so, 1356 also fixes a
+wrong-repo comment, which raises its severity.
+
+## Orchestrator decisions (raid b7c67c)
+- "Review tree" in exit criterion 2 means the session tree recorded at setup: accepted.
+- The executor checks whether `pointer()` and the forge calls target the right repository from a
+  foreign cwd. If they comment on the wrong repository's PR, fix that in this PR with a test,
+  since it is the same defect.
