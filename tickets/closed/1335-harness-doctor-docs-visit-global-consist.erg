@@ -2,12 +2,14 @@
 Title: Harness doctor docs visit: global consistency and organization of docs
 Created: 2026-10-29
 Author: claude
+Closed: autoclosed — PR #1959
 
 --- log ---
 2026-10-29T08:56Z claude created
 2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: Blocked-by 1334 is real (SKILL.md line budget); stale weight-loss pointer fixed
 2026-10-29T12:35Z claude note raid 94edd2 feasibility WARN, resolved
 2026-10-29T10:22Z reviewer note blocker 1334 closed — Blocked-by removed.
+2026-10-29T10:44Z reviewer closed — autoclosed — PR #1959
 
 --- body ---
 ## Context
