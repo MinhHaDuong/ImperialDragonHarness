@@ -726,7 +726,7 @@ def test_pointer_timeout_ignored_and_seats_still_run(monkeypatch, capsys):
         raise subprocess.TimeoutExpired(cmd, kw.get("timeout", 120))
 
     monkeypatch.setattr(forge.subprocess, "run", slow)
-    monkeypatch.setattr(gaze_close.forge, "get_forge", lambda cwd, pr, **kw: forge.GhForge())
+    monkeypatch.setattr(gaze_close.forge, "get_forge", lambda choice, pr, cwd=None: forge.GhForge())
     gaze_close.pointer("/nowhere", "7", "REVIEWED", identity={"review_id": "r1"})
     assert "pointer: not posted" in capsys.readouterr().out
 
