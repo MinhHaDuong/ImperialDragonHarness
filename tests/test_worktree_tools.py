@@ -772,11 +772,23 @@ def test_preflight_passes_on_ignored_setuptools_build(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-build", dirty=False)
     _exclude(primary, "build/")
-    for p in ("build/lib/pkg/m.py", "build/bdist.linux-x86_64/x.py", "build/temp.linux-x86_64/o.o"):
+    for p, data in (("build/lib/pkg/work.txt", "first\n"), ("build/lib/pkg/m.pyc", "x\n"),
+                    ("build/bdist.linux-x86_64/work.txt", "first\n"), ("build/temp.linux-x86_64/o.o", "x\n")):
         (wt / p).parent.mkdir(parents=True, exist_ok=True)
-        (wt / p).write_text("x\n")
+        (wt / p).write_text(data)
     res = _preflight(wt)
     assert res.returncode == 0, res.stderr
+
+
+def test_preflight_blocks_on_extensionless_bdist_metadata(origin):
+    """Control: extensionless bdist/temp files match no tracked blob and no build extension."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-meta", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "bdist.linux-x86_64").mkdir(parents=True)
+    (wt / "build" / "bdist.linux-x86_64" / "x").write_text("x\n")
+    res = _preflight(wt)
+    assert res.returncode == 1 and "build/bdist.linux-x86_64" in res.stderr
 
 
 def test_preflight_blocks_on_hand_made_file_under_ignored_build(origin):
@@ -861,6 +873,43 @@ def test_removal_keeps_hand_made_file_inside_ignored_build_lib(origin):
     res = _removal(wt)
     assert res.returncode == 1 and "build/lib" in res.stderr
     assert (wt / "build" / "lib" / "notes.txt").exists()
+
+
+def test_removal_keeps_hand_made_py_inside_ignored_build_lib(origin):
+    """A hand-made .py is not build output: only tracked-blob copies and .pyc .so .pyd .o are."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-lib-py", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "notes.py").write_text("my work\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and "build/lib" in res.stderr
+    assert (wt / "build" / "lib" / "notes.py").exists()
+
+
+def test_removal_keeps_basename_twin_inside_ignored_build_lib(origin):
+    """A file sharing a tracked basename but not its bytes is hand-made."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-lib-twin", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "README").write_text("different words\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and "build/lib" in res.stderr
+    assert (wt / "build" / "lib" / "README").exists()
+
+
+def test_removal_scrubs_byte_copy_and_pyc_inside_ignored_build_lib(origin):
+    """Positive control: a byte-copy of a tracked file plus a .pyc is disposable build output."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-lib-copy", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib" / "pkg").mkdir(parents=True)
+    (wt / "build" / "lib" / "README").write_text("hi\n")
+    (wt / "build" / "lib" / "pkg" / "m.pyc").write_bytes(b"\x00pyc")
+    res = _removal(wt)
+    assert res.returncode == 0, res.stderr
+    assert not (wt / "build").exists()
 
 
 def test_refused_removal_scrubs_nothing(origin):

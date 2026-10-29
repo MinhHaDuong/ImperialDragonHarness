@@ -16,11 +16,12 @@ set -euo pipefail
 # include, share, .gitignore, CACHEDIR.TAG); any other entry is residue and the
 # whole .venv is kept. worktree_scrub deletes it, since git refuses to remove a
 # tree holding untracked files. A build/ child (lib*, bdist.*, temp.*) is
-# regenerable only when every file in it looks like build output: extension
-# py pyc so pyd pyi typed o a c h, or a basename that some tracked file has
-# (package data copied by setuptools); else the child is residue. Symlinks
-# inside are never build output. Ignored files count: a repo may ignore `*`, and
-# `git worktree remove` deletes them. --no-optional-locks keeps the status
+# regenerable only when every file in it is build output: its bytes are
+# identical to some tracked blob (setuptools copies sources and package data),
+# or its extension is one of pyc so pyd o; else the child is residue. A
+# hand-made .py, or a file that merely shares a tracked basename, is residue.
+# Symlinks inside are never build output. Ignored files count: a repo may ignore
+# `*`, and `git worktree remove` deletes them. --no-optional-locks keeps the status
 # from rewriting the index, which would restart the tree's idle clock.
 # Returns 1 when git cannot answer (an unreadable tree is never "clean").
 # _build_child_regenerable <name>: a setuptools output directory name.
@@ -47,19 +48,22 @@ _venv_disposable() {
 }
 
 # _build_child_disposable <path> <name>: build/<name> is a real directory whose
-# files all look like build output (see header); symlinks disqualify it.
+# files all are build output (see header); symlinks disqualify it.
 _build_child_disposable() {
-    local d="$1/build/$2" f base names
+    local d="$1/build/$2" f blobs cand=() hashes
     [ -d "$d" ] && [ ! -L "$d" ] || return 1
     [ -z "$(find "$d" -type l -print -quit)" ] || return 1
-    names=$(git -C "$1" ls-files 2>/dev/null | sed 's|.*/||') || return 1
     while IFS= read -r -d '' f; do
-        base="${f##*/}"
-        case "$base" in
-            *.py|*.pyc|*.so|*.pyd|*.pyi|*.typed|typed|*.o|*.a|*.c|*.h) continue ;;
-        esac
-        printf '%s\n' "$names" | grep -qxF -- "$base" || return 1
+        case "$f" in *.pyc|*.so|*.pyd|*.o) continue ;; esac
+        cand+=("$f")
     done < <(find "$d" -type f -print0)
+    [ "${#cand[@]}" -gt 0 ] || return 0
+    blobs=$(git -C "$1" ls-files -s 2>/dev/null | awk '{print $2}') || return 1
+    hashes=$(printf '%s\n' "${cand[@]}" | git -C "$1" hash-object --stdin-paths 2>/dev/null) || return 1
+    [ "$(printf '%s\n' "$hashes" | wc -l)" -eq "${#cand[@]}" ] || return 1
+    while IFS= read -r f; do
+        printf '%s\n' "$blobs" | grep -qxF -- "$f" || return 1
+    done <<<"$hashes"
     return 0
 }
 

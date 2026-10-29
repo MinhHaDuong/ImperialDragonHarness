@@ -105,9 +105,11 @@ def test_tree_holding_setuptools_build_is_removed(tmp_path):
     exclude.parent.mkdir(parents=True, exist_ok=True)
     with exclude.open("a") as stream:
         stream.write("\nbuild/\n")
-    for p in ("build/lib/pkg/m.py", "build/bdist.linux-x86_64/x", "build/temp.linux-x86_64/o"):
+    tracked = (tree / "f.txt").read_bytes()
+    for p, data in (("build/lib/pkg/f.txt", tracked), ("build/lib/pkg/m.pyc", b"\x00x"),
+                    ("build/bdist.linux-x86_64/f.txt", tracked), ("build/temp.linux-x86_64/o.o", b"\x00x")):
         (tree / p).parent.mkdir(parents=True, exist_ok=True)
-        (tree / p).write_text("x\n")
+        (tree / p).write_bytes(data)
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
