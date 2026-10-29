@@ -15,3 +15,22 @@ should degrade (`skip` with a reason) rather than fail where a prerequisite is m
 ## Exit criteria
 - [ ] In a project with no adherence runner, verify-adherence reports a skip with its reason, by test
 - [ ] Where a runner exists, behaviour is unchanged
+
+## Imagine (raid d2253c)
+- Premise check: skills/verify-adherence/SKILL.md last changed 2026-10-28 (worker wait, status cleanup), none since the ticket's Created date. The "no declared runner -> blocking FAIL, never skip" wording dates from de0b257c (2026-09-17, ticket 0953) and is repeated in phase 1, the circuit breakers, and the verdict mapping. So the failure is the current documented contract, not a bug; the ticket asks to reverse a deliberate decision. Not void, but the reversal must be owned (D1).
+- Why now: DOIfetch fails every run, and hunt's self-gate treats the FAIL as a blocker, so every hunt there escalates.
+- Simplest path: edit phase 1 prose so "none declared" yields `adherence: PASS`, `skipped_runner: no declared adherence runner` reported in the verdict block, while phases 1.0, 1.2 and 3 still run. A declared-but-unrunnable command stays ESCALATE; a runner that exists is untouched. Mirror the change in the circuit-breaker bullet and the verdict-mapping paragraph. No new helper, no code: the skill is prose.
+- YAGNI: no detection script. "Declared" is already defined by the skill's discovery rules.
+- Open decisions:
+  D1: the skill deliberately refused a silent pass because a repo with no runner has no mechanical gate. Accept skip-as-PASS (with visible reason), or keep FAIL and let such projects declare a trivial runner? The ticket text picks skip; the orchestrator should confirm it with the author, since it loosens a gate.
+  D2: verdict shape. The schema has only PASS|FAIL. Add a `mechanical_runner: skipped (reason)` key, or a third value `SKIP`? Recommend a separate key, keeping adherence PASS/FAIL so hunt and gaze parsers do not change.
+  D3: should phase 3 (semantic review) still run when the runner is skipped? Recommend yes where rule files are touched, since it is then the only gate.
+- Price: about 1 coder-hour. Not a monster (2 files).
+
+## Plan (raid d2253c)
+- First test: add tests/test_verify_adherence_no_runner.py. Existing tests here read SKILL.md text, so the test asserts the phase 1 section contains the skip-with-reason contract, no longer says "blocking `adherence: FAIL`" for the none-declared case, and keeps ESCALATE for a declared-but-missing executable. It fails on today's text (which says FAIL), and a stray edit that weakens ESCALATE would also fail it. A second test asserts the "make lint" harness-runner paragraph and the "Invoke ... verbatim" sentence are unchanged (exit criterion 2).
+- Edit skills/verify-adherence/SKILL.md: phase 1 paragraph at "If none is declared" (about line 146), circuit-breaker bullet "No declared adherence runner" (about line 255), phase 4 mapping paragraph and schema comment (add the skipped-runner key).
+- Check hunt/SKILL.md line 137 needs no change (it only consumes PASS/FAIL).
+- Run make skills-catalog only if the description changes (it will not), then make lint and check-fast.
+- Dependencies: none among the open tickets; PR #2013 touches different files.
+- Files touched: skills/verify-adherence/SKILL.md, tests/test_verify_adherence_no_runner.py, tickets/1358-verify-adherence-fails-in-a-project-that.erg.

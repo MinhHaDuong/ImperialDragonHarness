@@ -131,3 +131,20 @@ Use in this ticket:
 - 1353-census-of-repository-memory-reads-on-cla.erg: census of memory reads (exit criterion 1)
 - 1354-memory-outcome-trial-on-dreambench-swe-a.erg: outcome trial (exit criterion 2); needs the author's spend approval
 1346 is now a tracker, closed after both children and the integration review.
+
+## Imagine (raid d2253c)
+- Premise check: raid 0a53b8 already split this ticket into children 1353 (census, now closed and archived; scripts/census/repo-memory-reads.py exists, with the 22:20Z control-OK numbers in this log) and 1354 (priced plan, then trial; label needs-human, open). The log says 1346 is a tracker closed only after both children and the integration review. Nothing on its surfaces has changed since: git log since 2026-10-29 shows no commit touching scripts/census or the child tickets beyond the 1353 close.
+- PREMISE OBJECTION: no (the premise holds), but there is nothing for a coder to execute on 1346 itself. Exit criterion 1 is met by 1353 and awaits only the integration review; exit criterion 2 is 1354, which is blocked on the author's spend approval of a priced plan.
+- Why now: only the integration step remains. Simplest path is to leave 1346 open as the tracker, verify criterion 1 against the 1353 output (per-runtime, per-host counts with control; doudou was unreachable, so the host dimension is partly open), and not run the trial.
+- Open decisions for the orchestrator:
+  D1. Doudou census: criterion 1 says "per runtime and host". The log shows padme only (ssh to doudou failed). Re-run with --host doudou, or accept padme-only and state the limit?
+  D2. Close 1346 now? Recommended no: criterion 2 needs 1354's approved plan and result, so the tracker stays open.
+  D3. Whether 1354 gets a priced-plan draft in this raid. It is the model-spend decision (180 cells x 5 arms x gpt-5.5 via Codex CLI); the plan can be drafted without spend, but approval is the author's.
+- Price: integration check about 0.3 coder-hour; the 1354 priced plan about 1.5 coder-hours (no spend); the trial itself is the expensive part and needs author acceptance. Monster: yes as a whole (real spend, author acceptance, bundled sign-off units), and it is already split into 1353 and 1354. No further split.
+
+## Plan (raid d2253c)
+- No code change on 1346. Files touched: tickets/1346-measure-repository-memory-use-on-all-thr.erg only (this note).
+- Action 1: confirm scripts/census/repo-memory-reads.py runs with its positive control on padme (read-only run); no failing test to add, since 1353 owns its tests.
+- Action 2: resolve D1 by a doudou run if reachable, else record the limit in the log.
+- Action 3: leave exit criterion 2 to 1354; do not tick it.
+- Dependencies: 1353 closed; 1354 needs-human; 1349 (departments) feeds trial arm 4, not this ticket's closure. No overlap with 1355, 1358, 1360 to 1363, nor with PR #2013 files.

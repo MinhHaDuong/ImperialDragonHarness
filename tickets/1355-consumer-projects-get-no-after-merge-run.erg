@@ -20,3 +20,21 @@ make a gated consumer project carry it, or make `main_sweep.py --after` report t
 ## Exit criteria
 - [ ] A gated consumer project starts the after-merge runner on a main move, or the absence is reported by lair/yawn
 - [ ] Checked in DOIfetch
+
+## Imagine (raid d2253c)
+- Premise check: no commit since 2026-10-29 touched hooks/, scripts/main_sweep.py or on-start-sync.sh; the premise stands. Refinement: main_sweep --after already runs `run-after` itself on the latest gap tip and flags gap tips older than --stale-minutes, and lair step 14 calls it. So a red main is seen at lair time even without the hook; what is missing is a line naming the cause (hook not installed), and no mechanism installs the hook in a consumer (on-start-sync.sh sets core.hooksPath only for a repo with its own hooks/pre-commit; the hook lives in IDH_ROOT/hooks).
+- Simplest path to criterion 1 (second branch, "absence reported by lair/yawn"): in main_sweep.after_audit, when the base declares a gate, detect whether a reference-transaction hook is active (core.hooksPath resolving to a dir holding an executable reference-transaction, or <common-dir>/hooks/reference-transaction) and prepend one line "after: no reference-transaction hook installed, the after-merge runner never starts on a main move". Lair already carries the output unchanged; no new skill text beyond one sentence. Installing hooks into consumers is YAGNI here: it touches foreign repos' git config (cross-project edit, guards.md) and needs author acceptance.
+- Narrowing named: only the "reported" branch of criterion 1; the "starts the runner" branch is not attempted.
+- D1: should a missing hook make the exit code 1 (finding) or stay advisory? Recommend finding, exit 1 only when gaps exist, else a plain note.
+- D2: criterion 2 "Checked in DOIfetch" needs read-only execution of main_sweep against ~/DOIfetch (no write there); confirm ok. If the checkout is absent in the raid, state it unchecked.
+- D3: yawn gets nothing extra (lair line suffices) unless the author wants it.
+- Price: about 1.5 coder-hours, 3 files; not a monster.
+
+## Plan (raid d2253c)
+- First failing test in tests/test_main_sweep*.py (or test_after_merge.py, whichever hosts after_audit tests): temp repo declaring a gate, one gap tip older than the stale limit, no hook configured; assert the output carries the "no reference-transaction hook" line. Catches a wrong implementation because a control repo with core.hooksPath pointing at a dir with an executable hook must NOT print it (positive and negative control, same fixture).
+- Second test: hooksPath set but the file non-executable or absent in that dir, expects the line (catches a check that only reads the config key).
+- Edit scripts/main_sweep.py: add `_hook_installed(repo)` using `git config core.hooksPath` and `git rev-parse --git-path hooks`; call it in after_audit before gap handling; update module docstring paragraph at lines 33-39.
+- Edit skills/lair/SKILL.md step 14 (about line 114-118): one clause saying the line may name a missing main-update hook.
+- Run `make skills-catalog` only if lair frontmatter changes (it does not).
+- Check in DOIfetch: run main_sweep.py --after --summary read-only from there with fetch off; quote the output in the PR.
+- Dependencies: none among the open tickets; PR #2013 does not touch these files. Files touched: scripts/main_sweep.py, skills/lair/SKILL.md, the one test file, tickets/1355-*.erg.

@@ -13,3 +13,20 @@ Reported by the DOIfetch session (raid f9e483), DOIfetch PR #33 at 24a2ef5: a ga
 ## Exit criteria
 - [ ] A seat's recorded family is derived from the runtime/door that actually ran it, never from the plan label
 - [ ] A test launches a seat planned as another family through the subagent door and shows the record names the real family (or the launch is refused)
+
+## Imagine (raid d2253c)
+- Premise check: no commit touched scripts/seat_clock.py, gaze_seat.py or skills/gaze since the Created date (git log --since 2026-10-29 empty on them). Premise holds; PREMISE OBJECTION: none.
+- Cause located, not just suspected: scripts/seat_clock.py identities(), final else branch (about line 281), a seat with no headless door in its reason takes runtime = session runtime and route=subagent, but family stays the plan's column 3 (cells[2]) at line 284. A plan that labels a subagent seat openai therefore records runtime=claude-code family=openai. The headless branch is already immune (1326: launcher header wins).
+- Simplest path: in that branch derive family from the runtime actually used, via the launch_doors families in skills/route/routes.json (reuse gaze_seat.load_doors and billed_provider, already imported in qualify()). One-family door gives that family; an "any provider" door (pi) or unknown runtime gives the model's provider prefix, else the token unconfirmed. Same treatment for the self branch (family is the session's, not the label). No new module, no new flag.
+- YAGNI: do not also refuse the plan in plan-write; the exit criterion allows record-or-refuse, and recording the truth lets the existing --require-cross-family gate do the refusing.
+- Decisions: D1 on a mismatch (label openai, real anthropic) record the real family silently, or also add a deviation line to the posted result so the plan error is visible (recommend record only plus a deviation, a few lines in _assess path; narrow to record only if cost grows). D2 for a pi subagent door with no model prefix, unconfirmed vs plan label (recommend unconfirmed, never a guess).
+- Price: about 1 coder-hour. Not a monster: 2 files.
+
+## Plan (raid d2253c)
+- Step 1, tests/test_seat_clock.py near line 311 (beside the 1326 tests): add test_identities_derive_a_subagent_seat_family_from_the_session_runtime. Manifest plans item X with model gpt-6.1-sol, family openai, reason with no headless door; call identities(panel, session_runtime='claude-code'); assert runtime=claude-code, route=subagent, family=anthropic. It fails today (family=openai), so it catches the label copy. Second test: same plan with session_runtime='codex' gives family=openai, proving derivation not a hardcoded value. Third: unknown runtime gives family unconfirmed.
+- Step 2, scripts/seat_clock.py: add a small helper family_of_runtime(runtime, model) next to qualify() (line 240-254), loading doors once and returning the lowercase single door family, else the model prefix, else unconfirmed. Use it in the else branch (line 281) and the self branch (line 278) when the family would come from the label.
+- Step 3, same file docstring (line 38-45): state that a subagent or self seat's family is the session door's, never the plan label.
+- Step 4, skills/gaze/references/panel.md line 71 area: one sentence only if it describes the label as the recorded family; check with grep first.
+- Step 5, run tests/test_seat_clock.py, tests/test_gaze_seat.py and the attribution tests that parse seat lines (scripts/attribution_record.py consumes the line).
+- Dependencies: none on the listed tickets; PR #2013 does not touch seat_clock.py. 1346/1349/1355/1358/1361/1362/1363 not known to touch it; recheck gaze_setup overlap at merge.
+- Files touched: scripts/seat_clock.py, tests/test_seat_clock.py, possibly skills/gaze/references/panel.md.
