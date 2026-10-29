@@ -153,12 +153,23 @@ a pinned ref through `uvx`; nothing is installed, and uv caches it after the fir
 "$IDH_ROOT/scripts/doifetch.sh" --doi <doi> --title <title>
 ```
 
-Pass no `--source`. The default list is open and institutional only (Crossref, Unpaywall,
-HAL, ISTEX, EZproxy). File each downloaded PDF with
-`suggest-attachments --parent <itemKey> <file>`, and add `--edit` after reading
-the report. Never pass `--source scihub` or `--source libgen`: a source outside the
-default list is the author's own manual, per-user choice, never the harness's.
+Pass no `--source`. The default cascade (DOIfetch v0.2.0) is Crossref, Unpaywall,
+OpenAlex, HAL, ISTEX, EZproxy, then ISBN lookup: open and institutional sources only.
+An `--isbn` is fetched by looking up the book's DOI on Crossref and running the
+open sources on it; LibGen, PDF-only, is used only with `--source libgen`. File each
+downloaded PDF with `suggest-attachments --parent <itemKey> <file>`, and add `--edit`
+after reading the report. Never pass `--source scihub` or `--source libgen`: a
+source outside the default list is the author's own manual, per-user choice, never
+the harness's. DOIfetch's default install is standard library only. Check
+`scripts/doifetch.sh --version` to see the pinned release.
 The prerequisites are `uv` and the network. Exit 127 means no `uvx`; 69 means
 DOIfetch itself could not be downloaded. On either, say which and stop; do not
-fetch another way. Any other nonzero exit is DOIfetch's own answer for that work
-(not found in the open sources): report it and move on to the next work.
+fetch another way.
+
+DOIfetch's own exit codes: 0 success (or a batch that completed); 1 a single
+download failed or its identifier is invalid; 2 command-line usage error. Exit 1
+alone does not tell the two apart, so read the first output line. `Download failed:
+...` means not found in the open sources: report it and move on to the next work.
+`Error: Invalid ISBN ...` or `Error: Invalid DOI format ...` means a bad identifier,
+not a missing work: correct the identifier from the library record, and do not report
+the work as unavailable. Exit 2 is a malformed call: fix the call.
