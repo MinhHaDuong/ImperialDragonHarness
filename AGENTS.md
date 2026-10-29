@@ -36,9 +36,9 @@ A `description:` sentence starting with `Not for`, `Use for`, `Use to` or
 
 Set each skill’s `metadata.category` frontmatter to a key in
 `scripts/gen_skills_catalog.py`; an optional numeric `metadata.order` sets
-its row within the section. After changing a skill’s name, description,
+its row within the section, rows without one following alphabetically. After changing a skill’s name, description,
 category or order, or adding or removing a skill, run `make skills-catalog`.
-Check generated catalog drift with `make check-skills-drift`.
+`make check-skills-drift` checks the whole generated document, order included.
 
 ## Agent profiles
 
