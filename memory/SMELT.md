@@ -1,6 +1,6 @@
 # SMELT — project memory consolidation prompt
 
-Prompt revision: v8-r3 (2026-10-29)
+Prompt revision: v8-r4 (2026-10-29)
 
 This is the versioned consolidation prompt for this repository's project
 memory. Every smelt report states this revision. Changing the prompt is a
@@ -11,8 +11,9 @@ skill; this prompt is the per-project editorial layer.
 ## Read
 
 1. `memory/MEMORY.md`, every `topics/` file it indexes, previous accepted
-   reports in `memory/smelts/`, and the entries of `memory/journal/YYYY/` not
-   yet covered by an accepted report. Skip `*review-attribution-*` files:
+   reports in `memory/smelts/`, and the entries of `memory/journal/YYYY/`:
+   all of them are evidence for the rebuild below; an accepted report is a
+   ledger of what was examined, not a reason to skip an entry. Skip `*review-attribution-*` files:
    attribution records are route-grid telemetry, not experiences; they live in
    `memory/evidence/attribution/`, and a project that has not moved its
    records yet still holds some in the journal.
@@ -29,6 +30,25 @@ revision is re-examined. Record every examined source in the report ledger,
 one line each:
 
 - <path> blob <40-hex git blob id>
+
+## Rebuild
+
+A smelt re-derives every topic; it does not append to it. For each page, write
+it fresh from the previous page plus the journal episodes that page links and
+any new ones, under the caps below. A claim survives only if current evidence
+supports it. Carry pinned Commission lines (`> pinned`) verbatim.
+
+The journal exceeds one context (about 700 KB; linked episodes run from 9 KB
+for the smallest topic to about 200 KB for the largest, measured 2026-10-29),
+so work by department: one topic at a time, loading only the journal episodes
+that topic links plus entries not yet linked anywhere, and never the whole
+journal at once. Files linked by several topics are re-read per topic.
+
+Net change: measure, never estimate, with
+`python3 scripts/memory_sizes.py --before <git ref of the previous accepted
+state>`; it prints bytes before and after per page and the total. Pinned lines
+count. A page or a store that grows is explained in the report; shrinking
+needs no reason.
 
 ## Job of a topic and caps
 
@@ -141,10 +161,14 @@ Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
   encrypted entries skipped, and unavailable sources.
 - Editorial changes: what was pruned, merged or refreshed, with the reason
   and retained sources; corrections with the evidence that revised them.
-- The bytes of each topic page against the cap.
+- The bytes of each topic page against the cap, and the net change per page
+  and in total (`memory_sizes.py --before`), with the reason for any growth.
 - Unresolved questions and exposed contradictions.
 - What the pass wrote, then a second pass over the same revision set: it
-  imports nothing as new and re-examines each correction against its sources.
+  imports nothing as new and re-examines each correction against its sources. It also compares each
+  previous page with its rebuild: every caveat, condition or exception of the
+  previous page is still present or has a Retired line naming why, none dropped
+  without a Retired line.
 
 ## Bounds
 

@@ -351,6 +351,6 @@ def test_legacy_hoard_layout_migrates_to_smelt(tmp_path):
     assert not (tmp_path / "memory/HOARD.md").exists()
     assert (tmp_path / "memory/smelts/old.md").read_bytes() == b"report memory/HOARD.md\xff"
     prompt = (tmp_path / "memory/SMELT.md").read_text()
-    assert prompt.startswith("# SMELT") and "Prompt revision: v8-r3" in prompt
+    assert prompt.startswith("# SMELT") and "Prompt revision: v8-r4" in prompt
     assert "memory/smelts/" in prompt
     assert (tmp_path / "memory/MEMORY.md").read_text() == "[report](smelts/old.md) /smelt\n"

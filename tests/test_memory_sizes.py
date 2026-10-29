@@ -89,3 +89,34 @@ def test_quotation_clause_scoped():
     flat = " ".join(text.split())
     assert "quotations from manuscript sources" in flat
     assert "40 lines" in flat and "100 lines" not in flat
+
+
+def _dir(tmp_path, name, **pages):
+    d = tmp_path / name
+    d.mkdir()
+    for page, size in pages.items():
+        (d / page).write_text(_page(size), encoding="utf-8")
+    return d
+
+
+def test_net_change_measures_both_sides(tmp_path):
+    before = _dir(tmp_path, "before", **{"a.md": 3000, "gone.md": 1000})
+    after = _dir(tmp_path, "after", **{"a.md": 5000, "new.md": 500})
+    rows = {r[0]: r for r in ms.net_change(before, after)}
+    assert rows["a.md"][3] == 2000 and rows["a.md"][4] is True  # grew: reason due
+    assert rows["gone.md"][2] == 0 and rows["gone.md"][3] < 0
+    assert rows["new.md"][1] == 0 and rows["new.md"][3] > 0
+    assert sum(r[3] for r in rows.values()) == sum(
+        ms.guide_bytes(p.read_text(encoding="utf-8")) for p in after.glob("*.md")
+    ) - sum(ms.guide_bytes(p.read_text(encoding="utf-8")) for p in before.glob("*.md"))
+
+
+def test_net_change_cli_flags_store_growth(tmp_path, capsys):
+    before = _dir(tmp_path, "before", **{"a.md": 3000})
+    after = _dir(tmp_path, "after", **{"a.md": 3500})
+    assert ms.main(after, before=before) == 0
+    out = capsys.readouterr().out
+    assert "net +" in out and "reason required" in out
+    shrunk = _dir(tmp_path, "shrunk", **{"a.md": 2000})
+    assert ms.main(shrunk, before=before) == 0
+    assert "reason required" not in capsys.readouterr().out
