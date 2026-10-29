@@ -2,11 +2,11 @@
 Title: Make each hoard a rebuild of the topics, not a delta
 Created: 2026-10-29
 Author: reviewer
-Blocked-by: 1348
 
 --- log ---
 2026-10-29T19:54Z reviewer created
 2026-10-29T20:27Z reviewer input design: native memories as inboxes, drain requirements (author)
+2026-10-29T21:55Z reviewer note blocker 1348 closed — Blocked-by removed.
 
 --- body ---
 ## Context

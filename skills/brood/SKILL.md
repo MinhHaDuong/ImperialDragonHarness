@@ -79,7 +79,7 @@ Preserve the journal append-only; corrections are new linked entries.
 Immediately before writing, compare source revisions with those examined.
 Re-read and reconcile concurrent Smelt changes before applying dependent edits;
 never overwrite their conclusions from a stale snapshot. Unresolved conflicts
-stay visible. Keep the memory index within its project limit (v8: 100 lines).
+stay visible. Keep the memory index within its project limit (v8: 40 lines).
 
 Use the project's existing ticket, Git and review surfaces; no parallel store.
 Check destination diffs, source preservation and actual validation outcomes.

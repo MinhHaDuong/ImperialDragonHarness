@@ -1,6 +1,6 @@
 # SMELT — project memory consolidation prompt
 
-Prompt revision: v8-r2 (2026-10-15)
+Prompt revision: v8-r3 (2026-10-29)
 
 This is the versioned consolidation prompt for this repository's project
 memory. Every smelt report states this revision. Changing the prompt is a
@@ -30,6 +30,42 @@ one line each:
 
 - <path> blob <40-hex git blob id>
 
+## Job of a topic and caps
+
+A topic is the as-built guide to one department of the project: what is true
+now, in the present tense, each claim with its scope and a link to the journal
+episode that supports it. It is a guide to the journal, not a replacement for
+it. When a claim and its source episode disagree, the episode wins and the
+claim is corrected or retired. A superseded claim leaves the page: the journal
+and git keep the history; never annotate it in place, and never split a page
+by date.
+
+Page shape: current guidance, hazards, open questions, Retired (one line per
+retired claim, naming the change that retired it), Sources (journal links), and
+a fallback box for material that fits no department, emptied at each smelt.
+
+Caps, in UTF-8 bytes (`scripts/memory_sizes.py` reports them):
+
+- A page holds at most 4096 bytes, counting every section except `Retired` and
+  `Sources`. Inline source links inside a claim count. Retired moves to history
+  at the next smelt.
+- The cap binds on history, never on conditions and exceptions.
+- Pinned rulings in the Commission page (lines starting `> pinned`) count
+  against the cap and are never cut to fit: smelt files, dates and links them,
+  never paraphrases or retires them; only the author retires a ruling. An
+  overflowing Commission page is reported as a sign that rules wait for the
+  author to promote them.
+- `memory/MEMORY.md` is capped separately (see Bounds).
+
+Departments, provisional until ticket 1349 tests them on this repository: a
+fixed core (Commission: the author's intent and rulings; Site practice: how
+work lands here; Environment: hosts, services, external tools; History: the
+journal, reports and git, never a page) plus the project's ouvrage departments
+(tool or code: architecture and contracts, interfaces and compatibility,
+release; analysis: data and provenance, methods, results; article: argument,
+literature, venue; book: structure, voice, sources and rights; host:
+services, hardware, access, monitoring). At most 8 pages per project.
+
 ## Consolidate
 
 Apply to `memory/topics/` and `memory/MEMORY.md`:
@@ -39,7 +75,8 @@ Apply to `memory/topics/` and `memory/MEMORY.md`:
   stays.
 - **Merging:** combine duplicate or overlapping entries into one accurate
   record, preserving source links, conditions, exceptions and unresolved
-  contradictions.
+  contradictions. Quotations from manuscript sources keep their wording and
+  locators; operational memory is condensed freely.
 - **Refreshing:** update still-relevant context from current evidence; flag
   uncertainty when it cannot be verified.
 
@@ -104,6 +141,7 @@ Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
   encrypted entries skipped, and unavailable sources.
 - Editorial changes: what was pruned, merged or refreshed, with the reason
   and retained sources; corrections with the evidence that revised them.
+- The bytes of each topic page against the cap.
 - Unresolved questions and exposed contradictions.
 - What the pass wrote, then a second pass over the same revision set: it
   imports nothing as new and re-examines each correction against its sources.
@@ -114,7 +152,8 @@ The journal is append-only: never rewrite, move or delete an entry; a
 correction is a new entry linking the original. One carve-out: legacy
 review-attribution records move once, by `git mv` with their bytes intact, to
 `memory/evidence/attribution/`. `memory/MEMORY.md` stays at
-most 100 lines, headings and blank lines counted; check before committing.
+most 40 lines, headings and blank lines counted, one line per department with
+its most-used fact; check before committing.
 Smelt writes only `memory/MEMORY.md`, `memory/topics/` and
 `memory/smelts/` in this repository. It proposes no rule, edits no AGENTS.md
 or runbook, opens no crystallisation issue and writes nothing into the

@@ -2,6 +2,7 @@
 Title: Give memory topics a stated job and a byte budget
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2006
 
 --- log ---
 2026-10-29T19:54Z reviewer created
@@ -11,6 +12,7 @@ Author: reviewer
 2026-10-29T20:36Z reviewer borrowings: pinned rulings, recall with source
 2026-10-29T20:42Z reviewer journal as source, departments as guide (author)
 2026-10-29T20:45Z reviewer author ruling: cap option B, 4 KB per department, index 40 lines, ratchet after 1346
+2026-10-29T21:55Z reviewer closed — autoclosed — PR #2006
 
 --- body ---
 ## Context
