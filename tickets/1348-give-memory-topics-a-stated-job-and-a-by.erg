@@ -9,6 +9,7 @@ Author: reviewer
 2026-10-29T20:04Z reviewer cross-project department scheme from a sweep of padme projects
 2026-10-29T20:08Z reviewer author rulings: departments accepted provisionally; rename to smelt (1352); byte cap open
 2026-10-29T20:36Z reviewer borrowings: pinned rulings, recall with source
+2026-10-29T20:42Z reviewer journal as source, departments as guide (author)
 
 --- body ---
 ## Context
@@ -125,3 +126,23 @@ harness ticket (`rules/workflow.md` § Cross-project work).
 - **Recall with its source.** Le Chat shows when a memory is used and links it to its source.
   Every department claim carries its source link (journal entry, note, PR), and an agent that acts
   on a memory claim cites it in its report.
+
+## Journal as source, departments as guide (author, 2026-10-29)
+Two independent results say consolidation must prove itself against raw episodes:
+DreamBench-SWE (1346: a rich typed consolidation pipeline did not beat verbatim event memory,
+95/180 versus 89/180, with worse useful-memory precision, 0.264 versus 0.556, and worse staleness
+handling, 8/21 versus 13/21) and "Useful Memories Become Faulty" (May 2026, in the audit:
+repeated LLM rewriting can fall below no memory, while kept raw episodes hold up).
+
+Consequences for the department scheme:
+- The journal is the source of truth for what happened, and it stays intact: append-only, never
+  rewritten or condensed by smelt, and searchable. Attribution records leave it (1347), but no
+  episode does.
+- A department page is a guide to the journal, not a replacement for it. It holds the current
+  guidance in a few lines, and each claim links to the episodes that support it. An agent that
+  needs the detail follows the link to the raw entry instead of trusting a paraphrase.
+- Smelt rewrites the guides, never the sources. When a guide claim and its source episode
+  disagree, the episode wins, and the claim is corrected or retired.
+- The value a department adds is cheaper reading (finding the right episodes and knowing what is
+  current), not better recall. 1346's verbatim-journal control arm tests exactly this: if the
+  guides do not beat raw journal retrieval on reading cost or on stale-fact use, shrink them.
