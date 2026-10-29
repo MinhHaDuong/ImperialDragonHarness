@@ -301,7 +301,8 @@ untested_rules:
 
 Verdict mapping is mandatory: any mechanical failure or blocking semantic finding → adherence: FAIL.
 A required semantic review with status other than `ran` also fails with the
-infrastructure escalation above. PASS requires successful mechanical checks,
+infrastructure escalation above. PASS requires successful mechanical checks (or the runner skipped for
+lack of a declared one),
 no blocking semantic findings, and either a valid completed semantic worker
 or an explicitly justified inapplicable `skipped` status. Always emit
 `semantic_review`, even when an earlier phase stops execution; record it as
