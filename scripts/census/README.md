@@ -25,6 +25,7 @@ OUT=/tmp/census
 python3 "$C/traces.py"          --out "$OUT/census.json"         # the main pass
 python3 "$C/deps.py"            --root "$IDH_ROOT" --out "$OUT/deps.json"
 python3 "$C/memory-recall.py"   --out "$OUT/memory.json"         # does the resident index get followed?
+python3 "$C/repo-memory-reads.py" --since 2026-10-15      # are repository memory files read, per runtime and host
 python3 "$C/report.py" --census "$OUT/census.json" --gitmeta "$OUT/gitmeta.json" \
                      --start 2026-06-01 --end 2026-09-09 --out "$OUT/report.json"
 ```
@@ -47,6 +48,7 @@ file of `{}` if the creation dates are not needed.
 | `file-access.py` | was a rule consulted, or only edited |
 | `permissions.py` | which allow rules name something that no longer exists |
 | `portability.py` | how much of each skill depends on a runtime-specific primitive |
+| `repo-memory-reads.py` | which sessions read `memory/MEMORY.md` or `memory/topics/`, per runtime, host and session kind |
 
 ## Reading the output honestly
 
