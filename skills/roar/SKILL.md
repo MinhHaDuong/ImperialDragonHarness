@@ -97,7 +97,15 @@ default branch — there are no remote branches nor merge requests to inspect.
    wrap-up worktree; a refused or pending capture is reported in step 11.
 4-5. **Sweep and report findings**: follow `runbooks/sweep.md`; follow-up tickets go
    in the single wrap-up bundle.
-6. **Update project docs** if pipeline, data contract, or methodology changed.
+6. **Propagate the change to the docs.** Trigger: the merged diff changed
+   something a reader or another agent relies on: a command line or option, a
+   configuration key, a file path, a public function, a skill contract, a make
+   target, a pipeline step, a data contract or the methodology. Grep the whole
+   tree on the ref for each changed or renamed name and update every statement
+   of it: the root documents (README, INSTALL, AGENTS, CONTRIBUTING; ROADMAP
+   when a milestone moved), the module and function docstrings of the touched
+   scripts, and comments restating it. Edits ride in the wrap-up bundle;
+   STATE.md stays lair's. Nothing to propagate: say so in step 11.
 
 ## Bundle and fast track
 
