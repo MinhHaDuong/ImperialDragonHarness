@@ -117,3 +117,14 @@ def test_falling_cumulative_usage_is_a_gap_not_a_negative_bill():
                                     fetch=lambda u, k: {'data': {'usage': 3.0}}, key=lambda env: 'k'))
     m = got['billed.openrouter.OPENROUTER_API_KEY_PI.window_usd']
     assert m['value'] is None and 'reset' in m['gap']
+
+
+def test_unmoved_cumulative_usage_bills_zero_not_a_reset_gap():
+    """A figure with more than 4 decimals journals rounded; the next identical read must give 0.0."""
+    first = hc.billed_cost(hc.Context(root=Path('.'), common_dir=Path('.'), since=None, until=None, previous=None,
+                                      fetch=lambda u, k: {'data': {'usage': 12.34567}}, key=lambda env: 'k'))
+    again = hc.billed_cost(hc.Context(root=Path('.'), common_dir=Path('.'), since=None, until=None,
+                                      previous=_rec('2026-10-01T00:00:00Z', first),
+                                      fetch=lambda u, k: {'data': {'usage': 12.34567}}, key=lambda env: 'k'))
+    assert again['billed.openrouter.OPENROUTER_API_KEY_PI.window_usd']['value'] == 0.0
+    assert again['billed.total.window_usd']['value'] == 0.0

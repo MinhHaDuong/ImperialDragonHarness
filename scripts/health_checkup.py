@@ -293,7 +293,8 @@ def billed_cost(ctx):
             out[cum] = out[win] = gap('USD', src, f'{env} not held in the keystore')
             continue
         try:
-            usage = float(fetch(OPENROUTER_URL, k)['data']['usage'])
+            # Rounded once, as journaled: comparing a raw figure with a rounded one fakes a fall.
+            usage = round(float(fetch(OPENROUTER_URL, k)['data']['usage']), 4)
         except Exception as e:  # noqa: BLE001 -- name the failure class only, nothing of the request
             code = getattr(e, 'code', '')
             out[cum] = out[win] = gap('USD', src, f'provider read failed: {type(e).__name__} {code}'.strip())
@@ -531,7 +532,7 @@ def _fetch_main(root):
     """Refresh origin/main so the main-commit window is not cut short by a stale ref. Best effort."""
     try:
         return subprocess.run(['git', '-C', str(root), 'fetch', '-q', 'origin', 'main'], capture_output=True,
-                              timeout=60).returncode == 0
+                              timeout=60, env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'}).returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
 
