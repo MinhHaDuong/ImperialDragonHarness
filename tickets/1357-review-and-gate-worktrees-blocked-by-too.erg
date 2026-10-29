@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Review and gate worktrees blocked by tool output: build/ and an unignored .venv
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:56Z reviewer created
+
+--- body ---
+## Context
+Reported by the DOIfetch session (raid f9e483, 2026-10-29) through the inter-project protocol; causes as its team lead stated them, not re-verified here.
+Sibling of 1345 (egg-info). Observed:
+- gaze inside a coder left its review tree behind because a `build/` directory blocked cleanup; the
+  tree's liveness lock then blocked a re-run for about 20 minutes;
+- verify-gate force-removed its own worktree twice (DOIfetch PRs #25, #27) because a `.venv` left by
+  its touched-tests step blocked a plain remove, which the skill forbids forcing.
+Both block reviews or break the no-force rule.
+
+## Scope
+Decide per artifact: count it as regenerable in `worktree_residue` (as 1345 did for egg-info), or
+have the step that creates it remove it. Keep hand-made files under an ignored `build/` protected.
+
+## Exit criteria
+- [ ] A review tree holding setuptools `build/` output is removed by gaze's close, by test
+- [ ] verify-gate removes its tree after touched-tests without force, by test
+- [ ] The stale liveness lock no longer blocks a re-run of the same review

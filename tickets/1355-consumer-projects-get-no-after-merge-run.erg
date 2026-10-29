@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Consumer projects get no after-merge runner: hook not installed
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:56Z reviewer created
+
+--- body ---
+## Context
+Reported by the DOIfetch session (raid f9e483, 2026-10-29) through the inter-project protocol; causes as its team lead stated them, not re-verified here.
+In DOIfetch no `reference-transaction` hook is installed and `core.hooksPath` is unset, so
+`.git/idh/after-merge.log` never appears: nothing checks main after a merge
+(`skills/merge/SKILL.md` step 9 assumes the hook starts the runner). A red main goes unseen.
+
+## Scope
+Find how a consumer project gets the hook (idh install, project setup, merge-gate enablement) and
+make a gated consumer project carry it, or make `main_sweep.py --after` report the missing hook.
+
+## Exit criteria
+- [ ] A gated consumer project starts the after-merge runner on a main move, or the absence is reported by lair/yawn
+- [ ] Checked in DOIfetch

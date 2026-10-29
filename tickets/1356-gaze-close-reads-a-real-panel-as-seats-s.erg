@@ -1,0 +1,24 @@
+%erg 0.1
+Title: gaze_close reads a real panel as seats: self-only when run from another project's cwd
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:56Z reviewer created
+
+--- body ---
+## Context
+Reported by the DOIfetch session (raid f9e483, 2026-10-29) through the inter-project protocol; causes as its team lead stated them, not re-verified here.
+`gaze_close.py` resolves the project from its cwd. Run from the harness directory, it read a real
+panel as `seats: self-only` (DOIfetch PR #26, likely #19), which counts as no record
+(`skills/merge/SKILL.md` § Gating tiers) and fired the gaze-self-only-twice breaker. This blocks merges.
+Same family as the containment branch mismatch seen in harness PRs #1984 and #1996 today (the
+runtime moved the gaze session's cwd during the run).
+
+## Scope
+Make gaze's close resolve the project and panel from explicit arguments or the review's own
+record, never from the cwd at close time.
+
+## Exit criteria
+- [ ] A test runs the close from a foreign cwd and records the real panel's seats
+- [ ] The containment check reports the review tree, not the session's moved cwd
