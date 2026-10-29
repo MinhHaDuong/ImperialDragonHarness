@@ -45,6 +45,10 @@ not a probe: it is never offered, skipped or priced.
   work by what costs most to be wrong about, before any probe runs: a
   contradiction that misleads a model into a wrong act first, then a skill
   presuming another's ownership, then mechanical lint, then runtime drift.
+- **Docs visit.** When the author asks for the whole doc set (root docs,
+  `rules/`, the `conception/` index, skill references), the input and
+  questions are in `references/docs-visit.md`; its journal slug is
+  `-docs-visit-`.
 
 ## Probes
 
@@ -117,7 +121,7 @@ revisit.
 ## Journal and revisit
 
 The journal is `memory/journal/YYYY/YYYY-MM-DD-harness-doctor-<slug>.md`, read
-by searching for `-harness-doctor-` entries. For each ticket the last entry
+by searching for `-harness-doctor-` entries (a docs visit writes `-docs-visit-`). For each ticket the last entry
 filed, check whether it closed and whether the fix held: rerun the probe that
 found it, on the same target. The entry holds the complaint or triage input,
 the count of findings above the floor, the tickets filed, what the revisit of
