@@ -38,7 +38,9 @@ launcher-set `worker:` header, never typed by the model: `seat: <item> ·
 runtime=<id> · family=<family> · route=<token> · model=<provider/id | not
 observed> · status: ran|failed|skipped`. A header with `door=headless` is the
 launcher's (its runtime and model); a subagent seat types its own header, so
-its line takes the manifest pin and the session's runtime (`route=subagent`);
+its line takes the manifest pin and the session's runtime (`route=subagent`), and its
+family is the runtime door's (routes.json), the model's `<provider>/` prefix, else `unconfirmed`,
+never the plan label (a mismatch prints a `deviation:` line on stderr, ticket 1360);
 self takes the session's runtime and model (`route=self`); a seat with no
 report keeps its planned pin and the runtime its reason names, status `failed`.
 Items of family `none` (scripts) are not workers and print nothing. The model id
@@ -60,6 +62,7 @@ flag becomes a header line. Exit 2 and no file on a refused plan.
 
 import argparse
 import importlib.util
+import json
 import os
 import re
 import signal
@@ -254,6 +257,24 @@ def qualify(model: str, runtime: str) -> str:
     return f'{provider.lower()}/{model}' if provider else model
 
 
+def door_family(runtime: str, model: str) -> str:
+    """The family that really ran a seat on `runtime`'s own door (ticket 1360), never the plan label.
+
+    The runtime's subagent (else headless) door with one family gives it; else the model's `<provider>/` prefix;
+    else `unconfirmed`. Read from skills/route/routes.json launch_doors."""
+    try:
+        routes = json.loads(Path(__file__).resolve().parent.parent.joinpath('skills/route/routes.json')
+                            .read_text(encoding='utf-8'))
+        door = routes['launch_doors'][runtime]
+        families = (door.get('subagent', {}).get('families') or door.get('headless', {}).get('families') or [])
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        families = []
+    if len(families) == 1 and not families[0].lower().startswith('any provider'):
+        return families[0].lower()
+    model = model.strip()
+    return model.split('/', 1)[0].lower() if '/' in model else 'unconfirmed'
+
+
 def identities(panel: Path, session_runtime: str = '', session_model: str = '') -> list[dict[str, str]]:
     """One identity per worker item of the plan, from the plan and the launcher's header (ticket 1303)."""
     _, _, _, accepted = _assess(panel)
@@ -261,7 +282,7 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
     out = []
     for cells in manifest_items(panel):
         name, pin = cells[0], (cells[1].strip() if len(cells) > 1 else '')
-        family = cells[2].strip() if len(cells) > 2 else ''
+        family = planned = cells[2].strip() if len(cells) > 2 else ''
         reason = cells[3] if len(cells) > 3 else ''
         if len(cells) < 3 or family == 'none':
             continue  # free text is no plan item (the plan check fails it); a script is not a worker
@@ -269,6 +290,7 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
         door = re.search(r'headless[ ]+(\S+)', reason)
         if is_self(cells):
             runtime, model, route = session_runtime, session_model.strip() or 'not observed', 'self'
+            family = door_family(runtime, model)  # the session's family, not the label (1360)
         elif (door and header.get('door') == 'headless' and header.get('runtime')
               and header['runtime'] == door.group(1).strip('.,;)(')):
             runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
@@ -279,9 +301,10 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
                 route = 'unconfirmed'
         else:
             runtime, model, route = session_runtime, pin, 'subagent'
+            family = door_family(runtime, model)  # the door that ran it, not the label (1360)
         status = ('skipped' if reason.strip().lower().startswith('skipped')
                   else 'ran' if name in accepted else 'failed')
-        out.append({'seat': name, 'runtime': _token(runtime), 'family': _token(family or header.get('family', '')),
+        out.append({'planned': planned, 'seat': name, 'runtime': _token(runtime), 'family': _token(family or header.get('family', '')),
                     'route': route, 'model': qualify(model, runtime) if model else 'not observed',
                     'status': status})
     return out
@@ -413,7 +436,11 @@ def main(argv: list[str]) -> int:
         return 0 if ok else 1
     if args.mode == 'identities':
         try:
-            print('\n'.join(format_seat(i) for i in identities(args.panel, args.session_runtime, args.session_model)))
+            idents = identities(args.panel, args.session_runtime, args.session_model)
+            print('\n'.join(format_seat(i) for i in idents))
+            for i in idents:  # a plan label the door contradicts is visible, not silent (1360)
+                if i['planned'] not in ('', 'none') and i['family'] != i['planned'].lower():
+                    print(f"deviation: {i['seat']}: planned family {i['planned']}, ran as {i['family']}", file=sys.stderr)
         except OSError as error:
             print(f'seat_clock: cannot read {args.panel}/manifest.txt: {error}', file=sys.stderr)
             return 2
