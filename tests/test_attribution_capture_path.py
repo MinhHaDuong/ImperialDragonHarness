@@ -112,6 +112,7 @@ def test_private_capture_lands_in_the_new_root(tmp_path):
     assert not (repo / "memory/journal").exists()
 
 
+@pytest.mark.integration
 def test_harness_journal_holds_no_attribution_record():
     listed = subprocess.run(["git", "-C", str(ROOT), "ls-files", "memory/journal"], text=True,
                             capture_output=True, check=True, env=child_env()).stdout.splitlines()
