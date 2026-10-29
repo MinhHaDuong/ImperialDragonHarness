@@ -1,0 +1,37 @@
+%erg 0.1
+Title: idh install must not require doifetch: make it opt-in, never a default network install
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T15:34Z reviewer created
+
+--- body ---
+## Context
+`adapters/lifecycle.py` `install()` calls `install_doifetch()` (around lines 55-75),
+which runs `uv tool install --force git+https://github.com/MinhHaDuong/DOIfetch@<ref>`.
+
+- Its PyPI dependencies are resolved at install time, so the result drifts by date (for example tzdata).
+- It needs the network.
+- On failure it prints SKIPPED and the install still exits 0, so its absence goes unnoticed.
+- The only way to omit it today is to hide uv from PATH.
+
+Arena evidence, 2026-10-29 (arena ticket 1180 log, merge c7c8ac1): a home installed
+without doifetch is 4 files and 75 symlinks and byte-reproducible (tree digest 2b371947...).
+With doifetch it is 3650 files and 109 MB, also outside the home (the venv points at /usr/bin/python3).
+
+Author (MinhHaDuong), arena session "Provide keys to contestants", 2026-10-29:
+"doifetch is a problem. It should NOT be needed." Filed through the inter-project
+protocol; the arena never edits the harness.
+
+## Scope
+- doifetch becomes an explicit opt-in (a flag or a manifest choice) and is not installed by default.
+- A skipped optional component is reported as "not requested" rather than as a silent SKIPPED.
+- The skills that use doifetch (for example `skills/zotero/SKILL.md`, `skills/zotero/references/backfill.md`)
+  state the prerequisite and degrade with a clear message when it is absent.
+
+## Exit criteria
+- [ ] A default `idh install` makes no network call and installs no doifetch
+- [ ] The opt-in installs it
+- [ ] Tests cover both (`tests/test_idh_lifecycle.py`)
+- [ ] The skills that use doifetch name the prerequisite and degrade with a clear message
