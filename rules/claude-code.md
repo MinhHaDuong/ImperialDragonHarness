@@ -1,8 +1,7 @@
 <!-- last-reviewed: 2026-09-24 -->
 # Claude Code idiosyncrasies
 
-True of the current runtime only: an adapter on another runtime (Pi, Codex)
-loads the rest of `rules/` and skips this file.
+True of this runtime only: adapters on other runtimes skip this file.
 
 ## Entering the session
 
@@ -10,8 +9,7 @@ Except for `/hunt N` (below) and manuscript prose
 ([prose/workpackages.md](./prose/workpackages.md)), create the conversation's
 worktree before answering with the plain-git recipe of `skills/hunt/SKILL.md` § Worktree
 (`git worktree add`, `git worktree lock`, `cd`), named from the table below.
-The Bash tool keeps its cwd, so the `cd` moves the session; a restart resets
-it, so paths stay absolute.
+The `cd` moves the session; a restart resets it, so paths stay absolute.
 
 Never call `EnterWorktree`. It switches on a runtime guard that refuses git
 aimed at any other worktree, `-C` and `cd` alike, and the session's subagents
@@ -39,21 +37,26 @@ conversation's language, then answer:
 ## Subagent levers
 
 - **Pin `model` on every launch** with the short token (`sonnet|opus|haiku|fable`).
-  Harness agent definitions carry no `model:`, so an unpinned `Agent` child or
-  `Workflow` `agent()` inherits the session model. Choose the worker per
+  Agent definitions carry no `model:`: an unpinned `Agent` child or
+  `Workflow` `agent()` inherits the session model. Choose per
   `skills/route/SKILL.md` and state why; a skill that launches workers must say
   so (`tests/test_launch_model_choice.py`). Independence is a family question
   (`skills/route/references/decorrelation.md`).
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
-  the only per-call lever. Unreliable on models with a pinned default effort.
+  the only per-call lever. Unreliable on models with a pinned effort.
 - **`team-lead` delegation needs a nesting depth of at least 2**, or it
-  silently degrades into a flat agent; check it before debugging the prompt.
+  silently degrades into a flat agent; check it before debugging.
 <!-- harness-extension-point -->
-  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (3 in `settings.shared.json`: raid, coder, gaze, seats), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
+  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (3 in `settings.shared.json`), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
+
+## Allow rules
+
+The classifier refuses rule-mandated force-pushes and `git branch -D` despite
+the blanket `Bash` allow: `scripts/claude-allow-check.py` lists the narrow rules.
 
 ## Hook output
 
-Hook stdout enters the conversation as context: **frame it declaratively**
+Hook stdout enters the conversation: **frame it declaratively**
 ("Worktree isolation is enabled…"), never as an imperative, which the model
-discounts as prompt injection — the channel then fails while looking fine.
+discounts as prompt injection; the channel fails while looking fine.
