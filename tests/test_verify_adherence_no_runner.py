@@ -33,3 +33,8 @@ def test_declared_runner_behaviour_unchanged():
     assert "Invoke the declared command verbatim from the project worktree" in text
     assert "A non-zero\ntest/check result is blocking" in text
     assert "verify-adherence#project-runner" in text
+
+
+def test_verdict_mapping_admits_the_skipped_runner():
+    mapping = SKILL[SKILL.index("PASS requires successful mechanical checks") :].split("\n\n")[0]
+    assert "skipped" in mapping.split("no blocking semantic findings")[0]
