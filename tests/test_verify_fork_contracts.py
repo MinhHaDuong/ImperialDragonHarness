@@ -492,3 +492,13 @@ def test_no_skill_text_names_full_result_comment_as_evidence():
     assert hits == [], hits
     # Negative control: the wording the cut-over removed is caught.
     assert evidence.search("the latest `## /gaze result` comment posted on the PR")
+
+
+def test_verify_gate_removal_runs_the_preflight_first():
+    """Ticket 1357: the gate's plain remove follows `worktree-exit-preflight.sh
+    --removal`, which scrubs the venv its touched-tests step made; never forced."""
+    text = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    pre = text.index("worktree-exit-preflight.sh --removal")
+    assert pre < text.index("worktree remove", pre)
+    assert "The gate writes nothing in it" not in text
+    assert "--force" not in text[pre:text.index("## Evidence discovery")].replace("never forced", "")

@@ -117,12 +117,25 @@ def primary_root(cwd=None):
     return Path(top.split("/.claude/worktrees/")[0])
 
 
+CLOSED_MARKER = "gaze-closed"
+
+
+def closed_marker(tree):
+    """`<git dir of the tree>/gaze-closed`: outside the status-visible tree, so it
+    survives a refused close and bumps no mtime in the tree; None when unreadable."""
+    rc, gd = git("rev-parse", "--absolute-git-dir", cwd=tree)
+    return None if rc or not gd else Path(gd) / CLOSED_MARKER
+
+
 def cleanup(primary, pr, branch):
     """Remove scratch and the review worktree; return (ok, message)."""
     key = unit_key(pr)
     tree = primary / ".claude" / "worktrees" / f"review-{key}"
     if not tree.is_dir():
         return True, "no review worktree"
+    marker = closed_marker(tree)  # the run that held the liveness lock has ended
+    if marker is not None:
+        marker.write_text("closed\n")
     tmp = tree / ".tmp"
     if tmp.exists() or tmp.is_symlink():
         r = subprocess.run([sys.executable, str(HERE / "worktree-tmp-guard.py"), "removal",

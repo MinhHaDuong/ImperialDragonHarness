@@ -153,7 +153,9 @@ def main():
         return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
     tree = primary / ".claude" / "worktrees" / f"review-{key}"
     if tree.exists():
-        if time.time() - newest_mtime(tree) < liveness_window():
+        marker = gaze_close.closed_marker(tree)  # a closed run holds no lock (ticket 1357)
+        closed = marker is not None and marker.is_file()
+        if not closed and time.time() - newest_mtime(tree) < liveness_window():
             return fail(3, "another gaze is live on this PR")
         ok, msg = gaze_close.cleanup(primary, pr, branch)
         if not ok:

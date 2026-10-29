@@ -119,10 +119,14 @@ if ! git -C "$primary_root" worktree add --detach "$gate_tree" origin/"$PR_BRANC
 fi
 ```
 
-On every exit path, after the verdict is recorded: `git -C "$primary_root"
-worktree remove "$gate_tree"`. The session and round suffix keeps a
-round-1 tree left behind by a refused removal from blocking round 2. The gate writes nothing in it, so a plain
-remove suffices; a refusal is reported in the verdict, never forced.
+On every exit path, after the verdict is recorded:
+`$IDH_ROOT/scripts/worktree-exit-preflight.sh --removal "$gate_tree"`, then
+`git -C "$primary_root" worktree remove "$gate_tree"`. The touched-tests step
+leaves a `.venv` (and setuptools `build/` output) that git counts as untracked
+when the repository does not ignore it; the preflight deletes those regenerable
+paths and refuses on anything else. The session and round suffix keeps a
+round-1 tree left behind by a refused removal from blocking round 2. A refusal
+is reported in the verdict, never forced.
 
 ## Evidence discovery
 

@@ -71,6 +71,13 @@ if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
     rm -rf -- "$path/build/panel-head"
 fi
 
+# The removal also scrubs regenerable state git would refuse to remove: the
+# unignored root .venv a touched-tests step leaves, and setuptools build output.
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
+if [ "$removal" -eq 1 ]; then
+    worktree_scrub "$path"
+fi
+
 # Same residue definition as worktree-gc.sh (shared lib): uncommitted entries
 # plus ignored files, which `git worktree remove` deletes too (a repo whose
 # .gitignore is `*` hides drafts from plain status; ticket 1212). Regenerable
