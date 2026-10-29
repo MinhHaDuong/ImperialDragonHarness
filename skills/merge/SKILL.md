@@ -159,7 +159,7 @@ marker; another forge needs the same writes in its own spelling.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
    pushes `refs/notes/review` and the review-heads of the requests naming `<branch>`, never
    forced. It prints the refs pushed and does nothing when the branch has no review notes
-   or the repository has no remote; a non-zero exit stops the merge. On a forge, then render
+   or the repository has no remote; a landing head missing locally is restored from the notes when its commit survives; a non-zero exit stops the merge. On a forge, then render
    the attribution block of notes into the body, right before the merge:
    `python3 "$IDH_ROOT/scripts/attribution_record.py" --render-pr N` (`references/claims.md`
    § Attribution block warning); its exit 1 (`missing`, `invalid: …`, a lost edit) is a

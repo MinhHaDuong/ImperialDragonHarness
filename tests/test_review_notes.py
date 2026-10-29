@@ -681,14 +681,15 @@ def test_sync_if_idle_skips_busy_lock(world):
     assert elapsed < 2
 
 
-def test_push_for_landing_refuses_a_missing_review_head(world):
-    """gaze on PR #1852: once notes are merge evidence, a landed review's head ref must exist."""
+def test_push_for_landing_restores_a_missing_review_head(world):
+    """Ticket 1362: a landed review's head ref lost locally is rebuilt from its request entry."""
     _, a, _, _ = world
     rid = rn.open_review(str(a), "feature", "origin/main")
-    rq = rn.entries(a, rid)[0]["request_id"]
-    sh(a, "update-ref", "-d", f"{rn.HEADS}/{rid}/{rq}")
-    with pytest.raises(rn.Refusal, match="missing"):
-        rn.push_for_landing(str(a), "feature")
+    ent = rn.entries(a, rid)[0]
+    ref = f"{rn.HEADS}/{rid}/{ent['request_id']}"
+    sh(a, "update-ref", "-d", ref)
+    assert ref in rn.push_for_landing(str(a), "feature")
+    assert sh(a, "rev-parse", ref) == ent["head"]
 
 
 # --- ticket 1301: readers take the PR review's answers from notes, not from comments -------------
