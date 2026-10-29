@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-29T19:54Z reviewer created
+2026-10-29T19:59Z reviewer proposal added for author ruling: theory of change, fixed departments, as-built (DOE) metaphor
 
 --- body ---
 ## Context
@@ -27,3 +28,41 @@ condensed or merged), `memory/HOARD.md` § Coherence and "Keep details in topics
 - [ ] HOARD.md and the hoard skill define the job of a topic and its caps
 - [ ] A check reports topic sizes against the caps
 - [ ] The quotation clause no longer applies to operational memory
+
+## Proposal for the author's ruling (lair session, 2026-10-29)
+Discussed with the author in the session that closed #1975; the author asked for it here.
+
+**Theory of change.** Memory changes behaviour only when a current fact reaches the agent at
+the decision point, in few enough words to be read. Every fact either becomes procedure (a rule,
+a skill step, a test) and then leaves memory, or it expires. Consequences:
+- memory is a waiting room for procedure, so a healthy store shrinks when brood promotes lessons;
+- success is fewer repeated incidents, not more pages (measurable through 1346's trial);
+- injection comes before content: pages nobody reads change nothing (1346 first).
+
+**Fixed departments, the author's idea.** A fixed list of topics, each a stable path that a
+delegation brief can name ("relevant memory topics by path", `rules/workflow.md` § Delegation).
+Each has its own budget, and none may split by date. One history department holds the past:
+the journal, hoard reports and git. Every other department holds the current state only, and a
+superseded claim moves to history instead of being annotated in place. Each department also has
+a fallback box for material that fits no department, which the next hoard empties.
+Candidate departments for the harness:
+worktrees and concurrency; merge and review; testing and gates; runtimes and model routing;
+hosts and environment; tickets and state; external tools (Zotero, DOIfetch); memory itself;
+history (not a topic).
+
+**Organizing metaphor: the as-built file.** It matches the MOE/MOA posture vocabulary
+(`rules/workflow.md` § Posture). The name "hoard" says the opposite: a hoard only grows.
+| Construction | Harness |
+|---|---|
+| Journal de chantier | `memory/journal/` (history) |
+| Lots (trades), a fixed list | topics, one per department |
+| DOE (dossier des ouvrages exécutés): as built, current | the content of each topic |
+| Cahier des charges, normes | `rules/`, skills, tests |
+| Updating the DOE | hoard: rewrite each lot to match the as-built state |
+
+**Page shape.** For each department page: current guidance (claims in the present tense, with
+their scope), hazards, open questions, retired (one line per claim, naming the change that
+retired it), and sources (journal links).
+
+Open for the author: accept or amend the list of departments; whether to rename hoard;
+the byte cap per department.
