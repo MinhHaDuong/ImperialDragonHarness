@@ -20,6 +20,17 @@ for r in codex pi claude; do
     printf '#!/bin/sh\nprintf %%s "${GH_CONFIG_DIR-<unset>}"\n' > "$TMP/bin/$r"
     chmod +x "$TMP/bin/$r"
 done
+# Ticket 1337: force the disk headroom warning on, whatever the host's free
+# space, so the captured stdout below proves the warning stays off it.
+REAL_PY="$(command -v python3)"
+cat > "$TMP/bin/python3" <<STUB
+#!/bin/sh
+case "\$*" in
+  *tmp_report.py*--disk-warning*) echo 'Disk headroom warning: /home has 5% free (threshold: 10% free)'; exit 0 ;;
+esac
+exec "$REAL_PY" "\$@"
+STUB
+chmod +x "$TMP/bin/python3"
 
 # run HOME CALLER_GH "child cmd" -> child output, then "|" and the parent's value
 run() {

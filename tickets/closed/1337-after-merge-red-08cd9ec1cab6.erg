@@ -2,11 +2,13 @@
 Title: After-merge red on main 08cd9ec1cab6: pytest-guard
 Created: 2026-10-29
 Author: merge-gate
+Closed: closed by its raid PR
 
 --- log ---
 2026-10-29T10:26Z merge-gate created
 2026-10-29T11:10Z claude note Diagnosis: /home on padme at 9% free (threshold 10%); the "Disk headroom warning" line (scripts/tmp_report.py) lands in the output test_shell_init_gh_agent.sh compares, so all six cases fail. Same failure on the last green tip 78ba2235, so not caused by PR 1957. Host state; the test is sensitive to the warning channel.
 2026-10-29T13:05Z claude scope Recurs whenever /home dips under 10% free: shell-init.sh prints the disk warning on stdout, which the test captures. Fix the channel, not the disk.
+2026-10-29T14:40Z reviewer closed — closed by its raid PR
 
 --- body ---
 ## Context

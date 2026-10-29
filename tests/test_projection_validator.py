@@ -330,7 +330,7 @@ def test_claude_session_start_prints_low_disk_warning(tmp_path):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime", ["codex", "pi"])
-def test_codex_and_pi_print_disk_warning_before_launch(world, runtime):
+def test_codex_and_pi_print_disk_warning_on_stderr(world, runtime):
     python = world["fakebin"] / "python3"
     python.write_text(
         "#!/bin/sh\n"
@@ -344,7 +344,10 @@ def test_codex_and_pi_print_disk_warning_before_launch(world, runtime):
     result = launch(world, runtime)
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.index("Disk headroom warning:") < result.stdout.index(f"LAUNCHED {runtime}")
+    # Ticket 1337: the notice goes to stderr; stdout carries the runtime alone.
+    assert "Disk headroom warning: /tmp has 5% free" in result.stderr
+    assert "Disk headroom warning" not in result.stdout
+    assert f"LAUNCHED {runtime}" in result.stdout
 
 
 @pytest.mark.integration
