@@ -75,6 +75,27 @@ def test_clean_tree_is_removed_and_comment_posted(tmp_path):
     assert "{{" not in text
 
 
+def test_tree_holding_uv_run_build_output_is_removed(tmp_path):
+    """Ticket 1345: a seat's `uv run` in a packaged project leaves an ignored
+    egg-info beside the .venv and caches; the close removes the tree anyway."""
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir")) / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n.venv/\n*.egg-info/\n__pycache__/\n.pytest_cache/\n")
+    for p in (".venv/bin/python", "pkg.egg-info/PKG-INFO", "src/__pycache__/m.pyc", ".pytest_cache/README.md"):
+        (tree / p).parent.mkdir(parents=True, exist_ok=True)
+        (tree / p).write_text("x\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
+            primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not tree.exists()
+    assert answer_text(primary, f).startswith("result: REVIEWED")
+
+
 def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
     primary, env, f = opened(tmp_path)
     tree = primary / ".claude" / "worktrees" / "review-7"
