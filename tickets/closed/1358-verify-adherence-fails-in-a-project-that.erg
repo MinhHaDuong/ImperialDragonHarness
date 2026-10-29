@@ -2,10 +2,12 @@
 Title: verify-adherence fails in a project that declares no adherence runner
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2022
 
 --- log ---
 2026-10-29T20:56Z reviewer created
 2026-10-29T22:52Z reviewer DOIfetch (~/CNRS/code/DOIfetch) declares no adherence entry point: discovery is right, skip lands
+2026-10-29T23:09Z reviewer closed — autoclosed — PR #2022
 
 --- body ---
 ## Context
