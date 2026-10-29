@@ -117,7 +117,7 @@ This check is intentionally cheap. If it exceeds the 10 s budget,
 ESCALATE rather than silently trimming scope (a trimmed check that drops
 a failing test is worse than no check).
 
-### 1. Project runner (never skip)
+### 1. Project runner (skipped only when none is declared)
 
 Read the project instructions, build file, and CI configuration for an explicit
 adherence entry point. Record the declaring file and line with the exact command.
@@ -125,10 +125,11 @@ A filename or a target named `lint` alone is not a declaration of adherence;
 its documented purpose must establish that contract. If declarations conflict,
 ESCALATE with their locations rather than choosing silently.
 
-If none is declared, stop with blocking `adherence: FAIL`, reason
-`no declared adherence runner`, rule ref `verify-adherence#project-runner`.
-Do not guess from installed tools or add a dependency manifest to satisfy the
-harness. A declared command whose executable or dependencies are missing is an
+If none is declared, skip this mechanical runner and say so: emit
+`mechanical_runner: skipped (no declared adherence runner)` in the verdict,
+rule ref `verify-adherence#project-runner`, and go on to phases 1.0 and 3,
+where the semantic review is then the only gate. Do not guess from
+installed tools or add a dependency manifest to satisfy the harness. A declared command whose executable or dependencies are missing is an
 environment error: ESCALATE; never report a clean pass or skip the gate.
 
 Invoke the declared command verbatim from the project worktree, including its
@@ -267,6 +268,7 @@ A valid completed worker alone earns `status: ran`.
 
 ```yaml
 adherence: PASS | FAIL
+mechanical_runner: ran | skipped (<reason>)   # skipped only for "no declared adherence runner"
 escalation: null | adherence-infrastructure
 semantic_review:
   applicable: true | false
@@ -299,7 +301,8 @@ untested_rules:
 
 Verdict mapping is mandatory: any mechanical failure or blocking semantic finding → adherence: FAIL.
 A required semantic review with status other than `ran` also fails with the
-infrastructure escalation above. PASS requires successful mechanical checks,
+infrastructure escalation above. PASS requires successful mechanical checks (or the runner skipped for
+lack of a declared one),
 no blocking semantic findings, and either a valid completed semantic worker
 or an explicitly justified inapplicable `skipped` status. Always emit
 `semantic_review`, even when an earlier phase stops execution; record it as
@@ -320,7 +323,7 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Circuit breakers
 
-- No declared adherence runner → blocking contract failure (phase 1).
+- No declared adherence runner → skip with a visible reason, verdict key `mechanical_runner: skipped` (phase 1); phases 1.0 and 3 still run.
 - A declared runner cannot execute → ESCALATE (environment broken).
 - No `scripts/` directory → **reference resolution still runs** when prose is
   in scope. A manuscript-only layout does not exempt phase 1.0 or the project runner.
