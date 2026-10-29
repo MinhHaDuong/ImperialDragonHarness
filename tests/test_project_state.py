@@ -363,3 +363,45 @@ def test_state_fingerprint_sees_claude_housekeeping_branches(tmp_path):
     before = ps.state_fingerprint(repo)
     _git(repo, "branch", "claude/housekeeping-foo")
     assert ps.state_fingerprint(repo) != before
+
+
+def _hk_repo(tmp_path, days_old):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    when = f"{int(__import__('time').time()) - days_old * 86400} +0000"
+    subprocess.run(
+        ["git", "commit", "-qm", "chore: housekeeping fixes (sweep)", "--allow-empty",
+         "--date", when],
+        cwd=repo, check=True, capture_output=True,
+        env={**__import__("os").environ, "GIT_COMMITTER_DATE": when},
+    )
+    return repo
+
+
+@pytest.mark.integration
+def test_housekeeping_state_commitless_molt_counts(tmp_path):
+    """A molt that found nothing to commit leaves a marker in the git common
+    dir; yawn check 8 must not report `needed` right after it."""
+    repo = _hk_repo(tmp_path, 3)
+    assert ps.housekeeping_state(repo)["state"] == "needed"
+    (repo / ".git" / ps.HOUSEKEEPING_MARKER).touch()
+    out = ps.housekeeping_state(repo)
+    assert out["state"] == "clean"
+    assert out["age_hours"] < 1
+
+
+@pytest.mark.integration
+def test_housekeeping_state_stale_marker_still_needed(tmp_path):
+    """A marker older than the threshold does not mask an overdue sweep."""
+    import os
+    import time
+
+    repo = _hk_repo(tmp_path, 3)
+    marker = repo / ".git" / ps.HOUSEKEEPING_MARKER
+    marker.touch()
+    old = time.time() - 48 * 3600
+    os.utime(marker, (old, old))
+    assert ps.housekeeping_state(repo)["state"] == "needed"
