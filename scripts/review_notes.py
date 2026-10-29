@@ -50,7 +50,9 @@ Landing (ticket 1299). `push_for_landing` (CLI `push-landing <branch>`) runs bef
 refresh, then push refs/notes/review and the review-heads of the requests naming the branch
 (never the HEADS/* glob), never forced; a failed push is a Refusal, no remote or no request
 for the branch pushes nothing. A head missing locally for the latest review of the branch, the
-one landing, is a Refusal (ticket 1300); older reviews' missing heads are skipped.
+one landing, is fetched from the remote or restored from its request entry when the commit
+survives (ticket 1362), a Refusal when the commit is gone (ticket 1300); older reviews'
+missing heads are skipped.
 
 Locking (ticket 1282). Every local write to refs/notes/review (`notes append`, `notes merge`)
 is a read-modify-write, so writers hold an exclusive flock on
@@ -567,6 +569,20 @@ def _refuse_split_rounds(cwd, review_id):
                       "refusing to land: ESCALATE")
 
 
+def _restore_head(cwd, remote, ref, key, reqs):
+    """Ticket 1362: a landing review-head ref missing locally is rebuilt from its request entry
+    (the authority on the head) when the commit survives, after a try at the remote; a stderr
+    note says so. A commit truly gone is still a Refusal."""
+    _git(cwd, "fetch", "-q", remote, f"{ref}:{ref}", check=False)
+    if not _has_ref(cwd, ref):
+        head = next(e.get("head") for e in reqs if (e["review_id"], e["request_id"]) == key)
+        if not head or _git(cwd, "cat-file", "-e", f"{head}^{{commit}}", check=False).returncode != 0:
+            raise Refusal(f"review-head {ref} of the landing review is missing locally and its "
+                          "commit is gone; the reviewed head is merge evidence, refusing to land without it")
+        keep_head(cwd, key[0], key[1], head)
+    print(f"review-head {ref} was missing locally; restored from the request entry", file=sys.stderr)
+
+
 def push_for_landing(cwd, branch, remote="origin"):
     """Landing door (ticket 1299): push REF and the review-heads of the requests naming `branch`,
     synchronously and never forced, before the merge. A failed push is a Refusal; so is a landing
@@ -576,7 +592,6 @@ def push_for_landing(cwd, branch, remote="origin"):
     def requests():
         return [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
     # Notes are merge evidence (ticket 1300): the landing review's retained heads must exist.
-
     if not _has_remote(cwd, remote) or not requests():
         return []  # decided from local entries: no config write, no fetch
     setup(cwd, remote)
@@ -591,10 +606,9 @@ def push_for_landing(cwd, branch, remote="origin"):
     for key in dict.fromkeys((e["review_id"], e["request_id"]) for e in reqs):
         ref = f"{HEADS}/{key[0]}/{key[1]}"
         if not _has_ref(cwd, ref):
-            if key[0] == landing:
-                raise Refusal(f"review-head {ref} of the landing review is missing locally; "
-                              "the reviewed head is merge evidence, refusing to land without it")
-            continue
+            if key[0] != landing:
+                continue
+            _restore_head(cwd, remote, ref, key, reqs)
         if _git(cwd, "push", "-q", remote, f"{ref}:{ref}", check=False).returncode != 0:
             raise Refusal(f"push of {ref} to {remote} rejected")
         pushed.append(ref)

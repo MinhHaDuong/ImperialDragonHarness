@@ -260,6 +260,41 @@ def test_landing_pushes_review_notes_and_head_before_the_merge(tmp_path, monkeyp
     assert any(line.startswith("review notes pushed:") for line in out)
 
 
+def _rebased_review_without_head(wt):
+    """A review opened, the branch rebased (amend), a new review requested, its head ref lost."""
+    _open(wt)
+    git(wt, "commit", "-q", "--amend", "-m", "feat rebased")
+    rid, req = _open(wt)
+    git(wt, "update-ref", "-d", f"refs/review-heads/{rid}/{req['request_id']}")
+    return rid, req
+
+
+def test_landing_restores_a_missing_review_head_from_notes(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    rid, req = _rebased_review_without_head(wt)
+    ref = f"refs/review-heads/{rid}/{req['request_id']}"
+    tip = git(wt, "rev-parse", "HEAD")
+    code, out = land(wt)
+    assert code == 0, out
+    assert git(wt, "rev-parse", ref) == tip == req["head"]
+    assert git(origin, "rev-parse", ref) == tip
+
+
+def test_landing_still_refuses_when_the_review_head_commit_is_gone(tmp_path, monkeypatch):
+    monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    rid, req = _open(wt)
+    ref = f"refs/review-heads/{rid}/{req['request_id']}"
+    git(wt, "update-ref", "-d", ref)
+    git(wt, "reset", "-q", "--hard", "main")
+    git(wt, "reflog", "expire", "--expire=now", "--all")
+    git(wt, "gc", "-q", "--prune=now")
+    with pytest.raises(review_notes.Refusal, match="commit is gone"):
+        rl.review_notes.push_for_landing(str(wt), "feat")
+    assert _remote_refs(origin, "refs/review-heads/") == ""
+
+
 def test_landing_refuses_on_a_rejected_notes_push_and_does_not_merge(tmp_path, monkeypatch):
     monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
     work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
