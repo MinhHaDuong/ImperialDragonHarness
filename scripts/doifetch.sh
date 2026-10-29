@@ -5,7 +5,7 @@
 # network. The pin lives here only; bump it after a DOIfetch merge worth taking.
 set -euo pipefail
 
-DOIFETCH_REF=3f6507c7d66a43341fe57d8caee4391be00fa367  # DOIfetch PR 1: core is requests only
+DOIFETCH_REF=v0.2.0  # DOIfetch v0.2.0, annotated unsigned tag c66a2e5 on fc85d31 (author ruling 2026-10-29)
 
 if ! command -v uvx >/dev/null 2>&1; then
     echo "doifetch: uvx not found; install uv (https://docs.astral.sh/uv/) and retry" >&2

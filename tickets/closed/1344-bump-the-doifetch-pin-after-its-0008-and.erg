@@ -2,12 +2,15 @@
 Title: Bump the DOIfetch pin after its 0008 and update the zotero docs with it
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2010
 
 --- log ---
 2026-10-29T18:55Z reviewer created
 2026-10-29T19:40Z reviewer author rulings via DOIfetch session: pin signed tag v0.2.0; stdlib-only default install; ISBN via Crossref DOI lookup, LibGen opt-in
 2026-10-29T22:05Z reviewer note DOIfetch session reports v0.2.0 tagged UNSIGNED (annotated c66a2e5 on fc85d31, merge of DOIfetch PR 42; YubiKey PIN unknown) and asks to change exit criterion 1 from signed tag to tag v0.2.0; criterion left unchanged pending the author's own ruling
 2026-10-29T22:07Z reviewer author ruling: accept the unsigned annotated tag v0.2.0; exit criterion 1 amended
+2026-10-29T22:10Z reviewer evidence: scripts/doifetch.sh --doi 10.1371/journal.pone.0033288 at v0.2.0 -> 'Download succeeded: Izutsu 2012 - Genome Features of Dark-Fly...pdf' (PDF 13 pages, 704513 bytes), rc=0; --version 'doifetch 0.2.0'; invalid ISBN -> 'Error: Invalid ISBN' rc=1 (same code as 'Download failed:', told apart by first line)
+2026-10-29T22:17Z reviewer closed — autoclosed — PR #2010
 
 --- body ---
 ## Context
