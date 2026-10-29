@@ -6,6 +6,7 @@ Blocked-by: 1348
 
 --- log ---
 2026-10-29T19:54Z reviewer created
+2026-10-29T20:27Z reviewer input design: native memories as inboxes, drain requirements (author)
 
 --- body ---
 ## Context
@@ -22,3 +23,38 @@ forge as reference.
 ## Exit criteria
 - [ ] The hoard skill and HOARD.md describe the rebuild and the net-change report
 - [ ] One harness hoard has run as a rebuild and was accepted by the author
+
+## Input design: native memories as inboxes (author, 2026-10-29)
+The author's idea was to merge the tools' memories. Accepted shape (option A): each runtime keeps
+capturing in its native store; smelt drains the native stores and the journal into the
+departments (1348); the repository store is canonical and the only one all four runtimes read.
+Merging is smelt's input step, not a replacement for it.
+
+Evidence (lair session probes, 2026-10-29, padme only; the reports were session scratch,
+so the numbers are kept here):
+- Claude Code native: 1,137 notes (1.9 MB) in 47 of 268 project dirs; types feedback 68%,
+  project 15%, reference 8%, user 1%, untyped 9%. Tombstones (`# DELETED 2026-09-16`) 92;
+  notes missing from their index 56; 290 notes (26%) in superseded, renamed or old-path dirs,
+  including a 138-note store under `~/.claude`.
+- Harness native store (27 notes), single coder: Commission 44%, rule in disguise 41%,
+  unique (never in the repo) 52%, stale 22%, full duplicate 26%. AEDIST sample (25 live notes,
+  about ±18 points): rule in disguise 64%, unique 68%, harness machinery stored in a project 44%.
+- Cross-store contradictions: padme CPU (3945WX/12 cores versus 3975WX/32 cores); "no wait
+  tickets" versus "a reminder is an open Blocked-by ticket"; `prose_edits_on_main` versus `rules/git.md`.
+- Codex native memories: feature off, store empty (1346). Pi and Vibe: no built-in memory in the
+  installed releases. Pi's ecosystem has many memory packages (pi.dev lists 219 under "memory";
+  for example `pi-claude-memory`, `@fractaal/pi-cross-agent-memory`, `@getpipher/armory-memory`
+  import, `pi-codex-memory`, `pi-agent-memory-repo`). They merge stores, but none verifies,
+  retires or budgets: that part is smelt's.
+
+Drain requirements:
+- Read the directory, not the index; skip tombstones; parse the nested `metadata.type`;
+  ignore mtimes, since they are bulk-touched.
+- Map stores to repositories by the repository, not the cwd: resolve old paths and aliases
+  (`.project-aliases.json` has 14) and route harness machinery found in a project store to the harness.
+- Batch by store; the first full drain is about 480k tokens (an estimate).
+- Commission receives author rulings (the largest flow). Notes that prescribe behaviour are filed
+  as rulings, never promoted to rules; 1351 lists them as candidates.
+- A time-limited note gets a revisit date (for example, the main-guard watch ends 2026-11-03).
+- A drained native note is emptied, or its index points to the department page; pick one, and
+  measure with 1346 that Claude Code then reads it.

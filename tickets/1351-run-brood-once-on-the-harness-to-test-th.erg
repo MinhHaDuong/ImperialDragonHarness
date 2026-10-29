@@ -6,6 +6,7 @@ Blocked-by: 1349
 
 --- log ---
 2026-10-29T19:54Z reviewer created
+2026-10-29T20:27Z reviewer rule-candidate lane from native notes (author)
 
 --- body ---
 ## Context
@@ -18,3 +19,14 @@ List the candidates for the author; implement nothing without the request.
 
 ## Exit criteria
 - [ ] One brood run report, listing candidates with sources, or "no change" with reasons
+
+## Rule-candidate lane (author, 2026-10-29)
+The native-note probe (1349 § Input design) found that 41% of the harness's native Claude notes,
+and 64% of a sample from AEDIST's, prescribe behaviour that `rules/` does not hold: the author's
+working rules live in native memory. Smelt files them under Commission as rulings and never
+promotes them. This brood run lists them as rule candidates: the ruling, its source note and
+date, the rule file it would join, and any conflict with a current rule (three known, for
+example `prose_edits_on_main` versus `rules/git.md`). The author decides each one; promotion
+needs the explicit request with a destination (AGENTS.md § Project memory boundary).
+Extra exit criterion:
+- [ ] Rule candidates from the drained native notes listed with source, destination and conflicts
