@@ -2,10 +2,12 @@
 Title: A read-only codex seat cannot read the review tree
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2018
 
 --- log ---
 2026-10-29T22:20Z reviewer created
 2026-10-29T22:51Z reviewer not reproduced (codex-cli 0.165.0, gpt-6-luna, padme): real gaze_seat.py launch, codex exec -s read-only, cwd=review tree, panel inside tree. (a) git worktree of this repo: read STATE.md, 7278 tokens. (b) detached linked worktree of a throwaway repo: reach read=yes shell=yes, quoted f.txt first line, 10s, stderr empty, sandbox read-only, workdir=review tree. Earlier probe: codex refuses a NON-git cwd ('Not inside a trusted directory'); a review tree that is not a git repo is the one failure mode found, and launch already refuses it (git rev-parse HEAD). No door fix invented; likely f9e483 cause is environmental or a non-git/removed tree. Regression: codex.cwd == review tree asserted in test_gaze_seat.py. Open for author: a recurrence needs the seat stderr from f9e483.
+2026-10-29T23:09Z reviewer closed — autoclosed — PR #2018
 
 --- body ---
 ## Context
