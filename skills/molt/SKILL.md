@@ -62,7 +62,7 @@ Run full repo housekeeping and act on every finding.
 
    **Do not run `erg sync` in a sweep** (`erg update` is its old name). It
    rewrites `tickets/erg` in place from the project's origin, and in a checkout
-   whose local main lags, step 1's `git switch` then refuses the modified file
+   whose local main lags, step 1's worktree cut then refuses the modified file
    even when it matches the target byte for byte. `erg sync --upstream`
    imports a binary the project has not reviewed: if a visited repo's
    committed `tickets/erg` lags git-erg, **surface that as an `open-ticket`
@@ -254,11 +254,14 @@ Run full repo housekeeping and act on every finding.
 
 7. **Report and release the worktree.** This step runs on **every** exit after step 1: the normal path, step 2.5's stop-and-report, and a failure in any other step. `worktree-gc.sh` never reclaims a locked worktree on an unpushed branch, so a worktree left without commits hangs until someone removes it by hand. Before reporting:
 
-   - **No commits on the branch** (`git rev-list --count origin/main..HEAD` is 0): after step 2.5's stop, first discard its partial ticket edits with `git -C "$W" reset --hard` (they are this run's own); any other dirty tree falls under the last bullet. From the primary checkout, `git worktree unlock "$W" && git worktree remove "$W" && git branch -d housekeeping-<date>`. If the sweep ran to the end, also record it for yawn check 8, which dates housekeeping from `git log` and sees no commit here: `touch "$(git rev-parse --path-format=absolute --git-common-dir)/molt-last-run"`. A stopped or crashed sweep records nothing: it did not finish.
-   - **Commits pushed with a merge request open:** keep the worktree and branch; name both in the report as pending until the merge, when roar cleans them.
-   - **Dirty tree not explained above:** keep it and name it.
+   Shell variables do not survive Bash calls: read the literal worktree path printed at step 1 and use it verbatim; never run `git -C "$W"` with `$W` unset or unchecked.
 
-   Then summarize what you did, say which of the three applied, and propose: "Surface remaining nits?"
+   - **No commits on the branch** (`git rev-list --count origin/main..HEAD` is 0) and a clean tree: from the primary checkout, `git worktree unlock <path> && git worktree remove <path> && git branch -d housekeeping-<date>`. `git worktree remove` refuses a dirty tree, so nothing is discarded. If the sweep ran to the end, also record it for yawn check 8, which dates housekeeping from `git log` and sees no commit here: `touch "$(git rev-parse --path-format=absolute --git-common-dir)/molt-last-run"`. A stopped or crashed sweep records nothing: it did not finish.
+   - **Commits pushed with a merge request open:** keep the worktree and branch; name both in the report as pending until the merge, when roar cleans them.
+   - **Commits but no merge request** (the push or the merge request failed): keep the worktree and branch; name both as pending, with the failure.
+   - **Dirty tree** (including step 2.5's stop, which leaves partial ticket edits): keep it and name it; the removal refused it, and the edits are not discarded.
+
+   Then summarize what you did, say which case applied, and propose: "Surface remaining nits?"
 
 ## Branch discipline
 
