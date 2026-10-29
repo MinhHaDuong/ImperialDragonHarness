@@ -3,6 +3,7 @@
 
 # Harness components
 !.gitignore
+!.gitattributes
 !pyproject.toml
 !uv.lock
 !.ruff.toml
@@ -37,6 +38,9 @@ skills/directory
 !conception/**
 !memory/
 !memory/**
+# Health journal (ticket 1334): one checkup record per harness-doctor visit.
+!health/
+!health/journal.jsonl
 memory/.provenance.lock
 
 # Per-project agent memory (projects/<hash>/memory/): track note bodies + index.
