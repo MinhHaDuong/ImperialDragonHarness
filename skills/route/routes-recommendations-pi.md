@@ -17,3 +17,25 @@ work prefer the cluster default, Luna, or Haiku 5.5 when the Anthropic
 credentials are loaded. When a review of Claude-produced work must be
 independent (high risk, `references/decorrelation.md`), choose a non-Anthropic
 model.
+
+## Albert seats stay out of the grid
+
+Arena Albert smoke spot check, 2026-10-29 (arena repository,
+`docs/2026-10-29-albert-smoke-spot-check.md`, "Readout for the route grid"):
+0 of 4 legs OK, no quality or speed observation, so neither Albert identity
+enters `grid.json` and the unbenched-identity rule in `SKILL.md` keeps both
+off routed agent work.
+
+- `qwen3-coder-30b-a3b-instruct @off · albert` (`albert/openweight-code`):
+  not usable as a Pi agent; tool calls do not come back as tool calls when Pi
+  omits `tool_choice`. Single-shot text use, without tools, is unaffected.
+- `gpt-oss-120b @medium · albert` (`albert/openweight-large`): tool calls
+  work, but the experimentation tier's 10 RPM ends a Pi agent leg within a
+  minute. Use it for single-shot calls only (judging, probes), never agent
+  work.
+
+Re-bench conditions, all outside the arena; any one reopens the question:
+Albert parsing Qwen3-Coder tool calls without `tool_choice` (or Pi sending
+`tool_choice: "auto"` for the albert provider); a Pi retry policy that waits
+out a 60 s rate window; or the Production Limitée tier (declined by the author
+on 2026-10-23). Then make a fresh pin and run a smoke leg before any grid row.
