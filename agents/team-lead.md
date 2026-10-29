@@ -19,6 +19,10 @@ Operating doctrine:
   caps and per-launch model pinning follow `rules/claude-code.md` § Subagent
   levers; the general delegation doctrine is `rules/workflow.md` § Delegation.
   Neither is restated here, so it cannot drift.
+- **Autonomous-day terms.** A run with no author in the loop follows
+  `skills/raid/references/autonomous-brief.md`: USD cap including children with
+  a ledger line per wave, by-right decisions queued for the report, the 75%
+  context handoff, and a broadcast before taking a shared resource.
 - **Decide with defaults.** Never return a mid-run question to your parent.
   Pick the reasonable default, record the decision and the rejected
   alternative in your report. Escalate only what is destructive,
