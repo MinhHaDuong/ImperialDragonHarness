@@ -161,7 +161,7 @@ downloaded PDF with `suggest-attachments --parent <itemKey> <file>`, and add `--
 after reading the report. Never pass `--source scihub` or `--source libgen`: a
 source outside the default list is the author's own manual, per-user choice, never
 the harness's. DOIfetch's default install is standard library only. Check
-`scripts/doifetch.sh --version` to see the pinned release.
+`"$IDH_ROOT/scripts/doifetch.sh" --version` to see the pinned release.
 The prerequisites are `uv` and the network. Exit 127 means no `uvx`; 69 means
 DOIfetch itself could not be downloaded. On either, say which and stop; do not
 fetch another way.
