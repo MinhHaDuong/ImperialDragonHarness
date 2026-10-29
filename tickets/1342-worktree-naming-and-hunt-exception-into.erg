@@ -1,0 +1,48 @@
+%erg 0.1
+Title: Worktree naming and hunt exception into runtime-neutral workflow.md
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T13:55Z claude created
+
+--- body ---
+## Context
+
+Docs visit, 2026-10-29 (`memory/journal/2026/2026-10-29-docs-visit-first-global.md`,
+finding B), ticketed at the author's request the same day.
+
+`rules/workflow.md` § Session start says "Enter the worktree before answering
+(exceptions and naming: `claude-code.md`)". The naming table, the `/hunt N`
+exception (do not create a worktree before the skill runs: its detached agent
+creates its own) and the self-presentation line live in `rules/claude-code.md`
+§ Entering the session. The Pi and Codex adapters skip `rules/claude-code.md`
+(`rules/README.md`, adapter projections), so on those runtimes the session-start
+rule points at text they never load. Consequence: a Pi or Codex session can create
+a worktree before `/hunt N` and orphan it, and names worktrees without the table.
+Molt reclaims orphans, so nothing corrupts; the cost is clutter and a rule that
+does not hold on two first-class runtimes. The self-presentation line is also
+stated twice (`workflow.md` and `claude-code.md`).
+
+Unverified on a live Pi or Codex session: confirm the adapters' load set before
+editing.
+
+## Intent
+
+Move what every runtime needs into `rules/workflow.md`: the worktree naming table,
+the `/hunt N` exception, the plain-git recipe pointer (`skills/hunt/SKILL.md`
+§ Worktree) and the one self-presentation line. `rules/claude-code.md` keeps only
+what is true of Claude Code alone (never call `EnterWorktree`, and why) and points
+to workflow.md for the rest. One home per fact; no restatement.
+
+## Exit criteria
+
+- [ ] The Pi and Codex adapters' load sets are checked, and the PR states which rule files each loads
+- [ ] `rules/workflow.md` holds the naming table, the `/hunt N` exception and the self-presentation line; `rules/claude-code.md` keeps only the Claude Code specifics and a pointer
+- [ ] The self-presentation line is stated once
+- [ ] Every reference to the moved text (grep `claude-code.md` across rules/, skills/, hooks/, adapters/) points at its new home
+- [ ] The harness gate passes
+
+Priced in the visit: about 15 resident lines moved, about 30 agent-minutes and
+5 author-minutes, odds 0.8 that it removes the orphan path. Resident rules: the
+author reviews the wording.
