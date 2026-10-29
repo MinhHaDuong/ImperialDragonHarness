@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Autonomous-day brief: a standard intent block for team-lead runs
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T11:38Z claude created
+
+--- body ---
+## Context
+
+Arena run 2026-10-29, one Opus team lead, 6 merges, 1.33 of 5 USD, zero stalls, zero leftover trees; what nearly failed was agent context (213K and 192K of about 236K).
+
+## Scope
+
+skills/raid/references/autonomous-brief.md, cited by raid and team-lead:
+
+1. the goal as an observable outcome;
+2. a hard USD cap that includes child spend, with a ledger that shows its arithmetic;
+3. waves with roar between them and a lair at the end of the day;
+4. watchdogs over executors as well as runs, plus the classifier-denial rule: rewrite to match an allow rule literally (git -C, no cd prefix), or log it and move on, never retry verbatim;
+5. a named advisor model for calls outside a ticket's scope;
+6. the author's by-right decisions queued, one line each with a default;
+7. a context rule: at about 75% of the ceiling, write a handoff note, and give bounded risky windows to a fresh agent;
+8. sitreps from side effects (git log, ps, health endpoints), never from transcripts;
+9. a broadcast to every agent before taking a shared resource (GPU, production).
+
+## Exit criteria
+
+- [ ] The reference exists and is cited by raid and team-lead.
+- [ ] One run reports against it.
+- [ ] The denial rule is added to rules/claude-code.md § Allow rules.

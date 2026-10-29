@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Exclude the arena skill from contestant pins
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T11:38Z claude created
+
+--- body ---
+## Context
+
+Arena run 2026-10-29 (arena repo, docs/smoke-2026-10-29/README.md and
+memory/journal/2026/2026-10-29-arena-run-smoke-and-free-panel.md): in the smoke
+leg f1m (excursion scan HARNESS 1) the contestant read its own pinned `arena`
+skill, a possible leak of the bench's method to the contestant.
+
+Mechanism (read-only search, harness side): the contestant's skill set is the
+Pi skills directories. `~/.pi/agent/skills/arena` is a symlink to the arena
+repo's `skills/arena`, left over from the per-skill Pi links that `idh install`
+created before PR 1690 (2026-10-27) moved Pi to the standard root. Pi now reads
+`~/.agents/skills`, projected by `adapters/projections.json` (entry
+`~/.agents/skills` -> `$IDH_ROOT/skills`, runtimes codex and pi, children).
+The arena's `harness_pin.py` copies `skills/` from the live Pi agent dir into
+the sealed snapshot, so whatever is linked at pin time is what the contestant sees.
+The harness has no `skills/arena`: the link is not in the manifest, so
+`idh install` neither declares nor retires it.
+
+Proposal (to choose in Plan): the arena-owned skill set that must not reach a
+contestant is declared as a harness-visible exclusion (e.g. a bench-only skill
+marker or a pin-time deny list honoured by `idh`/the Pi projection), rather
+than relying on hand-removal of a stray link. The pin copy itself lives in the
+arena repo and is not edited from here.
+
+## Exit criteria
+
+- [ ] The mechanism that puts `arena` in a pinned skill set is named in the fix and documented.
+- [ ] A pin built after the fix contains no `arena` skill (checked on a fresh pin).
+- [ ] `make check` passes.

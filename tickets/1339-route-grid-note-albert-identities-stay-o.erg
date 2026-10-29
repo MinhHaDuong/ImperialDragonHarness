@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Route grid note: Albert identities stay out of the grid
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T11:38Z claude created
+
+--- body ---
+## Context
+
+Arena run 2026-10-29, Albert smoke spot check
+(arena repo, docs/2026-10-29-albert-smoke-spot-check.md, section "Readout for
+the route grid"). Quoted verbatim:
+
+> There is no routing-grade measurement: 0 of 4 legs are OK, with 0 quality
+> observations and 0 speed observations. On the harness side,
+> `scripts/tournament-analysis.py --grid` has nothing to refresh for `alq`/`alg`.
+> Both identities stay **out of the grid**, and the route skill's rule ("never
+> route to an unbenched identity") keeps them off routed agent work. What the
+> evidence supports:
+>
+> - `qwen3-coder-30b-a3b-instruct @off · albert`: unusable as a Pi agent today,
+>   because tool calls are not returned as tool calls when Pi omits `tool_choice`.
+>   Single-shot text use (no tools) is unaffected.
+> - `gpt-oss-120b @medium · albert`: tool calls work. In the experimentation tier,
+>   10 RPM ends a Pi agent leg within a minute. Suitable for single-shot calls
+>   (judging, probes), as the 2026-10-23 finding already says.
+>
+> Re-benching either seat needs one of these, all outside the arena: Albert
+> parsing Qwen3-Coder tool calls without `tool_choice` (or Pi sending
+> `tool_choice: "auto"` for the albert provider); a Pi retry policy that waits out
+> a 60 s window; or the Production Limitée tier, which the author declined on
+> 2026-10-23. Then make a fresh pin and run a smoke leg.
+
+Apply this note in `skills/route` (SKILL.md or a reference it cites): the two
+Albert identities stay out of the grid; gpt-oss-120b is routable for
+single-shot calls only, not agent work; the re-bench conditions are recorded.
+
+## Exit criteria
+
+- [ ] `skills/route` carries the note (Albert identities out of the grid, single-shot-only use, re-bench conditions), with no change to `grid.json`.
+- [ ] `make check` passes.
