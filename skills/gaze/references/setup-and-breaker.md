@@ -4,7 +4,8 @@ Loaded from `skills/gaze/SKILL.md` § 1. Setup. `"$IDH_ROOT/scripts/gaze_setup.p
 does the mechanical part in one call, in this order:
 
 - Reads the PR through the forge CLI; aborts (exit 1) on merge conflicts.
-- Checks the liveness lock, creates the isolated review worktree
+- Checks the liveness lock (a tree holding `gaze-closed` in its git dir, written by
+  `gaze_close.py` before cleanup and kept by a refused close, is dead, not live), creates the isolated review worktree
   `review-<pr-number>` and runs `"$IDH_ROOT/scripts/review-anchor.py"` on it. A
   nonzero anchor result stops the run (exit 2): do not review an empty or
   wrong-tree diff. Carry its HEAD and changed-file roster into every plan item.
