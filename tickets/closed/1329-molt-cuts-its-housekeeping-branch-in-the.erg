@@ -2,9 +2,11 @@
 Title: Molt cuts its housekeeping branch in the shared primary checkout; yawn warns after a no-commit molt
 Created: 2026-10-29
 Author: reviewer
+Closed: fixed by PR #1941: molt runs in its own locked worktree, step 7 releases it on every exit (keeps .tmp/, keeps when unsure); a finished commit-less molt touches molt-last-run, read by yawn check 8
 
 --- log ---
 2026-10-29T07:49Z reviewer created
+2026-10-29T08:34Z reviewer closed — fixed by PR #1941: molt runs in its own locked worktree, step 7 releases it on every exit (keeps .tmp/, keeps when unsure); a finished commit-less molt touches molt-last-run, read by yawn check 8
 
 --- body ---
 ## Context
