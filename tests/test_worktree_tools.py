@@ -790,6 +790,17 @@ def test_preflight_blocks_on_hand_made_file_under_ignored_build(origin):
     assert res.returncode == 1 and "build/" in res.stderr
 
 
+def test_removal_keeps_unignored_build_output(origin):
+    """The scrub only deletes what the repository ignores: an unignored build/lib is work."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-unignored", dirty=False)
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "draft.txt").write_text("mine\n")
+    res = _removal(wt)
+    assert res.returncode == 1
+    assert (wt / "build" / "lib" / "draft.txt").exists()
+
+
 def test_preflight_blocks_on_symlinked_build(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-build-link", dirty=False)
