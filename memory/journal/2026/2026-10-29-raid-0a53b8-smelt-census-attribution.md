@@ -16,8 +16,8 @@ Date: 2026-10-29. Orchestrator: Claude Code (claude-opus-5-5).
     in those repositories on the author's instruction, after the agent token was refused
     GitHub issue creation.
   - PR #1999 (1353, census) merged after a FINDINGS round. A cross-family seat found writes and
-    git commands counted as reads; the corrected Codex read rate is about 19 % against the
-    audit's 77 %.
+    git commands counted as reads. Corrected Codex rate: 142 of 570 sessions read the index
+    or topics (about 25 %), against the audit's 360 of 468 (77 %); 109 of 570 (about 19 %) read the index alone.
 - Wave 2: PR #2002 (1347) moved 183 attribution records to `memory/evidence/attribution/`.
   It merged APPROVED with a cross-family seat. The AGENTS.md:74 append-only wording was left
   for the author.
