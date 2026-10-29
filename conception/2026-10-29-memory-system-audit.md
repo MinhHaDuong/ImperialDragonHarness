@@ -38,8 +38,8 @@ The five findings that matter for a decision:
    `memory/MEMORY.md` or `memory/topics/` in 148 main sessions since
    2026-10-15, against 77 % of Codex working sessions that do (§4.2).
 3. Half the journal (183 of 380 entries) is review-attribution telemetry that
-   roar must write for every reviewed PR, which design v8 §4 says the journal
-   should not hold (§3.1).
+   roar must write for every reviewed PR. Design v8 §4 rules out routine entries
+   in general; reading attribution records as routine is this audit's inference (§3.1).
 4. The behaviour-shaping memory in Claude Code is native auto-memory: 28
    unreviewed notes, injected at every start, one of which states its own
    disagreement with `rules/git.md` (§4.3).
