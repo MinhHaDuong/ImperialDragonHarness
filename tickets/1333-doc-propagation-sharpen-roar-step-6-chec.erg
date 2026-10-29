@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Doc propagation: sharpen roar step 6, check root-doc paths exist
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T08:35Z claude created
+
+--- body ---
+## Context
+
+Author question, 2026-10-29: how does documentation propagation happen? Survey of
+the gates and skills on origin/main 78a1acb1: only `skills-catalog.md` is
+enforced (drift check in the merge gate's `before` set); STATE.md has its line
+cap, lair step 10 and yawn §11. README, INSTALL, ROADMAP and script docstrings
+rely on roar step 6, a single line ("Update project docs if pipeline, data
+contract, or methodology changed") whose trigger reads as science-project
+wording and names no document, and on gaze's doc-propagation perspective.
+
+Measured from refs/notes/review (40 gaze reviews, 2026-10-28 to 2026-10-29,
+the whole notes era): 3 reviews ran a docs seat, 10 a consistency seat.
+Positive control: the probe found the 3. Item 2 of the author's list (make the
+seat mandatory) waits on a longer window.
+
+## Decisions
+
+- Roar step 6 names the triggers (any contract a reader or agent relies on)
+  and the documents, and asks for a tree-wide grep of each changed name.
+  Agnostic wording: roar runs in every project.
+- A mechanical check, `tests/test_root_doc_paths.py` under `lint` (so in the
+  merge gate's `before` set): every repo path a root `*.md` names in backticks
+  or a link exists, and every `make <target>` it names is a Makefile target.
+  Placeholders (`<x>`, `*`, `$VAR`, `~`, `YYYY`) are skipped. It catches renames,
+  not drifted meaning.
+
+- Lair step 10 also refreshes ROADMAP.md's facts in the STATE branch (author
+  request, 2026-10-29). Evidence: its three "Current priorities" (1045, 1100,
+  1099) are all closed and the file last changed 2026-10-27. Lair fixes facts
+  only; the next priority is the author's call and is flagged, not written.
+
+## Exit criteria
+
+- [ ] Roar step 6 rewritten as above
+- [ ] `tests/test_root_doc_paths.py` passes on the tree and fires on a fixture
+      with a missing path and a missing make target
+- [ ] Lair step 10 covers ROADMAP.md facts, strategy left to the author
+- [ ] `make lint` and `make check-skills-drift` pass
