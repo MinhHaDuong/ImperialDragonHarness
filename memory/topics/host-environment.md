@@ -53,6 +53,52 @@ on doudou, and the author was told to rotate it. That is an occurrence of what
 `rules/guards.md` forbids, recorded as an episode; the key is not reproduced
 here.
 
+## Refresh: 2026-10-15 to 2026-10-29
+
+Shells and PATH. `timeout 200 command grep …` exits 127 because `command` is a
+builtin ([legacy import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md)).
+A French decimal comma broke a `bc`/`printf` timing wrapper
+([1583](../journal/2026/2026-10-21-gc-liveness-scan-lazy-pr1583.md)).
+`~/.local/bin` appeared three times on padme's PATH (an unconditional
+`~/.bashrc:1` prepend, Ubuntu's `~/.profile`, the systemd user manager); the
+classifier denied the agent's dotfile edit and the author applied it by hand
+([dangling prune](../journal/2026/2026-10-27-dangling-prune-moves-to-install-pr1701.md)).
+In the Bash tool `pkill` first resolves to a Claude Code shell function keyed on
+`CLAUDE_PID`. The ticket 1216 `pgrep`/`pkill` PATH wrapper was found absent
+until `idh install`, then retired as heavy-handed by the author; PR #1914 instead
+refuses `pgrep -f`/`pkill -f` without `-A` or a bracketed pattern in
+`scripts/guard-destructive-bash.sh`, a hook all three runtimes run
+([pgrep](../journal/2026/2026-10-28-pgrep-wrapper-retired-pr1914.md)). The
+shell-init disk warning moved off stdout after it broke a test (PR 1967).
+
+Skill links. On Claude Code 2.1.311 the skill header names a directory, not a
+SKILL.md path, so a literal substitution into the helper seam gives the wrong
+`IDH_ROOT`; whether the runtime changed or the contract was always loose is not
+isolated ([IDH_ROOT](../journal/2026/2026-10-27-harness-doctor-idh-root-paragraph-1240.md)).
+Pi 1.4.0 scans `~/.agents/skills`; the author removed the Pi skill projection
+(PR 1690) and `idh install` retired 37 receipt-owned links
+([Pi root](../journal/2026/2026-10-27-pi-skills-standard-root-pr1690.md)).
+Dangling `~/.claude/skills` links on doudou were unlinked on request
+([skills audit](../journal/2026/2026-10-20-raid-skills-audit-1128-1129-1130.md)).
+
+Hosts and credentials. Padme's daily `claude-harness-pull.timer` failed on a
+retired directory and was removed on the author's instruction
+([1466](../journal/2026/2026-10-19-smart-testing-1466-wrap-up.md)). Doudou was
+unreachable on 2026-10-20, 10-26, 10-28 and 10-29; on the last day the author
+stated it runs Ubuntu 24.04 LTS (systemd 255), recorded from the release, not a
+live read ([1309](../journal/2026/2026-10-29-tracker-1309-closed.md)). Agent
+sessions use a fine-grained PAT under `GH_CONFIG_DIR=~/.config/gh-agent`; it was
+regenerated with about one year's expiry, padme re-logged and verified, doudou
+still on the old token at the time; `idh.mainGuard` was set to enforce on both
+hosts on 2026-10-27 ([held tickets](../journal/2026/2026-10-27-session-close-held-tickets.md),
+[forge-less raid](../journal/2026/2026-10-27-raid-forge-less-and-guard.md)). On
+2026-10-23 the author authorized task-necessary transmissions to Claude, Codex
+and OpenRouter; it is carried in session-start context, keeping local-only,
+confidentiality and credential restrictions
+([transmission](../journal/2026/2026-10-23-model-transmission-authorization.md)).
+A mis-quoted ssh heredoc ran documentation lines as commands on doudou; a
+follow-up scan found no side effect ([wave 0](../journal/2026/2026-10-27-raid-prep-wave0-and-1206-doudou.md)).
+
 ## Hypotheses, not facts
 
 That snapshots pin the old venv copies is the entry's reading; no

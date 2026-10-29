@@ -87,6 +87,38 @@ for attribution. Later observed producer effort enabled six validated records
 No model pin is reconstructed. The historical append-in-place question from
 the accepted reports remains unresolved; this pass changes no journal bytes.
 
+## Refresh: 2026-10-15 to 2026-10-29
+
+Decisions behind the Hoard migration, 2026-10-15 morning: "Oui sans alias.
+Pourquoi garder dreams et DREAM ?", "Oui avec migration sans legacy",
+"Auto-migration dans le skill ?"; ticket 1102 then specified one-way migration
+in the project's isolated branch before consolidation
+([morning](../journal/2026/2026-10-15-morning-healthcheck-merges-ticket-revalidation.md)).
+The [fourth hoard](../hoards/2026-10-15-fourth-hoard.md) merged the same day
+([merge record](../journal/2026/2026-10-15-fourth-hoard-merge-and-maintenance-fixture.md)).
+
+Encrypted leg. Decision F2 keeps the private `.age` leg deferred; it dates from
+the 0923 smoke, which also showed that with a broken or absent index the
+session-start injection emitted nothing ("the honest failure is behavioural,
+not mechanical") ([smoke](../journal/2026/2026-10-02-memory-v8-smoke.md)). On
+2026-10-15 three `.age` review appendices failed the F2 guards; the author kept
+F2 and the appendices were dropped. Real encrypted processing therefore remains
+unexercised.
+
+Backfill and capture. The commissioned attribution backfill appended zero in
+every later run; unresolved counts were 76 (2026-10-15), 91 and 92
+(2026-10-19), 101 (2026-10-19, PR 1466). No run inferred historical coordinates.
+Capture friction and the merge-commit ticket are in
+[merge flow](merge-flow-and-review-evidence.md).
+
+Repository layout. On 2026-10-19 the installed `~/.claude/CLAUDE.md` symlink was
+removed (PR #1462). On 2026-10-27 the author ruled "docs/ stays staging, design
+history moves to conception/" (PR 1744); hash-pinned records, including hoard
+reports, were restored byte-identical and the link checkers map moved paths
+([docs move](../journal/2026/2026-10-27-docs-to-conception-pr1744.md)). Older
+`docs/…` citations in the journal are historical paths. A further rename of
+`conception/` was floated and not decided.
+
 ## Sources and exceptions
 
 - [2026-10-01: memory v8 design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption.

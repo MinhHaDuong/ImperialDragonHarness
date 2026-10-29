@@ -44,7 +44,8 @@ v0.1.43 quirks: it rejects `reasoning_effort: "xhigh"` in config (accepts
 `high`), and its server ignores the config `port`.
 
 Vibe. Child sessions spawned through Vibe's agent connector do not themselves
-expose it; detached `vibe -p` seats were blocked by its approval policy; the
+expose it; detached `vibe -p` seats were blocked by its approval policy on
+2.25.8 (superseded on 2.26.0, see the 2026-10-27 refresh below); the
 runtime exposed no verbatim provider-qualified model id, so PR #1211's
 attribution records the writer as runtime-masked.
 
@@ -119,6 +120,46 @@ remain evidence, not a current harness-owned tournament. The
 records #1423 importing two author-selected provisional local candidates from
 pinned Arena evidence. Neither those candidates nor masked review identities
 establish a new model-performance finding here.
+
+## Refresh: 2026-10-19 to 2026-10-29
+
+Vibe 2.26.0 (ticket 1279): headless `vibe -p` reads files under the `plan`,
+`ask` and `auto-approve` agents and serves as a read-only gaze seat; launched
+without a terminal it blocks on stdin until `</dev/null`. With
+`--enabled-tools read_file` it read a planted nonce and left the tree unchanged
+([Vibe seat](../journal/2026/2026-10-27-vibe-headless-seat-1279.md)).
+
+Waiting and waking (2026-10-21, Claude Code 2.1.306, Codex 0.163.0, Pi 1.3.0):
+"Only Claude Code wakes the model when a background command exits"; Codex
+background terminals finish without a turn, Pi has no background tool, and
+`codex queue` starts a turn in an idle TUI but fails from the default sandbox.
+The author chose the per-runtime background facility first and parked the
+systemd waiter ([await probes](../journal/2026/2026-10-21-await-external-probes.md)).
+Later controls on codex-cli 0.165.0: `wake send` reaches a Codex thread only as a
+queued message, and on Pi writes only the caller's own inbox, hence "ticket
+only" for Pi in `rules/workflow.md` § Cross-project work
+([1309](../journal/2026/2026-10-29-tracker-1309-closed.md),
+[runtime verbs](../journal/2026/2026-10-28-raid-6530fd-runtime-verbs.md)). A
+Stop hook blocking the first stop made the agent continue on all three runtimes;
+Codex needed the hook inline with `-c`, Pi needed `sendUserMessage` as a
+follow-up ([stopguard](../journal/2026/2026-10-21-stopguard-end-of-turn-hook-design.md)).
+
+Pi providers on padme (2026-10-28). Author: "Pi on padme is meant to serve
+padme's LLM service." Pi had no OpenAI key there, so a gaze seat planned through
+Pi failed. `scripts/pi-albert` and `scripts/pi-openrouter` pin a provider and a
+declared model and load only their own key; review twice found an egress gap
+(an empty `--model` reroutes) before merge
+([Albert](../journal/2026/2026-10-28-pi-padme-albert-route.md),
+[OpenRouter](../journal/2026/2026-10-28-pi-openrouter-and-session-close.md)).
+
+Model ids seen in review: `openai/gpt-6.1-sol`, `openai/gpt-6-luna`,
+`openai/gpt-6-astra`, `anthropic/claude-fable-5-1`, `firstParty/claude-haiku-5-5`
+(Claude Code headless). A 301-agent Haiku/Sonnet contradiction sweep exceeded its
+allowance of about 130 and found 24 confirmed contradictions out of 92; its
+control caught 5 of 5 planted items on one lens, 2 of 5 on the other
+([sweep](../journal/2026/2026-10-21-instruction-contradiction-sweep-pr1622.md)).
+The 2026-10-29 test-doctor read logged 160 codex seat sessions with a model
+time median of 53 s ([contention](../journal/2026/2026-10-29-test-doctor-gate-contention.md)).
 
 ## Sources
 

@@ -44,8 +44,8 @@ detected by PR #1211's review panel; during reproduction a review seat that
 did not override `HOME` clobbered the same live file and restored it
 sha-verified (2026-10-05). On 2026-10-06 a Vibe tournament session in the
 primary checkout acted on review remarks meant for another session; because
-`~/.claude/CLAUDE.md` is a symlink to `AGENTS.md`, its uncommitted `AGENTS.md`
-edit reached running sessions, one of which corrected its open PR #1223
+`~/.claude/CLAUDE.md` was then a symlink to `AGENTS.md` (removed 2026-10-19,
+PR #1462; see below), its uncommitted `AGENTS.md` edit reached running sessions, one of which corrected its open PR #1223
 against the new text. No work was lost; the split of the two sessions' work
 went to the author.
 
@@ -108,6 +108,40 @@ establish session liveness; the census used process cwds. Author-approved
 cleanup removed the specifically identified stale trees and merged branches,
 while retaining another session's open #1415 tree and the archived review
 branch. This was an authorized census, not task-local roar scope expanding.
+
+## Refresh: 2026-10-15 to 2026-10-29
+
+The symlink channel above is closed: PR #1462 removed the installed
+`~/.claude/CLAUDE.md` and its registration at the author's request
+([docs refresh](../journal/2026/2026-10-19-docs-refresh-and-global-claude-retirement.md)).
+`rules/README.md` still says `tickets/AGENTS.md` is "`@`-imported by the
+harness `CLAUDE.md`"; that rule-file statement is not edited here (see the
+fifth hoard's open questions).
+
+Main moving under open work. PR 1541 saw main move by 26 or more commits,
+costing four rebases and nine full-gate runs, and a merge procedure change
+landed mid-flight ([pulse](../journal/2026/2026-10-21-pulse-testing-expert-1541.md)).
+Three peer sessions committed into one branch while a gaze ran on it; the work
+was split into PRs 1664 and 1666, and gaze or gate stopped three times on a
+moved head ([evening](../journal/2026/2026-10-26-evening-review-ceremony.md)).
+Gate records went stale whenever another session merged during them (see
+[merge flow](merge-flow-and-review-evidence.md)).
+
+Other episodes. `git reset --keep` in the orchestrator's worktree dropped
+unpushed ticket commits, restored by cherry-pick
+([afternoon raid](../journal/2026/2026-10-27-raid-optimistic-merge-afternoon.md)).
+`erg next-id` proposed an id an open PR already added; the cross-PR scan caught
+it ([hunt phases](../journal/2026/2026-10-27-hunt-phases-1235-override-merge.md)).
+A coder's control run closed a ticket in another project's checkout and
+restored it ([raid 1212](../journal/2026/2026-10-26-raid-1212-1211-1221-1219-1220-1215.md)).
+A docs-refresh worktree still held 59 changed files after its work had landed
+through #1462-#1473; it was preserved and the remaining edit reapplied on a
+fresh branch ([final merge](../journal/2026/2026-10-19-doc-refresh-final-merge.md)).
+Two coders ran `git stash` and popped it at once in their own worktrees, with
+nothing lost ([raid b](../journal/2026/2026-10-27-raid-b-followups.md)). The stash
+stack is shared across worktrees of one repository, so whether "in a shared
+checkout" in `rules/git.md` covers that case is not settled here; the episode is
+not evidence that the rule's hazard is absent.
 
 ## Sources
 

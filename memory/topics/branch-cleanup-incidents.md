@@ -66,7 +66,44 @@ confirmed that ignored `.tmp/` content is absent from the porcelain WIP check
 and can disappear with worktree removal. It also observed pre-WIP `.panel/`
 purging. The author selected session-history-assisted candidate reporting and
 worktree-owned `.tmp/`, with a disk warning and snapshot exclusion. PR #1399
-records the design, not completed implementation; 1095 remains deferred.
+records the design, not completed implementation. Refreshed: the lifecycle
+work then shipped through PRs #1456, #1457 and #1460 (tickets 1118-1120, merged
+2026-10-19) and ticket 1095 is now under `tickets/closed/`
+([1095 integration](../journal/2026/2026-10-19-1095-temporary-lifecycle-integration.md),
+[timeout diagnosis](../journal/2026/2026-10-19-tmp-report-timeout-diagnosis.md)).
+The report had timed out at 90 s without output; #1460 added a history budget
+with explicit partial coverage (one run: 924 candidates, 3,483 of 11,444 files
+attributed). Nothing was deleted by the report.
+
+## Later sweeps and worktree GC (2026-10-23 to 2026-10-29)
+
+Repository-wide sweeps, outside roar scope. After /molt on 2026-10-23, six local
+branches checked patch-equivalent on main by `git cherry`; `git branch -d`
+refused all six and the author authorized `-D`; 14 remote branches went too.
+Two cloud-session branches had each minted tickets 1114 and 1115 with different
+subjects; the author dropped both ([sweep 1644](../journal/2026/2026-10-23-branch-sweep-1644.md)).
+A /yawn on 2026-10-27 removed seven train branches with zero `+` commits in
+`git cherry`, the author confirming no other session ran
+([yawn](../journal/2026/2026-10-27-yawn-to-rest-pr1782-pr1789.md)). These are
+author-authorized housekeeping, consistent with `rules/git.md` § Branch cleanup
+leaving repository-wide work to lair and molt.
+
+Owner-less locks (PRs 1638, 1640). A Codex hunt in a pid namespace wrote locks
+naming pid 1, which is always alive on the host, so `worktree-gc.sh` skipped the
+trees and molt aborted. This repository's `.gitignore` is `*`, so `git status`
+omits ignored files and `git worktree remove` deletes them; round 2 of 1640
+found that data-loss path. The outcome keeps unverifiable locks except the two
+harness owner-less shapes, reclaimed after 72 h of git inactivity on a tree
+with no work; the residual (a live sandboxed session idle 72 h loses its tree)
+is accepted dissent. uutils `readlink` 0.10.0 on doudou stopped at the first
+unreadable link ([worktree GC](../journal/2026/2026-10-23-worktree-gc-ownerless-locks-1638-1640.md)).
+Locks taken without `--reason` carry no pid and are skipped too
+([F1 gap](../journal/2026/2026-10-28-readme-pr1853-f1-notes-gap.md)).
+
+Molt left the shared primary checkout off main (ticket 1329, PR #1941); five
+gaze rounds found, among others, `reset --hard` with an unset `$W` and a
+preflight clearing an uncited `.tmp/`
+([triage](../journal/2026/2026-10-29-harness-doctor-triage.md)).
 
 ## Sources and exceptions
 

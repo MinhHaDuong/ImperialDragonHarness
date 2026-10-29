@@ -30,7 +30,18 @@ Other runtimes, same period: Codex `spawn_agent` honoured `model` and
 `fork_turns` "all", 46 of 109 calls carried a model override, honouring not
 measured. On Codex 0.161.0 a model's own answer to "which model are you" was
 wrong; the session header was the reliable read. The ticket 1071 round
-recorded that the source note lacks the `fable` token (accepted, not fixed).
+recorded that the source note lacks the `fable` token (accepted, not fixed);
+later raids launched `fable`, `opus`, `sonnet` and `haiku` per call routinely,
+as `rules/claude-code.md` lists ([raid 1170](../journal/2026/2026-10-21-raid-1170-1173-1175.md)).
+
+Identity, 2026-10-20 to 2026-10-28. Agent-launched seats and coders report no
+verbatim model id to the parent; only the subagent transcript's `model` field
+does ([PR 1526 record](../journal/2026/2026-10-20-review-attribution-pr1526.md)).
+Coders launched with aliases left writer lines runtime-masked, so the coder,
+gate-seat and team-lead profiles now open their report with
+`worker: model=<id> · family=<family>`; one writer line had been typed with an
+unobserved id through a since-removed flag and nothing was recorded
+([gate scope](../journal/2026/2026-10-28-gate-scope-and-doctor-kit.md)).
 
 ## Sources and exceptions
 

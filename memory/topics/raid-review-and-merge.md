@@ -7,6 +7,12 @@ hold. Sections marked "2026-10-08 to 2026-10-13" were added by the third dream.
 The procedures themselves live in the `raid`, `gaze`, `verify-gate` and
 `merge` skills; nothing here amends them.
 
+Superseded as current practice (2026-10-21 onward): the 15-file breaker was
+removed (PR 1614), `erg-pr-merge` and `erg-pr-status` were deleted (1178),
+`review-pr` folded into gaze, and review evidence moved to git notes (1298).
+Statements below about those mechanisms are dated history; the later path is in
+[merge flow and review evidence](merge-flow-and-review-evidence.md).
+
 ## Supported observations: what caught what
 
 Panels caught defects that every mechanical layer had passed. On PR #1179 a
@@ -62,7 +68,8 @@ spawn (PR #1143, ticket 1021). Executors without an Agent tool (pi, Vibe
 child sessions, the 0875 hunt executor) posted `PANEL-INTEGRITY: DEGRADED`;
 detached headless CLI seats, one process per seat with artifact polling,
 restored full panels from 2026-10-02 onward (ticket 1017), except that
-detached `vibe -p` seats were blocked by the runtime's approval policy. In every
+detached `vibe -p` seats were blocked by the runtime's approval policy (Vibe
+2.25.8; superseded on 2.26.0, see [runtimes](runtime-observations.md)). In every
 entry that mentions it, the openrouter-budget seat failed fail-open (the
 ticket 0347 hang class) while the openrouter-frontier seat ran.
 
@@ -264,6 +271,29 @@ PR #1403's `**Ticket:** Closes 1090` closed nothing; #1408 archived the ticket.
 This is an identified grammar mismatch, unlike the unresolved #1377 body.
 #1403/#1404/#1408 had no reviews. #1414 stayed open despite green checks and
 auto-merge, then merged directly; cause remains unestablished.
+
+## Later evidence (2026-10-15 to 2026-10-19)
+
+[PR #1454](../journal/2026/2026-10-19-merge-inspection-1117.md) (ticket 1117)
+let the helper merge after an HTTP 403 branch-rule inspection denial; the first
+red-team report found a paginated response emitting required-check data before
+the 403, and partial responses are now refused. [PR #1456](../journal/2026/2026-10-19-pr1456-review-and-attribution.md)
+needed a formal gate round to find missing ancestry and launch wiring after a
+first review. The 42 catalog metadata additions were split into four PRs below
+the breaker; the renderer review found a privacy test asserting only the last
+row ([catalog](../journal/2026/2026-10-19-catalog-grouping-and-merge-delay.md)).
+The docs refresh was split into #1462-#1464 for the same reason
+([docs refresh](../journal/2026/2026-10-19-docs-refresh-and-global-claude-retirement.md),
+[final merge](../journal/2026/2026-10-19-doc-refresh-final-merge.md)). The
+catalog renderer merged 6 min 55 s after its last green check, cause not
+established; this extends the #1324/#1414 open-after-green pattern, and #1448
+again needed a direct merge after a CLEAN all-green state
+([verbs](../journal/2026/2026-10-16-zotero-verbs-exact-match.md)). Review
+transport refusals (publication to an unverified remote, a "private export"
+premise, a comment with local paths) were each cleared by checking public
+evidence, not bypassed ([morning](../journal/2026/2026-10-15-morning-healthcheck-merges-ticket-revalidation.md)).
+Raid 1004's closure census (22 model judgments, all `openai/gpt-6-sol` or
+`gpt-6.1-sol`, medium) is in its [entry](../journal/2026/2026-10-06-raid1004-closure-experience.md).
 
 ## Sources
 

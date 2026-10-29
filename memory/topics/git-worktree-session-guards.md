@@ -76,6 +76,38 @@ accepted residual risk is loss of the runtime guard against writes aimed at
 another tree. The concurrency topic records this same episode, not a separate
 measurement of the risk.
 
+## Refresh: refusals after 2026-10-14, collisions, allow rules
+
+Two independent transcript scans place the guard refusals before the
+retirement. A 14-day scan of 2,364 transcripts found about 1,270 worktree-guard
+refusals, all on or before 2026-10-14, none after, with Bash volume above 2,000
+calls a day ([velocity scan](../journal/2026/2026-10-21-velocity-scan-stale-baseline.md));
+the premise check for tickets 1166 and 1168 found zero for 2026-10-15 to 10-21,
+and the author closed both. A 28-day `trace-friction.py` read on padme counted
+3,391 denials falling from about 750 a day to 0 in the last three days
+([test-doctor rename](../journal/2026/2026-10-27-test-doctor-rename-1228.md)).
+Both entries call this a timing match with the 2026-10-14 change, not an
+isolated cause. The census figures above are therefore period figures.
+
+Worktree-name collisions (ticket 1328, PR #1934): a subagent's shell starts in
+the spawner's cwd, an unchained failed `git worktree add` let the following
+`lock` lock the spawner's tree, and hunt's "owned already?" adopted a clean tree
+handed by path. Earlier, hunt's `t$ID-$PPID` path equalled the raid
+orchestrator's own worktree, which cleanup then removed, with no work lost. The
+fix chains add, lock and echo, redraws the `$RANDOM` suffix, and limits adoption
+to a path named in the brief; `rules/workflow.md` now names `{pid}` as
+`$PPID-$RANDOM` ([b6aabf](../journal/2026/2026-10-28-raid-b6aabf-worktree-adoption.md),
+[1326](../journal/2026/2026-10-28-raid-f642df-1326-opt-out-not-refusal.md)).
+
+The permission classifier refused rule-mandated `--force-with-lease` and branch
+deletes twice in 24 h; with the author's permission, narrow allow rules were
+added on padme and `scripts/claude-allow-check.py` checks them (ticket 1331,
+PR #1943); `git update-ref -d` stays refused. This agrees with
+`rules/claude-code.md` § Allow rules ([triage](../journal/2026/2026-10-29-harness-doctor-triage.md)).
+A worktree that appeared mid-review with a pid-less lock was, per the entry,
+"consistent with the headless seat following the session-start worktree rule",
+cause not established ([yawn](../journal/2026/2026-10-27-yawn-to-rest-pr1782-pr1789.md)).
+
 ## Sources and exceptions
 
 - [git in a worktree session](../reference_git_in_a_worktree_session.md) — attributed operational note, re-tested 2026-09-06; its rtk-on-git description predates the 2026-10-09 exclusion.

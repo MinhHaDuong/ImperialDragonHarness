@@ -3,7 +3,10 @@
 Scope: measurements and author decisions about the forge CI, the local CI
 runner and the test suite's cost, 2026-10-02 to 2026-10-13. Standing
 procedure lives in `skills/merge/SKILL.md` (where the local CI runs) and in
-ticket 1045 (local merge gate, open); this topic records evidence only.
+ticket 1045 (local merge gate, closed 2026-10-21 by PR 1625; see
+[merge flow](merge-flow-and-review-evidence.md)); this topic records evidence
+only. Forge Actions were later disabled repo-wide, and `pytest -n` now comes
+from `scripts/pytest_workers.py` (ticket 1215), not a fixed `-n 4`.
 
 ## Supported observations
 
@@ -106,6 +109,51 @@ records 1627 passed, 3 skipped, 50.26 s on `ec5571a7`; local container CI
 recorded 1620 passed, 10 skipped. These are different execution environments,
 not failed count reconciliation. Earlier pending CI statements in raw reports
 remain historical, with completed results recorded separately.
+
+## Later measurements (2026-10-15 to 2026-10-29)
+
+Counts. `make check` on integrated trees: 1640 passed (2026-10-15), 1733 to
+1763 (2026-10-19), 1908 (2026-10-20), 2053 to 2238 (2026-10-21), 2179
+(2026-10-26), 2430 to 2551 (2026-10-27), 2829 and 3009 (2026-10-28), 3041
+collected (2026-10-29), each with 3 or 4 skipped. Container pytest skips rose
+from 10 to 95 on 2026-10-19, unexplained in the entries. Sandboxed runs failed
+on socket denial and passed unsandboxed (#1415, docs refresh).
+
+Gate wall time. PR #1583 made the `worktree-gc.sh` liveness scan a single
+`readlink` over `/proc`: 14 GC tests had taken about 21 s each on a host with
+10,942 processes, and `make check` fell from 353 s to 76 s
+([1583](../journal/2026/2026-10-21-gc-liveness-scan-lazy-pr1583.md)). A trace
+analysis of 334 runs (median 78 s, p90 201 s) found the smart-testing tests held
+38% of serial time; the author retired the helper and moved to 8 workers
+([gate wall time](../journal/2026/2026-10-21-pulse-gate-wall-time.md),
+[pulse](../journal/2026/2026-10-21-pulse-testing-expert-1541.md)). On
+2026-10-29 a quiet-host `make check` took 35.0 s against a field median of about
+75 s; the entry's hypothesis (about 80%) is CPU sharing with parallel sessions
+and arena coders. Ten ABBA pairs of `-n 24` and `-n 32` differed by a mean
+-1.6 s (sd 9.1 s), so the cap stays 24 and the worker rule stays adaptive
+([contention](../journal/2026/2026-10-29-test-doctor-gate-contention.md)).
+
+Flakes, cause not established: `test_pool_runs_every_item_and_counts_failures`
+(forge and local, 1 of 36 in one stress run, 0 in 2550 replica trials), a
+sibling pool test, `test_kill_groups_reaches_the_whole_group`, a Zotero field
+test, a collision-shell assertion on #1415, and after-merge reds 1295 and 1322.
+Isolated causes: a Zotero 401 traced to an xdist port collision (1258, 1259); a
+`.git/config.lock` race in `review_notes.setup()`, 7/60 failures before and 0/60
+after (PR 1873); a byte-snapshot test tripping on git maintenance removing
+`maintenance.lock`, fixed by disabling auto maintenance in the fixture
+([fourth hoard merge](../journal/2026/2026-10-15-fourth-hoard-merge-and-maintenance-fixture.md)).
+
+Environment traps. Hunt's `TMPDIR=$W/.tmp` advice made census, coherence and
+harness-doctor tests fail in coder worktrees (seen 2026-10-21, 10-26, 10-27). A
+test needing poppler passed locally and failed on CI (#1447). Install tests
+leaked into the real `~/.local/bin` and inherited PATH (#1759, #1767). Direct
+`pytest tests/test_attribution_record.py` errors on import while `make check`
+passes ([1302-1306](../journal/2026/2026-10-28-raid-1302-1306-wrapup.md)).
+Resident budgets refused growth several times: skills 6209/6200 passed a
+pre-rebase lint, the rules set sat at 17,795 of 17,800, and two PRs that each
+passed alone composed to 18,317 against 18,200 after the first merged; the
+budget became 18,350 ([composition](../journal/2026/2026-10-29-raid-6958fe-resident-budget-composition.md)).
+The author ruled "REMOVE WORDING PINS" on PR 1778; thinning followed in PR #1782.
 
 ## Sources
 

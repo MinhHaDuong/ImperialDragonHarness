@@ -4,34 +4,30 @@ v8 repository memory. Pilot: [pilot.md](../conception/memory-v8/pilot.md). Prove
 
 ## Topics
 
-- [Zotero library](topics/zotero-library.md)
+- [Zotero library](topics/zotero-library.md) — local API only.
 - [Subagent model/effort levers](topics/subagent-model-effort-levers.md)
-- [git in a worktree session](topics/git-worktree-session-guards.md) — guards, census.
-- [Branch-cleanup incidents](topics/branch-cleanup-incidents.md) — incl. PR 1374.
+- [git in a worktree session](topics/git-worktree-session-guards.md)
+- [Branch-cleanup incidents](topics/branch-cleanup-incidents.md) — incl. worktree GC.
 - [Memory v8 governance](topics/memory-v8-governance.md)
 - [Memory v8 acceptance trial](topics/memory-v8-acceptance-trial.md)
 - [Concurrent sessions on one checkout](topics/shared-checkout-concurrency.md)
-- [Raids, review panels and merges](topics/raid-review-and-merge.md)
+- [Raids, review panels and merges](topics/raid-review-and-merge.md) — to 2026-10-19.
+- [Merge flow and review evidence](topics/merge-flow-and-review-evidence.md) — from 2026-10-19.
 - [Runtimes, models and routing](topics/runtime-observations.md)
 - [CI and the test suite](topics/ci-and-test-suite.md)
 - [Hosts, shells and credentials](topics/host-environment.md)
 
 ## Recent experiences
 
-- [Smart-testing integration and daily timer removal](journal/2026/2026-10-19-smart-testing-1466-wrap-up.md) — PR1466 merged; arena1103 remains follow-up.
-- [PR1466 review attribution](journal/2026/2026-10-19-review-attribution-pr1466.md) — original/recheck attempts and identity limits.
-
-- [Temporary report timeout diagnosis](journal/2026/2026-10-19-tmp-report-timeout-diagnosis.md)
-- [Temporary report and lifecycle integration](journal/2026/2026-10-19-1095-temporary-lifecycle-integration.md)
-- [Denied merge inspection](journal/2026/2026-10-19-merge-inspection-1117.md)
-
-- [Roar remeasure](journal/2026/2026-10-14-roar-remeasure-1090.md)
-- [Hoard migration](journal/2026/2026-10-15-hoard-path-migration.md)
+- [Gate contention](journal/2026/2026-10-29-test-doctor-gate-contention.md)
+- [Opt-out, not refusal](journal/2026/2026-10-28-raid-f642df-1326-opt-out-not-refusal.md)
+- [Diminishing-returns bar](journal/2026/2026-10-28-diminishing-returns-bar.md)
+- [Optimistic merge](journal/2026/2026-10-27-raid-optimistic-merge-afternoon.md)
 
 ## Hoards
 
-- [Third hoard](hoards/2026-10-13-third-dream.md) — accepted.
 - [Fourth hoard](hoards/2026-10-15-fourth-hoard.md) — accepted.
+- [Fifth hoard](hoards/2026-10-29-fifth-hoard.md) — under review.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.
