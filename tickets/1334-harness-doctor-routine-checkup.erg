@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Harness doctor routine checkup: size, complexity and timings at every visit
+Created: 2026-10-29
+Author: claude
+
+--- log ---
+2026-10-29T08:56Z claude created
+2026-10-29T10:30Z claude respecified Author correction: not a one-off text cut but a routine measurement offered at every visit
+
+--- body ---
+## Context
+
+Author request, 2026-10-29, corrected the same day. The first draft read
+"weight loss, round 2" as another one-off trim of `skills/harness-doctor/`
+(round 1: `3dc7ef05`). That was a misreading. The author wants a **routine
+checkup**: on each visit the doctor offers to take the harness's vital signs,
+so that a weight-watch discussion rests on measured trends, not impressions.
+
+Existing probes to reuse, not duplicate: `scripts/skill_text_lint.py` (body
+length, long blocks), `scripts/gaze_wall_time.py`, `scripts/trace-wall-time.py`.
+
+## Intent
+
+Add a checkup to the visit menu of `skills/harness-doctor/SKILL.md`, offered
+at the start of every visit, which measures and reports:
+
+- **Length**: lines (and words or tokens) of every `skills/*/SKILL.md`, its
+  references, the resident rules, and every script under `scripts/`.
+- **Complexity**: a cheap structural proxy per script (functions, branches or
+  cyclomatic complexity) and per skill (steps, probe rows, cross-references).
+- **Main timings**: wall time of the expensive paths: gaze, the test gate,
+  session start, from existing traces where they exist.
+
+Each figure is shown beside the previous visit's (stored in the visit journal
+entry), so the report reads as a delta: biggest gainers, totals, outliers. The
+checkup measures and surfaces; whether to cut, and what, is the weight-watch
+discussion with the author that follows, not part of the checkup.
+
+## Exit criteria
+
+- [ ] The visit menu offers the checkup at every visit; one command produces it
+- [ ] Report covers length, complexity and main timings, with the delta to the previous visit
+- [ ] Figures are recorded in the visit journal entry so the next visit can compare
+- [ ] A first run on origin/main is attached to the PR as the baseline
+- [ ] Cost stated in the menu row (seconds, no model usage) and a positive control fires
