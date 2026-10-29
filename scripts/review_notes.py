@@ -580,7 +580,9 @@ def _restore_head(cwd, remote, ref, key, reqs):
             raise Refusal(f"review-head {ref} of the landing review is missing locally and its "
                           "commit is gone; the reviewed head is merge evidence, refusing to land without it")
         keep_head(cwd, key[0], key[1], head)
-    print(f"review-head {ref} was missing locally; restored from the request entry", file=sys.stderr)
+        print(f"review-head {ref} was missing locally; restored from the request entry", file=sys.stderr)
+    else:
+        print(f"review-head {ref} was missing locally; fetched from the remote", file=sys.stderr)
 
 
 def push_for_landing(cwd, branch, remote="origin"):
