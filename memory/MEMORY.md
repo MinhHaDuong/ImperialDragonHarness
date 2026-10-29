@@ -26,12 +26,12 @@ v8 repository memory. Pilot: [pilot.md](../conception/memory-v8/pilot.md). Prove
 - [Denied merge inspection](journal/2026/2026-10-19-merge-inspection-1117.md)
 
 - [Roar remeasure](journal/2026/2026-10-14-roar-remeasure-1090.md)
-- [Hoard migration](journal/2026/2026-10-15-hoard-path-migration.md)
+- [Smelt migration](journal/2026/2026-10-15-hoard-path-migration.md)
 
-## Hoards
+## Smelts
 
-- [Third hoard](hoards/2026-10-13-third-dream.md) — accepted.
-- [Fourth hoard](hoards/2026-10-15-fourth-hoard.md) — accepted.
+- [Third smelt](smelts/2026-10-13-third-dream.md) — accepted.
+- [Fourth smelt](smelts/2026-10-15-fourth-hoard.md) — accepted.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.

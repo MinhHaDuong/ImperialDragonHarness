@@ -30,7 +30,7 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    changes, and follow the project's branch/integration policy. A refused write
    or failed commit remains a visible pending capture; do not switch to the
    harness or a native memory directory. An unintegrated capture branch must be
-   preserved and reported before worktree cleanup. Do not load the hoard skill
+   preserved and reported before worktree cleanup. Do not load the smelt skill
    to derive lessons or propose rules during roar.
 
    **Capture review attribution for every reviewed merged PR**, even when

@@ -61,7 +61,7 @@ repository; uncleared material stays encrypted. When the harness itself is
 the explicitly assigned project, its own project memory follows the same
 convention.
 
-Roar records significant facts only. Hoard consolidates project memory only.
+Roar records significant facts only. Smelt consolidates project memory only.
 Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into
 instructions. Crystallisation is a separate task requiring an explicit user
 request, including the intended destination. Repetition, general usefulness and
@@ -69,12 +69,12 @@ acceptance of a memory PR do not grant that authorization. Explicit Brood may
 implement project improvements; a named harness receives nominations only,
 until separately authorized implementation.
 
-At Roar, commit significant facts; do not derive lessons. Hoard prunes, merges
+At Roar, commit significant facts; do not derive lessons. Smelt prunes, merges
 and refreshes themes while preserving sources. Journal entries remain
 append-only; link corrections from new entries. Keep MEMORY.md at most
 100 lines; no automatic rule proposals or timer.
 
-On explicit Hoard invocation, one-way migration may mechanically update
+On explicit Smelt invocation, one-way migration may mechanically update
 inventoried active path/command references in the selected project's isolated
 branch, including AGENTS.md. This grants no policy changes or consolidation
 writes outside memory.

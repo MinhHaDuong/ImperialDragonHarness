@@ -18,7 +18,7 @@ adherence).
 
 Runtime: Vibe CLI 2.25.8 (`vibe --version`), model Mistral Vibe. The first
 runtime is de facto chosen: the raid annotation in the ticket records it,
-and the [first dream report](../memory/hoards/2026-10-02-pilot-first-dream.md)
+and the [first dream report](../memory/smelts/2026-10-02-pilot-first-dream.md)
 carries "Runtime: Vibe CLI" — the pilot declaration itself
 ([memory-v8/pilot.md](memory-v8/pilot.md)) names none. The pilot's earlier
 smokes already demonstrated reading-before-action (PR #1109), a readable
@@ -42,7 +42,7 @@ Two inherited decisions frame it, both recorded in the ticket log at
 
 Read before the first write, with git blob revisions at HEAD 483e8218
 (recording convention of the
-[first dream report](../memory/hoards/2026-10-02-pilot-first-dream.md)):
+[first dream report](../memory/smelts/2026-10-02-pilot-first-dream.md)):
 
 | File read | Blob revision |
 |---|---|

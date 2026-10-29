@@ -3,7 +3,7 @@ metadata:
   category: build
   order: 6
 name: roar
-description: "Post-task wrap-up after one or more merge(s): clean task branches, reflect, capture significant facts, update state. Not for memory audits (/hoard) or the day's end (/lair)."
+description: "Post-task wrap-up after one or more merge(s): clean task branches, reflect, capture significant facts, update state. Not for memory audits (/smelt) or the day's end (/lair)."
 disable-model-invocation: false
 user-invocable: true
 ---
@@ -121,7 +121,7 @@ merge by the recipe, both as one background command (a record missing
 after the base moved: record again on the same head); elsewhere pass the project's required checks and enable auto-merge
 using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
-branch requirements. Hoard, suggested in lair’s conclusion, remains a separately
+branch requirements. Smelt, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
 Do not wait for the bundle's checks: step 9's exit check lets the

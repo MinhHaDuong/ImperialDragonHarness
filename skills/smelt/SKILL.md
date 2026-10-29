@@ -2,14 +2,14 @@
 metadata:
   category: memory
   order: 1
-name: hoard
+name: smelt
 description: "Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. Use to tidy accumulated memory; not for new facts (/roar)."
 user-invocable: true
 ---
 
-# Hoard — project memory consolidation
+# Smelt — project memory consolidation
 
-Use `/hoard <project-repository> [--dry-run]`. The explicitly selected project
+Use `/smelt <project-repository> [--dry-run]`. The explicitly selected project
 repository is the destination; the installed skill directory is never a
 destination. Read its AGENTS.md and inspect its memory convention. Missing
 paths or permissions are visible failures; do not create a replacement store
@@ -35,7 +35,7 @@ never sweep other projects or the installed harness.
 Preflight reads inputs and describes the one-way migration:
 
 ```bash
-python3 "$IDH_ROOT/scripts/hoard_migrate.py" "$PROJECT" "${REFERENCES[@]}" --dry-run
+python3 "$IDH_ROOT/scripts/smelt_migrate.py" "$PROJECT" "${REFERENCES[@]}" --dry-run
 ```
 
 Stop visibly on a conflict, unreadable input, filesystem indirection or helper
@@ -49,10 +49,10 @@ Set `PROJECT` to that isolated checkout; retain the inspected relative
 `REFERENCES` inventory. Apply the migration there:
 
 ```bash
-python3 "$IDH_ROOT/scripts/hoard_migrate.py" "$PROJECT" "${REFERENCES[@]}"
+python3 "$IDH_ROOT/scripts/smelt_migrate.py" "$PROJECT" "${REFERENCES[@]}"
 ```
 
-After success, read its versioned `memory/HOARD.md`. If that prompt or the
+After success, read its versioned `memory/SMELT.md`. If that prompt or the
 project convention is missing, report it and stop. Already migrated projects
 are a no-op. Report/journal bytes and provenance remain preserved; review all
 migration edits before committing. There is no old command alias, compatibility
@@ -96,7 +96,7 @@ Do not infer a new rule from a repeated experience or manufacture agreement.
 After the writing run's migration succeeds, continue sequentially:
 
 1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted reports in
-   `memory/hoards/` and new entries in `journal/YYYY/`. Skip age-encrypted `.age`
+   `memory/smelts/` and new entries in `journal/YYYY/`. Skip age-encrypted `.age`
    entries when the project key is unavailable, recording the skipped count;
    never treat a skipped or unavailable source as empty. Read native notes only
    as attributed sources when available; report unavailable sources. Native
@@ -105,7 +105,7 @@ After the writing run's migration succeeds, continue sequentially:
    episodes; distinguish hypotheses from supported observations. Update the
    `memory/MEMORY.md` index within its 100-line maximum. Never rewrite, move or
    delete journal entries. Do not propose rules.
-3. Write a report in `memory/hoards/` listing sources and revisions, changes,
+3. Write a report in `memory/smelts/` listing sources and revisions, changes,
    unresolved questions, runtime/model and prompt revision. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
    the project's audience. A fingerprint alone cannot preserve a mutable note.
@@ -119,7 +119,7 @@ After the writing run's migration succeeds, continue sequentially:
 
 ## Encrypted entries
 
-Uncleared material lives in the project repository as `.age` ciphertext. Hoard
+Uncleared material lives in the project repository as `.age` ciphertext. Smelt
 uses the same pinned age commands and the same per-project key as capture —
 decrypt with `age -d -i <key>`, re-encrypt with
 `age -r <recipient> -o <entry>.age` — and never writes plaintext to the
@@ -128,7 +128,7 @@ atomically replaces the original only after success; `age -o` overwrites an
 existing destination silently, so writing in place could destroy the
 original mid-write. Without the key, skip `.age` entries and record the
 skipped count: they are existing but unreadable, not empty. The versioned
-`memory/HOARD.md` prompt defines the operational detail, including the three
+`memory/SMELT.md` prompt defines the operational detail, including the three
 failure modes: an authentication failure (key missing, unreadable or wrong)
 skips and counts the entry; malformed ciphertext is left untouched and
 reported unreadable; a re-encryption failure removes the temporary
@@ -144,7 +144,7 @@ This exception is limited to migration in its isolated branch: no policy
 rewriting, rule promotion, historical-ledger edits or cross-project writes.
 
 Consolidation writes only `memory/MEMORY.md`, `memory/topics/` and
-`memory/hoards/` within the selected project repository. Uncleared material stays in that same
+`memory/smelts/` within the selected project repository. Uncleared material stays in that same
 repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not
 modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,
@@ -152,8 +152,8 @@ propose promotions, or write cross-project provenance into the harness.
 Crystallisation requires a separate explicit user request naming its scope and
 destination. A useful pattern or a reviewed memory PR is not that request.
 
-Lair completes its work and suggests hoard in its conclusion after 5 or more
-new experiences. It neither waits nor launches hoard. Hoard runs when explicitly
+Lair completes its work and suggests smelt in its conclusion after 5 or more
+new experiences. It neither waits nor launches smelt. Smelt runs when explicitly
 invoked as a separate follow-up, in a new `/clear` session — a fresh context,
 not the wrapping session's compacted residue.
 There is no timer or automatic periodic launch. Use an isolated project checkout. Missing paths or permissions are visible

@@ -78,25 +78,25 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     so git cannot see it). If it prints a line, include it in the final summary
     as an offer of `/zotero check-staging`; the author accepts or not. No output, no
     mention. Proposed, never run automatically; it does not belong in molt.
-12. **Suggest a hoard in the conclusion when relevant.** After completing
+12. **Suggest a smelt in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
-    report in `memory/hoards/`. An unmerged report does not mark experiences
+    report in `memory/smelts/`. An unmerged report does not mark experiences
     processed. Count inline, on the journal blobs against the accepted
     reports' ledgers — no counting script, no library, no configuration
     knob, the threshold stays hardcoded at 5. Every report records its
-    examined sources as `<path> blob <40-hex>` lines (the project’s versioned HOARD.md):
+    examined sources as `<path> blob <40-hex>` lines (the project’s versioned SMELT.md):
     - Current blob id of every `memory/journal/YYYY/*.md` entry at HEAD:
       `git ls-tree -r HEAD memory/journal/` (the 40-hex column).
     - Blob ids already examined by the accepted reports: the `<path> blob
-      <40-hex>` lines in `memory/hoards/*.md` merged into main — a report
+      <40-hex>` lines in `memory/smelts/*.md` merged into main — a report
       visible only on an unmerged branch covers nothing.
     - An entry is covered only when its current blob id appears in an
       accepted report's ledger; a journal blob examined only by an unmerged
       report is still new, and a changed blob is new again.
     With **5 or more new experiences**, include in the final summary:
     “N nouvelles expériences depuis le dernier rapport accepté. Follow-up suggéré :
-    `/hoard <project-repository>` dans une nouvelle session `/clear`.” Do not
-    ask a question, wait for a response, launch hoard or mark
+    `/smelt <project-repository>` dans une nouvelle session `/clear`.” Do not
+    ask a question, wait for a response, launch smelt or mark
     the experiences processed. Below the
     threshold, omit this suggestion. No timer or automatic invocation.
 13. **Suggest a testing consultation when the traces show a speed bump.**

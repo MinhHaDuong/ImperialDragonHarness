@@ -1,16 +1,16 @@
-"""Lair step 12 suggests a hoard, it never runs one (ticket 0910).
+"""Lair step 12 suggests a smelt, it never runs one (ticket 0910).
 
 Step 12 counts journal experiences not yet covered by an accepted report in
-``memory/hoards/`` and, at five or more, suggests ``/hoard`` in the final
+``memory/smelts/`` and, at five or more, suggests ``/smelt`` in the final
 summary. Its negative semantics are the deliverable: no question, no waiting
-for a response, no invocation, no timer — hoard is a separate invocation by
+for a response, no invocation, no timer — smelt is a separate invocation by
 the author. These tests pin those negatives against drift of the skill text,
 in the pattern of ``tests/test_lair_state_via_pr.py`` (string-match ratchet
 on the skill text; not a grep for the string '5').
 
 The residue method: a prohibition is deleted only with its own scope — from
 the marker to the next sentence or clause boundary — so a forbidden verb
-sharing a sentence with a hedge ("Ask the user whether to run hoard, no more
+sharing a sentence with a hedge ("Ask the user whether to run smelt, no more
 than once.") still fails the ratchet. Dropping whole sentences on a marker
 would let that phrasing through, and bare-substring markers would let
 unrelated words ("piano", "know") shield a sentence, so the markers are
@@ -24,7 +24,7 @@ REPO = Path(__file__).resolve().parents[1]
 
 LAIR_SKILL = (REPO / "skills" / "lair" / "SKILL.md").read_text()
 
-STEP_12_HEADING = "**Suggest a hoard in the conclusion when relevant.**"
+STEP_12_HEADING = "**Suggest a smelt in the conclusion when relevant.**"
 
 # A prohibition deletes only its own scope: the marker plus the text up to the
 # next sentence or clause boundary (. ; :). Word boundaries keep "piano" or
@@ -42,7 +42,7 @@ TIMER = re.compile(r"\btimer|\bsleep\b|\bcron|\bschedul|\bremind|\balarm\b|\bwak
 
 
 def step_12() -> str:
-    """The hoard-suggestion step, up to any later step or heading."""
+    """The smelt-suggestion step, up to any later step or heading."""
     step = LAIR_SKILL.split(STEP_12_HEADING, 1)[1]
     return re.split(r"\n(?=\d+\. |# )", step, 1)[0]
 
@@ -55,7 +55,7 @@ def instruction_residue(text: str) -> str:
 def test_step_12_asks_no_question():
     assert not QUESTION.search(instruction_residue(step_12())), (
         "lair step 12 must not ask a question or prompt for confirmation — "
-        "the hoard suggestion is informational, the session finishes "
+        "the smelt suggestion is informational, the session finishes "
         "without a response"
     )
 
@@ -67,9 +67,9 @@ def test_step_12_does_not_wait():
     )
 
 
-def test_step_12_does_not_launch_hoard():
+def test_step_12_does_not_launch_smelt():
     assert not LAUNCH.search(instruction_residue(step_12())), (
-        "lair step 12 must not launch, invoke, run, start or spawn hoard — "
+        "lair step 12 must not launch, invoke, run, start or spawn smelt — "
         "a separate invocation by the author is the whole point of the "
         "suggestion"
     )
@@ -90,8 +90,8 @@ def test_step_12_keeps_threshold_and_suggestion_text():
         "its own words — the suggestion appears only above it and the "
         "summary stays silent below"
     )
-    assert "/hoard <project-repository>" in text, (
-        "lair step 12 must keep the suggestion's `/hoard "
+    assert "/smelt <project-repository>" in text, (
+        "lair step 12 must keep the suggestion's `/smelt "
         "<project-repository>` quote — the author's separate invocation is "
         "the follow-up being suggested"
     )

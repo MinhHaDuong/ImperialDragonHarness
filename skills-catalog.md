@@ -38,8 +38,8 @@
 
 | Command | Description |
 |---------|-------------|
-| [`/hoard`](skills/hoard/SKILL.md) | Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. |
-| [`/brood`](skills/brood/SKILL.md) | Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request. |
+| [`/smelt`](skills/smelt/SKILL.md) | Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. |
+| [`/brood`](skills/brood/SKILL.md) | Turn accepted Smelt findings into project improvements and scoped harness nominations, on explicit request. |
 
 ### Runtime and review support
 

@@ -1,17 +1,17 @@
-# HOARD — project memory consolidation prompt
+# SMELT — project memory consolidation prompt
 
 Prompt revision: v8-r2 (2026-10-15)
 
 This is the versioned consolidation prompt for this repository's project
-memory. Every hoard report states this revision. Changing the prompt is a
+memory. Every smelt report states this revision. Changing the prompt is a
 reviewed change like any other: a new revision lands by PR, and reports name
-the revision they ran. The workflow contract lives in the installed hoard
+the revision they ran. The workflow contract lives in the installed smelt
 skill; this prompt is the per-project editorial layer.
 
 ## Read
 
 1. `memory/MEMORY.md`, every `topics/` file it indexes, previous accepted
-   reports in `memory/hoards/`, and the entries of `memory/journal/YYYY/` not
+   reports in `memory/smelts/`, and the entries of `memory/journal/YYYY/` not
    yet covered by an accepted report.
 2. Applicable harness rules (AGENTS.md, rules/) as authority sources — read,
    never edited.
@@ -43,7 +43,7 @@ Apply to `memory/topics/` and `memory/MEMORY.md`:
 Group related positive and negative outcomes; keep conditions, exceptions and
 contradictions. A connection between episodes is not an established cause.
 Present a hypothesis as such, distinct from a supported observation, and
-distinguish canonical author decisions from hypotheses. A hoard may derive no
+distinguish canonical author decisions from hypotheses. A smelt may derive no
 lesson at all; it must not invent one.
 
 ## Coherence
@@ -59,7 +59,7 @@ when it relates a derogation.
 ## Encrypted entries (.age)
 
 Material not cleared for the repository audience stays in this repository as
-age ciphertext, from birth. Hoard uses the same pinned commands and the same
+age ciphertext, from birth. Smelt uses the same pinned commands and the same
 per-project key as capture — there is no second mechanism:
 
 - key: `~/.config/keys/memory/<sha256(normalized origin URL)[:16]>.age`
@@ -94,7 +94,7 @@ ciphertext in the tree:
 
 ## Report
 
-Write `memory/hoards/YYYY-MM-DD-<slug>.md` recording:
+Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
 
 - Prompt revision, runtime and model.
 - Sources examined with their git blob revisions (the ledger), the count of
@@ -110,9 +110,9 @@ Write `memory/hoards/YYYY-MM-DD-<slug>.md` recording:
 The journal is append-only: never rewrite, move or delete an entry; a
 correction is a new entry linking the original. `memory/MEMORY.md` stays at
 most 100 lines, headings and blank lines counted; check before committing.
-Hoard writes only `memory/MEMORY.md`, `memory/topics/` and
-`memory/hoards/` in this repository. It proposes no rule, edits no AGENTS.md
+Smelt writes only `memory/MEMORY.md`, `memory/topics/` and
+`memory/smelts/` in this repository. It proposes no rule, edits no AGENTS.md
 or runbook, opens no crystallisation issue and writes nothing into the
-harness for another project. Commit on the hoard branch and submit a PR for
+harness for another project. Commit on the smelt branch and submit a PR for
 review; do not merge automatically. Only an accepted report counts as
 completed processing for the runs that follow.
