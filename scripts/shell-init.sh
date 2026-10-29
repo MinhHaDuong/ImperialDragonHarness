@@ -62,13 +62,15 @@ _idh_preflight() {
 }
 
 # Advisory only: a failed disk probe must never block an otherwise valid launch.
+# Stderr, like every other launch notice: a caller capturing the wrapper's
+# stdout sees the runtime's output alone (ticket 1337).
 _idh_disk_warning() {
   local output
   output=$(python3 "$_IDH_ROOT/scripts/tmp_report.py" --disk-warning 2>&1) || {
     echo "Disk headroom probe unavailable; check /tmp and /home manually." >&2
     return 0
   }
-  [ -z "$output" ] || printf '%s\n' "$output"
+  [ -z "$output" ] || printf '%s\n' "$output" >&2
 }
 
 # _idh_agent_gh RUNTIME ARGS... — launch RUNTIME on the narrow agent gh
