@@ -2,9 +2,12 @@
 Title: After-merge red on main fc9014aadfa0: pytest-guard
 Created: 2026-10-29
 Author: merge-gate
+Closed: autoclosed — test made hermetic
 
 --- log ---
 2026-10-29T22:20Z merge-gate created
+2026-10-29T22:28Z reviewer note cause: host disk probe leaks into the negative control's stderr (/tmp tmpfs 91% full on padme); reproduces at 5b255399, before #2010
+2026-10-29T22:28Z reviewer closed — autoclosed — test made hermetic
 
 --- body ---
 ## Context
