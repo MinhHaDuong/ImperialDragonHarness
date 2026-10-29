@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-29T18:55Z reviewer created
+2026-10-29T19:40Z reviewer author rulings via DOIfetch session: pin signed tag v0.2.0; stdlib-only default install; ISBN via Crossref DOI lookup, LibGen opt-in
 
 --- body ---
 ## Context
@@ -21,11 +22,19 @@ the harness documents in `skills/zotero/references/backfill.md` (about lines 150
   source list (Crossref, Unpaywall, HAL, ISTEX, EZproxy) goes stale.
 - DOIfetch 0012 (DOAB) is out of that raid (DOAB REST API returns 403); not in this bump.
 
-When: after DOIfetch 0008 merges; the author may tag a version there (question queued
-on the DOIfetch side). Pin the tag if one exists, else the merge commit.
+When: after DOIfetch 0008 merges. Author ruling (relayed by the DOIfetch session,
+2026-10-29): DOIfetch goes 0.1.0 -> 0.2.0 with a signed tag `v0.2.0`, signed by the
+author; pin that tag, not 0008's merge commit. The DOIfetch session announces the tag.
+
+Further author rulings that change what the docs say:
+- 0008 replaces `requests` with the standard library: the default install has no
+  third-party dependency.
+- 0012 reshaped: an ISBN is fetched by looking up the book's DOI on Crossref, then
+  running the open-access DOI sources. LibGen becomes opt-in only (the harness still
+  never passes it).
 
 ## Exit criteria
-- [ ] `DOIFETCH_REF` in `scripts/doifetch.sh` points at a DOIfetch ref that contains 0008
+- [ ] `DOIFETCH_REF` in `scripts/doifetch.sh` points at the signed tag `v0.2.0`
 - [ ] `skills/zotero/references/backfill.md` lists the default sources of that ref
 - [ ] The backfill doc tells an invalid-identifier exit apart from "not found", per the exit codes that ref emits
 - [ ] One real `scripts/doifetch.sh --doi <open-access DOI>` run at the new ref downloads a PDF
