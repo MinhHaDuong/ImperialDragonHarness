@@ -221,14 +221,14 @@ def test_probe_script_is_reachable_through_the_seam(tmp_path):
 
 
 @pytest.mark.integration
-def test_hoard_real_migration_from_another_project_cwd(tmp_path):
-    body = (REPO / "skills/hoard/SKILL.md").read_text()
+def test_smelt_real_migration_from_another_project_cwd(tmp_path):
+    body = (REPO / "skills/smelt/SKILL.md").read_text()
     seam = SEAM_RE.search(body).group(0)
-    commands = re.findall(r'^python3 "\$IDH_ROOT/scripts/hoard_migrate.py".*$', body, re.MULTILINE)
+    commands = re.findall(r'^python3 "\$IDH_ROOT/scripts/smelt_migrate.py".*$', body, re.MULTILINE)
     preflight, apply = commands
-    projected = tmp_path / "installed/skills/hoard"
+    projected = tmp_path / "installed/skills/smelt"
     projected.parent.mkdir(parents=True)
-    projected.symlink_to(REPO / "skills/hoard", target_is_directory=True)
+    projected.symlink_to(REPO / "skills/smelt", target_is_directory=True)
     env = {**seam_env(), "GIT_AUTHOR_NAME": "fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
            "GIT_COMMITTER_NAME": "fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid"}
 
@@ -272,14 +272,14 @@ def test_hoard_real_migration_from_another_project_cwd(tmp_path):
     assert bytes_in(selected) == selected_before
     assert git(selected, "for-each-ref") == refs_before
     isolated = tmp_path / "isolated"
-    git(selected, "worktree", "add", "-b", "hoard-fixture", str(isolated), "main")
+    git(selected, "worktree", "add", "-b", "smelt-fixture", str(isolated), "main")
     result = run(apply, isolated)
     assert result.returncode == 0, result.stderr
-    assert (isolated / "memory/HOARD.md").is_file()
+    assert (isolated / "memory/SMELT.md").is_file()
     assert not (isolated / "memory/DREAM.md").exists()
-    assert (isolated / "memory/MEMORY.md").read_text() == "[report](hoards/old.md)\n"
-    assert (isolated / "AGENTS.md").read_text() == "Read memory/HOARD.md; invoke /hoard\n"
-    assert (isolated / "memory/hoards/old.md").read_bytes() == primary_memory["dreams/old.md"]
+    assert (isolated / "memory/MEMORY.md").read_text() == "[report](smelts/old.md)\n"
+    assert (isolated / "AGENTS.md").read_text() == "Read memory/SMELT.md; invoke /smelt\n"
+    assert (isolated / "memory/smelts/old.md").read_bytes() == primary_memory["dreams/old.md"]
     after = bytes_in(isolated)
     repeat = run(apply, isolated)
     assert repeat.returncode == 0, repeat.stderr
@@ -290,7 +290,7 @@ def test_hoard_real_migration_from_another_project_cwd(tmp_path):
 
 
 @pytest.mark.integration
-def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypatch):
+def test_smelt_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypatch):
     repo = tracked_checkout()
     home = tmp_path / "home"
     home.mkdir()
@@ -308,17 +308,17 @@ def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypat
     perch, lifecycle = load("perch"), load("lifecycle")
     monkeypatch.setattr(perch, "check_version", lambda *a, **k: "9.9.9")
     assert lifecycle.install_links() == 0
-    assert "hoard" in perch.known_skills()
+    assert "smelt" in perch.known_skills()
     assert "dream" not in perch.known_skills()
     for runtime, relative in (
-        ("claude", ".claude/skills/hoard"),
-        ("codex", ".agents/skills/hoard"),
-        ("pi", ".agents/skills/hoard"),
+        ("claude", ".claude/skills/smelt"),
+        ("codex", ".agents/skills/smelt"),
+        ("pi", ".agents/skills/smelt"),
     ):
-        perch.install(runtime, "hoard")
+        perch.install(runtime, "smelt")
         projected = home / relative
-        assert projected.resolve() == repo / "skills/hoard"
-        assert "already discoverable" in perch.install(runtime, "hoard")
+        assert projected.resolve() == repo / "skills/smelt"
+        assert "already discoverable" in perch.install(runtime, "smelt")
         assert not (projected.parent / "dream").exists()
         assert not (projected.parent / "dream").is_symlink()
 

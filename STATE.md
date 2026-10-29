@@ -19,8 +19,8 @@ Model-service transmission authorization now prints in every session's start con
 Doc propagation (1333, PR #1945): roar step 6 names its contracts and documents, `tests/test_root_doc_paths.py` checks root-doc paths and make targets, lair step 10 refreshes ROADMAP facts. Next: harness-doctor weight loss (1334), then a whole-docs visit lair suggests (1335, blocked by 1334).
 
 ## Next session (from 2026-10-29)
-1. Audit the fifth hoard, PR #1975 (unmerged; author acceptance): spot-check superseded marks, the new topic merge-flow-and-review-evidence.md, and the 206-line blob ledger against the 193 entries.
-2. Rule the four conflicts it flagged (hoard report memory/hoards/2026-10-29-fifth-hoard.md once merged; rules are the author's):
+1. Audit the fifth smelt, PR #1975 (unmerged; author acceptance): spot-check superseded marks, the new topic merge-flow-and-review-evidence.md, and the 206-line blob ledger against the 193 entries.
+2. Rule the four conflicts it flagged (smelt report memory/smelts/2026-10-29-fifth-hoard.md once merged; rules are the author's):
    - rules/README.md says tickets/AGENTS.md is @-imported by the harness CLAUDE.md, removed 2026-10-19.
    - rules/git.md stash ban "in a shared checkout": does it cover a session's own worktree (stash stack is repo-global)?
    - Severity floor wording ("misleads a model" in harness-doctor vs "bites the science" in workflow.md); North star required by rules/state.md but kept in ROADMAP.md.

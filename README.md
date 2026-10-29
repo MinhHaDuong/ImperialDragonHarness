@@ -93,7 +93,7 @@ explains the layout.
 > unmerged because topics had become accumulated incident logs. The redesign
 > is ticketed: fixed departments with a 4 KB cap per page, the journal kept
 > intact as the source with the pages as guides to it, and the runtimes'
-> native memories (Claude Code, Codex) drained as inboxes. `/hoard` becomes
+> native memories (Claude Code, Codex) drained as inboxes. `/smelt` becomes
 > `/smelt`, and a trial measures whether memory helps. See tickets 1346–1352
 > and [the audit](conception/2026-10-29-memory-system-audit.md). Until then,
 > the description below is the current mechanism.
@@ -111,11 +111,11 @@ project's own repository; the harness's memory is its own (`memory/`).
    [INSTALL.md § Dependencies](INSTALL.md#dependencies).
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
    `memory/MEMORY.md`, is not injected: `AGENTS.md` asks each session to
-   read it at task start, and subagents are pointed to it per section 7. `/hoard` turns
+   read it at task start, and subagents are pointed to it per section 7. `/smelt` turns
    events into topics; it runs on demand, and `/lair` suggests it when five
    or more events are not yet covered.
 4. **Crystallisation**: `/brood` proposes improvements to rules and skills
-   from accepted hoard findings, on explicit request only.
+   from accepted smelt findings, on explicit request only.
 
 ### 4. Skills
 
@@ -166,7 +166,7 @@ Pi are launched through wrappers in `scripts/shell-init.sh`;
 ```
 ImperialDragonHarness/      # reference clone: ~/.agents
 ├── AGENTS.md  rules/       # System prompt and guardrails
-├── memory/                 # The harness's own memory (journal, topics, hoards)
+├── memory/                 # The harness's own memory (journal, topics, smelts)
 ├── skills/                 # Slash commands — see skills-catalog.md
 ├── RTK.md                  # Tool guidance (with tickets/AGENTS.md, rules/)
 ├── scripts/  bin/          # Deterministic helpers, installer

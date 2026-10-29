@@ -19,11 +19,11 @@ same day by the author's encrypted-in-repo decision — uncleared material
 stays in this repository as age-encrypted `.age` ciphertext from birth,
 plaintext never in the tree, the key under `~/.config/keys` and never
 tracked (PR #1112, mechanics pinned by 0988). Without the key an entry is
-existing but unreadable: hoard skips it and reports the count, never
-treating it as empty. Roar captures facts; HOARD consolidates without rule
+existing but unreadable: smelt skips it and reports the count, never
+treating it as empty. Roar captures facts; SMELT consolidates without rule
 promotion; the journal is append-only. The pilot declaration is
 [conception/memory-v8/pilot.md](../../conception/memory-v8/pilot.md); this correction
-was made by the [first dream](../hoards/2026-10-02-pilot-first-dream.md),
+was made by the [first dream](../smelts/2026-10-02-pilot-first-dream.md),
 which cites the sources below. The pilot's evaluation protocol was
 committed to main before its acceptance trials on 2026-10-02
 ([evaluation protocol](../../conception/memory-v8/evaluation-protocol.md), PR
@@ -43,7 +43,7 @@ evidence-based edits to consolidated memories while the journal stays
 append-only, and leaves Dream and Roar authority unchanged. Its evaluation
 records procedural fixture results only, not field benefit
 ([brood evaluation](../../conception/memory-v8/brood-evaluation.md)). The second
-dream ([2026-10-07](../hoards/2026-10-07-second-dream.md)) added the
+dream ([2026-10-07](../smelts/2026-10-07-second-dream.md)) added the
 operational topics indexed beside this one.
 
 Refresh, 2026-10-08 to 2026-10-13. On 2026-10-09, nine legacy native notes
@@ -64,21 +64,21 @@ backfill appended zero events in each run: 34 records unresolved on 2026-10-08,
 65 on 2026-10-12 and 69 on 2026-10-13. Historical reviewed-revision coordinates
 were missing, and no run inferred them.
 
-## Refresh: index simplification and canonical Hoard paths
+## Refresh: index simplification and canonical Smelt paths
 
 The [third consolidation follow-up](../journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md)
 records the author's removal of a test pin that forced duplicate reference-note
 links in the index. Test changes landed separately in #1383, consolidation in
 #1382. Explicit author merge instructions overrode that run's no-automatic-merge
-clause; they do not grant future Hoard merge authority.
+clause; they do not grant future Smelt merge authority.
 
 The [1106 migration record](../journal/2026/2026-10-15-hoard-path-migration.md)
-pins original/current paths and blobs: current prompt `memory/HOARD.md` v8-r2,
-six byte-preserved reports under `memory/hoards/`. Historical report bodies
+pins original/current paths and blobs: current prompt `memory/SMELT.md` v8-r2,
+six byte-preserved reports under `memory/smelts/`. Historical report bodies
 and journal bytes retain former names; one archival journal link is explicitly
 mapped. This was migration, not consolidation. The
 [final integration checkpoint](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
-records canonical Hoard/Yawn activation across Claude, Codex and Pi, with no
+records canonical Smelt/Yawn activation across Claude, Codex and Pi, with no
 managed old-name alias. Interrupted trial pass 3 is not accepted processing.
 
 The same checkpoint distinguishes the diff producer from the journal recorder

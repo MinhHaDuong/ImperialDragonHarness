@@ -62,6 +62,11 @@ def test_trace_fixture_classifies_current_hoard_and_historical_dream(tmp_path):
     dream.write_text(
         '{"type":"user","message":{"content":"<command-name>/dream</command-name>"}}\n'
     )
+    smelt = tmp_path / "smelt.jsonl"
+    smelt.write_text(
+        '{"type":"assistant","message":{"content":[{"type":"tool_use",'
+        '"name":"Skill","input":{"skill":"smelt"}}]}}\n'
+    )
     hunt = tmp_path / "hunt.jsonl"
     hunt.write_text(
         '{"type":"assistant","message":{"content":[{"type":"tool_use",'
@@ -71,4 +76,5 @@ def test_trace_fixture_classifies_current_hoard_and_historical_dream(tmp_path):
     assert mr.scan_file(str(hoard))["maintenance"] is True
     assert mr.scan_file(str(hoard_command))["maintenance"] is True
     assert mr.scan_file(str(dream))["maintenance"] is True
+    assert mr.scan_file(str(smelt))["maintenance"] is True
     assert mr.scan_file(str(hunt))["maintenance"] is False

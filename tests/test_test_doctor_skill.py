@@ -25,10 +25,10 @@ def test_the_expert_cannot_be_invoked_by_a_model():
     assert meta["name"] == "test-doctor"
 
 
-def test_the_hoard_step_does_not_end_the_wrap_up_before_the_testing_step():
+def test_the_smelt_step_does_not_end_the_wrap_up_before_the_testing_step():
     lair = (REPO / "skills" / "lair" / "SKILL.md").read_text()
-    hoard = lair.split("**Suggest a hoard", 1)[1].split("**Suggest a testing", 1)[0]
-    assert "Then\n    finish" not in hoard and "Then finish" not in hoard
+    smelt = lair.split("**Suggest a smelt", 1)[1].split("**Suggest a testing", 1)[0]
+    assert "Then\n    finish" not in smelt and "Then finish" not in smelt
 
 
 def test_only_hunt_and_the_suggesters_mention_the_expert():

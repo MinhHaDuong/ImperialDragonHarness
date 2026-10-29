@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Migrate one project's memory paths, preserving historical evidence bytes.
+"""Migrate one project's memory paths to the smelt names, preserving historical evidence bytes.
+
+Legacy names (DREAM.md and dreams/, HOARD.md and hoards/) move to SMELT.md and
+smelts/. The legacy names stay in this file because they are what it detects.
 
 The caller owns the Git branch. Plans are read-only; application refuses changed
 inputs and rolls back ordinary I/O failures. This is not crash-atomic. Symlinks
@@ -13,6 +16,12 @@ from pathlib import Path
 import re
 import shutil
 import tempfile
+
+
+LEGACY_PROMPTS = ("memory/DREAM.md", "memory/HOARD.md")
+LEGACY_DIRS = ("memory/dreams", "memory/hoards")
+NEW_PROMPT = "memory/SMELT.md"
+NEW_DIR = "memory/smelts"
 
 
 class MigrationError(Exception):
@@ -92,7 +101,7 @@ def _rewrite(data, reference, moves, root):
         for old, new in moves:
             old_path = root / old
             if target != old_path and not (
-                old == "memory/dreams" and old_path in target.parents
+                old in LEGACY_DIRS and old_path in target.parents
             ):
                 continue
             destination = root / new / target.relative_to(old_path)
@@ -110,17 +119,17 @@ def _rewrite(data, reference, moves, root):
         return token
 
     text = re.sub(
-        r"(?<![\w./:-])/?(?:[\w.-]+/)*(?:DREAM\.md(?![\w.-])|dreams/[\w./-]*)",
+        r"(?<![\w./:-])/?(?:[\w.-]+/)*(?:(?:DREAM|HOARD)\.md(?![\w.-])|(?:dreams|hoards)/[\w./-]*)",
         moved_path, text,
     )
     # Only the current skill directory/entrypoint is renamed. Retired helpers
     # keep the path under which they historically existed.
     text = re.sub(
-        r"(?<![\w./:-])(?P<prefix>/?(?:[\w.-]+/)*)skills/dream"
+        r"(?<![\w./:-])(?P<prefix>/?(?:[\w.-]+/)*)skills/(?:dream|hoard)"
         r"(?P<entry>/SKILL\.md|/)?(?![\w/-]|\.(?!\s|$))",
-        lambda match: match["prefix"] + "skills/hoard" + (match["entry"] or ""), text,
+        lambda match: match["prefix"] + "skills/smelt" + (match["entry"] or ""), text,
     )
-    text = re.sub(r"(?<![\w./-])/dream(?![\w./-])", "/hoard", text)
+    text = re.sub(r"(?<![\w./-])/(?:dream|hoard)(?![\w./-])", "/smelt", text)
     return text.encode("utf-8")
 
 
@@ -132,38 +141,38 @@ def plan_migration(project, references=()):
     root = Path(project).absolute()
     refs = tuple(str(_relative(value)) for value in references)
     for name in refs:
-        if any(part in {".git", "journal", "dreams", "hoards"}
+        if any(part in {".git", "journal", "dreams", "hoards", "smelts"}
                for part in Path(name).parts) or name.endswith(".age"):
             raise MigrationError(f"Historical/immutable reference refused: {name}")
     for name in refs:
         parts = Path(name).parts
         if parts[:1] == ("memory",) and (
-            len(parts) < 2 or parts[1] not in ("MEMORY.md", "DREAM.md", "HOARD.md", "topics")
+            len(parts) < 2 or parts[1] not in ("MEMORY.md", "DREAM.md", "HOARD.md", "SMELT.md", "topics")
         ):
             raise MigrationError(f"Historical/immutable reference refused: {name}")
     before = _snapshot(root, refs)
-    if "memory/DREAM.md" not in before and "memory/HOARD.md" not in before:
-        raise MigrationError("Missing memory consolidation prompt (DREAM.md or HOARD.md)")
+    legacy_prompts = [name for name in LEGACY_PROMPTS if name in before]
+    legacy_dirs = [name for name in LEGACY_DIRS if name in before]
+    if not legacy_prompts and NEW_PROMPT not in before:
+        raise MigrationError("Missing memory consolidation prompt (DREAM.md, HOARD.md or SMELT.md)")
     moves = []
-    for old, new, directory in (("memory/DREAM.md", "memory/HOARD.md", False),
-                                ("memory/dreams", "memory/hoards", True)):
-        if old in before and new in before:
-            raise MigrationError(f"Coexistence conflict: {old} and {new}")
-        for name in (old, new):
+    for olds, new, directory in ((legacy_prompts, NEW_PROMPT, False),
+                                 (legacy_dirs, NEW_DIR, True)):
+        if len(olds) > 1 or (olds and new in before):
+            raise MigrationError(f"Coexistence conflict: {', '.join(olds + [new])}")
+        for name in (*olds, new):
             if name in before and (before[name] is None) != directory:
                 raise MigrationError(f"Wrong input type: {name}")
-        if old in before:
-            moves.append((old, new))
-    if (("memory/HOARD.md" in before and "memory/dreams" in before) or
-            ("memory/DREAM.md" in before and "memory/hoards" in before)):
+        if olds:
+            moves.append((olds[0], new))
+    if (NEW_PROMPT in before and legacy_dirs) or (legacy_prompts and NEW_DIR in before):
         raise MigrationError("Mixed old/new memory layout: prompt and reports disagree")
     targets = list(moves)
-    if "memory/DREAM.md" in before and not any(
-        name in before for name in ("memory/dreams", "memory/hoards")
-    ):
+    if legacy_prompts and not legacy_dirs and NEW_DIR not in before:
         # A project with no reports still needs the new output convention.
         # This changes references only; no absent directory is created/moved.
-        targets.append(("memory/dreams", "memory/hoards"))
+        old_dir = LEGACY_DIRS[LEGACY_PROMPTS.index(legacy_prompts[0])]
+        targets.append((old_dir, NEW_DIR))
     edits = {}
     # Already-new projects are an exact no-op, including prompt revision.
     if moves:
@@ -171,8 +180,7 @@ def plan_migration(project, references=()):
                   if data is not None and (name == "memory/MEMORY.md" or
                      (name.startswith("memory/topics/") and name.endswith(".md")))}
         active.update(refs)
-        active.discard("memory/DREAM.md")
-        active.discard("memory/HOARD.md")
+        active.difference_update(LEGACY_PROMPTS)
         try:
             for name in sorted(active):
                 data = before[name]
@@ -181,15 +189,15 @@ def plan_migration(project, references=()):
                 edited = _rewrite(data, name, targets, root)
                 if edited != data:
                     edits[name] = edited
-            if "memory/DREAM.md" in before:
-                text = _rewrite(before["memory/DREAM.md"], "memory/DREAM.md", targets, root).decode("utf-8")
+            for legacy in legacy_prompts:
+                text = _rewrite(before[legacy], legacy, targets, root).decode("utf-8")
                 text, count = re.subn(
                     r"(?m)^(Prompt revision: v\d+-r)(\d+)(\b.*)$",
                     lambda match: match[1] + str(int(match[2]) + 1) + match[3], text)
                 if count != 1:
                     raise MigrationError("Expected exactly one versioned Prompt revision")
-                text = text.replace("# DREAM", "# HOARD", 1)
-                edits["memory/HOARD.md"] = text.encode("utf-8")
+                text = re.sub(r"^# (?:DREAM|HOARD)", "# SMELT", text, count=1)
+                edits[NEW_PROMPT] = text.encode("utf-8")
         except UnicodeError as error:
             raise MigrationError(f"Active reference is not UTF-8: {error}") from error
     return MigrationPlan(root, refs, before, tuple(moves), edits)
@@ -203,9 +211,10 @@ def apply_migration(plan):
     if not plan.moves:
         return
     try:
-        stage = Path(tempfile.mkdtemp(prefix=".hoard-migrate-", dir=root))
+        stage = Path(tempfile.mkdtemp(prefix=".smelt-migrate-", dir=root))
     except OSError as error:
         raise MigrationError(f"Cannot stage migration: {error}") from error
+    origin = {new: old for old, new in plan.moves}
     undo = []
     failure = None
     residual = []
@@ -213,7 +222,7 @@ def apply_migration(plan):
         for index, (name, data) in enumerate(plan.edits.items()):
             staged = stage / str(index)
             staged.write_bytes(data)
-            original = "memory/DREAM.md" if name == "memory/HOARD.md" else name
+            original = origin.get(name, name)
             os.chmod(staged, (root / original).stat().st_mode & 0o777)
         # Staging can take time; validate again immediately before mutation.
         if _snapshot(root, plan.references) != plan.snapshot:

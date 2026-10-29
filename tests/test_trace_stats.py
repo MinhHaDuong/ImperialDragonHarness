@@ -351,11 +351,12 @@ def test_hoard_and_historical_dream_are_mandated_in_postmerge_tail(tmp_path):
         _merge_result_row(),
         _tool_row("m2", "Skill", {"skill": "hoard"}),
         _tool_row("m3", "Skill", {"skill": "dream"}),
-        _tool_row("m4", "Skill", {"skill": "hunt"}),
+        _tool_row("m4", "Skill", {"skill": "smelt"}),
+        _tool_row("m5", "Skill", {"skill": "hunt"}),
     ]
     stats = ts.parse_trace_file(_write_rows(tmp_path, rows, "hoard-tail.jsonl"))
-    assert stats["tail_turns"] == 3
-    assert stats["tail_mandated_turns"] == 2
+    assert stats["tail_turns"] == 4
+    assert stats["tail_mandated_turns"] == 3
 
 
 def test_first_turn_cache_write_and_excess_reads(tmp_path):

@@ -21,15 +21,15 @@ runtime's loading rather than claiming automatic injection.
 
 ```text
 memory/MEMORY.md
-memory/HOARD.md
+memory/SMELT.md
 memory/topics/<theme>.md
 memory/journal/YYYY/YYYY-MM-DD-<slug>.md
 memory/hoards/YYYY-MM-DD-<slug>.md
 ```
 
-HOARD.md and the accepted-report convention are delivered under 0916: the
+SMELT.md and the accepted-report convention are delivered under 0916: the
 versioned consolidation prompt is the pilot's live copy at
-[memory/HOARD.md](../../memory/HOARD.md); adopting projects copy and adapt it,
+[memory/SMELT.md](../../memory/SMELT.md); adopting projects copy and adapt it,
 keeping its revision line, and reports live in `memory/hoards/`. Journal files stay in their original year directory. Choose a
 new descriptive slug or distinguishing suffix on collision; never overwrite.
 Corrections are new entries linking to the original, which remains unchanged.
@@ -52,17 +52,17 @@ required checks precede auto-merge. Preserve and report any unintegrated branch.
 No native-store or harness fallback, unrelated staging, shared-checkout stash,
 or removal of unsaved worktrees. A non-Git capture cannot be called committed.
 
-HOARD separately prunes obsolete consolidated claims, merges overlapping themes
+SMELT separately prunes obsolete consolidated claims, merges overlapping themes
 with their sources and exceptions, and refreshes still-relevant context. It
 checks coherence between indexed memories and applicable harness rules, which
 it reads without changing. Resolve conflicts only where evidence and authority
 are clear; otherwise expose the contradiction. Preserve journal sources and
-trace withdrawals in a reviewed report. Neither roar nor HOARD proposes rules
+trace withdrawals in a reviewed report. Neither roar nor SMELT proposes rules
 or crystallisation. The index is at most 100 lines, including blank lines and
 headings; move detail to themes. Check with `wc -l memory/MEMORY.md` before commit
 and ensure the file ends in a newline.
 
-After completing its work, lair suggests a separate HOARD invocation when at
+After completing its work, lair suggests a separate SMELT invocation when at
 least five new experiences remain uncovered by accepted reports, including on
 a session with no new commit. It does not ask, wait or launch. No timer.
 A pending report does not consume experiences; changed source revisions need
