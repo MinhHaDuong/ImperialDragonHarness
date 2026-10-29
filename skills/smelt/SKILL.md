@@ -111,12 +111,18 @@ After the writing run's migration succeeds, continue sequentially:
    never treat a skipped or unavailable source as empty. Read native notes only
    as attributed sources when available; report unavailable sources. Native
    notes are not the canonical reference or a write destination.
-2. Apply pruning, merging and refreshing to `memory/topics/`. Link source
+2. Re-derive each topic from its previous page and the journal, by
+   department (never the whole journal in one context), instead of appending;
+   apply pruning, merging and refreshing in the rewrite, carrying pinned
+   Commission lines verbatim. Link source
    episodes; distinguish hypotheses from supported observations. Update the
    `memory/MEMORY.md` index within its 40-line maximum. Never rewrite, move or
    delete journal entries. Do not propose rules.
 3. Write a report in `memory/smelts/` listing sources and revisions, changes,
-   unresolved questions, runtime/model and prompt revision. Preserve the text of
+   the net change in bytes per page and in total
+   (`scripts/memory_sizes.py --before <ref>`, growth explained), unresolved
+   questions, runtime/model and prompt revision. The second pass checks that
+   no caveat of a previous page was dropped without a Retired line. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
    the project's audience. A fingerprint alone cannot preserve a mutable note.
 4. Check coherence across all indexed memories and applicable harness rules,

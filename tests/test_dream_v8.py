@@ -188,3 +188,15 @@ def test_governance_topic_records_supersession_with_sources():
     assert (
         "journal/2026/2026-10-02-memory-v8-pilot-established.md" in text
     ), "the corrected claim lost its journal source"
+
+
+def test_smelt_is_a_rebuild_with_a_net_change_report():
+    """Ticket 1349: both the prompt and the skill state rebuild and net change."""
+    prompt = " ".join(DREAM_PROMPT.read_text(encoding="utf-8").split())
+    skill = " ".join(SKILL.read_text(encoding="utf-8").split())
+    for name, text in (("SMELT.md", prompt), ("SKILL.md", skill)):
+        assert "re-derive" in text.lower(), f"{name}: no rebuild statement"
+        assert "net change" in text.lower(), f"{name}: no net-change report"
+    assert "## Rebuild" in DREAM_PROMPT.read_text(encoding="utf-8")
+    assert "by department" in prompt and "memory_sizes.py --before" in prompt
+    assert "none dropped without a Retired line" in prompt
