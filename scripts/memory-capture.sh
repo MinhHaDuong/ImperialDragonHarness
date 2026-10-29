@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 # Capture one memory journal entry under the project's memory/journal/YYYY/,
+# or one review-attribution record under memory/evidence/attribution/,
 # applying the encrypted-in-repo audience policy (author decision 2026-10-02,
 # PR #1112; pinned here for ticket 0988 — the policy named age and
 # ~/.config/keys but not the command, the key filename or the per-project
 # key selection).
 #
-# Usage: memory-capture.sh <repo-dir> <audience> <slug>   (entry text on stdin)
+# Usage: memory-capture.sh <repo-dir> <audience> <slug> [attribution]   (entry text on stdin)
 #   repo-dir   the project repository, or a worktree of it
 #   audience   public  — cleared for the repository's public audience:
 #                        written as plaintext Markdown
 #              private — not cleared: encrypted as age ciphertext, plaintext
 #                        never written anywhere in the working tree
 #   slug       filename slug for the dated entry (letters, digits, ., _, -)
+#   attribution  optional: the entry is a review-attribution record, route-grid
+#              telemetry rather than an experience, written flat under
+#              memory/evidence/attribution/ so it stays out of the journal and
+#              out of smelt's input (ticket 1347)
 #
 # The audience judgment happens at capture, before the first byte is written:
 # the capturing agent decides public vs not-cleared, and this helper
@@ -41,7 +46,7 @@ set -euo pipefail
 die() { echo "memory-capture: $*" >&2; exit 1; }
 
 usage() {
-    echo "usage: memory-capture.sh <repo-dir> <public|private> <slug>   (entry text on stdin)" >&2
+    echo "usage: memory-capture.sh <repo-dir> <public|private> <slug> [attribution]   (entry text on stdin)" >&2
     exit 2
 }
 
@@ -84,8 +89,8 @@ project_key() {
 }
 
 
-[ $# -eq 3 ] || usage
-dir=$1 audience=$2 slug=$3
+[ $# -eq 3 ] || { [ $# -eq 4 ] && [ "$4" = attribution ]; } || usage
+dir=$1 audience=$2 slug=$3 kind=${4:-journal}
 
 case "$audience" in
     public|private) ;;
@@ -100,14 +105,19 @@ repo=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || die "not a git re
 
 date=$(date +%Y-%m-%d)
 year=$(date +%Y)
-entry="memory/journal/$year/$date-$slug"
+if [ "$kind" = attribution ]; then
+    folder="memory/evidence/attribution"
+else
+    folder="memory/journal/$year"
+fi
+entry="$folder/$date-$slug"
 [ "$audience" = public ] && suffix=md || suffix=age
 path="$repo/$entry.$suffix"
-[ ! -e "$path" ] || die "refusing to overwrite an existing entry: $entry.$suffix (journal is append-only; corrections are new entries)"
-mkdir -p "$repo/memory/journal/$year"
+[ ! -e "$path" ] || die "refusing to overwrite an existing entry: $entry.$suffix (memory is append-only; corrections are new entries)"
+mkdir -p "$repo/$folder"
 
 if [ "$audience" = public ]; then
-    # Plaintext is the cleared audience: straight to the journal.
+    # Plaintext is the cleared audience: straight to the entry.
     cat > "$path" || { rm -f "$path"; die "could not write $entry.$suffix"; }
 else
     # Not cleared: stdin pipes straight into age; no plaintext file, no

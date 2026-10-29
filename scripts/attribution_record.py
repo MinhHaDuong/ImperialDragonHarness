@@ -172,7 +172,7 @@ def runtime_masked(record):
 
 
 def capture_slug(record):
-    """The journal slug: `review-attribution-pr<n>`, or `-branch-<name>` for a no-forge unit."""
+    """The record slug: `review-attribution-pr<n>`, or `-branch-<name>` for a no-forge unit."""
     pr = record["pr"]
     if isinstance(pr, int):
         return f"review-attribution-pr{pr}"
@@ -181,7 +181,7 @@ def capture_slug(record):
 
 def capture_record(text, record, repository, audience):
     helper = Path(__file__).resolve().with_name("memory-capture.sh")
-    result = subprocess.run([str(helper), str(repository), audience, capture_slug(record)],
+    result = subprocess.run([str(helper), str(repository), audience, capture_slug(record), "attribution"],
                             input=text, text=True, capture_output=True)
     if result.returncode:
         raise ValueError(result.stderr.strip() or "memory capture failed")

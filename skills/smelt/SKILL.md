@@ -73,7 +73,8 @@ Apply these to consolidated `memory/topics/` and the index:
   evidence; flag uncertainty when it cannot be verified.
 
 The raw journal stays append-only. Pruning a consolidated claim never deletes
-its source experience. `memory/MEMORY.md` has **at most 100 lines**, counting
+its source experience. One carve-out: legacy review-attribution records move
+once, by `git mv` with their bytes intact, to `memory/evidence/attribution/`. `memory/MEMORY.md` has **at most 100 lines**, counting
 headings and blank lines. Keep details in topics rather than expanding the index.
 
 ## Coherence across indexed memories and harness rules
@@ -96,7 +97,9 @@ Do not infer a new rule from a repeated experience or manufacture agreement.
 After the writing run's migration succeeds, continue sequentially:
 
 1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted reports in
-   `memory/smelts/` and new entries in `journal/YYYY/`. Skip age-encrypted `.age`
+   `memory/smelts/` and new entries in `journal/YYYY/`. Skip
+   `*review-attribution-*` files, route-grid telemetry rather than experiences
+   (their home is `memory/evidence/attribution/`). Skip age-encrypted `.age`
    entries when the project key is unavailable, recording the skipped count;
    never treat a skipped or unavailable source as empty. Read native notes only
    as attributed sources when available; report unavailable sources. Native

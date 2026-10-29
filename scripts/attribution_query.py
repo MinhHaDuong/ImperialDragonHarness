@@ -83,6 +83,16 @@ def journal_entries(journal, project, counts):
                 yield path
 
 
+# The records' own root (ticket 1347), then the legacy journal, which consumer
+# projects keep until they move their records.
+RECORD_ROOTS = (('memory', 'evidence', 'attribution'), ('memory', 'journal'))
+
+
+def record_paths(project, counts):
+    for parts in RECORD_ROOTS:
+        yield from journal_entries(project.joinpath(*parts), project, counts)
+
+
 def read_records(project):
     project = project.resolve()
     candidates = {}
@@ -91,8 +101,7 @@ def read_records(project):
     counts = {'valid': 0, 'malformed': 0, 'ambiguous_prs': [],
               'ambiguous_records': 0, 'encrypted_unavailable': 0,
               'unsafe_unavailable': 0}
-    journal = project / 'memory' / 'journal'
-    for path in journal_entries(journal, project, counts):
+    for path in record_paths(project, counts):
         match = RECORD_NAME.fullmatch(path.name)
         pr = int(match[1])
         # Reserve identity before parsing: invalid/encrypted evidence is still
@@ -140,7 +149,8 @@ def read_records(project):
         if runtime_masked(record):
             LOG.warning('WARN PR %s: runtime-masked identity; whole game excluded from model estimates', record['pr'])
     if not records:
-        LOG.warning('WARN %s: no attribution records available', journal)
+        LOG.warning('WARN %s: no attribution records available',
+                    ' or '.join(str(project.joinpath(*parts)) for parts in RECORD_ROOTS))
     return records, counts, unavailable_prs
 
 
