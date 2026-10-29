@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-29T11:38Z claude created
+2026-10-29T13:05Z claude scope Reframed: stray link already gone; no exclusion guard; pin-source question moved to the arena repo.
 
 --- body ---
 ## Context
@@ -25,14 +26,25 @@ the sealed snapshot, so whatever is linked at pin time is what the contestant se
 The harness has no `skills/arena`: the link is not in the manifest, so
 `idh install` neither declares nor retires it.
 
-Proposal (to choose in Plan): the arena-owned skill set that must not reach a
-contestant is declared as a harness-visible exclusion (e.g. a bench-only skill
-marker or a pin-time deny list honoured by `idh`/the Pi projection), rather
-than relying on hand-removal of a stray link. The pin copy itself lives in the
-arena repo and is not edited from here.
+Status 2026-10-29 13:00Z: `~/.pi/agent/skills/` is empty; the stray link
+is gone (removed by hand). No harness-side exclusion guard is wanted: the
+cause was a one-off leftover, and a marker or deny list would be a guard
+against a file that no longer exists (memory: no second-order guards).
+
+Open question handed to the arena repo (arena ticket 1178): `harness_pin.py`
+copies `~/.pi/agent/skills` (now empty) into the pin, while Pi reads
+`~/.agents/skills` and the pin preserves `HOME`. A pinned contestant may
+therefore see the live harness skills, unpinned. The pin code lives there.
+
+## Scope
+
+Harness side only: record the mechanism, and make `idh install` retire
+pre-PR-1690 per-skill Pi links under `~/.pi/agent/skills` if it does not
+already (dry-run first; if it already does, document only).
 
 ## Exit criteria
 
-- [ ] The mechanism that puts `arena` in a pinned skill set is named in the fix and documented.
-- [ ] A pin built after the fix contains no `arena` skill (checked on a fresh pin).
+- [ ] The mechanism (pre-PR-1690 per-skill Pi link, outside the manifest, so never retired) is documented where `adapters/projections.json` or `idh install` is described.
+- [ ] `idh install` retires or reports stale per-skill links under `~/.pi/agent/skills`, or the PR shows it already does.
+- [ ] The arena-repo ticket on the pin source is cross-referenced here.
 - [ ] `make check` passes.
