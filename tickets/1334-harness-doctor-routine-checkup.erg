@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Harness doctor routine checkup: KPIs, size, complexity and timings at every visit
+Title: Harness doctor routine checkup: KPIs and vital signs into a long-lived health journal
 Created: 2026-10-29
 Author: claude
 
@@ -7,66 +7,100 @@ Author: claude
 2026-10-29T08:56Z claude created
 2026-10-29T10:30Z claude respecified Author correction: not a one-off text cut but a routine measurement offered at every visit
 2026-10-29T11:10Z claude note Author: think KPIs (time per ticket), read from what monitoring already stores
+2026-10-29T11:40Z claude note Author decisions: long-lived per-project JSON health journal for curves over time; cost limited to real API-key-billed spend, token estimates excluded
 
 --- body ---
 ## Context
 
-Author request, 2026-10-29, corrected the same day. The first draft read
-"weight loss, round 2" as another one-off trim of `skills/harness-doctor/`
-(round 1: `3dc7ef05`). That was a misreading. The author wants a **routine
-checkup**: on each visit the doctor offers to take the harness's vital signs,
-so that a weight-watch discussion rests on measured trends, not impressions.
+Author request, 2026-10-29, refined three times the same day:
 
-Second author note, same day: think KPIs, starting with time per ticket. The
-monitoring already stores what a quick pulse check and basic follow-up need;
-the checkup reads it, it adds no instrumentation.
+1. Not a one-off trim of `skills/harness-doctor/` (round 1: `3dc7ef05`) but a
+   **routine checkup** offered at every visit.
+2. Think **KPIs**, starting with time per ticket. The monitoring already stores
+   what a quick pulse check and basic follow-up need: the checkup reads, it adds
+   no instrumentation.
+3. The figures go into a **long-lived, project-specific health journal** in
+   JSON, to plot curves over time, not just a comparison with the last visit.
+   JSON because the KPI set will change.
+4. **Costs: only real billed spend.** Most cost figures (token counts times a
+   price list, subscription sessions) are estimates, mostly imaginary. The only
+   cost worth monitoring is what API keys are actually billed.
 
-Existing stores and readers to reuse, not duplicate:
+Survey at respecification: no store holds billed spend today.
+`gaze_seat.billed_provider` routes a seat to its billing provider; it records no
+amount. Billed cost is therefore the one KPI read from outside the harness: the
+provider's own account of what the key was charged.
+
+The checkup measures and records; whether to cut, and what, is the
+weight-watch discussion with the author that follows, not part of this ticket.
+
+Existing readers to reuse, not duplicate:
 
 - Time per ticket: `scripts/slow_tickets.py` defines solve time once (sum of
   the `duration:` lines gaze, verify-gate and merge post on the PR; else PR
-  open-to-merge, an upper bound; else unknown).
-- Cost per ticket: `scripts/trace-stats.py` (tokens, USD per session) joined
-  to PRs by `scripts/trace-pr-join.py`.
-- Review outcome: REROLL / ESCALATE verdicts (`trace-pr-join.py`, review notes).
-- Main health: `idh/after-merge.log`, `idh/main-journal.jsonl`.
-- Throughput and backlog: ticket `Created:` / `Closed:` headers, `/dashboard`.
+  open-to-merge, an upper bound; else unknown). It reads a fixed 24 h window.
+- Review outcome: REROLL / ESCALATE verdicts (`scripts/trace-pr-join.py`,
+  review notes).
+- Main health: `idh/after-merge.log`, `idh/main-journal.jsonl` under the git
+  common dir.
+- Throughput and backlog: ticket `Created:` / `Closed:` headers.
 - Size and timings: `scripts/skill_text_lint.py` (body length, long blocks),
   `scripts/gaze_wall_time.py`, `scripts/trace-wall-time.py`.
 
 ## Intent
 
-Add a checkup to the visit menu of `skills/harness-doctor/SKILL.md`, offered
-at the start of every visit, in two panels.
+One command, offered at the start of every harness-doctor visit, measures the
+project and appends one record to its health journal; a second mode plots any
+metric's series over time.
 
-**KPIs (pulse)**, over the window since the previous visit:
+**KPIs (pulse)**, over the window since the previous record:
 
-- **Time per ticket**: median and p90 solve time, share recorded vs derived vs
-  unknown, the slowest tickets named.
-- **Cost per ticket**: median and total USD and tokens.
-- **Throughput**: tickets closed, opened, net backlog change.
-- **First-pass quality**: share of PRs merged without REROLL or ESCALATE;
-  red after-merge runs on main.
+- Time per ticket: median and p90 solve time; counts recorded, derived, unknown.
+- Throughput: tickets closed, opened, net backlog change.
+- First-pass quality: share of PRs merged without REROLL or ESCALATE; red
+  after-merge runs on main.
+- Main timings: gaze wall time, test gate, session start, where traces exist.
+- Billed cost: spend charged to each API key the harness uses (OpenRouter,
+  Anthropic API, OpenAI API), over the window, per provider and total.
 
 **Vital signs (weight)**:
 
-- **Length**: lines (and words or tokens) of every `skills/*/SKILL.md`, its
-  references, the resident rules, and every script under `scripts/`.
-- **Complexity**: a cheap structural proxy per script (functions, branches or
-  cyclomatic complexity) and per skill (steps, probe rows, cross-references).
-- **Main timings**: wall time of the expensive paths: gaze, the test gate,
-  session start, from existing traces where they exist.
+- Length: lines of each `skills/*/SKILL.md`, its references, the resident rules,
+  each script under `scripts/`; totals.
+- Complexity: per script, functions and branch nodes counted with the stdlib
+  `ast` module (no new dependency); per skill, steps, table rows and
+  cross-references.
 
-Each figure is shown beside the previous visit's (stored in the visit journal
-entry), so the report reads as a delta: biggest gainers, totals, outliers. The
-checkup measures and surfaces; whether to cut, and what, is the weight-watch
-discussion with the author that follows, not part of the checkup.
+## Decisions
+
+- **Journal**: `health/journal.jsonl` at the project root, committed,
+  append-only, one JSON object per checkup. Outside `memory/`, so hoard never
+  prunes it. Each record carries `schema`, `ts`, `host`, `commit`, `window`, and
+  a flat `metrics` object of `name -> {value, unit, source}`. Readers tolerate
+  unknown and missing names, so KPIs can be added, renamed (old series kept) or
+  retired without migration.
+- **Gaps**: a metric whose source is missing or unreadable is written with
+  `value: null` and a `gap` reason, never 0 and never omitted silently.
+- **Window**: `slow_tickets.py` gains a `--since` option (default unchanged)
+  so the checkup covers the time since the previous record.
+- **Plot**: `--plot <metric>[,<metric>...]` renders the series from the
+  journal to a PNG; only this mode imports matplotlib.
+- **Billed cost only**: read from each provider's billing or usage endpoint
+  with the key the harness already holds, where the endpoint exists for that
+  key; a provider that exposes none to that key is a `gap`. Never a token-based
+  estimate, never subscription usage. Keys are never printed or written to the
+  journal; record the provider name, not the key.
+- The terminal report shows each figure beside the previous record and flags
+  the biggest movers; the curves answer the longer view.
 
 ## Exit criteria
 
-- [ ] The visit menu offers the checkup at every visit; one command produces it
-- [ ] Report covers the KPIs (time and cost per ticket, throughput, first-pass quality) and length, complexity and main timings, each with the delta to the previous visit
-- [ ] Every figure comes from an existing store; a KPI whose store is missing or unreadable is reported as a gap, never as zero
-- [ ] Figures are recorded in the visit journal entry so the next visit can compare
-- [ ] A first run on origin/main is attached to the PR as the baseline
-- [ ] Cost stated in the menu row (seconds, no model usage) and a positive control fires
+- [ ] The harness-doctor visit menu offers the checkup at every visit; one command runs it and appends one record to `health/journal.jsonl`
+- [ ] A record covers the KPIs (time per ticket, throughput, first-pass quality, main timings) and the vital signs (length, complexity), per the record shape above
+- [ ] Billed cost per provider comes from the provider's own record or is a `gap`; no estimated figure appears
+- [ ] A missing source yields `value: null` with a `gap` reason; a test feeds one missing source and checks it
+- [ ] A reader test loads a journal whose records differ in metric names and plots a series spanning them
+- [ ] `slow_tickets.py --since` covers a chosen window; its default output is unchanged
+- [ ] A first run on origin/main is committed as the journal's first record and shown in the PR
+- [ ] Cost of the run stated in the menu row (wall seconds measured, no model usage)
+- [ ] The harness gate passes
