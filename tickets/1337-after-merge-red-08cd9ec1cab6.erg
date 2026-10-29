@@ -5,6 +5,7 @@ Author: merge-gate
 
 --- log ---
 2026-10-29T10:26Z merge-gate created
+2026-10-29T11:10Z claude note Diagnosis: /home on padme at 9% free (threshold 10%); the "Disk headroom warning" line (scripts/tmp_report.py) lands in the output test_shell_init_gh_agent.sh compares, so all six cases fail. Same failure on the last green tip 78ba2235, so not caused by PR 1957. Host state; the test is sensitive to the warning channel.
 
 --- body ---
 ## Context
