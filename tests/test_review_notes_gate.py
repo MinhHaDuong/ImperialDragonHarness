@@ -488,6 +488,27 @@ def test_seat_line_reads_the_real_formatter():
     assert rn.cross_family_seats(line + "\n", "anthropic") == ["redteam"]
 
 
+def test_a_hollow_cross_family_report_does_not_satisfy_the_requirement(repo, tmp_path):
+    """Ticket 1361, end to end: seat_clock.identities on a hollow codex report feeds the gate."""
+    sc_spec = importlib.util.spec_from_file_location("seat_clock", SCRIPTS / "seat_clock.py")
+    sc = importlib.util.module_from_spec(sc_spec)
+    sc_spec.loader.exec_module(sc)
+    head = "worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\n"
+    ready = {}
+    for label, body in (("hollow", "verdict: clear\n"), ("cited", "clear after reading src/x.py:42\n")):
+        panel = tmp_path / label
+        panel.mkdir()
+        (panel / "manifest.txt").write_text("# budget: 10m\nredteam\tgpt-6-luna\topenai\theadless codex\n")
+        (panel / "redteam.md").write_text(head + body)
+        seats = "\n".join(sc.format_seat(i) for i in sc.identities(panel, "claude-code", "claude-x")) + "\n"
+        rid = rn.open_review(repo, "feature", "main")
+        answer_text(repo, rid, seats)
+        ready[label] = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not ready["hollow"]["ready"] and ready["hollow"]["cross_family"] == []
+    assert "no cross-family seat" in ready["hollow"]["reason"]
+    assert ready["cited"]["ready"] and ready["cited"]["cross_family"] == ["redteam"]
+
+
 def test_self_and_subagent_seats_never_count_as_cross_family():
     """Gaze 1925 finding 1: only a headless seat's family is launcher-set; a plan labelling self
     or a subagent with another family cannot satisfy the requirement."""
