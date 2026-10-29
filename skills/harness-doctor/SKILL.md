@@ -49,9 +49,11 @@ not a probe: it is never offered, skipped or priced.
 ## Probes
 
 A menu, not a sequence: launch a probe only when it separates live hypotheses.
+The health checkup is the exception: offer it at every visit, before triage.
 
 | Probe | Answers | Cost |
 |-------|---------|------|
+| Health checkup: `python3 "$IDH_ROOT/scripts/health_checkup.py"`; curves with `--plot <metric>[,<metric>...]` | The pulse (time per ticket, throughput, first-pass quality, main timings, billed cost per API key) and the weight (length, complexity) since the last visit, appended to `health/journal.jsonl`; metrics and gaps in `references/health-checkup.md` | About 13 s for a 7-day window; window capped at 30 days; no model usage; reads the OpenRouter keys through the keystore, never prints them; commit the appended record |
 | Catalog and descriptions: `python3 "$IDH_ROOT/scripts/gen_skills_catalog.py" "$IDH_ROOT"` and the conditional table of `rules/README.md` | Which skills or rules may overlap: same act, same decision, same artifact | Seconds; reading tokens; no credentials |
 | Overlapping bodies: both texts of a listed pair, plus any rule body they cite | Contradiction, or a skill presuming or paraphrasing another's responsibility | Minutes; reading tokens per pair; no credentials |
 | Lint: `python3 "$IDH_ROOT/scripts/skill_text_lint.py" --root "$IDH_ROOT" [paths]` | Mechanical hits: history phrasing, dates, ticket forms, project names, body length, long blocks | Seconds; no model usage; no credentials |
