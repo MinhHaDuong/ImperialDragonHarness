@@ -27,7 +27,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
 | `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir`, with `.bib` files named by `--bib`, skipping `_` directories on request; PDF, HTML, image, DjVu and EPUB files only, not Markdown — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
 | `report-duplicates` | hash-dedup JSON report, library against itself | `conception/zotero-report-duplicates.md` |
-| `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`); fetch missing fulltexts with `doifetch` first (default open sources only) | `references/backfill.md` |
+| `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`); fetch missing fulltexts with DOIfetch first, through its on-demand helper (default open sources only) | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and enrichment
 map to the `import` and `suggest-edits` verbs, and the backfill mode is

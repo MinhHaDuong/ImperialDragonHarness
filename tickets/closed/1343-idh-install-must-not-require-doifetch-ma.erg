@@ -1,0 +1,53 @@
+%erg 0.1
+Title: idh install must not require doifetch: make it opt-in, never a default network install
+Created: 2026-10-29
+Author: reviewer
+Closed: resolved by removal: idh install installs no doifetch; zotero skill runs it on demand via scripts/doifetch.sh (uvx, pinned)
+
+--- log ---
+2026-10-29T15:34Z reviewer created
+2026-10-29T18:30Z reviewer reviewer note resolved by removal, not opt-in flag: the opt-in is the zotero skill's on-demand uvx call; DOIfetch slimmed to requests in its PR 1 (112 MB/3760 files -> 2.6 MB/170)
+2026-10-29T18:32Z reviewer closed — resolved by removal: idh install installs no doifetch; zotero skill runs it on demand via scripts/doifetch.sh (uvx, pinned)
+
+--- body ---
+## Context
+`adapters/lifecycle.py` `install()` calls `install_doifetch()` (around lines 55-75),
+which runs `uv tool install --force git+https://github.com/MinhHaDuong/DOIfetch@<ref>`.
+
+- Its PyPI dependencies are resolved at install time, so the result drifts by date (for example tzdata).
+- It needs the network.
+- On failure it prints SKIPPED and the install still exits 0, so its absence goes unnoticed.
+- The only way to omit it today is to hide uv from PATH.
+
+Arena evidence, 2026-10-29 (arena ticket 1180 log, merge c7c8ac1): a home installed
+without doifetch is 4 files and 75 symlinks and byte-reproducible (tree digest 2b371947...).
+With doifetch it is 3650 files and 109 MB, also outside the home (the venv points at /usr/bin/python3).
+
+Author (MinhHaDuong), arena session "Provide keys to contestants", 2026-10-29:
+"doifetch is a problem. It should NOT be needed." Filed through the inter-project
+protocol; the arena never edits the harness.
+
+## Scope
+- doifetch becomes an explicit opt-in (a flag or a manifest choice) and is not installed by default.
+- A skipped optional component is reported as "not requested" rather than as a silent SKIPPED.
+- The skills that use doifetch (for example `skills/zotero/SKILL.md`, `skills/zotero/references/backfill.md`)
+  state the prerequisite and degrade with a clear message when it is absent.
+
+## Exit criteria
+- [x] A default `idh install` makes no network call and installs no doifetch
+- [x] The opt-in installs it
+- [x] Tests cover both (`tests/test_idh_lifecycle.py`)
+- [x] The skills that use doifetch name the prerequisite and degrade with a clear message
+
+## Resolution (2026-10-29, explore session with the author)
+The weight came from DOIfetch's declared dependencies, not from its 2,100 lines: pandas and numpy
+(103 MB) served only spreadsheet batch input. DOIfetch ticket 0005 (its PR 1, merged 3f6507c) cut
+the core to `requests`; spreadsheets and the shadow sources became extras. Installed tool: 112 MB,
+3,760 files before; 2.6 MB, 170 files after.
+
+The harness side then needs no opt-in flag. `install_doifetch()` is deleted; the zotero skill runs
+DOIfetch on demand through `$IDH_ROOT/scripts/doifetch.sh` (`uvx --from git+…@<ref> doifetch`), so the
+pin lives in that one helper (skills stay forge-agnostic) and the network is reached only when a fulltext is fetched (cold 2.3 s, warm 0.13 s). Reading the
+exit criteria under this design: "the opt-in installs it" is the first `uvx` run, which caches it.
+Once DOIfetch's 0006 and 0008 land (a `doifetch` package with a typed contract), a follow-up can
+import it as a library from a PEP 723 script instead of calling the CLI.
