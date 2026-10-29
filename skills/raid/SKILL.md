@@ -397,31 +397,16 @@ For each eligible PR, sequentially within the wave:
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe, in one call from the PR's
    worktree: `python3 "$IDH_ROOT/scripts/raid_land.py" <pr> --ruled-head <ruled_tip_sha|-> --ruled-claims <ids,|-> --cleanup`
-   (`--ruled-claims` is the ruled verdict's `ticket:` field, never a fresh read of the body)
-   (close, head pin, record with one re-record, disarm, pinned merge, read-back, sync, a
-   `<pr> merge <start> <end>` row for `step_clock.py`). Exit 1 refused, 4 merged but main
-   unsynced (report, never re-merge), 5 queued, 6 merge outcome unknown (read the request, never
-   re-merge). The after-merge runner (recipe step 9) is started by the main-update hook on the sync. The checks below are what `raid_land.py` enforces,
-   by the recipe,
-   only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
-   (HEAD read with `-C <worktree-path>`) and, full tier, a head that adds at
-   most a bookkeeping delta to the gate's `ruled_tip_sha` (`skills/merge/SKILL.md`
-   § Gating tiers); otherwise no merge. Close before gating: Phase 6 closed the ticket on
-   the branch before the round-1 gate, so the recipe's close step finds it in
-   `tickets/closed/` and adds no close commit.
-   **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
-   § Gated base): the record check, the record run when it is missing, the
-   pinned merge and the read-back run as one background command. The record
-   is the gate; the read-back is the outcome (MERGED at the gated head).
-   A missing record after an earlier merge in the wave moved the base means
-   record again on the same head: mechanical, it spends no gate round. A
-   second miss goes in the briefing.
-   **Ungated base:** the merge may be queued, not landed: pending checks are normal.
-   Pending is not a
-   failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge
-   prescribes (one bounded background command) and move on to the next PR
-   meanwhile; a PR still pending when that wait ends is listed as queued in the
-   briefing, not as merged.
+   (`--ruled-claims` is the ruled verdict's `ticket:` field, never a fresh read of the body).
+   What `raid_land.py` checks (head pin, gating tier, gated and ungated base, queued merge,
+   read-back, sync) is the recipe's: `skills/merge/SKILL.md` § The recipe, § Gating tiers,
+   § Gated base. Phase 6 closed the ticket on the branch, so the recipe's close step adds no commit.
+   Exit 1 refused, 4 merged but main unsynced (report, never re-merge), 5 queued, 6 merge outcome
+   unknown (read the request, never re-merge). The call writes a `<pr> merge <start> <end>` row for
+   `step_clock.py`. A queued PR is listed as queued in the briefing, not as merged; wait as merge
+   prescribes in one bounded background command and move on to the next PR meanwhile. A missing gate
+   record after an earlier merge in the wave moved the base means record again on the same head
+   (mechanical, no gate round spent); a second miss goes in the briefing.
    **No forge:** the call is the same with `<pr>` = `branch:<branch> [base=<ref>]`. It is a
    `--no-ff` merge pinned by head OID, the base moved under the main-update guard, the gate record
    in this repository's `refs/notes/gate`; nothing is pushed (no `origin`), and the repository's own
@@ -471,7 +456,8 @@ Autonomous mode: ralph loop to next wave.
 The raid log has a fixed path and format (`references/sitrep.md`); append
 `RAID_START`, `WAVE_BASE`, `WAVE`, `PR` (each step change), `BREAKER` and `QUEUE` lines with
 `python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT raid=<id> key=value ...`.
-`RAID_START` mints the id and prints it: read it there and put `raid=<id>` on
+`RAID_START` mints the id and prints it (add `deadline=<epoch>` only when the author gave the raid a
+time budget; without it the sitrep shows elapsed time alone): read it there and put `raid=<id>` on
 every later append and on the sitrep command. At raid
 start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>`
 once and arm the cadence:
