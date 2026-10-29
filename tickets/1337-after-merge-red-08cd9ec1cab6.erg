@@ -6,6 +6,7 @@ Author: merge-gate
 --- log ---
 2026-10-29T10:26Z merge-gate created
 2026-10-29T11:10Z claude note Diagnosis: /home on padme at 9% free (threshold 10%); the "Disk headroom warning" line (scripts/tmp_report.py) lands in the output test_shell_init_gh_agent.sh compares, so all six cases fail. Same failure on the last green tip 78ba2235, so not caused by PR 1957. Host state; the test is sensitive to the warning channel.
+2026-10-29T13:05Z claude scope Recurs whenever /home dips under 10% free: shell-init.sh prints the disk warning on stdout, which the test captures. Fix the channel, not the disk.
 
 --- body ---
 ## Context
@@ -22,6 +23,17 @@ Merges since (first parent, newest first):
 Failed tests (check, test id):
 - pytest-guard tests/test_bash_suites.py::test_shell_suite[test_shell_init_gh_agent.sh]
 
+## Scope
+
+`scripts/shell-init.sh` (around line 67) prints the "Disk headroom warning"
+on stdout when sourced; `tests/test_shell_init_gh_agent.sh` captures the
+sourcing shell's stdout, so any host under 10% free turns the test red.
+Disk is back at 12% free and the test passes today: the trap remains.
+Send the warning to stderr (an interactive-shell notice belongs there);
+check `scripts/on-start-context.sh` uses its own channel and is unaffected.
+
 ## Exit criteria
 
+- [ ] shell-init.sh emits the disk warning on stderr, not stdout.
+- [ ] The test passes with the warning forced on (e.g. a threshold or reading override, or a stubbed `tmp_report.py`), shown in the PR.
 - [ ] An after-merge record on main passes the checks named above.
