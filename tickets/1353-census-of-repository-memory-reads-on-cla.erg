@@ -79,3 +79,17 @@ Risks: Claude trace shape varies (assistant `tool_use` input); fixtures must fol
 invisible (stated in output). Real traces are large: the scan must stream lines.
 Orchestrator decision: lifting the audit logic copies about 80 lines out of `conception/` rather
 than importing it; accepted as cheaper than refactoring a frozen record.
+
+## Feasibility (raid 0a53b8)
+Verdict: PASS.
+- scripts/census/memory-recall.py exists (has argparse, `main` at line 117); scripts/census/README.md exists for the one-line doc.
+- Audit scripts exist: conception/2026-10-29-memory-system-audit/repo_mem_reads.py (script-style, imports sys/glob, no functions: lift by copy, as plan says) and codex_mem.py (2 defs).
+- scripts/census/repo-memory-reads.py and tests/test_repo_memory_reads.py do not exist yet: no collision. tests/test_memory_recall.py is the sibling pattern for fixtures.
+- Check tiers: `make check` includes check-tests; the new file is covered with no registry edit.
+- doudou unreachable (per Imagine); plan leaves it as a re-run: acceptable.
+- Conflicts: none with 1347; with 1352 only if 1352 edits scripts/census/memory-recall.py or census README hoard words (1352 touches memory-recall.py); new files avoid it.
+
+## Blind-spot finding (raid 0a53b8), binding on the executor
+1352 renames hoard to smelt in the same wave. The maintenance-session keyword set must include
+`smelt` and `dream` beside `hoard`, `roar`, `lair` and `brood`, with one fixture, or sessions after
+the rename count as working sessions and inflate the baseline that 1354 needs.

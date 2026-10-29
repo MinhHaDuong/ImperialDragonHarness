@@ -87,3 +87,20 @@ arena/repos/agents have DREAM.md (migrate straight to SMELT.md, cheaper than two
 Decisions for the orchestrator: (a) exempt memory/evidence and health/ as history in the
 exit criterion; (b) historical-name lines keep `hoard`; (c) exit criterion 3 narrows to
 padme plus the three DREAM.md projects, others carry no store file.
+
+## Feasibility (raid 0a53b8)
+Verdict: PASS (one WARN-grade note).
+- Paths exist as cited: skills/hoard, memory/HOARD.md, memory/hoards (7 reports), scripts/hoard_migrate.py, tests/test_hoard_migrate.py, tests/test_lair_dream_suggestion.py.
+- Count re-measured: `git grep -il hoard` outside journal/conception/closed/memory/hoards = 38 files (incl. 7 tickets, memory/evidence, health); about 28 live non-ticket files. Matches Imagine; "55" is overstated.
+- Tests naming hoard: 8 test files by grep (plan says "10 files above"); the suite names the rest.
+- Tools: `make skills-catalog`, `check-skills-drift`, `check` targets exist; `bin/idh` has `install skill`.
+- Lair step 12 (skills/lair/SKILL.md:81-99) reads memory/hoards/*.md and suggests `/hoard <project-repository>`: both in plan scope.
+- Conflicts: shares skills/hoard/SKILL.md, memory/HOARD.md, scripts/hoard_migrate.py, tests/test_hoard_migrate.py, skills/roar/runbooks/capture.md, skills/lair/SKILL.md with 1347. Order: 1347 says 1352 rebases over it, 1352 says it lands first; pick one (1352 first is a pure rename and rebases cheaply).
+- Registry: skills-catalog.md is regenerated (generated file, only 1352 edits it). No 3-PR shared registry.
+
+## Blind-spot finding (raid 0a53b8)
+The rename takes effect when merge step 8 syncs local main: Codex discovers skills in
+`~/.agents/skills` (the primary checkout), and `~/.claude/skills/hoard` is a symlink into it. A
+hoard, lair or roar running at that moment loses `skills/hoard/` mid-run. Merge only when none
+runs; doudou keeps the old name until it pulls. `idh install skill smelt` then repairs the
+installed link, and the dangling `hoard` link is deleted.
