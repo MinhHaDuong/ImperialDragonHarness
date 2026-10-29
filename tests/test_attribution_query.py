@@ -319,7 +319,7 @@ def test_masked_range_coverage_is_distinct(tmp_path, monkeypatch, caplog):
 def test_pr1209_reused_contexts_preserve_attempts_without_self_pairs(monkeypatch):
     query = load_query(monkeypatch)
     capture = query.parse_record(
-        (ROOT / 'memory/journal/2026/2026-10-06-review-attribution-pr1209.md').read_text())
+        (ROOT / 'memory/evidence/attribution/2026-10-06-review-attribution-pr1209.md').read_text())
     assert len(capture['reviewers']) == 14
     attempts = query.game_attempts(capture)
     assert len(attempts) == 7
