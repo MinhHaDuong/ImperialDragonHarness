@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-29T19:59Z reviewer proposal added for author ruling: theory of change, fixed departments, as-built (DOE) metaphor
 2026-10-29T20:04Z reviewer cross-project department scheme from a sweep of padme projects
 2026-10-29T20:08Z reviewer author rulings: departments accepted provisionally; rename to smelt (1352); byte cap open
+2026-10-29T20:36Z reviewer borrowings: pinned rulings, recall with source
 
 --- body ---
 ## Context
@@ -116,3 +117,11 @@ harness ticket (`rules/workflow.md` § Cross-project work).
   tests it on the harness before other projects adopt it.
 - Rename: hoard becomes **smelt** (ticket 1352).
 - Still open: the byte cap per department.
+
+## Two borrowings from other designs (author, 2026-10-29)
+- **Pinned rulings.** Qwen Code keeps `pinned/` notes that consolidation never rewrites; only an
+  explicit forget removes them. Commission rulings get the same status: smelt may file, date and
+  link them, never paraphrase or retire them; only the author retires a ruling.
+- **Recall with its source.** Le Chat shows when a memory is used and links it to its source.
+  Every department claim carries its source link (journal entry, note, PR), and an agent that acts
+  on a memory claim cites it in its report.
