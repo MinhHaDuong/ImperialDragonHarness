@@ -6,10 +6,11 @@ set -euo pipefail
 # worktree_residue <path> prints, one per line, every status entry that
 # removing the tree would destroy and that is not disposable: anything
 # modified, staged or untracked, and any ignored path except regenerable
-# caches (the root .venv/, rebuilt from the lock, and tool caches anywhere)
-# and .tmp/ (its own guard decides). Ignored files count: a repo may ignore
-# `*`, and `git worktree remove` deletes them. --no-optional-locks keeps the
-# status from rewriting the index, which would restart the tree's idle clock.
+# caches (the root .venv/, rebuilt from the lock, tool caches anywhere, and
+# the *.egg-info/ setuptools rebuilds on every `uv run`) and .tmp/ (its own
+# guard decides). Ignored files count: a repo may ignore `*`, and
+# `git worktree remove` deletes them. --no-optional-locks keeps the status
+# from rewriting the index, which would restart the tree's idle clock.
 # Returns 1 when git cannot answer (an unreadable tree is never "clean").
 worktree_residue() {
     local out line p
@@ -21,7 +22,7 @@ worktree_residue() {
         case "$line" in
             "!! "*)
                 case "/$p" in
-                    /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*) continue ;;
+                    /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
                 esac ;;
         esac
         printf '%s\n' "$line"
