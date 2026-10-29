@@ -1,0 +1,17 @@
+%erg 0.1
+Title: verify-adherence fails in a project that declares no adherence runner
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T20:56Z reviewer created
+
+--- body ---
+## Context
+Reported by the DOIfetch session (raid f9e483, 2026-10-29) through the inter-project protocol; causes as its team lead stated them, not re-verified here.
+verify-adherence fails on every run in DOIfetch, which declares no adherence runner. The skill
+should degrade (`skip` with a reason) rather than fail where a prerequisite is missing.
+
+## Exit criteria
+- [ ] In a project with no adherence runner, verify-adherence reports a skip with its reason, by test
+- [ ] Where a runner exists, behaviour is unchanged
