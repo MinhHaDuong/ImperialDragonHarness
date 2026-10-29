@@ -297,3 +297,37 @@ def test_cli_append_prints_the_minted_line(tmp_path, monkeypatch, capsys):
     assert raid_log.main(["append", "RAID_START", "deadline=5"]) == 0
     assert " raid=" in capsys.readouterr().out
     assert raid_log.main(["append", "QUEUE", "n=1"]) == 2
+
+
+def test_no_deadline_shows_elapsed_without_budget(repo, tmp_path, monkeypatch, capsys):
+    log_with(tmp_path, monkeypatch, done_log(2).replace(" deadline=1700007200", ""))
+    code, out = run(capsys, "--no-forge")
+    assert code == 0
+    assert "UNREADABLE" not in out
+    assert "elapsed" in out
+    assert "budget" not in out.split("elapsed", 1)[1].splitlines()[0].replace("no time budget", "")
+    assert "NEXT resume wave" in out
+
+
+def test_deadline_present_keeps_budget_line(repo, tmp_path, monkeypatch, capsys):
+    log_with(tmp_path, monkeypatch, done_log(2))
+    code, out = run(capsys, "--no-forge")
+    assert code == 0
+    assert "120m budget" in out
+
+
+def test_malformed_deadline_is_unreadable(repo, tmp_path, monkeypatch, capsys):
+    log_with(tmp_path, monkeypatch, done_log(2).replace("deadline=1700007200", "deadline=soon"))
+    code, out = run(capsys, "--no-forge")
+    assert code == 2
+    assert "UNREADABLE deadline" in out
+
+
+def test_gate_max_is_read_without_deadline(repo, tmp_path, monkeypatch, capsys):
+    log_with(tmp_path, monkeypatch,
+             done_log(2).replace(" deadline=1700007200", "").replace("gate_max=1800", "gate_max=50")
+             .replace("step=merged", "step=gate_round_1"))
+    monkeypatch.setattr(sitrep, "worktrees", lambda: [repo])
+    monkeypatch.setattr(sitrep, "read_marker", lambda _p: (float(NOW) - 100, float(NOW) - 5))
+    out = run(capsys, "--no-forge")[1]
+    assert "GATE_TIMEOUT" in out

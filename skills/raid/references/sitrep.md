@@ -18,7 +18,7 @@ are ignored by the sitrep.
 
 | Event | Written | Fields |
 |---|---|---|
-| `RAID_START` | at raid start | `raid=` (minted when absent), `deadline=<epoch>`, `gate_max=<seconds>` |
+| `RAID_START` | at raid start | `raid=` (minted when absent), optional `deadline=<epoch>` (set only when the author gave the raid a time budget), optional `gate_max=<seconds>` (default 1800) |
 | `WAVE_BASE` | Phase 4, and each refresh | `sha=` |
 | `WAVE` | when a wave launches | `n=`, `tickets=a,b` |
 | `PR` | every step change of a PR | `n=`, `ticket=`, `step=` (`executing`, `gaze`, `gate_round_N`, `merged`, `escalated`) |
@@ -29,7 +29,7 @@ are ignored by the sitrep.
 **Reading.** `python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>` reads only
 that raid's lines (a missing `--raid` prints `UNREADABLE raid`; an id with no
 `RAID_START` line prints `UNREADABLE RAID_START`; both exit 2) and renders elapsed time
-against the budget, the latest wave, each PR's step, breakers logged since the
+(against the budget when `deadline=` is set; otherwise elapsed alone, no budget claimed), the latest wave, each PR's step, breakers logged since the
 last `SITREP` line, live gate heartbeats (from `raid_gate_state`, so breaker
 readings are not re-derived), and open PRs from the forge. A garbled or missing
 line, a failed git or forge read, prints `UNREADABLE <part>` and exits 2: treat

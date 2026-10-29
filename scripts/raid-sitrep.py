@@ -87,12 +87,15 @@ def main(argv: list[str]) -> int:
     if starts:
         start, _, fields = starts[-1]
         try:
-            deadline = float(fields["deadline"])
             gate_max = float(fields.get("gate_max", gate_max))
-            out.append(f"time: elapsed {minutes(now - start)} of {minutes(deadline - start)} "
-                       f"budget, {minutes(max(deadline - now, 0))} left")
-        except (KeyError, ValueError):
-            fail("deadline", "RAID_START lacks a numeric deadline=")
+            if "deadline" in fields:
+                deadline = float(fields["deadline"])
+                out.append(f"time: elapsed {minutes(now - start)} of {minutes(deadline - start)} "
+                           f"budget, {minutes(max(deadline - now, 0))} left")
+            else:  # deadline= is optional: no budget was given, none is claimed
+                out.append(f"time: elapsed {minutes(now - start)} (no time budget set)")
+        except ValueError:
+            fail("deadline", "RAID_START has a non-numeric deadline= or gate_max=")
     elif args.raid is not None and path is not None and path.exists():
         fail("RAID_START", "no RAID_START line in the log")
 
