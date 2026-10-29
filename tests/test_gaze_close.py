@@ -391,7 +391,9 @@ def test_findings_follow_their_generated_reviewer_line(tmp_path):
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
     panel(primary, "# budget: 10m\na\tclaude-x\tanthropic\theadless claude-code\nb\tclaude-y\tanthropic\theadless claude-code\n",
-          {n: HEADLESS.format(pin=p, family="anthropic", runtime="claude-code") for n, p in (("a", "claude-x"), ("b", "claude-y"))})
+          # A cited report: a bare verdict is a hollow seat since ticket 1361.
+          {n: HEADLESS.format(pin=p, family="anthropic", runtime="claude-code") + "read scripts/x.py:3\n"
+           for n, p in (("a", "claude-x"), ("b", "claude-y"))})
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     finding = "finding: a · verifiable · scripts/x.py:3 · adopted: yes\n"
