@@ -96,6 +96,40 @@ def test_tree_holding_uv_run_build_output_is_removed(tmp_path):
     assert answer_text(primary, f).startswith("result: REVIEWED")
 
 
+def test_tree_holding_setuptools_build_is_removed(tmp_path):
+    """Ticket 1357: an ignored setuptools build/ (git prints only `!! build/`)
+    no longer blocks the close; the standard `build/` pattern is the shape git emits."""
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir")) / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\nbuild/\n")
+    tracked = (tree / "f.txt").read_bytes()
+    for p, data in (("build/lib/pkg/f.txt", tracked), ("build/lib/pkg/m.pyc", b"\x00x"),
+                    ("build/bdist.linux-x86_64/f.txt", tracked), ("build/temp.linux-x86_64/o.o", b"\x00x")):
+        (tree / p).parent.mkdir(parents=True, exist_ok=True)
+        (tree / p).write_bytes(data)
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
+            primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not tree.exists()
+
+
+def test_refused_close_leaves_the_closed_marker(tmp_path):
+    """Ticket 1357: the marker lives in the worktree's git dir, so it survives a refused close."""
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    (tree / "f.txt").write_text("real wip\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("x {{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 1
+    assert (Path(git(tree, "rev-parse", "--absolute-git-dir")) / "gaze-closed").is_file()
+
+
 def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
     primary, env, f = opened(tmp_path)
     tree = primary / ".claude" / "worktrees" / "review-7"

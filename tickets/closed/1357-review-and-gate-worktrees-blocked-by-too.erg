@@ -2,9 +2,11 @@
 Title: Review and gate worktrees blocked by tool output: build/ and an unignored .venv
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2013
 
 --- log ---
 2026-10-29T20:56Z reviewer created
+2026-10-29T22:26Z reviewer closed — autoclosed — PR #2013
 
 --- body ---
 ## Context

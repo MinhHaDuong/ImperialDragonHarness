@@ -41,6 +41,17 @@ def test_setup_second_call_sees_live_gaze(tmp_path):
     assert r.returncode == 3 and "live" in r.stderr
 
 
+def test_setup_reruns_after_closed_marker(tmp_path):
+    """Ticket 1357: a fresh tree whose run already closed is dead, not live."""
+    primary, env = make_repo(tmp_path)
+    assert run(SETUP, ["7"], primary, env).returncode == 0
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    (Path(git(tree, "rev-parse", "--absolute-git-dir")) / "gaze-closed").write_text("closed\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    assert not (Path(git(tree, "rev-parse", "--absolute-git-dir")) / "gaze-closed").exists()
+
+
 def test_setup_conflicting_pr_blocks_before_worktree(tmp_path):
     import json
     primary, env = make_repo(tmp_path)

@@ -75,7 +75,8 @@ nonexistent ticket file, no isolated worktree: never fall back into the
 invoking tree), 2 is a read or anchor failure, 3 means another gaze is live on
 this PR (`review-<pr-number>` is the lock; liveness window
 `fork_liveness_seconds`, `skills/gaze/telemetry.yml`): return ESCALATE
-"another gaze is live on this PR". A dead run's leftover tree is cleaned by
+"another gaze is live on this PR". A dead run's leftover tree, or one whose close already ran
+(`gaze-closed` in its git dir, left even by a refused close), is cleaned by
 the script. Details and what stays judgment: `references/setup-and-breaker.md`.
 
 **Offline forge (ticket 1308).** Forge reads wait a short bound
