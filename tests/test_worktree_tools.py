@@ -752,6 +752,94 @@ def test_preflight_passes_on_uv_run_build_output(origin, egg):
     assert res.returncode == 0, res.stderr
 
 
+def _exclude(primary, text):
+    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write(f"\n{text}\n")
+
+
+def _removal(path):
+    return subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal", str(path)],
+        capture_output=True, text=True, env=child_env(),
+    )
+
+
+def test_preflight_passes_on_ignored_setuptools_build(origin):
+    """Ticket 1357: git prints the ignored directory as `!! build/`; only
+    lib*, bdist.* and temp.* inside it are regenerable."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build", dirty=False)
+    _exclude(primary, "build/")
+    for p in ("build/lib/pkg/m.py", "build/bdist.linux-x86_64/x", "build/temp.linux-x86_64/o"):
+        (wt / p).parent.mkdir(parents=True, exist_ok=True)
+        (wt / p).write_text("x\n")
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+
+
+def test_preflight_blocks_on_hand_made_file_under_ignored_build(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-notes", dirty=False)
+    _exclude(primary, "build/")
+    (wt / "build" / "lib").mkdir(parents=True)
+    (wt / "build" / "lib" / "m.py").write_text("x\n")
+    (wt / "build" / "notes.txt").write_text("keep me\n")
+    res = _preflight(wt)
+    assert res.returncode == 1 and "build/" in res.stderr
+
+
+def test_preflight_blocks_on_symlinked_build(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-build-link", dirty=False)
+    _exclude(primary, "build")
+    (primary.parent / "elsewhere" / "lib").mkdir(parents=True)
+    (wt / "build").symlink_to(primary.parent / "elsewhere")
+    assert _preflight(wt).returncode == 1
+
+
+def _plain_venv(wt):
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
+
+
+def test_gate_sequence_removes_tree_with_unignored_venv_without_force(origin):
+    """Ticket 1357: a venv without its own .gitignore (not uv's) is untracked,
+    so a plain `git worktree remove` refuses; the removal preflight scrubs it first."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-venv", dirty=False)
+    _plain_venv(wt)
+    assert git(primary, "worktree", "remove", str(wt), check=False).returncode != 0
+    res = _removal(wt)
+    assert res.returncode == 0, res.stderr
+    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
+    assert not wt.exists()
+
+
+def test_preflight_keeps_venv_without_pyvenv_cfg_as_residue(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-venv-hand", dirty=False)
+    (wt / ".venv").mkdir()
+    (wt / ".venv" / "mine.txt").write_text("hand made\n")
+    res = _removal(wt)
+    assert res.returncode == 1 and ".venv" in res.stderr
+    assert (wt / ".venv" / "mine.txt").exists()
+
+
+def test_preflight_keeps_symlinked_venv_as_residue(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-venv-link", dirty=False)
+    target = primary.parent / "shared-venv"
+    target.mkdir()
+    (target / "pyvenv.cfg").write_text("home = /usr/bin\n")
+    (wt / ".venv").symlink_to(target)
+    res = _removal(wt)
+    assert res.returncode == 1
+    assert (target / "pyvenv.cfg").exists()
+
+
 def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
