@@ -91,3 +91,39 @@ Plan accepted as written: setuptools `build/lib*`, `bdist.*` and `temp.*` are re
 other content under `build/` stays protected; a `.venv` is recognised by `pyvenv.cfg`, with nothing
 tracked and no symlink, and scrubbed by the removal preflight, which the gate calls before its
 plain remove; a `closed` marker lifts the liveness refusal. Runs in wave 2, after 1356.
+
+## Feasibility (raid b7c67c)
+WARN, two plan defects, both fixable in-ticket.
+1. Git collapses an ignored directory. Measured (git 2.43, `.gitignore` = `build/`, files in
+   `build/lib/pkg/m.py` and `build/bdist.linux-x86_64/x`): `status --porcelain --untracked-files=all
+   --ignored=matching` prints only `!! build/`. Patterns `/build/lib/*` never match `/build/`, and
+   allowlisting `/build/*` would also pass a hand-made `build/notes.txt`. `worktree_residue` must
+   expand a `!! build/` entry (list its children without following symlinks) and accept only
+   `lib*`, `bdist.*`, `temp.*`. The E1 fixture and the notes.txt control must use the standard
+   `build/` pattern, or the test passes on a shape git never emits.
+2. The `closed` marker in `.panel/<key>/` does not survive the failing close: `cleanup()` rmtrees
+   `.panel/<key>` (gaze_close.py ~138) and preflight `--removal` runs `rm -rf .panel` before its
+   residue refusal. After a refused close the marker is gone, and E3 is not met. Put it outside the
+   status-visible tree, e.g. `$(git -C <tree> rev-parse --git-dir)/gaze-closed` (removed with the
+   worktree, invisible to status, no mtime bump in the tree), and have setup read it there.
+Sites exist: `worktree_residue` (worktree-clean-lib.sh:15), preflight `--removal` (:21), verify-gate
+§ Isolation (SKILL.md:96-125), `touched-tests.py` `uv run` (~line 113), setup liveness (gaze_setup.py:156).
+
+## Blind-spot (raid b7c67c)
+- worktree-gc: `worktree_residue` is used only through `ownerless_tree_clean` (pid-1 lock path,
+  worktree-gc.sh:198). The ordinary gc path checks `report_wip` (no `--ignored`, :100) and then a plain
+  `git worktree remove`, which already deletes ignored hand-made files under `build/`. So the widening
+  adds no new gc loss beyond the ownerless path, and an untracked `.venv` still stops gc as WIP. No scrub
+  needed in gc; the plan's "serves gc" benefit is limited to that path.
+- Skill text versus helper: verify-gate has no helper; its removal lives in prose. A test of the
+  preflight sequence does not prove the gate calls it. Add one text-contract test that § Isolation names
+  `worktree-exit-preflight.sh --removal` before `worktree remove`, and delete the sentence "The gate
+  writes nothing in it" (SKILL.md:124), now false.
+- uv writes `.venv/.gitignore` (`*`), so a uv-made venv shows as ignored and is already tolerated;
+  the unignored case needs a venv without that file. Build the E2 fixture without it, as planned.
+
+## Handoff (raid b7c67c, 2026-10-29)
+Planning is complete: Imagine, Plan, orchestrator decisions, feasibility and blind spot are above,
+and they bind the executor. Execution is left to a fresh session at the author's request (the
+planning session's context was long). Resume with `/raid 1348 1356 1357`: wave 1 = 1348 + 1356,
+wave 2 = 1357 after 1356 merges. Phases 1-4 are done; start at Phase 5.

@@ -269,3 +269,31 @@ Verification: `python3 scripts/memory_sizes.py` on the tree must list all 11 pag
   carries out the author's explicit ruling of 2026-10-29 (index cap 40 lines) and is named in the
   PR body for the author.
 - D4: pinned rulings are marked by a `> pinned` line, as proposed.
+
+## Feasibility (raid b7c67c)
+PASS. Re-measured 2026-10-29 at 8ccc046f: 11 pages in `memory/topics/`, 84,663 bytes; largest
+`raid-review-and-merge.md` 21,469. Two pages are already under 4096 (`subagent-model-effort-levers.md`
+2,576, `zotero-library.md` 3,556); `host-environment.md` is 4,178. So not every page is over the cap:
+harmless under TRANSITION, but the verification line should expect 9 over, not 11. Index 37 lines (fits 40).
+Sites exist: `memory/SMELT.md:117` (Bounds), `skills/smelt/SKILL.md:69` (quotation), `:78-79` (100 lines,
+"Keep details in topics"), `:118`; `tests/test_dream_v8.py:92` (DREAM_PROMPT = SMELT.md); `AGENTS.md:75`.
+100 to 40 in AGENTS.md is -1 char: resident budgets unaffected. `.idh-checks.json` is absent: full gate.
+No file shared with 1356 or 1357; no registry touched (description unchanged, no catalog run).
+
+## Blind-spot (raid b7c67c)
+- Missed "100 lines" site: `skills/brood/SKILL.md:82` ("v8: 100 lines"). Leaving it makes a third
+  contradicting text. Smallest fix: change to 40 in the same commit (rename-sweep rule).
+- `tests/test_memory_v8_pilot.py:161` asserts the harness index `<= 100` lines: stays green but stale;
+  tighten to 40 or point it at `memory_sizes.INDEX_LINES` (one source of the number).
+- `memory/` root holds stray `feedback_*.md`, `reference_*.md`, `pending-capture-*.md.txt`: the script
+  must glob `memory/topics/*.md` only, else the positive control counts non-topics.
+- Census overlap checked: `scripts/census/` reads session traces, `resident_census.py` resident chars;
+  neither measures topic bytes. A new script does not duplicate.
+- `conception/memory-v8/templates/{AGENTS.md:16,memory/MEMORY.md:4}` still say 100; no script reads them
+  (grep). Historical design record: leave, but say so in the PR body.
+
+## Handoff (raid b7c67c, 2026-10-29)
+Planning is complete: Imagine, Plan, orchestrator decisions, feasibility and blind spot are above,
+and they bind the executor. Execution is left to a fresh session at the author's request (the
+planning session's context was long). Resume with `/raid 1348 1356 1357`: wave 1 = 1348 + 1356,
+wave 2 = 1357 after 1356 merges. Phases 1-4 are done; start at Phase 5.

@@ -93,3 +93,32 @@ wrong-repo comment, which raises its severity.
 - The executor checks whether `pointer()` and the forge calls target the right repository from a
   foreign cwd. If they comment on the wrong repository's PR, fix that in this PR with a test,
   since it is the same defect.
+
+## Feasibility (raid b7c67c)
+PASS. Read at 8ccc046f: `gaze_close.main()` calls `primary_root()` with no cwd (line ~327);
+`containment()` (line 221) runs three git reads with no `cwd=`; `read_entry` (211) keys on primary;
+`gaze_setup.main()` writes `entry-state.json` (line 222) and prints `review_tree=` (235), so a `repo=`
+line fits. Open point (b) CONFIRMED by reading: `pointer()` calls `forge.get_forge(None, pr)` with no
+cwd (line 308), and `get_forge(choice, ref, cwd=None)` returns `GhForge(None)`, so `gh` posts to the
+cwd's repository: a foreign cwd comments on the wrong repo's PR N. In scope per orchestrator decision;
+pass `cwd=str(primary)`. `record_answer` already passes `cwd`. `step_clock.py` reads no cwd.
+Fixtures exist: `tests/gaze_fixture.py::make_repo`, `test_gaze_close.py::opened` (58), `panel` (215),
+`one_seat` (224). Files shared with 1357: `scripts/gaze_close.py`, `scripts/gaze_setup.py`,
+`tests/test_gaze_close.py`, `skills/gaze/SKILL.md`; wave order handles it, no coordination PR.
+
+## Blind-spot (raid b7c67c)
+- `gaze_setup.py:133` is cwd-bound too (`primary_root()`, `get_forge(None, pr)`, entry branch read in
+  cwd). Setup run from the wrong project reads that repo's PR N. Out of this ticket's exit criteria, but
+  the SKILL.md setup line should say "run from the reviewed project's checkout"; `--repo` on setup is
+  the symmetric fix if cheap (same one-arg pattern). Executor decides; name it in the PR body if deferred.
+- Naming: verify-gate already takes `repo=<path>` (`skills/verify-gate/SKILL.md:21-25`). Setup's
+  printed `repo=` and close's `--repo` match it; keep that spelling.
+- Runtimes: Codex and Pi read the same `skills/gaze/SKILL.md` (no gaze-specific adapter; only
+  `adapters/README.md` mentions gaze), so the doc change reaches them; the default-to-cwd keeps old
+  callers working.
+
+## Handoff (raid b7c67c, 2026-10-29)
+Planning is complete: Imagine, Plan, orchestrator decisions, feasibility and blind spot are above,
+and they bind the executor. Execution is left to a fresh session at the author's request (the
+planning session's context was long). Resume with `/raid 1348 1356 1357`: wave 1 = 1348 + 1356,
+wave 2 = 1357 after 1356 merges. Phases 1-4 are done; start at Phase 5.
