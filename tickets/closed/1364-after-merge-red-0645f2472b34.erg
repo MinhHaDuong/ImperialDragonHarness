@@ -2,9 +2,12 @@
 Title: After-merge red on main 0645f2472b34: pytest-guard
 Created: 2026-10-29
 Author: merge-gate
+Closed: autoclosed — fixture fix
 
 --- log ---
 2026-10-29T23:38Z merge-gate created
+2026-10-29T23:40Z reviewer note cause: 1361's hollow-seat rule failed this test's bare-verdict fixture reports; deterministic, reproduced on 0645f247
+2026-10-29T23:40Z reviewer closed — autoclosed — fixture fix
 
 --- body ---
 ## Context
