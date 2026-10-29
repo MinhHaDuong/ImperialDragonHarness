@@ -30,6 +30,7 @@ drafts* below.
 | `VISION-original.md` | Original harness vision document |
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
+| `2026-10-29-memory-system-audit.md` | Audit of roar, hoard, brood and memory injection on Claude Code, Codex and Pi: accumulation causes measured on five hoards and PR #1975, read rates from transcripts, priced recommendations (scan scripts in the folder of the same name) |
 | `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
 | `2026-09-11-memory-implementation-plan.md` | V8 delivery plan: Markdown pilot, factual capture, separately invoked dreaming and four-runtime evidence |
 | `2026-09-24-rules-coherence-audit.md` | Harness ↔ project directive coherence audit of eleven repos: findings, in-flight PR check, ranked preconisations (tracker 0956) |
