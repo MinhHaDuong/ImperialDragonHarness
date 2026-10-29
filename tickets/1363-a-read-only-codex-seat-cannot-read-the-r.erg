@@ -13,3 +13,28 @@ Reported by DOIfetch's team lead (raid f9e483): a codex seat launched with `exec
 ## Exit criteria
 - [ ] A read-only codex seat launched by `gaze_seat.py` can read the review tree it is pointed at
 - [ ] A test or recorded smoke run shows the seat reading a file in the review tree under the read-only sandbox
+
+## Imagine (raid d2253c)
+- Premise check: git log since 2026-10-29 shows no commit on scripts/gaze_seat.py or the codex door in skills/route/routes.json (lines ~110-125). Premise not void, but not reproduced either. Probe 1: `codex exec -s read-only -m gpt-6-luna` run with cwd in a git worktree (this one) read STATE.md fine. Probe 2: cwd in a non-git scratch dir failed at once with "Not inside a trusted directory and --skip-git-repo-check was not specified". So the cause is not the sandbox root; candidates are the trust check (review tree not a git repo or not trusted, e.g. a detached/removed worktree, or a tree under a path codex does not treat as a repo) or a tree path outside cwd. Positive control for the failure is not yet in hand.
+- Why now: --require-cross-family gate on high-risk PRs yields no seat, so the gate blocks.
+- Simplest path: first reproduce with the real launcher (gaze_seat.py run --dry-run shows argv and cwd; then run for real on a worktree like the f9e483 one, capturing stderr). Likely fix is a door-level flag in the codex template, such as `-C <review-tree>` plus `--skip-git-repo-check`, or the sandbox read root, filled by build_command from a new value (values dict already supports placeholders). No new abstraction: edit the template in routes.json and, if needed, one value in gaze_seat.launch.
+- YAGNI: no per-runtime probing framework; one smoke test only.
+- D1: cause is unestablished; if reproduction shows an environmental cause (codex login, trust config in ~/.codex) rather than a launcher defect, the fix is documentation plus a NOT-RUN message, and exit criterion 1 needs the author's call.
+- D2: the smoke test needs a real codex call (a few thousand tokens, ChatGPT login); test-suite tests never launch real CLIs (test_gaze_seat.py header). Recommend a recorded smoke run in the ticket log (criterion 2 allows it) plus a rig test asserting the codex argv carries the fix.
+- Price: 1.5 coder-hours, about 10k tokens of codex spend. Not a monster; 2-3 files.
+
+## Plan (raid d2253c)
+- Step 1: run `gaze_seat.py run --dry-run` against a throwaway worktree for codex, and the real launch; capture stderr to identify the failure (trust check, path, or sandbox). Record the result in the ticket.
+- Step 2: first failing test in tests/test_gaze_seat.py near line 328 (test asserting codex argv): assert argv contains the chosen flag(s) and that cwd is the review tree. It would fail on the current template, and a wrong fix (flag in wrong position, before `exec`) fails the position assertion. Add a build_command test (line ~381) for the placeholder fill.
+- Step 3: edit skills/route/routes.json codex headless template (and its status note); touch scripts/gaze_seat.py only if a value must be injected (build_command ~line 125, launch ~line 395).
+- Step 4: smoke run: real codex seat reads a file in a review tree under read-only; paste output into the ticket log.
+- Dependencies: none of the listed tickets; PR #2013 does not touch these files. Possible overlap with any ticket editing routes.json (check 1346-1362 at merge).
+- Files: skills/route/routes.json, scripts/gaze_seat.py (maybe), tests/test_gaze_seat.py, tests/test_seat_runner.sh (maybe), tickets/1363-*.erg.
+
+## Orchestrator decisions (raid d2253c)
+- First reproduce through the real `gaze_seat.py` launch. If it does not reproduce, log the finding (codex refuses a non-git directory, reads a git worktree under read-only) with the evidence and land a regression test of the door argv; do not invent a fix.
+- D2: one recorded smoke run in the ticket log plus an argv rig test.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility WARN: the argv test is new (none at test_gaze_seat.py:328).
+- Blind spot: may be the cause of 1361's hollow seat; record the seat's stderr and timing in the smoke run. Add one codex/pi session-runtime fixture if the door path differs.

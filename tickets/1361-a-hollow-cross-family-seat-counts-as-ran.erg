@@ -13,3 +13,32 @@ Reported by DOIfetch (raid f9e483), PR #33: a cross-family seat (gpt-6-luna) ret
 ## Exit criteria
 - [ ] A seat report with no evidence of reading the diff (no cited file:line, no reasoning) is not counted as `ran` for coverage or `--require-cross-family`
 - [ ] A test feeds a hollow seat report and shows it does not satisfy the cross-family requirement
+
+## Imagine (raid d2253c)
+- Premise check: no commit since 2026-10-29 touches scripts/seat_clock.py, review_notes.py or tests/test_seat_clock.py. The gap is live. seat_clock._assess accepts any non-self report whose first line starts `worker:` and which has at least 2 non-blank lines (L195-208); identities() turns acceptance into `status: ran` (L283); review_notes.cross_family_seats (L847) counts that line. A `worker:` header plus `verdict: clear` therefore passes, which is the DOIfetch case. No objection.
+- Why now: the cross-family requirement (1326, 1287) is the high-risk gate; a hollow seat defeats it silently and costs real spend.
+- Simplest path: one content check in seat_clock, applied where `ran` is decided (identities), not in review_notes (it only sees seat lines, not report bodies) and not in the plan check (a hollow report should not turn the whole plan into FAIL). A non-self, non-`none` report is substantive when the body after the header holds a `path:line` citation or at least ~200 characters of text; otherwise its status is `failed`. Both consumers (coverage counting via attribution, `--require-cross-family`) then follow with no change to review_notes.py. No new helper or library needed.
+- YAGNI: no scoring, no model-based judging, no new status value, no change to the gate parser.
+- D1: threshold. A genuinely clean review has no finding to cite, so "citation required" would reject honest clean seats; proposed rule is citation OR length >= 200 chars. Alternative: require the panel.md report contract to ask clean seats for a `checked:` line listing files read (stricter, edits panel.md, seat prompts).
+- D2: status of a hollow seat: `failed` (existing vocabulary, attribution_record accepts only ran/failed/skipped) versus a new `hollow`. Proposed: `failed`; the reason is not recorded in the seat line.
+- D3: self and `none` (script) items are exempt; only headless/worker seats are checked. Proposed yes.
+- Existing tests use one-line bodies (`verdict: clear`, test_seat_clock.py L295-325, test_review_notes fixtures use seat lines directly); those headless fixtures must be lengthened, which is a visible side effect.
+- Price: about 1.5 coder-hours, 3 files. Not a monster.
+
+## Plan (raid d2253c)
+- 1. tests/test_seat_clock.py: add test_identities_mark_a_hollow_headless_report_failed. Panel with a headless codex seat whose report is the header plus `verdict: clear` expects `status: failed`; a second seat with a header plus a `src/x.py:42` citation, and a third with a 200+ char clean-reasoning body, expect `ran`. It fails on the current code (all three say ran), so it catches an implementation that does nothing, and the paired positives catch one that rejects everything.
+- 2. tests/test_review_notes_gate.py: add an end-to-end test that feeds seat_clock.identities output for a hollow cross-family panel through the generated seat lines into rn.gate_state(producer_family=...) and asserts ready is False with "no cross-family seat". This is the ticket's second exit criterion; it fails today because the hollow seat counts.
+- 3. scripts/seat_clock.py: add a small `substantive(report_text)` helper beside worker_header (L226) and use it in identities (L282-283): status is ran only when name in accepted and (is_self or planned none or substantive). Update the identities docstring.
+- 4. Fix existing fixtures in tests/test_seat_clock.py (L295-325, `headless`, `header` strings) to carry a citation, so they stay valid positives.
+- 5. skills/gaze/references/panel.md near L41 and L108: one sentence stating a seat report with no citation and no reasoning is counted as failed. Run make skills-catalog only if frontmatter changes (it does not).
+- Gate: run tests/test_seat_clock.py, test_review_notes_gate.py, test_attribution_seats.py, and the scoped gate.
+- Dependencies: none of 1346 1349 1355 1358 1360 1362 1363 are known to touch seat_clock.py; check 1362/1363 titles for gaze_seat or panel.md overlap. PR #2013 (1357) edits gaze_close.py and gaze_setup.py, not these files; no conflict expected.
+- Files touched: scripts/seat_clock.py, tests/test_seat_clock.py, tests/test_review_notes_gate.py, skills/gaze/references/panel.md, tickets/1361-*.erg.
+
+## Orchestrator decisions (raid d2253c)
+- D1: a headless non-self seat counts as ran only with a path:line citation or at least 200 characters of body; else `failed`. D2: status `failed`, no new value. D3: self and script seats exempt.
+- Wave 2, after 1360 merges (same function).
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS; headless fixtures near test_seat_clock.py:188.
+- Blind spot: the hollow DOIfetch seat (10 s, no reasoning) may be the 1363 failure (a codex seat that could not read the tree). Check the 1361 rule against the actual PR #33 seat report before fixing; 1363 lands first. Add one codex/pi session-runtime fixture.

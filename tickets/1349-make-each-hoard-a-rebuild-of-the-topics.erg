@@ -58,3 +58,32 @@ Drain requirements:
 - A time-limited note gets a revisit date (for example, the main-guard watch ends 2026-11-03).
 - A drained native note is emptied, or its index points to the department page; pick one, and
   measure with 1346 that Claude Code then reads it.
+
+## Imagine (raid d2253c)
+- Premise check: the skill was renamed hoard to smelt on 2026-10-29 (a1dbb4b8): the ticket's "hoard skill and HOARD.md" are now skills/smelt/SKILL.md and memory/SMELT.md (prompt v8-r3, 1348 landed caps and the topic job, af95a78f). No contrary change: SMELT.md still says "reads entries not yet covered" and "Consolidate" prunes/merges in place, so the delta behaviour the ticket targets is intact. PREMISE OBJECTION: no. Wording in the ticket is stale only.
+- Current state: 11 topics, several far over 4 KB (raid-review-and-merge 21 KB, runtime-observations 9.4 KB); 1348 set caps but did not shrink pages. A rebuild is the first thing that makes them comply.
+- Simplest path: edit the prompt and skill so the run re-derives each topic from prior topic plus journal (new SMELT.md section "Rebuild", revision v8-r4), add a "Net change" report line (bytes before/after per topic, reason if the store grows), state that pass two checks each dropped caveat against the previous page. Extend scripts/memory_sizes.py minimally to print before/after (git ref) so the net figure is measured, not hand-derived.
+- YAGNI: skip the native-store drain (input design section, 480k tokens, mapping aliases); it is a separate scope and not in Scope or Exit criteria. Named narrowing: criteria untouched, drain is out of this PR.
+- D1: criterion 2 needs a real smelt run on this repo plus author acceptance (real spend, author-gated). The raid can deliver criterion 1 and launch the run, but cannot close the ticket. Recommend: PR closes criterion 1 only, run separate.
+- D2: the Commission page (pinned rulings never cut) and the pinned tie-break: rebuild must carry pinned lines verbatim; confirm the net-change report counts them.
+- D3: bump the prompt revision to v8-r4 or keep v8-r3; tests/test_smelt_migrate.py and test_memory_v8_pilot.py pin v8-r3 (grep to confirm); recommend v8-r4 and update the pins.
+- D4: do net-change numbers belong in the helper or only in the report? Recommend the helper (one command, reproducible).
+- Price: 2-3 coder-hours for the doc, helper and tests; the rebuild run about 1 hour of agent time, roughly 480k tokens only if the drain were included (it is not). Not a monster: 4-6 files, no shared symbol, but one sign-off unit needs author acceptance.
+
+## Plan (raid d2253c)
+- 1. tests first: add to tests/test_dream_v8.py a test that SMELT.md has a "Rebuild" section stating topics are re-derived and a "Net change" report line, and that SKILL.md says the same (fails today: neither text exists; a wrong implementation that only touches one file is caught by checking both). Add a scripts/memory_sizes.py test comparing two topic dirs: fixture page grows 3000 to 5000 bytes, expects net +2000 and a reason-required flag; a wrong implementation that sums only the after side fails.
+- 2. memory/SMELT.md: new "Rebuild" section after Read (~line 38) and "Net change" item in Report (~line 150); revision line 3 to v8-r4; change "not yet covered" wording in Read item 1 so topics are rebuilt from the prior page plus all journal evidence, accepted reports stay as ledger. Second pass line: re-examine each caveat of the previous page, none dropped without a Retired line.
+- 3. skills/smelt/SKILL.md: Procedure step 2 (~line 107) say rebuild not append; step 3 add the net-change report line; Three main functions unchanged.
+- 4. scripts/memory_sizes.py: add --before REF/dir net-change output; main(topics_dir) signature kept.
+- 5. Update revision pins in tests/test_smelt_migrate.py and tests/test_memory_v8_pilot.py if D3 = v8-r4; run make skills-catalog if the description changes (it should not).
+- 6. After merge, run /smelt on this repo (criterion 2), author accepts.
+- Dependencies: none on 1346, 1355, 1358, 1360-1363; 1351 (brood, lists rulings) reads Commission but does not conflict; PR #2013 files are disjoint.
+- Files touched: memory/SMELT.md, skills/smelt/SKILL.md, scripts/memory_sizes.py, tests/test_dream_v8.py, tests/test_smelt_migrate.py, tests/test_memory_v8_pilot.py, tests/test_memory_sizes.py (new or existing), tickets/1349 file.
+
+## Orchestrator decisions (raid d2253c)
+- The PR delivers exit criterion 1 only and does not close the ticket; criterion 2 (a real harness smelt run as a rebuild, accepted by the author) stays open.
+- D2 yes: pinned Commission rulings carried verbatim and counted in the net change. D3 yes: bump to v8-r4, update the pins. D4 yes: the helper measures the net change.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility PASS; anchors drift (Read ends near SMELT.md:32, Procedure step 2 at :114).
+- Blind spot: memory/journal is about 1.1 MB, about 275k tokens (derived at 4 bytes/token), above the 256K guard. The rebuild procedure must batch by department (journal episodes per topic, measured) so one run never holds the whole journal; measure bytes per topic before writing the prompt.

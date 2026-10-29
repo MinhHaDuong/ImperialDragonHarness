@@ -13,3 +13,29 @@ Reported by DOIfetch (raid f9e483), 4 occurrences (PRs #30, #33 twice, #39): `ra
 ## Exit criteria
 - [ ] A review request made before a rebase, or by a nested gaze session, leaves its review-head ref where `raid_land.py` reads it (or `raid_land.py` restores it from notes when the commit exists)
 - [ ] A test reproduces the rebase case and lands without manual `keep-head`
+
+## Imagine (raid d2253c)
+- Premise check: no commit touched scripts/review_notes.py or raid_land.py since 2026-10-29 (git log --since empty); tip is 6bc36e59. Premise stands, no objection.
+- Cause not established. Reading the code: keep_head runs inside request() (review_notes.py:688) in whatever repo `cwd` names; refs/review-heads is repo-global across worktrees, so a plain rebase cannot drop it. Candidates: a request written by a nested gaze in a different clone or against another git dir (gaze_setup.reviewed_request passes str(primary)); a request entry arriving by notes refresh while its head ref exists only on the remote or on another host (_check_heads fetches heads, but only those the remote has). Reproduce before choosing.
+- Simplest path to the exit criteria: the ticket allows the restore route. In push_for_landing (review_notes.py:590-596), when the landing review's head ref is missing locally, try fetching it from the remote, then fall back to keep_head(cwd, rid, rq, entry["head"]) if `git cat-file -e <head>` succeeds; refuse only when the commit is truly gone. The request entry is the authority on the head, keep_head is create-once so it cannot move anything. This is what the manual repair did.
+- YAGNI: no new subcommand, no change to request() unless the repro shows it writes the ref in the wrong repo.
+- D1: restore silently or with a warning in the returned refs/stderr? Recommend a stderr note, still landing.
+- D2: if the repro shows the writer side is at fault (wrong cwd), fix that too, or only the landing-side restore? Recommend landing-side first, writer fix only if reproduced cheaply; narrowing to the restore route is a subset of criterion 1.
+- D3: restore only for the landing review, or all requests of the branch? Existing code skips non-landing ones; keep that.
+- Price: about 1.5 coder-hours. Not a monster: 2 files, no symbol dependants beyond raid_land.
+
+## Plan (raid d2253c)
+- 1. tests/test_raid_land_local.py near line 277: add test_landing_restores_a_missing_review_head_from_notes. Build the existing landing fixture (line 251), open a review, then rebase the branch (new head), request again, then delete refs/review-heads/<rv>/<rq> with update-ref -d, merge via rl. Fails today with the "missing locally" refusal; a stub that skips the check would instead land with no ref pushed, so assert the ref exists locally and on origin afterwards and equals the request head.
+- 2. Negative control in the same file: the head commit unreachable (gc after deleting the ref and pruning with expire=now) still refuses with the existing message, so the restore does not hide lost evidence.
+- 3. tests/test_review_notes.py: unit test for push_for_landing with a missing ref and an existing commit, asserting the pushed list contains the ref.
+- 4. Edit scripts/review_notes.py push_for_landing (lines 590-596) as in Imagine; update its docstring and the header text at line 52. Drop the stray comment at line 575 if misplaced.
+- 5. If the repro in step 1 shows the ref written in the wrong repo, add the fix in gaze_setup.reviewed_request (line ~120) with a test in tests/test_gaze_branch.py; otherwise leave.
+- 6. skills/merge/SKILL.md line 160: one sentence that a missing landing head with a surviving commit is restored from the notes.
+- Dependencies: none of the listed open tickets edit review_notes.py or raid_land.py; PR #2013 touches gaze_setup.py, so step 5 (conditional) can conflict with 1357. Verify-gate SKILL.md is also touched by 1357, not by this plan.
+- Files: scripts/review_notes.py, tests/test_raid_land_local.py, tests/test_review_notes.py, skills/merge/SKILL.md; conditionally scripts/gaze_setup.py, tests/test_gaze_branch.py.
+
+## Orchestrator decisions (raid d2253c)
+- D1: restore with a stderr note. D2: restore only, no writer-side change unless the reproduction implicates it (then name it, do not touch gaze_setup.py while PR #2013 is open). D3: the landing review's head only.
+
+## Feasibility and blind spot (raid d2253c)
+- Feasibility WARN: conditional step on gaze_setup.py collides with PR #2013; keep to review_notes.py.
