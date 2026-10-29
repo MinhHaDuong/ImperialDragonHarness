@@ -1,11 +1,12 @@
 %erg 0.1
-Title: Harness doctor routine checkup: size, complexity and timings at every visit
+Title: Harness doctor routine checkup: KPIs, size, complexity and timings at every visit
 Created: 2026-10-29
 Author: claude
 
 --- log ---
 2026-10-29T08:56Z claude created
 2026-10-29T10:30Z claude respecified Author correction: not a one-off text cut but a routine measurement offered at every visit
+2026-10-29T11:10Z claude note Author: think KPIs (time per ticket), read from what monitoring already stores
 
 --- body ---
 ## Context
@@ -16,13 +17,38 @@ Author request, 2026-10-29, corrected the same day. The first draft read
 checkup**: on each visit the doctor offers to take the harness's vital signs,
 so that a weight-watch discussion rests on measured trends, not impressions.
 
-Existing probes to reuse, not duplicate: `scripts/skill_text_lint.py` (body
-length, long blocks), `scripts/gaze_wall_time.py`, `scripts/trace-wall-time.py`.
+Second author note, same day: think KPIs, starting with time per ticket. The
+monitoring already stores what a quick pulse check and basic follow-up need;
+the checkup reads it, it adds no instrumentation.
+
+Existing stores and readers to reuse, not duplicate:
+
+- Time per ticket: `scripts/slow_tickets.py` defines solve time once (sum of
+  the `duration:` lines gaze, verify-gate and merge post on the PR; else PR
+  open-to-merge, an upper bound; else unknown).
+- Cost per ticket: `scripts/trace-stats.py` (tokens, USD per session) joined
+  to PRs by `scripts/trace-pr-join.py`.
+- Review outcome: REROLL / ESCALATE verdicts (`trace-pr-join.py`, review notes).
+- Main health: `idh/after-merge.log`, `idh/main-journal.jsonl`.
+- Throughput and backlog: ticket `Created:` / `Closed:` headers, `/dashboard`.
+- Size and timings: `scripts/skill_text_lint.py` (body length, long blocks),
+  `scripts/gaze_wall_time.py`, `scripts/trace-wall-time.py`.
 
 ## Intent
 
 Add a checkup to the visit menu of `skills/harness-doctor/SKILL.md`, offered
-at the start of every visit, which measures and reports:
+at the start of every visit, in two panels.
+
+**KPIs (pulse)**, over the window since the previous visit:
+
+- **Time per ticket**: median and p90 solve time, share recorded vs derived vs
+  unknown, the slowest tickets named.
+- **Cost per ticket**: median and total USD and tokens.
+- **Throughput**: tickets closed, opened, net backlog change.
+- **First-pass quality**: share of PRs merged without REROLL or ESCALATE;
+  red after-merge runs on main.
+
+**Vital signs (weight)**:
 
 - **Length**: lines (and words or tokens) of every `skills/*/SKILL.md`, its
   references, the resident rules, and every script under `scripts/`.
@@ -39,7 +65,8 @@ discussion with the author that follows, not part of the checkup.
 ## Exit criteria
 
 - [ ] The visit menu offers the checkup at every visit; one command produces it
-- [ ] Report covers length, complexity and main timings, with the delta to the previous visit
+- [ ] Report covers the KPIs (time and cost per ticket, throughput, first-pass quality) and length, complexity and main timings, each with the delta to the previous visit
+- [ ] Every figure comes from an existing store; a KPI whose store is missing or unreadable is reported as a gap, never as zero
 - [ ] Figures are recorded in the visit journal entry so the next visit can compare
 - [ ] A first run on origin/main is attached to the PR as the baseline
 - [ ] Cost stated in the menu row (seconds, no model usage) and a positive control fires
