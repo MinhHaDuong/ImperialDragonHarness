@@ -86,7 +86,8 @@ def test_billed_cost_gap_when_key_is_absent():
     assert m['value'] is None and 'not held' in m['gap']
 
 
-def test_record_shape_and_movers(tmp_path):
+def test_record_shape_and_movers(tmp_path, monkeypatch):
+    monkeypatch.setattr(hc, '_git', lambda root, *a: 'abc\n')  # fast tier: no git subprocess
     rec = hc.build_record({'a': {'value': 2, 'unit': 'n', 'source': 's'}}, hc.parse_ts('2026-10-01T00:00:00Z'),
                           hc.parse_ts('2026-10-08T00:00:00Z'), root=tmp_path)
     assert set(rec) == {'schema', 'ts', 'host', 'commit', 'window', 'metrics'}
