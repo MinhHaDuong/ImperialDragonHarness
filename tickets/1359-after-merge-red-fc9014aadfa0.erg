@@ -1,0 +1,27 @@
+%erg 0.1
+Title: After-merge red on main fc9014aadfa0: pytest-guard
+Created: 2026-10-29
+Author: merge-gate
+
+--- log ---
+2026-10-29T22:20Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: fc9014aadfa006ded21aa2e1d0ef4daaa0afa75b
+Failing checks: pytest-guard
+Last green after-merge tip: 5b2553990cc1e70cfb403e446a68436dd799e3aa
+Merges since (first parent, newest first):
+- fc9014aadfa0 Merge pull request #2010 from MinhHaDuong/t1344-doifetch-v020
+
+Failed tests (check, test id):
+- pytest-guard tests/test_projection_validator.py::test_negative_control_healthy_home_launches_unchanged[codex]
+- pytest-guard tests/test_projection_validator.py::test_negative_control_healthy_home_launches_unchanged[pi]
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
