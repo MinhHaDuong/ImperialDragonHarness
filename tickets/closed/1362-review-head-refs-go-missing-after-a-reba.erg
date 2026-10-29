@@ -2,9 +2,11 @@
 Title: Review-head refs go missing after a rebase or nested gaze
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2019
 
 --- log ---
 2026-10-29T22:20Z reviewer created
+2026-10-29T23:28Z reviewer closed — autoclosed — PR #2019
 
 --- body ---
 ## Context
