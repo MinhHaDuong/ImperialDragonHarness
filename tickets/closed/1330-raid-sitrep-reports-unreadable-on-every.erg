@@ -2,9 +2,11 @@
 Title: Raid sitrep reports UNREADABLE on every raid without a time budget; raid Phase 7 paraphrases the merge recipe
 Created: 2026-10-29
 Author: reviewer
+Closed: fixed by PR #1942: deadline= optional in raid-sitrep (elapsed shown, exit 0), gate_max read independently; raid Phase 7 points to the merge recipe
 
 --- log ---
 2026-10-29T07:49Z reviewer created
+2026-10-29T07:55Z reviewer closed — fixed by PR #1942: deadline= optional in raid-sitrep (elapsed shown, exit 0), gate_max read independently; raid Phase 7 points to the merge recipe
 
 --- body ---
 ## Context
