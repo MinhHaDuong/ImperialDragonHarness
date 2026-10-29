@@ -148,3 +148,6 @@ Use in this ticket:
 - Action 2: resolve D1 by a doudou run if reachable, else record the limit in the log.
 - Action 3: leave exit criterion 2 to 1354; do not tick it.
 - Dependencies: 1353 closed; 1354 needs-human; 1349 (departments) feeds trial arm 4, not this ticket's closure. No overlap with 1355, 1358, 1360 to 1363, nor with PR #2013 files.
+
+## Orchestrator decisions (raid d2253c)
+- Not executed in this raid: the census child 1353 is closed and the trial child 1354 waits on the author (needs-human). D1 (doudou census) and D3 (drafting the 1354 priced plan) go to the author's queue.

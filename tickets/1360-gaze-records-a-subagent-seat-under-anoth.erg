@@ -30,3 +30,7 @@ Reported by the DOIfetch session (raid f9e483), DOIfetch PR #33 at 24a2ef5: a ga
 - Step 5, run tests/test_seat_clock.py, tests/test_gaze_seat.py and the attribution tests that parse seat lines (scripts/attribution_record.py consumes the line).
 - Dependencies: none on the listed tickets; PR #2013 does not touch seat_clock.py. 1346/1349/1355/1358/1361/1362/1363 not known to touch it; recheck gaze_setup overlap at merge.
 - Files touched: scripts/seat_clock.py, tests/test_seat_clock.py, possibly skills/gaze/references/panel.md.
+
+## Orchestrator decisions (raid d2253c)
+- D1: record the real family and add a deviation line on a label mismatch. D2: `unconfirmed` when the door gives no model prefix.
+- Lands before 1361 (both edit `identities()` in scripts/seat_clock.py).

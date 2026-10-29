@@ -30,3 +30,7 @@ Reported by DOIfetch's team lead (raid f9e483): a codex seat launched with `exec
 - Step 4: smoke run: real codex seat reads a file in a review tree under read-only; paste output into the ticket log.
 - Dependencies: none of the listed tickets; PR #2013 does not touch these files. Possible overlap with any ticket editing routes.json (check 1346-1362 at merge).
 - Files: skills/route/routes.json, scripts/gaze_seat.py (maybe), tests/test_gaze_seat.py, tests/test_seat_runner.sh (maybe), tickets/1363-*.erg.
+
+## Orchestrator decisions (raid d2253c)
+- First reproduce through the real `gaze_seat.py` launch. If it does not reproduce, log the finding (codex refuses a non-git directory, reads a git worktree under read-only) with the evidence and land a regression test of the door argv; do not invent a fix.
+- D2: one recorded smoke run in the ticket log plus an argv rig test.

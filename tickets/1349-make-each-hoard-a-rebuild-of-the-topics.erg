@@ -79,3 +79,7 @@ Drain requirements:
 - 6. After merge, run /smelt on this repo (criterion 2), author accepts.
 - Dependencies: none on 1346, 1355, 1358, 1360-1363; 1351 (brood, lists rulings) reads Commission but does not conflict; PR #2013 files are disjoint.
 - Files touched: memory/SMELT.md, skills/smelt/SKILL.md, scripts/memory_sizes.py, tests/test_dream_v8.py, tests/test_smelt_migrate.py, tests/test_memory_v8_pilot.py, tests/test_memory_sizes.py (new or existing), tickets/1349 file.
+
+## Orchestrator decisions (raid d2253c)
+- The PR delivers exit criterion 1 only and does not close the ticket; criterion 2 (a real harness smelt run as a rebuild, accepted by the author) stays open.
+- D2 yes: pinned Commission rulings carried verbatim and counted in the net change. D3 yes: bump to v8-r4, update the pins. D4 yes: the helper measures the net change.

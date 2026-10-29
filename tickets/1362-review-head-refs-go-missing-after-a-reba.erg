@@ -33,3 +33,6 @@ Reported by DOIfetch (raid f9e483), 4 occurrences (PRs #30, #33 twice, #39): `ra
 - 6. skills/merge/SKILL.md line 160: one sentence that a missing landing head with a surviving commit is restored from the notes.
 - Dependencies: none of the listed open tickets edit review_notes.py or raid_land.py; PR #2013 touches gaze_setup.py, so step 5 (conditional) can conflict with 1357. Verify-gate SKILL.md is also touched by 1357, not by this plan.
 - Files: scripts/review_notes.py, tests/test_raid_land_local.py, tests/test_review_notes.py, skills/merge/SKILL.md; conditionally scripts/gaze_setup.py, tests/test_gaze_branch.py.
+
+## Orchestrator decisions (raid d2253c)
+- D1: restore with a stderr note. D2: restore only, no writer-side change unless the reproduction implicates it (then name it, do not touch gaze_setup.py while PR #2013 is open). D3: the landing review's head only.

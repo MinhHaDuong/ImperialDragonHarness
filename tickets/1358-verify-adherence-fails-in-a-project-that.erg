@@ -34,3 +34,7 @@ should degrade (`skip` with a reason) rather than fail where a prerequisite is m
 - Run make skills-catalog only if the description changes (it will not), then make lint and check-fast.
 - Dependencies: none among the open tickets; PR #2013 touches different files.
 - Files touched: skills/verify-adherence/SKILL.md, tests/test_verify_adherence_no_runner.py, tickets/1358-verify-adherence-fails-in-a-project-that.erg.
+
+## Orchestrator decisions (raid d2253c)
+- The ticket itself (2026-10-29) asks for the skip, so it carries the author's intent to revise the 0953 contract; only the no-runner-declared case changes.
+- D2: a `mechanical_runner: skipped (<reason>)` key, verdict PASS. D3: phase 3 semantic review still runs. A declared but unrunnable runner stays ESCALATE.

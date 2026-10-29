@@ -34,3 +34,7 @@ Reported by DOIfetch (raid f9e483), PR #33: a cross-family seat (gpt-6-luna) ret
 - Gate: run tests/test_seat_clock.py, test_review_notes_gate.py, test_attribution_seats.py, and the scoped gate.
 - Dependencies: none of 1346 1349 1355 1358 1360 1362 1363 are known to touch seat_clock.py; check 1362/1363 titles for gaze_seat or panel.md overlap. PR #2013 (1357) edits gaze_close.py and gaze_setup.py, not these files; no conflict expected.
 - Files touched: scripts/seat_clock.py, tests/test_seat_clock.py, tests/test_review_notes_gate.py, skills/gaze/references/panel.md, tickets/1361-*.erg.
+
+## Orchestrator decisions (raid d2253c)
+- D1: a headless non-self seat counts as ran only with a path:line citation or at least 200 characters of body; else `failed`. D2: status `failed`, no new value. D3: self and script seats exempt.
+- Wave 2, after 1360 merges (same function).
