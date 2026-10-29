@@ -26,7 +26,8 @@ seat mandatory) waits on a longer window.
 
 - Roar step 6 names the triggers (any contract a reader or agent relies on)
   and the documents, and asks for a tree-wide grep of each changed name.
-  Agnostic wording: roar runs in every project.
+  Agnostic wording: roar runs in every project. Neighbouring duties are named
+  out of scope with a pointer, never restated (author, 2026-10-29).
 - A mechanical check, `tests/test_root_doc_paths.py` under `lint` (so in the
   merge gate's `before` set): every repo path a root `*.md` names in backticks
   or a link exists, and every `make <target>` it names is a Makefile target.
