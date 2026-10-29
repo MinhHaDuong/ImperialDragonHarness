@@ -36,7 +36,8 @@ runner passed over, but not one it started on and crashed, ticket 1293) and runs
 run is a finding. So is a gap tip committed more than --stale-minutes ago
 (ticket 1265): hooks/reference-transaction starts the runner on every move of
 main, so a tip that old without a record means the runner never started or
-died.
+died. A repo without an executable reference-transaction hook (ticket 1355)
+gets one advisory line naming that cause; the exit status is unchanged.
 
 Never run in the merge path: run by hand, or from the end-of-day wrap-up with
 --summary (one line).
@@ -180,6 +181,20 @@ def after_audit(tip: str, ref: str, max_count: int, summary: bool, stale_minutes
     return lines, code or int(bool(stale))
 
 
+def hook_installed() -> bool:
+    """Whether an executable reference-transaction hook is active here (ticket 1355).
+
+    `--git-path hooks` already honours core.hooksPath, so one lookup covers the
+    configured directory and <common-dir>/hooks alike.
+    """
+    hooks = mg.git("rev-parse", "--path-format=absolute", "--git-path", "hooks").stdout.strip()
+    return os.access(os.path.join(hooks, "reference-transaction"), os.X_OK) and os.path.isfile(
+        os.path.join(hooks, "reference-transaction"))
+
+
+NO_HOOK = "no reference-transaction hook installed, the after-merge runner never starts on a main move"
+
+
 def _quiet_run(remote: str, branch: str, actor: str, command: str) -> int:
     """run_after with its own text and its checks' output kept off fds 1 and 2 (the summary is one line).
 
@@ -260,6 +275,11 @@ def run(args: argparse.Namespace) -> int:
     after_code = 0
     if args.after:
         lines, after_code = after_audit(tip, args.ref, args.max_count, args.summary, args.stale_minutes)
+        if not hook_installed():  # advisory: the exit status is unchanged (ticket 1355)
+            if args.summary:
+                lines[-1] += f"; {NO_HOOK}"
+            else:
+                lines.append(f"after: {NO_HOOK}")
         text += "; " + lines[-1] if args.summary else "\n" + "\n".join(lines)
     sys.stdout.write(text + "\n")
     if cut:
