@@ -9,14 +9,9 @@ projects, machines and runtimes.
 
 ## Current priorities
 
-| Workstream | Next step | Completion evidence |
-|---|---|---|
-| Local merge gate — 1045 | Settle the open trust and execution decisions, then implement the local gate | Revision-bound check records, enforced merge checks and a forge-outage rehearsal; full criteria in the ticket |
-| Review orchestration — 1100 | File the planned children before implementation; move review planning into Hunt and consolidate review entry through Gaze | Reuse of valid review evidence, rejection of stale proof, updated callers and integration review |
-| Bounded review — 1099 | After 1100, bound every review phase | Review phases end within their declared budgets; full criteria in the ticket |
-
-These are the three open tickets as of 2026-10-19. Use `erg ready tickets/`
-and `erg ls tickets/` for the live queue.
+The three workstreams listed here on 2026-10-19 (1045 local merge gate, 1100
+review orchestration, 1099 bounded review) are closed. No open workstream is
+named. Use `erg ready tickets/` and `erg ls tickets/` for the live queue.
 
 ## Next: testing subsystem
 

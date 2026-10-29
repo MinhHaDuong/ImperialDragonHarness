@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-28
+Last updated: 2026-10-29
 
 Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 
@@ -16,3 +16,4 @@ Forge-less review (tracker 1252, closed 2026-10-28 after integration review PASS
 F1 review evidence on notes (tracker 1298; children 1299, 1300, 1301): gaze's answer and verify-gate's verdict live in `refs/notes/review` for PR units too, written locally and pushed at landing; the PR comment is a one-line pointer (`/gaze review on notes: <id>, verdict <V>`, `/verify-gate round=<n> verdict=<V> ...`), best-effort. Readers (verify-gate, raid polling, `attribution_record.py --seats-pr`, roar capture) read notes; merged PRs gazed before the switch keep their comments as read-only history, open ones are re-gazed. Web sessions stay outcome B (read, relay publish; entries leave by export/import).
 Raid 2026-10-27b: gaze and verify-gate run `scripts/touched-tests.py` (1283); after-merge runner reports a stale venv as `environment` (1288) and builds the forge only on red; main_sweep lists crashed-on tips (1293); headless seats declare a reach line (1290); attribution writer lines append before reviewers (1286). Gaze cross-family default (1287, PR #1836; no further normaliser widening) and stopguard measure (1294, PR #1832) merged 2026-10-27.
 Model-service transmission authorization now prints in every session's start context (PR #1783); whether Codex's managed approval reviewer reads it is untested.
+Doc propagation (1333, PR #1945): roar step 6 names its contracts and documents, `tests/test_root_doc_paths.py` checks root-doc paths and make targets, lair step 10 refreshes ROADMAP facts. Next: harness-doctor weight loss (1334), then a whole-docs visit lair suggests (1335, blocked by 1334).
