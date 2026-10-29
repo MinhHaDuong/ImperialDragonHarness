@@ -120,7 +120,7 @@ After the writing run's migration succeeds, continue sequentially:
    delete journal entries. Do not propose rules.
 3. Write a report in `memory/smelts/` listing sources and revisions, changes,
    the net change in bytes per page and in total
-   (`scripts/memory_sizes.py --before <ref>`, growth explained), unresolved
+   (the size helper named in `memory/SMELT.md` § Rebuild; growth explained), unresolved
    questions, runtime/model and prompt revision. The second pass checks that
    no caveat of a previous page was dropped without a Retired line. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
