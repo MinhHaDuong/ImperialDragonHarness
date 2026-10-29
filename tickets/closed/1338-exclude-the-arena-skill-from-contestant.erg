@@ -2,10 +2,12 @@
 Title: Exclude the arena skill from contestant pins
 Created: 2026-10-29
 Author: claude
+Closed: Misplaced: moved to arena ticket 1178 (pin skills source), which carries the open question; the idh-install retire step is dropped, the stray link being gone.
 
 --- log ---
 2026-10-29T11:38Z claude created
 2026-10-29T13:05Z claude scope Reframed: stray link already gone; no exclusion guard; pin-source question moved to the arena repo.
+2026-10-29T15:21Z reviewer closed — Misplaced: moved to arena ticket 1178 (pin skills source), which carries the open question; the idh-install retire step is dropped, the stray link being gone.
 
 --- body ---
 ## Context
