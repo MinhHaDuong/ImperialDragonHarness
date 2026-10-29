@@ -1,0 +1,15 @@
+%erg 0.1
+Title: Gaze records a subagent seat under another family's label
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T22:20Z reviewer created
+
+--- body ---
+## Context
+Reported by the DOIfetch session (raid f9e483), DOIfetch PR #33 at 24a2ef5: a gaze seat labelled `xseat gpt-6.1-sol (OpenAI)` ran as `runtime=claude-code, route=subagent`, i.e. an Anthropic subagent recorded under an OpenAI label. The gate's `--require-cross-family` caught it, but the review record claimed an independence it did not have (corrupts review evidence). Positive control from the reporter: gaze from the interface session with `gaze_seat.py --runtime codex` recorded `runtime=codex · family=openai`. Cause not yet established (plan label vs launch door).
+
+## Exit criteria
+- [ ] A seat's recorded family is derived from the runtime/door that actually ran it, never from the plan label
+- [ ] A test launches a seat planned as another family through the subagent door and shows the record names the real family (or the launch is refused)

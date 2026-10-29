@@ -1,0 +1,15 @@
+%erg 0.1
+Title: A hollow cross-family seat counts as ran
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T22:20Z reviewer created
+
+--- body ---
+## Context
+Reported by DOIfetch (raid f9e483), PR #33: a cross-family seat (gpt-6-luna) returned "no verified findings" in about 10 s with no reasoning and was counted `status: ran`. A direct `codex exec -m gpt-6.1-sol` read of the same diff found 4 real defects (Proxy-Authorization kept on redirect, uncapped redirect body, multi-member gzip truncation, default-port origin comparison). A hollow seat satisfies the cross-family requirement while reviewing nothing.
+
+## Exit criteria
+- [ ] A seat report with no evidence of reading the diff (no cited file:line, no reasoning) is not counted as `ran` for coverage or `--require-cross-family`
+- [ ] A test feeds a hollow seat report and shows it does not satisfy the cross-family requirement
