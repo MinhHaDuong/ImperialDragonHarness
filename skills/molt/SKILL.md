@@ -71,7 +71,7 @@ Run full repo housekeeping and act on every finding.
    sweep's direct mutation. A stale `erg` on `PATH` is the operator's to
    reinstall; the sweep does not read it while `tickets/erg` exists.
 
-1. **Git phase.** Run `"$IDH_ROOT/scripts/housekeeping-git.sh"` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
+1. **Git phase.** Run `"$IDH_ROOT/scripts/housekeeping-git.sh"`, then create the run's own worktree; the primary checkout stays on `main` for every parallel session and is never switched (`rules/git.md`). Use hunt's recipe (`skills/hunt/SKILL.md` § Worktree) with the branch `housekeeping-$(date -u +%Y%m%d)` cut from `origin/main`, the lock reason `molt housekeeping (pid <PPID>)`, and the path printed as `$W`; `cd "$W"` and register it with `worktree-tmp-guard.py`. Note `$W`: every later step runs in it, with absolute paths and `git -C "$W"`, and all commits land on that branch. Step 0 ran before this lock exists, and step 1.5 skips locked worktrees, so the run never GCs itself.
 
 1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of
    dead trees, never an active session's. Remove any registered worktree on an
@@ -185,7 +185,7 @@ Run full repo housekeeping and act on every finding.
    ```
 
    The script closes, then stages the closed file in one process. If it fails,
-   stop the sweep and report the error; do not continue to archive or commit its
+   stop the sweep (go to step 7 to release the worktree) and report the error; do not continue to archive or commit its
    partial edits. Exit 2 means `tickets/` or the erg binary is missing: skip
    the ticket sweep for this repository.
 
@@ -250,11 +250,17 @@ Run full repo housekeeping and act on every finding.
 
 5. **Log `skip` items.** One line each, no action.
 
-6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere enable auto-merge so it lands after CI. If no commits were created, skip the merge request; step 7 removes the worktree.
 
-7. **Report.** Summarize what you did, then propose: "Surface remaining nits?"
+7. **Report and release the worktree.** This step runs on **every** exit after step 1: the normal path, step 2.5's stop-and-report, and a failure in any other step. `worktree-gc.sh` never reclaims a locked worktree on an unpushed branch, so a worktree left without commits hangs until someone removes it by hand. Before reporting:
+
+   - **No commits on the branch** (`git rev-list --count origin/main..HEAD` is 0): after step 2.5's stop, first discard its partial ticket edits with `git -C "$W" reset --hard` (they are this run's own); any other dirty tree falls under the last bullet. From the primary checkout, `git worktree unlock "$W" && git worktree remove "$W" && git branch -d housekeeping-<date>`. If the sweep ran to the end, also record it for yawn check 8, which dates housekeeping from `git log` and sees no commit here: `touch "$(git rev-parse --path-format=absolute --git-common-dir)/molt-last-run"`. A stopped or crashed sweep records nothing: it did not finish.
+   - **Commits pushed with a merge request open:** keep the worktree and branch; name both in the report as pending until the merge, when roar cleans them.
+   - **Dirty tree not explained above:** keep it and name it.
+
+   Then summarize what you did, say which of the three applied, and propose: "Surface remaining nits?"
 
 ## Branch discipline
 
-Step 1 cuts a `housekeeping-<date>` branch from origin/main before any commits,
+Step 1 cuts a `housekeeping-<date>` branch from origin/main in a dedicated worktree before any commits,
 and step 6 pushes it and opens a merge request. All fixes land via that merge, never directly on main.
