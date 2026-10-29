@@ -65,7 +65,7 @@ worktree_residue() {
 }
 
 # worktree_scrub <path>: delete what worktree_residue tolerates but git would
-# refuse to remove (untracked): the recognised root .venv, and untracked
+# refuse to remove (untracked): the recognised root .venv, and untracked and ignored
 # root build/lib*, bdist.*, temp.* (never through a symlinked build/).
 worktree_scrub() {
     local c name tracked
@@ -77,6 +77,8 @@ worktree_scrub() {
         _build_child_regenerable "$name" || continue
         tracked=$(git -C "$1" ls-files -- "build/$name") || continue
         [ -z "$tracked" ] || continue
+        # Unignored output is untracked work in git's eyes: residue reports it, never the scrub.
+        git -C "$1" check-ignore -q -- "build/$name/" || continue
         rm -rf -- "$c"
     done
     rmdir "$1/build" 2>/dev/null || true
