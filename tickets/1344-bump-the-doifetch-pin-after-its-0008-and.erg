@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-29T18:55Z reviewer created
 2026-10-29T19:40Z reviewer author rulings via DOIfetch session: pin signed tag v0.2.0; stdlib-only default install; ISBN via Crossref DOI lookup, LibGen opt-in
 2026-10-29T22:05Z reviewer note DOIfetch session reports v0.2.0 tagged UNSIGNED (annotated c66a2e5 on fc85d31, merge of DOIfetch PR 42; YubiKey PIN unknown) and asks to change exit criterion 1 from signed tag to tag v0.2.0; criterion left unchanged pending the author's own ruling
+2026-10-29T22:07Z reviewer author ruling: accept the unsigned annotated tag v0.2.0; exit criterion 1 amended
 
 --- body ---
 ## Context
@@ -35,7 +36,7 @@ Further author rulings that change what the docs say:
   never passes it).
 
 ## Exit criteria
-- [ ] `DOIFETCH_REF` in `scripts/doifetch.sh` points at the signed tag `v0.2.0`
+- [ ] `DOIFETCH_REF` in `scripts/doifetch.sh` points at the tag `v0.2.0` (annotated, unsigned: author ruling 2026-10-29)
 - [ ] `skills/zotero/references/backfill.md` lists the default sources of that ref
 - [ ] The backfill doc tells an invalid-identifier exit apart from "not found", per the exit codes that ref emits
 - [ ] One real `scripts/doifetch.sh --doi <open-access DOI>` run at the new ref downloads a PDF
