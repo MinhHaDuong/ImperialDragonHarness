@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-29T19:54Z reviewer created
 2026-10-29T19:59Z reviewer proposal added for author ruling: theory of change, fixed departments, as-built (DOE) metaphor
 2026-10-29T20:04Z reviewer cross-project department scheme from a sweep of padme projects
+2026-10-29T20:08Z reviewer author rulings: departments accepted provisionally; rename to smelt (1352); byte cap open
 
 --- body ---
 ## Context
@@ -109,3 +110,9 @@ For the harness, the machinery is the product: merge, review, worktrees and test
 its ouvrage (architecture and contracts), and a consumer project's site practice page only records
 its deviations. Consumer projects do not re-record harness behaviour; a harness defect becomes a
 harness ticket (`rules/workflow.md` § Cross-project work).
+
+## Author rulings, 2026-10-29
+- Departments: the core-plus-type scheme above is accepted **provisionally**; the 1349 rebuild
+  tests it on the harness before other projects adopt it.
+- Rename: hoard becomes **smelt** (ticket 1352).
+- Still open: the byte cap per department.
