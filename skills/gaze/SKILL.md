@@ -64,11 +64,11 @@ One call does the whole phase (clock, isolation worktree, anchor check, PR
 state, ticket files, panel directory):
 
 ```bash
-python3 "$IDH_ROOT/scripts/gaze_setup.py" <pr-number>
+python3 "$IDH_ROOT/scripts/gaze_setup.py" <pr-number>   # from the reviewed project's checkout
 ```
 
 It prints one `key=value` block (`clock`, `branch`, `head`, `ci`,
-`review_tree`, `panel`, `ticket`, the changed-file roster; PR body and
+`repo`, `review_tree`, `panel`, `ticket`, the changed-file roster; PR body and
 comments are written to files in the panel directory). Keep `clock` and
 `branch` literally for § 5. Exit 1 blocks (conflicts, a close claim naming a
 nonexistent ticket file, no isolated worktree: never fall back into the
@@ -207,8 +207,8 @@ or one that did not run, and for any other line in the file. Line fields:
 ## Cleanup and containment
 
 On every exit path run `references/cleanup.md` through the one closing call
-(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --attribution-file <file> --comment-file <file> --session-runtime <runtime> --session-model <model>`;
-the attribution file is required, empty when no seat ran; the session flags give a `self` item its identity):
+(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --repo <repo> --token <clock> --attribution-file <file> --comment-file <file> --session-runtime <runtime> --session-model <model>`;
+`<repo>` is the `repo=` line setup printed, so a moved cwd never picks the project; the attribution file is required, empty when no seat ran; the session flags give a `self` item its identity):
 it builds the attribution lines first, then removes this run's review scratch and the review worktree, checks the
 containment postcondition (cwd, branch, foreign files)
 and records the answer, then posts the pointer. On a blocked cleanup (exit 1)

@@ -219,8 +219,10 @@ def main():
     _, entry_branch = gaze_close.git("branch", "--show-current")
     _, entry_status = gaze_close.git("status", "--porcelain")
     _, entry_primary = gaze_close.git("-C", str(primary), "status", "--porcelain")
+    _, session_tree = gaze_close.git("rev-parse", "--show-toplevel")
     (panel / "entry-state.json").write_text(json.dumps(
         {"branch": entry_branch, "status": entry_status.splitlines(), "primary": entry_primary.splitlines(),
+         "session_tree": session_tree,
          **identity}))
     comments = [f"## {c.get('author', {}).get('login', '?')}\n{c.get('body', '')}" for c in discussion]
     if forge_read != "read":
@@ -232,7 +234,7 @@ def main():
     print(f"pr={pr}\nbranch={branch}\nhead={meta['head']}\nbase={meta['base']}")
     print(f"state={meta['state']}\nmergeable={meta.get('mergeable')}")
     print(f"ci={ci}")
-    print(f"review_tree={tree}\npanel={panel}")
+    print(f"repo={primary}\nreview_tree={tree}\npanel={panel}")
     print(f"pr_body={panel / 'pr-body.md'}\ncomments={panel / 'comments.md'}")
     print(f"ticket={' '.join(tickets) if tickets else 'none'}")
     for key, value in identity.items():
