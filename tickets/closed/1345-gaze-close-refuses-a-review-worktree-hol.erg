@@ -2,9 +2,11 @@
 Title: gaze close refuses a review worktree holding a regenerable egg-info build artifact
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #1982
 
 --- log ---
 2026-10-29T19:08Z reviewer created
+2026-10-29T19:22Z reviewer closed — autoclosed — PR #1982
 
 --- body ---
 ## Context
