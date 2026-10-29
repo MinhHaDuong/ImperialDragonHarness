@@ -81,9 +81,6 @@ cut-prose and submission-event. A skill's description stays resident in
 the catalog and its body loads on invocation — the same pointer-and-payload
 split as `paths:`, for triggers a filename cannot express.
 
-`claude-code.md` is the runtime-specific one: an adapter on another runtime
-loads every other resident file and skips it.
-
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters, the resident set must be injected by the adapter
 or made genuinely on-demand; `~6 000 tokens` is what that decision moves.

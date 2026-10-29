@@ -29,7 +29,7 @@ Missing memory does not block work; report a known incomplete installation.
 
 ## Skills catalog
 
-The skills catalog in `skills-catalog.md` is auto-generated from `skills/*/SKILL.md` frontmatter.
+The skills catalog in `skills-catalog.md` is auto-generated from `skills/*/SKILL.md` frontmatter; private skill symlinks are excluded.
 
 A `description:` sentence starting with `Not for`, `Use for`, `Use to` or
 `Keyword(s):` is a routing hint for the model; the catalog omits it.
