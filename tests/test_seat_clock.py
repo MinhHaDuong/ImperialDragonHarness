@@ -290,7 +290,7 @@ def _plan(tmp_path, rows, reports):
 
 
 def test_identities_map_status_route_and_provider(tmp_path):
-    headless = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nverdict: clear\n'
+    headless = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nverdict: clear (src/x.py:42)\n'
     panel = _plan(tmp_path, [
         'consistency\tgpt-6-luna\topenai\theadless codex',
         'late\tgpt-6-luna\topenai\theadless codex',
@@ -310,7 +310,7 @@ def test_identities_map_status_route_and_provider(tmp_path):
 
 def test_identities_take_a_headless_seat_family_from_the_launcher_header(tmp_path):
     """Ticket 1326: the plan's family column cannot relabel a headless seat; the launcher's header wins."""
-    header = 'worker: model=sonnet · family=anthropic · runtime=claude-code · door=headless\nverdict: clear\n'
+    header = 'worker: model=sonnet · family=anthropic · runtime=claude-code · door=headless\nclear: src/x.py:42\n'
     panel = _plan(tmp_path, ['correctness\tsonnet\topenai\theadless claude-code'], {'correctness': header})
     result = run('identities', str(panel), '--session-runtime', 'claude-code')
     assert result.returncode == 0, result.stderr
@@ -320,7 +320,7 @@ def test_identities_take_a_headless_seat_family_from_the_launcher_header(tmp_pat
 def test_identities_mark_a_headless_seat_without_the_launcher_header_unconfirmed(tmp_path):
     """Gaze 1925 round 2: a report the launcher did not write keeps no confirmed route."""
     panel = _plan(tmp_path, ['redteam\tsonnet\topenai\theadless codex'],
-                  {'redteam': 'worker: model=sonnet · family=openai\nverdict: clear\n'})
+                  {'redteam': 'worker: model=sonnet · family=openai\nclear: src/x.py:42\n'})
     lines = run('identities', str(panel), '--session-runtime', 'claude-code').stdout.splitlines()
     assert len(lines) == 1 and 'route=unconfirmed' in lines[0] and lines[0].endswith('status: ran')
 
@@ -328,7 +328,7 @@ def test_identities_mark_a_headless_seat_without_the_launcher_header_unconfirmed
 def test_identities_derive_a_subagent_seat_family_from_the_session_runtime(tmp_path):
     """Ticket 1360: a seat planned openai but run through the claude-code subagent door is anthropic."""
     panel = _plan(tmp_path, ['xseat\tgpt-6.1-sol\topenai\tcross-family check'],
-                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nverdict: clear\n'})
+                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nclear: src/x.py:42\n'})
     result = run('identities', str(panel), '--session-runtime', 'claude-code')
     assert result.returncode == 0, result.stderr
     line = result.stdout.splitlines()[0]
@@ -339,7 +339,7 @@ def test_identities_derive_a_subagent_seat_family_from_the_session_runtime(tmp_p
 def test_identities_a_codex_session_subagent_seat_is_openai_without_deviation(tmp_path):
     """Ticket 1360: the family follows the door, not a hardcoded value."""
     panel = _plan(tmp_path, ['xseat\tgpt-6.1-sol\topenai\tcross-family check'],
-                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nverdict: clear\n'})
+                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nclear: src/x.py:42\n'})
     result = run('identities', str(panel), '--session-runtime', 'codex')
     assert 'runtime=codex · family=openai · route=subagent' in result.stdout and 'deviation' not in result.stderr
 
@@ -347,7 +347,7 @@ def test_identities_a_codex_session_subagent_seat_is_openai_without_deviation(tm
 def test_identities_a_pi_subagent_seat_takes_the_model_prefix_else_unconfirmed(tmp_path):
     """Ticket 1360: pi's subagent door names no one family; a bare model is never guessed."""
     panel = _plan(tmp_path, ['a\tanthropic/claude-x\topenai\tcheck', 'b\tqwen3\topenai\tcheck'],
-                  {'a': 'worker: x\nok\n', 'b': 'worker: x\nok\n'})
+                  {'a': 'worker: x\nok src/x.py:1\n', 'b': 'worker: x\nok src/x.py:1\n'})
     lines = run('identities', str(panel), '--session-runtime', 'pi').stdout.splitlines()
     assert 'family=anthropic' in lines[0] and 'family=unconfirmed' in lines[1]
 
@@ -356,3 +356,25 @@ def test_identities_skip_free_text_and_fail_loudly_without_a_manifest(tmp_path):
     panel = _plan(tmp_path, ['One seat reads the diff.'], {})
     assert run('identities', str(panel)).stdout.strip() == ''
     assert run('identities', str(tmp_path / 'nowhere')).returncode == 2
+
+
+HOLLOW = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nverdict: clear\n'
+CITED = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nclear after reading src/x.py:42\n'
+REASONED = ('worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\n'
+            + 'I read the whole diff, followed the redirect path and the size cap, and found no defect. ' * 3)
+
+
+def test_identities_mark_a_hollow_headless_report_failed(tmp_path):
+    """Ticket 1361: a header plus a bare verdict reviewed nothing; a citation or a reasoned body did."""
+    rows = [f'{n}\tgpt-6-luna\topenai\theadless codex' for n in ('hollow', 'cited', 'reasoned')]
+    panel = _plan(tmp_path, rows, {'hollow': HOLLOW, 'cited': CITED, 'reasoned': REASONED})
+    lines = run('identities', str(panel), '--session-runtime', 'claude-code').stdout.splitlines()
+    assert [ln.rsplit('status: ', 1)[1] for ln in lines] == ['failed', 'ran', 'ran']
+
+
+@pytest.mark.parametrize('runtime', ['codex', 'pi'])
+def test_identities_mark_a_hollow_subagent_report_failed_on_any_session_runtime(tmp_path, runtime):
+    panel = _plan(tmp_path, ['h\tgpt-6.1-sol\topenai\tcheck', 'c\tgpt-6.1-sol\topenai\tcheck'],
+                  {'h': 'worker: x\nverdict: clear\n', 'c': 'worker: x\nclear: src/x.py:1\n'})
+    lines = run('identities', str(panel), '--session-runtime', runtime).stdout.splitlines()
+    assert [ln.rsplit('status: ', 1)[1] for ln in lines] == ['failed', 'ran']

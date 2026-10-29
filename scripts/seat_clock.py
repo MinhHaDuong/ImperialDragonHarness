@@ -238,6 +238,16 @@ def worker_header(report: Path) -> dict[str, str]:
     return {m.group(1).lower(): m.group(2) for m in re.finditer(r'(\w+)=([^\s·]+)', first)}
 
 
+def substantive(report: Path) -> bool:
+    """True when a report's body, after the `worker:` line, cites a `path:line` or holds 200+ characters (ticket 1361)."""
+    try:
+        text = report.read_text(encoding='utf-8-sig', errors='replace')
+    except OSError:
+        return False
+    body = '\n'.join([ln for ln in text.splitlines() if re.search(r'\w', ln)][1:])
+    return bool(re.search(r'[\w./-]+\.\w+:\d+', body)) or len(body.strip()) >= 200
+
+
 def _token(value: str) -> str:
     return re.sub(r'[\s·=:]+', '-', value.strip()) or 'not-stated'
 
@@ -276,7 +286,9 @@ def door_family(runtime: str, model: str) -> str:
 
 
 def identities(panel: Path, session_runtime: str = '', session_model: str = '') -> list[dict[str, str]]:
-    """One identity per worker item of the plan, from the plan and the launcher's header (ticket 1303)."""
+    """One identity per worker item of the plan, from the plan and the launcher's header (ticket 1303).
+
+    A non-self report counts as `ran` only when substantive: a `path:line` citation or 200+ characters (ticket 1361)."""
     _, _, _, accepted = _assess(panel)
     session_runtime = session_runtime.strip() or 'not-stated'
     out = []
@@ -303,7 +315,8 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
             runtime, model, route = session_runtime, pin, 'subagent'
             family = door_family(runtime, model)  # the door that ran it, not the label (1360)
         status = ('skipped' if reason.strip().lower().startswith('skipped')
-                  else 'ran' if name in accepted else 'failed')
+                  else 'ran' if name in accepted and (is_self(cells) or substantive(panel / f'{name}.md'))
+                  else 'failed')  # a hollow worker report reviewed nothing (1361)
         out.append({'planned': planned, 'seat': name, 'runtime': _token(runtime), 'family': _token(family or header.get('family', '')),
                     'route': route, 'model': qualify(model, runtime) if model else 'not observed',
                     'status': status})
