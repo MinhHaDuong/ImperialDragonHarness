@@ -334,6 +334,9 @@ def test_cross_family_seat_with_consent_launches_on_its_door(rig):
     assert argv[argv.index('-m') + 1] == 'gpt-6-luna'
     assert argv[argv.index('-s') + 1] == 'read-only'
     assert 'verify the parser' in (rig['log'] / 'codex.stdin').read_text()  # prompt arrives on stdin
+    # codex refuses a non-git cwd and reads its workspace under read-only (ticket 1363):
+    # the seat must start inside the review tree, a git worktree, with no flag before `exec`
+    assert Path((rig['log'] / 'codex.cwd').read_text().strip()) == rig['tree']
 
 
 @pytest.mark.integration
