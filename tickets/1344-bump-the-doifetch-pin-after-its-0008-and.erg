@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Bump the DOIfetch pin after its 0008 and update the zotero docs with it
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T18:55Z reviewer created
+
+--- body ---
+## Context
+`scripts/doifetch.sh` pins DOIfetch at `DOIFETCH_REF` (its PR 1). Its raid f9e483
+(DOIfetch session, 2026-10-29, through the inter-project protocol) is changing what
+the harness documents in `skills/zotero/references/backfill.md` (about lines 150-164):
+
+- DOIfetch 0011: an invalid ISBN is rejected (ValueError, nonzero exit) before any fetch.
+  The backfill doc reads every nonzero exit other than 127/69 as "not found in the open
+  sources", which would misreport a bad identifier.
+- DOIfetch 0006: entry point moves to `doifetch.cli:main`; the `doifetch` console name stays.
+- DOIfetch 0008: dispatch rewritten; public API `from doifetch import Request, Result, fetch`.
+- DOIfetch 0013: OpenAlex joins the default cascade after Unpaywall, so the doc's default
+  source list (Crossref, Unpaywall, HAL, ISTEX, EZproxy) goes stale.
+- DOIfetch 0012 (DOAB) is out of that raid (DOAB REST API returns 403); not in this bump.
+
+When: after DOIfetch 0008 merges; the author may tag a version there (question queued
+on the DOIfetch side). Pin the tag if one exists, else the merge commit.
+
+## Exit criteria
+- [ ] `DOIFETCH_REF` in `scripts/doifetch.sh` points at a DOIfetch ref that contains 0008
+- [ ] `skills/zotero/references/backfill.md` lists the default sources of that ref
+- [ ] The backfill doc tells an invalid-identifier exit apart from "not found", per the exit codes that ref emits
+- [ ] One real `scripts/doifetch.sh --doi <open-access DOI>` run at the new ref downloads a PDF
