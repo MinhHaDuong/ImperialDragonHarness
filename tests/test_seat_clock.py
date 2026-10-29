@@ -325,6 +325,33 @@ def test_identities_mark_a_headless_seat_without_the_launcher_header_unconfirmed
     assert len(lines) == 1 and 'route=unconfirmed' in lines[0] and lines[0].endswith('status: ran')
 
 
+def test_identities_derive_a_subagent_seat_family_from_the_session_runtime(tmp_path):
+    """Ticket 1360: a seat planned openai but run through the claude-code subagent door is anthropic."""
+    panel = _plan(tmp_path, ['xseat\tgpt-6.1-sol\topenai\tcross-family check'],
+                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nverdict: clear\n'})
+    result = run('identities', str(panel), '--session-runtime', 'claude-code')
+    assert result.returncode == 0, result.stderr
+    line = result.stdout.splitlines()[0]
+    assert 'runtime=claude-code · family=anthropic · route=subagent' in line and 'family=openai' not in line
+    assert 'deviation: xseat: planned family openai, ran as anthropic' in result.stderr
+
+
+def test_identities_a_codex_session_subagent_seat_is_openai_without_deviation(tmp_path):
+    """Ticket 1360: the family follows the door, not a hardcoded value."""
+    panel = _plan(tmp_path, ['xseat\tgpt-6.1-sol\topenai\tcross-family check'],
+                  {'xseat': 'worker: model=gpt-6.1-sol · family=openai\nverdict: clear\n'})
+    result = run('identities', str(panel), '--session-runtime', 'codex')
+    assert 'runtime=codex · family=openai · route=subagent' in result.stdout and 'deviation' not in result.stderr
+
+
+def test_identities_a_pi_subagent_seat_takes_the_model_prefix_else_unconfirmed(tmp_path):
+    """Ticket 1360: pi's subagent door names no one family; a bare model is never guessed."""
+    panel = _plan(tmp_path, ['a\tanthropic/claude-x\topenai\tcheck', 'b\tqwen3\topenai\tcheck'],
+                  {'a': 'worker: x\nok\n', 'b': 'worker: x\nok\n'})
+    lines = run('identities', str(panel), '--session-runtime', 'pi').stdout.splitlines()
+    assert 'family=anthropic' in lines[0] and 'family=unconfirmed' in lines[1]
+
+
 def test_identities_skip_free_text_and_fail_loudly_without_a_manifest(tmp_path):
     panel = _plan(tmp_path, ['One seat reads the diff.'], {})
     assert run('identities', str(panel)).stdout.strip() == ''
