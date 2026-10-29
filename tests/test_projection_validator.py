@@ -289,6 +289,8 @@ def bypass_log(world) -> str:
 @pytest.mark.integration
 @pytest.mark.parametrize("runtime", RUNTIMES)
 def test_negative_control_healthy_home_launches_unchanged(world, runtime):
+    # A healthy disk too: the real probe reads the host's /tmp and /home.
+    (world["root"] / "scripts/tmp_report.py").write_text("")
     r = launch(world, runtime)
     assert r.returncode == 0, r.stderr
     assert f"LAUNCHED {runtime}" in r.stdout and "--version" in r.stdout
