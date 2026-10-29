@@ -6,6 +6,8 @@ Blocked-by: 1334
 
 --- log ---
 2026-10-29T08:56Z claude created
+2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: Blocked-by 1334 is real (SKILL.md line budget); stale weight-loss pointer fixed
+2026-10-29T12:35Z claude note raid 94edd2 feasibility WARN, resolved
 
 --- body ---
 ## Context
@@ -37,7 +39,28 @@ the other doctor offers.
 
 ## Exit criteria
 
-- [ ] Harness-doctor names the docs visit (complaint area or default input) by pointer, within the body budget after the weight-loss ticket
+- [ ] Harness-doctor names the docs visit (complaint area or default input) by pointer, within the body budget after ticket 1334 (150-line cap, scripts/skill_text_lint.py)
 - [ ] Lair suggests it on the two triggers, suggestion only
 - [ ] One visit run on the current tree, its journal entry committed, findings handled by the floor
 - [ ] No new guard or test pinning wording
+
+## Plan (raid 94edd2)
+
+Blocked-by 1334 holds: both edit skills/harness-doctor/SKILL.md, which has a 150-line
+cap (`MAX_BODY_LINES`, scripts/skill_text_lint.py); 1334's menu row lands first.
+
+Actions: (1) measure the SKILL.md headroom after 1334. (2) Name the docs visit by pointer
+in SKILL.md, its input list and questions in a reference; journal slug
+`-docs-visit-` so a docs visit is distinguishable from other visits. (3) Lair
+suggestion step shaped like its existing suggestion steps, suggestion only: the 30-day
+trigger reads the newest `*-docs-visit-*` entry date; the workstream trigger is
+a reading of ROADMAP.md, judgment, no script. (4) Run the visit on a pinned commit,
+commit the journal entry, findings by the floor. No new test pinning wording.
+
+## Feasibility (raid 94edd2): WARN, resolved
+
+- skills/harness-doctor/SKILL.md sets a regular visit's input from the last
+  `-harness-doctor-` journal entry; a `-harness-doctor-docs-` slug would match and
+  shrink the next regular visit. The docs visit uses the slug `-docs-visit-` instead
+  (`memory/journal/YYYY/YYYY-MM-DD-docs-visit-<slug>.md`), and the lair trigger reads
+  the newest such entry.

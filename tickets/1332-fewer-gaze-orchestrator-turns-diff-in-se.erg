@@ -6,6 +6,8 @@ Author: claude
 --- log ---
 2026-10-29T08:24Z claude created
 2026-10-29T11:50Z claude note After-measurement left to the test-doctor's journal revisit so the raid can close at merge
+2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: premise holds; seat reports via wait-roster.py
+2026-10-29T12:35Z claude note raid 94edd2 feasibility WARN, resolved
 
 --- body ---
 ## Context
@@ -48,3 +50,37 @@ the Step 0 baseline in this ticket's log is what it compares against.
 scripts/gaze_setup.py, scripts/gaze_close.py, skills/gaze/SKILL.md, skills/gaze/references/setup-and-breaker.md, skills/gaze/references/cleanup.md, scripts/gaze_wall_time.py (read only), scripts/gaze_wall_analysis.py (read only).
 
 Related: [[1227]], [[1225]], [[1197]], [[1327]].
+
+## Plan (raid 94edd2)
+
+Premise checked: nothing merged since this ticket's creation touches gaze_setup.py,
+gaze_close.py or skills/gaze/.
+
+Design reading: seat reports print from `scripts/wait-roster.py` on exit 0 ("the call
+that waits for the roster"), not from `gaze_close.py`, which runs after the reports are
+read (it consumes the attribution and comment files written from them). Nothing printed
+on exit 1 or 3. Both outputs bounded by a fixed cap with a truncation line; no flags.
+
+Actions: (1) Step 0: `python3 scripts/gaze_wall_analysis.py 2026-10-27T10:45Z` (it takes
+the cut as argv[1], no `--help`); preliminary: setup median 39 s, closing 37 s, n=185,
+about 1.7 git-read calls per run before launch; classify 10 setup and 10 closing
+sequences by hand, record go/no-go in the log. (2) Test, then `bounded_diff` in
+gaze_setup.py, printed after the roster against its anchor. (3) Test, then wait-roster.py
+prints `== <name>.md ==` and each report, bounded in total, excluding `.part` and stale
+files. (4) One-line updates: skills/gaze/SKILL.md § 1, references/setup-and-breaker.md,
+references/panel.md § Collection.
+
+First tests: tests/test_gaze_setup.py, temp repo via `make_repo`, asserts the diff stat
+and the changed hunk against the PR base, and a truncation case bounded under the cap;
+tests/test_wait_roster.py, three reports plus a `.part` and a stale one, all three bodies
+printed, the others not, nothing on exit 1.
+
+## Feasibility (raid 94edd2): WARN, resolved
+
+- `wait-roster.py` is also called by skills/verify-adherence/SKILL.md and gaze's
+  fork-contract.md, on Codex and Pi too: printing the reports is opt-in by one flag
+  that only gaze's panel.md passes, with a byte cap and a final truncation line.
+  Default output unchanged.
+- gaze_setup.py output is read as `key=value` lines (`fields()` in
+  tests/gaze_fixture.py, and the model): the bounded diff prints last, between fixed
+  marker lines, and `fields()` stops at the first marker.
