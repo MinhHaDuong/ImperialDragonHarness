@@ -304,6 +304,8 @@ def billed_cost(ctx):
         prev = _prev_value(ctx, cum)
         if prev is None:
             out[win] = gap('USD', src, 'no earlier cumulative figure; the window starts at the next record')
+        elif usage < prev:
+            out[win] = gap('USD', src, 'cumulative usage fell since the previous record (key reset or rotated)')
         else:
             out[win] = metric(round(usage - prev, 4), 'USD', src)
             window_total += usage - prev
@@ -521,18 +523,35 @@ def report(cur, prev):
     return '\n'.join(lines)
 
 
+def latest(recs):
+    return max(recs, key=lambda r: str(r.get('ts', '')), default=None)
+
+
+def _fetch_main(root):
+    """Refresh origin/main so the main-commit window is not cut short by a stale ref. Best effort."""
+    try:
+        return subprocess.run(['git', '-C', str(root), 'fetch', '-q', 'origin', 'main'], capture_output=True,
+                              timeout=60).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def checkup(root, journal, days=FIRST_WINDOW_DAYS, now=None):
     now = now or datetime.now(timezone.utc)
     recs = read_journal(journal)
-    prev = recs[-1] if recs else None
+    # Union merges join parallel branches' appends in any order: the previous record is the latest ts.
+    prev = latest(recs)
     since = parse_ts(prev['ts']) if prev else now - timedelta(days=days)
     since = max(since, now - timedelta(days=MAX_WINDOW_DAYS))
     common = Path(_git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir').strip())
+    fetched = _fetch_main(root)
     ctx = Context(root=root, common_dir=common, since=since, until=now, previous=prev)
     metrics = {}
     for fn, names in GROUPS:
         metrics.update(guarded(fn, names, ctx))
-    return build_record(metrics, since, now, root), prev
+    rec = build_record(metrics, since, now, root)
+    rec['window']['main_fetched'] = fetched  # False: main figures may stop at a stale origin/main
+    return rec, prev
 
 
 def main(argv=None):

@@ -101,3 +101,19 @@ def test_complexity_counts_functions_and_branches(tmp_path):
     f.write_text('def a(x):\n    if x:\n        return [i for i in x if i]\n    return 0\n\nasync def b():\n'
                  '    while True:\n        pass\n')
     assert hc.py_complexity(f) == (2, 4)  # if, comprehension, its if, while
+
+
+def test_previous_record_is_the_latest_ts_not_the_last_line():
+    """merge=union can leave an older record last; the window must start at the newest one."""
+    recs = [_rec('2026-10-29T00:00:00Z', {}), _rec('2026-10-28T00:00:00Z', {})]
+    assert hc.latest(recs)['ts'] == '2026-10-29T00:00:00Z'
+    assert hc.latest([]) is None
+
+
+def test_falling_cumulative_usage_is_a_gap_not_a_negative_bill():
+    prev = _rec('2026-10-01T00:00:00Z', {
+        'billed.openrouter.OPENROUTER_API_KEY_PI.cumulative_usd': {'value': 10.0, 'unit': 'USD', 'source': 's'}})
+    got = hc.billed_cost(hc.Context(root=Path('.'), common_dir=Path('.'), since=None, until=None, previous=prev,
+                                    fetch=lambda u, k: {'data': {'usage': 3.0}}, key=lambda env: 'k'))
+    m = got['billed.openrouter.OPENROUTER_API_KEY_PI.window_usd']
+    assert m['value'] is None and 'reset' in m['gap']

@@ -4,7 +4,8 @@
 `health/journal.jsonl` (committed, append-only, `merge=union` in
 `.gitattributes`). Each record holds `schema`, `ts`, `host`, `commit`,
 `window` (since the previous record; the first covers 7 days; never more
-than 30) and a flat `metrics` object of `name -> {value, unit, source}`.
+than 30, starting at the newest `ts`, whatever the line order union merges
+leave) and a flat `metrics` object of `name -> {value, unit, source}`.
 
 A source that is missing or unreadable writes `value: null` with a `gap`
 reason. Read a gap as "not measured", never as zero. Readers ignore names they
@@ -25,5 +26,7 @@ dropped without migrating the journal.
 | `size.*`, `complexity.*` | file lines; functions and branch nodes from the stdlib `ast`; steps, table rows and cross-references per skill |
 
 Billed cost is what the provider charged and nothing else: no token-count
-estimate and no subscription usage. Local review notes are read as they are;
+estimate and no subscription usage. A cumulative figure that fell (key reset or
+rotated) gives a gap for the window, never a negative bill. The checkup fetches
+`origin/main` first; `window.main_fetched: false` means main figures may stop short. Local review notes are read as they are;
 fetch `refs/notes/review` first if this clone has fallen behind.
