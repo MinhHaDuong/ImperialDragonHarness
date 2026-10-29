@@ -1,0 +1,15 @@
+%erg 0.1
+Title: A read-only codex seat cannot read the review tree
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T22:20Z reviewer created
+
+--- body ---
+## Context
+Reported by DOIfetch's team lead (raid f9e483): a codex seat launched with `exec -s read-only` could not read the review tree, so the cross-family seat produced nothing. On a high-risk PR that blocks the gate (`--require-cross-family`). Cause not yet established (sandbox root vs review-tree path outside the codex workspace).
+
+## Exit criteria
+- [ ] A read-only codex seat launched by `gaze_seat.py` can read the review tree it is pointed at
+- [ ] A test or recorded smoke run shows the seat reading a file in the review tree under the read-only sandbox

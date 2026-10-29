@@ -1,0 +1,15 @@
+%erg 0.1
+Title: Review-head refs go missing after a rebase or nested gaze
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T22:20Z reviewer created
+
+--- body ---
+## Context
+Reported by DOIfetch (raid f9e483), 4 occurrences (PRs #30, #33 twice, #39): `raid_land.py` refused with "review-head refs/review-heads/<rv>/<rq> … missing locally", always for a review request made before a rebase or by a nested gaze. `review_notes.py keep-head <rv> <rq> <head>` repaired it; the reviewed commits still existed. Blocks merges until repaired by hand.
+
+## Exit criteria
+- [ ] A review request made before a rebase, or by a nested gaze session, leaves its review-head ref where `raid_land.py` reads it (or `raid_land.py` restores it from notes when the commit exists)
+- [ ] A test reproduces the rebase case and lands without manual `keep-head`
