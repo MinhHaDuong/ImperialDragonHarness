@@ -7,6 +7,7 @@ Author: claude
 2026-10-29T08:24Z claude created
 2026-10-29T11:50Z claude note After-measurement left to the test-doctor's journal revisit so the raid can close at merge
 2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: premise holds; seat reports via wait-roster.py
+2026-10-29T12:35Z claude note raid 94edd2 feasibility WARN, resolved
 
 --- body ---
 ## Context
@@ -73,3 +74,13 @@ First tests: tests/test_gaze_setup.py, temp repo via `make_repo`, asserts the di
 and the changed hunk against the PR base, and a truncation case bounded under the cap;
 tests/test_wait_roster.py, three reports plus a `.part` and a stale one, all three bodies
 printed, the others not, nothing on exit 1.
+
+## Feasibility (raid 94edd2): WARN, resolved
+
+- `wait-roster.py` is also called by skills/verify-adherence/SKILL.md and gaze's
+  fork-contract.md, on Codex and Pi too: printing the reports is opt-in by one flag
+  that only gaze's panel.md passes, with a byte cap and a final truncation line.
+  Default output unchanged.
+- gaze_setup.py output is read as `key=value` lines (`fields()` in
+  tests/gaze_fixture.py, and the model): the bounded diff prints last, between fixed
+  marker lines, and `fields()` stops at the first marker.
