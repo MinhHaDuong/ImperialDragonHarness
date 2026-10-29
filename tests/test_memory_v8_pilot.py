@@ -65,6 +65,13 @@ def unresolved_links(root, doc, archival_links=()):
             # records keep their old link text.
             if old.startswith("docs/") and (root / "conception" / old[5:]).is_file():
                 continue
+            # Attribution records left the journal for memory/evidence/attribution/
+            # (ticket 1347); append-only journal entries keep their old link text.
+            name = old.rsplit("/", 1)[-1]
+            if (source.startswith("memory/journal/") and old.startswith("memory/journal/")
+                    and "-review-attribution-" in name
+                    and (root / "memory/evidence/attribution" / name).is_file()):
+                continue
             current = (source == "memory/MEMORY.md" or source.startswith("memory/topics/")
                        or source in {"conception/memory-v8/README.md",
                                      "conception/2026-10-02-memory-v8-runtime-smoke.md"})

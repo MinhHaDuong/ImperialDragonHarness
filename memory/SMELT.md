@@ -12,7 +12,10 @@ skill; this prompt is the per-project editorial layer.
 
 1. `memory/MEMORY.md`, every `topics/` file it indexes, previous accepted
    reports in `memory/smelts/`, and the entries of `memory/journal/YYYY/` not
-   yet covered by an accepted report.
+   yet covered by an accepted report. Skip `*review-attribution-*` files:
+   attribution records are route-grid telemetry, not experiences; they live in
+   `memory/evidence/attribution/`, and a project that has not moved its
+   records yet still holds some in the journal.
 2. Applicable harness rules (AGENTS.md, rules/) as authority sources — read,
    never edited.
 3. Native notes only as attributed sources when available; report an
@@ -108,7 +111,9 @@ Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
 ## Bounds
 
 The journal is append-only: never rewrite, move or delete an entry; a
-correction is a new entry linking the original. `memory/MEMORY.md` stays at
+correction is a new entry linking the original. One carve-out: legacy
+review-attribution records move once, by `git mv` with their bytes intact, to
+`memory/evidence/attribution/`. `memory/MEMORY.md` stays at
 most 100 lines, headings and blank lines counted; check before committing.
 Smelt writes only `memory/MEMORY.md`, `memory/topics/` and
 `memory/smelts/` in this repository. It proposes no rule, edits no AGENTS.md

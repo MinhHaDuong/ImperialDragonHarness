@@ -299,8 +299,8 @@ auto-merge, then merged directly; cause remains unestablished.
 - [Raid 1084/1085/1086](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md), [PR 1374 merge](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md), [PR 1374 attribution pending](../journal/2026/2026-10-13-pr1374-attribution-pending.md), [PR 1374 identity](../journal/2026/2026-10-13-pr1374-review-evidence/identity.md)
 - [Raid 1091/1092](../journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md)
 - [2026-09-29 relocation lessons import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md)
-- The 36 records of 2026-10-08 to 2026-10-13, `memory/journal/2026/2026-10-{08..13}-review-attribution-pr*.md`, ledgered in the [2026-10-13 dream](../smelts/2026-10-13-third-dream.md).
+- The 36 records of 2026-10-08 to 2026-10-13, `memory/evidence/attribution/2026-10-{08..13}-review-attribution-pr*.md` (in `memory/journal/2026/` until ticket 1347), ledgered in the [2026-10-13 dream](../smelts/2026-10-13-third-dream.md).
 - [Reviewer attribution design](../journal/2026/2026-10-02-reviewer-attribution-design.md) — processed by the first dream; linked here as the design behind the records.
-- The 33 records: `memory/journal/2026/2026-10-0[56]-review-attribution-pr*.md`, ledgered in the [2026-10-07 dream](../smelts/2026-10-07-second-dream.md).
+- The 33 records: `memory/evidence/attribution/2026-10-0[56]-review-attribution-pr*.md` (in `memory/journal/2026/` until ticket 1347), ledgered in the [2026-10-07 dream](../smelts/2026-10-07-second-dream.md).
 - Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
   revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

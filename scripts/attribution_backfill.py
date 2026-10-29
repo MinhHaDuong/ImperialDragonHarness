@@ -54,12 +54,15 @@ def within_project(path, project):
 
 def load_records(project, stats):
     records = collections.defaultdict(list)
-    journal = project / "memory/journal"
-    if not within_project(journal, project):
-        LOG.warning("WARN unresolved: unsafe project journal path")
-        stats["unresolved"] += 1
-        return records
-    for path in sorted(journal.rglob("*review-attribution-pr*")):
+    paths = []
+    # The records' own root (ticket 1347), then the legacy journal of consumer projects.
+    for root in (project / "memory/evidence/attribution", project / "memory/journal"):
+        if not within_project(root, project):
+            LOG.warning("WARN unresolved: unsafe project record path %s", root.relative_to(project))
+            stats["unresolved"] += 1
+            return records
+        paths += sorted(root.rglob("*review-attribution-pr*"))
+    for path in paths:
         if not path.is_file() or path.suffix not in {".md", ".age"}:
             continue
         name_pr = re.search(r"review-attribution-pr([1-9][0-9]*)\.(?:md(?:\.age)?|age)$", path.name)

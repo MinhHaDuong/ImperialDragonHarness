@@ -19,7 +19,7 @@ v8 repository memory. Pilot: [pilot.md](../conception/memory-v8/pilot.md). Prove
 ## Recent experiences
 
 - [Smart-testing integration and daily timer removal](journal/2026/2026-10-19-smart-testing-1466-wrap-up.md) — PR1466 merged; arena1103 remains follow-up.
-- [PR1466 review attribution](journal/2026/2026-10-19-review-attribution-pr1466.md) — original/recheck attempts and identity limits.
+- [PR1466 review attribution](evidence/attribution/2026-10-19-review-attribution-pr1466.md) — original/recheck attempts and identity limits.
 
 - [Temporary report timeout diagnosis](journal/2026/2026-10-19-tmp-report-timeout-diagnosis.md)
 - [Temporary report and lifecycle integration](journal/2026/2026-10-19-1095-temporary-lifecycle-integration.md)

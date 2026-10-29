@@ -132,7 +132,7 @@ def test_roar_capture_command_works_in_fresh_unrelated_shell(tmp_path):
     result = subprocess.run(["bash", "--noprofile", "--norc", "-c", command], cwd=project,
                             input=RECORD, text=True, capture_output=True, env=environment)
     assert result.returncode == 0, result.stderr
-    assert len(list(project.glob("memory/journal/*/*-review-attribution-pr1164.md"))) == 1
+    assert len(list(project.glob("memory/evidence/attribution/*-review-attribution-pr1164.md"))) == 1
 
 
 @pytest.mark.integration
@@ -146,7 +146,7 @@ def test_malformed_optional_facts_never_capture(tmp_path, fact):
                             input=text, text=True, capture_output=True, env=child_env())
     assert result.returncode != 0
     assert "malformed" in result.stderr
-    assert not list(project.glob("memory/journal/*/*"))
+    assert not list(project.glob("memory/**/*.md"))
 
 
 @pytest.mark.integration
@@ -156,7 +156,7 @@ def test_capture_round_trip_and_invalid_record_writes_nothing(tmp_path):
     command = [sys.executable, str(SCRIPT), "--capture", str(project), "--audience", "public"]
     captured = subprocess.run(command, input=RECORD, text=True, capture_output=True, env=child_env())
     assert captured.returncode == 0, captured.stderr
-    entries = list(project.glob("memory/journal/*/*-review-attribution-pr1164.md"))
+    entries = list(project.glob("memory/evidence/attribution/*-review-attribution-pr1164.md"))
     assert len(entries) == 1
     parsed = subprocess.run([sys.executable, str(SCRIPT), str(entries[0])], text=True,
                             capture_output=True, env=child_env(), check=True)
@@ -164,7 +164,7 @@ def test_capture_round_trip_and_invalid_record_writes_nothing(tmp_path):
     bad = subprocess.run(command, input=RECORD.replace("1164", "1165").replace(" · status: failed", ""),
                          text=True, capture_output=True, env=child_env())
     assert bad.returncode != 0
-    assert not list(project.glob("memory/journal/*/*pr1165*"))
+    assert not list(project.glob("memory/**/*pr1165*"))
 
 
 MASK = 'model-state=runtime-masked · model-evidence=memory/pending-capture-pr1211.md.txt:3'
@@ -214,7 +214,7 @@ def test_masked_capture_query_round_trip(tmp_path):
 
 def test_pr1211_preserves_all_original_attempts_and_draft(reader):
     draft = (ROOT / "memory/pending-capture-pr1211.md.txt").read_text().split("\n\nResolution (1038", 1)[0]
-    text = (ROOT / "memory/journal/2026/2026-10-06-review-attribution-pr1211.md").read_text()
+    text = (ROOT / "memory/evidence/attribution/2026-10-06-review-attribution-pr1211.md").read_text()
     parsed = reader.parse_record(text)
     assert len(parsed["reviewers"]) == 15
     assert reader.runtime_masked(parsed)

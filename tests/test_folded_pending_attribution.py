@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_folded_record_validates_and_links_pending_file(pr):
     pending = Path(f"memory/evidence/review-attribution-pr{pr}-pending.md")
     assert (ROOT / pending).is_file()
-    (entry,) = (ROOT / "memory/journal/2026").glob(f"*-review-attribution-pr{pr}.md")
+    (entry,) = (ROOT / "memory/evidence/attribution").glob(f"*-review-attribution-pr{pr}.md")
     text = entry.read_text()
     record = parse_record(text)
     assert record["pr"] == pr

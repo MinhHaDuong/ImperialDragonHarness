@@ -118,3 +118,13 @@ def test_step_12_counts_inline_from_report_ledgers():
         "the threshold stays hardcoded in the skill text — no "
         "configuration knob (ticket 0910 antipattern)"
     )
+
+
+def test_step_12_skips_attribution_records():
+    """Ticket 1347: attribution records are telemetry, not experiences. A
+    consumer project whose records still sit in the journal would otherwise be
+    told to smelt forever, since smelt's input skips them and never covers them."""
+    assert "review-attribution" in step_12(), (
+        "lair step 12 must skip `*review-attribution-*` journal files, the "
+        "same filter as smelt's input"
+    )

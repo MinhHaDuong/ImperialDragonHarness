@@ -86,7 +86,9 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     knob, the threshold stays hardcoded at 5. Every report records its
     examined sources as `<path> blob <40-hex>` lines (the project’s versioned SMELT.md):
     - Current blob id of every `memory/journal/YYYY/*.md` entry at HEAD:
-      `git ls-tree -r HEAD memory/journal/` (the 40-hex column).
+      `git ls-tree -r HEAD memory/journal/` (the 40-hex column). Skip
+      `*review-attribution-*` files, as smelt's input does: they are
+      telemetry, and a project that has not moved them yet keeps some there.
     - Blob ids already examined by the accepted reports: the `<path> blob
       <40-hex>` lines in `memory/smelts/*.md` merged into main — a report
       visible only on an unmerged branch covers nothing.
