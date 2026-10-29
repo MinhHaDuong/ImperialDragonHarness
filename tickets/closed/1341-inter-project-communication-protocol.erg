@@ -2,10 +2,12 @@
 Title: Inter-project communication protocol
 Created: 2026-10-29
 Author: claude
+Closed: closed by its raid PR
 
 --- log ---
 2026-10-29T11:38Z claude created
 2026-10-29T13:15Z claude scope Location and runtime-neutral wording set on advisor (Fable) review, author-delegated.
+2026-10-29T14:40Z reviewer closed — closed by its raid PR
 
 --- body ---
 ## Context

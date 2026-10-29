@@ -53,7 +53,12 @@ import resident_census as rc  # noqa: E402
 # apply to every agent role, bullet layout. Measured 17781, set at measured
 # plus thin headroom. The 359 chars AGENTS.md net-freed are on the import
 # channel, a different budget that grants no credit here.
-RESIDENT_BUDGET = 17800
+# Raised 2026-10-29 (ticket 1341, author-authorized rule edit): workflow.md
+# § Delegation gains "Cross-project work", four runtime-neutral lines with a
+# stated channel per runtime. Measured 18317 on a base that already carries
+# ticket 1340's Allow-rules sentence in claude-code.md; set at measured plus
+# thin headroom.
+RESIDENT_BUDGET = 18350
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.
