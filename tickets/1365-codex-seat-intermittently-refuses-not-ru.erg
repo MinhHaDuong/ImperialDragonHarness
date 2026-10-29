@@ -1,0 +1,15 @@
+%erg 0.1
+Title: Codex seat intermittently refuses NOT-RUN: review tree unreadable
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T23:44Z reviewer created
+
+--- body ---
+## Context
+Reproduced on padme, 2026-10-29T23:41Z: gaze run `gz-20261029T234033056Z-224e` on PR 2026, seat `correctness` (codex door, openai/gpt-6-luna) refused with "NOT-RUN: The review tree cannot be read with the available tools." (answer `20261029T234156414Z-padme-ea5ae0cf`, review `rv-20261029-pr-2026-d0c0`). The same failure DOIfetch reported (raid f9e483). Ticket 1363 closed on two launches that read the tree, and in the same session about a dozen codex seats (gpt-6.1-sol and gpt-6-luna) did read their trees, so the failure is intermittent; cause not established (luna-only? tree path? sandbox start-up?). Since 1361 (PR 2023) such a seat records `status: failed` and no longer satisfies `--require-cross-family`; the cost is a lost independent review, which on a high-risk change blocks the gate.
+
+## Exit criteria
+- [ ] The cause is established from a captured failing launch (seat stderr, codex argv, cwd and sandbox), or the failure rate is measured over a stated number of launches with the condition that predicts it
+- [ ] A failing seat launch leaves its stderr in the panel record so the next occurrence is diagnosable
