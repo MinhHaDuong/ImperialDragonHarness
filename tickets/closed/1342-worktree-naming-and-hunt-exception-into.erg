@@ -2,10 +2,12 @@
 Title: Worktree naming and hunt exception into runtime-neutral workflow.md
 Created: 2026-10-29
 Author: claude
+Closed: autoclosed — PR #1964
 
 --- log ---
 2026-10-29T13:55Z claude created
 2026-10-29T14:10Z claude note raid 815b7f imagine+plan+feasibility: WARN, resolved; on-start-context.sh added to scope
+2026-10-29T14:18Z reviewer closed — autoclosed — PR #1964
 
 --- body ---
 ## Context
