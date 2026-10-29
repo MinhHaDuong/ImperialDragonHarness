@@ -71,7 +71,8 @@ until separately authorized implementation.
 
 At Roar, commit significant facts; do not derive lessons. Smelt prunes, merges
 and refreshes themes while preserving sources. Journal entries remain
-append-only; link corrections from new entries. Keep MEMORY.md at most
+append-only; link corrections from new entries. Review-attribution records
+live in `memory/evidence/attribution/`, outside the journal. Keep MEMORY.md at most
 100 lines; no automatic rule proposals or timer.
 
 On explicit Smelt invocation, one-way migration may mechanically update
