@@ -5,7 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-29T08:24Z claude created
-2026-10-29T11:50Z claude note After-measurement split to 1336 so the raid can close at merge
+2026-10-29T11:50Z claude note After-measurement left to the test-doctor's journal revisit so the raid can close at merge
 
 --- body ---
 ## Context
@@ -34,8 +34,9 @@ Risk to watch: a larger context on every later turn can slow each turn and eat t
 
 ## Exit criteria
 
-The after-measurement on 20 runs is ticket 1336 (Monitor, after merge).
-
+The after-measurement is the test-doctor's gaze revisit, already set in
+`memory/journal/2026/2026-10-29-test-doctor-gate-contention.md` § Revisit;
+the Step 0 baseline in this ticket's log is what it compares against.
 
 - [ ] Step 0 recorded in this ticket's log with the go or no-go decision; on no-go, close here
 - [ ] `gaze_setup.py` prints the bounded diff stat and diff; a test on a temp repo checks the output and the truncation line
