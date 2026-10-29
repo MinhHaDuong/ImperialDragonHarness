@@ -71,12 +71,10 @@ if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
     rm -rf -- "$path/build/panel-head"
 fi
 
-# The removal also scrubs regenerable state git would refuse to remove: the
-# unignored root .venv a touched-tests step leaves, and setuptools build output.
+# The removal also scrubs regenerable state git would refuse to remove (the
+# unignored root .venv a touched-tests step leaves, setuptools build output),
+# but only after the residue check below passes: a refused removal deletes nothing.
 . "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
-if [ "$removal" -eq 1 ]; then
-    worktree_scrub "$path"
-fi
 
 # Same residue definition as worktree-gc.sh (shared lib): uncommitted entries
 # plus ignored files, which `git worktree remove` deletes too (a repo whose
@@ -94,7 +92,12 @@ status=$(worktree_residue "$path") || {
 if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
     status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
 fi
-[ -z "$status" ] && exit 0
+if [ -z "$status" ]; then
+    if [ "$removal" -eq 1 ]; then
+        worktree_scrub "$path"
+    fi
+    exit 0
+fi
 
 cat >&2 <<EOF
 Blocked: worktree '$path' has uncommitted or ignored state — removing the worktree would destroy it.
