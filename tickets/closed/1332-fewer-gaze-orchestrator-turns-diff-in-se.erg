@@ -2,12 +2,15 @@
 Title: Fewer gaze orchestrator turns: diff in setup output, seat reports in one closing call
 Created: 2026-10-29
 Author: claude
+Closed: autoclosed — PR #1956
 
 --- log ---
 2026-10-29T08:24Z claude created
 2026-10-29T11:50Z claude note After-measurement left to the test-doctor's journal revisit so the raid can close at merge
 2026-10-29T12:20Z claude note raid 94edd2 imagine+plan: premise holds; seat reports via wait-roster.py
 2026-10-29T12:35Z claude note raid 94edd2 feasibility WARN, resolved
+2026-10-29T09:55Z reviewer Step 0 NO-GO, no lever. Cut 2026-10-27T10:45Z, host padme, n=118 runs with setup and closing evidence (of 185). Baseline (gaze_wall_analysis.py): setup median 39 s (n=130, 6 calls median incl. gaze_setup.py), closing median 37 s (n=118, 3 calls median). Per run after gaze_setup.py: 4.7 calls before first seat launch, 3.1 after last seat. Mechanical (content fixed by the PR) per run, by regex over all 118 plus hand read of the last 10 setup and 10 closing sequences: PR-range git diff/stat/log before launch 1.36 (pure range diff or stat 0.93; 103 of 118 runs have one); seat-report reads after the last seat 0.03 (4 of 118 runs): reports reach the orchestrator through wait-roster output and seat returns, not extra read calls. Total 1.39 per run (1.0 to 1.4 by definition) under the 1.5 bar; the closing half of the lever does not exist, and the setup half is one compound call already, which a bounded diff in setup output would at best fold. Closing without a lever. Remaining pre-launch calls are judgment reads (plan.md, targeted file sed/grep, routes.json).
+2026-10-29T09:55Z reviewer closed — autoclosed — PR #1956
 
 --- body ---
 ## Context
