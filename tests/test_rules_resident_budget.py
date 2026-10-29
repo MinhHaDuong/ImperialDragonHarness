@@ -55,8 +55,10 @@ import resident_census as rc  # noqa: E402
 # channel, a different budget that grants no credit here.
 # Raised 2026-10-29 (ticket 1341, author-authorized rule edit): workflow.md
 # § Delegation gains "Cross-project work", four runtime-neutral lines with a
-# stated channel per runtime. Measured 18177, set at measured plus thin headroom.
-RESIDENT_BUDGET = 18200
+# stated channel per runtime. Measured 18317 on a base that already carries
+# ticket 1340's Allow-rules sentence in claude-code.md; set at measured plus
+# thin headroom.
+RESIDENT_BUDGET = 18350
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.
