@@ -32,7 +32,7 @@ confirm-first for irreversible or outward acts, nor forge read-back (`git.md`).
 Before answering, create the conversation's worktree by the plain-git recipe of
 `skills/hunt/SKILL.md` § Worktree, named from the table, and `cd` into it.
 Exceptions: manuscript prose ([prose/workpackages.md](./prose/workpackages.md)),
-and `/hunt N`, whose detached agent creates its own: one made before it is orphaned.
+and `/hunt N`: **create none before the skill runs**; its detached agent makes its own.
 
 | Context | Worktree name | Phase |
 |---------|---------------|-------|
