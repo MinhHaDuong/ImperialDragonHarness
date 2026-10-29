@@ -164,3 +164,136 @@ Rejected: 200 lines per page (Claude Code's index load limit); with eight pages 
 today's 1,766 lines.
 With this ruling, the open questions of this ticket are settled: departments (provisional),
 rename (smelt, 1352), and cap.
+
+## Imagine (raid b7c67c)
+Premise check against the tree (2026-10-29): the ticket's `HOARD.md` and hoard skill are now
+`memory/SMELT.md` (1352, prompt revision v8-r2) and `skills/smelt/SKILL.md`; the quotation clause
+is `skills/smelt/SKILL.md:69-71` ("Carry quotations verified on the page ... verbatim"), and
+SMELT.md has no such clause. SMELT.md has no "Keep details in topics" either; the skill has it
+(line 88). Attribution records are already out of the journal path (1347), so SMELT.md's legacy
+carve-out stays only until 1349 confirms no project still holds some. Today: 11 topic files,
+about 85 KB, largest `raid-review-and-merge.md` 21 KB; index 37 lines. Only "100 lines" is pinned
+anywhere (`tests/test_dream_v8.py:92`, SMELT.md, the skill twice, `AGENTS.md:75`).
+No topic-size check exists. `scripts/resident_census.py` budgets the resident index in chars; the
+topics are not resident, so extending it would mix two jobs.
+
+Simplest path to the three exit criteria, no new machinery:
+1. Prose (criteria 1 and 3): one short "Job and caps" section in SMELT.md, a pointer plus the
+   quotation scoping in the skill. The skill stays procedure, SMELT.md holds the editorial rule.
+2. Check (criterion 2): one ~40-line script `scripts/memory_sizes.py` that prints bytes per
+   topic page against the cap, plus one pytest file calling its function. Not a census extension,
+   not a hook, no guard on the guard: the pytest is the check's own regression, nothing more.
+3. Transition: 1349 rebuilds the pages, so on 1348's merge the real topics are all over 4 KB.
+   Use the repo's own ratchet idiom (`tests/test_resident_census.py` BUDGETS at measured value):
+   a `TRANSITION` dict of per-file ceilings at today's sizes, deleted by 1349. Cheaper than
+   skipping the real tree, and the check never reports a false all-clear.
+
+Price: about 1 coder-hour, about 25k tokens. Probability the cap definition survives 1349
+unchanged: about 60%; the likely amendment is where "Sources" counts (below).
+
+Decisions the text must make, which the rulings leave unstated (flag to the orchestrator):
+- D1. What the cap measures. The ruling: guide sections (current guidance, hazards, open
+  questions) count; Retired is outside. Sources is unnamed. Proposal: every H2 section counts
+  except the one titled `Retired`; Sources counts, because source links are claim-bearing
+  and "recall with source" would otherwise be a way to grow past the cap. Reversible in one line.
+- D2. Commission overflow. "Never cut to fit" means the check cannot fail the page. It prints
+  `OVER (promote to rules, brood 1351)` and exits 0 for that page only; any other page over cap fails.
+- D3. `AGENTS.md:75` says "100 lines". It is an instruction file; the author's call whether the
+  smelt session edits it. Without it, two documents contradict (40 versus 100).
+- D4. Pinned rulings are not machine-detectable without a marker. Proposal: a line starting
+  `> pinned` inside the Commission page. The check does not count them separately; no new rule.
+
+## Plan (raid b7c67c)
+Dependencies: 1352 (done: SMELT.md and skill names are current). 1346's ratchet is later and is
+not this ticket. 1349 consumes the definitions and deletes the TRANSITION dict.
+
+Actions, in order, by file:
+1. `memory/SMELT.md`
+   - New section `## Job of a topic and caps`, after `## Read`: a topic is the as-built
+     (DOE) guide to one department, present tense, each claim with its scope and a source link
+     to a journal episode; page shape (guidance, hazards, open questions, Retired, Sources); the
+     journal stays the intact source and the episode wins over a guide claim; pinned Commission
+     rulings are filed, dated and linked, never paraphrased or retired by smelt; cap 4 KB (4096
+     bytes) per page measured on all sections except Retired; Retired moves to history at the next
+     smelt; a Commission overflow is reported, not cut; the departments list (core + per-type,
+     provisional) in a table or one list; fallback box per page, emptied each smelt.
+   - `## Bounds`: "at most 100 lines" becomes 40 (headings and blanks counted); one line per
+     department with its most-used fact. Bump `Prompt revision` to v8-r3 with today's date.
+   - `## Consolidate` Merging bullet: add "Quotations from manuscript sources keep their
+     wording and locators; operational memory is condensed freely." (the clause lives there,
+     since SMELT.md is the editorial layer.)
+   - `## Report`: one line, "the bytes of each topic page against the cap" (1349 adds the net change).
+2. `skills/smelt/SKILL.md`
+   - Lines 69-71 (Merging bullet): scope "Carry quotations verified on the page and their
+     locators" to "quotations from manuscript sources"; drop "never paraphrase, condense or merge
+     them away" for operational memory; keep the conflicting-locator sentence under the same scope.
+   - Line 88 and procedure step 2 and 4: "100 lines" becomes 40, three sites; "Keep details in
+     topics" becomes "keep details in the journal, linked from the department page".
+   - One new bullet under "Three main functions": a topic's job and the 4 KB cap, one sentence
+     each, then "details: `memory/SMELT.md` § Job of a topic and caps" (no restatement of the table).
+   - Run `make skills-catalog` only if the description changes; it should not.
+3. `scripts/memory_sizes.py` (new, stdlib only): `guide_bytes(text)` returns the UTF-8 byte
+   count of the page minus every `## Retired` section (heading to next H2 or EOF);
+   `report(topics_dir)` yields (name, bytes, cap, status); `main()` prints a table and exits 1 on
+   any non-Commission page over cap. `CAP = 4096`; `INDEX_LINES = 40`. Index lines counted with
+   the same rule as SMELT.md (every line). Filename for Commission: `commission.md` (provisional
+   per the ruling; 1349 may rename it, one constant).
+4. `tests/test_memory_sizes.py` (new), `pytestmark = pytest.mark.adherence` as in the census test.
+5. `tests/test_dream_v8.py:92`: `"100 lines"` becomes `"40 lines"` (the prompt pin follows the prompt).
+6. `AGENTS.md:75`: D3, orchestrator to decide; do not edit unasked.
+
+First failing test (written before the script, red for the right reason):
+`test_retired_section_is_outside_the_cap`: a synthetic page of 3 KB guidance plus a 6 KB
+`## Retired` passes; the same page with a 4.2 KB guidance and an empty Retired is OVER. A
+implementation that counts the whole file fails the first case; one that strips everything after
+the first H2 fails the second. Companion cases in the same file, each one assertion:
+`test_commission_over_cap_warns_not_fails`; `test_exact_cap_passes_and_cap_plus_one_fails`
+(bytes, with a multibyte character so a character count fails); `test_index_line_cap` (a
+41-line index fails, 40 passes, blanks counted); `test_real_tree_is_measured` (positive control:
+at least 10 pages found, so a glob that matches nothing cannot pass; every page at or under its
+TRANSITION ceiling, each ceiling equal to today's size, so growth fails and a rebuild passes).
+Exit criterion 3: `test_quotation_clause_scoped`: skill text contains "manuscript" within the
+quotation sentence and no longer contains "never paraphrase, condense or merge them away" unqualified.
+
+Verification: `python3 scripts/memory_sizes.py` on the tree must list all 11 pages, flag
+`raid-review-and-merge.md` as over the 4 KB cap, and exit 0 under TRANSITION; run the scoped gate
+(`.idh-checks.json` if present) and quote selected/skipped. 1349 is not started here.
+
+## Orchestrator decisions (raid b7c67c)
+- D1: a Sources section sits outside the 4 KB cap, like Retired. The author's ruling lists the
+  capped sections as current guidance, hazards and open questions. Inline source links inside
+  claims count, since they belong to the claim.
+- D2: a Commission page over the cap warns and never fails, as the ruling says
+  ("never cut to fit").
+- D3: `AGENTS.md:75` ("Keep MEMORY.md at most 100 lines") is changed to 40 lines in this PR. This
+  carries out the author's explicit ruling of 2026-10-29 (index cap 40 lines) and is named in the
+  PR body for the author.
+- D4: pinned rulings are marked by a `> pinned` line, as proposed.
+
+## Feasibility (raid b7c67c)
+PASS. Re-measured 2026-10-29 at 8ccc046f: 11 pages in `memory/topics/`, 84,663 bytes; largest
+`raid-review-and-merge.md` 21,469. Two pages are already under 4096 (`subagent-model-effort-levers.md`
+2,576, `zotero-library.md` 3,556); `host-environment.md` is 4,178. So not every page is over the cap:
+harmless under TRANSITION, but the verification line should expect 9 over, not 11. Index 37 lines (fits 40).
+Sites exist: `memory/SMELT.md:117` (Bounds), `skills/smelt/SKILL.md:69` (quotation), `:78-79` (100 lines,
+"Keep details in topics"), `:118`; `tests/test_dream_v8.py:92` (DREAM_PROMPT = SMELT.md); `AGENTS.md:75`.
+100 to 40 in AGENTS.md is -1 char: resident budgets unaffected. `.idh-checks.json` is absent: full gate.
+No file shared with 1356 or 1357; no registry touched (description unchanged, no catalog run).
+
+## Blind-spot (raid b7c67c)
+- Missed "100 lines" site: `skills/brood/SKILL.md:82` ("v8: 100 lines"). Leaving it makes a third
+  contradicting text. Smallest fix: change to 40 in the same commit (rename-sweep rule).
+- `tests/test_memory_v8_pilot.py:161` asserts the harness index `<= 100` lines: stays green but stale;
+  tighten to 40 or point it at `memory_sizes.INDEX_LINES` (one source of the number).
+- `memory/` root holds stray `feedback_*.md`, `reference_*.md`, `pending-capture-*.md.txt`: the script
+  must glob `memory/topics/*.md` only, else the positive control counts non-topics.
+- Census overlap checked: `scripts/census/` reads session traces, `resident_census.py` resident chars;
+  neither measures topic bytes. A new script does not duplicate.
+- `conception/memory-v8/templates/{AGENTS.md:16,memory/MEMORY.md:4}` still say 100; no script reads them
+  (grep). Historical design record: leave, but say so in the PR body.
+
+## Handoff (raid b7c67c, 2026-10-29)
+Planning is complete: Imagine, Plan, orchestrator decisions, feasibility and blind spot are above,
+and they bind the executor. Execution is left to a fresh session at the author's request (the
+planning session's context was long). Resume with `/raid 1348 1356 1357`: wave 1 = 1348 + 1356,
+wave 2 = 1357 after 1356 merges. Phases 1-4 are done; start at Phase 5.
