@@ -92,6 +92,15 @@ def test_ordinary_capture_still_lands_in_the_journal(tmp_path):
 
 
 @pytest.mark.integration
+def test_unknown_fourth_argument_is_refused(tmp_path):
+    repo = project(tmp_path)
+    result = subprocess.run([str(SCRIPTS / "memory-capture.sh"), str(repo), "public", "note", "journal"],
+                            input="text\n", text=True, capture_output=True, env=child_env())
+    assert result.returncode == 2
+    assert not (repo / "memory").exists()
+
+
+@pytest.mark.integration
 @pytest.mark.skipif(not (shutil.which("age") and shutil.which("age-keygen")), reason="age not installed")
 def test_private_capture_lands_in_the_new_root(tmp_path):
     repo = project(tmp_path)
