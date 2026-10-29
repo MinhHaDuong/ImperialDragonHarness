@@ -32,9 +32,10 @@ carries the generated `seat:` lines, read before the panel was removed.
 On **every** exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after removing the review worktree and before returning; the report goes
 in the result:
 
-The script reads, and prints as `containment: ...`: the toplevel of cwd (the
-forks just returned, so a drifted cwd would make the other reads report a
-foreign tree's state, `rules/git.md` § anchor), `git status --porcelain` of the
+The script reads, and prints as `containment: ...`: the toplevel of the session
+tree `gaze_setup.py` recorded at entry (not cwd: a runtime may have moved the shell
+between setup and close, and a drifted cwd would report a foreign tree's state;
+an entry state without it reads the cwd), `git status --porcelain` of the
 invoking session worktree, its branch (compared to `--entry-branch`), and the
 primary checkout's status; lines already present at entry (recorded by `gaze_setup.py`) are the caller's own work, not findings. Any finding exits 4 (the result is still recorded
 with the report); the repairs below stay with gaze.

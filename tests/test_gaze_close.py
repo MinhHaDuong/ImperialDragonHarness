@@ -726,6 +726,68 @@ def test_pointer_timeout_ignored_and_seats_still_run(monkeypatch, capsys):
         raise subprocess.TimeoutExpired(cmd, kw.get("timeout", 120))
 
     monkeypatch.setattr(forge.subprocess, "run", slow)
-    monkeypatch.setattr(gaze_close.forge, "get_forge", lambda cwd, pr: forge.GhForge())
+    monkeypatch.setattr(gaze_close.forge, "get_forge", lambda choice, pr, cwd=None: forge.GhForge())
     gaze_close.pointer("/nowhere", "7", "REVIEWED", identity={"review_id": "r1"})
     assert "pointer: not posted" in capsys.readouterr().out
+
+
+def foreign_repo(tmp_path):
+    """An unrelated repository: where a runtime may leave the shell while a review closes (ticket 1356)."""
+    other = tmp_path / "other"
+    other.mkdir()
+    git(other, "init", "-q", "-b", "main")
+    return other
+
+
+def test_close_from_foreign_cwd_records_the_real_panel(tmp_path):
+    """Ticket 1356: run from another project's cwd with --repo, the close reads the real panel's
+    seats, removes the real review tree and posts the pointer to the real repository's PR."""
+    primary, env, f = opened(tmp_path)
+    shim = tmp_path / "bin" / "gh"
+    shim.write_text(shim.read_text().replace('"$5" >> "$MOCK_GH_LOG"', '"$PWD $5" >> "$MOCK_GH_LOG"'))
+    one_seat(primary)
+    other = foreign_repo(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\nseats: panel\n{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", "--repo", str(primary), *ATTR(tmp_path), "--comment-file", str(comment)],
+            other, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "self-only" not in r.stdout + r.stderr
+    text = answer_text(primary, f)
+    assert "seat: " in text and "plan check: PASS" in text
+    assert not (primary / ".claude" / "worktrees" / "review-7").exists()
+    (line,) = posted(tmp_path).splitlines()
+    assert line.startswith(f"{primary.resolve()} /gaze review on notes:"), line
+
+
+def test_containment_reports_the_session_tree_not_a_moved_cwd(tmp_path):
+    """Ticket 1356: setup records the session tree; a close whose cwd moved to the main checkout
+    judges the recorded tree and branch, not the new cwd."""
+    primary, env = make_repo(tmp_path)
+    session = tmp_path / "session"
+    git(primary, "worktree", "add", "-q", "-b", "t1-work", str(session), "main")
+    r = run(SETUP, ["7"], session, env)
+    assert r.returncode == 0, r.stderr
+    f = fields(r.stdout)
+    assert f["repo"] == str(primary.resolve())
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{containment}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", "--repo", str(primary), *ATTR(tmp_path), "--comment-file", str(comment)],
+            primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "differs from entry branch" not in r.stdout
+    assert f"toplevel={session.resolve()} branch=t1-work" in r.stdout
+
+
+def test_legacy_entry_state_without_session_tree_closes_from_cwd(tmp_path):
+    primary, env, f = opened(tmp_path)
+    state = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7" / "entry-state.json"
+    import json
+    d = json.loads(state.read_text())
+    d.pop("session_tree", None)
+    state.write_text(json.dumps(d))
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{containment}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"toplevel={primary.resolve()}" in r.stdout

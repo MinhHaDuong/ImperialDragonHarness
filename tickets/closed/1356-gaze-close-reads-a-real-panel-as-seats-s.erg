@@ -2,9 +2,11 @@
 Title: gaze_close reads a real panel as seats: self-only when run from another project's cwd
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2007
 
 --- log ---
 2026-10-29T20:56Z reviewer created
+2026-10-29T22:00Z reviewer closed — autoclosed — PR #2007
 
 --- body ---
 ## Context
