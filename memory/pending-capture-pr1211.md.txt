@@ -71,7 +71,7 @@ provider ids for these attempts. The public three five-seat syntheses confirm
 runtime-assigned seats without model pinning; no alias can recover the actual
 historical identities. Model re-audition is impossible from available facts.
 Captured with explicit runtime-masked identities in
-memory/journal/2026/2026-10-06-review-attribution-pr1211.md. All 15 attempts,
+memory/evidence/attribution/2026-10-06-review-attribution-pr1211.md. All 15 attempts,
 findings, adoption decisions and incident context are preserved; the draft's
 blocker severity maps to the contract's verifiable category, without changing
 adoption or inventing findings. No absent native/external review is inferred.

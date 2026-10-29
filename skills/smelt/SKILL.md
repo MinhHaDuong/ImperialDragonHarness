@@ -75,7 +75,8 @@ Apply these to consolidated `memory/topics/` and the index:
 The raw journal stays append-only. Pruning a consolidated claim never deletes
 its source experience. One carve-out: legacy review-attribution records move
 once, by `git mv` with their bytes intact, to `memory/evidence/attribution/`.
-`memory/MEMORY.md` has **at most 100 lines**, counting headings and blank lines. Keep details in topics rather than expanding the index.
+`memory/MEMORY.md` has **at most 100 lines**, counting headings and blank
+lines. Keep details in topics rather than expanding the index.
 
 ## Coherence across indexed memories and harness rules
 

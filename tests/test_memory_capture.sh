@@ -209,6 +209,25 @@ if printf 'x\n' | "$CAPTURE" "$P" public 'bad/slug' >/dev/null 2>&1; then
 else
     _pass "invalid slug refused"
 fi
+
+# attribution kind (ticket 1347): the record lands flat under
+# memory/evidence/attribution/, never in the journal; any other 4th argument is
+# a usage error that writes nothing.
+_mkproject attr https://example.com/Owner/Attr.git
+printf 'record\n' | "$CAPTURE" "$P" public review-attribution-pr7 attribution >/dev/null
+if [ -f "$P/memory/evidence/attribution/$DATE-review-attribution-pr7.md" ] && [ ! -e "$P/memory/journal" ]; then
+    _pass "attribution kind written under memory/evidence/attribution/"
+else
+    _fail "attribution kind not written under memory/evidence/attribution/"
+fi
+_mkproject badkind https://example.com/Owner/Badkind.git
+rc=0
+printf 'x\n' | "$CAPTURE" "$P" public note-six journal >/dev/null 2>&1 || rc=$?
+if [ "$rc" = 2 ] && [ ! -e "$P/memory" ]; then
+    _pass "unknown 4th argument refused with exit 2, nothing written"
+else
+    _fail "unknown 4th argument: exit $rc or files written"
+fi
 if printf 'x\n' | "$CAPTURE" "$SANDBOX/not-a-repo" public note >/dev/null 2>&1; then
     _fail "non-repository accepted"
 else
