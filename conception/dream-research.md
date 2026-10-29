@@ -1,5 +1,15 @@
 # /dream Research Note — 2026-05-13
 
+> **Status, 2026-10-29.** This is the harness's running survey of agent-memory
+> practice. Its "Recommended design" (nightly cron, cross-project scope over
+> `~/.claude/projects/*/memory/`, the Mem0 four-operation classifier) was not
+> adopted: design v8 ([2026-09-10-dragon-memory-design.md](2026-09-10-dragon-memory-design.md))
+> chose repository-local Markdown, explicit `/hoard` runs and no timer. Factual
+> errors found on re-verification are corrected in place and flagged
+> "Corrected 2026-10-29"; the current state of the field is in
+> [§ State of the art, 2026-10-29](#state-of-the-art-2026-10-29), and the audit
+> that uses it is [2026-10-29-memory-system-audit.md](2026-10-29-memory-system-audit.md).
+
 ## Verdict
 
 The initial survey (2026-04-30) remains **broadly valid**, but five critical shifts have emerged: (1) Anthropic released "dreaming" as a managed-agent primitive (May 2026), providing a reference implementation architecture and real-world performance data (6x Harvey completion rate lift). (2) Mem0 advanced to v2.0.2 with no breaking schema changes; the four-operation classifier (ADD/UPDATE/DELETE/NOOP) is confirmed production-ready. (3) TiMem (January 2026) introduces temporal-hierarchical consolidation (five-level tree) as a SOTA alternative to flat reflection; critical for long-horizon agents. (4) Importance-sum triggers remain optional but are now validated by SCM (sleep-consolidated memory, 2026) as a scalable replacement for time-based scheduling. (5) Letta sleep-time agents remain experimental; client-side subagent consolidation is replacing server-side sleep, shifting the /dream design toward local-first consolidation.
@@ -10,7 +20,7 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 
 ## Pattern status
 
-### mem0 (ADD/UPDATE/DELETE/NOOP tool-call classifier) — VALID with production certification
+### mem0 (ADD/UPDATE/DELETE/NOOP tool-call classifier) — VALID in May 2026; dropped upstream by October 2026
 
 **Status**: VALID (2504.19413, April 2025)
 
@@ -21,7 +31,9 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 - No mention of deprecated API; v2.x is current production.
 - Apache Cassandra (v1.0.1, Nov 2025) and Valkey (v0.1.118, Sept 2025) storage backends added for distributed deployments.
 
-**For /dream**: Use as-is. Sem0's classifier is battle-tested. Consider making embedding model configurable (haiku 4.5 for cost; accept user override).
+**Corrected 2026-10-29**: Mem0 itself abandoned this pipeline. Its "new memory algorithm" is single-pass ADD-only extraction ("one LLM call, no UPDATE/DELETE"); old facts stay in the store and retrieval ranks current ones first ([migration guide](https://docs.mem0.ai/migration/oss-v2-to-v3), accessed 2026-10-29; the page is undated, and the README dates the algorithm April 2026). PyPI `mem0ai` is 2.2.1 (2026-09-25, per the research subagent's PyPI query, not re-checked). The four-operation classifier survives only in the 2025 paper. "Production certification" in the heading above had no source and is withdrawn.
+
+**For /dream** (May 2026 advice, superseded): Use as-is. Mem0's classifier is battle-tested. Consider making embedding model configurable (haiku 4.5 for cost; accept user override).
 
 ---
 
@@ -63,6 +75,8 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 
 **For /dream**: Design as local-first (already true per 0070 Action 7). No server-side dependency. Subprocess or manual cron scheduling. This aligns with Letta's direction.
 
+**Update 2026-10-29**: Letta's sleep-time page now describes "dreaming": background subagents review recent conversations and update memory, triggered after N steps or on compaction, with an optional review-before-apply mode ([docs](https://docs.letta.com/guides/agents/architectures/sleeptime), research subagent, accessed 2026-10-29). Letta Code's *context repositories* (2026-02-12) store memory as files in a git repository; `system/` files are always loaded and the file tree sits in the system prompt; reflection works in a separate git worktree and merges back; a defrag subagent splits, merges and restructures memory toward 15-25 focused files ([blog](https://www.letta.com/blog/context-repositories), accessed 2026-10-29). The "May 2026 roadmap" claim above was not found again and is unverified.
+
 ---
 
 ### A-MEM / Zettelkasten link updates (2502.12110) — VALID, now confirmed best-practice
@@ -80,7 +94,7 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 
 ### Importance-sum trigger (Park) — VALID, now formally validated as scalable alternative
 
-**Status**: VALID as optional v2. Now validated by SCM (2604.20943, April 2026) as scalable replacement for time-based scheduling.
+**Status**: VALID as optional v2. *Corrected 2026-10-29*: SCM (2604.20943) is a single-author research-preview prototype evaluated on an eight-test suite; it illustrates importance-based forgetting but does not validate it at scale.
 
 **Evidence**:
 - Park's importance scoring (2023) is standard: LLM assigns importance to each fact based on perceived long-term value.
@@ -104,6 +118,7 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 - Developers can set automatic update or review-before-land workflow.
 - **Real-world impact**: Harvey reported ~6x task completion rate lift after dreaming activation (internal testing).
 - Architecture: runs on Anthropic's managed-agent platform; agents can't inspect or modify dreaming behavior directly.
+- *Corrected 2026-10-29*: the official docs describe a dream as an asynchronous job writing a separate output store from one input store and 1-100 sessions; the input store is never modified, and the output is reviewed before attaching. That is review-before-land by construction. The Harvey figure is press-reported, single-customer and unverified. Third-party sources disagree on the launch date (May 6 or May 19, 2026). No official *Claude Code* dreaming feature was found; "Auto Dream" appears only in third-party blogs.
 
 **Implication for /dream**: 
 - Anthropic's design validates the concept: background memory consolidation produces measurable agent improvement.
@@ -142,6 +157,7 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 - Client-side implementation: Claude makes tool calls; application executes locally.
 - Comes with example implementations (Python `BetaAbstractMemoryTool`, TypeScript `betaMemoryTool`).
 - Security: must validate paths to prevent traversal attacks (`../`, URL-encoded sequences, etc.).
+- *Update 2026-10-29*: the tool is generally available with type `memory_20250818` and no beta header; the API injects a "view your memory directory first" instruction; the docs pair it with context editing and server-side compaction ([memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool), research subagent, accessed 2026-10-29).
 
 **Implication for /dream**: 
 - `/dream` shares design DNA with Anthropic's memory tool: CRUD operations on memory files, validation, path safety.
@@ -182,6 +198,10 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 ---
 
 ## Recommended design
+
+> *Superseded 2026-10-29*: kept as the May 2026 proposal. Design v8 replaced it
+> with repository-local Markdown, explicit runs and no timer; see the status note
+> at the top.
 
 ### For /dream v1 (MVP, production-ready by Q2 2026)
 
@@ -238,10 +258,10 @@ The initial survey (2026-04-30) remains **broadly valid**, but five critical shi
 - [Letta Docs (April 2025). Sleep-time agents](https://docs.letta.com/guides/agents/architectures/sleeptime/) — Background memory consolidation agents; May 2026 roadmap signals shift to client-side subagent model.
 - [Xu et al. (February 2025). A-MEM: Agentic Memory for LLM Agents. NeurIPS 2025. arXiv:2502.12110](https://arxiv.org/abs/2502.12110) — Zettelkasten-style link generation and dynamic link updates during consolidation.
 - [Cognee. Memify Post-Processing Pipeline (2026)](https://docs.cognee.ai/core-concepts/main-operations/memify) — Two-stage extraction + enrichment architecture for knowledge graph consolidation.
-- [Anthropic. Dreaming for Claude Managed Agents (May 6, 2026)](https://letsdatascience.com/blog/anthropic-dreaming-claude-managed-agents-self-improving-may-6) — Cloud-native reference implementation; 6x Harvey completion rate lift reported; snapshot-before-mutation pattern.
+- [Anthropic. Dreams, Claude Managed Agents docs](https://platform.claude.com/docs/en/managed-agents/dreams) — research preview (header `dreaming-2026-04-21`); a dream reads one memory store and 1-100 sessions and writes a *separate* output store, which is reviewed and attached or discarded; the input store is never modified (accessed 2026-10-29 by the research subagent). *Corrected 2026-10-29*: the earlier link was a third-party blog; the "6x Harvey" figure appears only in press coverage of one customer's internal test and was not found in an Anthropic source ([search, 2026-10-29](https://itbrief.com.au/story/anthropic-adds-dreaming-multiagent-tools-for-claude)).
 - [Anthropic. Memory tool (May 2026). Claude API Docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool) — Native memory tool (view/create/str_replace/insert/delete/rename); client-side implementation; path validation required.
-- [Zhao et al. (January 2026). TiMem: Temporal-Hierarchical Memory Consolidation for Long-Horizon Conversational Agents. arXiv:2601.02845](https://arxiv.org/abs/2601.02845) — Five-level temporal memory tree (segments → clusters → slices → arcs → profiles); SOTA long-horizon consolidation; 75.30% accuracy, 52% memory reduction.
-- [Li et al. (April 2026). SCM: Sleep-Consolidated Memory with Algorithmic Forgetting for Large Language Models. arXiv:2604.20943](https://arxiv.org/html/2604.20943) — Importance-based thresholding for memory retention; validates importance-sum trigger pattern as scalable alternative to time-based scheduling.
+- [Li, K. et al. (January 2026; v2 April 2026). TiMem: Temporal-Hierarchical Memory Consolidation for Long-Horizon Conversational Agents. arXiv:2601.02845](https://arxiv.org/abs/2601.02845) — Five-level temporal memory tree (segments → clusters → slices → arcs → profiles); 75.30% on LoCoMo, 76.88% on LongMemEval-S, 52.20% shorter recalled memory (author-reported). *Corrected 2026-10-29*: first author is Kai Li, not Zhao.
+- [Shinde, S. S. (April 2026). SCM: Sleep-Consolidated Memory with Algorithmic Forgetting for Large Language Models. arXiv:2604.20943](https://arxiv.org/html/2604.20943) — Importance-based thresholding for memory retention; a research-preview prototype; author-reported 90.9 % noise reduction on an eight-test suite. *Corrected 2026-10-29*: single author (Shinde), not "Li et al."; evidence too thin to "validate" a trigger pattern.
 - [ICLR 2026 Workshop. MemAgents: Memory for LLM-Based Agentic Systems](https://openreview.net/forum?id=U51WxL382H) — Emerging standardization on memory data structures, retrieval, consolidation, and benchmarks.
 - [Mem0 Changelog (2025-2026)](https://docs.mem0.ai/changelog) — Apache Cassandra support (v1.0.1, Nov 2025), Valkey support (v0.1.118, Sept 2025), v2.0.x releases April-May 2026.
 
@@ -308,17 +328,17 @@ where `t_j` is the time since the j-th retrieval and `d` is a decay parameter (~
 
 For the harness tier, a simplified version: each entry carries a `last_confirmed` timestamp, updated whenever a project consolidation finds the entry still relevant (NOOP or UPDATE, not DELETE). Entries not confirmed within 90 days are **flagged for review** — not automatically deleted, because a long-unconfirmed entry may still be correct if no relevant project was consolidated in that period.
 
-SCM (Li et al., 2026; arXiv:2604.20943) validates importance-based decay as scalable: their algorithmic forgetting uses multi-dimensional importance scores to determine which memories survive consolidation. The 90-day threshold is a conservative starting point; operational data from the first quarter of v2 deployment will calibrate whether a shorter or longer window better balances injection cost against memory loss.
+SCM (Shinde, 2026; arXiv:2604.20943; *corrected 2026-10-29*: a single-author prototype, illustrative rather than validating) proposes importance-based decay: their algorithmic forgetting uses multi-dimensional importance scores to determine which memories survive consolidation. The 90-day threshold is a conservative starting point; operational data from the first quarter of v2 deployment will calibrate whether a shorter or longer window better balances injection cost against memory loss.
 
 **Flagging, not deletion**: The exit criterion specifies "flagged for review." The `/dream` decay pass lists flagged entries with their age, originating projects, and last confirmation date. A human or a future automated pass decides whether to confirm, demote, or delete.
 
-**References**: Anderson, J. R. (1983). *The Architecture of Cognition*. Harvard University Press; Anderson, J. R. & Lebiere, C. (1998). *The Atomic Components of Thought*. Lawrence Erlbaum; Li et al. (2026), arXiv:2604.20943.
+**References**: Anderson, J. R. (1983). *The Architecture of Cognition*. Harvard University Press; Anderson, J. R. & Lebiere, C. (1998). *The Atomic Components of Thought*. Lawrence Erlbaum; Shinde (2026), arXiv:2604.20943.
 
 ### 5. Existing multi-tier agent memory systems
 
 A survey of published agent memory architectures reveals that **explicit cross-context earned promotion from local to global scope is largely novel** in the /dream v2 design:
 
-- **TiMem** (Zhao et al., 2026; arXiv:2601.02845): Defines five hierarchical levels (segments, utterance clusters, persona slices, interaction arcs, persona profiles). These are *abstraction* tiers within a single conversational context, not *scope* tiers across independent projects. TiMem's bottom-up consolidation is analogous to the dream v1 reflection pass, but it has no mechanism for a memory to earn promotion from one user-project context to a global tier.
+- **TiMem** (Li et al., 2026; arXiv:2601.02845): Defines five hierarchical levels (segments, utterance clusters, persona slices, interaction arcs, persona profiles). These are *abstraction* tiers within a single conversational context, not *scope* tiers across independent projects. TiMem's bottom-up consolidation is analogous to the dream v1 reflection pass, but it has no mechanism for a memory to earn promotion from one user-project context to a global tier.
 
 - **A-MEM** (Xu et al., 2025; arXiv:2502.12110): Implements a flat Zettelkasten-style link graph with dynamic index updates. All memories inhabit a single namespace; there is no local/global distinction. The link-update pattern (rescan references after mutations) is valuable for v2 post-promotion housekeeping but does not address promotion itself.
 
@@ -326,7 +346,7 @@ A survey of published agent memory architectures reveals that **explicit cross-c
 
 - **Anthropic's dreaming** (May 2026): Runs as a managed-agent background process reviewing prior sessions. Merges duplicates, removes outdated entries, highlights recurring patterns. The architecture operates on a single agent's memory store — there is no published multi-project tier model or earned-promotion criterion. The key design pattern adopted for v2 is **snapshot-before-mutation** (read full state, propose edits, allow rollback).
 
-- **SCM** (Li et al., 2026; arXiv:2604.20943): Implements importance-weighted retention with algorithmic forgetting, but within a single-agent context. No cross-context promotion.
+- **SCM** (Shinde, 2026; arXiv:2604.20943): Implements importance-weighted retention with algorithmic forgetting, but within a single-agent context. No cross-context promotion.
 
 - **Mem0** (Chhikara et al., 2025; arXiv:2504.19413): Provides a four-operation classifier (ADD/UPDATE/DELETE/NOOP) with k-neighborhood retrieval. Designed for a single memory namespace; no built-in tier separation.
 
@@ -337,3 +357,179 @@ A survey of published agent memory architectures reveals that **explicit cross-c
 ---
 
 **Note**: All URLs and arxiv IDs verified as of 2026-05-13 (v1 section) and 2026-06-05 (v2 section). This research note is companion to tickets 0070 (v1) and 0165 (v2).
+
+*Corrected 2026-10-29*: re-verification found the TiMem first author, the SCM author and the dreaming source misattributed in that pass; see the flagged corrections above.
+
+---
+
+## State of the art, 2026-10-29
+
+Gathered by a Sonnet research subagent (fetched pages marked V in its report,
+snippets S) and spot-checked by the writer, Claude Opus 5.5, who re-fetched the
+items marked † on 2026-10-29. Items without † rest on the subagent's fetch;
+items marked "unverified" were seen only in search snippets. The question is
+what changed since June 2026 that bears on a file-based, repository-owned
+memory for coding agents.
+
+### 1. Vendor guidance and runtime mechanics
+
+- **Context engineering.** Anthropic's guidance (2025-09-29) names four
+  techniques for long-horizon agents: compaction, structured note-taking
+  outside the window, sub-agents returning condensed 1-2K-token results, and
+  just-in-time retrieval by reference rather than pre-loading
+  ([blog](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)).
+  Its description of the memory tool as beta is now dated.
+- **API memory tool and context management.** The memory tool is GA
+  (`memory_20250818`); context editing (`clear_tool_uses_20250919`,
+  `clear_thinking_20251015`) stays beta; server-side compaction is now the
+  documented first choice for long conversations, and client-side SDK
+  compaction is deprecated ([context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing),
+  [compaction](https://platform.claude.com/docs/en/build-with-claude/compaction)).
+- **Claude Code memory†.** Instruction files load broadest to most specific;
+  Claude Code can read `AGENTS.md` in place of `CLAUDE.md`; the docs advise
+  under 200 lines per file because longer files "reduce adherence". Auto memory
+  is on by default, shared across worktrees of a repository, and loads the
+  first 200 lines or 25 KB of `MEMORY.md` at every start; topic files are read
+  on demand. It is "context, not enforced configuration"; it can be disabled
+  (`autoMemoryEnabled`, `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`) or relocated
+  (`autoMemoryDirectory`). Subagents do not inherit it, except forks
+  ([memory docs](https://code.claude.com/docs/en/memory)).
+- **Codex.** `AGENTS.md` files are concatenated from the project root to the
+  working directory up to `project_doc_max_bytes` (32 KiB default). Codex
+  *memories* are off by default, generated in the background from idle past
+  chats, and the docs say required rules belong in `AGENTS.md`, not in
+  memories ([AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md),
+  [memories](https://learn.chatgpt.com/docs/customization/memories?surface=app)).
+  OpenAI's session-memory cookbook warns that summary errors carry forward and
+  suggests labelling unverified content
+  ([cookbook](https://developers.openai.com/cookbook/examples/agents_sdk/session_memory), undated).
+- **Pi.** Pi loads `AGENTS.md` or `CLAUDE.md` from its agent directory, the
+  working directory and every parent; it implements the Agent Skills
+  specification, including `~/.agents/skills/`; it has no built-in memory, and
+  now ships compaction that keeps original entries in the session tree
+  ([pi-mono](https://github.com/badlogic/pi-mono), `packages/coding-agent/docs/`).
+- **Managed consolidation.** Anthropic dreams and Letta dreaming (sections
+  above) both write consolidation output where it can be reviewed before it
+  replaces the store; Letta's defrag aims at 15-25 files. Neither publishes an
+  outcome evaluation of the consolidation step itself.
+
+### 2. Systems
+
+- **Mem0†** moved from LLM-decided ADD/UPDATE/DELETE/NOOP to ADD-only
+  extraction with time-aware retrieval (section above). Its README benchmark
+  figures are for the managed platform, which "includes proprietary
+  optimizations not available in the open-source SDK" (vendor-reported).
+- **Zep/Graphiti.** Graphiti keeps "explicit bi-temporal tracking with
+  automatic fact invalidation"; old facts are invalidated, not deleted, and
+  current or past state can be queried ([repo](https://github.com/getzep/graphiti)).
+  Zep Community Edition is deprecated (unverified, help-page snippet).
+- **Letta†.** Git-backed context repositories (section above). Letta reported
+  74.0 % on LoCoMo for GPT-4o-mini with plain file tools (grep, open), above
+  Mem0's reported 68.5 % for its graph variant, and recommends other benchmarks
+  over LoCoMo ([blog, 2025-08-12](https://www.letta.com/blog/benchmarking-ai-agent-memory); vendor result).
+- **A-MEM** reached v11 (2025-10-08), NeurIPS 2025
+  ([arXiv:2502.12110](https://arxiv.org/abs/2502.12110)). Successors were not
+  searched.
+- **Sleep-time compute** (Lin et al., 2025-04-17,
+  [arXiv:2504.13171](https://arxiv.org/abs/2504.13171)) reports about 5× less
+  test-time compute at equal accuracy on stateful math tasks by precomputing
+  over the context between queries. It is a reasoning-compute result, not a
+  memory-QA one; citing it as evidence for memory consolidation overreaches.
+
+### 3. Benchmarks and their critiques
+
+- **LongMemEval** (ICLR 2025, [arXiv:2410.10813](https://arxiv.org/abs/2410.10813)):
+  500 questions over five abilities; the S variant is about 115K tokens per
+  question, which now fits in a context window. Chroma found models did worse
+  on the full prompt than on a focused one
+  ([context rot](https://www.trychroma.com/research/context-rot)).
+- **LongMemEval-V2†** (2026-05-12, [arXiv:2605.12493](https://arxiv.org/abs/2605.12493)):
+  451 questions over web-agent experience. A file-based method driven by a
+  coding agent scores 72.5 %, an off-the-shelf coding agent 69.3 %, the best
+  RAG baseline 48.5 %, at higher latency.
+- **LoCoMo** (2024, [arXiv:2402.17753](https://arxiv.org/abs/2402.17753)) has
+  short conversations (about 9K tokens on average). An audit found 99 of 1,540
+  golden answers wrong (6.4 %) and a gpt-4o-mini judge accepting 62.81 % of
+  deliberately wrong but topical answers
+  ([Penfield Labs, 2026-04-08](https://penfieldlabs.substack.com/p/we-audited-locomo-64-of-the-answer);
+  the auditors build a competing benchmark). The Mem0-Zep dispute
+  ([Zep, 2025-05-06](https://www.getzep.com/blog/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/))
+  turns on harness errors in each other's runs; Mem0's own table shows a
+  full-context baseline (72.90 %) above both Mem0 variants. Vendor LoCoMo
+  scores are not comparable evidence.
+- **MemoryAgentBench** ([arXiv:2507.05257](https://arxiv.org/abs/2507.05257), v4 2026-06-28):
+  accurate retrieval, test-time learning, long-range understanding and
+  selective forgetting; no method masters all four.
+- **BEAM** (ICLR 2026, [arXiv:2510.27246](https://arxiv.org/abs/2510.27246), unverified
+  snippet): conversations up to 10M tokens; long-context models degrade with
+  length.
+- **VibeMemBench†** (2026-09-20, [arXiv:2609.23570](https://arxiv.org/abs/2609.23570)):
+  111 repository coding targets with 3,634 history trajectories. Injecting
+  verified experience raised resolution by 1.1-4.5 points for four of five
+  solvers, but when four memory systems built and retrieved experience
+  themselves, 11 of 12 solver-system pairs did not beat no memory. Closest
+  published analogue to this harness's use case.
+- **Evaluating AGENTS.md†** (Gloaguen et al., ICLR 2026, v3 2026-09-29,
+  [arXiv:2602.11988](https://arxiv.org/abs/2602.11988)): context files "do not
+  generally improve task success rates" and raise inference cost by over 20 %;
+  agents follow them, repository overviews do not help, and non-standard
+  practices are where they pay.
+
+### 4. Accumulation, consolidation and forgetting
+
+- **"Useful Memories Become Faulty When Continuously Updated by LLMs"†**
+  (Zhang et al., 2026-05-13, v2 2026-08-29,
+  [arXiv:2605.12978](https://arxiv.org/abs/2605.12978)): memory utility rises
+  then degrades under repeated LLM consolidation, sometimes below the
+  no-memory baseline; consolidating even from ground-truth solutions, GPT-5.4
+  failed 54 % of ARC-AGI problems it had solved without memory; agents that
+  keep raw episodes by default double the accuracy of forced-consolidation
+  agents. This is the most direct evidence against rewrite-heavy
+  consolidation, and it bears on `/hoard`.
+- **Experience-following** (Xiong et al., [arXiv:2505.16067](https://arxiv.org/abs/2505.16067), v2 2025-10-10):
+  agents copy retrieved past experience, so stored errors propagate and
+  superficially successful runs mislead when replayed.
+- **ACE** (ICLR 2026, [arXiv:2510.04618](https://arxiv.org/abs/2510.04618)) names
+  *brevity bias* (summaries drop domain detail) and *context collapse*
+  (iterative rewriting erodes accumulated detail), and answers with
+  incremental itemised updates rather than wholesale rewrites. Read with the
+  previous item: neither "rewrite everything" nor "append everything" is safe;
+  bounded, itemised edits with a size budget are the current middle ground.
+- **Context rot** (Chroma, 2025-07-14): performance falls with input length
+  even on simple tasks; distractors hurt. Supports keeping resident memory
+  small and retrieving on demand.
+- Dynamic Cheatsheet ([arXiv:2504.07952](https://arxiv.org/abs/2504.07952)) and
+  ReasoningBank ([arXiv:2509.25140](https://arxiv.org/abs/2509.25140)) report gains
+  from curated, test-time strategy memories; both curate a small store rather
+  than accumulate.
+
+### 5. Surveys
+
+- Hu et al., *Memory in the Age of AI Agents* (2025-12-15,
+  [arXiv:2512.13564](https://arxiv.org/abs/2512.13564)): forms (token-level,
+  parametric, latent), functions (factual, experiential, working) and dynamics.
+- Du et al., *Rethinking Memory in AI* (2025-05-01,
+  [arXiv:2505.00675](https://arxiv.org/abs/2505.00675), snippet only): six
+  operations, consolidation through forgetting.
+- Wu et al., *From Human Memory to AI Memory* (2025-04-22,
+  [arXiv:2504.15965](https://arxiv.org/abs/2504.15965), snippet only).
+- Du, *Memory for Autonomous LLM Agents* (2026-03-08,
+  [arXiv:2603.07670](https://arxiv.org/abs/2603.07670)).
+
+### 6. What this changes for the harness
+
+- The file-and-grep retrieval that v8 chose agrees with the best 2026 evidence
+  (LongMemEval-V2, Letta's LoCoMo run); no change is indicated there.
+- Consolidation is the contested step. The 2026 evidence favours keeping raw
+  episodes searchable and making any consolidated layer small, itemised and
+  reviewed as a separate output, over repeatedly rewriting one growing store.
+- Outcome evaluation is the gap the field and the harness share: VibeMemBench
+  shows that coding-agent memory usually fails to beat no memory, so a local
+  with/without trial is worth more than further mechanism.
+- The June 2026 claim that cross-context earned promotion is absent from
+  published systems was not re-searched; treat it as dated.
+
+Not verified in this pass: Mem0 and Letta version numbers (PyPI, subagent
+only); Zep CE deprecation; BEAM and MemBench details; the Mem0
+counter-rebuttal of Zep's later 80-84 % claims (snippets only); any official
+Anthropic source for the Harvey figure.
