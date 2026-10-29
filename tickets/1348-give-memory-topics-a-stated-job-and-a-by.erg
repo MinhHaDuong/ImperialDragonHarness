@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Give memory topics a stated job and a byte budget
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) §3.2, R1; Fable and GPT-6 Astra reviews of the fifth hoard (PR #1975, closed unmerged 2026-10-29 by author decision). Topics grew from 15 KB (2026-10-03) to 120 KB on the fifth hoard's branch:
+dated "Later measurements" and "Refresh" sections, and superseded claims marked in place rather
+than retired. Both reviewers estimated 10-35% of topic text states what is true now.
+No document says what a topic is for, and only `MEMORY.md` has a budget (100 lines).
+Structural clauses both reviewers named: `skills/hoard/SKILL.md:69-70` (quotations never
+condensed or merged), `memory/HOARD.md` § Coherence and "Keep details in topics".
+
+## Scope
+- State the job of a topic in `memory/HOARD.md` and the hoard skill (an author decision; the
+  lair session proposed a definition in its report of 2026-10-29).
+- A per-topic byte cap and a total cap well under today's size. The cap binds on history, not on
+  conditions and exceptions (ACE's brevity-bias warning).
+- Superseded claims leave topics; the journal and git keep the history.
+- Scope the verbatim-quotation clause to manuscript sources.
+
+## Exit criteria
+- [ ] HOARD.md and the hoard skill define the job of a topic and its caps
+- [ ] A check reports topic sizes against the caps
+- [ ] The quotation clause no longer applies to operational memory

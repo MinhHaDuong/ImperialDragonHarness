@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Make each hoard a rebuild of the topics, not a delta
+Created: 2026-10-29
+Author: reviewer
+Blocked-by: 1348
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) R2; Fable and GPT-6 Astra reviews of the fifth hoard (PR #1975, closed unmerged 2026-10-29 by author decision). Today a hoard reads only journal entries newer than the last accepted report and
+appends to topics, so topics only grow. The fifth hoard's branch `hoard-2026-10-29` stays on the
+forge as reference.
+
+## Scope
+- Each hoard re-derives every topic from the previous topic and the journal, writes it fresh
+  under the caps of 1348, and reports the net byte change. A run that grows the store explains why.
+- Pair with the existing second pass so a rewrite does not drop a caveat.
+- Run the next harness hoard this way; it replaces the closed fifth hoard.
+
+## Exit criteria
+- [ ] The hoard skill and HOARD.md describe the rebuild and the net-change report
+- [ ] One harness hoard has run as a rebuild and was accepted by the author

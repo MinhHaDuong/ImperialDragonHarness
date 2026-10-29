@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Move review-attribution records out of the memory journal
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) §3.1, R3. 183 of 380 journal entries are the per-PR review-attribution records roar writes;
+design v8 §4 keeps routine reports out of the journal. They also make up most of each
+hoard's input (98 of the entries in the last run).
+
+## Scope
+- Give attribution records their own data path, outside `memory/journal/` (for example
+  `memory/evidence/attribution/`, or notes beside the review evidence), excluded from hoard input.
+- Update roar and the readers of these records (route grid, `attribution_record.py`) together.
+- When capture itself fails, roar still writes a normal journal entry about the failure.
+
+## Exit criteria
+- [ ] New attribution records land outside the journal; existing ones moved with history kept
+- [ ] Every reader of the records finds them at the new path (tests)
+- [ ] Hoard's input excludes them
