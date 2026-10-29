@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-29T08:24Z claude created
+2026-10-29T11:50Z claude note After-measurement split to 1336 so the raid can close at merge
 
 --- body ---
 ## Context
@@ -33,11 +34,13 @@ Risk to watch: a larger context on every later turn can slow each turn and eat t
 
 ## Exit criteria
 
+The after-measurement on 20 runs is ticket 1336 (Monitor, after merge).
+
+
 - [ ] Step 0 recorded in this ticket's log with the go or no-go decision; on no-go, close here
 - [ ] `gaze_setup.py` prints the bounded diff stat and diff; a test on a temp repo checks the output and the truncation line
 - [ ] Seat reports printed in one closing call; a test checks every report in a panel directory appears
 - [ ] The harness gate passes
-- [ ] After 20 runs on the new structure: setup and closing medians, call counts and model time per turn against the Step 0 baseline, same endpoints, same scripts; reported in this ticket even if the gain is nil
 
 ## Relevant files
 
