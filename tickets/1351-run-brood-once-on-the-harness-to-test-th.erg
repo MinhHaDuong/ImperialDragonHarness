@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Run brood once on the harness to test the exit from memory to procedure
+Created: 2026-10-29
+Author: reviewer
+Blocked-by: 1349
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) R8. Brood, the exit from memory to procedure, has never run on the harness itself.
+Crystallisation needs an explicit author request with a destination (AGENTS.md § Project memory boundary).
+
+## Scope
+Run brood once after the rebuilt hoard (1349), scoped to lesson candidates in decaying topics.
+List the candidates for the author; implement nothing without the request.
+
+## Exit criteria
+- [ ] One brood run report, listing candidates with sources, or "no change" with reasons

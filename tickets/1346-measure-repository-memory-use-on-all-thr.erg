@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Measure repository-memory use on all three runtimes, then a with/without-memory trial
+Created: 2026-10-29
+Author: reviewer
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) §4.2, R6. On padme since 2026-10-15, Claude Code main sessions made 0 `Read` calls on
+`memory/MEMORY.md` or `memory/topics/` (audit: 0 of 148; lair session recheck: 0 of 106 in the
+harness project dir, with a positive control matching Read calls in 26). Codex read them in 77%
+of 468 sessions; Pi had 4 sessions. Nobody has measured whether reading topics helps.
+Recent research (VibeMemBench; "Useful Memories Become Faulty", May 2026) makes a null result plausible.
+
+## Scope
+- Extend `scripts/census/memory-recall.py` to repository memory paths on Claude Code, Codex and
+  Pi, on padme and doudou, including subagent transcripts (team-lead briefs should name topics
+  by path: `rules/workflow.md` § Delegation).
+- One small outcome trial: the same ten harness tickets with and without topics, judged on
+  rework and reviewer findings. Price the model spend before running.
+
+## Exit criteria
+- [ ] The census reports read counts per runtime and host, with a positive control
+- [ ] The trial result is written in `conception/` with its arithmetic and its limits

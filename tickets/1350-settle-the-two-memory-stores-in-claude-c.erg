@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Settle the two memory stores in Claude Code: native auto-memory versus repository memory
+Created: 2026-10-29
+Author: reviewer
+Blocked-by: 1346
+
+--- log ---
+2026-10-29T19:54Z reviewer created
+
+--- body ---
+## Context
+Audit: `conception/2026-10-29-memory-system-audit.md` (PR #1984) §4.3, R4 and R5. Claude Code loads its native auto-memory (28 notes, 4.2 KB index) in every
+session; none of it passes through roar, hoard or review, several notes are rules in substance,
+and one says it disagrees with `rules/git.md`. The repository index is no longer injected at
+start (`tests/test_on_start_memory_injection.py`), and the repository store is not read (1346).
+
+## Scope
+Decide from 1346's numbers, then implement one of:
+- a. native auto-memory off for the harness, and roar journals what the author dictates;
+- b. keep it, and each hoard lists the native notes for the author to promote or delete;
+- c. restore an index in Claude Code's start context, or point `autoMemoryDirectory` at the repo.
+
+## Exit criteria
+- [ ] The author's choice is recorded with its rationale
+- [ ] The chosen path is implemented and measured once with the 1346 census
