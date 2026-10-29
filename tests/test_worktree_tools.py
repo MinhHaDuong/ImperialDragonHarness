@@ -729,6 +729,29 @@ def test_preflight_passes_on_ignored_caches_only(origin):
     assert res.returncode == 0, res.stderr
 
 
+@pytest.mark.parametrize("egg", ["pkg.egg-info", "src/pkg.egg-info"])
+def test_preflight_passes_on_uv_run_build_output(origin, egg):
+    """Ticket 1345: `uv run` in a packaged project leaves an egg-info beside
+    the .venv and caches; setuptools rebuilds it, so it is not work. The
+    ignore list is a package's own (DOIfetch's), not `*`: under `*` an
+    untracked src/ collapses to one entry and rightly blocks."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ign-egg", dirty=False)
+    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n.venv/\n*.egg-info/\n.pytest_cache/\n")
+    (wt / egg).mkdir(parents=True)
+    (wt / egg / "PKG-INFO").write_text("Name: pkg\n")
+    (wt / ".pytest_cache").mkdir()
+    (wt / ".pytest_cache" / "README.md").write_text("")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+
+
 def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
