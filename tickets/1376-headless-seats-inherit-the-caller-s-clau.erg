@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-30T14:04Z reviewer created
+2026-10-30T14:25Z reviewer note plan raid 80974c — Imagine, Blind-Spot and feasibility annotations appended
 
 --- body ---
 ## Context
@@ -22,3 +23,35 @@ seats and for arena comparability ("I hate hidden settings, plus arena").
 
 - [ ] `scripts/gaze_seat.py` launches each seat with an environment whose runtime-config variables are either dropped or declared on the door, credentials' variables kept
 - [ ] A test sets a conflicting runtime variable in the parent (e.g. `CLAUDE_EFFORT=low`) and shows the seat command and environment unchanged
+
+## Plan (raid 80974c: Imagine, Blind-Spot, feasibility)
+
+Premise holds and is wider than stated: `seat_clock.run_seat` merges the full
+`os.environ` (seat_clock.py:104), so `CLAUDE_CODE_MESSAGING_TOKEN`,
+`CLAUDE_CODE_MESSAGING_SOCKET` and `SSH_AUTH_SOCK` reach codex, pi and vibe
+seats too: credential containment as well as determinism.
+
+Design: allowlist, fail closed. A base set in `gaze_seat.py` (PATH, HOME, USER,
+LANG/LC_*, TMPDIR, TERM, XDG_*, DBUS_SESSION_BUS_ADDRESS; not SSH_AUTH_SOCK),
+plus per-door keeps declared on the door in `skills/route/routes.json`
+(credential and auth-home variables such as CODEX_HOME, PI_CODING_AGENT_DIR).
+Pi keys are `$ENV` indirections in `~/.pi/agent/models.json` that differ per
+host: derive pi's keep-list from that file at launch, as aider's
+`base_url_source` does. Check whether proxy/TLS variables (HTTP(S)_PROXY,
+SSL_CERT_FILE, NODE_EXTRA_CA_CERTS) are needed; keep them only if set on the door.
+
+Actions:
+1. Red test: stub seat dumps its env; parent sets CLAUDE_EFFORT=low,
+   ANTHROPIC_MODEL, CODEX_* and PI_* noise; argv identical with and without,
+   injected variables absent, credential and PATH present. Same for `--dry-run`
+   JSON, which then prints the effective variable names (values never printed).
+2. `gaze_seat.py` builds the complete env and passes it whole; `run_seat` gets a
+   replace-env path. Its other caller, `seat_clock.py run` (check items,
+   seat_clock.py:442), keeps inheriting `os.environ`; `tests/test_seat_clock.py`
+   stays green.
+3. Live smoke before the MR, one trivial seat per available door (claude,
+   codex, vibe, pi on a `$ENV` provider) under the allowlist: a stub cannot
+   catch a broken login. Report any door unavailable on this host.
+
+Feasibility: PASS. Shares `tests/test_gaze_seat.py` with 1375: appended tests
+only, second lander rebases.
