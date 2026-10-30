@@ -157,7 +157,9 @@ def test_an_after_record_is_never_taken_for_a_before_merge_one(tmp_path, module)
     assert entries[0]["scope"] not in scopes
 
 
-def test_a_killed_runner_leaves_no_lock_behind(tmp_path):
+def test_a_killed_runner_leaves_no_lock_behind(tmp_path, monkeypatch):
+    # The SIGKILL skips the runner's own cleanup: its checkout lands in tmp_path, not the shared temp root.
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
     log = tmp_path / "runs.log"
     work = make_repo(tmp_path, logging_checks(log, 60))
     holder = run_after(work, start_new_session=True)
