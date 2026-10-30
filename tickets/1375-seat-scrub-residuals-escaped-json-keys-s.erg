@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-30T14:04Z reviewer created
 2026-10-30T14:25Z reviewer note plan raid 80974c — Imagine, Blind-Spot and feasibility annotations appended
 2026-10-30T16:23Z reviewer note PR #2054 parked by author ruling after six gaze rounds (raid 80974c); redesign in ticket 1378
+2026-10-30T16:50Z reviewer note author ruling: over-redaction shapes won't-fix; leak shapes and the answer scrub move to 1378 (owned failure fields, main's scrub kept)
 
 --- body ---
 ## Context
@@ -30,7 +31,7 @@ answers quote seat bodies verbatim into notes was not checked.
 
 ## Exit criteria
 
-- [ ] The three leak/over-redaction shapes above have a test each, red before the fix
+- [ ] The three leak/over-redaction shapes above have a test each, red before the fix (author ruling 2026-10-30: the two leak shapes are fixed in ticket 1378; the over-redaction shapes, `basic usage` and compact JSON, are won't-fix: over-redaction is the friction-free failure)
 - [ ] It is established, with a positive control, whether seat report text reaches `refs/notes/review` verbatim; if it does, that path is scrubbed the same way, otherwise the boundary is stated in `skills/gaze/references/panel.md`
 
 ## Plan (raid 80974c: Imagine, Blind-Spot, feasibility)
