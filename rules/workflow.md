@@ -103,7 +103,7 @@ right (scope, money, irreversible) are never delegated; they wait.
    is reversible → act and report.
 2. **Otherwise ask the author**, advisor's view beside your pick, and keep
    working. Reversible options worth building → build each in its own
-   worktree and branch (build capped at 5 minutes), gaze `branch:<name>` on the
+   worktree and branch (build capped at 5 min), gaze `branch:<name>` on the
    recommended one and a likely author pick; the question carries the
    result, or drops if it settles the call. No merge, no outward act (gaze
    notes sync excepted).
