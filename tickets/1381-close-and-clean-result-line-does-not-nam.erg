@@ -1,0 +1,25 @@
+%erg 0.1
+Title: close-and-clean RESULT line does not name the checks that fired
+Created: 2026-10-30
+Author: claude
+
+--- log ---
+2026-10-30T20:22Z claude created
+
+--- body ---
+## Context
+
+Reported from padme, 2026-10-30. `close-and-clean.sh --phase before-exit` on a
+merged ticket worktree ended with `roar: RESULT: findings (exit 1)`. The cause
+is printed on its own earlier line (for example `PREFLIGHT: DIRTY …`,
+`skills/roar/close-and-clean.sh:206`), but the session filtered the output to
+the `CLOSE|CLAIMS|RESULT` lines and lost it; the worktree was then removed
+cleanly by `after-exit` and the finding could no longer be recovered. Low
+severity: nothing was lost but the explanation. Filed at the author's request.
+
+## Exit criteria
+
+- [ ] The `RESULT: findings` line names the checks that fired (for example
+      `RESULT: findings (exit 1): PREFLIGHT`), so the one-line verdict is
+      self-sufficient
+- [ ] Test covers a dirty-preflight run and asserts the named check on the RESULT line
