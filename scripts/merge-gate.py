@@ -479,7 +479,11 @@ def remote_holds(remote, oid, probe):
     if git("fetch", "-q", remote, f"+{NOTES_REF}:{probe}", check=False).returncode:
         LOG.warning("cannot verify %s on %s: the remote tip %s could not be fetched", NOTES_REF, remote, tip)
         return None
-    return git("merge-base", "--is-ancestor", oid, probe, check=False).returncode == 0
+    code = git("merge-base", "--is-ancestor", oid, probe, check=False).returncode
+    if code > 1:
+        LOG.warning("cannot verify %s on %s: ancestry check failed (exit %d)", NOTES_REF, remote, code)
+        return None
+    return code == 0
 
 
 def append_and_push(oid, text, remote):
@@ -500,7 +504,7 @@ def append_and_push(oid, text, remote):
         return
     mine = f"{NOTES_REF}-pending-{os.getpid()}"
     probe = f"{NOTES_REF}-probe-{os.getpid()}"
-    pushed, absent = None, False
+    pushed, absent, tried = None, False, []
     try:
         for attempt in (1, 2):
             fetch_notes(remote)
@@ -511,6 +515,8 @@ def append_and_push(oid, text, remote):
                 git("update-ref", mine, NOTES_REF)
             git("notes", f"--ref={mine}", "append", "-m", text, oid)
             pushed = git("rev-parse", "--verify", mine).stdout.strip()
+            tried.append(pushed)
+            absent = False
             push = git("push", "-q", remote, f"{pushed}:{NOTES_REF}", check=False)
             if push.returncode:
                 LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
@@ -530,6 +536,16 @@ def append_and_push(oid, text, remote):
                 continue
             git("update-ref", NOTES_REF, pushed, check=False)
             return
+        # Both attempts failed: a lagging read-back may have hidden a landed push, so look once more.
+        try:
+            fetch_notes(remote)
+        except GateError as err:
+            LOG.warning("cannot verify %s on %s: %s", NOTES_REF, remote, err)
+        for earlier in tried:
+            if git("merge-base", "--is-ancestor", earlier, NOTES_REF, check=False).returncode == 0:
+                return
+        if tried:  # keep the unpublished record reachable, as the error below says
+            git("update-ref", NOTES_REF, tried[-1], check=False)
     finally:
         git("update-ref", "-d", mine, check=False)
         git("update-ref", "-d", probe, check=False)
