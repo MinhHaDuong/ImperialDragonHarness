@@ -147,6 +147,13 @@ def test_a_branch_review_carries_over_a_bookkeeping_delta(repo):
     assert rn.gate_state(repo, pr_rid, "feature")["ready"]
 
 
+def test_a_reused_branch_name_never_finds_the_adopted_review(repo):
+    branch_rid = rn.open_review(repo, "feature", "main")
+    answer(repo, branch_rid)
+    assert rn.open_review(repo, "feature", "main", unit="pr:7") == branch_rid
+    assert rn.find(repo, "feature") is None
+
+
 def test_a_branch_review_on_an_older_head_is_discarded_for_the_pr(repo):
     branch_rid = rn.open_review(repo, "feature", "main")
     answer(repo, branch_rid)

@@ -730,7 +730,7 @@ def _carries_over(cwd, rid, branch, base_ref, head):
     if not answers or any(e.get("unit") for e in es if e["kind"] == "request"):
         return False
     head = _rev(cwd, head or branch)
-    return answers[-1]["head"] == head or _bookkeeping_since(cwd, base_ref, head, answers[-1]["head"])
+    return answers[-1]["head"] == head or _bookkeeping_since(cwd, answers[-1]["base_ref"], head, answers[-1]["head"])
 
 
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
@@ -775,9 +775,11 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
 
 def find(cwd, branch):
     """The review id of the latest request naming `branch` in the local ref, else None. A PR
-    review (`unit: pr:<n>`) is never a branch unit's, so it is skipped (ticket 1300)."""
-    hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch
-            and not str(e.get("unit") or "").startswith("pr:")]
+    review (`unit: pr:<n>`), adopted branch review included, is never a branch unit's, so it
+    is skipped (tickets 1300, 1379)."""
+    reqs = [e for e in all_entries(cwd) if e.get("kind") == "request"]
+    bound = {e["review_id"] for e in reqs if str(e.get("unit") or "").startswith("pr:")}  # adopted (1379)
+    hits = [e for e in reqs if e.get("branch") == branch and e["review_id"] not in bound]
     return hits[-1]["review_id"] if hits else None
 
 
