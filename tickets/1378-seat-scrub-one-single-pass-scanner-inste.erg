@@ -1,10 +1,11 @@
 %erg 0.1
-Title: Seat scrub: one single-pass scanner instead of sequential regex patterns
+Title: Seat failures as owned fields; keep main's scrub as a net with two key-side fixes
 Created: 2026-10-30
 Author: reviewer
 
 --- log ---
 2026-10-30T16:23Z reviewer created
+2026-10-30T16:50Z reviewer note rescoped by author ruling: owned failure fields, main's scrub kept with key-side fixes; no scanner, no LLM judge
 
 --- body ---
 ## Context
@@ -32,9 +33,30 @@ corpus as tests and the parts that held: the answer-text scrub in
 `refs/notes/review` verbatim), the no-line-crossing rule, and the
 `skills/gaze/references/panel.md` boundary.
 
+## Ruling (author, 2026-10-30)
+
+Regex filtering rarely works, and recurring friction weighs more than a
+one-time build: no scanner, no LLM judge (latency, outages, false
+positives, a pending backlog every close). Instead remove the channel that
+needs filtering and keep main's crude scrub, whose failure mode
+(over-redaction) costs a few words and never blocks.
+
 ## Exit criteria
 
-- [ ] One pass finds every secret span (key=value with quoted, escaped or unquoted value, an auth scheme value inside it or bare, vendor keys, JWT, org ids, emails, home logins), then redacts the spans, so no pattern sees another's output
-- [ ] Every shape in the six rounds above has a test, and none leaks where origin/main at 3e9f79db redacts (a differential test over the corpus against main's `scrub`)
-- [ ] Linear time on a 1 MB line with many values
-- [ ] Ticket 1375's exit criteria are met by landing this together with the held parts of #2054 (one PR, or #2054 rebased onto it)
+- [ ] The seat failure line written to notes (`<name>.md.status`, the
+  `stderr:` part of a failed outcome) carries only fields the harness owns:
+  exit code, timed out or not, duration, door, model, report present or not.
+  No CLI stderr text reaches notes; the raw stderr stays in the seat's local
+  `.log`. A test plants a fake secret in a stub's stderr and finds it in no
+  status line or note.
+- [ ] `scrub()` keeps origin/main's key=value value matching (`\S+`) and gains
+  only the key-side fixes that never touched value ends: a backslash-escaped
+  JSON key (`{\"access_token\": ...}`), a spaced `Account ID:` label, and no
+  match across a newline (so parsed answer fields survive). One red-first test
+  each.
+- [ ] `gaze_close.py` scrubs the answer's free text with that `scrub()` (the
+  held part of PR #2054), with the parsed fields byte-identical.
+- [ ] PR #2054 is closed unmerged, pointing here.
+
+Not in scope by ruling: an error class read from CLI output (vendor formats
+change; add later only if debugging hurts), a grammar on seat reports.
