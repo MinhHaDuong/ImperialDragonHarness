@@ -59,6 +59,8 @@ COUNT = re.compile(r"(\d+) (failed|passed|errors?)\b")
 # rewrites the tree. A heuristic: a tree changed by a tool it does not know
 # reads as "no recognised edit", so a flip is a candidate, never a verdict.
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+# A rerun that already selects the last failures is the remedy, not a saving.
+SELECTED = re.compile(r"(?:^|\s)(?:--lf|--last-failed|--sw|--stepwise)\b")
 MUTATION = re.compile(r"\bsed\s+-i|\bgit\s+(?:-C\s+\S+\s+)?(?:commit|rebase|merge|pull|checkout|switch|reset|"
                       r"cherry-pick|am|apply|restore|stash)\b|\b(?:tee|mv|cp|rm|patch)\s|(?<![0-9&>])>>?(?![&>])(?!\s*/dev/)")
 
@@ -84,6 +86,7 @@ class Chain:
     rerun_seconds: float
     rerun_red: int | None  # None: the rerun's outcome could not be read
     edited: bool
+    rerun_selected: bool = False  # the rerun was already a last-failed or stepwise run
 
 
 @dataclass
@@ -296,9 +299,14 @@ def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[
                 command = str(spec.get("command", ""))
                 classes = gate_classes(command, extra)
                 # An edit chained before the gate on one line (`sed -i … && make
-                # check`) counts; the gate's own segment (`make check > log`) does not.
-                edits += any(MUTATION.search(segment) and not gate_classes(segment, extra)
-                             for segment in _segments(_strip_heredocs(command)))
+                # check`) counts; the gate's own segment and what follows it
+                # (`make check > log`, `| tee log`, `&& git commit`) do not.
+                for segment in _segments(_strip_heredocs(command)):
+                    if gate_classes(segment, extra):
+                        break
+                    if MUTATION.search(segment):
+                        edits += 1
+                        break
                 if not classes:
                     continue
                 if spec.get("run_in_background"):
@@ -438,7 +446,8 @@ def chains(rows: list[Row]) -> list[Chain]:
             if rerun is None:
                 continue
             found.append(Chain(row.gate, row.session, row.red, row.total or row.red,
-                               rerun.seconds, rerun.red, rerun.edits > row.edits))
+                               rerun.seconds, rerun.red, rerun.edits > row.edits,
+                               bool(SELECTED.search(rerun.command))))
     return found
 
 
@@ -452,7 +461,7 @@ def summarise_reruns(rows: list[Row]) -> dict[str, dict]:
         if not members:
             summary[gate] = {"chains": 0, "rerun_unread": len(found)}
             continue
-        again = [c for c in members if c.rerun_red]
+        again = [c for c in members if c.rerun_red and not c.rerun_selected]
         summary[gate] = {
             "chains": len(members),
             "rerun_unread": len(found) - len(members),

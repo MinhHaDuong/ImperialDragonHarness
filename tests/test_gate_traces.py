@@ -394,6 +394,24 @@ def test_an_edit_chained_before_the_gate_is_not_a_flip(tmp_path, project):
     assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 0
 
 
+@pytest.mark.parametrize("after", ["2>&1 | tee /tmp/log", "2>&1 | tail -5 > /tmp/out", "&& git commit -m x"])
+def test_what_follows_the_gate_is_not_an_edit(tmp_path, project, after):
+    rows = _rows(tmp_path, project, [
+        {"command": f"make check {after}", "output": RED},
+        {"command": f"make check {after}", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 1
+
+
+def test_a_last_failed_loop_is_not_red_again(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "python3 -m pytest --lf -x", "output": "==== 1 failed, 1 passed in 2.0s ===="},
+        {"command": "x", "tool": "Edit"},
+        {"command": "python3 -m pytest --lf -x", "output": "==== 1 failed, 1 passed in 2.0s ===="},
+    ])
+    assert pt.summarise_reruns(rows)["pytest"]["red_reruns"] == 0
+
+
 def test_the_gate_own_redirect_is_not_an_edit(tmp_path, project):
     rows = _rows(tmp_path, project, [
         {"command": "make check > /tmp/log 2>&1", "output": RED},
