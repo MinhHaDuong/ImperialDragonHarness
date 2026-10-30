@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Contradiction: prose edits on main versus the harness gate
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T13:45Z reviewer created
+
+--- body ---
+## Context
+Exposed by the fifth smelt (PR #2049), Commission page open questions
+(`memory/topics/commission.md`). Filed under the smelt rule "ticket every
+exposed contradiction" (SMELT.md v8-r5). Earlier mentions as evidence or
+example only: tickets 1349, 1351.
+
+Claim A, native note `feedback_prose_edits_are_on_main` (Claude Code
+auto-memory of the harness, 2026-10-26), quoting the author: "Next time we
+should remember that editing prose is on main." How to apply: the author's
+hand edits of skill or rule text go in the primary checkout on main, no PR,
+review or gate unless asked.
+
+Claim B, `rules/git.md` § Branch and commit: "Main is read-only. Everything
+(code, docs, tickets, STATE, memory, config) lands via branch + merge request.
+Sole exception: manuscript prose". `rules/prose/workpackages.md`: "The harness
+repo keeps its no-exceptions gate."
+
+The note itself says the rule and the preference disagree. The main guard
+(`idh.mainGuard`, enforce since 2026-10-27) may refuse such commits.
+
+## Question for the author
+Do the author's own hand edits of harness skill or rule text go on main, or
+through the gate? Smelt picks no side.
+
+## Exit criteria
+- [ ] The author's answer is recorded here
+- [ ] The losing claim is withdrawn from its store, or the rule is changed by an explicit request naming it
