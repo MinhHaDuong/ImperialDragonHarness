@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-30T14:04Z reviewer created
+2026-10-30T14:25Z reviewer note plan raid 80974c — Imagine, Blind-Spot and feasibility annotations appended
 
 --- body ---
 ## Context
@@ -29,3 +30,33 @@ answers quote seat bodies verbatim into notes was not checked.
 
 - [ ] The three leak/over-redaction shapes above have a test each, red before the fix
 - [ ] It is established, with a positive control, whether seat report text reaches `refs/notes/review` verbatim; if it does, that path is scrubbed the same way, otherwise the boundary is stated in `skills/gaze/references/panel.md`
+
+## Plan (raid 80974c: Imagine, Blind-Spot, feasibility)
+
+Premise holds: all three shapes reproduce on `scrub()` at origin/main 5a8da15a.
+Seat bodies reach `refs/notes/review` when the gaze orchestrator quotes them
+into its result file (`panel.md` § dissent kept verbatim → `gaze_close.py`
+reads `--comment-file` and adds it as the `answer` entry). That counts as
+"reaches verbatim", so the second criterion takes its scrub branch.
+
+Actions:
+1. Red tests first in `tests/test_gaze_seat.py` (parametrized scrub cases): escaped
+   JSON key, `Account ID: <uuid>`, `basic usage: run` survives, compact JSON
+   `{"api_key":"…","model":"x","status":500}` keeps `model` and `status`.
+   Keep the `session id: <uuid>` survival case.
+2. `SCRUB_PATTERNS`: allow `\\` before the key quote; `account[\s_-]?id`;
+   value ends at its closing quote or at `,}` / whitespace; `Basic` only before
+   a base64-shaped token, case-sensitive.
+3. Positive control: plant a canary secret in a seat report, quote it into a
+   result file as gaze does, close, grep the note; show it present before the
+   fix and redacted after.
+4. Scrub the answer text in `gaze_close.py` before it is added, importing
+   `gaze_seat.scrub` (no copied patterns).
+5. Blind-Spot guard: scrubbing a real answer leaves the verdict,
+   `reviewed_head_sha` and `seat:` lines byte-identical; the
+   `/home/<login>` rule must not break parsed fields (scope the scrub to free
+   text if needed). State the boundary in `skills/gaze/references/panel.md`.
+
+Feasibility: PASS (paths and lines checked: gaze_seat.py:478-495,
+gaze_close.py:352). Shares `tests/test_gaze_seat.py` with 1376: appended
+tests only, second lander rebases.
