@@ -78,8 +78,8 @@ project or local derogation can set aside (never display credentials, a
 skill load is not write authorization, split work beyond the context
 limit). Enforcing them falls to the force publique, which is mechanical:
 - hooks (for example `guard-destructive-bash.sh`, which refuses a
-  self-matching `pgrep -f`; the main-update guard, which refuses a write to
-  main);
+  self-matching `pgrep -f`; the main-update guard, which refuses an update
+  of main that carries no gate record);
 - the runtime's permission rules and its auto-mode classifier;
 - the before-merge checks of the merge gate.
 
@@ -93,21 +93,22 @@ mechanism that enforces it, or say plainly that none does:
 | never display credentials | declared only (no output filter) |
 | a skill load is not write authorization | declared only |
 | split work beyond ~256K tokens of context | declared only |
-| main is read-only | the main-update guard (enforce on padme and doudou) |
-| no destructive shell patterns | `guard-destructive-bash.sh` |
+| main is read-only (`rules/git.md`, not ordre public) | the main-update guard refuses an update of main without a gate record (enforce on padme and doudou) |
+| no self-matching `pgrep -f`, no `git reset --hard` on a dirty tree (hook-only, written in no rule) | `guard-destructive-bash.sh`, which blocks these two and nothing else |
 
 The "declared only" rows are prohibitions with no enforcement: the place to
 ask whether a mechanism is possible and worth its cost. The harness's own
-doctrine limits that growth: a guard that misfires is deleted before it is
-grown, and no guard watches another guard (test-doctor's domain).
+doctrine limits that growth: when a guard misfires, deleting it is
+preferred over growing it, and no guard watches another guard (test-doctor's domain).
 
 ## 4. Who makes the jurisprudence: a memory court
 
 Roar records cases: it writes the journal entry about the task it just ran,
 as a clerk writes up minutes. Smelt writes consolidated case law, the
 equivalent of leading decisions (arrêts de principe). Both are executive
-runs. Today the only independent instance is the author, at the very end
-(the fifth consolidation, PR #1975, was rejected as "redo").
+runs. Independent review of a consolidation has happened only ad hoc: the
+fifth consolidation, PR #1975, was judged "redo" by Fable and GPT-6 Astra,
+and the author closed it. Only the author rules by right.
 
 Smelt's output should be judged, but not as a code change is. There is no
 test to run; the evidence is the sources; the verdict is per claim (confirm,
