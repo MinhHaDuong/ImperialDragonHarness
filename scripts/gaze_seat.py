@@ -508,14 +508,15 @@ STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, i
 
 # Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.
 SCRUB_PATTERNS = tuple(re.compile(p) for p in (
+    # key=value first, so no earlier pattern can eat the quotes its scan needs; JSON-quoted or backslash-escaped too, never
+    # across a line. The regex matches the opener only: `_redact` scans a quoted value to its closing quote from the
+    # match end (linear, no backtracking), an unquoted one is the whole non-space token
+    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:(\\*)(["'])(?P<rest>)|\S+)''',
     r'(?i:[\w.+-]+@[\w-]+(?:\.[\w-]+)+)',                                # email
     r'(?i:\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w*-]{8,}|\bAKIA[0-9A-Z]{12,})',  # vendor keys, masked too
-    r'''(?i:\bBearer[ \t]+\S+|\bAuthorization["']?[ \t]*[:=][ \t]*["']?Basic[ \t]+[^\s"']+|\bBasic[ \t]+[\w+/-]{8,}={0,2})''',  # auth header value; a bare Basic only before a base64 token
+    r'''(?i:\bBearer[ \t]+[^\s"']+|\bAuthorization["']?[ \t]*[:=][ \t]*["']?Basic[ \t]+[^\s"']+|\bBasic[ \t]+[\w+/-]{8,}={0,2})''',  # auth header value; a bare Basic only before a base64 token
     r'(?i:\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?)',                          # JWT
     r'(?i:\borg-[\w-]{4,})',                                              # organisation id
-    # key=value, JSON-quoted or backslash-escaped too, never across a line. The regex matches the opener only; a quoted value is
-    # scanned to its closing quote by `_redact` (linear, no backtracking), an unquoted one is the whole non-space token
-    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:(\\*)(["'])(?P<rest>[^\n]*)|\S+)''',
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 
@@ -526,14 +527,15 @@ def _redact(match: re.Match) -> tuple[str, int]:
     closer it runs to the line end. The scan resumes after the closing quote, so a later secret on the line is found."""
     if match.groupdict().get('rest') is None:
         return '<redacted>', match.end()
-    slashes, quote, start = len(match.group(1)), match.group(2), match.start('rest')
-    rest = match.group('rest')
+    slashes, quote, text = len(match.group(1)), match.group(2), match.string
+    line_end = text.find('\n', match.end())
+    line_end = len(text) if line_end < 0 else line_end
     run = 0
-    for i, ch in enumerate(rest):
-        if ch == quote and run == slashes:
-            return '<redacted>', start + i + 1
-        run = run + 1 if ch == '\\' else 0
-    return '<redacted>', match.end()
+    for i in range(match.end(), line_end):
+        if text[i] == quote and run == slashes:
+            return '<redacted>', i + 1
+        run = run + 1 if text[i] == '\\' else 0
+    return '<redacted>', line_end
 
 
 def scrub(text: str) -> str:

@@ -975,3 +975,16 @@ def test_scrub_rescans_after_a_closed_quoted_value(text, kept):
     scrubbed = load_module().scrub(text)
     assert 'FAKEa1' not in scrubbed and 'FAKEb2' not in scrubbed
     assert kept in scrubbed
+
+
+def test_an_earlier_pattern_never_eats_the_quotes_a_quoted_value_needs():
+    scrubbed = load_module().scrub('GITHUB_TOKEN="Bearer FAKEtok" DB_PASSWORD="FAKEpw" end')
+    assert 'FAKEtok' not in scrubbed and 'FAKEpw' not in scrubbed and scrubbed.endswith(' end')
+
+
+def test_many_quoted_values_on_one_line_scrub_in_linear_time():
+    import time
+    line = 'token="a" ' * 16000
+    start = time.perf_counter()
+    load_module().scrub(line)
+    assert time.perf_counter() - start < 0.3
