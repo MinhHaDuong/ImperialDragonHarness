@@ -7,6 +7,7 @@ consent config is a temporary file, never the host's.
 
 import importlib.util
 import json
+import shlex
 import subprocess
 import sys
 import threading
@@ -87,6 +88,12 @@ def load_module():
     return module
 
 
+def bake(text, log):
+    """Give a stub its log directory and mode as shell variables of its own: a seat's environment carries neither."""
+    head = f'#!/bin/sh\nSTUB_LOG={shlex.quote(str(log))}\nSTUB_MODE=$(cat "$STUB_LOG/mode" 2>/dev/null)\n'
+    return text.replace('#!/bin/sh\n', head, 1)
+
+
 @pytest.fixture
 def rig(tmp_path):
     bin_dir, log = tmp_path / 'bin', tmp_path / 'log'
@@ -94,7 +101,7 @@ def rig(tmp_path):
     log.mkdir()
     for name in ('claude', 'codex', 'pi', 'aider', 'vibe'):
         stub = bin_dir / name
-        stub.write_text(STUB)
+        stub.write_text(bake(STUB, log))
         stub.chmod(0o755)
     tree = tmp_path / 'review-1'
     tree.mkdir()
@@ -113,9 +120,7 @@ def rig(tmp_path):
     env = {
         'PATH': f'{bin_dir}:/usr/bin:/bin',  # no real model CLI is reachable
         'HOME': str(tmp_path),
-        'STUB_LOG': str(log),
         'IDH_GAZE_SEATS_CONFIG': str(tmp_path / 'gaze-seats.json'),
-        'IDH_SEAT_ENV_PASS': 'STUB_LOG,STUB_MODE',  # the stubs' own channel; a seat sees nothing else extra
     }
     return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env,
             'base': base, 'head': head}
@@ -123,7 +128,8 @@ def rig(tmp_path):
 
 def launch(rig, *extra, runtime='claude-code', model='haiku', family='Anthropic', name='correctness',
            mode='', home='Anthropic', anchor=None, caller_stdin=None):
-    env = dict(rig['env'], STUB_MODE=mode)
+    (rig['log'] / 'mode').write_text(mode)
+    env = dict(rig['env'])
     return subprocess.run(
         [sys.executable, str(SCRIPT), 'launch', '--runtime', runtime, '--model', model,
          '--family', family, '--home-family', home, '--perspective', 'correctness',
@@ -459,7 +465,7 @@ HOST_CONFIGS = {
 def test_seat_ignores_a_conflicting_host_user_config(rig, runtime, model, family):
     cli = runtime.split('-')[0]
     shim = rig['tmp'] / 'bin' / cli
-    shim.write_text(CONFIG_SHIMS[cli])
+    shim.write_text(bake(CONFIG_SHIMS[cli], rig['log']))
     (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['OpenAI']}))
     runs = []
     for host_config in (False, True):
@@ -773,7 +779,7 @@ def dumping_stubs(rig):
     """Make every stub also dump its environment to <STUB_LOG>/<name>.env."""
     for name in ('claude', 'codex', 'pi', 'aider', 'vibe'):
         stub = rig['tmp'] / 'bin' / name
-        stub.write_text(STUB.replace('#!/bin/sh\n', '#!/bin/sh\nenv | sort > "$STUB_LOG/$(basename "$0").env"\n', 1))
+        stub.write_text(bake(STUB.replace('#!/bin/sh\n', '#!/bin/sh\nenv | sort > "$STUB_LOG/$(basename "$0").env"\n', 1), rig['log']))
 
 
 def seat_env(rig, name):
@@ -841,3 +847,37 @@ def test_dry_run_names_the_seat_environment_without_values(rig):
     plan = json.loads(result.stdout)
     assert 'PATH' in plan['env'] and 'ANTHROPIC_API_KEY' in plan['env'] and not set(NOISE) & set(plan['env'])
     assert 'fake-credential' not in result.stdout and rig['env']['PATH'] not in result.stdout
+
+
+@pytest.mark.integration
+def test_no_caller_variable_opens_the_seat_environment(rig):
+    dumping_stubs(rig)
+    rig['env'].update(IDH_SEAT_ENV_PASS='*', CLAUDE_EFFORT='low', CLAUDE_CODE_MESSAGING_TOKEN='fake-messaging-token')
+    assert launch(rig).returncode == 0
+    seen = seat_env(rig, 'claude')
+    assert 'CLAUDE_EFFORT' not in seen and 'CLAUDE_CODE_MESSAGING_TOKEN' not in seen
+
+
+@pytest.mark.integration
+def test_seat_keeps_xdg_runtime_dir_only(rig):
+    dumping_stubs(rig)
+    rig['env'].update(XDG_RUNTIME_DIR='/run/user/1', XDG_CONFIG_HOME='/tmp/cfg', XDG_DATA_HOME='/tmp/data')
+    assert launch(rig).returncode == 0
+    seen = seat_env(rig, 'claude')
+    assert seen['XDG_RUNTIME_DIR'] == '/run/user/1'
+    assert 'XDG_CONFIG_HOME' not in seen and 'XDG_DATA_HOME' not in seen
+
+
+@pytest.mark.integration
+def test_seat_locale_is_pinned_whatever_the_caller_speaks(rig):
+    dumping_stubs(rig)
+    rig['env'].update(LANG='fr_FR.UTF-8', LC_ALL='fr_FR.UTF-8', LC_MESSAGES='fr_FR.UTF-8')
+    assert launch(rig).returncode == 0
+    seen = seat_env(rig, 'claude')
+    assert seen['LANG'] == 'C.UTF-8'
+    assert not [k for k in seen if k.startswith('LC_')]
+
+
+def test_claude_door_declares_its_config_home():
+    door = json.loads((ROOT / 'skills' / 'route' / 'routes.json').read_text())['launch_doors']['claude-code']['headless']
+    assert 'CLAUDE_CONFIG_DIR' in door['env_keep']

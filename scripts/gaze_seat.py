@@ -79,11 +79,11 @@ alias = "seat-model"
 # Variables a seat inherits whatever the door: the process basics and the network transport. Anything
 # else (CLAUDE_*, CODEX_*, PI_*, ANTHROPIC_MODEL, SSH_AUTH_SOCK, the parent's messaging token) is
 # dropped; a door keeps its credentials and auth home by `env_keep` in routes.json (ticket 1376).
-BASE_ENV = ('PATH', 'HOME', 'USER', 'LOGNAME', 'SHELL', 'LANG', 'LC_*', 'TMPDIR', 'TERM', 'XDG_*',
+BASE_ENV = ('PATH', 'HOME', 'USER', 'LOGNAME', 'SHELL', 'TMPDIR', 'TERM', 'XDG_RUNTIME_DIR',
             'DBUS_SESSION_BUS_ADDRESS', 'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'ALL_PROXY',
             'http_proxy', 'https_proxy', 'no_proxy', 'all_proxy', 'SSL_CERT_FILE', 'SSL_CERT_DIR',
             'NODE_EXTRA_CA_CERTS', 'REQUESTS_CA_BUNDLE')
-PASS_ENV = 'IDH_SEAT_ENV_PASS'  # host-local comma list of further names a seat may see (test stubs, odd hosts)
+SEAT_LOCALE = 'C.UTF-8'  # set by the launcher, never inherited: a caller's LANG changed a seat's reply language
 
 ROLES = ('code-reviewer', 'prose-reviewer')
 PROFILES = HERE.parent / 'profiles'
@@ -133,12 +133,12 @@ class Command:
 
 
 def seat_env(door: dict, extra: list[str] = (), environ=None) -> dict[str, str]:
-    """The seat's whole environment: the caller's variables the base set, the door's `env_keep`, the
-    host's `IDH_SEAT_ENV_PASS` and `extra` names allow, nothing else. Fail closed: a new variable is dropped."""
+    """The seat's whole environment: the caller's variables the base set, the door's `env_keep` and
+    `extra` names allow, plus the pinned locale; nothing else. Fail closed: a new variable is dropped."""
     environ = os.environ if environ is None else environ
-    allowed = [*BASE_ENV, *door.get('env_keep', []), *extra,
-               *(n.strip() for n in environ.get(PASS_ENV, '').split(',') if n.strip())]
-    return {k: v for k, v in environ.items() if any(fnmatch.fnmatchcase(k, pattern) for pattern in allowed)}
+    allowed = [*BASE_ENV, *door.get('env_keep', []), *extra]
+    kept = {k: v for k, v in environ.items() if any(fnmatch.fnmatchcase(k, pattern) for pattern in allowed)}
+    return {**kept, 'LANG': SEAT_LOCALE}
 
 
 def pi_key_names(provider_id: str) -> list[str]:
