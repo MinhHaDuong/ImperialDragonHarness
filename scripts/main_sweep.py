@@ -142,7 +142,7 @@ def after_gaps(tip: str, max_count: int) -> tuple[list[tuple[str, int, str]], st
     A record covers its tip and every tip below it that its runner passed over,
     so the tips newer than the newest recorded one are gaps. Below that record a
     tip is a gap only when a runner started on it (merge-gate's attempts file)
-    and left no record: it crashed, it was not passed over.
+    and left no record visible: it died, or its record was lost (ticket 1366); it was not passed over.
     Returns (gaps as (sha, committer time, subject), what bounds them).
     """
     walked = mg.git("log", "--first-parent", f"--max-count={max_count}", "--format=%H %ct %s", tip).stdout.splitlines()
@@ -165,7 +165,7 @@ def after_audit(tip: str, ref: str, max_count: int, summary: bool, stale_minutes
     if not gaps:
         return lines + [f"after: every tip carries an after-merge record ({bound})"], 0
     if gaps[0][0] != tip:  # only crashed tips below a recorded one: a run on the newest would be covered
-        return lines + [f"after: {len(gaps)} attempted tip(s) without an after-merge record, the runner crashed on them ({bound})"], 1
+        return lines + [f"after: {len(gaps)} attempted tip(s) without an after-merge record visible, the runner was started on them ({bound})"], 1
     remote, _, branch = ref.partition("/") if ref.startswith("origin/") else ("origin", "", ref)
     actor = mg.actor_line("", "", "")
     command = f"main_sweep --after: merge-gate run-after --remote {remote} --ref {branch}"
