@@ -90,3 +90,25 @@ at 00:38:21 succeeded with no rejection, so origin did not hold 9a85f48c then.
 PASS. Callers: merge-gate.py record (~609) and run-after (~1026); no other
 writer of refs/notes/gate. review_notes.py serializes under a lock and merges
 rather than force-fetching: out of scope.
+
+## Blind-spot pass (raid 85542d), folded into the plan
+
+- Capture race: another process's forced fetch can also land between the
+  append and the OID capture. Build the notes commit on a per-process ref
+  (or verify the captured commit holds the entry) so the pushed OID is
+  always the one carrying this record.
+- Read-back fetches the remote tip into a probe ref, never with `+` onto
+  refs/notes/gate. `ls-remote` exit 2 (ref absent) is loss; any other
+  non-zero is "cannot verify", a distinct warning, not loss. Forge lag ends
+  in a warning, never a GateError, unless the record is provably absent
+  after a refetch.
+- Before re-appending on a retry, check whether the record already reached
+  the remote (ancestry); decide() and after_entries take the last entry, so
+  a duplicate is harmless but avoidable.
+- Remotes may be a local path (raid_land without origin); keep
+  test_merge_gate.py, test_after_merge.py and test_raid_land_local.py green.
+- main_sweep: the gap label also fires when the local ref was rewound and
+  the record is on the remote; use neutral wording ("attempted, no record
+  visible").
+- Check whether hooks/reference-transaction reads the local gate ref; record
+  the answer in the PR.
