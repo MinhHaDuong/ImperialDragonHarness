@@ -71,7 +71,7 @@ fix is pushed and you know it is yours.
 
 # Check scope
 
-If `.idh-checks.json` exists, use the scoped gate before PRs. Unknown paths
+If `.idh-checks.json` exists, use the scoped gate before merge requests. Unknown paths
 run the full gate. Quote `selected:` and `skipped:`; never call a scoped pass
 full.
 
@@ -147,7 +147,7 @@ A clean-room render is usually seconds — run it yourself.
   needs a seat from another model family. A same-family review is never called
   independent; report any required perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
-  registry → open a coordination change first. One gaze per PR at a time.
+  registry → open a coordination change first. One gaze per request at a time.
 - **Say what a delegate in a shared worktree must not do.** A read-only brief
   does not imply "don't touch git": forbid `add`/`commit`/`push` explicitly.
 - **Before building a multi-cycle orchestration**, inventory the existing
@@ -165,10 +165,10 @@ Work that belongs to another project:
    for authorized work that must happen now.
 4. **Never edit it from here** (`guards.md`; AGENTS.md § Project memory boundary).
 
-# Ticket discipline for multi-PR work
+# Ticket discipline for multi-request work
 
-Sub-tasks landing in separate PRs → child tickets *before* work starts, each
-PR closing its own child (close-claim syntax: the merge skill). The parent becomes a
+Sub-tasks landing in separate merge requests → child tickets *before* work starts, each
+merge request closing its own child (close-claim syntax: the merge skill). The parent becomes a
 tracker listing every child, closed only after the integration review
 (roar step 8), never on the bare event of the last child merging.
 
@@ -179,7 +179,7 @@ up-front decisions, wave order) and children sized to one sign-off unit,
 `Blocked-by` their real prerequisite, never the tracker. An autonomous
 orchestrator files it; a hunt or an interactive session proposes it; a lone
 session proposes it in its report and stops. The 15-file count is a signal, not
-a wall. A large diff splits the review, not necessarily the PR.
+a wall. A large diff splits the review, not necessarily the merge request.
 
 # Compaction
 
@@ -202,7 +202,7 @@ juggles projects, so a ticket number means nothing: name the project and
 stakes in words. Shape: context, decision, priced options, your recommended
 default, what the higher models said. Queue the rest.
 
-**Sweep results are decisions.** Hits → act (ticket, PR, review flag); empty
+**Sweep results are decisions.** Hits → act (ticket, merge request, flag); empty
 sweep → silent no-op.
 
 **Severity floor, every repo.** File a ticket only when the defect blocks a

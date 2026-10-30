@@ -6,7 +6,7 @@ memory notes and tickets.
 
 ## Branch and commit
 
-- **Always work on a branch.** Main is read-only. Everything (code, docs, tickets, STATE, memory, config) lands via branch + PR. Sole exception: manuscript prose — [prose/workpackages.md](./prose/workpackages.md).
+- **Always work on a branch.** Main is read-only. Everything (code, docs, tickets, STATE, memory, config) lands via branch + merge request. Sole exception: manuscript prose — [prose/workpackages.md](./prose/workpackages.md).
 - **One change per commit.** The message explains *why this change and not another*: alternatives considered, local design choices made. Merge commits carry the strategic level — architecture decisions, cross-file impacts, residual debt.
 - **Git is the project's long-term memory.** Top-level files reflect *now*; history lives in `git log`.
 - **Worktrees are throwaway, branches hold durable state.** Never `rm -rf` a worktree the runtime created; `git worktree prune` after deleting the branch.
@@ -20,16 +20,16 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Merging
 
-- **Merge by the merge skill.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after gaze, checks the gate record and holds the recoveries (merge § Merge conflict recovery). One ticket per PR unless they genuinely land together.
+- **Merge by the merge skill.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after gaze, checks the gate record and holds the recoveries (merge § Merge conflict recovery). One ticket per merge request unless they land together.
 - **Rebase before every gate.** A verdict on a stale base is partly void. Rebase onto `origin/main`, force-push with lease, wait for CI — before the MR, before gaze, before the round-1 verify-gate; a later rebase is gated by the tier of what it changes (merge § Gating tiers).
 - **Anchor branch-mutating git after a fork returns.** The shell cwd may sit in another worktree: before the first `switch`/`checkout`/`merge`/`rebase`/`commit`/`push`/`reset` of that turn, check `git rev-parse --show-toplevel` or use `git -C <path>`.
 - **Remind the user of a merge left without its `/roar`.** Once, before you hand back.
 
 ## Branch cleanup
 
-- **Roar cleans only the just-completed ticket/PR.** Roar's step 10 takes
+- **Roar cleans only the just-completed ticket and its merge.** Roar's step 10 takes
   explicitly identified source branches and full approved head OIDs from the
-  current task's merged PRs, then checks ancestry before cleanup. All foreign
+  task's merged requests, then checks ancestry before cleanup. All foreign
   branches/worktrees remain, even when merged; repository-wide housekeeping
   belongs to lair/molt. Worktree removal also requires task ownership.
   Local cleanup retains ordinary Git merge/worktree refusal with `-d`; drift
@@ -38,7 +38,7 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 ## Reading state you will act on
 
 - **Never read a SHA, a count, or a tip from output a proxy may rewrite.** The `rtk` hook compacts for a reader, not a parser: it can rewrite counts, drop commits and truncate long output head-first. Use plumbing that answers in exit codes and single values (`git rev-parse`, `git rev-list --count A..B`, `git merge-base --is-ancestor`). What it spares moves between versions: ask `rtk hook check <cmd>`. Escape hatches: `RTK_DISABLED=1`, `/usr/bin/git -C <worktree> …`; `~/.local/share/rtk/tee/` keeps unfiltered output.
-- **Verify a forge mutation by reading it back, in the same command** (`gh pr edit … && gh pr view --json body`). Exit codes and warnings do not tell you whether the mutation landed. **An all-clear indistinguishable from "I could not look" is not a check.**
+- **Verify a forge mutation by reading it back, in the same command**. Exit codes and warnings do not tell you whether it landed. **An all-clear indistinguishable from "I could not look" is not a check.**
 - **Local main syncs by ref, never by assumption:** `scripts/sync-local-main.sh`, run at session start and after a merge. Never `git branch -f main`, never stash a dirty file to force a sync.
 
 ## Repo layout

@@ -22,12 +22,12 @@ narrative sections: neither derived numbers nor the North star.
 
 **No derived numbers (ticket 1121).** STATE.md stores no ticket counts, next
 picks, open merge requests, CI verdicts or recent commits: every merge made
-them stale and every parallel PR collided on them. One pointer line replaces
+them stale and every parallel merge request collided on them. One pointer line replaces
 them — live numbers are read when needed from `erg ready tickets/`,
 `erg list` and the dashboard skill. Nothing regenerates STATE.md; lair step 10
 edits and prunes the hand sections only when one changes, and bumps
-`Last updated:` in that same change (a quiet day opens no STATE PR; molt
-writes no stamp). A ticket-closing PR needs
+`Last updated:` in that same change (a quiet day opens no STATE merge request; molt
+writes no stamp). A ticket-closing merge request needs
 no STATE.md edit.
 
 **Live counts at session start.** `scripts/on-start-context.sh` prints one line of
