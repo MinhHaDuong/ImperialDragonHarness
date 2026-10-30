@@ -51,6 +51,13 @@ as no record** (definition: `skills/gaze/SKILL.md` § 4): gaze runs again, from
 a session that can launch seats. A second self-only record on the same head
 goes to the author.
 
+**A branch review carries over to the PR** (ticket 1379). A gaze answered on
+`branch:<name>` before the PR existed is the PR's review when its reviewed
+head is the head that lands, or the PR adds bookkeeping to it
+(`review_notes.open_review` adopts it when the `pr:<n>` review is opened);
+any other delta discards it and the PR gets a fresh review. One gaze per
+request at a time still holds.
+
 **A commit added after approval is gated by the tier of its own diff:**
 `merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.
 Bookkeeping or unchanged: the APPROVED verdict stands, no review or gate

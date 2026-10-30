@@ -95,20 +95,22 @@ nearest enclosing repo. Wrong repo → `git -C <project> worktree add
 
 **Stuck on the work:** fix direct, rethink the approach, then re-ticket with a
 diagnosis (the problem is mis-specified). Note what failed at each step; save
-it as a feedback memory at wrap-up. Stop when you repeat yourself; three
-failed approaches make it a decision.
+it as a feedback memory at wrap-up. Three failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
-right (scope, money, irreversible) are never forked or delegated; they wait.
+right (scope, money, irreversible) are never delegated; they wait.
 1. **Ask up first**: an advisor model. It agrees with your pick and the call
    is reversible → act and report.
 2. **Otherwise ask the author**, advisor's view beside your pick, and keep
-   working. Reversible options worth building → fork each into its own
-   worktree and branch, capped at 5 minutes; no merge, no outward act.
+   working. Reversible options worth building → build each in its own
+   worktree and branch (build capped at 5 minutes), gaze `branch:<name>` on the
+   recommended one and a likely author pick; the question carries the
+   result, or drops if it settles the call. No merge, no outward act (gaze
+   notes sync excepted).
 3. **Author back within 5 minutes** → their pick; delete the other branch.
    Still away, or no author in the loop → the advisor picks on the built
-   evidence (a cross-family seat when the stakes are high); keep the loser
-   until the author has seen the report.
+   evidence (a cross-family seat if stakes are high); keep the loser
+   until the author sees it.
 
 # Diagnosis discipline
 
@@ -122,7 +124,7 @@ behaviour. Write "X emits Y for input Z; cause not yet established".
 empty probe cannot tell "absent" from "invisible to me". Produce a known
 positive and watch the probe react; where your tooling cannot, report the one
 experiment that would settle it, not a null. Three independent zeros are one
-zero measured three times. A null result supports only the tested scope.
+zero measured three times.
 
 **A number you divided out is not a number you measured.** Label derived
 quantities as derived, show the arithmetic, say which machine a number came
@@ -132,7 +134,6 @@ inference. An unexplained gap is an open question, not a residual to attribute.
 **Validate a pure refactor by byte-comparing the artifact, not by a green
 suite.** Produce it before and after on the same inputs (`SOURCE_DATE_EPOCH`
 set) and compare content; tests pass on a refactor that misplaced its output.
-A clean-room render is usually seconds — run it yourself.
 
 # Delegation
 
@@ -147,7 +148,8 @@ A clean-room render is usually seconds — run it yourself.
   needs a seat from another model family. A same-family review is never called
   independent; report any required perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
-  registry → open a coordination change first. One gaze per request at a time.
+  registry → open a coordination change first. One gaze per request at a time
+  (carry-over: merge § Gating tiers).
 - **Say what a delegate in a shared worktree must not do.** A read-only brief
   does not imply "don't touch git": forbid `add`/`commit`/`push` explicitly.
 - **Before building a multi-cycle orchestration**, inventory the existing
@@ -178,8 +180,8 @@ units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
 `Blocked-by` their real prerequisite, never the tracker. An autonomous
 orchestrator files it; a hunt or an interactive session proposes it; a lone
-session proposes it in its report and stops. The 15-file count is a signal, not
-a wall. A large diff splits the review, not necessarily the merge request.
+session proposes it in its report and stops. A large diff splits the review,
+not necessarily the merge request.
 
 # Compaction
 

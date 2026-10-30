@@ -16,7 +16,8 @@ writes on completion. Fix agent gets ≤10 min. The agent works under:
 - Push commits to the PR branch; do not open new PRs.
 
 After a FINDINGS fix, run gaze on the new head with a narrower intent: verify
-those fixes, because they were the findings; after a round-1 REROLL fix,
+those fixes, because they were the findings (a gaze already answered on the
+fix branch is reused by the rule in `skills/merge/SKILL.md` § Gating tiers); after a round-1 REROLL fix,
 re-gate once with the same `session=`. Breakers on this loop:
 
 - Fix agent timeout (10 min) → ESCALATE.
