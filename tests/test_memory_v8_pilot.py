@@ -76,6 +76,15 @@ def unresolved_links(root, doc, archival_links=()):
                     and "-review-attribution-" in name
                     and (root / "memory/evidence/attribution" / name).is_file()):
                 continue
+            # A smelt merged the page away (ticket 1349); journal entries and
+            # smelt reports keep their old link text, the page stays in git history.
+            if (source.startswith(("memory/journal/", "memory/smelts/"))
+                    and old.startswith("memory/topics/")
+                    and subprocess.run(
+                        ["git", "-C", str(root), "log", "-1", "--format=%H", "--", old],
+                        capture_output=True, text=True, env=child_env(),
+                    ).stdout.strip()):
+                continue
             current = (source == "memory/MEMORY.md" or source.startswith("memory/topics/")
                        or source in {"conception/memory-v8/README.md",
                                      "conception/2026-10-02-memory-v8-runtime-smoke.md"})
