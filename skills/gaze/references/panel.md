@@ -26,7 +26,8 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
      --brief <panel>/brief.md [--role code-reviewer|prose-reviewer]
    ```
 
-   The door, model and family come from the plan item; the runtime's door
+   The door, model and family come from the plan item (a pi model carries
+   its thinking level, `<provider>/<id>:<level>`); the runtime's door
    (`launch_doors.<door>.headless` in `skills/route/routes.json`) supplies the
    command template and its `seat_rails`: read tools only, with no shell and
    no write tool, where the CLI takes an allowlist; a sandboxed door holds the

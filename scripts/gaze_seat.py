@@ -509,7 +509,7 @@ def main(argv: list[str]) -> int:
     sub.add_parser('consent', help='print the manifest line declaring cross-family spend')
     run = sub.add_parser('launch', help='launch one seat and file its report')
     run.add_argument('--runtime', required=True, help='launch_doors key: claude-code, codex, pi')
-    run.add_argument('--model', required=True, help='model pinned on the door, from the route skill')
+    run.add_argument('--model', required=True, help='model pinned on the door, from the route skill; a pi model ends in :<thinking level>')
     run.add_argument('--family', required=True, help='model family the plan names for this seat')
     run.add_argument('--home-family', required=True, help='family of the session running gaze')
     run.add_argument('--role', choices=ROLES, default='code-reviewer',
