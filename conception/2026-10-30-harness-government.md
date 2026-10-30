@@ -78,8 +78,9 @@ project or local derogation can set aside (never display credentials, a
 skill load is not write authorization, split work beyond the context
 limit). Enforcing them falls to the force publique, which is mechanical:
 - hooks (for example `guard-destructive-bash.sh`, which refuses a
-  self-matching `pgrep -f`; the main-update guard, which refuses an update
-  of main that is neither a sync from origin nor a gated merge);
+  self-matching `pgrep -f`; the main-update guard, which, in enforce mode,
+  refuses an update of main that is neither a sync from origin nor a gated
+  merge);
 - the runtime's permission rules and its auto-mode classifier;
 - the before-merge checks of the merge gate.
 
