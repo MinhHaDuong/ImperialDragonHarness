@@ -92,7 +92,7 @@ carry the intent, the method, the budget in minutes, which fits the
 providers the author consented to spend on (one host-local key, set once; none
 by default). Consent follows the provider that bills the seat, not the family
 the plan writes. Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
-reason naming the seat's door (`headless <runtime>`, or `subagent`). An item
+reason naming the seat's door (`headless <runtime>`, or `subagent`). A `headless pi` model carries its thinking level, `<provider>/<id>:<level>`. An item
 is self when its name or its model is `self`: gaze's own read. Every
 item, a check included, writes `<panel>/<name>.md`. The item name is the seat's
 one name for good: the roster, the `seat:` line, the attribution `seat=` field and
