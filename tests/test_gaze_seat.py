@@ -285,7 +285,7 @@ def test_failed_seat_status_carries_the_first_stderr_line(rig):
 def test_pi_seat_refuses_a_model_id_the_provider_does_not_list(rig):
     # A local server answers to any id and Pi exits 0 with a stderr warning: the
     # report would name a model that did not run.
-    result = launch(rig, runtime='pi', model='anthropic/nope-model', family='Anthropic',
+    result = launch(rig, runtime='pi', model='anthropic/nope-model:medium', family='Anthropic',
                     mode='pi-unknown')
     assert result.returncode == 1
     assert result.stdout.startswith('correctness: no report (')
@@ -306,7 +306,7 @@ def test_codex_seat_echoing_the_warning_phrase_still_reports(rig):
 @pytest.mark.integration
 def test_pi_seat_with_a_listed_model_still_reports(rig):
     # Control: the same door and provider without the warning files its report.
-    result = launch(rig, runtime='pi', model='anthropic/listed-model', family='Anthropic')
+    result = launch(rig, runtime='pi', model='anthropic/listed-model:medium', family='Anthropic')
     assert result.returncode == 0, result.stdout
     assert (rig['panel'] / 'correctness.md').exists()
 
@@ -393,12 +393,95 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
     assert codex.argv[:2] == ['codex', 'exec'] and codex.stdin == Path('/p/x.prompt')
     assert codex.argv[codex.argv.index('-o') + 1] == '/p/x.seat' and '<' not in codex.argv
     assert codex.argv[codex.argv.index('-c') + 1] == 'model_reasoning_effort="medium"'  # ticket 1365
-    pi = gaze_seat.build_command(doors['pi'], 'anthropic/claude-haiku-5-5', 'PROMPT', Path('/p/x.seat'),
+    pi = gaze_seat.build_command(doors['pi'], 'anthropic/claude-haiku-5-5:medium', 'PROMPT', Path('/p/x.seat'),
                                  Path('/p/x.prompt'))
-    assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5'
+    assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5:medium'
     assert pi.argv[pi.argv.index('--tools') + 1] == 'read,grep,find,ls' and pi.argv[-1] == 'PROMPT'
     with pytest.raises(ValueError):  # the claude door offers named aliases only
         gaze_seat.build_command(doors['claude-code'], 'gpt-6-luna', 'P', Path('/o'), Path('/f'))
+
+
+# Ticket 1371: a seat's settings are the door's, never the host's user CLI config.
+# Each shim plays its CLI's config resolution as measured on padme 2026-10-30
+# (codex 0.165.0 header: `reasoning effort: low` from ~/.codex/config.toml without
+# --ignore-user-config, `none` with it, `medium` with the -c pin either way; claude
+# --help: --restricted ignores user, project and local settings files) and records
+# what the seat would run with.
+CONFIG_SHIMS = {
+    'codex': r"""#!/bin/sh
+printf '%s\n' "$@" > "$STUB_LOG/codex.argv"
+effort=""; ignore=no; prev=""; out=""
+for a in "$@"; do
+  [ "$a" = --ignore-user-config ] && ignore=yes
+  [ "$prev" = -c ] && case "$a" in model_reasoning_effort=*) effort="${a#*=}" ;; esac
+  [ "$prev" = -o ] && out="$a"
+  prev="$a"
+done
+user="${CODEX_HOME:-$HOME/.codex}/config.toml"
+read_user=no
+if [ $ignore = no ] && [ -f "$user" ]; then
+  read_user=yes
+  [ -z "$effort" ] && effort=$(sed -n 's/^model_reasoning_effort *= *//p' "$user")
+fi
+effort=$(printf '%s' "$effort" | tr -d '"')
+printf 'effort=%s\nuser-config=%s\n' "${effort:-none}" "$read_user" > "$STUB_LOG/codex.settings"
+cat > /dev/null
+printf 'reach: read=yes shell=no tests=not-run\nverdict: clear\n' > "$out"
+""",
+    'claude': r"""#!/bin/sh
+printf '%s\n' "$@" > "$STUB_LOG/claude.argv"
+effort=""; skip=no; prev=""
+for a in "$@"; do
+  [ "$a" = --restricted ] && skip=yes
+  [ "$prev" = --effort ] && effort="$a"
+  prev="$a"
+done
+user="$HOME/.claude/settings.json"
+read_user=no
+if [ $skip = no ] && [ -f "$user" ]; then
+  read_user=yes
+  [ -z "$effort" ] && effort=$(sed -n 's/.*"effortLevel": *"\([a-z]*\)".*/\1/p' "$user")
+fi
+printf 'effort=%s\nuser-config=%s\n' "${effort:-default}" "$read_user" > "$STUB_LOG/claude.settings"
+printf 'reach: read=yes shell=no tests=not-run\nverdict: clear\n'
+""",
+}
+HOST_CONFIGS = {
+    'codex': ('.codex/config.toml', 'model = "gpt-6.1-sol"\nmodel_reasoning_effort = "low"\n'),
+    'claude': ('.claude/settings.json', '{"effortLevel": "low", "model": "opus"}\n'),
+}
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('runtime,model,family', [('codex', 'gpt-6-luna', 'OpenAI'),
+                                                  ('claude-code', 'haiku', 'Anthropic')])
+def test_seat_ignores_a_conflicting_host_user_config(rig, runtime, model, family):
+    cli = runtime.split('-')[0]
+    shim = rig['tmp'] / 'bin' / cli
+    shim.write_text(CONFIG_SHIMS[cli])
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['OpenAI']}))
+    runs = []
+    for host_config in (False, True):
+        if host_config:  # the host sets effort low, as padme's interactive config did (ticket 1365)
+            path, body = HOST_CONFIGS[cli]
+            (rig['tmp'] / path).parent.mkdir(parents=True, exist_ok=True)
+            (rig['tmp'] / path).write_text(body)
+        result = launch(rig, runtime=runtime, model=model, family=family, name=f'seat{int(host_config)}')
+        assert result.returncode == 0, result.stdout
+        argv = (rig['log'] / f'{cli}.argv').read_text().replace(f'seat{int(host_config)}', 'seat')
+        runs.append((argv, (rig['log'] / f'{cli}.settings').read_text()))
+    assert runs[0] == runs[1]  # the host file changes nothing the seat runs with
+    assert runs[1][1] == 'effort=medium\nuser-config=no\n'
+
+
+def test_pi_door_pins_the_thinking_level_on_every_seat():
+    gaze_seat = load_module()
+    door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['pi']
+    pi = gaze_seat.build_command(door, 'anthropic/claude-haiku-5-5:medium', 'P', Path('/o'), Path('/f'))
+    assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5:medium'
+    for unpinned in ('anthropic/claude-haiku-5-5', 'anthropic/claude-haiku-5-5:', 'anthropic/x:loud'):
+        with pytest.raises(ValueError, match='thinking'):  # else the host's defaultThinkingLevel decides
+            gaze_seat.build_command(door, unpinned, 'P', Path('/o'), Path('/f'))
 
 
 class _Models(BaseHTTPRequestHandler):

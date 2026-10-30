@@ -154,6 +154,13 @@ def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile
             argv.append(str(promptfile))
         elif token.strip('<>') in values and token.startswith('<'):
             argv.append(values[token.strip('<>')])
+        elif previous in MODEL_FLAGS and PLACEHOLDER.fullmatch(token) and ':<' in token:
+            # `<provider>/<id>:<levels>`: the seat names its thinking level, the host default never does.
+            levels = token.rsplit(':<', 1)[1].strip('<>').split('|')
+            named, _, level = model.rpartition(':')
+            if not named or level not in levels:
+                raise ValueError(f'model {model} pins no thinking level; add :<{"|".join(levels)}>')
+            argv.append(model)
         elif previous in MODEL_FLAGS and PLACEHOLDER.fullmatch(token):
             offered = token.strip('<>').split('|')
             if len(offered) > 1 and model not in offered:
@@ -502,7 +509,7 @@ def main(argv: list[str]) -> int:
     sub.add_parser('consent', help='print the manifest line declaring cross-family spend')
     run = sub.add_parser('launch', help='launch one seat and file its report')
     run.add_argument('--runtime', required=True, help='launch_doors key: claude-code, codex, pi')
-    run.add_argument('--model', required=True, help='model pinned on the door, from the route skill')
+    run.add_argument('--model', required=True, help='model pinned on the door, from the route skill; a pi model ends in :<thinking level>')
     run.add_argument('--family', required=True, help='model family the plan names for this seat')
     run.add_argument('--home-family', required=True, help='family of the session running gaze')
     run.add_argument('--role', choices=ROLES, default='code-reviewer',

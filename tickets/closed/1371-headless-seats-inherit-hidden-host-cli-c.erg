@@ -2,9 +2,12 @@
 Title: Headless seats inherit hidden host CLI config: declare every seat setting in routes.json
 Created: 2026-10-30
 Author: reviewer
+Closed: autoclosed — PR #2050
 
 --- log ---
 2026-10-30T13:18Z reviewer created
+2026-10-30T13:39Z reviewer plan deviation: claude door keeps --restricted (already skips user/project/local settings per --help 2.1.314; --setting-sources project would load the reviewed tree's settings) and adds --effort medium; real launches 2026-10-30 through gaze_seat.py on HEAD 168b5b33, each quoting a nonce planted in the review tree: codex gpt-6-luna (22 s), claude-code haiku (14 s), pi padme/qwen3.8-flash-next-iq3_s:medium (100 s)
+2026-10-30T14:00Z reviewer closed — autoclosed — PR #2050
 
 --- body ---
 ## Context
