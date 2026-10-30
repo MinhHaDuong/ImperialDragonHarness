@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-30T16:23Z reviewer created
+2026-10-30T17:30Z reviewer note plan raid 0da24b — author ruling (b): carry-over in code; plan appended
 
 --- body ---
 ## Context
@@ -24,3 +25,51 @@ a `branch:<name>` unit with no merge request.
 - [ ] The escalation protocol makes the review of a built option part of building it: gaze on the option's branch runs while the question is pending, and the question to the author carries the result (or is dropped when the result settles it)
 - [ ] A review on the option branch carries over to the PR when its reviewed head is the head that lands (bookkeeping delta at most), otherwise it is discarded; one gaze per request at a time still holds
 - [ ] `skills/raid/references/fix-and-regate.md` points at the rule instead of restating it
+
+## Plan (raid 0da24b; author ruling 2026-10-30, option (b): carry-over in code)
+
+Premise holds at origin/main 4269e12e. `review_notes.find_unit` (~765) matches
+only `unit == "pr:<n>"`; the two openers of a PR review, `gaze_setup.py`
+(~193, `resolve_unit(...) or open_review(..., unit=...)`) and
+`attribution_record.py` (~397, writer line before any review), mint a fresh
+review, so `gate_state(review_id, head)` (~882) sees no answer and says
+"no completed review" even when gaze already answered `branch:<name>` on the
+very head the PR carries.
+
+Actions:
+1. Red test first (tests/test_review_notes.py or its nearest sibling): gaze-record
+   an answer on `branch:x` at head H, open `pr:N` for branch x at H through the
+   same call the openers use, assert `gate_state` for the pr:N review at H is
+   `ready`. Second case, same file: the branch review's answer is on an older
+   head H0 and the PR head adds code (not bookkeeping) → no adoption, a fresh
+   review, gate state not ready. Show the first red for the targeted reason.
+2. Code, one choke point: `review_notes.open_review` with `unit="pr:<n>"`
+   adopts the latest `find(cwd, branch)` review when its latest answer's head
+   equals the PR head, or the PR head adds only bookkeeping to it
+   (`_bookkeeping_since`); otherwise it opens a fresh review (the branch review
+   is left as it is, discarded for this PR). Adoption = the review keeps its id
+   and gains the `pr:<n>` request (request() already carries `unit` forward), so
+   `find_unit` finds it and its answers, writer lines and rounds come along.
+   The executor may pick another mechanism if this one breaks an invariant
+   (e.g. `find` must keep skipping PR reviews for later branch reuse); say why.
+3. Docs, stated once: the carry-over rule goes in `skills/merge/SKILL.md`
+   § Gating tiers (a `branch:<name>` review whose reviewed head is the head that
+   lands, bookkeeping delta at most, is the PR's review; otherwise discarded;
+   one gaze per request at a time still holds). Cite it, do not restate it, from
+   `rules/workflow.md` (the one-gaze-per-request clause ~:150) and
+   `skills/raid/references/fix-and-regate.md`.
+4. Rewrite `rules/workflow.md` § Escalation protocol step 2 (~105-108): an
+   option is built when gaze (`branch:<name>`) has run on it; the question to the
+   author carries the result, or is dropped when the result settles it; the
+   5-minute cap is on building only; gaze the recommended option (plus a likely
+   author pick), not every option; "no outward act" exempts gaze's notes sync
+   (`gaze_close.py` pushes notes, ~283). Plain git wording: "its own worktree
+   and branch", never "fork" in the subagent sense (Codex and Pi are
+   first-class). Keep the section's length about the same.
+5. No new guards and no tests about tests. Gate: `make check` (Python changed).
+
+Antipattern scan: the red test exercises the opener path and `gate_state`, so a
+wrong adoption rule (wrong head, code delta adopted) fails case 2; not
+tautological. YAGNI: no new CLI verb, no new entry kind.
+
+Review: this is a gate-path change, so its gaze includes a cross-family seat.
