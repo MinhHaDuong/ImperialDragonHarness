@@ -31,7 +31,10 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    (`launch_doors.<door>.headless` in `skills/route/routes.json`) supplies the
    command template and its `seat_rails`: read tools only, with no shell and
    no write tool, where the CLI takes an allowlist; a sandboxed door holds the
-   seat read-only by its sandbox. A seat without a shell runs no tests and no
+   seat read-only by its sandbox. The seat's environment is built, never
+   inherited: process basics, a pinned `LANG=C.UTF-8`, and the variables the
+   door declares in `env_keep` (for pi, the key its provider names in
+   `models.json`); the caller's runtime settings never reach it. A seat without a shell runs no tests and no
    git: a behaviour claim is a check item, and the script writes the diff
    `<base>...HEAD` to `<panel>/<name>.diff` for the seat to read. The script
    builds the prompt from the role's profile Charter (`--role`:
