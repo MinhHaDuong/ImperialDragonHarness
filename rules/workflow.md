@@ -99,16 +99,16 @@ it as a feedback memory at wrap-up. Stop when you repeat yourself; three
 failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
-right (scope, money, irreversible) are never delegated; they wait.
+right (scope, money, irreversible) are never branched or delegated; they wait.
 1. **Ask up first**: an advisor model. It agrees with your pick and the call
    is reversible → act and report.
 2. **Otherwise ask the author**, advisor's view beside your pick, and keep
    working. Reversible options worth building → build each on its own
-   branch (5 min cap), gaze it (merge § Gating tiers); no merge.
+   branch in ≤5 min, gaze it (merge § Gating tiers); no merge.
 3. **Author back within 5 minutes** → their pick; delete the other branch.
    Still away, or no author in the loop → the advisor picks on the built
-   evidence (a cross-family seat when the stakes are high); keep the loser
-   until the author has seen the report.
+   evidence (a cross-family seat if stakes are high); keep the loser
+   until the author sees the report.
 
 # Diagnosis discipline
 
