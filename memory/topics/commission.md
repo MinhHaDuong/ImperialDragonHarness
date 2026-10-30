@@ -63,8 +63,8 @@ Stated intent, not ruled (input for 1350): user memory apart from project memory
 
 ## Open questions
 
-- Exposed contradiction, unsettled: "editing prose is on main" (2026-10-26, native `feedback_prose_edits_are_on_main`) against rules/git.md (main read-only, sole exception manuscript prose) and rules/prose/workpackages.md ("The harness repo keeps its no-exceptions gate"). Awaits the author.
-- "No wait tickets" against "a reminder is an open Blocked-by ticket" (another store, ticket 1349 probe).
+- Exposed contradiction, unsettled: "editing prose is on main" (2026-10-26, native `feedback_prose_edits_are_on_main`) against rules/git.md (main read-only, sole exception manuscript prose) and rules/prose/workpackages.md ("The harness repo keeps its no-exceptions gate"). Ticket 1372.
+- "No wait tickets" against "a reminder is an open Blocked-by ticket" (another store, ticket 1349 probe). Ticket 1374.
 - Ex-post coder/reviewer health read awaits the author ([source](../journal/2026/2026-10-28-diminishing-returns-bar.md)).
 
 ## Retired

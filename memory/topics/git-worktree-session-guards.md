@@ -53,7 +53,7 @@ checkout or refs. Authority: `rules/git.md`, `rules/claude-code.md`.
 ## Open questions
 
 - `rules/git.md` requires forge read-back; the author merged 2035 without it
-  and declined to narrow the rule. Unsettled here.
+  and declined to narrow the rule. Ticket 1373.
 - Hypothesis: the shared primary checkout as common cause.
 - `worktree-tmp-guard.py` keeps any tree whose commits cite `.tmp/`.
 
