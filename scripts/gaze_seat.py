@@ -513,17 +513,32 @@ SCRUB_PATTERNS = tuple(re.compile(p) for p in (
     r'''(?i:\bBearer[ \t]+\S+|\bAuthorization["']?[ \t]*[:=][ \t]*["']?Basic[ \t]+[^\s"']+|\bBasic[ \t]+[\w+/-]{8,}={0,2})''',  # auth header value; a bare Basic only before a base64 token
     r'(?i:\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?)',                          # JWT
     r'(?i:\borg-[\w-]{4,})',                                              # organisation id
-    # key=value, JSON-quoted or backslash-escaped too, never across a line; a quoted value ends at its own matching, unescaped closing quote
-    # (else at the line end), an unquoted one at whitespace
-    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:\\+(["'])(?:(?!\\+\1)[^\n])*(?:\\+\1|(?=\n|\Z))|(["'])(?:\\.|\\(?=\n|\Z)|(?!\2)[^\\\n])*(?:\2|(?=\n|\Z))|\S+)''',
+    # key=value, JSON-quoted or backslash-escaped too, never across a line. The regex matches the opener only; a quoted value is
+    # scanned to its closing quote by `_redact` (linear, no backtracking), an unquoted one is the whole non-space token
+    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:(\\*)(["'])(?P<rest>[^\n]*)|\S+)''',
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
+
+
+def _redact(match: re.Match) -> str:
+    """Replacement for a scrub match. A quoted key=value value closes at the first quote of the opener's kind preceded by
+    exactly as many backslashes as the opener had (`\\"` opens, `\\\\\\"` is content); with no closer it runs to the line end."""
+    rest = match.groupdict().get('rest')
+    if rest is None:
+        return '<redacted>'
+    slashes, quote = len(match.group(1)), match.group(2)
+    run = 0
+    for i, ch in enumerate(rest):
+        if ch == quote and run == slashes:
+            return '<redacted>' + rest[i + 1:]
+        run = run + 1 if ch == '\\' else 0
+    return '<redacted>'
 
 
 def scrub(text: str) -> str:
     """Replace emails, key- or token-shaped strings, organisation ids and home logins with `<redacted>`."""
     for pattern in SCRUB_PATTERNS:
-        text = pattern.sub('<redacted>', text)
+        text = pattern.sub(_redact, text)
     return text
 
 

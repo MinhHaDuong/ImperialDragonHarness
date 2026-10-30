@@ -936,3 +936,29 @@ def test_scrub_quoted_value_ends_at_its_own_unescaped_closing_quote(leak, secret
 ])
 def test_scrub_never_crosses_a_line(text):
     assert load_module().scrub(text).split('\n')[1:] == text.split('\n')[1:]
+
+
+def _escaped_secret(label, sep):
+    return json.dumps(label + sep + json.dumps('FAKEabc"TAIL123'))[1:-1]
+
+
+@pytest.mark.parametrize('leak', [
+    _escaped_secret('password', '='),
+    _escaped_secret('token', ': '),
+])
+def test_scrub_escaped_value_with_escaped_inner_quote_is_whole(leak):
+    assert 'TAIL123' not in load_module().scrub(leak)
+
+
+def test_scrub_escaped_json_object_keeps_later_fields():
+    leak = r'{\"password\": \"FAKEabc\\\"def123\", \"ok\": 1}'
+    out = load_module().scrub(leak)
+    assert 'def123' not in out and r'\"ok\": 1' in out
+
+
+def test_scrub_long_backslash_run_is_linear():
+    import time
+    leak = 'password=\\"' + '\\' * 16000
+    start = time.perf_counter()
+    load_module().scrub(leak)
+    assert time.perf_counter() - start < 0.2
