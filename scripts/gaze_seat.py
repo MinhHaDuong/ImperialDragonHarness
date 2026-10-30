@@ -510,11 +510,12 @@ STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, i
 SCRUB_PATTERNS = tuple(re.compile(p) for p in (
     r'(?i:[\w.+-]+@[\w-]+(?:\.[\w-]+)+)',                                # email
     r'(?i:\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w*-]{8,}|\bAKIA[0-9A-Z]{12,})',  # vendor keys, masked too
-    r'(?i:\bBearer)\s+\S+|\bBasic\s+[A-Za-z0-9+/]{8,}={0,2}',            # auth header value; Basic only before a base64 token
+    r'''(?i:\bBearer[ \t]+\S+|\bAuthorization["']?[ \t]*[:=][ \t]*["']?Basic[ \t]+[^\s"']+|\bBasic[ \t]+[\w+/-]{8,}={0,2})''',  # auth header value; a bare Basic only before a base64 token
     r'(?i:\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?)',                          # JWT
     r'(?i:\borg-[\w-]{4,})',                                              # organisation id
-    # key=value, JSON-quoted or backslash-escaped too; the value ends at its closing quote, else at whitespace or `,}]`
-    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[\s_-]?id))\\*["']?\s*[:=]\s*(?:\\*["'][^"'\\]*\\*["']|[^\s,}\]"']+)''',
+    # key=value, JSON-quoted or backslash-escaped too, never across a line; a quoted value ends at its closing quote
+    # (else at the line end), an unquoted one at whitespace
+    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:\\*["'](?:[^"'\\\n]|\\+(?!["']))*(?:\\*["']|(?=\n|\Z))|\S+)''',
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 

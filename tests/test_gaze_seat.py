@@ -901,3 +901,28 @@ def test_scrub_residuals_escaped_keys_spaced_labels_and_compact_json(leak, secre
 ])
 def test_scrub_keeps_ordinary_prose_and_later_json_fields(text, kept):
     assert kept in load_module().scrub(text)
+
+
+@pytest.mark.parametrize('leak, secret', [
+    ('{"password": "abc\\\\def123"}', 'def123'),
+    ('token: "unterminated secret123', 'secret123'),
+    ('password=FAKEcanary,TAIL', 'TAIL'),
+    ('Authorization: Basic dTpw', 'dTpw'),
+    ('Authorization: basic dXNlcjpwYXNz', 'dXNlcjpw'),
+    ('Basic dXNlcjpw-YXNz', 'YXNz'),
+])
+def test_scrub_fully_redacts_backslash_unterminated_comma_and_basic_variants(leak, secret):
+    assert secret not in load_module().scrub(leak)
+
+
+@pytest.mark.parametrize('text', [
+    'intent: inspect access_token:\nreview plan: panel',
+    'intent: rotate the api key:\nseats: panel',
+    'token:\nresult: REVIEWED',
+    'Bearer\nreviewed_head_sha: abc',
+    'Authorization:\nran: tests',
+    'password:\nplan check: ok',
+    'secret:\nseat: self',
+])
+def test_scrub_never_crosses_a_line(text):
+    assert load_module().scrub(text).split('\n')[1:] == text.split('\n')[1:]
