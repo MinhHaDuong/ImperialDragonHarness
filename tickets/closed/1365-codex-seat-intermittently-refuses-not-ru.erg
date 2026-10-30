@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Codex seat intermittently refuses NOT-RUN: review tree unreadable
+Created: 2026-10-29
+Author: reviewer
+Closed: autoclosed — PR #2044
+
+--- log ---
+2026-10-29T23:44Z reviewer created
+2026-10-30T13:04Z reviewer reviewer measured (raid 70b3bc): cause established. Failing rollouts ~/.codex/sessions/2026/10/{29,30} (session 01a18a09-fb11-79b2-a50b-e4f43dd76f18 is the reported gz-20261029T234033056Z-224e seat): codex-cli 0.165.0, cwd = review tree, sandbox read-only, approval never, tool set identical to reading runs; the model answered its first turn NOT-RUN in ~0.2 s with zero tool calls and zero reasoning tokens. Predicting condition: gpt-6-luna at reasoning effort low, inherited from ~/.codex/config.toml (set low 2026-10-29 19:33; the door pinned none). Recorded seat launches: luna low 3/36 refused, luna medium 0/61, sol low 0/27, sol medium 0/~120. Controlled replay of the exact failing prompt on a rebuilt review-2026 tree: luna low 1/20 refused (zero tool calls), luna medium 0/20. Pooled luna 4/56 low vs 0/81 medium, Fisher one-sided p~0.026; medium spends the same ~26k tokens, ~4 s more. Fix: door pins model_reasoning_effort=medium (commit 1a7007e2); stderr excerpt in every no-report status (9d87d05e) carries codex's header (model, sandbox, reasoning effort, session id) to the answer's ran: line.
+2026-10-30T13:04Z reviewer closed — autoclosed — PR #2044
+
+--- body ---
+## Context
+Reproduced on padme, 2026-10-29T23:41Z: gaze run `gz-20261029T234033056Z-224e` on PR 2026, seat `correctness` (codex door, openai/gpt-6-luna) refused with "NOT-RUN: The review tree cannot be read with the available tools." (answer `20261029T234156414Z-padme-ea5ae0cf`, review `rv-20261029-pr-2026-d0c0`). The same failure DOIfetch reported (raid f9e483). Ticket 1363 closed on two launches that read the tree, and in the same session about a dozen codex seats (gpt-6.1-sol and gpt-6-luna) did read their trees, so the failure is intermittent; cause not established (luna-only? tree path? sandbox start-up?). Since 1361 (PR 2023) such a seat records `status: failed` and no longer satisfies `--require-cross-family`; the cost is a lost independent review, which on a high-risk change blocks the gate.
+
+## Exit criteria
+- [x] The cause is established from a captured failing launch (seat stderr, codex argv, cwd and sandbox), or the failure rate is measured over a stated number of launches with the condition that predicts it
+- [x] A failing seat launch leaves its stderr in the panel record so the next occurrence is diagnosable

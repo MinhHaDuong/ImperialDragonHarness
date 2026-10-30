@@ -113,7 +113,8 @@
         "status": "verified 2026-10-09 (Codex 0.161.0, parent gpt-6.1-sol): spawn_agent {model, reasoning_effort} is honoured; with fork_turns none the child rollout turn_context shows gpt-6-luna/low; with fork_turns omitted the child also ran on gpt-6-luna but carries an inherited parent turn_context first; fork_turns all: 109 spawn_agent calls in ~/.codex/sessions (46 with a model override) were accepted, but the child turn_context.model was not read, so whether the override is honoured under 'all' is unmeasured. Evidence: ~/.codex/sessions rollout turn_context.model of the child (parent_thread_id links it)."
       },
       "headless": {
-        "template": "codex exec -s read-only -m <openai-model-id> -o <outfile> - < <promptfile>",
+        "template": "codex exec -s read-only -m <openai-model-id> -c 'model_reasoning_effort=\"medium\"' -o <outfile> - < <promptfile>",
+        "effort_status": "pinned medium 2026-10-30 (ticket 1365): unpinned, seats inherited ~/.codex/config.toml, set to low on 2026-10-29; at low gpt-6-luna answered its first turn NOT-RUN with no tool call in 4 of 56 launches (36 recorded rollouts, 20 replays of the failing prompt), at medium 0 of 81; same tokens, about 4 s slower",
         "seat_rails": [],
         "seat_rails_limit": "codex exec offers no flag to skip the project's AGENTS.md, so a reviewed tree can still address its codex seat; the read-only sandbox caps what that can do",
         "seat_rails_status": "flags read from --help 2026-10-27 (ticket 1256): read tools only, no shell, no write tool; codex holds the seat by its read-only sandbox instead. gaze_seat.py inserts them after the program and subcommand",
