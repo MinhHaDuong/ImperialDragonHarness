@@ -679,3 +679,24 @@ def test_a_record_that_never_arrives_raises(seeded, module, monkeypatch):
     monkeypatch.setattr(module, "READBACK_WAIT", 0)
     with pytest.raises(module.GateError, match="remote lacks the record"):
         module.append_and_push(head, "second\nresult: fail", "origin")
+
+
+def test_a_remote_that_drops_on_the_retry_keeps_the_unpublished_record_reachable(seeded, module, monkeypatch):
+    repo, head = seeded
+    real = module.git
+    seen = {"fetches": 0}
+
+    def flaky(*args, **kw):
+        if args[:2] == ("push", "-q"):
+            return subprocess.CompletedProcess(args, 1, "", "rejected")
+        if args[:1] == ("ls-remote",) and "--exit-code" in args:  # fetch_notes' probe
+            seen["fetches"] += 1
+            if seen["fetches"] > 1:
+                return subprocess.CompletedProcess(args, 128, "", "remote gone")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", flaky)
+    with pytest.raises(module.GateError):
+        module.append_and_push(head, "second\nresult: fail", "origin")
+    kept = real("notes", "--ref=refs/notes/gate", "show", head).stdout
+    assert "second" in kept

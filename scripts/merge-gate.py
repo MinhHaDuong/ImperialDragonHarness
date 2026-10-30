@@ -504,11 +504,12 @@ def append_and_push(oid, text, remote):
         return
     mine = f"{NOTES_REF}-pending-{os.getpid()}"
     probe = f"{NOTES_REF}-probe-{os.getpid()}"
-    pushed, absent, tried = None, False, []
+    pushed, absent, tried, published = None, False, [], False
     try:
         for attempt in (1, 2):
             fetch_notes(remote)
             if pushed and git("merge-base", "--is-ancestor", pushed, NOTES_REF, check=False).returncode == 0:
+                published = True
                 return  # the earlier push did land (read-back lag): do not append a second entry
             git("update-ref", "-d", mine, check=False)
             if git("rev-parse", "--verify", "--quiet", NOTES_REF, check=False).returncode == 0:
@@ -535,6 +536,7 @@ def append_and_push(oid, text, remote):
                 absent = True
                 continue
             git("update-ref", NOTES_REF, pushed, check=False)
+            published = True
             return
         # Both attempts failed: a lagging read-back may have hidden a landed push, so look once more.
         try:
@@ -543,10 +545,11 @@ def append_and_push(oid, text, remote):
             LOG.warning("cannot verify %s on %s: %s", NOTES_REF, remote, err)
         for earlier in tried:
             if git("merge-base", "--is-ancestor", earlier, NOTES_REF, check=False).returncode == 0:
+                published = True
                 return
-        if tried:  # keep the unpublished record reachable, as the error below says
-            git("update-ref", NOTES_REF, tried[-1], check=False)
     finally:
+        if tried and not published:  # on any exit: keep the unpublished record reachable
+            git("update-ref", NOTES_REF, tried[-1], check=False)
         git("update-ref", "-d", mine, check=False)
         git("update-ref", "-d", probe, check=False)
     if absent:
