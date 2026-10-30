@@ -1,108 +1,88 @@
-# Memory v8 governance
+# Architecture: the memory system
 
-Scope: how project memory is governed in this repository under the v8
-convention — design boundaries, legacy retirement, and what the retired
-legacy advice was. Facts here come from the journal entries and design
-documents cited below.
+Scope: this repository's project memory (prompt `memory/SMELT.md` v8-r4) and
+how runtimes reach it. Checked against the tree 2026-10-30.
 
-## Supported observations
+## Current guidance
 
-The v8 design was adopted and delivered through PRs #1093, #1096 and #1097,
-then the convention and source inventory (0911/0917) through PR #1102, which
-also retired the native/shared-store DREAM helpers (`commit.py`,
-`read-index.py`, `provenance.py`) with their consumer tests. The pilot
-activating the convention in this repository was decided 2026-10-02: public
-audience for themes and journal, and initial sources limited to the ten
-`memory/` root files in the inventory. As first recorded, uncleared material
-was to go to a separate private companion; that clause was superseded the
-same day by the author's encrypted-in-repo decision — uncleared material
-stays in this repository as age-encrypted `.age` ciphertext from birth,
-plaintext never in the tree, the key under `~/.config/keys` and never
-tracked (PR #1112, mechanics pinned by 0988). Without the key an entry is
-existing but unreadable: smelt skips it and reports the count, never
-treating it as empty. Roar captures facts; SMELT consolidates without rule
-promotion; the journal is append-only. The pilot declaration is
-[conception/memory-v8/pilot.md](../../conception/memory-v8/pilot.md); this correction
-was made by the [first dream](../smelts/2026-10-02-pilot-first-dream.md),
-which cites the sources below. The pilot's evaluation protocol was
-committed to main before its acceptance trials on 2026-10-02
-([evaluation protocol](../../conception/memory-v8/evaluation-protocol.md), PR
-#1137); the trial experiences are consolidated under
-[acceptance trial](memory-v8-acceptance-trial.md) and their cell verdicts
-live in the [results document](../../conception/memory-v8/evaluation-results.md),
-not in memory.
+- **Stores.** `memory/journal/YYYY/` is the intact, append-only source;
+  corrections are new entries linking the original. Department pages under
+  `memory/topics/` are as-built guides to it, 4 KB each, index 40 lines
+  (author rulings on 1348, see Commission; [redesign day](../journal/2026/2026-10-29-memory-redesign-day.md)).
+  Review-attribution records live in `memory/evidence/attribution/`, outside
+  smelt input (PR #2002, [raid 0a53b8](../journal/2026/2026-10-29-raid-0a53b8-smelt-census-attribution.md)).
+  Uncleared material is age ciphertext in the repo, key never tracked
+  ([pilot](../journal/2026/2026-10-02-memory-v8-pilot-established.md)); none exist today.
+- **Pipeline.** Roar captures facts (`skills/roar/runbooks/capture.md`, steps
+  2-3, before cleanup) and ends with a `/clear` verdict
+  ([survey](../journal/2026/2026-10-11-roar-clear-verdict-survey.md)). Smelt
+  rebuilds every page per department and measures net bytes with
+  `scripts/memory_sizes.py --before` (1349: this is the first rebuild; it closes on
+  author acceptance). Brood is
+  explicit-only and has never run on the harness (1351, blocked by 1349)
+  ([adoption](../journal/2026/2026-10-05-brood-adoption-pr1187.md)). No stage
+  promotes rules; crystallisation needs the author's request (AGENTS.md).
+- `skills/dream/` helpers are removed; calling them fails ([retirement](../journal/2026/2026-10-01-memory-helper-retirement.md)).
+- **Attribution capture** is one call, `attribution_record.py --capture-pr N`
+  (PR #1719); merge-commit storage (1243) was closed by the author
+  ([entry](../journal/2026/2026-10-27-capture-pr-and-merge-commit-attribution.md)).
 
-After the trial (verdict "No rollout"), the two recorded blockers were
-cleared on evidence by PRs #1147 (codex) and #1150 (pi on the local server)
-and tracker 0909 closed on 2026-10-02. Ticket 0913, the standing rollout
-workpackage, closed through PR #1212 on 2026-10-06; 0912 and 0919 were closed
-as superseded v7 scopes (PR #1205). On 2026-10-05 the author adopted Brood
-(PR #1187, ticket 0888): project-local proofs of concept, harness nomination
-tickets only, and separately assigned harness generalization; it permits
-evidence-based edits to consolidated memories while the journal stays
-append-only, and leaves Dream and Roar authority unchanged. Its evaluation
-records procedural fixture results only, not field benefit
-([brood evaluation](../../conception/memory-v8/brood-evaluation.md)). The second
-dream ([2026-10-07](../smelts/2026-10-07-second-dream.md)) added the
-operational topics indexed beside this one.
+## Hazards
 
-Refresh, 2026-10-08 to 2026-10-13. On 2026-10-09, nine legacy native notes
-from the 2026-09-29 relocation session were imported as one journal entry with
-their blob ids, facts restated and nothing promoted. Their content is
-consolidated under [hosts](host-environment.md),
-[concurrency](shared-checkout-concurrency.md) and
-[raids](raid-review-and-merge.md). The index's session-start
-hook budget (2100 characters, `tests/test_resident_census.py`) refused one
-added index line on 2026-10-10 (2175 characters), so that entry stayed
-unlinked from the index. Roar's capture moved to step 3, before the sweep, and
-step 11 now ends with a `/clear` verdict (ticket 1083, PR #1354). This followed
-a heuristic transcript survey on padme: about 20 of 64 roars ran above 256k
-context, about 22 of 59 sessions outside this repository kept working after
-roar, and none ran `/clear`. The author ruled out `/compact` before roar,
-because it drops the detail capture needs. The commissioned attribution
-backfill appended zero events in each run: 34 records unresolved on 2026-10-08,
-65 on 2026-10-12 and 69 on 2026-10-13. Historical reviewed-revision coordinates
-were missing, and no run inferred them.
+- **Claude Code does not read repository memory.** Census
+  (`scripts/census/repo-memory-reads.py`, read operations only, with control):
+  Claude main-working 1/148 on padme, 0/5 on doudou; Codex 142/570 on padme
+  (ticket 1346 log). The index is not injected at session start
+  (`tests/test_on_start_memory_injection.py`). Counting tool calls that merely
+  name a path overcounts: the audit's 77 % was 25 % (audit § Correction).
+- **Native notes can override silently.** In the 0918 trial a planted
+  contradicting note was delivered natively on every runtime probed; Claude
+  flagged it, Codex adopted it without signal
+  ([Claude](../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md)).
+  Pi loads only the first of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`,
+  `CLAUDE.md` per directory, and also delivers a home-level `AGENTS.md`
+  ([rerun](../journal/2026/2026-10-02-memory-v8-0918-pi-native-load-delivered-contradictory-note.md); placement intent unverified). Single samples, 2026-10-02 versions.
+- **The harness native store** holds rules in disguise (41 %) and knowledge
+  the repo never captured (52 %): one coder, padme, 2026-10-29 (ticket 1349).
+- **The journal exceeds one context** (723 KB, 2026-10-30): work per department.
+- **Attribution capture refuses** two findings at one anchor, fact order
+  other than kind, pr, writer, and ticket-only PRs; one writer line per step
+  (native note, 2026-10-29).
+- Interrupted trial pass 3 and the fifth hoard (PR #1975, closed unmerged)
+  are not accepted processing.
 
-## Refresh: index simplification and canonical Smelt paths
+## Open questions
 
-The [third consolidation follow-up](../journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md)
-records the author's removal of a test pin that forced duplicate reference-note
-links in the index. Test changes landed separately in #1383, consolidation in
-#1382. Explicit author merge instructions overrode that run's no-automatic-merge
-clause; they do not grant future Smelt merge authority.
+- Which store Claude Code uses (1350: off, list per smelt, or restore an index
+  / `autoMemoryDirectory`); blocked by 1346. Author input for it is in the
+  [2026-10-30 entry](../journal/2026/2026-10-30-rulings-and-memory-design-input.md) (Commission).
+- Accepted input shape (1349, author): native stores are inboxes smelt
+  drains; the drain is not built.
+- Does consolidation beat the verbatim journal? Hypothesis from
+  DreamBench-SWE (typed 95/180 vs verbatim 89/180, p = .52); trial 1354 needs
+  spend approval.
+- Departments are provisional until 1349 closes.
+- The append-in-place question of earlier reports stays unresolved.
 
-The [1106 migration record](../journal/2026/2026-10-15-hoard-path-migration.md)
-pins original/current paths and blobs: current prompt `memory/SMELT.md` v8-r2,
-six byte-preserved reports under `memory/smelts/`. Historical report bodies
-and journal bytes retain former names; one archival journal link is explicitly
-mapped. This was migration, not consolidation. The
-[final integration checkpoint](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
-records canonical Smelt/Yawn activation across Claude, Codex and Pi, with no
-managed old-name alias. Interrupted trial pass 3 is not accepted processing.
+## Retired
 
-The same checkpoint distinguishes the diff producer from the journal recorder
-for attribution. Later observed producer effort enabled six validated records
-(#1424, #1426–#1430); #1423/#1425 still lack producer or initial context facts.
-No model pin is reconstructed. The historical append-in-place question from
-the accepted reports remains unresolved; this pass changes no journal bytes.
+- Index hook budget refusal (2100 chars): the index is no longer injected (`test_on_start_memory_injection.py`); `test_resident_census.py` no longer pins it.
+- Separate private companion for uncleared material: superseded by encrypted-in-repo (PR #1112).
+- Delivery PR list (#1093-#1102, #1137, #1147, #1150), 0909/0913/0912/0919 closures, 1106 path migration, third-consolidation test-pin removal: completed history, kept in journal and git.
+- Attribution backfill counts (34/65/69) and producer-versus-recorder notes for #1423-#1430: history; records now in `memory/evidence/attribution/`.
+- Trial details (relocated-clone link catch, detached flags eating positional prompts on Claude Code 2.1.286 / Vibe 2.25.8, background launch without cwd, concurrent detached sessions, Pi credit depletion, retired-helper and slug-collision probes): single-sample history; runtime launch facts belong to the runtimes page.
+- AGENTS.md append-only wording versus the attribution move: resolved by f78334e6 and the SMELT.md Bounds carve-out.
+- Legacy advice to derive rules from consolidation (`memory/feedback_rules_come_from_memory_consolidation.md`): retired by v8 and the author's 2026-10-01 RETIRE LEGACY direction.
+- `memory/pending-capture-pr1211.md.txt`: resolved by 1038, record in `memory/evidence/attribution/2026-10-06-review-attribution-pr1211.md`.
+- Merged page `memory-v8-acceptance-trial.md`: folded into this page.
 
-## Sources and exceptions
+## Sources
 
-- [2026-10-01: memory v8 design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption.
-- [2026-10-01: legacy provenance helper retirement](../journal/2026/2026-10-01-memory-helper-retirement.md) — helper removal with controls.
-- [2026-10-01: portable registration review](../journal/2026/2026-10-01-portable-registration-review.md) — registration PR review.
-- [2026-10-02: PR 1102 merge under parallel housekeeping](../journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md) — delivery merge record.
-- [2026-10-02: memory v8 pilot established](../journal/2026/2026-10-02-memory-v8-pilot-established.md) — pilot activation.
-- [Orchestrated raid closes 0909](../journal/2026/2026-10-02-orchestrated-raid-closes-memory-v8-tracker.md) — trial blockers cleared.
-- [Brood adoption](../journal/2026/2026-10-05-brood-adoption-pr1187.md) — author decision, PR #1187.
-- [Raid 926/912/919](../journal/2026/2026-10-05-raid-926-supersession-and-publication.md) — 0912/0919 superseded.
-- [0913 close path](../journal/2026/2026-10-06-0913-dispatch-close-path.md) — rollout workpackage closed.
-- [Legacy notes import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md) — nine native notes, 2026-10-09.
-- [Index budget refusal](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md) — the unlinked entry.
-- [Roar /clear verdict survey](../journal/2026/2026-10-11-roar-clear-verdict-survey.md) — ticket 1083.
-- [Backfill counts](../journal/2026/2026-10-08-haiku55-arm-n-integration.md), [65](../journal/2026/2026-10-12-local-ci-wrap-up-inefficiency.md), [69](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md).
-- [Legacy retirement record](../../conception/memory-v8/legacy-retirement.md) — removed execution paths and recovery.
-- [Retired legacy feedback: rules from consolidation](../feedback_rules_come_from_memory_consolidation.md) — historical evidence only; its advice to derive rules was superseded by v8 and the author's 2026-10-01 RETIRE LEGACY direction. Kept as history, never current authority.
-- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).
+- [Design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md), [helper retirement](../journal/2026/2026-10-01-memory-helper-retirement.md), [registration review](../journal/2026/2026-10-01-portable-registration-review.md), [PR 1102 merge](../journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md), [pilot](../journal/2026/2026-10-02-memory-v8-pilot-established.md), [0909 close](../journal/2026/2026-10-02-orchestrated-raid-closes-memory-v8-tracker.md)
+- Trial: [link catch](../journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md), [withdrawal](../journal/2026/2026-10-02-memory-v8-0918-withdrawn-claim-local-gate-cause.md), [correction](../journal/2026/2026-10-02-memory-v8-0918-correction-link-catch-was-pre-merge.md), [detached flags](../journal/2026/2026-10-02-memory-v8-0918-detached-flags-consume-positional-prompt.md), [concurrent sessions](../journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md), [no cwd](../journal/2026/2026-10-02-memory-v8-0918-background-launch-without-cwd.md), [Claude contradiction](../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md), [misattribution correction](../journal/2026/2026-10-02-memory-v8-0918-correction-worktree-guard-misattribution.md), [step-6 conflict](../journal/2026/2026-10-02-worktree-guard-guidance-conflict-step6.md), Codex [read-index](../journal/2026/2026-10-02-memory-v8-0918-missing-read-index.md), [slug](../journal/2026/2026-10-02-memory-v8-0918-smoke-slug-collision.md), [loading](../journal/2026/2026-10-02-memory-v8-0918-instruction-loading-evidence.md); Claude [CLAUDE.md](../journal/2026/2026-10-02-untracked-claude-md-contradicts-memory.md), [read-index](../journal/2026/2026-10-02-retired-read-index-invoked-in-trial.md), [slug](../journal/2026/2026-10-02-capture-slug-collision-refused.md), [clone](../journal/2026/2026-10-02-trial-clone-carries-prior-session-entries.md); Vibe [read-index](../journal/2026/2026-10-02-t0918-trial-read-index-helper-absent.md), [slug](../journal/2026/2026-10-02-t0918-trial-smoke-slug-collision.md), [injection](../journal/2026/2026-10-02-t0918-trial-vibe-native-agents-injection.md), [aborted](../journal/2026/2026-10-02-skills-dream-read-index-not-found.md); Pi [credits](../journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md), [AGENTS.md](../journal/2026/2026-10-02-memory-v8-0918-pi-loaded-agents-not-planted-claude-md.md), [native load](../journal/2026/2026-10-02-memory-v8-0918-pi-native-load-delivered-contradictory-note.md); smokes [0923](../journal/2026/2026-10-02-memory-v8-smoke.md), [0924](../journal/2026/2026-10-02-memory-v8-runtimes-verified.md)
+- [Brood adoption](../journal/2026/2026-10-05-brood-adoption-pr1187.md), [raid 926](../journal/2026/2026-10-05-raid-926-supersession-and-publication.md), [0913 close](../journal/2026/2026-10-06-0913-dispatch-close-path.md), [legacy import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md), [index budget](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md), [roar survey](../journal/2026/2026-10-11-roar-clear-verdict-survey.md)
+- Backfill [34](../journal/2026/2026-10-08-haiku55-arm-n-integration.md), [65](../journal/2026/2026-10-12-local-ci-wrap-up-inefficiency.md), [69](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md); [third consolidation](../journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md), [path migration](../journal/2026/2026-10-15-hoard-path-migration.md), [1101 checkpoint](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md), [fourth hoard merge](../journal/2026/2026-10-15-fourth-hoard-merge-and-maintenance-fixture.md)
+- [Capture one call](../journal/2026/2026-10-27-capture-pr-and-merge-commit-attribution.md), [redesign day](../journal/2026/2026-10-29-memory-redesign-day.md), [raid 0a53b8](../journal/2026/2026-10-29-raid-0a53b8-smelt-census-attribution.md), [2026-10-30 input](../journal/2026/2026-10-30-rulings-and-memory-design-input.md)
+- Conception: [audit](../../conception/2026-10-29-memory-system-audit.md), [pilot](../../conception/memory-v8/pilot.md), [protocol](../../conception/memory-v8/evaluation-protocol.md), [results](../../conception/memory-v8/evaluation-results.md), [legacy retirement](../../conception/memory-v8/legacy-retirement.md), [brood evaluation](../../conception/memory-v8/brood-evaluation.md), [inventory](../../conception/memory-v8/source-inventory.md)
+
+## Fallback

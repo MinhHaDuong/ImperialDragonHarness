@@ -99,6 +99,13 @@ evidence is ambiguous, mark the conflict explicitly and avoid presenting either
 claim as settled advice. Reading harness rules never authorizes editing them.
 Do not infer a new rule from a repeated experience or manufacture agreement.
 
+Every contradiction left exposed gets a ticket in the selected project's ticket
+store, for later discussion with the author (author's order, 2026-10-30): one
+per contradiction, naming both claims, their sources and the exposing page;
+reuse an open ticket on the same contradiction. The page and the report link
+it. The ticket states the question; it picks no side and proposes no rule.
+A project without a ticket store lists them in the report as unfiled.
+
 ## Procedure
 
 After the writing run's migration succeeds, continue sequentially:
@@ -127,7 +134,8 @@ After the writing run's migration succeeds, continue sequentially:
    the project's audience. A fingerprint alone cannot preserve a mutable note.
 4. Check coherence across all indexed memories and applicable harness rules,
    links, provenance, the migration/consolidation diff and the index line count.
-   Reduce the index if it exceeds 40 lines before committing. Commit the
+   Reduce the index if it exceeds 40 lines before committing. Ticket each
+   exposed contradiction (§ Coherence). Commit the
    authorized migration edits and memory outputs on the project branch and
    submit a merge request following its integration policy. Do not merge
    automatically. Preserve and report the branch if submission fails. Only
@@ -159,8 +167,9 @@ inventoried active references, including the selected project's AGENTS.md.
 This exception is limited to migration in its isolated branch: no policy
 rewriting, rule promotion, historical-ledger edits or cross-project writes.
 
-Consolidation writes only `memory/MEMORY.md`, `memory/topics/` and
-`memory/smelts/` within the selected project repository. Uncleared material stays in that same
+Consolidation writes only `memory/MEMORY.md`, `memory/topics/`,
+`memory/smelts/` and, for exposed contradictions only, new tickets within the
+selected project repository. Uncleared material stays in that same
 repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not
 modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,

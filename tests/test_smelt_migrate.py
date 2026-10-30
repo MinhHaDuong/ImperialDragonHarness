@@ -237,8 +237,14 @@ def test_unrelated_paths_and_urls_are_preserved(project):
         assert (project / name).read_bytes() == before[name]
 
 
+@pytest.mark.integration
 def test_retired_helpers_preserve_their_historical_identity(project):
-    actual_topic = (Path(SPEC.origin).parents[1] / "memory/topics/memory-v8-acceptance-trial.md").read_bytes()
+    # A real topic naming the retired helpers, as it stood before the fifth smelt merged it.
+    actual_topic = subprocess.run(
+        ["git", "-C", str(Path(SPEC.origin).parents[1]), "show",
+         "0cad157b8e42dca534139a80f7a7933c8be04975:memory/topics/memory-v8-acceptance-trial.md"],
+        check=True, capture_output=True, env=child_env(),
+    ).stdout
     (project / "memory/topics/history.md").write_bytes(actual_topic)
     (project / "AGENTS.md").write_text(
         "Use /dream and skills/dream/SKILL.md. Retired: "
