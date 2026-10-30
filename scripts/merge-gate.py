@@ -507,7 +507,16 @@ def append_and_push(oid, text, remote):
     pushed, absent, tried, published = None, False, [], False
     try:
         for attempt in (1, 2):
-            fetch_notes(remote)
+            try:
+                fetch_notes(remote)
+            except GateError as err:
+                if not pushed:  # no push exited 0 yet: nothing to vouch for
+                    raise
+                # the earlier push exited 0 and absence was never proved: cannot verify, not lost
+                LOG.warning("cannot verify that %s on %s holds the record %s: %s", NOTES_REF, remote, pushed, err)
+                git("update-ref", NOTES_REF, pushed, check=False)
+                published = True
+                return
             if pushed and git("merge-base", "--is-ancestor", pushed, NOTES_REF, check=False).returncode == 0:
                 published = True
                 return  # the earlier push did land (read-back lag): do not append a second entry

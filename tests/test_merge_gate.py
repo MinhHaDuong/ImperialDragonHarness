@@ -700,3 +700,29 @@ def test_a_remote_that_drops_on_the_retry_keeps_the_unpublished_record_reachable
         module.append_and_push(head, "second\nresult: fail", "origin")
     kept = real("notes", "--ref=refs/notes/gate", "show", head).stdout
     assert "second" in kept
+
+
+def test_a_lagging_push_then_an_unreadable_retry_warns_without_raising(seeded, module, monkeypatch, caplog):
+    """The first push exits 0 but reads back absent twice (forge lag); the retry's fetch then
+    fails. Absence was never proved, so the call warns "cannot verify" and keeps the record."""
+    repo, head = seeded
+    real = module.git
+    seen = {"fetches": 0, "readbacks": 0}
+
+    def lag_then_down(*args, **kw):
+        if args[:1] == ("ls-remote",) and "--exit-code" in args:  # fetch_notes' probe
+            seen["fetches"] += 1
+            if seen["fetches"] > 1:
+                return subprocess.CompletedProcess(args, 128, "", "remote gone")
+        elif args[:1] == ("ls-remote",):  # the read-back still serves the pre-push tip
+            seen["readbacks"] += 1
+            return subprocess.CompletedProcess(args, 0, "", "")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", lag_then_down)
+    monkeypatch.setattr(module, "READBACK_WAIT", 0)
+    with caplog.at_level("WARNING"):
+        module.append_and_push(head, "second\nresult: fail", "origin")
+    assert "cannot verify" in caplog.text
+    assert "second" in on_remote(repo, head)
+    assert "second" in real("notes", "--ref=refs/notes/gate", "show", head).stdout
