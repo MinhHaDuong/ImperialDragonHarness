@@ -114,7 +114,13 @@ unavailable route is never reported as a clean review.
 
 #### Synthesis and posting
 
-1. **Preserve dissent** verbatim; the author decides.
+1. **Preserve dissent** verbatim; the author decides. A seat reads host files
+   in its sandbox, and the result file you write becomes the `answer` entry on
+   `refs/notes/review`, which is permanent and pushed. `gaze_close.py` therefore
+   scrubs the result file with `gaze_seat.scrub` (emails, key- and token-shaped
+   strings, home logins) before the entry is written; the seat report file and
+   the codex `-o` outfile stay unscrubbed on disk in the review tree. Quote a
+   seat's finding, not its transcript of host files.
 2. **Triage by confidence**: investigate low-confidence findings before posting.
 3. **Deduplicate** findings, never verdicts: a seat whose only finding merged
    into another's keeps its own verdict.

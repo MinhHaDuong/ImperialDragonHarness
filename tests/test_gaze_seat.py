@@ -756,3 +756,23 @@ def test_successful_seat_status_carries_no_stderr(rig):
     result = launch(rig, mode='codex-echo')
     assert result.returncode == 0
     assert 'stderr' not in (rig['panel'] / 'correctness.md.status').read_text()
+
+
+@pytest.mark.parametrize('leak, secret', [
+    ('{\\"access_token\\": \\"FAKEescaped0123\\"}', 'FAKEescaped'),
+    ('Account ID: 0190abcd-1234-5678-9abc-def012345678', 'def012345678'),
+    ('{"api_key":"FAKEcompact0123","model":"x"}', 'FAKEcompact'),
+])
+def test_scrub_residuals_escaped_keys_spaced_labels_and_compact_json(leak, secret):
+    assert secret not in load_module().scrub(leak)
+
+
+@pytest.mark.parametrize('text, kept', [
+    ('basic usage: run the seat', 'basic usage: run the seat'),
+    ('Basic usage: run the seat', 'Basic usage: run the seat'),
+    ('{"api_key":"FAKEcompact0123","model":"x","status":500}', '"model":"x","status":500}'),
+    ('{\\"access_token\\": \\"FAKEescaped0123\\", \\"model\\": \\"x\\"}', '\\"model\\": \\"x\\"}'),
+    ('session id: 0190abcd-1234-5678-9abc-def012345678', 'session id: 0190abcd-1234-5678-9abc-def012345678'),
+])
+def test_scrub_keeps_ordinary_prose_and_later_json_fields(text, kept):
+    assert kept in load_module().scrub(text)

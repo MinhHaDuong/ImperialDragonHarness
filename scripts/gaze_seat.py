@@ -477,13 +477,14 @@ STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, i
 
 
 # Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.
-SCRUB_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
-    r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',                                    # email
-    r'\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w*-]{8,}|\bAKIA[0-9A-Z]{12,}',  # vendor keys, masked too
-    r'\b(?:Bearer|Basic)\s+\S+',                                         # auth header value
-    r'\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?',                               # JWT
-    r'\borg-[\w-]{4,}',                                                   # organisation id
-    r'\b[\w-]*(?:key|token|secret|password|account[_-]?id)["\']?\s*[:=]\s*\S+',  # key=value, JSON-quoted too
+SCRUB_PATTERNS = tuple(re.compile(p) for p in (
+    r'(?i:[\w.+-]+@[\w-]+(?:\.[\w-]+)+)',                                # email
+    r'(?i:\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w*-]{8,}|\bAKIA[0-9A-Z]{12,})',  # vendor keys, masked too
+    r'(?i:\bBearer)\s+\S+|\bBasic\s+[A-Za-z0-9+/]{8,}={0,2}',            # auth header value; Basic only before a base64 token
+    r'(?i:\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?)',                          # JWT
+    r'(?i:\borg-[\w-]{4,})',                                              # organisation id
+    # key=value, JSON-quoted or backslash-escaped too; the value ends at its closing quote, else at whitespace or `,}]`
+    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[\s_-]?id))\\*["']?\s*[:=]\s*(?:\\*["'][^"'\\]*\\*["']|[^\s,}\]"']+)''',
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 

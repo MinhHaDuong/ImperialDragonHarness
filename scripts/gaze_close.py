@@ -19,7 +19,10 @@ on notes carrying them, with its pointer on the PR. A tree with real uncommitted
 without it fails at argument parsing rather than skipping attribution.
 
 `--comment-file` holds the result text (the output shape of skills/gaze/references/output.md);
-it is the answer's text on notes, never posted whole.
+it is the answer's text on notes, never posted whole. The file is scrubbed
+(`gaze_seat.scrub`: emails, key- and token-shaped strings, home logins) before the
+script's own lines fill the placeholders, because a quoted seat body lands there verbatim
+and notes are permanent (ticket 1375).
 
 A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed or
 posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
@@ -71,6 +74,7 @@ from pathlib import Path
 
 import attribution_record
 import forge  # same directory: the script dir is on sys.path
+from gaze_seat import scrub  # the one scrub: seat text quoted into the answer is permanent on notes (ticket 1375)
 import review_notes as rn
 
 HERE = Path(__file__).resolve().parent
@@ -349,7 +353,7 @@ def main():
         print(f"gaze_close: cwd is inside the review worktree {tree}, which this call removes; "
               "run it from the invoking session worktree", file=sys.stderr)
         return 2
-    comment_text = a.comment_file.read_text() if a.comment_file else None
+    comment_text = scrub(a.comment_file.read_text()) if a.comment_file else None  # before the placeholders fill: only free text is scrubbed
     if comment_text is not None and ("{{plan_check}}" not in comment_text
                                      or TYPED_PLAN_CHECK.search(comment_text)):
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
