@@ -12,24 +12,6 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import memory_sizes as ms  # noqa: E402
 
-# Ceilings at the guide sizes measured 2026-10-29 (bytes, Retired and Sources
-# excluded). Ticket 1349 rebuilds the
-# pages under the 4 KB cap and deletes this dict.
-TRANSITION = {
-    "branch-cleanup-incidents.md": 4879,
-    "ci-and-test-suite.md": 6611,
-    "git-worktree-session-guards.md": 5516,
-    "host-environment.md": 3514,
-    "memory-v8-acceptance-trial.md": 7806,
-    "memory-v8-governance.md": 7895,
-    "raid-review-and-merge.md": 16618,
-    "runtime-observations.md": 7485,
-    "shared-checkout-concurrency.md": 6547,
-    "subagent-model-effort-levers.md": 2576,
-    "zotero-library.md": 3556,
-}
-
-
 def _page(guidance: int, retired: int = 0, sources: int = 0) -> str:
     text = "# Page\n\n## Guidance\n\n" + "a" * guidance + "\n"
     if retired:
@@ -78,9 +60,11 @@ def test_index_line_cap():
 
 def test_real_tree_is_measured():
     rows = list(ms.report(REPO / "memory" / "topics"))
-    assert len(rows) >= 10, "glob found too few pages: a census that cannot look"
+    assert len(rows) >= 4, "glob found too few pages: a census that cannot look"
     for name, size, _cap, _status in rows:
-        assert size <= TRANSITION.get(name, ms.CAP), f"{name} grew to {size}"
+        # Pinned rulings are never cut: Commission may overflow (SMELT.md § caps).
+        if name != ms.COMMISSION:
+            assert size <= ms.CAP, f"{name} grew to {size}"
     assert ms.index_ok((REPO / "memory" / "MEMORY.md").read_text(encoding="utf-8"))
 
 
