@@ -585,3 +585,97 @@ def test_tier_since_rejects_edited_or_executable_seat_reports(repo):
     git(repo, "add", ".")
     git(repo, "commit", "-q", "-m", "executable report")
     assert gate(repo, "tier", "--base", "main", "--head", "feature", "--since", after_edit).returncode == 1
+
+
+# ── append_and_push: the record must reach the remote (ticket 1366) ─────────────
+
+
+def remote_tip(repo):
+    out = git(repo, "ls-remote", "origin", "refs/notes/gate")
+    return out.split()[0] if out else ""
+
+
+def on_remote(repo, candidate):
+    """The remote's notes ref, fetched into a probe ref, carries a note for `candidate`."""
+    git(repo, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/probe")
+    shown = subprocess.run(
+        ["git", "-C", str(repo), "notes", "--ref=refs/notes/probe", "show", candidate],
+        capture_output=True, text=True, env=child_env(),
+    )  # fmt: skip
+    return shown.stdout
+
+
+@pytest.fixture
+def seeded(repo, module, monkeypatch):
+    """A repo whose remote already holds one gate note, with the module's cwd on it."""
+    monkeypatch.chdir(repo)
+    head = git(repo, "rev-parse", "HEAD")
+    module.append_and_push(head, "first\nresult: pass", "origin")
+    return repo, head
+
+
+def test_a_forced_fetch_between_append_and_push_does_not_lose_the_record(seeded, module, monkeypatch):
+    repo, head = seeded
+    old = remote_tip(repo)
+    real = module.git
+
+    def racing(*args, **kw):
+        if args[:2] == ("push", "-q"):  # another process force-fetches the shared ref just before the push
+            real("fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", racing)
+    module.append_and_push(head, "second\nresult: fail", "origin")
+    assert remote_tip(repo) != old
+    assert "second" in on_remote(repo, head)
+
+
+def test_a_push_that_exits_0_without_the_record_warns_and_retries(seeded, module, monkeypatch, caplog):
+    repo, head = seeded
+    real = module.git
+    swallowed = []
+
+    def lossy(*args, **kw):
+        if args[:2] == ("push", "-q") and not swallowed:  # exit 0, nothing sent
+            swallowed.append(args)
+            return subprocess.CompletedProcess(args, 0, "", "")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", lossy)
+    monkeypatch.setattr(module, "READBACK_WAIT", 0)
+    with caplog.at_level("WARNING"):
+        module.append_and_push(head, "second\nresult: fail", "origin")
+    assert "remote lacks the record" in caplog.text
+    assert "second" in on_remote(repo, head)
+
+
+def test_a_failing_readback_warns_without_raising(seeded, module, monkeypatch, caplog):
+    repo, head = seeded
+    old = remote_tip(repo)
+    real = module.git
+
+    def blind(*args, **kw):
+        if args[:1] == ("ls-remote",) and "--exit-code" not in args:  # the read-back, not fetch_notes' probe
+            return subprocess.CompletedProcess(args, 128, "", "forge down")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", blind)
+    with caplog.at_level("WARNING"):
+        module.append_and_push(head, "second\nresult: fail", "origin")
+    assert "cannot verify" in caplog.text
+    assert remote_tip(repo) != old
+
+
+def test_a_record_that_never_arrives_raises(seeded, module, monkeypatch):
+    repo, head = seeded
+    real = module.git
+
+    def black_hole(*args, **kw):
+        if args[:2] == ("push", "-q"):
+            return subprocess.CompletedProcess(args, 0, "", "")
+        return real(*args, **kw)
+
+    monkeypatch.setattr(module, "git", black_hole)
+    monkeypatch.setattr(module, "READBACK_WAIT", 0)
+    with pytest.raises(module.GateError, match="remote lacks the record"):
+        module.append_and_push(head, "second\nresult: fail", "origin")

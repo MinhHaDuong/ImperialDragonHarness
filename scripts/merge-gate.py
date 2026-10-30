@@ -457,23 +457,84 @@ def read_note(oid, ref=NOTES_REF):
     return shown.stdout if shown.returncode == 0 else ""
 
 
+READBACK_WAIT = 1.0  # seconds before the second look at a remote that lacks a just-pushed record
+
+
+def remote_holds(remote, oid, probe):
+    """Does `remote`'s notes ref hold commit `oid`? True, False (provably absent), or None (cannot verify).
+
+    Reads the remote tip with ls-remote, then fetches it into the private
+    `probe` ref (never `+` onto NOTES_REF) to test ancestry: another writer may
+    have appended on top of `oid` since.
+    """
+    listed = git("ls-remote", remote, NOTES_REF, check=False)
+    if listed.returncode:
+        LOG.warning("cannot verify %s on %s: ls-remote failed: %s", NOTES_REF, remote, listed.stderr.strip())
+        return None
+    tip = listed.stdout.split()[0] if listed.stdout.strip() else ""
+    if not tip:
+        return False
+    if tip == oid:
+        return True
+    if git("fetch", "-q", remote, f"+{NOTES_REF}:{probe}", check=False).returncode:
+        LOG.warning("cannot verify %s on %s: the remote tip %s could not be fetched", NOTES_REF, remote, tip)
+        return None
+    return git("merge-base", "--is-ancestor", oid, probe, check=False).returncode == 0
+
+
 def append_and_push(oid, text, remote):
-    """Append one entry and push; on a lost race, refetch and append once more.
+    """Append one entry, publish exactly that commit, and read the remote back.
 
     Without a remote (--no-push) the entry goes to LOCAL_REF, which is never
     pushed: a trial record cannot ride along with a later published one.
+
+    The append is built on a per-process ref and pushed by commit id: another
+    process sharing this repository's refs may force-fetch NOTES_REF at any
+    moment (fetch_notes), and a push that names the ref would then find
+    nothing new to send, exit 0, and lose the record (ticket 1366). A push that
+    exits 0 is confirmed by reading the remote; absence earns a warning and one
+    more attempt, an unreadable remote a distinct warning and no failure.
     """
     if not remote:
         git("notes", f"--ref={LOCAL_REF}", "append", "-m", text, oid)
         return
-    for attempt in (1, 2):
-        if remote:
+    mine = f"{NOTES_REF}-pending-{os.getpid()}"
+    probe = f"{NOTES_REF}-probe-{os.getpid()}"
+    pushed, absent = None, False
+    try:
+        for attempt in (1, 2):
             fetch_notes(remote)
-        git("notes", f"--ref={NOTES_REF}", "append", "-m", text, oid)
-        push = git("push", "-q", remote, f"{NOTES_REF}:{NOTES_REF}", check=False)
-        if push.returncode == 0:
+            if pushed and git("merge-base", "--is-ancestor", pushed, NOTES_REF, check=False).returncode == 0:
+                return  # the earlier push did land (read-back lag): do not append a second entry
+            git("update-ref", "-d", mine, check=False)
+            if git("rev-parse", "--verify", "--quiet", NOTES_REF, check=False).returncode == 0:
+                git("update-ref", mine, NOTES_REF)
+            git("notes", f"--ref={mine}", "append", "-m", text, oid)
+            pushed = git("rev-parse", "--verify", mine).stdout.strip()
+            push = git("push", "-q", remote, f"{pushed}:{NOTES_REF}", check=False)
+            if push.returncode:
+                LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
+                pushed = None
+                continue
+            held = remote_holds(remote, pushed, probe)
+            if held is False:
+                time.sleep(READBACK_WAIT)
+                held = remote_holds(remote, pushed, probe)
+            if held is None:
+                LOG.warning("cannot verify that %s on %s holds the record %s; the push exited 0", NOTES_REF, remote, pushed)
+            elif not held:
+                LOG.warning(
+                    "notes push reported success but the remote lacks the record (attempt %d): pushed %s", attempt, pushed
+                )
+                absent = True
+                continue
+            git("update-ref", NOTES_REF, pushed, check=False)
             return
-        LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
+    finally:
+        git("update-ref", "-d", mine, check=False)
+        git("update-ref", "-d", probe, check=False)
+    if absent:
+        raise GateError(f"push to {remote} exited 0 but the remote lacks the record on {NOTES_REF}; it exists only locally")
     raise GateError(f"could not push {NOTES_REF} to {remote}; the record exists only locally")
 
 
