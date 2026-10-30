@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Headless seats inherit hidden host CLI config: declare every seat setting in routes.json
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T13:18Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1365 (PR #2044) found that codex review seats inherited
+`model_reasoning_effort = "low"` from `~/.codex/config.toml` (set 2026-10-29
+for interactive use, on padme and doudou alike), and gpt-6-luna then refused
+4 of 56 launches without reading the tree. The fix pinned one key on the
+door (`-c 'model_reasoning_effort="medium"'` in `skills/route/routes.json`);
+every other key of the host file (provider, reasoning summaries, profiles,
+MCP servers, anything added later) still reaches every seat unseen. The same
+holds for the other headless doors (claude, pi, vibe) to the extent each CLI
+reads a user config.
+
+The author: "I hate hidden settings, plus arena". A seat's behaviour should
+be what `routes.json` declares (a règlement, readable in the repository),
+not what a host file happens to say; the arena bench needs the same for its
+arms to be comparable across hosts and days.
+
+`codex exec` offers `--ignore-user-config` (and `-p/--profile` layering a
+`$CODEX_HOME/<name>.config.toml`). Whether login credentials still load with
+`--ignore-user-config` is unchecked.
+
+## Exit criteria
+
+- [ ] Each headless seat door in `skills/route/routes.json` launches without reading the host's user CLI config, or the door records why its CLI cannot (and which keys it then pins)
+- [ ] Every setting a seat needs (model, effort, sandbox, tools) is declared on the door; a test shows a seat launch is unchanged when the host user config sets a conflicting value (for codex: effort low in a fake user config)
+- [ ] One real launch per changed door reads its review tree (login still works)
+
+Arena counterpart: filed in the arena repository (its legs may bind the host
+`~/.codex/config.toml` in some modes, `runner.py` LEG_CREDENTIALS).
