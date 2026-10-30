@@ -45,6 +45,9 @@ case "$STUB_MODE" in
     echo '+ assert "Model \"x\" not found for provider" in out' >&2
     printf 'reach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
+  codex-refuse)
+    printf 'OpenAI Codex v0.165.0\n--------\nworkdir: /x/review-1\nmodel: gpt-6-luna\nprovider: openai\napproval: never\nsandbox: read-only\nreasoning effort: low\nsession id: 0190-abcd (parenthesised); odd\n--------\nuser\n' >&2
+    printf 'NOT-RUN: review tree unreadable\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
@@ -614,3 +617,22 @@ def test_vibe_seat_needs_mistral_consent_and_a_plain_model_name(rig):
     odd = launch(rig, runtime='vibe', model='x"\n[[models]]', family='Mistral')
     assert odd.returncode == 1 and 'not a plain model name' in odd.stdout
     assert not (rig['log'] / 'vibe.argv').exists()
+
+
+@pytest.mark.integration
+def test_refused_seat_status_carries_the_cli_settings_header(rig):
+    result = launch(rig, mode='codex-refuse')
+    assert result.returncode == 1
+    status = (rig['panel'] / 'correctness.md.status').read_text()
+    assert status.count('\n') == 1 and status.startswith('correctness: no report (seat refused: NOT-RUN')
+    for kept in ('model: gpt-6-luna', 'sandbox: read-only', 'reasoning effort: low', 'session id: 0190-abcd'):
+        assert kept in status
+    assert '--------' not in status and '; odd' not in status and status.count('(') == status.count(')')
+    assert status == result.stdout
+
+
+@pytest.mark.integration
+def test_successful_seat_status_carries_no_stderr(rig):
+    result = launch(rig, mode='codex-echo')
+    assert result.returncode == 0
+    assert 'stderr' not in (rig['panel'] / 'correctness.md.status').read_text()

@@ -19,7 +19,8 @@ self-report of its model is not trusted. Whatever stops a seat (no door, a
 family the door cannot serve, no consent, an unreadable or moved review tree,
 a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, a missing or `read=no` `reach:` line, the
 cap) prints and saves
-`<name>: no report (<reason>)` to `<panel>/<name>.md.status` and writes no
+`<name>: no report (<reason>)` (a seat whose CLI ran appends `; stderr: <excerpt>`,
+bounded to one line, so the settings header survives the panel) to `<panel>/<name>.md.status` and writes no
 report, so `seat_clock.py plan-check` counts it missing. Nothing here reads
 the code in the caller's place.
 
@@ -436,10 +437,14 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             leftover.unlink(missing_ok=True)
         return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
-    if not ok and stderr_lines and outcome.startswith('no report (failed, exit '):
-        return False, f'{outcome[:-1]}: {stderr_lines[0][:200]})'  # name the cause the runtime gave
+    excerpt = stderr_excerpt(stderr_lines)
+
+    def failed(reason: str) -> tuple[bool, str]:
+        # The panel dies with the review tree; the status line is the durable record.
+        return False, f'{reason[:-1]}; stderr: {excerpt})' if excerpt else reason
+
     if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
-        return False, outcome  # a nonzero exit stays a failure even when the door wrote its file
+        return failed(outcome)  # a nonzero exit stays a failure even when the door wrote its file
     if not ok:
         outcome = 'reported in ' + outcome.rsplit(', ', 1)[-1].rstrip(')')
     text = last if wrote_last else staging
@@ -449,16 +454,26 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     for leftover in (staging, last):
         leftover.unlink(missing_ok=True)
     if not report:
-        return False, 'no report (empty output)'
+        return failed('no report (empty output)')
     if refused := refusal(report):
-        return False, f'no report (seat refused: {refused})'
+        return failed(f'no report (seat refused: {refused})')
     if bad := reach_refusal(report):
-        return False, f'no report (seat reach: {bad})'
+        return failed(f'no report (seat reach: {bad})')
     out = args.panel / f'{args.name}.md'
     part = out.with_name(out.name + '.part')
     part.write_text(report, encoding='utf-8')
     part.rename(out)
     return True, outcome
+
+
+STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, is about 300
+
+
+def stderr_excerpt(lines: list[str]) -> str:
+    """The CLI's stderr as one bounded line: separator-only rules dropped, `; ` and parentheses kept out."""
+    kept = [line for line in lines if line.strip('-=_ ')]
+    text = ' | '.join(kept).replace(';', ',').replace('(', '[').replace(')', ']')
+    return text[:STDERR_EXCERPT_CHARS]
 
 
 def main(argv: list[str]) -> int:
