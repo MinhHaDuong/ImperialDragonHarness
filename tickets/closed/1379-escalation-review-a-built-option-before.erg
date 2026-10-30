@@ -2,10 +2,12 @@
 Title: Escalation: review a built option before asking the author (speculative gaze)
 Created: 2026-10-30
 Author: reviewer
+Closed: done: open_review adopts a branch review on the landing head (PR #2062); carry-over stated in merge § Gating tiers, escalation step 2 gazes the built option
 
 --- log ---
 2026-10-30T16:23Z reviewer created
 2026-10-30T17:30Z reviewer note plan raid 0da24b — author ruling (b): carry-over in code; plan appended
+2026-10-30T17:51Z reviewer closed — done: open_review adopts a branch review on the landing head (PR #2062); carry-over stated in merge § Gating tiers, escalation step 2 gazes the built option
 
 --- body ---
 ## Context

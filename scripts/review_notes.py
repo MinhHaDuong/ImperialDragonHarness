@@ -708,10 +708,29 @@ def request(cwd, review_id, branch, base_ref="origin/main", why="", intent="", t
 
 
 def open_review(cwd, branch, base_ref="origin/main", unit=None, **kw):
-    """Mint a review id and write its first request; returns the review id."""
+    """Mint a review id and write its first request; returns the review id. A PR review
+    (`unit: pr:<n>`) adopts the branch's own review instead when that review's latest answer
+    is on the head the PR carries, or the PR adds only bookkeeping to it (ticket 1379): the
+    review keeps its id, answers and rounds and gains the `pr:` request. Any other delta, or a
+    review already bound to a PR, leaves the branch review as it was and mints a fresh one."""
+    if str(unit or "").startswith("pr:"):
+        rid = find(cwd, branch)
+        if rid and _carries_over(cwd, rid, branch, base_ref, kw.get("head")):
+            request(cwd, rid, branch, base_ref, unit=unit, **kw)
+            return rid
     rid = f"rv-{datetime.now(timezone.utc):%Y%m%d}-{_slug(unit or branch)}-{_hex(4)}"
     request(cwd, rid, branch, base_ref, unit=unit, **kw)
     return rid
+
+
+def _carries_over(cwd, rid, branch, base_ref, head):
+    """May the branch review `rid` serve a PR whose head is `head` (default: the branch tip)?"""
+    es = entries(cwd, rid)
+    answers = [e for e in es if e["kind"] == "answer"]
+    if not answers or any(e.get("unit") for e in es if e["kind"] == "request"):
+        return False
+    head = _rev(cwd, head or branch)
+    return answers[-1]["head"] == head or _bookkeeping_since(cwd, answers[-1]["base_ref"], head, answers[-1]["head"])
 
 
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
@@ -756,9 +775,11 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
 
 def find(cwd, branch):
     """The review id of the latest request naming `branch` in the local ref, else None. A PR
-    review (`unit: pr:<n>`) is never a branch unit's, so it is skipped (ticket 1300)."""
-    hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch
-            and not str(e.get("unit") or "").startswith("pr:")]
+    review (`unit: pr:<n>`), adopted branch review included, is never a branch unit's, so it
+    is skipped (tickets 1300, 1379)."""
+    reqs = [e for e in all_entries(cwd) if e.get("kind") == "request"]
+    bound = {e["review_id"] for e in reqs if str(e.get("unit") or "").startswith("pr:")}  # adopted (1379)
+    hits = [e for e in reqs if e.get("branch") == branch and e["review_id"] not in bound]
     return hits[-1]["review_id"] if hits else None
 
 

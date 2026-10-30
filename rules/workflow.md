@@ -99,16 +99,16 @@ it as a feedback memory at wrap-up. Stop when you repeat yourself; three
 failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
-right (scope, money, irreversible) are never forked or delegated; they wait.
+right (scope, money, irreversible) are never branched or delegated; they wait.
 1. **Ask up first**: an advisor model. It agrees with your pick and the call
    is reversible → act and report.
 2. **Otherwise ask the author**, advisor's view beside your pick, and keep
-   working. Reversible options worth building → fork each into its own
-   worktree and branch, capped at 5 minutes; no merge, no outward act.
+   working. Reversible options worth building → build each on its own
+   branch in ≤5 min, gaze it (merge § Gating tiers); no merge.
 3. **Author back within 5 minutes** → their pick; delete the other branch.
    Still away, or no author in the loop → the advisor picks on the built
-   evidence (a cross-family seat when the stakes are high); keep the loser
-   until the author has seen the report.
+   evidence (a cross-family seat if stakes are high); keep the loser
+   until the author sees the report.
 
 # Diagnosis discipline
 
@@ -147,7 +147,8 @@ A clean-room render is usually seconds — run it yourself.
   needs a seat from another model family. A same-family review is never called
   independent; report any required perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
-  registry → open a coordination change first. One gaze per request at a time.
+  registry → open a coordination change first. One gaze per request at a time
+  (merge § Gating tiers).
 - **Say what a delegate in a shared worktree must not do.** A read-only brief
   does not imply "don't touch git": forbid `add`/`commit`/`push` explicitly.
 - **Before building a multi-cycle orchestration**, inventory the existing
