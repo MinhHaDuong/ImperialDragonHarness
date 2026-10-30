@@ -2,9 +2,11 @@
 Title: Seat stderr excerpt can carry an account identifier into permanent review notes
 Created: 2026-10-30
 Author: reviewer
+Closed: autoclosed — PR #2048
 
 --- log ---
 2026-10-30T13:15Z reviewer created
+2026-10-30T13:38Z reviewer closed — autoclosed — PR #2048
 
 --- body ---
 ## Context
