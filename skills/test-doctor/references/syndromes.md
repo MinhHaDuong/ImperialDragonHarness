@@ -25,6 +25,12 @@ Read only the entries your differential points to. Each gives the symptom, the u
 - **Evidence.** `collect`: many runs of one gate per session; overlapping waits across sessions on one host.
 - **Treat.** A brief rule naming the scoped gates and forbidding the rest; a scoped target; one runner for the shared suite.
 
+## A fix is checked by rerunning the whole suite
+
+- **Causes.** A red run of one or two tests among thousands, then the full gate again after each fix attempt; a fresh worktree whose runner cache is still empty; no habit of the runner's last-failed flags.
+- **Evidence.** `reruns`: many chains on one gate, a median red far below the suite size, and rerun minutes that add up. The "passing" column is an upper bound: subtract the runner's boot and collection floor (time `--collect-only`) before quoting a saving.
+- **Treat.** The runner's last-failed cache in the fix loop, then one full run (toolkit). A one-test red that recurs across sessions is a different syndrome: look at that test.
+
 ## A stale green (a cached or selected pass after a change that should fail)
 
 - **Causes.** An undeclared dependency: a data file read through a child process, a file read by a path built at run time, an environment variable, a tool version, an absent file whose presence the test asserts against, live state.
@@ -34,7 +40,7 @@ Read only the entries your differential points to. Each gives the symptom, the u
 ## Red, then green, with no code change (flaky)
 
 - **Causes.** Order dependence, shared temporary state, time, network, parallel workers sharing a resource.
-- **Evidence.** Rerun the same commit repeatedly, serially and in parallel, in shuffled order, and see which tests flip.
+- **Evidence.** `reruns` flip candidates point at where to look: a red then a green with no recognised edit between (a tree changed by a tool the probe does not know reads as no edit). Confirm by rerunning the same commit repeatedly, serially and in parallel, in shuffled order, and see which tests flip.
 - **Treat.** Fix the cause. Quarantine only as a stopgap: the test keeps running, stops blocking, and carries a deadline after which it is fixed or deleted. Never add silent retries.
 
 ## The gate outlasts the tool's time limit
