@@ -28,7 +28,7 @@ Read only the entries your differential points to. Each gives the symptom, the u
 ## A fix is checked by rerunning the whole suite
 
 - **Causes.** A red run of one or two tests among thousands, then the full gate again after each fix attempt; a fresh worktree whose runner cache is still empty; no habit of the runner's last-failed flags.
-- **Evidence.** `reruns`: many chains on one gate, a median red far below the suite size, and rerun minutes that add up. The "passing" column is an upper bound: subtract the runner's boot and collection floor (time `--collect-only`) before quoting a saving.
+- **Evidence.** `reruns`: many chains on one gate, a median red far below the suite size, and full reruns that came back red again ("red again"). Those are the fix attempts a last-failed run could have checked; the green rerun that ends each episode stays, since the remedy keeps one full run. Their minutes are an upper bound: a last-failed run still pays the runner's boot and collection floor (time `--collect-only`) and the failing tests' own time.
 - **Treat.** The runner's last-failed cache in the fix loop, then one full run (toolkit). A one-test red that recurs across sessions is a different syndrome: look at that test.
 
 ## A stale green (a cached or selected pass after a change that should fail)

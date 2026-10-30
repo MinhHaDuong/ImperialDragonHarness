@@ -323,7 +323,10 @@ def _rows(tmp_path, project, calls):
 def test_outcome_reads_the_last_summary_line():
     assert pt.outcome("==== 1 passed in 0.1s ====\n" + RED) == (2, 2157)
     assert pt.outcome("==== 1 failed, 3 passed, 2 errors in 9.0s ====") == (3, 6)
+    assert pt.outcome("..F.\n2 failed, 5 passed in 1.2s") == (2, 7)  # -q
+    assert pt.outcome("[CI/job]   | ===== 3 failed, 1476 passed in 60.04s (0:01:00) =====") == (3, 1479)
     assert pt.outcome("make: *** [check] Error 2") is None
+    assert pt.outcome("12 files in 0.3s") is None
 
 
 def test_a_red_run_then_a_full_rerun_is_a_chain(tmp_path, project):
@@ -336,7 +339,31 @@ def test_a_red_run_then_a_full_rerun_is_a_chain(tmp_path, project):
     assert (chain.red, chain.total, chain.rerun_red, chain.edited) == (2, 2157, 0, True)
     stats = pt.summarise_reruns(rows)["make check"]
     assert stats["chains"] == 1 and stats["flip_candidates"] == 0
-    assert stats["passing_share_min_upper"] == 1.2  # 75 s x 2155/2157 = 1.249 min, one decimal
+    assert stats["red_reruns"] == 0  # the green rerun closing the episode is kept by the remedy
+
+
+def test_a_full_rerun_that_comes_back_red_is_savable(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED, "seconds": 120},
+        {"command": "x", "tool": "Edit"},
+        {"command": "make check", "output": RED, "seconds": 120},
+        {"command": "x", "tool": "Edit"},
+        {"command": "make check", "output": GREEN, "seconds": 120},
+    ])
+    stats = pt.summarise_reruns(rows)["make check"]
+    assert (stats["chains"], stats["red_reruns"], stats["red_rerun_min_upper"]) == (2, 1, 2.0)
+
+
+def test_the_remedy_followed_shows_nothing_savable(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED},
+        {"command": "x", "tool": "Edit"},
+        {"command": "python3 -m pytest --lf -x", "output": "==== 1 failed, 1 passed in 2.0s ===="},
+        {"command": "x", "tool": "Edit"},
+        {"command": "python3 -m pytest --lf -x", "output": "==== 2 passed in 2.0s ===="},
+        {"command": "make check", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["red_reruns"] == 0
 
 
 def test_red_to_green_with_no_edit_between_is_a_flip_candidate(tmp_path, project):
@@ -348,7 +375,8 @@ def test_red_to_green_with_no_edit_between_is_a_flip_candidate(tmp_path, project
     assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 1
 
 
-@pytest.mark.parametrize("edit", ["sed -i s/a/b/ f.py", "git rebase origin/main", "echo x > f.py"])
+@pytest.mark.parametrize("edit", ["sed -i s/a/b/ f.py", "git rebase origin/main", "echo x > f.py",
+                                  "echo x >> f.py"])
 def test_a_shell_edit_between_runs_is_not_a_flip(tmp_path, project, edit):
     rows = _rows(tmp_path, project, [
         {"command": "make check", "output": RED},
@@ -358,6 +386,38 @@ def test_a_shell_edit_between_runs_is_not_a_flip(tmp_path, project, edit):
     assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 0
 
 
+def test_an_edit_chained_before_the_gate_is_not_a_flip(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check > /tmp/log 2>&1", "output": RED},
+        {"command": "sed -i s/a/b/ f.py && make check > /tmp/log 2>&1", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 0
+
+
+def test_the_gate_own_redirect_is_not_an_edit(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check > /tmp/log 2>&1", "output": RED},
+        {"command": "make check > /tmp/log 2>&1", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 1
+
+
+def test_bare_pytest_runs_pair_only_on_the_same_command(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "python3 -m pytest tests/test_a.py", "output": RED},
+        {"command": "python3 -m pytest tests/test_b.py", "output": GREEN},
+    ])
+    assert pt.chains(rows) == []
+
+
+def test_an_unread_rerun_is_reported_as_unread(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED},
+        {"command": "make check", "output": "Killed"},
+    ])
+    assert pt.summarise_reruns(rows) == {"make check": {"chains": 0, "rerun_unread": 1}}
+
+
 def test_an_unreadable_outcome_makes_no_chain(tmp_path, project):
     rows = _rows(tmp_path, project, [
         {"command": "make check", "output": "make: *** Error 2"},
@@ -365,7 +425,9 @@ def test_an_unreadable_outcome_makes_no_chain(tmp_path, project):
         {"command": "make check", "output": RED},
         {"command": "make check", "output": "Killed"},
     ])
-    assert [r.red for r in rows] == [None, 0, 2, None] and pt.chains(rows) == []
+    assert [r.red for r in rows] == [None, 0, 2, None]
+    [chain] = pt.chains(rows)  # only the red run, and its rerun unread
+    assert chain.rerun_red is None
 
 
 # --- the command line -------------------------------------------------------

@@ -32,7 +32,7 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 - **The remedy.** In the fix loop, `pytest --lf -x` (or `--sw` through a run of failures) until green, then one full run of the declared gate. `--ff` keeps the full set and only puts the last failures first: safe wherever the full set is wanted.
 - **Prerequisite.** The loop calls pytest itself, or a target that forwards arguments; xdist and the cache plugin both active (a `-p no:cacheprovider` in the project's options disables it).
 - **Check first.** The collection floor: `time pytest --collect-only -q`. If it is most of a rerun, `--lf` saves little.
-- **Verify.** `reruns` again after N sessions: the rerun minutes of the gate fall and the flip count does not rise.
+- **Verify.** `reruns` again after N sessions: the "red again" reruns of the gate fall and the flip count does not rise.
 - **Bounds.** A development aid named in the brief of the agents who loop on that project, by the doctor, for that project. Never a rule for every agent, never in a merge gate or a review's evidence (§ Boundaries).
 - **Undo.** Drop the advice. Price: minutes.
 

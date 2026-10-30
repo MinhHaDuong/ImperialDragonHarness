@@ -49,17 +49,18 @@ TYPICAL_SECONDS = 30  # a high total of quick runs is use, not a speed bump
 LINES_SHOWN = 3
 
 
-# A pytest summary line ("==== 2 failed, 2155 passed, 18 skipped in 74.1s ====")
-# gives a run's outcome; the last one in a result wins, as in a gate of several
-# targets the final suite reports last.
-SUMMARY = re.compile(r"=+ ([^=\n]*?) in [\d.]+s(?: \([\d:]+\))? =+")
+# A pytest summary line gives a run's outcome, framed by rules
+# ("==== 2 failed, 2155 passed, 18 skipped in 74.1s ====") or bare under -q
+# ("2 failed, 5 passed in 1.2s"). The last one in a result wins, as in a gate
+# of several targets the final suite reports last.
+SUMMARY = re.compile(r"(?m)(?:^|=+ )((?:\d+ [a-z]+(?:, )?)+) in [\d.]+s\b")
 COUNT = re.compile(r"(\d+) (failed|passed|errors?)\b")
 # Between two runs, an edit is an Edit/Write call or a shell command that
 # rewrites the tree. A heuristic: a tree changed by a tool it does not know
 # reads as "no recognised edit", so a flip is a candidate, never a verdict.
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 MUTATION = re.compile(r"\bsed\s+-i|\bgit\s+(?:-C\s+\S+\s+)?(?:commit|rebase|merge|pull|checkout|switch|reset|"
-                      r"cherry-pick|am|apply|restore|stash)\b|\b(?:tee|mv|cp|rm|patch)\s|(?<![0-9&>])>(?![&>])(?!\s*/dev/)")
+                      r"cherry-pick|am|apply|restore|stash)\b|\b(?:tee|mv|cp|rm|patch)\s|(?<![0-9&>])>>?(?![&>])(?!\s*/dev/)")
 
 
 @dataclass
@@ -81,7 +82,7 @@ class Chain:
     red: int
     total: int
     rerun_seconds: float
-    rerun_red: int
+    rerun_red: int | None  # None: the rerun's outcome could not be read
     edited: bool
 
 
@@ -265,13 +266,11 @@ def _result_text(content: object) -> str:
 
 def outcome(text: str) -> tuple[int, int] | None:
     """(red, total) from the last pytest summary line in a result, or None."""
-    last = None
-    for last in SUMMARY.finditer(text):
-        pass
-    if last is None:
+    found = [m.group(1) for m in SUMMARY.finditer(text) if COUNT.search(m.group(1))]
+    if not found:
         return None
     counts = {"failed": 0, "passed": 0, "error": 0}
-    for number, kind in COUNT.findall(last.group(1)):
+    for number, kind in COUNT.findall(found[-1]):
         counts["error" if kind.startswith("error") else kind] += int(number)
     red = counts["failed"] + counts["error"]
     return red, red + counts["passed"]
@@ -296,8 +295,11 @@ def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[
                 spec = block.get("input") or {}
                 command = str(spec.get("command", ""))
                 classes = gate_classes(command, extra)
+                # An edit chained before the gate on one line (`sed -i … && make
+                # check`) counts; the gate's own segment (`make check > log`) does not.
+                edits += any(MUTATION.search(segment) and not gate_classes(segment, extra)
+                             for segment in _segments(_strip_heredocs(command)))
                 if not classes:
-                    edits += bool(MUTATION.search(_strip_heredocs(command)))
                     continue
                 if spec.get("run_in_background"):
                     background += 1
@@ -410,12 +412,19 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
     return flagged
 
 
+def _rerun_key(row: Row) -> str:
+    """Runs of one make target pair by target; bare pytest runs only by identical command,
+    since two pytest runs on different files are not a rerun."""
+    return row.command if row.gate == "pytest" else row.gate
+
+
 def chains(rows: list[Row]) -> list[Chain]:
     """Each red run joined to the next run of the same gate in its session.
 
     The rerun after a red is where a runner's last-failed selection would act:
-    a full rerun to check a fix of one or two tests pays for the whole suite.
-    A red-to-green rerun with no recognised edit between is a flip candidate.
+    a full rerun that comes back red again was a fix attempt the last-failed
+    tests alone could have checked. A red-to-green rerun with no recognised edit
+    between is a flip candidate.
     """
     by_session: dict[str, list[Row]] = {}
     for row in sorted(rows, key=lambda r: r.when):
@@ -425,8 +434,8 @@ def chains(rows: list[Row]) -> list[Chain]:
         for index, row in enumerate(members):
             if not row.red:
                 continue
-            rerun = next((r for r in members[index + 1:] if r.gate == row.gate), None)
-            if rerun is None or rerun.red is None:
+            rerun = next((r for r in members[index + 1:] if _rerun_key(r) == _rerun_key(row)), None)
+            if rerun is None:
                 continue
             found.append(Chain(row.gate, row.session, row.red, row.total or row.red,
                                rerun.seconds, rerun.red, rerun.edits > row.edits))
@@ -438,17 +447,26 @@ def summarise_reruns(rows: list[Row]) -> dict[str, dict]:
     for chain in chains(rows):
         by_gate.setdefault(chain.gate, []).append(chain)
     summary = {}
-    for gate, members in sorted(by_gate.items(), key=lambda item: -sum(c.rerun_seconds for c in item[1])):
+    for gate, found in sorted(by_gate.items(), key=lambda item: -sum(c.rerun_seconds for c in item[1])):
+        members = [c for c in found if c.rerun_red is not None]
+        if not members:
+            summary[gate] = {"chains": 0, "rerun_unread": len(found)}
+            continue
+        again = [c for c in members if c.rerun_red]
         summary[gate] = {
             "chains": len(members),
+            "rerun_unread": len(found) - len(members),
             "rerun_min": round(sum(c.rerun_seconds for c in members) / 60, 1),
             "median_red": statistics.median(c.red for c in members),
             "median_total": statistics.median(c.total for c in members),
             "median_rerun_s": round(statistics.median(c.rerun_seconds for c in members)),
-            # Derived, an upper bound: the runner's boot and collection floor is
-            # paid even by a rerun of the failed tests alone.
-            "passing_share_min_upper": round(
-                sum(c.rerun_seconds * (1 - c.red / c.total) for c in members) / 60, 1),
+            # Full reruns that came back red: fix attempts the last-failed tests
+            # alone could have checked. The green rerun that closes an episode
+            # stays, since the remedy keeps one full run. Derived, an upper
+            # bound: a last-failed rerun still pays the runner's floor and the
+            # failing tests' own time.
+            "red_reruns": len(again),
+            "red_rerun_min_upper": round(sum(c.rerun_seconds for c in again) / 60, 1),
             "flip_candidates": sum(1 for c in members if not c.edited and c.rerun_red == 0),
         }
     return summary
@@ -467,14 +485,18 @@ def _print_reruns(collected: Collected, project: Path, days: float) -> None:
         print("no red run was followed by a rerun of the same gate in its session")
         return
     print(f"{'gate':32s} {'chains':>6s} {'rerun':>7s} {'median red/total':>17s} {'rerun':>6s} "
-          f"{'passing':>8s} {'flips':>5s}")
+          f"{'red again':>12s} {'flips':>5s} {'unread':>6s}")
     for gate, s in summary.items():
+        if not s["chains"]:
+            print(f"{gate[:32]:32s} {0:6d} {'':>7s} {'':>17s} {'':>6s} {'':>12s} {'':>5s} {s['rerun_unread']:6d}")
+            continue
         print(f"{gate[:32]:32s} {s['chains']:6d} {s['rerun_min']:6.1f}m "
               f"{s['median_red']:>8g}/{s['median_total']:<8g} {s['median_rerun_s']:5d}s "
-              f"{s['passing_share_min_upper']:7.1f}m {s['flip_candidates']:5d}")
-    print("passing: rerun minutes spent on tests that had passed in the red run, derived, an upper bound "
-          "(subtract the runner's boot and collection floor); flips: red to green with no recognised "
-          "edit between, candidates only")
+              f"{s['red_reruns']:4d} {s['red_rerun_min_upper']:6.1f}m {s['flip_candidates']:5d} {s['rerun_unread']:6d}")
+    print("red again: full reruns that came back red, the fix attempts a last-failed run could have checked, "
+          "and their minutes (derived, an upper bound: a last-failed run still pays the runner's floor and "
+          "the failing tests); flips: red to green with no recognised edit between, candidates only; "
+          "unread: reruns whose outcome could not be read")
 
 
 def _print_table(collected: Collected, project: Path, days: float) -> None:
