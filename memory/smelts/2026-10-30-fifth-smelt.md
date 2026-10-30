@@ -2,7 +2,8 @@
 
 Date: 2026-10-30. Project: ImperialDragonHarness, selected by invocation in
 its repository (`/smelt` run from the harness checkout, no argument).
-Prompt: `memory/SMELT.md`, v8-r4 (2026-10-29).
+Prompt: `memory/SMELT.md`, v8-r4 (2026-10-29); the contradiction tickets
+were filed afterwards under v8-r5, on the author's order on PR #2049.
 Runtime: Claude Code, background session on padme. Orchestrator model
 `claude-opus-5-5` (session-stated); effort not exposed. Department passes:
 Opus for Commission, git, review and memory (judgment-heavy rewrites);
@@ -178,13 +179,14 @@ Exposed, not settled:
   ("The harness repo keeps its no-exceptions gate"). Shown as an open
   question on Commission. The auto-memory index (`feedback_prose_edits_are_on_main`)
   presents it as settled; that store is outside smelt's write area.
+  Ticket 1372.
 - `rules/git.md` requires forge read-back; the author's 1366 KISS ruling
   removed the ls-remote read-back and kept the commit-id push, and the
   author declined to narrow the rule. Commission pins the ruling; the git
-  page leaves the conflict open.
+  page leaves the conflict open. Ticket 1373.
 - "No wait tickets" against "a reminder is an open Blocked-by ticket" (another
-  store, ticket 1349 probe): the latter note was not found in the harness
-  store.
+  store, ticket 1349 probe): the latter note was not found in any native
+  store on padme. Ticket 1374.
 - Stale native note: `feedback_gate_record_staleness` names `erg-pr-merge`
   and `/tmp/chain-merge.sh`, both gone; its point (record bound to the exact
   candidate) holds and is on the raids page.
