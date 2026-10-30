@@ -154,6 +154,12 @@ def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile
             argv.append(str(promptfile))
         elif token.strip('<>') in values and token.startswith('<'):
             argv.append(values[token.strip('<>')])
+        elif previous in MODEL_FLAGS and PLACEHOLDER.fullmatch(token) and ':<' in token:
+            # `<provider>/<id>:<levels>`: the seat names its thinking level, the host default never does.
+            levels = token.rsplit(':<', 1)[1].strip('<>').split('|')
+            if model.rpartition(':')[2] not in levels or not model.rpartition(':')[0]:
+                raise ValueError(f'model {model} pins no thinking level; add :<{"|".join(levels)}>')
+            argv.append(model)
         elif previous in MODEL_FLAGS and PLACEHOLDER.fullmatch(token):
             offered = token.strip('<>').split('|')
             if len(offered) > 1 and model not in offered:
