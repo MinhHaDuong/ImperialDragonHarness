@@ -22,6 +22,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
@@ -161,6 +163,7 @@ def test_two_passes_do_not_reimport_and_reexamine_the_correction():
     )
 
 
+@pytest.mark.integration
 def test_report_journal_ledger_pins_the_untouched_journal():
     text = report_text()
     sections = pass_sections(text)

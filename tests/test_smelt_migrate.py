@@ -237,6 +237,7 @@ def test_unrelated_paths_and_urls_are_preserved(project):
         assert (project / name).read_bytes() == before[name]
 
 
+@pytest.mark.integration
 def test_retired_helpers_preserve_their_historical_identity(project):
     # A real topic naming the retired helpers, as it stood before the fifth smelt merged it.
     actual_topic = subprocess.run(
