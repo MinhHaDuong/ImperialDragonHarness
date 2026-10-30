@@ -469,10 +469,29 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
 STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, is about 300
 
 
+# Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.
+SCRUB_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',                                    # email
+    r'\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w-]{8,}|\bAKIA[0-9A-Z]{12,}',  # vendor keys
+    r'\bBearer\s+\S+',                                                   # auth header value
+    r'\borg-[\w-]{4,}',                                                   # organisation id
+    r'\b(?:api[_-]?key|key|token|secret|password)\s*[:=]\s*\S+',          # key=value
+    r'/home/[^/\s|]+',                                                    # login in a home path
+))
+
+
+def scrub(text: str) -> str:
+    """Replace emails, key- or token-shaped strings, organisation ids and home logins with `<redacted>`."""
+    for pattern in SCRUB_PATTERNS:
+        text = pattern.sub('<redacted>', text)
+    return text
+
+
 def stderr_excerpt(lines: list[str]) -> str:
-    """The CLI's stderr as one bounded line: separator-only rules dropped, `; ` and parentheses kept out."""
+    """The CLI's stderr as one bounded line, scrubbed of identifiers and tokens before the cut (the line lands
+    in permanent review notes): separator-only rules dropped, `; ` and parentheses kept out."""
     kept = [line for line in lines if line.strip('-=_ ')]
-    text = ' | '.join(kept).replace(';', ',').replace('(', '[').replace(')', ']')
+    text = scrub(' | '.join(kept)).replace(';', ',').replace('(', '[').replace(')', ']')
     return text[:STDERR_EXCERPT_CHARS]
 
 

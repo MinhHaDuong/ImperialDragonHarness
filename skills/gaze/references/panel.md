@@ -42,7 +42,7 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    family=<family>` set from the pin, never from the CLI's self-report.
    Anything that stops a seat, its own `NOT-RUN:` refusal included, is
    `<name>: no report (<reason>)` in
-   `<panel>/<name>.md.status` (with a bounded `; stderr: <excerpt>` of the CLI
+   `<panel>/<name>.md.status` (with a bounded, scrubbed (emails, keys, tokens, org ids, home logins) `; stderr: <excerpt>` of the CLI
    when it ran, so the answer's `ran:` line keeps the cause) and no report at all: the plan check counts the
    seat missing, and gaze never replaces it with its own read. A headless seat
    declares `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on its
