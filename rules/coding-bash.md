@@ -110,7 +110,7 @@ leakage across the `env -i` boundary, export-name collisions with the caller —
 appears only in that invocation path. A test that `source`s the script into the
 test's own shell is blind to all of it: three security defects (a `BASH_ENV`
 re-entry fork bomb, an ambient-env leak, a guard-name forgery) passed the
-source-in-shell unit suite and were caught only by runtime review (PRs
+source-in-shell unit suite and were caught only by runtime review (merge requests
 #599/#604, 2026-07-14).
 
 Test such scripts by spawning a real, hermetic subprocess:

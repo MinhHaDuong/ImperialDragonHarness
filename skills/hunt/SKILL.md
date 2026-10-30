@@ -58,7 +58,7 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   criterion, anything irreversible or outward-facing) is asked before
   executing, by the same escalation protocol.
 - **Too big or multipart** (`rules/workflow.md` § Ticket discipline for
-  multi-PR work): return it, unsplit, to whoever launched the hunt with a
+  multi-request work): return it, unsplit, to whoever launched the hunt with a
   proposed decomposition; execute only on "go as one". Found mid-Execute:
   commit the partial branch (push it where there is a forge), name it in the proposal, unlock the
   worktree and leave it for the caller.
