@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Seat stderr excerpt can carry an account identifier into permanent review notes
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T13:15Z reviewer created
+
+--- body ---
+## Context
+
+PR #2044 (ticket 1365) puts a one-line excerpt of a failing seat's stderr
+(up to 600 characters) into the seat's status line, which flows into the
+`ran:` line of the review record on `refs/notes/review`. Those notes are
+permanent and pushed to the remote. Gaze on #2044 (seat openai/gpt-6.1-sol)
+noted that an authentication error could carry an account identifier (login,
+email, organisation or key fragment) into that excerpt. Under ordre public
+("never display credentials", `rules/guards.md`) and the project memory
+boundary, identifiers and credential fragments must not enter a pushed record.
+
+## Exit criteria
+
+- [ ] The excerpt is scrubbed before it is recorded: email addresses, key- or token-shaped strings and account identifiers are replaced by a placeholder, while the effort, model and session-id fields stay readable
+- [ ] A test feeds an excerpt holding a fake identifier and a fake token-shaped string and finds neither in the recorded status line (and fails on the unscrubbed code)
