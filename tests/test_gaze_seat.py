@@ -388,6 +388,7 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
                                     Path('/p/x.prompt'))
     assert codex.argv[:2] == ['codex', 'exec'] and codex.stdin == Path('/p/x.prompt')
     assert codex.argv[codex.argv.index('-o') + 1] == '/p/x.seat' and '<' not in codex.argv
+    assert codex.argv[codex.argv.index('-c') + 1] == 'model_reasoning_effort="medium"'  # ticket 1365
     pi = gaze_seat.build_command(doors['pi'], 'anthropic/claude-haiku-5-5', 'PROMPT', Path('/p/x.seat'),
                                  Path('/p/x.prompt'))
     assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5'
