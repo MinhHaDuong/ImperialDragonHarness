@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Cooldown review of the harness-government memo before any implementation
+Created: 2026-10-30
+Author: reviewer
+Label: needs-human
+
+--- log ---
+2026-10-30T11:43Z reviewer created
+2026-10-30T11:43Z reviewer label needs-human
+
+--- body ---
+## Context
+
+`conception/2026-10-30-harness-government.md` (PR #2040) frames the harness
+as a government: AGENTS.md as constitution, `rules/guards.md` as ordre public
+with an enforcement column, a three-chamber court reviewing smelt, and memory
+split into case law and registries of dated, probed facts. The author
+accepted it as doctrine on 2026-10-30 and asked for a cooldown before any of
+it drives changes: "It is easy to be overenthusiastic about a metaphor."
+
+The cooldown is a review process. Precedent: the fifth consolidation (PR
+#1975) was judged by Fable and GPT-6 Astra and rejected as "redo".
+
+## Steps
+
+1. Fable review of the memo, in a fresh session given the memo only, not the
+   conversation that produced it.
+2. GPT-6 Astra review (cross-family), same conditions, independent of step 1.
+3. KISS review: what in the memo and its follow-ups can be dropped, merged
+   or left as vocabulary only.
+4. Needs-vs-wants triage of the follow-ups (memo end; the memory court;
+   registries with probes; the guards.md enforcement column), with the three
+   reviews beside it. The author picks what survives.
+
+## Exit criteria
+
+- [ ] The two independent reviews and the KISS review are recorded (in `conception/` or on this ticket)
+- [ ] The author's triage is logged here: each follow-up marked need, want or drop
+
+No implementation ticket is filed from the memo before this ticket closes.
+Ticket 1350 (memory stores) does not take the memo as its frame until then.
