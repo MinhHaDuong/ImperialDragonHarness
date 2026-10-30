@@ -513,9 +513,9 @@ SCRUB_PATTERNS = tuple(re.compile(p) for p in (
     r'''(?i:\bBearer[ \t]+\S+|\bAuthorization["']?[ \t]*[:=][ \t]*["']?Basic[ \t]+[^\s"']+|\bBasic[ \t]+[\w+/-]{8,}={0,2})''',  # auth header value; a bare Basic only before a base64 token
     r'(?i:\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?)',                          # JWT
     r'(?i:\borg-[\w-]{4,})',                                              # organisation id
-    # key=value, JSON-quoted or backslash-escaped too, never across a line; a quoted value ends at its closing quote
+    # key=value, JSON-quoted or backslash-escaped too, never across a line; a quoted value ends at its own matching, unescaped closing quote
     # (else at the line end), an unquoted one at whitespace
-    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:\\*["'](?:[^"'\\\n]|\\+(?!["']))*(?:\\*["']|(?=\n|\Z))|\S+)''',
+    r'''(?i:\b[\w-]*(?:key|token|secret|password|account[ \t_-]?id))\\*["']?[ \t]*[:=][ \t]*(?:\\+(["'])(?:(?!\\+\1)[^\n])*(?:\\+\1|(?=\n|\Z))|(["'])(?:\\.|\\(?=\n|\Z)|(?!\2)[^\\\n])*(?:\2|(?=\n|\Z))|\S+)''',
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 

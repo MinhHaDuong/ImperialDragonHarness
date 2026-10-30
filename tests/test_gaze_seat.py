@@ -915,6 +915,16 @@ def test_scrub_fully_redacts_backslash_unterminated_comma_and_basic_variants(lea
     assert secret not in load_module().scrub(leak)
 
 
+@pytest.mark.parametrize('leak, secret', [
+    ('{"password": "FAKEabc\'def123"}', 'def123'),
+    ('{"password": "FAKEabc\\"def123"}', 'def123'),
+    ("{'password': 'it\"s123'}", 's123'),
+    ('{\\"password\\": \\"FAKEabc\\\'def123\\", \\"ok\\": 1}', 'def123'),
+])
+def test_scrub_quoted_value_ends_at_its_own_unescaped_closing_quote(leak, secret):
+    assert secret not in load_module().scrub(leak)
+
+
 @pytest.mark.parametrize('text', [
     'intent: inspect access_token:\nreview plan: panel',
     'intent: rotate the api key:\nseats: panel',
