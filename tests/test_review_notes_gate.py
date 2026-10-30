@@ -125,6 +125,39 @@ def test_bookkeeping_after_the_reviewed_head_is_admitted(repo):
     assert state["ready"] and state["match"] == "bookkeeping"
 
 
+def test_a_branch_review_on_the_landing_head_is_the_prs_review(repo):
+    """Ticket 1379: gaze answered `branch:feature`; the PR opened on that head carries the answer."""
+    branch_rid = rn.open_review(repo, "feature", "main")
+    answer(repo, branch_rid)
+    pr_rid = rn.open_review(repo, "feature", "main", unit="pr:7")
+    assert pr_rid == branch_rid and rn.find_unit(repo, "pr:7") == branch_rid
+    state = rn.gate_state(repo, pr_rid, "feature")
+    assert state["ready"] and state["match"] == "equal"
+
+
+def test_a_branch_review_carries_over_a_bookkeeping_delta(repo):
+    branch_rid = rn.open_review(repo, "feature", "main")
+    answer(repo, branch_rid)
+    sh(repo, "switch", "-q", "feature")
+    (Path(repo) / "tickets").mkdir()
+    commit(repo, "tickets/0001-x.erg", "%erg 0.1\n", "ticket(1): close")
+    sh(repo, "switch", "-q", "main")
+    pr_rid = rn.open_review(repo, "feature", "main", unit="pr:7")
+    assert pr_rid == branch_rid
+    assert rn.gate_state(repo, pr_rid, "feature")["ready"]
+
+
+def test_a_branch_review_on_an_older_head_is_discarded_for_the_pr(repo):
+    branch_rid = rn.open_review(repo, "feature", "main")
+    answer(repo, branch_rid)
+    fix(repo, 14)
+    pr_rid = rn.open_review(repo, "feature", "main", unit="pr:7")
+    assert pr_rid != branch_rid
+    state = rn.gate_state(repo, pr_rid, "feature")
+    assert not state["ready"] and "no completed review" in state["reason"]
+    assert rn.find(repo, "feature") == branch_rid  # the branch review is left as it was
+
+
 def test_round_two_rules_the_fix_of_a_round_one_reroll(repo):
     rid = rn.open_review(repo, "feature", "main")
     answer(repo, rid)
