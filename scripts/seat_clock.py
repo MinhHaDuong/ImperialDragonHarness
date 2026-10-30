@@ -87,12 +87,15 @@ def kill_group(pid: int) -> None:
 
 
 def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
-             stdin: Path | None = None, env: dict[str, str] | None = None) -> tuple[bool, str]:
+             stdin: Path | None = None, env: dict[str, str] | None = None,
+             replace_env: bool = False) -> tuple[bool, str]:
     # The reader's stdout goes beside the report, never onto it: a seat that
     # writes <out>.part and renames it to <out> itself keeps its report.
     # `cwd` pins the reader to the review tree; `stdin` feeds it a prompt file
     # (gaze_seat.py, ticket 1256), else it reads nothing; `env` adds variables to
-    # the reader's environment (ticket 1279: Vibe's disposable VIBE_HOME).
+    # the reader's environment (ticket 1279: Vibe's disposable VIBE_HOME); with
+    # `replace_env` it is the reader's whole environment and nothing is inherited
+    # (ticket 1376: gaze_seat.py's allowlist).
     captured = out.with_name(out.name + '.stdout')
     started, launched = time.monotonic(), time.time() - 1  # 1 s for filesystem stamp granularity
     try:
@@ -101,7 +104,7 @@ def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
                 with (stdin.open('rb') if stdin else open(os.devnull, 'rb')) as feed:
                     child = subprocess.Popen(command, stdout=stdout, stderr=stderr, stdin=feed,
                                              cwd=cwd, start_new_session=True,
-                                             env={**os.environ, **env} if env else None)
+                                             env=env if replace_env else {**os.environ, **env} if env else None)
             except OSError:
                 return False, 'no report (failed to start)'
     except OSError as error:

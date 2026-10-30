@@ -115,6 +115,7 @@ def rig(tmp_path):
         'HOME': str(tmp_path),
         'STUB_LOG': str(log),
         'IDH_GAZE_SEATS_CONFIG': str(tmp_path / 'gaze-seats.json'),
+        'IDH_SEAT_ENV_PASS': 'STUB_LOG,STUB_MODE',  # the stubs' own channel; a seat sees nothing else extra
     }
     return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env,
             'base': base, 'head': head}
@@ -756,3 +757,87 @@ def test_successful_seat_status_carries_no_stderr(rig):
     result = launch(rig, mode='codex-echo')
     assert result.returncode == 0
     assert 'stderr' not in (rig['panel'] / 'correctness.md.status').read_text()
+
+
+# Ticket 1376: the seat runs in an allowlisted environment, never the caller's.
+
+NOISE = {
+    'CLAUDE_EFFORT': 'low', 'CLAUDE_CODE_MESSAGING_TOKEN': 'fake-messaging-token',
+    'CLAUDE_CODE_MESSAGING_SOCKET': '/tmp/fake.sock', 'ANTHROPIC_MODEL': 'opus',
+    'CODEX_SANDBOX': 'seatbelt', 'PI_SKIP_VERSION_CHECK': '1', 'SSH_AUTH_SOCK': '/tmp/fake-agent',
+    'OPENAI_BASE_URL': 'http://elsewhere.invalid',
+}
+
+
+def dumping_stubs(rig):
+    """Make every stub also dump its environment to <STUB_LOG>/<name>.env."""
+    for name in ('claude', 'codex', 'pi', 'aider', 'vibe'):
+        stub = rig['tmp'] / 'bin' / name
+        stub.write_text(STUB.replace('#!/bin/sh\n', '#!/bin/sh\nenv | sort > "$STUB_LOG/$(basename "$0").env"\n', 1))
+
+
+def seat_env(rig, name):
+    return dict(line.split('=', 1) for line in (rig['log'] / f'{name}.env').read_text().splitlines() if '=' in line)
+
+
+@pytest.mark.integration
+def test_conflicting_parent_variables_change_neither_seat_command_nor_environment(rig):
+    dumping_stubs(rig)
+    rig['env']['ANTHROPIC_API_KEY'] = 'fake-credential'
+    assert launch(rig).returncode == 0
+    quiet_argv = (rig['log'] / 'claude.argv').read_text()
+    quiet_env = (rig['log'] / 'claude.env').read_text()
+    rig['env'].update(NOISE)
+    assert launch(rig).returncode == 0
+    assert (rig['log'] / 'claude.argv').read_text() == quiet_argv
+    assert (rig['log'] / 'claude.env').read_text() == quiet_env
+    seen = seat_env(rig, 'claude')
+    assert not set(NOISE) & set(seen)
+    assert seen['ANTHROPIC_API_KEY'] == 'fake-credential' and seen['PATH'] == rig['env']['PATH']
+
+
+@pytest.mark.integration
+def test_codex_seat_keeps_its_declared_credential_and_home_only(rig):
+    dumping_stubs(rig)
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['OpenAI']}))
+    rig['env'].update(NOISE, CODEX_HOME='/tmp/codex-home', OPENAI_API_KEY='fake-openai')
+    result = launch(rig, runtime='codex', model='gpt-6-luna', family='OpenAI', name='redteam')
+    assert result.returncode == 0, result.stdout
+    seen = seat_env(rig, 'codex')
+    assert seen['CODEX_HOME'] == '/tmp/codex-home' and seen['OPENAI_API_KEY'] == 'fake-openai'
+    assert not set(NOISE) & set(seen)
+
+
+@pytest.mark.integration
+def test_pi_seat_keeps_only_the_key_its_provider_declares(rig):
+    dumping_stubs(rig)
+    models = rig['tmp'] / 'models.json'
+    models.write_text(json.dumps({'providers': {'myprov': {'baseUrl': 'https://x.invalid/v1', 'apiKey': '$MYPROV_KEY'}}}))
+    rig['env'].update(NOISE, IDH_PI_MODELS=str(models), MYPROV_KEY='fake-pi-key', OTHER_KEY_PI='must-not-pass')
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['myprov']}))
+    result = launch(rig, runtime='pi', model='myprov/m:low', family='Other', home='Other', name='scope')
+    assert result.returncode == 0, result.stdout
+    seen = seat_env(rig, 'pi')
+    assert seen['MYPROV_KEY'] == 'fake-pi-key'
+    assert 'OTHER_KEY_PI' not in seen and not set(NOISE) & set(seen)
+
+
+@pytest.mark.integration
+def test_vibe_seat_gets_its_disposable_home_and_no_caller_runtime_variables(rig):
+    dumping_stubs(rig)
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['Mistral']}))
+    rig['env'].update(NOISE, VIBE_HOME='/tmp/host-vibe')
+    result = launch(rig, runtime='vibe', model='mistral-medium-3.5', family='Mistral', name='scope')
+    assert result.returncode == 0, result.stdout
+    seen = seat_env(rig, 'vibe')
+    assert seen['VIBE_HOME'] != '/tmp/host-vibe' and not set(NOISE) & set(seen)
+
+
+@pytest.mark.integration
+def test_dry_run_names_the_seat_environment_without_values(rig):
+    rig['env'].update(NOISE, ANTHROPIC_API_KEY='fake-credential')
+    result = launch(rig, '--dry-run')
+    assert result.returncode == 0, result.stdout
+    plan = json.loads(result.stdout)
+    assert 'PATH' in plan['env'] and 'ANTHROPIC_API_KEY' in plan['env'] and not set(NOISE) & set(plan['env'])
+    assert 'fake-credential' not in result.stdout and rig['env']['PATH'] not in result.stdout

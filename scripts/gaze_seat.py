@@ -76,6 +76,15 @@ provider = "{provider}"
 alias = "seat-model"
 '''
 
+# Variables a seat inherits whatever the door: the process basics and the network transport. Anything
+# else (CLAUDE_*, CODEX_*, PI_*, ANTHROPIC_MODEL, SSH_AUTH_SOCK, the parent's messaging token) is
+# dropped; a door keeps its credentials and auth home by `env_keep` in routes.json (ticket 1376).
+BASE_ENV = ('PATH', 'HOME', 'USER', 'LOGNAME', 'SHELL', 'LANG', 'LC_*', 'TMPDIR', 'TERM', 'XDG_*',
+            'DBUS_SESSION_BUS_ADDRESS', 'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'ALL_PROXY',
+            'http_proxy', 'https_proxy', 'no_proxy', 'all_proxy', 'SSL_CERT_FILE', 'SSL_CERT_DIR',
+            'NODE_EXTRA_CA_CERTS', 'REQUESTS_CA_BUNDLE')
+PASS_ENV = 'IDH_SEAT_ENV_PASS'  # host-local comma list of further names a seat may see (test stubs, odd hosts)
+
 ROLES = ('code-reviewer', 'prose-reviewer')
 PROFILES = HERE.parent / 'profiles'
 
@@ -121,6 +130,25 @@ class Command:
     argv: list[str]
     stdin: Path | None
     env: dict[str, str] | None = None
+
+
+def seat_env(door: dict, extra: list[str] = (), environ=None) -> dict[str, str]:
+    """The seat's whole environment: the caller's variables the base set, the door's `env_keep`, the
+    host's `IDH_SEAT_ENV_PASS` and `extra` names allow, nothing else. Fail closed: a new variable is dropped."""
+    environ = os.environ if environ is None else environ
+    allowed = [*BASE_ENV, *door.get('env_keep', []), *extra,
+               *(n.strip() for n in environ.get(PASS_ENV, '').split(',') if n.strip())]
+    return {k: v for k, v in environ.items() if any(fnmatch.fnmatchcase(k, pattern) for pattern in allowed)}
+
+
+def pi_key_names(provider_id: str) -> list[str]:
+    """The variable a Pi provider's `apiKey: "$NAME"` indirection reads (the file differs per host), else none."""
+    try:
+        key = json.loads(pi_models_path().read_text(encoding='utf-8'))['providers'][provider_id]['apiKey']
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+    match = re.fullmatch(r'\$\{?(\w+)\}?', key) if isinstance(key, str) else None
+    return [match.group(1)] if match else []
 
 
 def load_doors(routes: Path) -> dict:
@@ -392,14 +420,16 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         command = build_command(door, run_model, prompt, last, promptfile, values)
     except ValueError as error:
         return False, f'no report ({error})'
+    extra = pi_key_names(args.model.partition('/')[0]) if door.get('env_keep_pi_key') else []
+    command.env = seat_env(door, extra)
     if 'seat_agent' in door:
         if not SEAT_MODEL.fullmatch(run_model):
             return False, f'no report (model id {run_model!r} is not a plain model name)'
-        command.env = {door['seat_agent']['home_env']: '<disposable>'}
+        command.env[door['seat_agent']['home_env']] = '<disposable>'
     if args.dry_run:
         print(json.dumps({'argv': [a if a != prompt else '<prompt>' for a in command.argv],
                           'stdin': str(command.stdin) if command.stdin else None,
-                          'env': command.env,
+                          'env': sorted(command.env),  # names only, never values
                           'cwd': 'scratch' if door.get('scratch_cwd') else str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
@@ -422,9 +452,9 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     try:
         if 'seat_agent' in door:
             home = seat_home(door, run_model)
-            command.env = {door['seat_agent']['home_env']: str(home)}
+            command.env[door['seat_agent']['home_env']] = str(home)
         ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin,
-                                          env=command.env)
+                                          env=command.env, replace_env=True)
     except OSError as error:
         return False, f'no report (cannot prepare the seat: {error.strerror})'
     finally:
