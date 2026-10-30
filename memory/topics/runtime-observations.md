@@ -1,142 +1,46 @@
-# Runtimes, models and routing
+# Environment: runtimes, models and routing
 
-Scope: what was observed about the non-Claude-Code runtimes (pi, Vibe,
-Codex), the local model server, the model tournament and the routing rollout
-on this repository, 2026-10-02 to 2026-10-13. These are single-run observations
-on named versions. Routing decisions live in `skills/route/` and
-`skills/route/references/decorrelation.md`, and the profile doctrine in
-AGENTS.md, not here.
+Single-run observations on named versions. Routing belongs to `skills/route/` and `rules/claude-code.md`; no grid here.
 
-## Supported observations
+## Current guidance
 
-pi. pi has no Agent tool: on 2026-10-02 the full raid loop for PR #1153 ran
-with every spawn site inline and the panel reported DEGRADED, the decorrelated
-evidence coming from external seats. On 2026-10-03 a raid on PR #1155 ran on
-pi's named agents with a local 27B model; gaze took 195 minutes against an
-1800-second escalate threshold, attributed in the entry to the six-seat
-fan-out on that model. A frontmatter-only translation of a Claude agent
-definition registered on pi and the live agent read and quoted its
-`PROFILE.md` contract (0938). pi loads only the first of `AGENTS.override.md`,
-`AGENTS.md`, `AGENTS.MD`, `CLAUDE.md` per directory, which explained the 0918
-plant's miss. On 2026-10-07 pi's unknown-model fallback had given
-`mistral-large-4` Devstral 2 settings; an explicit model declaration fixed the
-context metadata.
+- Claude Code levers (2026-09-10, v2.1.267, Opus 5): a skill's `model:` never reaches spawned children; `Agent` and `Workflow` `agent()` inherit the session model unless each launch passes a short token. `effort:` in an agent definition pins the child (none: inherits; `max`/`low` honoured; an invalid value is rejected at load); `Workflow` `opts.effort` is per-call. On models with pinned default effort (Opus 4.7/4.8, Fable 5) the key was unreliable before 2.1.267, untested. [levers](../feedback_subagent_model_effort_levers.md)
+- Codex `spawn_agent` honours `model` and `reasoning_effort` (child `turn_context`, 2026-10-09); read the session header, not the model's self-report (0.161.0).
+- Pi on padme serves padme's own seats, Hugging Face, and (via wrappers) paid doors: `scripts/pi-albert` and `scripts/pi-openrouter` load one key into Pi only and pin provider and model; `pi-albert` serves openweight-code and openweight-large. Author ruling: Albert counts as cleared. [Albert](../journal/2026/2026-10-28-pi-padme-albert-route.md), [OpenRouter](../journal/2026/2026-10-28-pi-openrouter-and-session-close.md)
+- Pi 1.4.0 reads skills from `~/.agents/skills`; author decision: no `~/.pi/agent/skills` projection (PR 1690). `idh install` retires undeclared receipt-owned links; run it per machine. [PR 1690](../journal/2026/2026-10-27-pi-skills-standard-root-pr1690.md)
+- Headless `vibe -p` (2.26.0) reads files under plan/ask/auto-approve and works as a read-only gaze seat with `--enabled-tools read_file`; it needs `</dev/null`. [1279](../journal/2026/2026-10-27-vibe-headless-seat-1279.md)
+- Production local model on padme: Flash-Next IQ3_S under Strata (:8080) since 2026-10-12; pi agents point there. Strata v0.1.43 rejects config `xhigh`, ignores `port`. [switch](../journal/2026/2026-10-12-t1048-cycle3-speed-stage-and-production-switch.md)
+- Codex runs gaze's cross-family seat; a usage-limit failure leaves no other-family reviewer. [1082](../journal/2026/2026-10-10-raid-1082-erg-pr-merge-pending-ci.md) The headless door pins `model_reasoning_effort="medium"`: inherited `low` made luna seats refuse (4/56 vs 0/81 at medium); a no-report status ends with a stderr excerpt. [1365](../journal/2026/2026-10-30-raid-70b3bc-codex-seat-effort-1365.md)
+- `runtime.py wake` must not key on `CLAUDE_CODE_CHILD_SESSION`: a live subagent carries it and wake still fires. [verbs](../journal/2026/2026-10-28-raid-6530fd-runtime-verbs.md)
+- Author rulings: design every mechanism for Claude Code, Codex and Pi together, none optional or staged last (2026-10-21, native note). The gaze orchestrator model changes only from arena data (route Update discipline); a faster-orchestrator arm waits for the arena (2026-10-29).
 
-pi, 2026-10-08 to 2026-10-12. On padme `pi auth check` was `not_ready` for
-anthropic, openai and openrouter, because only Hugging Face and the local seats
-are configured there. After API credits arrived, a Haiku-only wrapper
-(`scripts/pi-haiku`) ran, and its non-interactive `-p` mode hangs without
-`</dev/null`. The pi subagent extension links were dangling once and were
-repointed to release 1.1.0. On 2026-10-12 `scripts/pi-subagent-link` printed
-"nothing to link" and exited 0 while an npm-global pi existed elsewhere
-(ticket 1089, since closed by PR #1390). pi defaults were found resolving away from padme (to
-`openrouter/auto` on doudou, to a Hugging Face model on padme) because the
-default model was missing from the enabled or provider model lists.
+## Hazards
 
-Local server. The earlier standing default (padme `qwen3.8-27b` on
-`llama-server`) is superseded. On 2026-10-12 the author switched padme
-production to Flash-Next IQ3_S on both GPUs under Strata
-(`strata-server.service` on :8080, xhigh default). `llama-server.service` was
-disabled, and pi defaults on doudou and padme point to the new model. The roar
-sweep repointed six pi agents still pinned to the retired model, and
-`adapters/pi/agents/code-reviewer.md` named the new model on 2026-10-13. Strata
-v0.1.43 quirks: it rejects `reasoning_effort: "xhigh"` in config (accepts
-`high`), and its server ignores the config `port`.
+- Pi loads only the first of `AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md` per directory; an unknown model gets another model's settings, so declare it (2026-10-07). pi has no Agent tool: raids run inline, DEGRADED.
+- `pi-haiku -p` hangs without `</dev/null`; pi defaults drift when the model is missing from enabled lists; `pi-subagent-link` once exited 0 on "nothing to link" (PR #1390).
+- Wrappers do not unset a caller-exported OpenRouter key (open, 2026-10-28).
+- Vibe cannot report a provider-qualified model id; record it as runtime-masked. A delegate's model id is recorded only as it reported it.
+- Hours into a session, `--help` or reload a helper before a mutating call: an interface changed on main (attribution helper, ticket 1307). Never silence its output.
+- Gaze run inside a coder returned self-only five of five times; explicit panel briefs fixed it (2026-10-27).
 
-Vibe. Child sessions spawned through Vibe's agent connector do not themselves
-expose it; detached `vibe -p` seats were blocked by its approval policy; the
-runtime exposed no verbatim provider-qualified model id, so PR #1211's
-attribution records the writer as runtime-masked.
+## Open questions
 
-Codex. The contradictory-note channel seen in the 0918 trial was closed by a
-user-level `AGENTS.md` in `CODEX_HOME`; `rules/` was shown not to be
-instruction-bearing on codex-cli 0.159.3 (PR #1147). Detached codex seats
-given only a profile contract, a perspective and a diff caught a replayed
-defect class (0938). Codex 0.161.0 with a ChatGPT login accepted `-m
-gpt-6-luna` and rejected `-m claude-haiku-5-5` (HTTP 400). On 2026-10-10 a
-`codex exec` seat failed at once on a usage limit ("try again at Oct 14th"),
-so PR #1352 had no other-family reviewer.
+- Does Pi's 195-minute gaze on a local 27B model (2026-10-03, one run, six-seat fan-out as the entry's attribution) recur on the current model? Untested.
+- Would a faster gaze orchestrator save 20-30 s of a ~3 min run (40 percent odds)? Hypothesis.
 
-Model tournament. Cycle 2 (ticket 1024, closed 2026-10-06): the entry's
-opening medians were superseded the same day by two in-entry corrections
-(142/160 OK legs; seven VOID-EMPTY results were OpenRouter 403 key-limit
-errors). The current figures are the corrected summary
-(`docs/2026-10-06-tournament-corrected-summary.json`) and
-`skills/route/grid.json`. Haiku 5.5 arm N (PR #1253, 2026-10-08) completed
-10/10 with no retry, at a recorded candidate cost of $1.2571. The headline
-finding (Luna 6 medium as the best observed compromise) did not change. Cycle 3
-(ticket 1048, 2026-10-12) was re-scoped to three speed tickets; its local lane
-was announced as running twice while failing (server on the wrong port, then
-the launch script refusing the arm's own server), and four attempts were
-voided. A Claude Code native note records the author's remark that followed,
-"Babysit your takeoffs" (text preserved in the
-[third dream](../smelts/2026-10-13-third-dream.md)); it agrees with the entry
-and adds no rule here. Mellum 2.1
-failed long-context recall and applied 0 of 9 edits on one ticket, and the
-author marked it benchmaxxed. Two runs of one ticket on Flash-Next diverged at
-the first reply under greedy decoding; the entry notes that the prompt carries
-the arm name. Provider limits interrupted runs repeatedly: OpenAI credits, the
-OpenRouter monthly cap, a vanished free endpoint, Hugging Face credits
-(2026-10-02) and the DashScope free quota (2026-10-12). On 2026-10-12 a
-provider 404 was scored OK by the arena runner (1087; subsequently transferred
-to the independent Arena repository, where its copy remains open).
+## Retired
 
-Routing rollout (tracker 1052, 2026-10-08/09). The deterministic
-`model-level` × `effort` chooser was removed in favour of the orchestrator
-choosing from the route grid and per-runtime recommendation files. Haiku 5.5
-joined the grid with `family` labels. Risk-scaled decorrelation followed the
-author's feedback that many PRs are trivial. Wave C's advisor test (3 arms ×
-10 items) caught 0 of 4 recorded board defects in any arm and was recorded as
-insufficient evidence to downgrade review seats. The launch line (`worker |
-family | effort | risk row | reason`) was written before 4 of 154 traced
-launches (2.6%) and 1 of 35 after its introduction. These counts are floors,
-because lines written in chat were not counted. About 98% of launches pinned
-the model.
+- Agent files with `model: standard|strong` failing 404 (2026-10-08): tokens removed then; history ([A0-C](../journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md)).
 
-## Hypotheses, not facts
-
-That these behaviours hold for later runtime versions, other models or other
-prompts is untested. The 195-minute gaze is one run; its cause is the entry's
-attribution, not a measurement. That the arm name in the prompt explains the
-greedy-decoding divergence is the entry's observation, not a tested cause.
-
-## Refresh: Pi linking and Arena separation (2026-10-13 to 2026-10-15)
-
-[PR #1390](../journal/2026/2026-10-14-raids-1080-1089-wrap-up.md) repaired
-Pi linking by resolving the actual launcher and discovering npm-global modules,
-while retaining managed-release precedence/fallback. Seven subprocess cases
-covered discovery, idempotence, missing/incomplete sources and wrapper
-stderr/argv/status. The optional route-cache wording dissent was dismissed
-under bounded scope, not repaired; the upstream installer issue was auto-closed
-under its contributor policy.
-
-[PR #1386](../journal/2026/2026-10-13-arena-separation-and-force-merge.md)
-separated Arena after hash-verifying 96 original files. Eight open tickets,
-including 1048 and 1087, retain their IDs there; the historical harness copies
-of those two closed as wontdo with transfer reasons. Historical routing numbers
-remain evidence, not a current harness-owned tournament. The
-[2026-10-15 integration record](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
-records #1423 importing two author-selected provisional local candidates from
-pinned Arena evidence. Neither those candidates nor masked review identities
-establish a new model-performance finding here.
+- Tournament cycles 2-3 medians, Mellum, greedy divergence, routing-rollout launch-line counts: Arena separation (PR #1386) and the route grid own them.
+- Earlier padme `qwen3.8-27b` default: superseded by the 2026-10-12 switch.
+- Vibe 2.25.8 "headless denies file tools": superseded by 1279.
+- Codex 0.159.3 `rules/` note, `gpt-6-luna` accepted and `claude-haiku-5-5` rejected on 0.161.0: stale versions, unverified.
 
 ## Sources
 
-- [First raid on pi](../journal/2026/2026-10-02-first-raid-on-pi-pr1153.md)
-- [Raid 0902 on pi](../journal/2026/2026-10-03-raid-0902-gaze-risk-band-pr1155.md)
-- [Raid 0938, Pi portability and codex seats](../journal/2026/2026-10-03-raid-0938-profiles-subsystem.md)
-- [Orchestrated raid: #1147, #1150, pi default](../journal/2026/2026-10-02-orchestrated-raid-closes-memory-v8-tracker.md)
-- [Raid under Vibe](../journal/2026/2026-10-02-raid-853-937-979-1014-vibe-runtime.md)
-- [Detached vibe seats blocked](../journal/2026/2026-10-03-raid-verification-loop-wave-base-live.md)
-- [0887 activation, masked model id](../journal/2026/2026-10-05-0887-activation-live-reinstall-regression.md)
-- [Tournament cycle 2 with corrections](../journal/2026/2026-10-06-model-tournament-cycle-2-close.md)
-- [Mistral Large 4 pi context correction](../journal/2026/2026-10-07-mistral4-pi-context-correction.md)
-- [Pi leg interrupted](../journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md)
-- [Haiku arm N](../journal/2026/2026-10-08-haiku55-arm-n-integration.md) and [publication day](../journal/2026/2026-10-08-tournament-publication-wrapup.md)
-- [Routing plan and A1](../journal/2026/2026-10-08-llm-routing-plan-and-wave-a1.md), [A0 to C](../journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md), [review round](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md), [round two](../journal/2026/2026-10-09-routing-review-round-two.md), [launch-line recount](../journal/2026/2026-10-09-1071-launch-line-and-adherence-rerun.md)
-- [Raid 1082, Codex usage limit](../journal/2026/2026-10-10-raid-1082-erg-pr-merge-pending-ci.md)
-- [Cycle 3 and production switch](../journal/2026/2026-10-12-t1048-cycle3-speed-stage-and-production-switch.md)
-- [Arena 1053 close, provider 404 scored OK](../journal/2026/2026-10-12-t1053-close-shared-arena-checkout.md)
-- [Raid 1084/1085/1086, pi link no-op](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md)
-- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).
+- [First raid on pi](../journal/2026/2026-10-02-first-raid-on-pi-pr1153.md), [raid 0902](../journal/2026/2026-10-03-raid-0902-gaze-risk-band-pr1155.md), [raid 0938](../journal/2026/2026-10-03-raid-0938-profiles-subsystem.md)
+- [Mistral 4 pi context](../journal/2026/2026-10-07-mistral4-pi-context-correction.md), [routing review](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md), [round two](../journal/2026/2026-10-09-routing-review-round-two.md)
+- [PR 1390](../journal/2026/2026-10-14-raids-1080-1089-wrap-up.md), [Arena separation](../journal/2026/2026-10-13-arena-separation-and-force-merge.md)
+- [Raid under Vibe](../journal/2026/2026-10-02-raid-853-937-979-1014-vibe-runtime.md), [raid forge-less](../journal/2026/2026-10-27-raid-forge-less-and-guard.md)
