@@ -6,7 +6,6 @@ Closed: Pinned PDF build inputs, warning rejection and isolated variants impleme
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
-
 2026-10-23T10:30Z Codex note Red behavior probes reproduced successful compiler accepting unresolved citations, missing logs, bibliography fallback and absent ignored input interface; targeted tests then passed. Implemented explicit SHA-256-pinned old/new supplementary files, fresh build validation and isolated variant instructions. Parent retains PR and review integration.
 2026-10-23T10:00Z Codex MOE note Criteria verified: PDF build input/log/variant contracts validated by Astra/Fable; behavior tests and complete union check passed; real TeX toolchain optional test remains skipped. Complete union make check2156passed4skipped. Whole-train integration remains1198/1205.
 2026-10-23T10:00Z reviewer closed — Pinned PDF build inputs, warning rejection and isolated variants implemented and tested.

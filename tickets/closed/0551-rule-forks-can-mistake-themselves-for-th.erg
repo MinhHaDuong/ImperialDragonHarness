@@ -6,8 +6,8 @@ Closed: autoclosed — PR #759
 
 --- log ---
 2026-08-18T11:34Z claude-exec created
-
 2026-08-19T19:35Z Minh Ha-Duong closed — autoclosed — PR #759
+
 --- body ---
 ## Context
 Observed in a background session on `polycentric_activity`, resuming a stale

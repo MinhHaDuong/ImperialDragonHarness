@@ -6,11 +6,11 @@ Closed: migrated from Status: closed
 
 --- log ---
 2026-04-28T14:10Z claude created
-
 2026-04-29T09:18Z claude note sweep-skip: scope-too-large hash:c3bfb0ede8f9 expires:2026-04-30T09:18Z
 2026-04-29T09:25Z claude note sweep-skip: scope-too-large hash:9f5957e07f6c expires:2026-04-30T09:21Z
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
 2026-05-03T12:55Z claude status closed — folded into nightbeat per Phase 2 refinement; weekly Sunday step writes diffs to ~/.claude/telemetry/permission-diffs/ and surfaces unreviewed entries in nightbeat-report
+
 --- body ---
 ## Context
 

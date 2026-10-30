@@ -6,7 +6,6 @@ Closed: autoclosed — PR #355
 
 --- log ---
 2026-06-06T11:43Z claude created
-
 2026-06-06T11:52Z claude note ride-along: fix ~/.claude pre-commit hook error text 'Run make build first' — binary is vendored at tickets/erg, there is no make build; refresh via erg install --hooks
 2026-06-06T13:11Z claude note split: harness-repo portion (actions 1-3, 5, hook ride-along) moved to child 0230 for the raid; this parent retains the multi-repo sweep (action 4), one PR per repo, stays open until all repos done
 2026-06-08T10:16Z claude note erg-footprint sweep executed via /scry 2026-06-08: fuzzy-corpus #60, Oeconomia-Climate-finance #794, aedist #783, padme #19 (CLAUDE.md to @tickets/AGENTS.md, deleted ticket-* skills + stale rules/tickets.md). chemin-de-voix/git-erg/.claude verified clean. Those PRs were filed Ticket:none — linking retroactively. Remaining: cadens (deferred, 149-file untracked scaffold), llm-benchmarks, home-dir, aedist -docs/-experiments/-slides
@@ -15,6 +14,7 @@ Closed: autoclosed — PR #355
 2026-06-08T13:20Z claude note read-only residue recon of the remaining repos: llm_benchmarks clean (no erg), Climate_finance clean for this scope (no wrapper skills; one v1 closed ticket only). home-dir + aedist -docs/-experiments/-slides do not exist on this machine (over-enumerated). cadens is the lone residue, but it is UNTRACKED/local-only on cadens main (half-applied adoption scaffold) — the 149-file deferral is stale; remaining work is an author decision on cadens's adoption shape, not a mechanical sweep. Checklist updated accordingly.
 2026-06-08T14:05Z claude note cadens adopted canonically (author go-ahead): removed the untracked wrapper scaffold and wired CLAUDE.md to @tickets/AGENTS.md (cadens PR #45, merged). All checklist repos now resolved — closing 0227.
 2026-06-08T13:24Z Integration Test closed — autoclosed — PR #355
+
 --- body ---
 ## Context
 

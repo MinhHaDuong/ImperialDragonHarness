@@ -6,11 +6,8 @@ Closed: integration review — contract + decorrelation rule landed (PR #638), t
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
-
 2026-06-05T06:41Z claude note architecture decision (ACP/A2A dig with author): panel seats connect via the Agent Client Protocol — one client harness (0208), thin model agent replaces aider (0207 re-scoped + renamed), claude-code-acp joins as the sibling-tier Claude seat; A2A noted as the future seam for remote/hosted reviewers; 0216 proceeds as designed and converges into this
-
 2026-06-05T07:30Z claude note SUPERSEDED by panel + research: the PR #289 panel (RETHINK x2) and deep-research (docs/research/agnostic-reviewer-landscape.md) both find the ACP-client framing wrong — containment is OS-level not protocol-level, and the reusable unit is a sandbox-runner (spinoff 0217), not an ACP client. Decorrelation premise unproven (deep-research wbclco9po pending). Author reframe 2026-06-05: "review is CI, treat it like CI" — architecture rewrite pending on that
-
 2026-06-05T09:10Z claude note rewritten around review-is-CI (author directive): ACP dropped as the substrate; a reviewer seat is a sandboxed CI-style job (0217 seat-runner), findings normalize to the contract shape, advisory→required is the optional→required-check toggle. Decorrelation evidence landed (docs/research/ensemble-decorrelation-evidence.md): cap N at 2-4, composition>count, the genuinely-different local open-weights seat buys the real independence (prototype: qwen3.6-35b-a3b usable, devstral hallucinated). 0207/0208 re-scoped off ACP; children now blocked-by 0217
 2026-06-05T11:07Z claude note corrective: the 06:41Z ACP-client architecture decision was superseded the same day by ticket 0217 (sandbox-runner spinoff, PR #289 panel + deep-research evidence) — OS-level sandbox (rootless podman) is the load-bearing containment, ACP demoted to optional plumbing. Current seat mechanism: 0217 seat-runner + /reviewers skill (0208, closed). Do not orient from the 06:41Z note
 2026-06-05T11:08Z MinhHaDuong note blocker 0208 closed — Blocked-by removed.
@@ -26,6 +23,7 @@ Closed: integration review — contract + decorrelation rule landed (PR #638), t
 2026-10-02T08:01Z MinhHaDuong note design successor filed: tickets/1004 replaces the seat-runner panel contract with reviewer-attribution capture (spec docs/2026-10-02-reviewer-attribution-design.md); this tracker closes at 1009's integration-review note; recorded trial verdicts stand
 2026-10-03T08:21Z qwen3.8-27b note integration review (tracker-closure pass, author-approved): criteria 1-2 verified in-repo — PR #638 landed the decorrelation gradient in rules/workflow.md § Delegation and the panel-extension contract in skills/gaze/SKILL.md (## External reviewer panel: finding shape, advisory→required protocol, scorecard trial, fail-open); criterion 3 — all children closed (0356 closed in this pass as absorbed by 1008), trial verdicts stand (Codex roster audit 2026-09-23: local qwen3.8-27b seat completed the 5-PR/3-project trial with zero verified catches, remains on demand, not promoted); the seat-runner panel contract is superseded by the reviewer-attribution design (1004, docs/2026-10-02-reviewer-attribution-design.md); residual dispositions are owned by 1009 actions 3-4; the squad-management design anchor remains in this body (## Squad-management model)
 2026-10-03T08:21Z qwen3.8-27b closed — integration review — contract + decorrelation rule landed (PR #638), trial verdicts stand, residual work owned by 1009; panel contract superseded by 1004
+
 --- body ---
 ## Context
 

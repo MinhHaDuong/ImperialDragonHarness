@@ -6,8 +6,8 @@ Closed: fix applied directly — one-token substitution, no ambiguity
 
 --- log ---
 2026-05-15T10:00Z claude created
-
 2026-05-15T08:07Z MinhHaDuong closed — fix applied directly — one-token substitution, no ambiguity
+
 --- body ---
 ## Context
 Line 99 of skills/merge/erg-pr-merge hard-codes `origin/main`:

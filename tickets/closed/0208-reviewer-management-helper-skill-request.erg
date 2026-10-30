@@ -6,16 +6,14 @@ Closed: autoclosed — PR #299
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
-
 2026-06-05T06:41Z claude note re-scoped: per-tool adapters replaced by ONE ACP client harness — seats are interchangeable ACP agents (Gemini CLI and Copilot CLI speak it natively; 0207's thin model agent; claude-code-acp as the Sonnet seat); containment enforced by capability grants (fs/read only), see 0205 architecture decision
-
 2026-06-05T06:55Z claude note panel review (PR #289): reworded exit-criterion #3 to a delegation stub (the full panel-extension section is 0205's deliverable, which lands AFTER this child, so the original criterion was unverifiable at close). Open panel blockers held for author: ACP fs/read must be path-allowlisted (red-team), per-seat fail-open vs the verify circuit breaker (operational), scorecard schema (operational)
-
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): no ACP client harness — this is the management surface over the 0217 sandbox-runner. Blocked-by 0217 added (the runner is the seat execution mechanism). Seats are invoked by running the 0217 runner per roster entry; containment is the runner's OS sandbox, not protocol grants. The red-team's path-allowlist + per-seat fail-open blockers move to 0217 (where the sandbox lives); the scorecard-schema blocker stays here
 2026-06-05T09:25Z claude note /reviewers skill scaffold landed (PR supersedes #276): list/request/harvest/scorecard wired to the 0217 seat-runner — request runs the runner per roster seat with per-seat fail-open, harvest normalizes FINDING| output to the contract shape (unparseable→WARN), scorecard writes a fixed-schema erg line; empty-roster-safe; tests/test_reviewers.sh 13/13. NOT closing: blocked-by 0217 and the advisory trial (>=5 MRs) is pending
 2026-06-05T11:06Z Minh Ha-Duong note author disposition: close. All six exit criteria verified met (skill landed via PR #292 with Ticket-ref, harvest hardened by 0218/PR #298, delegation stub at verify/SKILL.md:216). Stale Blocked-by:0217 dropped — the remaining containment hardening (network isolation, path allowlist) is 0217's own scope, not this skill's
 2026-06-05T11:08Z MinhHaDuong closed — autoclosed — PR #299
 2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
+
 --- body ---
 ## Context
 

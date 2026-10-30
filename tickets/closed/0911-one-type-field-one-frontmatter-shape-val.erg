@@ -7,17 +7,16 @@ Closed: Implemented documentary v8 convention and templates; links and index bou
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
-
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: this ticket implements the predicate evaluator, not just enumerates the grammar; 0915 and 0921 both call one no other ticket builds. Three unlocated artefacts added to Relevant files.
-
 2026-09-16T10:27Z claude note Recorded the author's open question on who writes the shared store: v7 settles where project memory lives but not who publishes to memory-shared. Options, costs and a recommendation are in the body; the decision is the author's and sits above this ticket.
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T21:25Z codex note Author caps MEMORY.md at 100 lines and defines dream as pruning, merging, refreshing of consolidated memory; journal remains append-only.
 2026-10-01T21:30Z codex note Templates in docs/memory-v8/templates and convention in docs/memory-v8/README.md; relative links and 100-line bound verified; documentary only.
 2026-10-01T21:30Z MinhHaDuong closed — Implemented documentary v8 convention and templates; links and index bound verified
+
 --- body ---
 
 ## Context

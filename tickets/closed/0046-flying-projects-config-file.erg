@@ -7,6 +7,7 @@ Closed: migrated from Status: closed
 --- log ---
 2026-04-29T08:00Z claude created
 2026-04-29T08:11Z claude status closed — load_projects() + projects.json; beat.py no longer hardcodes project list
+
 --- body ---
 ## Context
 

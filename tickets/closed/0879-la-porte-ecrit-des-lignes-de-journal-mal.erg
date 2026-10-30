@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1164
 
 --- log ---
 2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
-
 2026-10-02T06:50Z MinhHaDuong note Current Gaze and verify-gate reroll recipes use erg log, which records the standardized note verb; malformed-log validation and isolated-checkout safety remain unverified.
 2026-10-03T11:49Z claude note Reimagined (raid 2026-10-03): premise verified by execution — vendored binary 91e1f848 PASSes both malformed shapes (log line after the log block's terminal blank line; regressive timestamp). Path: fix the two validator rules upstream in git-erg, re-vendor tickets/erg per the 91e1f848 pattern, add harness negative controls that PASS today and must fail after; route the REROLL bump out of the isolated gate (verify-gate SKILL.md:178, gaze SKILL.md:558,580) — gate emits the bump in its verdict comment, the orchestrator poses the line.
 2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03, F1): the orchestrator-posed bump must commit onto the PR branch (with the REROLL fix) or defer to merge time — an erg log on main mid-wave collides at the same insertion point with the branch's own ticket commits (1016's collision class re-entering).
@@ -18,7 +17,6 @@ Closed: autoclosed — PR #1164
 2026-10-03T12:30Z reviewer note review-pr round 1 on PR #1164 (five-seat panel: correctness/consistency/scope/red-team/doc-propagation, headless claude seats): scope approve; others comment; red team request-changes. Fixed in-branch: reroll_bump added to verify-gate's own YAML verdict schema and given a none value in gaze's; spec placement norm worded to the implemented rule (log block's last blank terminates the run, interior blanks tolerated style); test file gained the append-only invariant and the two-consecutive-turns exit criterion (5 tests green). Consumers outside this ticket's edit scope (raid tally, raid circuit-breaker recipe, gaze fork-liveness fallback) filed as ticket 1023.
 2026-10-03T12:37Z reviewer note review-pr round 2 on PR #1164 (scoped: four objecting seats + regression for scope): all five approve. Took the two consider-tier tightenings: gaze's embedded procedure now says reroll_bump is never none on REROLL; ticket 1023 also names the bare /verify-gate caller as a poser. Remaining consider/nofollow notes accepted as-is (verify-gate keeps its own omit-with-comment schema convention; pre-existing CRLF and echo-separator behaviors unchanged). Panel clean through round 2.
 2026-10-03T13:20Z reviewer note verify-reroll — round 1: test_real_corpus_check_still_passes depends on cwd (tests/test_erg_log_placement.py:136-137)
-
 2026-10-03T14:21Z reviewer closed — autoclosed — PR #1164
 2026-10-03T15:17Z claude note Author decisions (2026-10-03): (1) the position checkbox stands as satisfied by the advisory WARN — accepted; (2) the out-of-spec-verb checkbox is withdrawn — the spec's open verb set leaves nothing to reject; body updated accordingly.
 

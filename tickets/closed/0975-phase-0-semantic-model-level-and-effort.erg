@@ -10,8 +10,8 @@ Closed: Phase 0 accepted; sandbox-only full-gate failures waived
 2026-09-25T11:52Z codex note Verified nine make-check failures: six reproduce on clean HEAD in the same sandbox (shell fixture, socket, and network tests); three memory checks pass on clean HEAD and fail only with the current unrelated worktree memory edits (five untracked provenance bodies and MEMORY.md over budget).
 2026-09-25T11:58Z codex note Isolated Phase 0 overlay on clean HEAD passes all non-integration, non-slow tests (867 passed) and all static Makefile checks. MEMORY.md work is owned elsewhere; no Phase 0 regression found.
 2026-09-25T13:59Z codex note Author accepted Phase 0 as done despite the full make-check gate: six failures reproduce on clean HEAD in this sandbox, and unrelated memory edits are being handled elsewhere. The make-check exit criterion is explicitly waived for this merge.
-
 2026-09-25T13:59Z Minh Ha-Duong closed — Phase 0 accepted; sandbox-only full-gate failures waived
+
 --- body ---
 ## Context
 Child of tracker 0974. Phase 0 of `docs/portable-model-capability-policy.md`:

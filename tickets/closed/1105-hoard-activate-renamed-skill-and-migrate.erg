@@ -8,7 +8,6 @@ Closed: implemented
 2026-10-15T07:30Z reviewer created
 2026-10-15T08:46Z reviewer note blocker 1104 closed — Blocked-by removed.
 2026-10-15T08:55Z reviewer closed — implemented
-
 2026-10-15T08:58Z Codex note Activation verified: 1620 passed, 3 skipped; fast 968, adherence 185, affected 25. Hoard projected-helper and three-runtime install cases share test_skill_seam.py; normal close also unblocks 1106/1108.
 
 --- body ---

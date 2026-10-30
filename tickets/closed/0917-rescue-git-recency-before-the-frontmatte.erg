@@ -11,6 +11,7 @@ Closed: Inventoried legacy sources with exact qualified provenance; no migration
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T21:30Z codex note Inventory in docs/memory-v8/source-inventory.md and source-revisions.tsv; 1095 exact blob revisions checked; sources preserved; native metadata only.
 2026-10-01T21:30Z MinhHaDuong closed — Inventoried legacy sources with exact qualified provenance; no migration or source rewriting
+
 --- body ---
 
 ## Context

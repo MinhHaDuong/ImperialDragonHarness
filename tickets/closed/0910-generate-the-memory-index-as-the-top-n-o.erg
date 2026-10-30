@@ -7,7 +7,6 @@ Closed: autoclosed — PR #1127
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
-
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note Owns the two v7 compiler invariants and, after the Fable plan review, §8 growth monitoring (`hoard weigh`) — it was unowned across the whole train.
@@ -20,6 +19,7 @@ Closed: autoclosed — PR #1127
 2026-10-02T09:41Z vibe note Live step-11 counting run pinned against main at 8cd6c276 (Merge pull request #1126): 8 journal entries in memory/journal/2026/, blob ids from git ls-tree -r 8cd6c276 memory/journal/; the accepted report memory/dreams/2026-10-02-pilot-first-dream.md covers 6 of them via its ledger blob lines (425d8b63, 9dc218a9, f16cb521, 1616e1d4, 795fa66b, d1a855d9); 2 uncovered (8e6e7373 raid-1008-gaze-panel-runtime-child-cap, 50ddecf4 session-suite-economics). 2 < hardcoded threshold 5, so the lair conclusion omits the dream suggestion and finishes: no question, no waiting, no invocation, no timer.
 2026-10-02T09:47Z vibe note Review round 1 on PR #1127 (independent two-seat panel, correctness + consistency): correctness comment — mutant evidence that the ratchet's sentence-dropping filter and narrow verb vocabulary let hedged regressions through; consistency approve — one stale README sentence. Fixes: marker-scope deletion with word boundaries and broadened question/wait/launch/timer vocabularies in tests/test_lair_dream_suggestion.py (all 14 review mutants now caught), robust step-extraction anchor, semantic pin on the threshold phrase and suggestion quote, report-source bullet reworded to reports merged into main, docs/memory-v8/README.md counting sentence refreshed to delivered.
 2026-10-02T09:52Z MinhHaDuong closed — autoclosed — PR #1127
+
 --- body ---
 
 ## Context

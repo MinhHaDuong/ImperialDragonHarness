@@ -6,8 +6,8 @@ Closed: marker table migrated to cost-based tiers + make lint gate
 
 --- log ---
 2026-07-10T09:56Z HDMX-coding-agent created
-
 2026-07-10T09:59Z Minh Ha-Duong closed — marker table migrated to cost-based tiers + make lint gate
+
 --- body ---
 ## Context
 Migrated from climate-finance-het ticket 0220 (filed in the wrong repo — the

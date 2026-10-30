@@ -6,8 +6,8 @@ Closed: autoclosed — PR #567
 
 --- log ---
 2026-07-13T21:18Z Minh Ha-Duong created
-
 2026-07-13T21:33Z Minh Ha-Duong closed — autoclosed — PR #567
+
 --- body ---
 ## Context
 `tests/test_seat_runner.sh`'s "stale seat-runner-prototype refs" sweep

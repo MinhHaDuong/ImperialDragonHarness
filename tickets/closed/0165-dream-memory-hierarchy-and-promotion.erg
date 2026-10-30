@@ -7,11 +7,11 @@ Closed: autoclosed — PR #302
 --- log ---
 2026-05-15T09:00Z claude created
 2026-05-15T19:55Z claude note Tagged deferred — parked until dream v1 sees more exercise
-
 2026-06-05T11:07Z MinhHaDuong unlabel deferred
 2026-06-05T11:07Z Minh Ha-Duong note un-deferred: parking condition met — dream v1 has run nightly for ~3 weeks (latest: PR #295, 2026-06-05); enough exercise to design the hierarchy and promotion path
 2026-06-05T12:02Z claude note raid execute: research section written, provenance.py helper created, SKILL.md extended with promotion/decay/provenance passes, harness memory tier created, SessionStart hook updated, tests added (17 pass)
 2026-06-05T12:42Z MinhHaDuong closed — autoclosed — PR #302
+
 --- body ---
 ## Context
 

@@ -6,11 +6,9 @@ Closed: delivered by the v8 pilot PR (index, themes with provenance, reading sec
 
 --- log ---
 2026-09-11T07:04Z codex created
-
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: owns the v7 disjoint-roots row. The plan's 'move out of ~/.claude' was unachievable — the repo is ~/.claude — so the two moves are named against the declared native root instead. The loader half of the withdrawal test moves to 0921.
-
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 2026-10-01T19:03Z MinhHaDuong codex note Rebased the disjoint-roots action on 0999: resolve the checkout portably, with ~/.agents only the reference clone.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
@@ -19,6 +17,7 @@ Closed: delivered by the v8 pilot PR (index, themes with provenance, reading sec
 2026-10-01T22:05Z MinhHaDuong note blocker 0999 closed — Blocked-by removed.
 2026-10-02T06:47Z MinhHaDuong decision Batched decision list answered, hunt resumed detached. (1) Pilot project: the harness repository itself (~/.agents), per the candidate named in docs/memory-v8/source-inventory.md. (2) Audience: public repository for themes and journal, plus a declared versioned private companion store with a local pointer for material not cleared for the public audience; the companion carries its own access and versioning convention, a public branch is never private storage, and the concrete companion arrangement is proposed in the PR for author review without invented content. (3) Initial sources: only the memory/ root sources inventoried in docs/memory-v8/source-inventory.md (the 10 tracked files under its Pilot sources scope); no pooling of projects/* exports; each imported source keeps provenance, its original text stays accessible, and originals are not rewritten. DREAM.md versioning belongs to 0916, not this ticket.
 2026-10-02T06:51Z MinhHaDuong closed — delivered by the v8 pilot PR (index, themes with provenance, reading section, audience and companion declaration, relocated-clone test)
+
 --- body ---
 
 ## Context

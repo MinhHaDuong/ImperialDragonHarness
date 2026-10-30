@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1185
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
-
 2026-10-02T08:21Z MinhHaDuong note author sequencing decision (2026-10-02): capture waits for the memory v8 rollout to complete — the attribution record is a memory-journal entry, so its format, location and write path follow whatever v8 settles (tracker 0909); downstream 1006/1007/1009 inherit the gate through this ticket
 2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
 2026-10-02T11:34Z reviewer note blocker 0909 closed — Blocked-by removed.
@@ -15,8 +14,8 @@ Closed: autoclosed — PR #1185
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): keep-as-is; 0937 hand-off disposed — capture-side in scope via Actions 2-3 (named status: lines + fail-loud), read-side (check over N runs) is 1007's run-failure rate; implementation seams per the annotation (spec §4 capture template, step 6 via memory-capture.sh, scripts/attribution_record.py fixed-line reader)
 2026-10-05T08:03Z reviewer note implementation: fixed-line reader and validation-before-capture CLI; distinct attempts and shared anchors preserved; fast 896 passed, adherence 169 passed
 2026-10-05T09:05Z reviewer note verify-reroll — round 1: fix Roar capture root and enforce fixed-line attribution validation
-
 2026-10-05T10:34Z reviewer closed — autoclosed — PR #1185
+
 --- body ---
 ## Context
 

@@ -6,8 +6,8 @@ Closed: wontfix under the 2026-07-15 severity floor: the worktree-path guard is 
 
 --- log ---
 2026-07-14T20:10Z Minh Ha-Duong created
-
 2026-07-14T22:06Z Minh Ha-Duong closed — wontfix under the 2026-07-15 severity floor: the worktree-path guard is working as designed and /simplify's Bash fallback functions — no observed defect, no blocked merge. Reopen if a gaze-applied simplify edit demonstrably lands wrong.
+
 --- body ---
 ## Context
 

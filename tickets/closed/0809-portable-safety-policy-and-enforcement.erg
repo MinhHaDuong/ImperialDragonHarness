@@ -7,7 +7,6 @@ Closed: Slice complete: the canonical dirty-reset guard blocked live through cla
 --- log ---
 2026-08-28T12:57Z Codex created child of 0800
 2026-08-28T14:08Z Codex folded lifecycle and capability questions into one enforcing safety experiment
-
 2026-09-16T15:00Z Integration Test note blocker 0802 closed — Blocked-by removed.
 2026-09-24T16:16Z Codex note Rebased after 0976 removed guard-commit-on-main.sh; the surviving guard-destructive-bash.sh dirty-reset case is the enforcing portability pilot.
 2026-09-28T05:49Z claude 0800 amendment adds Vibe as fourth target; this slice stays three-runtime as ratified, Vibe is covered at 0810's gate.
@@ -15,6 +14,7 @@ Closed: Slice complete: the canonical dirty-reset guard blocked live through cla
 2026-09-28T08:05Z claude Action 2 established, all three runtimes have native pre-action blocking: Claude PreToolUse (existing), Codex PreToolUse (same payload field tool_input.command, same exit-2-with-stderr deny; hooks.json wiring, hash-recorded trust, --dangerously-bypass-hook-trust for headless), Pi tool_call handler returning {block, reason} (handler failure blocks as fail-safe - the adapter narrows that to carry the guard's fail-open doctrine). Actions 3-4: one decision contract, zero changes to the guard; Codex needs no normalization (byte-identical script); Pi adapter normalizes the event to the guard payload and translates exit codes; located through the realpath seam, no hard-coded root.
 2026-09-28T08:05Z claude Live smokes, 2026-09-28, dirty fixture (M tracked.txt): claude --print blocked with the guard's advice relayed, fixture intact; codex exec --dangerously-bypass-hook-trust blocked with 'Command blocked by PreToolUse hook: BLOCKED: git reset --hard would discard uncommitted changes to tracked files in /tmp/0809-fixture...'; pi --print (padme) blocked with the guard's options relayed, fixture intact. Clean fixture through pi: ALLOWED, reset ran as a no-op (no over-blocking). Canary CANARY-0809-zx9 in a quoted segment of a blocked compound command: 0 occurrences in the guard's stdout and stderr (local-probe test). Installed on this machine: ~/.codex/hooks.json and ~/.pi/agent/extensions/idh-guard.ts, both symlinks to the canonical tree; Codex persistent trust remains an author step via /hooks (headless used --dangerously-bypass-hook-trust). Adversarial matrix: tests/test_guard_adapter_wiring.py, 11 tests - wiring ratchets (claude/codex/pi), three independent mutation checks on the Pi adapter (event mapping, block result, exit semantics) plus the seam and hard-coded-root guards, fixture-home install resolutions, canary local-probe.
 2026-09-28T08:14Z Minh Ha-Duong closed — Slice complete: the canonical dirty-reset guard blocked live through claude --print, codex exec and pi --print on a dirty fixture (clean fixture allowed); Codex byte-identical via hooks.json (trust = boundary, author step /hooks); Pi adapter normalizes and carries the decision (realpath seam); canary clean; mutation matrix rejects weakening independently; refusal rule recorded for 0810
+
 --- body ---
 ## Context
 

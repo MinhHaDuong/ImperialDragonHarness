@@ -6,8 +6,8 @@ Closed: completed — skill removed; erg ready tickets/ is canonical
 
 --- log ---
 2026-05-03T09:00Z claude created
-
 2026-05-04T21:10Z claude closed — completed — skill removed; erg ready tickets/ is canonical
+
 --- body ---
 ## Context
 The ticket-ready skill calls `erg ready --json`, parses the JSON, and

@@ -6,7 +6,6 @@ Closed: pinned capture helper + reproduction suite
 
 --- log ---
 2026-09-29T12:59Z claude created from /roar sweep; related to 0978 (relocation) and 0987 (idh sync)
-
 2026-10-01T19:03Z MinhHaDuong codex note Removed the obsolete 0978 coupling: 0999 portability does not decide whether session memory remains in the pulled tree.
 2026-10-01T19:37Z MinhHaDuong codex note Author chose automatic factual experience capture and commit at roar time, in a dated project-specific pool; explicitly includes near misses and unexpectedly easy successes. Interpretation and rule/knowledge proposals are excluded from roar. Integration mechanics remain open.
 2026-10-01T20:25Z MinhHaDuong codex note Author simplified the target to repository Markdown and AGENTS.md across Claude, Codex, Pi and Vibe: no embedding model, database or MCP memory dependency. Proposed short MEMORY.md, consolidated topics, factual journal and versioned DREAM.md; weekly isolated dreaming produces a branch/PR, including crystallisation proposals. Prior capture-at-roar decision remains. Detailed migration and sync acceptance remain open.
@@ -19,6 +18,7 @@ Closed: pinned capture helper + reproduction suite
 2026-10-02T07:43Z MinhHaDuong vibe note Author decision, encrypted-in-repo (supersedes the private companion): capture commits uncleared material in the same repository as age ciphertext from birth (.age suffix); plaintext never lands in the working tree, and the key in ~/.config/keys is never tracked or named by repository content. Filenames of encrypted entries remain public metadata.
 2026-10-02T08:02Z MinhHaDuong note External review of PR #1112 (openrouter-frontier seat, gpt-5.6-luna via OpenRouter, 10.6s; diff ff9465b8..fbd1b0a1) raised a consider finding owned here: the encrypted-in-repo policy names age and ~/.config/keys but does not pin the exact encrypt/decrypt command, the key filename, or the per-project key-selection mechanism; capture implementation must define them. Filed at the author's direction.
 2026-10-02T08:19Z MinhHaDuong closed — pinned capture helper + reproduction suite
+
 --- body ---
 
 ## Context

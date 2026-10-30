@@ -8,7 +8,6 @@ Closed: autoclosed — PR #1685
 2026-10-21T20:20Z reviewer created
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: blocked by 1224, which builds the per-seat clock criterion 1 needs; runs in parallel with 1226. Note the 1225 diagnosis (five-seat panel) differs from this ticket's (idle poll gaps, ticket 1216); 1224 settles which dominates
 2026-10-26T22:56Z reviewer note blocker 1224 closed — Blocked-by removed.
-
 2026-10-27T00:40Z reviewer note measured: report docs/2026-10-27-gaze-wall-time.md (host padme, 140 runs). Neither the idle-poll nor the wide-panel diagnosis dominates; setup plus closing orchestrator turns (42%) and the slowest seat (40%) do. Child 1227 filed: one-call setup and closing scripts. Report is the /pulse visit brief (author away); USD is not priced (traces hold no cost field).
 2026-10-26T23:21Z reviewer closed — autoclosed — PR #1685
 2026-10-26T23:24Z reviewer reviewer note verify-reroll — round 1: criterion 3 — options carry no USD price although the traces hold the token usage it derives from

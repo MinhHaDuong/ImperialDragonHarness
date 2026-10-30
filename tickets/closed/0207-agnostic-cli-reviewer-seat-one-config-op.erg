@@ -6,15 +6,10 @@ Closed: autoclosed — PR #987
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
-
 2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
-
 2026-06-05T06:41Z claude note re-scoped: aider dropped in favor of a thin first-party reviewer agent speaking the Agent Client Protocol — its edit-and-commit loop is exactly what a read-only seat must forbid, while its endpoint connectivity is a trivial OpenAI-compatible call; decision from the ACP/A2A dig with the author (file renamed from 0207-aider-as-external-verifier-one-adapter-o.erg)
-
 2026-06-05T06:55Z claude note panel review (PR #289): added Blocked-by 0208 — action 3 wires this seat into 0208's ACP client harness, so the harness must land first. Three further panel blockers (overstated containment claim, ACP cost/value, trial-stat insufficiency) deferred to author direction on the architecture rewrite
-
 2026-06-05T06:56Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
-
 2026-06-05T09:10Z claude note re-scoped off ACP (author "review is CI" directive): the seat is just an agnostic CLI reviewer run by the 0217 sandbox-runner — no bespoke ACP agent. Blocked-by flipped 0208→0217 (the runner is the dependency, not a management surface). Prototype already done in 0217: aider --ask over llama-server, contained in rootless podman; scorecard 1 devstral-small-2 (13/13 hallucinations, unusable), scorecard 2 qwen3.6-35b-a3b (1 real cross-file catch, usable, 80 tok/s). This ticket now = generalize that to the {OpenRouter, llama-server} matrix + the advisory trial
 2026-07-13T21:13Z Minh Ha-Duong note blocker 0217 closed — Blocked-by removed.
 2026-07-14T05:29Z claude note raid-207 execute (PR pending): landed criteria 1-2 MACHINERY — seat-runner --credential-env (env-passthrough bare -e, never argv; empty-var fail-loud), --health-path built from origin scheme://authority (fixes double-/api), https end-to-end TLS branch (--add-host real-host:127.0.0.1 + in-container 8443 bridge; http byte-identical), reviewers.sh credential-env roster field threaded through all 3 read-sites, commented OpenRouter panel.yml example. Tests: test_seat_runner.sh 42/42, test_reviewers.sh 27/27, test_net_relay.py 2/2 (unchanged). Local TLS-bridge behavioral proof PASSED (self-signed cloud.test origin, HTTP 200, cert validated end-to-end through raw relay inside --network=none container).
@@ -66,7 +61,6 @@ Closed: autoclosed — PR #987
 2026-09-08T08:03Z claude note MR #826 seat=openrouter-budget verdict: did NOT review — seat-runner exited non-zero after 2.7s (0347)
 2026-09-08T08:03Z claude note seat=copilot across MR #813 #816 #818 #819 #820 #824 #825 #826 verdict: did NOT review on all eight — each returned a quota-limit notice rather than a review, and wrote no findings file. Recorded as one line rather than eight identical ones. NOTE the measurement defect: harvest writes status=ok for every one of those runs, so the sidecar alone would grade a seat that never reviewed as having reviewed — an all-clear indistinguishable from could-not-look, in the register the trial depends on
 2026-09-08T08:03Z claude note Backfill provenance: the fifteen lines above are graded from the seat sidecars surviving under the session temp root, not from agent reports. Correction worth keeping — a first pass counted findings with a grep for '^verifiable:' and reported 0 for MR #813, which actually carried two; the format is FINDING|severity=..., closed by SUMMARY|findings=N|verdict=V. The wrong count would have graded the trial's single most informative run as silent
-
 2026-09-23T11:09Z claude note MR #1459 seat=openrouter-frontier verdict: approve — 0 verifiable, 0 consider, of which 0 adopted latency=34.9s
 2026-09-23T16:57Z codex note Padmé trial resumed on qwen3.8-27b via SSH localhost forward to its existing llama-server. A tiny direct completion returned content plus reasoning_content; reasoning_effort=none returned content without reasoning. The aider seat still exhausted a 150s bound with no findings. A single-request direct client in the existing read-only container completed the merged IDH PR #983 diff with contract-shaped output; its sole finding was false (the unchanged _seat_status helper does write .status files). This is a judgeable but NOISY smoke, not a promotion signal. The normal roster remains unchanged; a separate on-demand local roster and short-lived tunnel wrapper are under trial. Criterion 4 still needs 5 MRs across 3 projects for this config.
 2026-09-23T17:03Z codex note On-demand wrapper rehearsal on this isolated t0207-padme branch (not an MR scorecard): tunnel startup and teardown, containment, direct JSON-constrained client, request and harvest all worked; latency 16.8s. Two verifiable findings were false: OPENAI_API_KEY is set in the credentialed branch, and no Authorization header is required by the unauthenticated local endpoint. The model remains advisory and NOISY. A 1024/2048-token free-text response had previously exhausted its cap on the same diff; constrained JSON finished within 512 output tokens.
@@ -83,6 +77,7 @@ Closed: autoclosed — PR #987
 2026-10-02T10:22Z claude note MR #1129 seat=openrouter-frontier verdict: 1 verifiable, 0 consider, of which 1 adopted — verifiable finding (userless scp origin key split) drove gaze REROLL round 1; fixed in 4af6dfac
 2026-10-02T10:22Z claude note MR #1129 seat=copilot verdict: 0 verifiable, 2 consider, of which 0 adopted — ordering-coverage premise partially incorrect (existing port test fails under reorder mutant); ticket-closure finding muted (close-claim carried by merge)
 2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
+
 --- body ---
 ## Context
 

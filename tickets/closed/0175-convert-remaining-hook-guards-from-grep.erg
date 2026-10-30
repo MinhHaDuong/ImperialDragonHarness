@@ -6,8 +6,8 @@ Closed: autoclosed — PR #226
 
 --- log ---
 2026-05-29T06:35Z claude created
-
 2026-05-29T14:14Z MinhHaDuong closed — autoclosed — PR #226
+
 --- body ---
 ## Context
 PR #221 fixed `guard-destructive-bash.sh` to use `grep -P` after a Copilot
