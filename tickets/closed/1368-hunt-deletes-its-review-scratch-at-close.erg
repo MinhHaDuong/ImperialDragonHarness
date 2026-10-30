@@ -3,10 +3,12 @@ Title: Hunt deletes its review scratch at close
 Created: 2026-10-30
 Author: haduong
 Label: needs-human
+Closed: not needed: hunt scratch is git-ignored (.gitignore:2 '*') so cannot cause PREFLIGHT: DIRTY; roar 9b keeps .tmp/ on purpose
 
 --- log ---
 2026-10-30T11:19Z haduong created
 2026-10-30T11:20Z reviewer label needs-human
+2026-10-30T12:18Z reviewer closed — not needed: hunt scratch is git-ignored (.gitignore:2 '*') so cannot cause PREFLIGHT: DIRTY; roar 9b keeps .tmp/ on purpose
 
 --- body ---
 ## Context
