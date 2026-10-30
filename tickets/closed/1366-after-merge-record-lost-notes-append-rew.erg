@@ -2,10 +2,12 @@
 Title: After-merge record lost: notes append rewound by a forced fetch one second later
 Created: 2026-10-30
 Author: reviewer
+Closed: autoclosed — PR #2033
 
 --- log ---
 2026-10-30T08:42Z reviewer created
 2026-10-30T10:00Z raid-85542d imagine+plan: third candidate reproduced (local shared-ref rewind before a push by ref name)
+2026-10-30T10:24Z reviewer closed — autoclosed — PR #2033
 
 --- body ---
 ## Observation
