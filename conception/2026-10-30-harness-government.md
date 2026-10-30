@@ -79,7 +79,7 @@ skill load is not write authorization, split work beyond the context
 limit). Enforcing them falls to the force publique, which is mechanical:
 - hooks (for example `guard-destructive-bash.sh`, which refuses a
   self-matching `pgrep -f`; the main-update guard, which refuses an update
-  of main that carries no gate record);
+  of main that is neither a sync from origin nor a gated merge);
 - the runtime's permission rules and its auto-mode classifier;
 - the before-merge checks of the merge gate.
 
@@ -93,8 +93,8 @@ mechanism that enforces it, or say plainly that none does:
 | never display credentials | declared only (no output filter) |
 | a skill load is not write authorization | declared only |
 | split work beyond ~256K tokens of context | declared only |
-| main is read-only (`rules/git.md`, not ordre public) | the main-update guard refuses an update of main without a gate record (enforce on padme and doudou) |
-| no self-matching `pgrep -f`, no `git reset --hard` on a dirty tree (hook-only, written in no rule) | `guard-destructive-bash.sh`, which blocks these two and nothing else |
+| main is read-only (`rules/git.md`, not ordre public) | the main-update guard, `hooks/reference-transaction` (enforce on padme and doudou; its header lists what it lets through) |
+| a few self-destructive shell patterns (`rules/coding-bash.md` names one) | `guard-destructive-bash.sh` (its header lists them) |
 
 The "declared only" rows are prohibitions with no enforcement: the place to
 ask whether a mechanism is possible and worth its cost. The harness's own
