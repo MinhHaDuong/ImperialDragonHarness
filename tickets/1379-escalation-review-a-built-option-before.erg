@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Escalation: review a built option before asking the author (speculative gaze)
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T16:23Z reviewer created
+
+--- body ---
+## Context
+
+Raid 80974c (2026-10-30) twice put a "continue?" question to the author on
+PR #2054 while a built fix sat on a branch unreviewed. Gaze ran only after the
+answer. Both times the gaze result was the answer: a further blocker meant
+park, a clean result meant gate. The author: "instead of waiting, it could have
+solved the question."
+
+`rules/workflow.md` § Escalation protocol step 2 builds reversible options on
+their own branch within 5 minutes but does not review them; gaze already takes
+a `branch:<name>` unit with no merge request.
+
+## Exit criteria
+
+- [ ] The escalation protocol makes the review of a built option part of building it: gaze on the option's branch runs while the question is pending, and the question to the author carries the result (or is dropped when the result settles it)
+- [ ] A review on the option branch carries over to the PR when its reviewed head is the head that lands (bookkeeping delta at most), otherwise it is discarded; one gaze per request at a time still holds
+- [ ] `skills/raid/references/fix-and-regate.md` points at the rule instead of restating it

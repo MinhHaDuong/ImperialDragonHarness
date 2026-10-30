@@ -1,11 +1,13 @@
 %erg 0.1
 Title: Seat scrub residuals: escaped JSON keys, spaced labels, over-redaction, unscrubbed seat body
 Created: 2026-10-30
+Blocked-by: 1378
 Author: reviewer
 
 --- log ---
 2026-10-30T14:04Z reviewer created
 2026-10-30T14:25Z reviewer note plan raid 80974c — Imagine, Blind-Spot and feasibility annotations appended
+2026-10-30T16:23Z reviewer note PR #2054 parked by author ruling after six gaze rounds (raid 80974c); redesign in ticket 1378
 
 --- body ---
 ## Context

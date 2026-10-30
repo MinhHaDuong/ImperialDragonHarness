@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Seat scrub: one single-pass scanner instead of sequential regex patterns
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T16:23Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1375 (PR #2054, parked by the author's ruling on 2026-10-30, raid
+80974c) tried to fix the seat scrub (`scripts/gaze_seat.py` `SCRUB_PATTERNS`,
+`scrub`) by patching regexes. Six review rounds of gaze with an OpenAI seat
+(review rv-20261030-pr-2054-cfb1 on notes) each closed one leak and opened a
+neighbouring one:
+
+1. value regex: backslash, unterminated, comma-tail values leaked; newline crossing ate parsed answer fields;
+2. a quote of the other kind ended a quoted value;
+3. a doubly-escaped inner quote ended it;
+4. (opener regex + linear scanner) the rest of the line was consumed, so a second secret on a line was skipped;
+5. the Bearer pattern, running first, ate a closing quote the scanner needs;
+6. key=value running first takes only `Bearer` from `X-Auth-Token: Bearer FAKEopaque` and leaves the token.
+
+Diagnosis: the patterns run one after another over text the previous one
+rewrote, so each pattern's correctness depends on the order and output of the
+others. The problem is not one regex but the sequential design.
+
+The parked branch `t1375-scrub-gaze-close` (head 6ff80a32) holds the shape
+corpus as tests and the parts that held: the answer-text scrub in
+`gaze_close.py` (seat bodies quoted into a gaze answer reach
+`refs/notes/review` verbatim), the no-line-crossing rule, and the
+`skills/gaze/references/panel.md` boundary.
+
+## Exit criteria
+
+- [ ] One pass finds every secret span (key=value with quoted, escaped or unquoted value, an auth scheme value inside it or bare, vendor keys, JWT, org ids, emails, home logins), then redacts the spans, so no pattern sees another's output
+- [ ] Every shape in the six rounds above has a test, and none leaks where origin/main at 3e9f79db redacts (a differential test over the corpus against main's `scrub`)
+- [ ] Linear time on a 1 MB line with many values
+- [ ] Ticket 1375's exit criteria are met by landing this together with the held parts of #2054 (one PR, or #2054 rebased onto it)
