@@ -48,6 +48,10 @@ case "$STUB_MODE" in
   codex-refuse)
     printf 'OpenAI Codex v0.165.0\n--------\nworkdir: /x/review-1\nmodel: gpt-6-luna\nprovider: openai\napproval: never\nsandbox: read-only\nreasoning effort: low\nsession id: 0190-abcd (parenthesised); odd\n--------\nuser\n' >&2
     printf 'NOT-RUN: review tree unreadable\n' ;;
+  codex-leak)
+    printf 'OpenAI Codex v0.165.0\n--------\nmodel: gpt-6.1-sol\nreasoning effort: high\nsession id: 0190abcd-1234-5678-9abc-def012345678\n--------\n' >&2
+    printf '401 Unauthorized for jane.doe@example.org org-AbC123xyz Bearer abcDEF123456 key=sk-proj-FAKEFAKEFAKE1234 in /home/janedoe/work\n' >&2
+    printf 'NOT-RUN: auth failed\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
@@ -630,6 +634,38 @@ def test_refused_seat_status_carries_the_cli_settings_header(rig):
         assert kept in status
     assert '--------' not in status and '; odd' not in status and status.count('(') == status.count(')')
     assert status == result.stdout
+
+
+@pytest.mark.integration
+def test_seat_status_scrubs_identifiers_and_tokens_from_the_excerpt(rig):
+    result = launch(rig, mode='codex-leak')
+    assert result.returncode == 1
+    status = (rig['panel'] / 'correctness.md.status').read_text()
+    for leaked in ('jane.doe', 'example.org', 'org-AbC123xyz', 'abcDEF123456', 'sk-proj-FAKE', 'janedoe'):
+        assert leaked not in status and leaked not in result.stdout
+    for kept in ('model: gpt-6.1-sol', 'reasoning effort: high', 'session id: 0190abcd-1234-5678-9abc-def012345678'):
+        assert kept in status
+    assert status.count('\n') == 1 and status == result.stdout
+
+
+def test_stderr_excerpt_scrubs_before_the_cut():
+    gaze_seat = load_module()
+    text = 'x' * 590 + ' sk-' + 'A' * 40
+    out = gaze_seat.stderr_excerpt([text])
+    assert 'sk-A' not in out and 'AAAA' not in out
+    assert gaze_seat.stderr_excerpt(['session id: 0190abcd-1234-5678-9abc-def012345678']).endswith('5678-9abc-def012345678')
+
+
+@pytest.mark.parametrize('leak, secret', [
+    ('{"x-api-key": "FAKEapikey0123"}', 'FAKEapikey'),
+    ('"access_token":"FAKEaccess0123"', 'FAKEaccess'),
+    ('key sk-proj-HEAD********TAILfake', 'TAILfake'),
+    ('account_id=0190abcd-1234-5678-9abc-def012345678', 'def012345678'),
+    ('Authorization: Basic ZmFrZTpmYWtlcGFzcw==', 'ZmFrZTpm'),
+    ('jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmYWtlIn0.c2lnbmF0dXJl', 'eyJzdWIi'),
+])
+def test_stderr_excerpt_scrubs_quoted_masked_and_labelled_secrets(leak, secret):
+    assert secret not in load_module().stderr_excerpt([leak])
 
 
 @pytest.mark.integration

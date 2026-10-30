@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Seat stderr excerpt can carry an account identifier into permanent review notes
+Created: 2026-10-30
+Author: reviewer
+Closed: autoclosed — PR #2048
+
+--- log ---
+2026-10-30T13:15Z reviewer created
+2026-10-30T13:38Z reviewer closed — autoclosed — PR #2048
+
+--- body ---
+## Context
+
+PR #2044 (ticket 1365) puts a one-line excerpt of a failing seat's stderr
+(up to 600 characters) into the seat's status line, which flows into the
+`ran:` line of the review record on `refs/notes/review`. Those notes are
+permanent and pushed to the remote. Gaze on #2044 (seat openai/gpt-6.1-sol)
+noted that an authentication error could carry an account identifier (login,
+email, organisation or key fragment) into that excerpt. Under ordre public
+("never display credentials", `rules/guards.md`) and the project memory
+boundary, identifiers and credential fragments must not enter a pushed record.
+
+## Exit criteria
+
+- [ ] The excerpt is scrubbed before it is recorded: email addresses, key- or token-shaped strings and account identifiers are replaced by a placeholder, while the effort, model and session-id fields stay readable
+- [ ] A test feeds an excerpt holding a fake identifier and a fake token-shaped string and finds neither in the recorded status line (and fails on the unscrubbed code)
+
+## Raid plan (raid 2b69a0, 2026-10-30)
+
+Imagine: premise holds on main. Sole producer `scripts/gaze_seat.py` `stderr_excerpt` (~:472), called once (~:440), recorded in the `.md.status` line and stdout (~:504-514) that becomes the `ran:` line. No reusable redact helper found (skim `scripts/check-personal-data.sh`, `scripts/review_evidence.py` before writing one).
+
+Actions:
+- Module-level tuple of prefix-anchored regexes applied inside `stderr_excerpt` before the 600-character cut: emails, `sk-`/`ghp_`/`github_pat_`/`xox[bp]-`/`AKIA` keys, `Bearer <x>`, `org-<id>`, `key|token|secret|password[:=]<x>`, `/home/<login>`. No generic entropy or length rule: UUID session ids and model ids (`gpt-6.1-sol`) must survive.
+- Docstring and `skills/gaze/references/panel.md` mention that the excerpt is scrubbed.
+
+First test: `tests/test_gaze_seat.py`, integration-tagged, a `codex-leak` stub case beside `codex-refuse`: fake email, token, org id and home login absent from the status line and stdout; model, effort and full UUID session id present; one line. Plus a unit test of `stderr_excerpt` with a token straddling offset 600. Run red on the unfixed code first.
+
+Blind-spot (boundary): the seat report body and codex `-o` outfile are not scrubbed. Check whether gaze answers on `refs/notes/review` quote seat bodies verbatim; if they do, record it as a follow-up, do not widen this ticket.
+
+Feasibility: PASS. Shares `tests/test_gaze_seat.py` with 1371 (disjoint regions); merges sequentially.
