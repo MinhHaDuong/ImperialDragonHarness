@@ -8,7 +8,6 @@ Closed: superseded by tracker 1052: the model-level x effort policy is retired a
 
 --- log ---
 2026-09-24T14:49Z claude created
-
 2026-09-25T13:59Z Minh Ha-Duong note blocker 0975 closed — Blocked-by removed.
 2026-10-05T19:31Z reviewer claude note 2026-10-05 audit: 1000 added as retroactive child; invariants 1,5,6,7,8 uncovered; routing question from 0980 folded in as open design point
 2026-10-06T06:00Z reviewer claude note invariant inventory table added to body (read-only, suite not run); invariant 1 reclassified partial; waivers for 7 and 8 proposed, not signed

@@ -8,7 +8,6 @@ Closed: autoclosed — PR #1616
 2026-10-14T19:43Z Minh Ha-Duong created
 2026-10-14T19:45Z Minh Ha-Duong note Filed from the 1096 design discussion (answer 1); sequenced after the review layers are simplified.
 2026-10-14T20:26Z reviewer reviewer note Blocked-by moved from 1096 to 1100: 1096 now holds the design only, 1100 the implementation.
-
 2026-10-15T16:10Z ChatGPT note Author confirms extending latency work to tests, CI and orchestration waiting; phased measurement and pilot added.
 2026-10-21T15:34Z reviewer reviewer note 2026-10-21 rescoped at the author's word and Blocked-by moved from tracker 1100 to its real prerequisite 1144: most items were fixed or made moot the same day (the startup failures, the test and validation waiting by PR 1583 and tracker 1045, the seat machinery by ticket 1176); three items stay (measure the seats, cap the external reader, never drop a seat silently).
 2026-10-21T16:58Z reviewer note blocker 1144 closed — Blocked-by removed.

@@ -6,15 +6,10 @@ Closed: autoclosed — PR #560
 
 --- log ---
 2026-06-04T08:41Z MinhHaDuong created
-
 2026-06-04T08:52Z unblocked: 0193 closed via PR #262 — stale Blocked-by removed (line was added by PR #267 in a cross-branch race with the 0193 close commit)
-
 2026-06-05T06:41Z claude note alternative path recorded: Copilot CLI speaks ACP natively (Jan 2026) and could join as an 0208 seat instead of the forge bot; this ticket's forge-bot approach stands (zero token cost, server-side) — re-evaluate at 0205's integration review
-
 2026-06-05T06:55Z claude note format correction: the 2026-06-04T08:52Z line above has no actor token (spec is {ts} {actor} {verb} {detail}); the unblocking action was performed by claude. Appending here per append-only rule rather than editing the original
-
 2026-07-13T08:50Z MinhHaDuong note design change: auto-request on every MR is too much — some PRs are trivial. Switch to on-demand: the review is requested per-PR when warranted, never enabled repo-wide. Body rewritten accordingly by claude
-
 2026-07-13T09:30Z claude note lever documented: /reviewers request <pr> runs the forge-bot seat via `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/requested_reviewers -f 'reviewers[]=copilot-pull-request-reviewer[bot]'` (login from panel.yml); gate clause added to skills/gaze/SKILL.md (absent seat silent, requested-but-pending bounded fail-open wait). Exit criteria 1-2 delivered; trial (criteria 3-4) remains
 2026-07-13T19:33Z claude note trial evidence: the 2026-07-13 pipeline raid ran 11 substantive /gaze batteries (PRs #538-#548, all gated, 3 rerolls with real defects) — exceeds the >=5-MR trial volume for exit criteria 3-4; harvest those runs' panel data before scheduling new trial MRs
 2026-07-13T19:43Z claude note correction: the 19:33Z assumption fails — the reviews API shows ZERO Copilot reviews on PRs #538-#548 (the seat was never requested on them; the raid batteries ran without it). No harvestable data there; trial run live instead on the 5 open MRs across 4 projects (request → review posted in 1-2 min each)
@@ -27,6 +22,7 @@ Closed: autoclosed — PR #560
 2026-07-13T19:43Z claude note recommendation for 0205 integration review: KEEP AS STANDING ADVISORY SEAT, do not promote to required. Precision (4/5) and cost (zero) justify keeping it on-demand for non-trivial MRs; promotion is barred by 0205 rule 2 until verifiable-class findings prove stable across re-runs AND the seat is observed on complex code diffs, neither demonstrated in this window
 2026-07-14T05:05Z Minh Ha-Duong closed — autoclosed — PR #560
 2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
+
 --- body ---
 ## Context
 

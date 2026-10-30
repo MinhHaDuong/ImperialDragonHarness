@@ -9,8 +9,8 @@ Closed: autoclosed — PR #855
 2026-09-10T08:20Z Minh Ha-Duong note Pivoted after review of PR #855: a PreToolUse guard replaces the resident rule, so the budget raise is withdrawn
 2026-09-10T08:45Z Minh Ha-Duong note Second review round: for-loop gap closed, heredocs skipped, write-then-exec conceded in writing
 2026-09-10T09:05Z Minh Ha-Duong note Third review round: heredoc exemption anchored and interpreter-aware; the for keyword reverted on the termination argument
-
 2026-09-10T09:07Z Minh Ha-Duong closed — autoclosed — PR #855
+
 --- body ---
 ## Context
 

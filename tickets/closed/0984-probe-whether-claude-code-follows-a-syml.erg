@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1061
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
-
 2026-09-29T13:09Z claude note Raid Imagine + Blind-Spot pass 2026-09-29: annotation appended; cwd-key probe moves into the disposable HOME.
 2026-09-29T13:12Z claude note Raid Phase 4 feasibility: PASS. All named files exist; new files (scripts/probe-memory-symlink.sh, tests/test_probe_memory_symlink.py) do not; touches no file 0987 edits. WARN: if the probe script needs a tests/test_idh_root_literals.py allowlist entry, that file is also edited by 0987; rebase at merge.
 2026-09-29T13:26Z claude note Live probe, claude 2.1.284, disposable HOME (api-key auth), run twice with identical results: control loaded; symlinked projects/<slug>/memory loaded; cwd key is physical (launch via ~/.idh -> ~/.claude keys memory and transcripts under slug(~/.claude), whatever $PWD says); headless -p added no .claude.json projects keys; live HOME entries created: none. Remedy and fallback in body § Verdict.
@@ -15,6 +14,7 @@ Closed: autoclosed — PR #1061
 2026-09-29T14:03Z claude note Correction to the 13:39Z entry: a failed or timed-out launch prints 'could not look (<status>)', not 'launch failed'. Round-2 review fixes: repository env variables stripped when the rig creates its repos, any keystore failure maps to no-key, timeouts kill the child's process group, SIGHUP cleans the rig too, proxy and CA variables pass through, argparse entry point; Verdict reworded (tagged-entries scope, PWD-only launches, repo-root mechanism labelled as observed, run count). Live re-run on claude 2.1.284: same verdict, live HOME tagged entries none.
 2026-09-29T14:16Z claude note Run tally (all on claude 2.1.284, all the same table): the script ran seven times, namely twice before the 13:26Z note, once after the label rename, and once each after review round 1, the author directives, review round 2 and review round 3. The gated live test (IDH_LIVE_PROBE=1, which runs the whole probe and asserts the control) ran four times: before 13:26Z, after the directives, after round 2 and after round 3. Round-3 fixes: the whole child group is killed on any interrupt, not only on timeout; the version query runs in a throwaway HOME with the allowlisted env and no key; the docstring says an inherited HTTPS proxy sees the key.
 2026-09-29T14:41Z Minh Ha-Duong closed — autoclosed — PR #1061
+
 --- body ---
 
 ## Context

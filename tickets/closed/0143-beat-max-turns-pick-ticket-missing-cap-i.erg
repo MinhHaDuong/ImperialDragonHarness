@@ -6,8 +6,8 @@ Closed: exit criteria met: max_turns_pick_ticket capped in __post_init__, docstr
 
 --- log ---
 2026-05-13T06:18Z MinhHaDuong created
-
 2026-05-13T08:56Z MinhHaDuong closed — exit criteria met: max_turns_pick_ticket capped in __post_init__, docstring updated, make check passes (PR #169)
+
 --- body ---
 ## Context
 

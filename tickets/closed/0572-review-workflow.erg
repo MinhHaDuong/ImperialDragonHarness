@@ -7,7 +7,6 @@ Closed: Author accepted cuts with three targeted restorations; authorized merge 
 --- log ---
 2026-08-22T09:27Z Minh Ha-Duong created
 2026-09-06T17:40Z claude note Rewritten in erg format from the author's free-form note left untracked in the primary checkout; the note's text is kept verbatim under Context
-
 2026-09-09T17:31Z claude note Mechanism isolated: the runtime auto-loads ~/.claude/rules/**.md; a paths: frontmatter makes a body conditional. Path-expressible bodies scoped, index and README rewritten, resident-budget gate added
 2026-09-09T18:04Z claude note Trimming pass done: workflow.md and git.md cut by ~55%, skill authoring made conditional, runtime specifics split into claude-code.md; resident 21 649 to 15 469 tk. Author acceptance of the cuts still pending
 2026-09-09T18:07Z claude note Branch sweep moved from git.md to roar step 10 on the author's call: a resident rule file must not inline 25 lines of shell every session pays for. Ratchet repointed at the skill, remote-symref guard added
@@ -17,6 +16,7 @@ Closed: Author accepted cuts with three targeted restorations; authorized merge 
 2026-09-09T19:07Z claude note Author reading the trimmed workflow.md: ticket numbers are provenance, not rule. Nine bare references removed from the resident set and a ratchet added
 2026-09-10T05:44Z codex note Author accepted all cuts except three targeted restorations: conditional author-input questions, tested-scope limit on null results, and global resident no-avian identity. Explicitly authorized application, merge and ticket closure.
 2026-09-10T05:44Z Codex closed — Author accepted cuts with three targeted restorations; authorized merge and closure
+
 --- body ---
 ## Context
 

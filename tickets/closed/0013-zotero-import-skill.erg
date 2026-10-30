@@ -6,7 +6,6 @@ Closed: autoclosed — PR #180
 
 --- log ---
 2026-04-17T15:30Z claude created from review session discussion
-
 2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:5337b9e78984 expires:2026-04-28T14:32Z
 2026-04-28T21:03Z claude note sweep-skip: scope-too-large hash:4680d9afb7d9 expires:2026-04-29T21:03Z
 2026-04-29T02:05Z claude note sweep-skip: scope-too-large hash:eb7beb6f93fa expires:2026-04-30T02:05Z
@@ -17,6 +16,7 @@ Closed: autoclosed — PR #180
 2026-05-13T08:58Z MinhHaDuong closed — out of scope for harness — bibliography/Zotero workflow belongs in the research project repo, not IDH
 2026-05-13T13:30Z MinhHaDuong reopened — scope shifted from bib→Zotero (Web API / Pyzotero) to PDF→Zotero (RIS export + xdg-open); shipped as PR #180
 2026-05-13T11:24Z Minh Ha-Duong closed — autoclosed — PR #180
+
 --- body ---
 ## Context
 

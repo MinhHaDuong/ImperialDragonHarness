@@ -9,7 +9,6 @@ Closed: implemented
 2026-10-13T09:38Z Minh-Ha-Duong note raid Imagine: EXECUTE; self PR inference preserves explicit override and no-ticket fast path; Blind-Spot requires lookup-failure visibility and no false renumber recommendation; exit criteria unchanged.
 2026-10-13T09:39Z Minh-Ha-Duong note raid feasibility PASS: script and hermetic suite exist; extend gh stub dispatch and environment forwarding for self lookup. Three planned paths plus shared annotations remain below the 15-file breaker; no coordination PR needed.
 2026-10-13T09:41Z Minh Ha-Duong closed — implemented
-
 2026-10-13T09:53Z coder note Review fix verifies source repository plus branch; foreign same-name collision control passes; exit criteria checked with actual validation evidence.
 2026-10-13T10:06Z coder note Final simplified self inference uses only actual open-PR list plus proven origin repository/current branch; removed discarded PR-view lookup. Real open PR1374 adds1089/1090 and exits0 unset SELF_PR_NUMBER. Sixteen shell controls pass; fast964, adherence182, full1603passed4skipped84.02s. Exit2 inspection-failure precedence documented; all four criteria remain checked.
 

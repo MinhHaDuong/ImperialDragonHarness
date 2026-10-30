@@ -6,7 +6,6 @@ Closed: autoclosed — PR #149
 
 --- log ---
 2026-04-27T00:00Z claude created
-
 2026-04-27T21:04Z claude note sweep-skip: scope-too-large hash:655d2448ed3c expires:2026-04-28T14:32Z
 2026-04-28T21:03Z claude note sweep-skip: scope-too-large hash:6eff9e1c2548 expires:2026-04-29T21:03Z
 2026-04-29T02:05Z claude note sweep-skip: scope-too-large hash:8632df653b14 expires:2026-04-30T02:05Z
@@ -15,6 +14,7 @@ Closed: autoclosed — PR #149
 2026-04-29T18:55Z claude note repaired body corruption from erg sweep-skip bug (ticket 0060)
 2026-05-12T13:28Z rescoped: offload git steps to shell script; drop two-skill split approach
 2026-05-12T13:56Z Minh Ha-Duong closed — autoclosed — PR #149
+
 --- body ---
 ## Problem
 

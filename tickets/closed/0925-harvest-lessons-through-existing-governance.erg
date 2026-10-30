@@ -7,7 +7,6 @@ Closed: Old scope superseded: explicit Brood path delivered and closed by 0888 (
 
 --- log ---
 2026-09-11T07:04Z codex created
-
 2026-09-11T07:24Z codex note Addressed independent planning review: explicit v6 ownership and core/optional boundaries; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: adds a positive exit criterion; the three existing ones were absence-shaped and met by harvesting nothing.

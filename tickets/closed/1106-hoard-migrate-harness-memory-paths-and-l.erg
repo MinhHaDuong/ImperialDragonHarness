@@ -8,7 +8,6 @@ Closed: implemented
 2026-10-15T07:30Z reviewer created
 2026-10-15T08:55Z reviewer note blocker 1105 closed — Blocked-by removed.
 2026-10-15T09:24Z reviewer closed — implemented
-
 2026-10-15T09:25Z Codex note Committed migration and relocated clone verified: 44 affected, 972 fast, 185 adherence passed; 217 files preserved, 244 ledger blobs accessible, 7 relocation mappings and 1 archival source/target pair. Full pre-PR gate follows.
 
 --- body ---

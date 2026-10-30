@@ -6,11 +6,9 @@ Closed: delivered by the v8 runtime smoke PR — evidence doc, marked public cap
 
 --- log ---
 2026-09-11T07:04Z codex created
-
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: the live smoke gains a miswired-delivery negative control and a runtime-side observation surface the adapter does not author. Disjoint-roots clearance reattributed to 0920.
-
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-09-28T05:49Z claude The store-cannot-leave-~/.claude premise: the relocation is now ticketed as 0978 (child of 0909). Re-read this ticket's premise against it before picking up.
 2026-10-01T19:03Z MinhHaDuong codex note Rebased adapter acceptance on 0999's resolved-checkout contract; no adapter may infer the canonical store from a fixed home path.
@@ -20,6 +18,7 @@ Closed: delivered by the v8 runtime smoke PR — evidence doc, marked public cap
 2026-10-02T10:02Z vibe note Private/.age capture leg deferred by author decision (raid imagine pass): no legitimate uncleared material exists for this smoke. Deferral and its limit — the decrypt/consolidate/re-encrypt path stays unexercised on real material — are recorded in the evidence document.
 2026-10-02T10:14Z MinhHaDuong closed — delivered by the v8 runtime smoke PR — evidence doc, marked public capture, every leg exercised or honestly deferred
 2026-10-02T10:41Z claude note cross-ref 0979 (raid 1014/0937/0979/0853 wave): wiring a Pi runtime adapter inherits the silent-reroute risk when model resolution comes up empty — the provider-assertion rule in adapters/pi/README.md (verify served provider in --mode json, keep declared model ids resolvable) is part of that adapter contract
+
 --- body ---
 
 ## Context

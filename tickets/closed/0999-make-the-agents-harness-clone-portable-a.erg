@@ -6,7 +6,6 @@ Closed: integration complete: #1091 registration, #1099 WONTDO, #1101 retirement
 
 --- log ---
 2026-10-01T19:02Z codex created
-
 2026-10-01T19:03Z MinhHaDuong codex note Created as the replacement for 0978/0986 by author decision: clone at ~/.agents, resolve the checkout portably, keep runtime profiles independently owned.
 2026-10-01T19:16Z MinhHaDuong note Documentation and migration-ticket sweep complete locally on docs-portable-agents-plan; 112 relevant tests, 511-ticket corpus validation and whitespace checks pass. Full installation, relocation and runtime smoke acceptance remain open.
 2026-10-01T19:59Z codex note Implementation isolated in PR #1091 (draft). Fresh clone, arbitrary-path and relocation fixtures pass; make check passed 1295 tests with 3 skips; live Claude/Codex/Pi clean reset and dirty guard controls pass. No runtime profile deployment or tracker closure claimed.
@@ -14,6 +13,7 @@ Closed: integration complete: #1091 registration, #1099 WONTDO, #1101 retirement
 2026-10-01T21:23Z codex note Child 1003 closed and archived by merged PR #1091 (8af5cd16); final gate round 2 approved. Child 1002 remains open; parent integration is pending.
 2026-10-01T22:05Z MinhHaDuong closed — integration complete: #1091 registration, #1099 WONTDO, #1101 retirement; 0920 pilot proceeds separately
 2026-10-02T06:27Z vibe note PR #1102 subsequently deleted the remaining legacy dream helpers (commit.py, read-index.py) under the author-directed memory v8 retirement; this closure record is otherwise unchanged.
+
 --- body ---
 
 ## Context

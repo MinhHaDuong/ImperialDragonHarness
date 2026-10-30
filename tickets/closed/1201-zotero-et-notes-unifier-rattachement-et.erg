@@ -6,7 +6,6 @@ Closed: Attach-to-existing, note intake and live receipt contracts validated; ba
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
-
 2026-10-23T09:24Z Codex note Implemented attach-to-existing and concrete Markdown Document intake with source work_key provenance and live imported-file hash receipts; separate per-note inventory covers check-staging exclusions. Backend unchanged: inspected create_entries, entry_to_zotero_item, attach_file and file_evidence; arbitrary readable .md accepted, abstract mapped to abstractNote. 35 existing skill checks passed; direct venv catalog drift check passed (make wrapper blocked by cache/network). No live Zotero write claimed; parent owns full gate and Astra/Fable final review.
 2026-10-23T10:00Z Codex MOE note Criteria verified: Zotero attachment/intake and Markdown-note receipts validated by Astra/Fable at0121b6a6; shared intake wording corrected. Backend unchanged. Complete union make check2156passed4skipped. Whole-train integration remains1198/1205.
 2026-10-23T10:00Z reviewer closed — Attach-to-existing, note intake and live receipt contracts validated; backend unchanged.

@@ -6,8 +6,8 @@ Closed: wontfix: author is the labelling actor and is in the loop by definition;
 
 --- log ---
 2026-07-28T14:58Z Integration Test created
-
 2026-07-28T15:22Z Integration Test closed — wontfix: author is the labelling actor and is in the loop by definition; the window is hours wide and 0390's Phase 1 screen covers the measured failure mode (0334/0338); growing raid skill text for this corner case contradicts the harness cool-down directive
+
 --- body ---
 ## Context
 

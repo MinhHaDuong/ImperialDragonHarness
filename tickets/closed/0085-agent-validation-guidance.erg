@@ -5,8 +5,8 @@ Author: claude
 Closed: completed — validate call sites fixed; erg check in housekeeping (graceful fallback); full erg check enforcement deferred to git-erg/0038
 --- log ---
 2026-05-04T21:45Z claude created — follow-up to git-erg/0037 design; depends on binary split landing in git-erg/0038; unblock once that ships
-
 2026-05-04T21:11Z claude closed — completed — validate call sites fixed; erg check in housekeeping (graceful fallback); full erg check enforcement deferred to git-erg/0038
+
 --- body ---
 ## Context
 

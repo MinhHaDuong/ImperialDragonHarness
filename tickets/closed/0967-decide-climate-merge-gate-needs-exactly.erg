@@ -7,9 +7,9 @@ Closed: Decided no (author, 2026-09-24): climate keeps two review cycles by defa
 
 --- log ---
 2026-09-24T07:12Z claude created
-
 2026-09-24T07:12Z Claude label needs-human
 2026-09-24T07:50Z Claude closed — Decided no (author, 2026-09-24): climate keeps two review cycles by default; the hook, review-checklist.md and AGENTS.md already agree
+
 --- body ---
 ## Context
 Audit B1 (`docs/2026-09-24-rules-coherence-audit.md`). climate `.claude/hooks/check-reviews.sh` requires ≥2

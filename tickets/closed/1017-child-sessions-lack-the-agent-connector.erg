@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1162
 
 --- log ---
 2026-10-02T11:05Z reviewer created
-
 2026-10-02T11:30Z reviewer MinhHaDuong note Keep the documented pattern runtime-portable: define a runtime-neutral detached-seat contract (headless non-interactive CLI per seat, prompt embedding the seat contract, worktree-pinned cwd, read-only rails, artifact polling) with per-runtime substitution examples, not a claude-only recipe
 2026-10-02T11:37Z reviewer MinhHaDuong note Generalize the seat beyond local CLI processes: a seat is any reviewer agent by transport (detached CLI, GitHub Copilot review, remote agent on another host). Express seat requests in agent-profile terms (capability class, effort) per AGENTS.md and let the route resolve the concrete model; when a transport cannot honor the requested profile (e.g. a fixed-model review bot), record the limitation instead of silently substituting
 2026-10-02T11:39Z reviewer MinhHaDuong note Seats deliver local report artifacts at known paths in the review worktree; they never post to GitHub or hold remote credentials. Propagating findings to the PR discussion is an orchestrator-owned adapter step downstream of the artifacts (cf. ingest-decision-letter ledger-then-propagate shape) — do not couple the seat contract to any remote register; git-dyne later only replaces the adapter
@@ -19,6 +18,7 @@ Closed: autoclosed — PR #1162
 2026-10-03T12:05Z reviewer note Executed (raid 2026-10-03): detached-seat substitution section inserted in skills/review-pr/SKILL.md after the perspective table (non-interactive detached CLI per seat, prompt-embedded seat contract, worktree-pinned cwd, read-only rails, deny-rules as one string, model-pin limitation recorded, artifact polling under the concurrency contract, spawn-success never trusted, slot budget/child cap, seat-runner.sh optional); pointer sentences in the fan-out preflight and gaze Agent C; doc-pin test tests/test_review_detached_seat_pattern.py
 2026-10-03T12:31Z reviewer note Review rounds 1-3 run via the detached-seat substitution itself (claude transport, vibe transport blocked by its approval policy for detached -p sessions — recorded limitation, no-report round 1 doc-propagation, approved on claude in round 2). All findings fixed in d47765c2 and 5325e270; round 3 consistency and regression both approve.
 2026-10-03T14:13Z reviewer closed — autoclosed — PR #1162
+
 --- body ---
 ## Context
 

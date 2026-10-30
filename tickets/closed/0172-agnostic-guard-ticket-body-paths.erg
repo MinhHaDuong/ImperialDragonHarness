@@ -6,9 +6,9 @@ Closed: make check now runs agnostic guard on open ticket bodies; adherence test
 
 --- log ---
 2026-05-23T00:00Z claude created — pattern found during quickfixes session celebrate sweep
-
 2026-05-27T19:56Z claude note wired check-agnostic.sh tickets into make check; closed/ subdir exempted; added tests/test_check_agnostic.py
 2026-05-27T19:56Z Claude closed — make check now runs agnostic guard on open ticket bodies; adherence test added; make check + 237 tests green
+
 --- body ---
 ## Context
 

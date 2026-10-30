@@ -7,8 +7,8 @@ Closed: autoclosed — PR #847
 --- log ---
 2026-09-09T17:00Z Minh Ha-Duong created
 2026-09-09T17:12Z Minh Ha-Duong note red step predicted three failures and found exactly three; the guard narrowed to verify-gate
-
 2026-09-09T17:01Z Minh Ha-Duong closed — autoclosed — PR #847
+
 --- body ---
 ## Context
 

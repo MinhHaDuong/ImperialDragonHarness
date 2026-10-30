@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1067
 
 --- log ---
 2026-09-29T08:27Z claude created child of 0978
-
 2026-09-29T10:35Z Minh Ha-Duong note blocker 0982 closed — Blocked-by removed.
 2026-09-29T12:38Z Minh Ha-Duong note blocker 0983 closed — Blocked-by removed.
 2026-09-29T12:39Z claude note Now also blocked by 0987: the rehearsal should run through idh install/check/relocate, not the separate scripts (author, 2026-09-29).
@@ -16,6 +15,7 @@ Closed: autoclosed — PR #1067
 2026-09-29T19:06Z claude note Mechanism: idh relocate harness [--rollback] (adapters/cutover.py, layout in adapters/cutover-layout.json), per the 12:39Z note; the two directions are two commands of one module. Live-window checklist: docs/idh-cutover-checklist.md. Crash points: tests/test_idh_cutover.py hard-exits before every mutation of both directions; each is finished by a rerun or undone by a rollback.
 2026-09-29T19:25Z claude note Author decision 2026-09-29: the cutover state machine is disproportionate for a one-off move (two blockers in rollback code that runs once, PR #1067 review round 1); redirected to a manual runbook plus tar-snapshot rollback. The cutover module, its rehearsal driver and its tests are deleted in the same PR; the rehearsal findings (both run-B sentinel sessions passed on 2.1.284; policy-limits.json* and remote-settings.json are Claude runtime files; git worktree repair leaves a .git file that still resolves through the restored ~/.idh link untouched) live on as runbook text. Exit criteria reworded.
 2026-09-29T19:36Z Minh Ha-Duong closed — autoclosed — PR #1067
+
 --- body ---
 
 ## Context

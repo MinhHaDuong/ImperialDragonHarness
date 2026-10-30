@@ -6,8 +6,8 @@ Closed: autoclosed — PR #465
 
 --- log ---
 2026-07-10T15:49Z HDMX-coding-agent created
-
 2026-07-10T16:09Z Minh Ha-Duong closed — autoclosed — PR #465
+
 --- body ---
 ## Context
 On a repo that still carries Projects (classic), `gh pr merge` exits non-zero on

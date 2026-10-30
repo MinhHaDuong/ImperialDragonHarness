@@ -6,7 +6,6 @@ Closed: autoclosed — PR #1166
 
 --- log ---
 2026-10-02T11:05Z reviewer created
-
 2026-10-02T11:30Z reviewer MinhHaDuong decision Approved option 1: land wave annotations as ONE commit before Phase 5 spawns executors, all wave branches base on it, wave rebases the shared commit once together; option 2 sidecar is rejected
 2026-10-03T11:49Z claude note Reimagined (raid 2026-10-03): premise holds — raid SKILL.md annotation flow unchanged since Created (26c8ab73 native vs 635cf70c cherry-pick still coexist in history). Path: Phase 4/5 boundary records WAVE_BASE after a final pull --rebase; Phase 5 worktrees branch from that exact SHA; mid-wave main advance = ONE collective wave rebase, never per-branch; Phase 6 integration review adds git merge-tree pairwise on tickets/. No sidecar, no registry, no new script.
 2026-10-03T11:49Z claude note Blind-spot (raid 2026-10-03): the collective rebase rewrites pushed branch SHAs — the skill text must name the force-with-lease authorization explicitly or executors stall at the push. Checkpointing tension resolved: per-phase annotation commits stay; WAVE_BASE is their last commit, all annotations ancestors of it.
@@ -16,6 +15,7 @@ Closed: autoclosed — PR #1166
 2026-10-03T13:03Z reviewer gate round 1 REROLL (PR #1161): pin mid-wave mechanism (rebase WAVE_BASE once, then git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>), define WAVE_BASE refresh after Phase 5.0 and per wave, tighten test to pin old/new base and --onto, apply simplify must-fix (single _slice helper)
 2026-10-03T13:53Z reviewer bump verify-reroll — round 1: mid-wave 'git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>' fails from orchestrator checkout (branch checked out in executor worktree — fatal already-used-by-worktree); target each executor worktree with -C; also apply simplify must-fix (guard test docstring/name residue)
 2026-10-03T14:09Z reviewer closed — autoclosed — PR #1166
+
 --- body ---
 ## Context
 

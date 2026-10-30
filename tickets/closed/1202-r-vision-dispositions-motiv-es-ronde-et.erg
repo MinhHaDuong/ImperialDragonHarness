@@ -6,7 +6,6 @@ Closed: Revision dispositions, same-round coverage and cumulative provenance imp
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
-
 2026-10-23T09:18Z Codex note Implemented reusable disposition/reason/resolution/evidence fields, explicit round ticket universe, cumulative archive manifest, archived source paths, and round-qualified new IDs. Legacy IDs and ticket coverage retained; original base fails four added regression tests. Affected tests and adherence runner pass; integration/review handled by parent train.
 2026-10-23T09:47Z Codex note Addressed Astra cross-round atomic blocker: dedupe and independent coverage require a distinct parent in the same round; malformed children remain visible and fail coverage. Added regression tests including dangling/self references.
 2026-10-23T10:00Z Codex MOE note Criteria verified: Disposition/round/provenance behavior covered by regressions; Astra recheck at e3233985 rejects cross-round hidden-remark probes. Complete union make check2156passed4skipped. Whole-train integration remains1198/1205.

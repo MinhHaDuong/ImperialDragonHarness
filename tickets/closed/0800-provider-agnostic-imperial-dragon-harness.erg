@@ -11,11 +11,11 @@ Closed: Tracker closed with 0810's gate passed: three slices hand-ported and pro
 2026-08-28T13:57Z Minh ratified core plus config plus adapters, with Claude Code, Codex and Pi as early targets
 2026-08-28T13:57Z Codex reconciled reviews by reducing ten speculative children to four evidence-producing vertical slices and removing generator-first work
 2026-08-28T14:22Z panel approved revised family 5/5 after dependency, guard, evidence, versioning and deployment corrections
-
 2026-09-28T05:49Z claude Author directives recorded in the amendment: Mistral Vibe (probed 2.25.8, ~/.vibe) becomes the fourth target runtime; 'harness' now names IDH only and hosts are 'runtimes'; pilot slices 0803/0809 stay three-runtime, 0810's gate covers four.
 2026-09-28T09:03Z Minh Ha-Duong note blocker 0810 closed — Blocked-by removed.
 2026-09-28T09:03Z claude Epic closed. All four children done: 0802 (perch, #938), 0803 (path/config seam, #1040), 0809 (dirty-reset guard, #1042), 0810 (gate, this PR). Slice-level checks passed on Claude Code, Codex and Pi with the evidence in adapters/pilot-support.json; Vibe probed (2.25.8) and named the next manual slice by 0810's recorded decision; documentation names its exclusions and claims no whole-harness parity. The recorded decision: stop - thin hand-written adapters, the two existing installers as the only shared tooling, no IR/compiler/lifecycle schema; reopen triggers (Agent Plugins scope, Anthropic joining) unchanged.
 2026-09-28T09:03Z Minh Ha-Duong closed — Tracker closed with 0810's gate passed: three slices hand-ported and proven (perch, path seam, dirty-reset guard) on Claude Code, Codex and Pi; Vibe probed as the fourth target; decision recorded (stop, thin adapters); no speculative machinery built at any point
+
 --- body ---
 ## Context
 

@@ -6,8 +6,8 @@ Closed: autoclosed — PR #818
 
 --- log ---
 2026-09-07T01:55Z claude created decouvert en reparant 0873 : poser la selection KEYS correcte rend make check rouge. Le defaut est dans le test, pas dans la configuration
-
 2026-09-07T03:33Z Minh Ha-Duong closed — autoclosed — PR #818
+
 --- body ---
 ## Context
 

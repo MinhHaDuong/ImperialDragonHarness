@@ -7,7 +7,6 @@ Closed: acceptance trials delivered, rollout verdict No rollout — results in d
 --- log ---
 2026-09-10T16:34Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
-
 2026-09-11T07:20Z codex note Tightened v6 design coverage and acceptance ownership during planning review; no implementation.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: acceptance margins must land on a named surface in a commit preceding the first trial run, so 'predeclared' is a fact Git can show.
@@ -20,6 +19,7 @@ Closed: acceptance trials delivered, rollout verdict No rollout — results in d
 2026-10-02T11:24Z vibe note STEP B acceptance trials run per the merged protocol (0a0714eacb7c): 31 cells across four runtimes; dream passes 1-2 plus interrupted pass 3; two claim withdrawals; results in docs/memory-v8/evaluation-results.md with per-cell evidence.
 2026-10-02T11:24Z vibe note Rollout verdict: No rollout (predeclared rule) — S9 fail (codex adopted a planted contradictory note), S3/S4 fail (pi leg interrupted by provider credit depletion); recorded, not smoothed.
 2026-10-02T11:19Z reviewer closed — acceptance trials delivered, rollout verdict No rollout — results in docs/memory-v8/evaluation-results.md
+
 --- body ---
 
 ## Context

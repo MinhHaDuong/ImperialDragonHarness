@@ -9,6 +9,7 @@ Closed: autoclosed — PR #497
 2026-07-11T21:05Z claude bump circuit-breaker — execute agent stalled (stream watchdog 600s), WIP salvaged, finisher relaunched
 2026-07-11T21:05Z claude note scry/SKILL.md verified clean — no pre-reorg paths found, no edit needed
 2026-07-11T22:28Z Minh Ha-Duong closed — autoclosed — PR #497
+
 --- body ---
 ## Context
 
