@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Headless seats inherit the caller's CLAUDE_* and other runtime environment variables
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T14:04Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1371 (PR #2050) sealed each headless seat door in
+`skills/route/routes.json` from the host's user CLI config (`host_config`
+per door). The seat process still inherits the caller's environment: a
+Claude Code parent exports `CLAUDE_EFFORT` and other `CLAUDE_*` variables,
+and codex, pi or aider parents may export their own. The explicit `--effort`
+on the claude door overrides the effort variable, but other variables reach
+the seat unseen, which is the hidden-setting class the author ruled out for
+seats and for arena comparability ("I hate hidden settings, plus arena").
+
+## Exit criteria
+
+- [ ] `scripts/gaze_seat.py` launches each seat with an environment whose runtime-config variables are either dropped or declared on the door, credentials' variables kept
+- [ ] A test sets a conflicting runtime variable in the parent (e.g. `CLAUDE_EFFORT=low`) and shows the seat command and environment unchanged

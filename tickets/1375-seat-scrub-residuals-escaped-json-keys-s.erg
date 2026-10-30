@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Seat scrub residuals: escaped JSON keys, spaced labels, over-redaction, unscrubbed seat body
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T14:04Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1370 (PR #2048) scrubs the seat stderr excerpt in `scripts/gaze_seat.py`
+(`SCRUB_PATTERNS`, `scrub`, `stderr_excerpt`) before it reaches the permanent,
+pushed `refs/notes/review`. Gaze on its last head (cross-family seat
+openai/gpt-6.1-sol, plus the orchestrator's probes) reproduced shapes that
+still pass, all non-blocking for 1370's named classes:
+
+- backslash-escaped JSON keys from nested error messages: `{\"access_token\": \"...\"}`;
+- a label with a space: `Account ID: <uuid>`;
+- over-redaction: the case-insensitive `Basic` pattern eats the word after
+  ordinary prose ("basic usage: run"), and in compact JSON a secret field
+  swallows every later field up to the next space.
+
+Boundary left by 1370: the seat report body and the codex `-o` outfile are
+not scrubbed. A seat's read-only sandbox can read host files; whether gaze
+answers quote seat bodies verbatim into notes was not checked.
+
+## Exit criteria
+
+- [ ] The three leak/over-redaction shapes above have a test each, red before the fix
+- [ ] It is established, with a positive control, whether seat report text reaches `refs/notes/review` verbatim; if it does, that path is scrubbed the same way, otherwise the boundary is stated in `skills/gaze/references/panel.md`
