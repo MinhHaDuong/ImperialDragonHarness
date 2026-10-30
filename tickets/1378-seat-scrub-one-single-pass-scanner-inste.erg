@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-30T16:23Z reviewer created
 2026-10-30T16:50Z reviewer note rescoped by author ruling: owned failure fields, main's scrub kept with key-side fixes; no scanner, no LLM judge
+2026-10-30T16:57Z reviewer note plan raid 0da24b — Imagine and Blind-Spot annotations appended
 
 --- body ---
 ## Context
@@ -60,3 +61,36 @@ needs filtering and keep main's crude scrub, whose failure mode
 
 Not in scope by ruling: an error class read from CLI output (vendor formats
 change; add later only if debugging hurts), a grammar on seat reports.
+
+## Plan (raid 0da24b: Imagine, Blind-Spot, feasibility)
+
+Premise holds. Chain: `seat_clock.py:102` CLI stderr → `<out>.log` →
+`gaze_seat.py` `stderr_excerpt()` → `failed()` appends `; stderr: …` →
+`main()` writes `<name>.md.status` → the gaze orchestrator copies the cause
+into the answer's `ran:` line (`panel.md:50`) → `gaze_close.py` → notes. No
+script parses the `stderr:` text (wait-roster, seat_clock plan-check and
+identities, review_notes SEAT_LINE checked).
+
+Actions:
+1. Red first: a stub seat writes a canary secret to stderr and fails; assert
+   the canary is absent from `<name>.md.status` and the printed line, and
+   present in `<out>.log` (positive control). Same for a seat whose report is
+   a `NOT-RUN:` refusal quoting a canary: `failed()` now quotes it.
+2. `failed()` keeps run_seat's owned outcome (`exit N`, `timed out after Ns`,
+   `empty output, Ns`, `failed to start`) and appends door and model; no stderr
+   excerpt, and a refusal is the fixed `seat refused (NOT-RUN)`. Delete
+   `stderr_excerpt` and `STDERR_EXCERPT_CHARS`. Rewrite the tests that assert
+   the old strings (`tests/test_gaze_seat.py` around 172, 220, 284-288, 661-663,
+   722, 730-765). Update `skills/gaze/references/panel.md:50`.
+3. Key-side scrub edit on origin/main's pattern only:
+   `…account[ _-]?id)(?:\\?["'])?[ \t]*[:=][ \t]*\S+` (escaped JSON key,
+   spaced label, no newline crossing); value stays `\S+`. Red tests: escaped
+   key, `Account ID: <uuid>`, `access_token:\nreview plan: x` untouched,
+   `session id: <uuid>` survives.
+4. Port the `gaze_close.py` answer scrub from `origin/t1375-scrub-gaze-close`
+   (head 6ff80a32) with its canary test; parsed fields byte-identical. Do not
+   port its value-end scanner or its later scrub tests.
+5. After merge: close PR #2054 with a comment pointing here; the parked
+   worktree `t1375-1259116-31958` is then removed by roar.
+
+Feasibility: PASS. No file overlap with 1379.
