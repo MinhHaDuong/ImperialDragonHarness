@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Hunt deletes its review scratch at close
+Created: 2026-10-30
+Author: haduong
+Label: needs-human
+
+--- log ---
+2026-10-30T11:19Z haduong created
+2026-10-30T11:20Z reviewer label needs-human
+
+--- body ---
+## Context
+
+Author request (2026-10-30): at the end of its Verify phase, hunt deletes the
+scratch it wrote, leaving branch and worktree to roar. Proposed as a way to spare
+roar's exit check a `PREFLIGHT: DIRTY` stop on hunt trees.
+
+Evidence gathered at filing, against that premise:
+
+- Hunt already confines scratch to `$W/.tmp/` (`skills/hunt/SKILL.md` § Worktree,
+  "Register and enter"); gaze removes its own review scratch through
+  `gaze_close.py` (`skills/gaze/SKILL.md` § Cleanup and containment).
+- `.gitignore:2` is a bare `*`: `.tmp/`, `.panel/` and `build/panel-head/` are
+  ignored (`git check-ignore -v`), so they never surface as uncommitted and
+  cannot cause `PREFLIGHT: DIRTY`. The DIRTY stop comes from tracked or
+  whitelisted files, which hunt's scratch is not.
+- Roar step 9b deliberately keeps `.tmp/` until merged ancestry and citation
+  coverage across PR bodies, branch commits and verdicts are clear
+  (`skills/roar/references/close-and-clean.md` § Step 9b). Deleting it at hunt
+  close, before the merge, would destroy evidence a merge request may cite.
+- Not measured: how often roar actually stops on a hunt tree, and why.
+
+## Decision for the author
+
+Close as not-needed (recommended), or keep and narrow it to the measured cause
+of any real roar stop on hunt trees.
+
+## Exit criteria
+
+- [ ] Count roar `PREFLIGHT: DIRTY` / `KEEP-PENDING` stops on hunt worktrees from
+      recent session logs and name their cause
+- [ ] If a cause is hunt-owned and uncited, hunt removes exactly it at close;
+      otherwise close this ticket with the count as the reason
+- [ ] No change deletes `.tmp/` or `.panel/` content before roar's step 9b gate
