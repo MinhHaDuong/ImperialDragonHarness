@@ -1,0 +1,90 @@
+%erg 0.1
+Title: Forward structured review constraints through gaze seats with evidence
+Created: 2026-10-30
+Author: MinhHaDuong
+
+--- log ---
+2026-10-30T15:13Z MinhHaDuong created
+
+--- body ---
+## Context
+
+Follow-up to Arena ticket 1205, filed after source inspection of
+`scripts/gaze_seat.py` (`build_command`, `launch`, `answer_of`, and
+`reach_refusal`), `scripts/seat_clock.py` (`run_seat`),
+`skills/route/routes.json` (`launch_doors.*.headless`), and
+`tests/test_gaze_seat.py`. The bridge currently sends a text prompt through
+runtime-specific CLI templates. Its template has no structured-output input;
+therefore API support does not establish that any CLI door or actual endpoint
+accepts a schema/grammar argument.
+
+The bridge owns gaze's `REVIEWED` / `FINDINGS` / `ESCALATE` report and
+review-note protocol. This must remain distinct from a caller's numeric rubric
+or product score. The launch prompt currently asks for a second-line
+`reach: read=... shell=... tests=...`; this is the seat's declaration, not
+verified tool-use evidence. If verified tool traces are available, retain them
+as separately sourced evidence and never promote a declaration into proof.
+
+A recent Arena Qwen review attempt timed out at 540 seconds; a second produced
+no valid reach line. Neither yielded an accepted independent clearance. Keep
+failed attempts visible as failures; structured parsing must not turn missing
+reach or invalid output into a pass.
+
+Raw-output retention needs an explicit fix and regression coverage. On a clean
+exit, `seat_clock.run_seat` moves captured stdout to the staging report; when
+`reach_refusal` rejects it, `launch` unlinks that staging file before returning.
+For a CLI output-file door it also unlinks the door output. Thus rejected
+output is not retained at the bridge's report path. Timeout stdout can remain
+in a temporary `.stdout` path, but the caller does not register it as durable
+review evidence; do not describe that as a retention guarantee. Preserve raw
+bytes before normalization/validation for successful and failed output, with
+provenance and safe handling of credentials or other sensitive CLI text.
+
+## Scope
+
+Update the gaze bridge only after identifying the actual CLI option and its
+semantics for each supported door/version. The supported set may be empty. Do
+not infer CLI passthrough from a provider API or an OpenAI-compatible endpoint.
+Keep native grammar/strict schema, JSON-only mode, and prompt-only format
+request as distinct modes. Unsupported or unverified doors must say so
+explicitly and follow a documented degraded path; never silently drop a
+requested constraint or claim enforcement from a parseable response.
+
+Do not change provider consent, cross-family spend controls, author holds,
+scoring policy, or the REVIEWED/FINDINGS/ESCALATE and review-note workflow. This
+ticket does not authorize live model/API calls. Tests must use controlled CLI
+stubs and offline fixtures.
+
+Relevant files:
+- `scripts/gaze_seat.py`: `build_command`, `launch`, `answer_of`, `reach_refusal`
+- `scripts/seat_clock.py`: `run_seat`
+- `skills/route/routes.json`: `launch_doors.*.headless`
+- `tests/test_gaze_seat.py`
+
+## Exit criteria
+
+- [ ] The bridge accepts a versioned structured-report request independently
+  of Arena/product scoring and carries it only through doors whose actual CLI
+  syntax and behavior have evidence; provenance records the requested mode,
+  CLI/door version evidence, and whether the constraint was passed, unsupported,
+  or unverified. Unknown is not native support.
+- [ ] Native grammar or strict schema, JSON syntax mode, and prompt-only mode
+  remain distinguishable. Unsupported/degraded behavior is visible in the plan
+  or report and cannot be mistaken for constrained generation.
+- [ ] Existing `REVIEWED` / `FINDINGS` / `ESCALATE` outcomes and review-note
+  records remain authoritative. Schema validation cannot convert invalid,
+  missing, or contradictory review content into a clear. Reach declarations
+  remain declarations unless separately bound to verified tool evidence.
+- [ ] Raw stdout or CLI output-file bytes are captured before answer extraction
+  and validation, retained for invalid reach, malformed/truncated output,
+  refusal, nonzero exit, and timeout, and linked to door/model/request
+  provenance without persisting credentials. A test proves invalid-reach raw
+  output remains available after `launch` returns.
+- [ ] Stubbed CLI tests cover one positively supported passthrough path (only
+  when a real door option has been established), unsupported/degraded paths,
+  adversarial output that ignores a request, malformed/missing fields, and the
+  failure-output retention cases. If no door has demonstrated support, no
+  positive native-support claim is made; the bridge reports unsupported and
+  preserves the rest of the contract.
+- [ ] The gaze seat tests and applicable project checks pass; no live model/API
+  calls or consent/author-hold changes are made.
