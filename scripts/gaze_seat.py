@@ -520,25 +520,31 @@ SCRUB_PATTERNS = tuple(re.compile(p) for p in (
 ))
 
 
-def _redact(match: re.Match) -> str:
-    """Replacement for a scrub match. A quoted key=value value closes at the first quote of the opener's kind preceded by
-    exactly as many backslashes as the opener had (`\\"` opens, `\\\\\\"` is content); with no closer it runs to the line end."""
-    rest = match.groupdict().get('rest')
-    if rest is None:
-        return '<redacted>'
-    slashes, quote = len(match.group(1)), match.group(2)
+def _redact(match: re.Match) -> tuple[str, int]:
+    """Replacement for a scrub match and where the scan resumes. A quoted key=value value closes at the first quote of the
+    opener's kind preceded by exactly as many backslashes as the opener had (`\\"` opens, `\\\\\\"` is content); with no
+    closer it runs to the line end. The scan resumes after the closing quote, so a later secret on the line is found."""
+    if match.groupdict().get('rest') is None:
+        return '<redacted>', match.end()
+    slashes, quote, start = len(match.group(1)), match.group(2), match.start('rest')
+    rest = match.group('rest')
     run = 0
     for i, ch in enumerate(rest):
         if ch == quote and run == slashes:
-            return '<redacted>' + rest[i + 1:]
+            return '<redacted>', start + i + 1
         run = run + 1 if ch == '\\' else 0
-    return '<redacted>'
+    return '<redacted>', match.end()
 
 
 def scrub(text: str) -> str:
     """Replace emails, key- or token-shaped strings, organisation ids and home logins with `<redacted>`."""
     for pattern in SCRUB_PATTERNS:
-        text = pattern.sub(_redact, text)
+        out, done = [], 0
+        while match := pattern.search(text, done):
+            replacement, end = _redact(match)
+            out += [text[done:match.start()], replacement]
+            done = end
+        text = ''.join(out) + text[done:]
     return text
 
 

@@ -962,3 +962,16 @@ def test_scrub_long_backslash_run_is_linear():
     start = time.perf_counter()
     load_module().scrub(leak)
     assert time.perf_counter() - start < 0.2
+
+
+@pytest.mark.parametrize('text, kept', [
+    ('token="FAKEa1" password="FAKEb2"', ' '),
+    ('{"token":"FAKEa1","password":"FAKEb2"}', '{"'),
+    ('{"token":"FAKEa1","model":"x","password":"FAKEb2"}', '"model":"x"'),
+    ("token='FAKEa1' then secret: 'FAKEb2' end", ' end'),
+])
+def test_scrub_rescans_after_a_closed_quoted_value(text, kept):
+    """A quoted value's closing quote ends the redaction, and the scan resumes there: a second secret on the line is found."""
+    scrubbed = load_module().scrub(text)
+    assert 'FAKEa1' not in scrubbed and 'FAKEb2' not in scrubbed
+    assert kept in scrubbed
