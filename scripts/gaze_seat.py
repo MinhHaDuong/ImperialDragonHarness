@@ -472,10 +472,11 @@ STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, i
 # Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.
 SCRUB_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
     r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',                                    # email
-    r'\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w-]{8,}|\bAKIA[0-9A-Z]{12,}',  # vendor keys
-    r'\bBearer\s+\S+',                                                   # auth header value
+    r'\b(?:sk|ghp|gho|ghs|github_pat|xox[a-z]|AKIA)[-_][\w*-]{8,}|\bAKIA[0-9A-Z]{12,}',  # vendor keys, masked too
+    r'\b(?:Bearer|Basic)\s+\S+',                                         # auth header value
+    r'\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?',                               # JWT
     r'\borg-[\w-]{4,}',                                                   # organisation id
-    r'\b(?:api[_-]?key|key|token|secret|password)\s*[:=]\s*\S+',          # key=value
+    r'\b[\w-]*(?:key|token|secret|password|account[_-]?id)["\']?\s*[:=]\s*\S+',  # key=value, JSON-quoted too
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 

@@ -656,6 +656,18 @@ def test_stderr_excerpt_scrubs_before_the_cut():
     assert gaze_seat.stderr_excerpt(['session id: 0190abcd-1234-5678-9abc-def012345678']).endswith('5678-9abc-def012345678')
 
 
+@pytest.mark.parametrize('leak, secret', [
+    ('{"x-api-key": "FAKEapikey0123"}', 'FAKEapikey'),
+    ('"access_token":"FAKEaccess0123"', 'FAKEaccess'),
+    ('key sk-proj-HEAD********TAILfake', 'TAILfake'),
+    ('account_id=0190abcd-1234-5678-9abc-def012345678', 'def012345678'),
+    ('Authorization: Basic ZmFrZTpmYWtlcGFzcw==', 'ZmFrZTpm'),
+    ('jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmYWtlIn0.c2lnbmF0dXJl', 'eyJzdWIi'),
+])
+def test_stderr_excerpt_scrubs_quoted_masked_and_labelled_secrets(leak, secret):
+    assert secret not in load_module().stderr_excerpt([leak])
+
+
 @pytest.mark.integration
 def test_successful_seat_status_carries_no_stderr(rig):
     result = launch(rig, mode='codex-echo')
