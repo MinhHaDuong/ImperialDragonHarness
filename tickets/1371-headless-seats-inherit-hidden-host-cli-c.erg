@@ -36,3 +36,16 @@ arms to be comparable across hosts and days.
 
 Arena counterpart: filed in the arena repository (its legs may bind the host
 `~/.codex/config.toml` in some modes, `runner.py` LEG_CREDENTIALS).
+
+## Raid plan (raid 2b69a0, 2026-10-30)
+
+Imagine, per door (`skills/route/routes.json`):
+- codex: add `--ignore-user-config` (help: skips `$CODEX_HOME/config.toml`, auth still from `CODEX_HOME`). Keep the `-c` effort pin. Confirm with `codex debug prompt-input` (no model call), with and without the flag, that the `-c` pin and sandbox still apply. The flag also drops the host's codex hooks (`[hooks.state]`) and trust entries in seats: record that in the door.
+- claude: NOT sealed. `--safe-mode` still loads user settings; `~/.claude/settings.json` sets `effortLevel` low and per-model overrides, and the door pins `--model` but no effort. Prefer `--setting-sources project` (or none) plus an explicit `--effort`; `--bare` is out (breaks subscription login). Definite change, so a real launch is required.
+- pi: no skip flag; `PI_CODING_AGENT_DIR` would move auth. Pin thinking level explicitly (refuse a pi model given without `:<thinking>`), record the remaining limit (default provider from host settings) on the door.
+- vibe (disposable `VIBE_HOME`) and aider (explicit flags, `--env-file /dev/null`): already isolated, no change.
+No new abstraction: `build_command` already fills templates; no guard scanning doors.
+
+First test: `tests/test_gaze_seat.py`: a door built from the real `routes.json` carries the isolation flags; plus a codex shim under the `rig` fixture with a fake user config setting effort low, showing the argv the seat runs is unchanged. Real launch per changed door (codex, claude, pi if reachable on padme; otherwise say unreachable) reading its review tree.
+
+Feasibility: PASS. Shares `tests/test_gaze_seat.py` with 1370 (disjoint regions).
