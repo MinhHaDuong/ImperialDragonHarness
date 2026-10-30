@@ -1,0 +1,116 @@
+%erg 0.1
+Title: After-merge record lost: notes append rewound by a forced fetch one second later
+Created: 2026-10-30
+Author: reviewer
+Closed: autoclosed — PR #2033
+
+--- log ---
+2026-10-30T08:42Z reviewer created
+2026-10-30T10:00Z raid-85542d imagine+plan: third candidate reproduced (local shared-ref rewind before a push by ref name)
+2026-10-30T10:24Z reviewer closed — autoclosed — PR #2033
+
+--- body ---
+## Observation
+
+The after-merge runner's record for main tip 0645f247 (PR #2023, result
+fail, written 2026-10-29T23:37:24Z) never reached origin's refs/notes/gate,
+although the runner printed it, which it does only after `append_and_push`
+returns, and went on to open red ticket 1364 (PR #2025). The local reflog
+of refs/notes/gate shows:
+
+- 00:38:07 +0100 `notes append` -> 9a85f48c (the 0645f247 record, parent ac5b37cb)
+- 00:38:08 +0100 `fetch -q origin +refs/notes/gate:refs/notes/gate: forced-update` -> ac5b37cb
+- 00:38:21 next append on ac5b37cb, pushed; origin's history never holds 9a85f48c
+
+No "notes push rejected" warning was logged for that run. No writer
+force-pushes refs/notes/gate (merge-gate.py and review_notes.py both push
+without `+`). The forced fetch is `fetch_notes`, which merge-gate.py runs
+before every append, check and record, from any process sharing this
+repository's refs (raid_land for #2025 was starting at that moment).
+
+Cause not yet established. Candidates: the push returned 0 but the forge
+served the pre-push ref to a fetch one second later (read-after-write lag),
+and the next writer's non-forced push still landed on top of the older tip;
+or the push did not land and its failure was not reported.
+
+`main_sweep.py --after` reported the tip as "the runner crashed on it",
+which was wrong: it ran and recorded red.
+
+Repaired 2026-10-30 by appending the reflog's blob verbatim to origin's
+refs/notes/gate (read back; the after-merge audit reads clean).
+
+## Exit criteria
+
+- One reproduction or a decisive discriminator between the two candidates
+  (for example `git ls-remote origin refs/notes/gate` read back right after
+  the push in `append_and_push`).
+- `append_and_push` confirms its record on the remote before returning, or
+  the ticket records why that is not needed.
+
+## Scope note (raid 85542d)
+
+`main_sweep.py --after` labels an attempted tip without a remote record
+"the runner crashed on them". That label is wrong when the runner wrote a
+record that was lost before reaching the remote; the wording changes to
+name both outcomes.
+
+## Imagine (raid 85542d)
+
+A third candidate fits every observation better than the two above: a local
+race on the shared ref. `append_and_push` appends (local refs/notes/gate ->
+9a85f48c), another process's `fetch_notes` force-fetches the same ref in the
+same repository (-> ac5b37cb, the 00:38:08 reflog line), then the push names
+the ref, `refs/notes/gate:refs/notes/gate`, finds nothing new to send, and
+exits 0 with no warning. Reproduced deterministically with a bare remote
+(append, forced fetch, push by name: exit 0, remote at the old tip; push by
+OID lands). Forge lag alone does not fit: the next writer's non-forced push
+at 00:38:21 succeeded with no rejection, so origin did not hold 9a85f48c then.
+
+## Plan
+
+1. `append_and_push` captures the OID of the notes ref right after its
+   append and pushes `<oid>:refs/notes/gate`, so a concurrent forced fetch
+   cannot change what is pushed.
+2. Read-back (the discriminator going forward): after a push that exits 0,
+   `git ls-remote <remote> refs/notes/gate`; confirmed when the remote tip is
+   the OID, or descends from it (another writer appended after: check
+   ancestry after a fetch). Otherwise log a distinct warning naming pushed
+   and remote OIDs ("push reported success but the remote lacks the
+   record"), re-check briefly to tell forge lag from loss, then retry inside
+   the existing attempt loop. A retry must not leave a duplicate entry that
+   changes any reader's result.
+3. `main_sweep.py`: reword the "crashed" label.
+4. First test (tests/test_merge_gate.py, bare-remote fixture): simulate the
+   rewind between append and push (wrap the module's `git` so a forced fetch
+   of the ref runs just before the push) and assert the record is on the
+   remote; it must fail on the pre-fix code. Second test: a read-back
+   mismatch warns and retries; a third: an ls-remote failure on read-back
+   does not silently pass.
+
+## Feasibility (raid 85542d)
+
+PASS. Callers: merge-gate.py record (~609) and run-after (~1026); no other
+writer of refs/notes/gate. review_notes.py serializes under a lock and merges
+rather than force-fetching: out of scope.
+
+## Blind-spot pass (raid 85542d), folded into the plan
+
+- Capture race: another process's forced fetch can also land between the
+  append and the OID capture. Build the notes commit on a per-process ref
+  (or verify the captured commit holds the entry) so the pushed OID is
+  always the one carrying this record.
+- Read-back fetches the remote tip into a probe ref, never with `+` onto
+  refs/notes/gate. `ls-remote` exit 2 (ref absent) is loss; any other
+  non-zero is "cannot verify", a distinct warning, not loss. Forge lag ends
+  in a warning, never a GateError, unless the record is provably absent
+  after a refetch.
+- Before re-appending on a retry, check whether the record already reached
+  the remote (ancestry); decide() and after_entries take the last entry, so
+  a duplicate is harmless but avoidable.
+- Remotes may be a local path (raid_land without origin); keep
+  test_merge_gate.py, test_after_merge.py and test_raid_land_local.py green.
+- main_sweep: the gap label also fires when the local ref was rewound and
+  the record is on the remote; use neutral wording ("attempted, no record
+  visible").
+- Check whether hooks/reference-transaction reads the local gate ref; record
+  the answer in the PR.
