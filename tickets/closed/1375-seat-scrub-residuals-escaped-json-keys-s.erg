@@ -2,6 +2,7 @@
 Title: Seat scrub residuals: escaped JSON keys, spaced labels, over-redaction, unscrubbed seat body
 Created: 2026-10-30
 Author: reviewer
+Closed: done by 1378 (PR #2060) plus author ruling 2026-10-30: the two leak shapes are tested and fixed there, seat text reaching notes is scrubbed by gaze_close.py; the over-redaction shapes are won't-fix
 
 --- log ---
 2026-10-30T14:04Z reviewer created
@@ -9,6 +10,7 @@ Author: reviewer
 2026-10-30T16:23Z reviewer note PR #2054 parked by author ruling after six gaze rounds (raid 80974c); redesign in ticket 1378
 2026-10-30T16:50Z reviewer note author ruling: over-redaction shapes won't-fix; leak shapes and the answer scrub move to 1378 (owned failure fields, main's scrub kept)
 2026-10-30T17:15Z reviewer note blocker 1378 closed — Blocked-by removed.
+2026-10-30T17:22Z reviewer closed — done by 1378 (PR #2060) plus author ruling 2026-10-30: the two leak shapes are tested and fixed there, seat text reaching notes is scrubbed by gaze_close.py; the over-redaction shapes are won't-fix
 
 --- body ---
 ## Context
