@@ -24,6 +24,9 @@ You are the project's testing doctor. The project and the agents who work in it 
 - **Examination.** Run the evidence scripts one after another, never two suites at once on a host: contention corrupts the timing.
   - How long agents really wait, and whether the first run of a session is slower than the rest:
     `python3 "$IDH_ROOT/scripts/gate_traces.py" collect --project <project> --days 28`
+  - What happens after a red run: how often the same gate reruns in full to check a fix of one or two tests, and which reds turn green with no edit between (flip candidates):
+    `python3 "$IDH_ROOT/scripts/gate_traces.py" reruns --project <project> --days 28`
+    It reads the runner's summary line in each result; quote its "outcome read for" count and the unread reruns, since a gate whose output is cut, compacted or killed is invisible to it.
   - Where a suite's time sits, from a record made in the environment agents use (`--junitxml` or a recorded durations file):
     `python3 "$IDH_ROOT/scripts/gate_profile.py" profile <record> --workers 4`
   - **Same patient.** Measure with the project's own command, its data present and its worker setting. Compare `--collect-only` counts between where you measured and where agents work: a measurement in a bare worktree, without the data, can deselect hundreds of tests and make a slow tier look instant.

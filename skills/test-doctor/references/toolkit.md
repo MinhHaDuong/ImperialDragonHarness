@@ -25,6 +25,17 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 - **Verify.** Dry-run on a docs-only diff, a code diff and a mixed diff; the code and mixed diffs must select the full gate.
 - **Undo.** Delete the map. Price: about 1–2 author-hours.
 
+## Rerun what failed (the runner's own last-failed cache)
+
+- **Fits.** `reruns` shows full reruns after small reds, on a suite whose collection floor is small beside its run time.
+- **What the cache is.** pytest keeps `.pytest_cache/v/cache/`: `lastfailed` (test ids that failed), `nodeids` (ids seen, for `--nf`) and `stepwise` (where `--sw` stopped). Ids only: no results, no fixtures, nothing keyed on file contents, so it never claims a pass is still valid; it only narrows or reorders the next run. It lives in the root of each checkout, so a new worktree starts empty and fills on its first run; copying another checkout's cache carries that checkout's failures. It goes stale silently: an id whose test was renamed or deleted stays until a run clears it, and `--lf` on such ids runs nothing or everything (`--lfnf`). The directory carries a `CACHEDIR.TAG` and its own `.gitignore`, so backups that honour the tag and git skip it without help.
+- **The remedy.** In the fix loop, `pytest --lf -x` (or `--sw` through a run of failures) until green, then one full run of the declared gate. `--ff` keeps the full set and only puts the last failures first: safe wherever the full set is wanted.
+- **Prerequisite.** The loop calls pytest itself, or a target that forwards arguments; xdist and the cache plugin both active (a `-p no:cacheprovider` in the project's options disables it).
+- **Check first.** The collection floor: `time pytest --collect-only -q`. If it is most of a rerun, `--lf` saves little.
+- **Verify.** `reruns` again after N sessions: the "red again" reruns of the gate fall and the flip count does not rise.
+- **Bounds.** A development aid named in the brief of the agents who loop on that project, by the doctor, for that project. Never a rule for every agent, never in a merge gate or a review's evidence (§ Boundaries).
+- **Undo.** Drop the advice. Price: minutes.
+
 ## Stage-level caching (pipeline stages, build stamps)
 
 - **Fits.** The cost is a data stage the tests exercise, not the tests themselves.

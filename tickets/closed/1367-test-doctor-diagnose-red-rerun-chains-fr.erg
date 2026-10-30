@@ -1,0 +1,37 @@
+%erg 0.1
+Title: test-doctor: diagnose red-rerun chains from repeated runs, carry the runner-cache know-how
+Created: 2026-10-30
+Author: claude
+Closed: autoclosed — PR #2032
+
+--- log ---
+2026-10-30T09:29Z claude created
+2026-10-30T09:51Z reviewer closed — autoclosed — PR #2032
+
+--- body ---
+## Context
+
+Author, 2026-10-30: test-cache management is expert knowledge the test doctor
+applies on demand, from evidence on repeated runs, not a wording pin in every
+agent's brief. The toolkit already lists "a rule telling every agent to use a
+cache" under Not remedies; what it lacks is the positive side: the syndrome,
+the remedy, and a probe that sees it.
+
+Prototype on the harness's own traces (28 days, padme, 2026-10-30): 4477
+foreground gate runs, 1326 with a readable pytest summary line; 84 red runs
+followed by a rerun of the same gate in the same session, 101 min of rerun
+wait; median red 1-2 tests of ~2100, median rerun 75 s. 52 of the reds went
+green with no Edit/Write call between, a flip-candidate count the probe must
+qualify (this repo also edits through Bash and git).
+
+Pytest's cache (`.pytest_cache/v/cache/{lastfailed,nodeids,stepwise}`) holds
+test ids only, is worktree-local and cold at creation, and goes stale silently:
+the primary checkout's `lastfailed` on 2026-10-30 named four tests, none of
+which still exists on main.
+
+## Exit criteria
+
+- [ ] `scripts/gate_traces.py reruns` reports, per gate, red-to-rerun chains, rerun wait, median red and suite size, a derived upper bound on rerun time spent on previously passing tests, and red-to-green flips with no recognised edit between; outcome-read coverage printed so "none found" differs from "could not read"
+- [ ] Tests: a positive control (a red run then a full rerun is a chain), a flip, an edited fix, an unreadable outcome
+- [ ] test-doctor examination names the probe; syndromes gain the fix-loop rerun syndrome and use flips as flake evidence; toolkit gains the runner's last-failed cache as a remedy with prerequisites, staleness and its bounds (never a gate, never a blanket rule)
+- [ ] `make check` passes
