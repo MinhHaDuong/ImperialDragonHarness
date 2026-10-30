@@ -20,14 +20,14 @@ last-reviewed: 2026-10-22
 ## Environment
 
 Principles which settle any case the rules below do not cover:
-1. Do not pollute the system: what the GitHub Ubuntu runner image lacks is exotic.
+1. Do not pollute the system: a project declares every tool it runs beyond a bare Linux base (shell, coreutils, git, make).
 2. uv, not pip.
 3. Commit to Linux, with no gratuitous incompatibility.
 4. The uv cache and `.venv` are machine state: never synced, snapshotted or backed up (host configuration, not repo content).
 
 Rules:
 - Commit `pyproject.toml` and `uv.lock` (`--frozen` fails without it); generate any required `requirements.txt` from the lock. A repo that is not a package sets `[tool.uv] package = false`. `pytest`, `pytest-xdist` and a pinned `ruff` go in the `dev` group. A legacy repo (`requirements.txt`, hand-made venv) migrates when next touched.
-- A Python tool absent from the `ubuntu-latest` runner readme is exotic and comes from the lock (or a script's inline metadata), never from the system: it ships no `uv`, `ruff` or `pytest` (actions/runner-images, `Ubuntu2404-Readme.md`, checked 2026-10-22; recheck when `ubuntu-latest` moves to 26.04). uv is the one exception; CI installs it with `astral-sh/setup-uv`, then `uv sync --locked`.
+- Every Python tool a project runs comes from its lock (or a script's inline metadata), never from the system: `ruff` and `pytest` included. uv is the one exception, the bootstrap that the host or CI installs before `uv sync --locked`.
 - Makefile recipes that run Python take the `RUN` prefix: see [make.md](./make.md).
 - Linux is the target. Use `pathlib`, `/` separators and `env` shebangs; a Linux-only tool needs a concrete need that no portable tool meets.
 
