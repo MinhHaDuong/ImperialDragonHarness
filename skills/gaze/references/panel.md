@@ -47,8 +47,9 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    family=<family>` set from the pin, never from the CLI's self-report.
    Anything that stops a seat, its own `NOT-RUN:` refusal included, is
    `<name>: no report (<reason>)` in
-   `<panel>/<name>.md.status` (with a bounded, scrubbed (emails, keys, tokens, org ids, home logins) `; stderr: <excerpt>` of the CLI
-   when it ran, so the answer's `ran:` line keeps the cause) and no report at all: the plan check counts the
+   `<panel>/<name>.md.status` (with `; door=<rt>, model=<pin>` appended when the CLI ran: harness-owned fields only, the exit code,
+   timeout and duration in the reason; CLI stderr and report text never enter the line, since it reaches permanent
+   notes via the answer's `ran:` line, and stay in the seat's local `.log`) and no report at all: the plan check counts the
    seat missing, and gaze never replaces it with its own read. A headless seat
    declares `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on its
    second line; a missing line or `read=no` is that same missing seat, and
@@ -118,7 +119,13 @@ unavailable route is never reported as a clean review.
 
 #### Synthesis and posting
 
-1. **Preserve dissent** verbatim; the author decides.
+1. **Preserve dissent** verbatim; the author decides. A seat reads host files
+   in its sandbox, and the result file you write becomes the `answer` entry on
+   `refs/notes/review`, which is permanent and pushed. `gaze_close.py` therefore
+   scrubs the result file with `gaze_seat.scrub` (emails, key- and token-shaped
+   strings, home logins) before the entry is written; the seat report file and
+   the codex `-o` outfile stay unscrubbed on disk in the review tree. Quote a
+   seat's finding, not its transcript of host files.
 2. **Triage by confidence**: investigate low-confidence findings before posting.
 3. **Deduplicate** findings, never verdicts: a seat whose only finding merged
    into another's keeps its own verdict.
