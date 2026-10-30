@@ -19,8 +19,8 @@ self-report of its model is not trusted. Whatever stops a seat (no door, a
 family the door cannot serve, no consent, an unreadable or moved review tree,
 a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, a missing or `read=no` `reach:` line, the
 cap) prints and saves
-`<name>: no report (<reason>)` (a seat whose CLI ran appends `; stderr: <excerpt>`,
-bounded to one line, so the settings header survives the panel) to `<panel>/<name>.md.status` and writes no
+`<name>: no report (<reason>)` (a seat whose CLI ran appends `; door=<rt>, model=<pin>`: harness-owned fields
+only, the CLI's stderr stays in the local `.log` and never reaches notes) to `<panel>/<name>.md.status` and writes no
 report, so `seat_clock.py plan-check` counts it missing. Nothing here reads
 the code in the caller's place.
 
@@ -474,11 +474,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             leftover.unlink(missing_ok=True)
         return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
-    excerpt = stderr_excerpt(stderr_lines)
 
     def failed(reason: str) -> tuple[bool, str]:
-        # The panel dies with the review tree; the status line is the durable record.
-        return False, f'{reason[:-1]}; stderr: {excerpt})' if excerpt else reason
+        # The panel dies with the review tree; the status line is the durable record and reaches
+        # permanent notes, so it carries only fields the harness owns: never CLI stderr or report text
+        # (both stay in the local `.log` and report file; ticket 1378).
+        return False, f'{reason[:-1]}; door={args.runtime}, model={args.model})'
 
     if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
         return failed(outcome)  # a nonzero exit stays a failure even when the door wrote its file
@@ -492,8 +493,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         leftover.unlink(missing_ok=True)
     if not report:
         return failed('no report (empty output)')
-    if refused := refusal(report):
-        return failed(f'no report (seat refused: {refused})')
+    if refusal(report):
+        return failed('no report (seat refused: NOT-RUN)')
     if bad := reach_refusal(report):
         return failed(f'no report (seat reach: {bad})')
     out = args.panel / f'{args.name}.md'
@@ -503,9 +504,6 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     return True, outcome
 
 
-STDERR_EXCERPT_CHARS = 600  # codex's settings header, through its session id, is about 300
-
-
 # Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.
 SCRUB_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
     r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',                                    # email
@@ -513,7 +511,7 @@ SCRUB_PATTERNS = tuple(re.compile(p, re.IGNORECASE) for p in (
     r'\b(?:Bearer|Basic)\s+\S+',                                         # auth header value
     r'\beyJ[\w-]{8,}\.[\w-]+(?:\.[\w-]+)?',                               # JWT
     r'\borg-[\w-]{4,}',                                                   # organisation id
-    r'\b[\w-]*(?:key|token|secret|password|account[_-]?id)["\']?\s*[:=]\s*\S+',  # key=value, JSON-quoted too
+    r'\b[\w-]*(?:key|token|secret|password|account[ _-]?id)(?:\\?["\'])?[ \t]*[:=][ \t]*\S+',  # key=value: JSON-quoted, backslash-escaped, spaced label; never across a newline
     r'/home/[^/\s|]+',                                                    # login in a home path
 ))
 
@@ -523,14 +521,6 @@ def scrub(text: str) -> str:
     for pattern in SCRUB_PATTERNS:
         text = pattern.sub('<redacted>', text)
     return text
-
-
-def stderr_excerpt(lines: list[str]) -> str:
-    """The CLI's stderr as one bounded line, scrubbed of identifiers and tokens before the cut (the line lands
-    in permanent review notes): separator-only rules dropped, `; ` and parentheses kept out."""
-    kept = [line for line in lines if line.strip('-=_ ')]
-    text = scrub(' | '.join(kept)).replace(';', ',').replace('(', '[').replace(')', ']')
-    return text[:STDERR_EXCERPT_CHARS]
 
 
 def main(argv: list[str]) -> int:

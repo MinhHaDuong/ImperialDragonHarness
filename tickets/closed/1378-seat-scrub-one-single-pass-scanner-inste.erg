@@ -2,11 +2,14 @@
 Title: Seat failures as owned fields; keep main's scrub as a net with two key-side fixes
 Created: 2026-10-30
 Author: reviewer
+Closed: done: seat failure lines carry harness-owned fields only; answer text scrubbed by main's scrub (PR #2060)
 
 --- log ---
 2026-10-30T16:23Z reviewer created
 2026-10-30T16:50Z reviewer note rescoped by author ruling: owned failure fields, main's scrub kept with key-side fixes; no scanner, no LLM judge
 2026-10-30T16:57Z reviewer note plan raid 0da24b — Imagine and Blind-Spot annotations appended
+2026-10-30T17:15Z reviewer closed — done: seat failure lines carry harness-owned fields only; answer text scrubbed by main's scrub (PR #2060)
+2026-10-30T17:19Z reviewer note verify-reroll — round 1: PR #2054 is closed unmerged, pointing here (closed 2026-10-30T17:18Z)
 
 --- body ---
 ## Context

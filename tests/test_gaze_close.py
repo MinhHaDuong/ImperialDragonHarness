@@ -827,3 +827,48 @@ def test_legacy_entry_state_without_session_tree_closes_from_cwd(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert f"toplevel={primary.resolve()}" in r.stdout
+
+
+
+CANARY = "sk-proj-CANARY0123456789"
+
+
+def canary_close(tmp_path):
+    """Close with a result text that quotes a seat body carrying a canary secret, as gaze
+    does for preserved dissent (panel.md); the answer entry is what lands on refs/notes/review."""
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\n{{{{plan_check}}}}\n{{{{seats}}}}\n"
+                       f"dissent (seat verbatim): config read /home/jane/.codex/auth.json "
+                       f"token: {CANARY} mail jane.doe@example.org\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    return answer_text(primary, f), f['head']
+
+
+def test_seat_body_quoted_into_the_answer_is_scrubbed_before_notes(tmp_path):
+    text, _ = canary_close(tmp_path)
+    for leaked in (CANARY, "jane.doe", "example.org", "/home/jane"):
+        assert leaked not in text
+    assert "<redacted>" in text
+
+
+def test_scrubbing_the_answer_leaves_verdict_head_and_seat_lines_intact(tmp_path):
+    text, head = canary_close(tmp_path)
+    assert "result: REVIEWED\n" in text and f"reviewed_head_sha: {head}\n" in text
+    assert "{{" not in text
+
+
+def test_scrub_of_secret_labels_at_line_end_keeps_every_parsed_field_line(tmp_path):
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\n{{{{plan_check}}}}\n{{{{seats}}}}\n"
+                       "intent: inspect access_token:\nreview plan: checks one to three\n"
+                       "intent: rotate the api key:\nseats: self-only\nran: pytest -q\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    text = answer_text(primary, f)
+    for line in ("result: REVIEWED", f"reviewed_head_sha: {f['head']}", "review plan: checks one to three",
+                 "seats: self-only", "ran: pytest -q"):
+        assert line + "\n" in text, line
+    assert "plan check:" in text

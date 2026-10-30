@@ -53,6 +53,8 @@ case "$STUB_MODE" in
     printf 'OpenAI Codex v0.165.0\n--------\nmodel: gpt-6.1-sol\nreasoning effort: high\nsession id: 0190abcd-1234-5678-9abc-def012345678\n--------\n' >&2
     printf '401 Unauthorized for jane.doe@example.org org-AbC123xyz Bearer abcDEF123456 key=sk-proj-FAKEFAKEFAKE1234 in /home/janedoe/work\n' >&2
     printf 'NOT-RUN: auth failed\n' ;;
+  canary-fail) echo "diagnostic: rejected by vendor, ref FAKECANARY0123456" >&2; exit 2 ;;
+  canary-notrun) printf 'NOT-RUN: could not read /home/jane/.codex/auth.json FAKECANARY0123456\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
@@ -169,7 +171,7 @@ def test_headless_seat_reports_with_the_pinned_worker_line(rig):
 def test_seat_refusal_is_no_report(rig):
     result = launch(rig, mode='notrun')
     assert result.returncode == 1
-    assert result.stdout.strip() == 'correctness: no report (seat refused: NOT-RUN: review tree unreachable)'
+    assert result.stdout.startswith('correctness: no report (seat refused: NOT-RUN; door=') and 'unreachable' not in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
 
 
@@ -177,7 +179,7 @@ def test_seat_refusal_is_no_report(rig):
 def test_seat_that_cannot_read_is_no_report(rig):
     result = launch(rig, mode='noread')  # a clear written without reading the tree
     assert result.returncode == 1
-    assert result.stdout.strip() == 'correctness: no report (seat reach: read=no)'
+    assert result.stdout.startswith('correctness: no report (seat reach: read=no;')
     assert (rig['panel'] / 'correctness.md.status').read_text().strip() == result.stdout.strip()
     assert not (rig['panel'] / 'correctness.md').exists()
 
@@ -217,7 +219,7 @@ def test_refused_reach_fails_the_plan_check(rig):
 @pytest.mark.integration
 def test_marked_up_refusal_after_a_preface_is_no_report(rig):
     result = launch(rig, mode='notrun-tick')
-    assert result.stdout.strip() == 'correctness: no report (seat refused: NOT-RUN: HEAD moved)'
+    assert result.stdout.startswith('correctness: no report (seat refused: NOT-RUN;') and 'HEAD moved' not in result.stdout
     mentions = launch(rig, mode='mentions', name='scope')
     assert mentions.returncode == 0, mentions.stdout  # a report with a verdict is not a refusal
 
@@ -281,11 +283,30 @@ def test_failed_seat_is_no_report_never_a_self_read(rig):
 
 
 @pytest.mark.integration
-def test_failed_seat_status_carries_the_first_stderr_line(rig):
+def test_failed_seat_status_carries_only_harness_owned_fields(rig):
     result = launch(rig, mode='fail')
     assert result.returncode == 1
     assert result.stdout.startswith('correctness: no report (failed, exit 1, ')
-    assert 'stub: provider rejected the request' in result.stdout
+    assert 'door=' in result.stdout and 'model=' in result.stdout
+    assert 'stderr' not in result.stdout and 'provider rejected' not in result.stdout
+
+
+@pytest.mark.integration
+def test_cli_stderr_canary_reaches_no_status_line_but_stays_in_the_local_log(rig):
+    result = launch(rig, mode='canary-fail')
+    status = (rig['panel'] / 'correctness.md.status').read_text()
+    assert result.returncode == 1 and 'exit 2' in status
+    assert 'FAKECANARY' not in status and 'FAKECANARY' not in result.stdout
+    log = next(rig['panel'].glob('correctness*.log')).read_text()
+    assert 'FAKECANARY0123456' in log  # positive control: the probe can see the canary where it is allowed
+
+
+@pytest.mark.integration
+def test_refusal_text_quoting_a_canary_reaches_no_status_line(rig):
+    result = launch(rig, mode='canary-notrun')
+    status = (rig['panel'] / 'correctness.md.status').read_text()
+    assert result.returncode == 1 and status.startswith('correctness: no report (seat refused: NOT-RUN')
+    assert 'FAKECANARY' not in status and '/home/jane' not in status and status == result.stdout
 
 
 @pytest.mark.integration
@@ -666,7 +687,7 @@ def test_verdict_in_aider_thinking_does_not_hide_a_refusal(rig, padme):
 @pytest.mark.integration
 def test_thinking_without_an_answer_is_no_report(rig, padme):
     result = aider_seat(rig, mode='aider-truncated')  # truncated: a verdict inside thinking only
-    assert result.returncode == 1 and 'no report (empty output)' in result.stdout
+    assert result.returncode == 1 and 'no report (empty output' in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
 
 
@@ -715,35 +736,24 @@ def test_vibe_seat_needs_mistral_consent_and_a_plain_model_name(rig):
 
 
 @pytest.mark.integration
-def test_refused_seat_status_carries_the_cli_settings_header(rig):
+def test_refused_seat_status_carries_no_cli_settings_header(rig):
     result = launch(rig, mode='codex-refuse')
     assert result.returncode == 1
     status = (rig['panel'] / 'correctness.md.status').read_text()
     assert status.count('\n') == 1 and status.startswith('correctness: no report (seat refused: NOT-RUN')
-    for kept in ('model: gpt-6-luna', 'sandbox: read-only', 'reasoning effort: low', 'session id: 0190-abcd'):
-        assert kept in status
-    assert '--------' not in status and '; odd' not in status and status.count('(') == status.count(')')
-    assert status == result.stdout
+    for gone in ('model: gpt-6-luna', 'sandbox:', 'session id', '--------', 'unreadable'):
+        assert gone not in status
+    assert status.count('(') == status.count(')') and status == result.stdout
 
 
 @pytest.mark.integration
-def test_seat_status_scrubs_identifiers_and_tokens_from_the_excerpt(rig):
+def test_codex_leak_stderr_reaches_neither_status_nor_stdout(rig):
     result = launch(rig, mode='codex-leak')
     assert result.returncode == 1
     status = (rig['panel'] / 'correctness.md.status').read_text()
-    for leaked in ('jane.doe', 'example.org', 'org-AbC123xyz', 'abcDEF123456', 'sk-proj-FAKE', 'janedoe'):
+    for leaked in ('jane.doe', 'example.org', 'org-AbC123xyz', 'abcDEF123456', 'sk-proj-FAKE', 'janedoe', 'session id'):
         assert leaked not in status and leaked not in result.stdout
-    for kept in ('model: gpt-6.1-sol', 'reasoning effort: high', 'session id: 0190abcd-1234-5678-9abc-def012345678'):
-        assert kept in status
     assert status.count('\n') == 1 and status == result.stdout
-
-
-def test_stderr_excerpt_scrubs_before_the_cut():
-    gaze_seat = load_module()
-    text = 'x' * 590 + ' sk-' + 'A' * 40
-    out = gaze_seat.stderr_excerpt([text])
-    assert 'sk-A' not in out and 'AAAA' not in out
-    assert gaze_seat.stderr_excerpt(['session id: 0190abcd-1234-5678-9abc-def012345678']).endswith('5678-9abc-def012345678')
 
 
 @pytest.mark.parametrize('leak, secret', [
@@ -753,9 +763,18 @@ def test_stderr_excerpt_scrubs_before_the_cut():
     ('account_id=0190abcd-1234-5678-9abc-def012345678', 'def012345678'),
     ('Authorization: Basic ZmFrZTpmYWtlcGFzcw==', 'ZmFrZTpm'),
     ('jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmYWtlIn0.c2lnbmF0dXJl', 'eyJzdWIi'),
+    ('{\\"access_token\\": \\"FAKEescaped0123\\"}', 'FAKEescaped'),     # backslash-escaped JSON key (ticket 1378)
+    ('Account ID: 0190abcd-1234-5678-9abc-def012345678', 'def012345678'),   # spaced label (ticket 1378)
 ])
-def test_stderr_excerpt_scrubs_quoted_masked_and_labelled_secrets(leak, secret):
-    assert secret not in load_module().stderr_excerpt([leak])
+def test_scrub_covers_quoted_masked_escaped_and_labelled_secrets(leak, secret):
+    assert secret not in load_module().scrub(leak)
+
+
+def test_scrub_never_matches_across_a_newline_and_keeps_session_ids():
+    scrub = load_module().scrub
+    out = scrub('access_token:\nreview plan: x')
+    assert 'review plan: x' in out
+    assert 'session id: 0190abcd-1234-5678-9abc-def012345678' in scrub('session id: 0190abcd-1234-5678-9abc-def012345678')
 
 
 @pytest.mark.integration
