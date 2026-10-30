@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Interactive sessions land PRs with no writer entry, so every landing warns attribution invalid
+Created: 2026-10-30
+Author: claude
+
+--- log ---
+2026-10-30T20:22Z claude created
+
+--- body ---
+## Context
+
+Reported from padme, 2026-10-30, six landings in one interactive Claude Code
+session (padme PRs #175, #177, #179, #180, #181, #182). Each `raid_land.py` run
+printed at step 5a:
+
+    attribution: invalid: line 3: fact order requires kind, pr, writer before reviewers (PR body: missing)
+
+The review notes held gaze `reviewer:` lines but no `writer:` entry: only raid
+and hunt record one (ticket 1307), and an interactive session that runs gaze,
+verify-gate and merge by hand never does. `attribution_record.py --render-pr`
+then refuses the block (`scripts/attribution_record.py:94`), the PR body keeps
+no attribution, and roar's `--capture-unit` refuses too until a writer line is
+added by hand (`--record-writer`, which itself demands step, route and
+independence fields). The warning never blocks, so it is easy to ignore on
+every landing.
+
+## Exit criteria
+
+- [ ] A landing from an interactive session either records the writer itself
+      (merge skill or `raid_land.py`, from the session's runtime and model) or
+      renders the reviewer lines without one, but does not print `invalid` for
+      the ordinary case
+- [ ] Roar's `--capture-unit` works on such a PR without a hand-typed writer line
+- [ ] Test: a review on notes with gaze answers and no writer entry lands and
+      captures with no `invalid` warning
