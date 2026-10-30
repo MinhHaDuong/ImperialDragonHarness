@@ -2,9 +2,11 @@
 Title: test-doctor: diagnose red-rerun chains from repeated runs, carry the runner-cache know-how
 Created: 2026-10-30
 Author: claude
+Closed: autoclosed — PR #2032
 
 --- log ---
 2026-10-30T09:29Z claude created
+2026-10-30T09:51Z reviewer closed — autoclosed — PR #2032
 
 --- body ---
 ## Context
