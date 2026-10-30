@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Measure how long agents wait on test and gate commands, from session traces.
 
-`collect` prints the full table for one project. `survey` is the short form for
+`collect` prints the full table for one project. `reruns` joins each red run
+to the next run of the same gate in its session, from the pytest summary line
+in the result. `survey` is the short form for
 the end-of-day wrap-up: it prints one line per gate that waited long enough to
 be worth a consultation, nothing when the traces were read and are clean, and a
 "not checked" line when they could not be read, so that silence never stands for
@@ -47,6 +49,19 @@ TYPICAL_SECONDS = 30  # a high total of quick runs is use, not a speed bump
 LINES_SHOWN = 3
 
 
+# A pytest summary line ("==== 2 failed, 2155 passed, 18 skipped in 74.1s ====")
+# gives a run's outcome; the last one in a result wins, as in a gate of several
+# targets the final suite reports last.
+SUMMARY = re.compile(r"=+ ([^=\n]*?) in [\d.]+s(?: \([\d:]+\))? =+")
+COUNT = re.compile(r"(\d+) (failed|passed|errors?)\b")
+# Between two runs, an edit is an Edit/Write call or a shell command that
+# rewrites the tree. A heuristic: a tree changed by a tool it does not know
+# reads as "no recognised edit", so a flip is a candidate, never a verdict.
+EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+MUTATION = re.compile(r"\bsed\s+-i|\bgit\s+(?:-C\s+\S+\s+)?(?:commit|rebase|merge|pull|checkout|switch|reset|"
+                      r"cherry-pick|am|apply|restore|stash)\b|\b(?:tee|mv|cp|rm|patch)\s|(?<![0-9&>])>(?![&>])(?!\s*/dev/)")
+
+
 @dataclass
 class Row:
     gate: str
@@ -54,6 +69,20 @@ class Row:
     command: str
     session: str
     when: datetime
+    red: int | None = None  # failed + errors, when the result carried a summary line
+    total: int | None = None  # failed + errors + passed
+    edits: int = 0  # recognised edits in the session before this run started
+
+
+@dataclass
+class Chain:
+    gate: str
+    session: str
+    red: int
+    total: int
+    rerun_seconds: float
+    rerun_red: int
+    edited: bool
 
 
 @dataclass
@@ -226,33 +255,60 @@ def _blocks(line: str) -> tuple[datetime | None, list[dict]]:
     return _parse_time(event.get("timestamp")), blocks
 
 
+def _result_text(content: object) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "\n".join(str(b.get("text", "")) for b in content if isinstance(b, dict))
+    return ""
+
+
+def outcome(text: str) -> tuple[int, int] | None:
+    """(red, total) from the last pytest summary line in a result, or None."""
+    last = None
+    for last in SUMMARY.finditer(text):
+        pass
+    if last is None:
+        return None
+    counts = {"failed": 0, "passed": 0, "error": 0}
+    for number, kind in COUNT.findall(last.group(1)):
+        counts["error" if kind.startswith("error") else kind] += int(number)
+    red = counts["failed"] + counts["error"]
+    return red, red + counts["passed"]
+
+
 def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[list[Row], int, int, bool, int]:
-    pending: dict[str, tuple[datetime, str, str, bool]] = {}
+    pending: dict[str, tuple[datetime, str, str, int]] = {}
     rows: list[Row] = []
     background = 0
     active = False
     dropped = 0
+    edits = 0
     for line in path.read_text(errors="replace").splitlines():
         when, blocks = _blocks(line)
         if when is None:
             continue
         for block in blocks:
-            if block.get("type") == "tool_use" and block.get("name") == "Bash" and when >= since:
+            if block.get("type") == "tool_use" and block.get("name") in EDIT_TOOLS:
+                edits += 1
+            elif block.get("type") == "tool_use" and block.get("name") == "Bash" and when >= since:
                 active = True
                 spec = block.get("input") or {}
                 command = str(spec.get("command", ""))
                 classes = gate_classes(command, extra)
                 if not classes:
+                    edits += bool(MUTATION.search(_strip_heredocs(command)))
                     continue
                 if spec.get("run_in_background"):
                     background += 1
                 else:
-                    pending[str(block.get("id"))] = (when, command, _gate_label(classes), True)
+                    pending[str(block.get("id"))] = (when, command, _gate_label(classes), edits)
             elif block.get("type") == "tool_result" and str(block.get("tool_use_id")) in pending:
-                start, command, gate, _ = pending.pop(str(block["tool_use_id"]))
+                start, command, gate, edits_before = pending.pop(str(block["tool_use_id"]))
                 seconds = (when - start).total_seconds()
                 if seconds >= 0:
-                    rows.append(Row(gate, seconds, command, path.stem, start))
+                    red, total = outcome(_result_text(block.get("content"))) or (None, None)
+                    rows.append(Row(gate, seconds, command, path.stem, start, red, total, edits_before))
                 else:
                     dropped += 1
     return rows, background, len(pending), active, dropped
@@ -354,6 +410,73 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
     return flagged
 
 
+def chains(rows: list[Row]) -> list[Chain]:
+    """Each red run joined to the next run of the same gate in its session.
+
+    The rerun after a red is where a runner's last-failed selection would act:
+    a full rerun to check a fix of one or two tests pays for the whole suite.
+    A red-to-green rerun with no recognised edit between is a flip candidate.
+    """
+    by_session: dict[str, list[Row]] = {}
+    for row in sorted(rows, key=lambda r: r.when):
+        by_session.setdefault(row.session, []).append(row)
+    found = []
+    for members in by_session.values():
+        for index, row in enumerate(members):
+            if not row.red:
+                continue
+            rerun = next((r for r in members[index + 1:] if r.gate == row.gate), None)
+            if rerun is None or rerun.red is None:
+                continue
+            found.append(Chain(row.gate, row.session, row.red, row.total or row.red,
+                               rerun.seconds, rerun.red, rerun.edits > row.edits))
+    return found
+
+
+def summarise_reruns(rows: list[Row]) -> dict[str, dict]:
+    by_gate: dict[str, list[Chain]] = {}
+    for chain in chains(rows):
+        by_gate.setdefault(chain.gate, []).append(chain)
+    summary = {}
+    for gate, members in sorted(by_gate.items(), key=lambda item: -sum(c.rerun_seconds for c in item[1])):
+        summary[gate] = {
+            "chains": len(members),
+            "rerun_min": round(sum(c.rerun_seconds for c in members) / 60, 1),
+            "median_red": statistics.median(c.red for c in members),
+            "median_total": statistics.median(c.total for c in members),
+            "median_rerun_s": round(statistics.median(c.rerun_seconds for c in members)),
+            # Derived, an upper bound: the runner's boot and collection floor is
+            # paid even by a rerun of the failed tests alone.
+            "passing_share_min_upper": round(
+                sum(c.rerun_seconds * (1 - c.red / c.total) for c in members) / 60, 1),
+            "flip_candidates": sum(1 for c in members if not c.edited and c.rerun_red == 0),
+        }
+    return summary
+
+
+def _print_reruns(collected: Collected, project: Path, days: float) -> None:
+    rows = collected.foreground
+    read = sum(1 for r in rows if r.red is not None)
+    print(f"{project.name}: {len(rows)} foreground gate runs in {days:g}d, outcome read for {read} "
+          f"({collected.sessions} sessions, {collected.unreadable} unreadable)")
+    if not read:
+        print("no run carried a readable pytest summary line: reruns could not be judged")
+        return
+    summary = summarise_reruns(rows)
+    if not summary:
+        print("no red run was followed by a rerun of the same gate in its session")
+        return
+    print(f"{'gate':32s} {'chains':>6s} {'rerun':>7s} {'median red/total':>17s} {'rerun':>6s} "
+          f"{'passing':>8s} {'flips':>5s}")
+    for gate, s in summary.items():
+        print(f"{gate[:32]:32s} {s['chains']:6d} {s['rerun_min']:6.1f}m "
+              f"{s['median_red']:>8g}/{s['median_total']:<8g} {s['median_rerun_s']:5d}s "
+              f"{s['passing_share_min_upper']:7.1f}m {s['flip_candidates']:5d}")
+    print("passing: rerun minutes spent on tests that had passed in the red run, derived, an upper bound "
+          "(subtract the runner's boot and collection floor); flips: red to green with no recognised "
+          "edit between, candidates only")
+
+
 def _print_table(collected: Collected, project: Path, days: float) -> None:
     print(f"{project.name}: {len(collected.foreground)} foreground gate runs in {days:g}d "
           f"({collected.sessions} sessions, {collected.background} background, "
@@ -389,6 +512,9 @@ def main(argv: list[str] | None = None) -> int:
     full.add_argument("--json", action="store_true")
     brief = sub.add_parser("survey", help="one line per gate worth a consultation; for the wrap-up")
     _common(brief, 7)
+    again = sub.add_parser("reruns", help="red runs and the rerun that followed each, per gate")
+    _common(again, 28)
+    again.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     project = args.project.resolve() if args.project.exists() else args.project
     if args.command == "survey":
@@ -396,6 +522,17 @@ def main(argv: list[str] | None = None) -> int:
             print(line)
         return 0
     collected = collect(args.traces, project, args.days, extra=args.pattern)
+    if args.command == "reruns":
+        if args.json:
+            print(json.dumps({
+                "project": str(project), "days": args.days, "sessions": collected.sessions,
+                "foreground_runs": len(collected.foreground),
+                "outcome_read": sum(1 for r in collected.foreground if r.red is not None),
+                "gates": summarise_reruns(collected.foreground),
+            }, indent=2))
+        else:
+            _print_reruns(collected, project, args.days)
+        return 0
     if args.json:
         longest = sorted(collected.foreground, key=lambda r: -r.seconds)[:5]
         print(json.dumps({

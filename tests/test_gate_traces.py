@@ -40,17 +40,20 @@ def _trace(path: Path, calls: list[dict]) -> None:
         lines.append({
             "type": "assistant", "timestamp": _stamp(start),
             "message": {"content": [{
-                "type": "tool_use", "id": use_id, "name": "Bash",
+                "type": "tool_use", "id": use_id, "name": call.get("tool", "Bash"),
                 "input": {"command": call["command"],
                           "run_in_background": call.get("background", False)},
             }]},
         })
         if call.get("unpaired"):
             continue
+        result = {"type": "tool_result", "tool_use_id": use_id}
+        if "output" in call:
+            result["content"] = call["output"]
         lines.append({
             "type": "user",
             "timestamp": _stamp(start + timedelta(seconds=call["seconds"])),
-            "message": {"content": [{"type": "tool_result", "tool_use_id": use_id}]},
+            "message": {"content": [result]},
         })
     path.write_text("\n".join(json.dumps(line) for line in lines) + "\n")
 
@@ -303,6 +306,68 @@ def test_gate_words_inside_other_words_are_not_gates(command):
     assert pt.gate_classes(command) == []
 
 
+# --- reruns after a red run ------------------------------------------------
+
+RED = "==== 2 failed, 2155 passed, 18 skipped in 74.10s (0:01:14) ===="
+GREEN = "==== 2157 passed, 18 skipped in 75.00s (0:01:15) ===="
+
+
+def _rows(tmp_path, project, calls):
+    root = tmp_path / "traces"
+    start = NOW - timedelta(hours=3)
+    timed = [{"seconds": 75, **call, "start": start + timedelta(minutes=5 * i)} for i, call in enumerate(calls)]
+    _trace(_project_dir(root, project) / "s1.jsonl", timed)
+    return pt.collect(root, project, days=7, now=NOW).foreground
+
+
+def test_outcome_reads_the_last_summary_line():
+    assert pt.outcome("==== 1 passed in 0.1s ====\n" + RED) == (2, 2157)
+    assert pt.outcome("==== 1 failed, 3 passed, 2 errors in 9.0s ====") == (3, 6)
+    assert pt.outcome("make: *** [check] Error 2") is None
+
+
+def test_a_red_run_then_a_full_rerun_is_a_chain(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED},
+        {"command": "x", "tool": "Edit"},
+        {"command": "make check", "output": GREEN},
+    ])
+    [chain] = pt.chains(rows)
+    assert (chain.red, chain.total, chain.rerun_red, chain.edited) == (2, 2157, 0, True)
+    stats = pt.summarise_reruns(rows)["make check"]
+    assert stats["chains"] == 1 and stats["flip_candidates"] == 0
+    assert stats["passing_share_min_upper"] == 1.2  # 75 s x 2155/2157 = 1.249 min, one decimal
+
+
+def test_red_to_green_with_no_edit_between_is_a_flip_candidate(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED},
+        {"command": "git status --short"},
+        {"command": "make check", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 1
+
+
+@pytest.mark.parametrize("edit", ["sed -i s/a/b/ f.py", "git rebase origin/main", "echo x > f.py"])
+def test_a_shell_edit_between_runs_is_not_a_flip(tmp_path, project, edit):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": RED},
+        {"command": edit},
+        {"command": "make check", "output": GREEN},
+    ])
+    assert pt.summarise_reruns(rows)["make check"]["flip_candidates"] == 0
+
+
+def test_an_unreadable_outcome_makes_no_chain(tmp_path, project):
+    rows = _rows(tmp_path, project, [
+        {"command": "make check", "output": "make: *** Error 2"},
+        {"command": "make check", "output": GREEN},
+        {"command": "make check", "output": RED},
+        {"command": "make check", "output": "Killed"},
+    ])
+    assert [r.red for r in rows] == [None, 0, 2, None] and pt.chains(rows) == []
+
+
 # --- the command line -------------------------------------------------------
 
 def _run(*args: str) -> subprocess.CompletedProcess:
@@ -323,5 +388,7 @@ def test_cli_survey_and_collect_json(tmp_path, project):
     collect = _run("collect", "--project", str(project), "--traces", str(root), "--json")
     data = json.loads(collect.stdout)
     assert data["gates"]["make check-fast"]["runs"] == 4
+    reruns = _run("reruns", "--project", str(project), "--traces", str(root))
+    assert reruns.returncode == 0 and "reruns could not be judged" in reruns.stdout
     missing = _run("survey", "--project", str(project), "--traces", str(tmp_path / "none"))
     assert missing.returncode == 0 and missing.stdout.startswith("test-doctor: not checked")
