@@ -17,7 +17,7 @@ import launch_line  # noqa: E402
 
 CLOCK = SCRIPTS / 'seat_clock.py'
 KEYS = {'ts_start', 'ts_end', 'host', 'parent_runtime', 'parent_session', 'child_runtime', 'child_session',
-        'seat', 'cwd', 'unit', 'exit'}
+        'seat', 'cwd', 'unit', 'exit', 'out'}
 SCRUB = ('CLAUDECODE', 'CLAUDE_CODE_SESSION_ID', 'CODEX_THREAD_ID', 'PI_CODING_AGENT', 'AI_AGENT',
          'IDH_PI_SESSION_ID', 'IDH_UNIT')
 
@@ -47,6 +47,7 @@ def test_stub_seat_appends_one_well_formed_line_per_run(tmp_path):
     assert (first['parent_runtime'], first['parent_session'], first['exit'], first['seat']) == \
         ('claude', 'parent-1', 3, 's')
     assert first['child_runtime'] == 'sh' and first['child_session'] == 'not captured' and first['unit'] == 't1384'
+    assert first['out'].endswith('/s.md')  # ticket 1399: the report path names the review's panel
     assert first['ts_start'] <= first['ts_end'] and second['parent_session'] == 'parent-1'
 
 

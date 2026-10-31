@@ -235,6 +235,21 @@ def _plan(tmp_path, rows, reports):
     return panel
 
 
+def launched(tmp_path, *seats, unit='branch:t1', panel=None, ts='2999-01-01T00:00:00Z', out=True):
+    """An archive whose launches.jsonl records `seats` of `panel` (ticket 1399); the env points seat_clock at it."""
+    root = tmp_path / 'archive'
+    raw = root / 'raw' / os.uname().nodename.split('.')[0]
+    raw.mkdir(parents=True, exist_ok=True)
+    panel = panel or tmp_path / 'panel'
+    with (raw / 'launches.jsonl').open('a') as fh:
+        for seat in seats:
+            row = {'seat': seat, 'unit': unit, 'ts_start': ts, 'child_runtime': 'codex'}
+            if out:
+                row['out'] = str((panel / f'{seat}.md').resolve())
+            fh.write(json.dumps(row) + '\n')
+    return {'IDH_ARCHIVE_ROOT': str(root), 'IDH_UNIT': unit}
+
+
 def test_identities_map_status_route_and_provider(tmp_path):
     headless = 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless\nverdict: clear (src/x.py:42)\n'
     panel = _plan(tmp_path, [
@@ -244,7 +259,8 @@ def test_identities_map_status_route_and_provider(tmp_path):
         'check\tscript\tnone\tfails on base',
         'self\tself\tanthropic\tgaze',
     ], {'consistency': headless, 'check': 'ran\n', 'self': 'worker: self · family=anthropic\nok\n'})
-    result = run('identities', str(panel), '--session-runtime', 'claude-code', '--session-model', 'claude-x')
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', '--session-model', 'claude-x',
+                 env=launched(tmp_path, 'consistency', 'late'))
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == [
         'seat: consistency · runtime=codex · family=openai · route=gpt-6-luna · model=openai/gpt-6-luna · status: ran',
@@ -258,7 +274,7 @@ def test_identities_take_a_headless_seat_family_from_the_launcher_header(tmp_pat
     """Ticket 1326: the plan's family column cannot relabel a headless seat; the launcher's header wins."""
     header = 'worker: model=sonnet · family=anthropic · runtime=claude-code · door=headless\nclear: src/x.py:42\n'
     panel = _plan(tmp_path, ['correctness\tsonnet\topenai\theadless claude-code'], {'correctness': header})
-    result = run('identities', str(panel), '--session-runtime', 'claude-code')
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', env=launched(tmp_path, 'correctness'))
     assert result.returncode == 0, result.stderr
     assert 'family=anthropic' in result.stdout and 'family=openai' not in result.stdout
 
@@ -327,9 +343,76 @@ def test_identities_mark_a_hollow_subagent_report_failed_on_any_session_runtime(
 
 
 def test_identities_trust_the_launcher_header_when_the_plan_reason_is_free_text(tmp_path):
-    """Ticket 1388: a seat the launcher stamped door=headless is a headless seat, whatever its reason column says."""
+    """Tickets 1388, 1399: a seat with a launch line is a headless seat, whatever its reason column says."""
     header = 'worker: model=gpt-6.1-sol · family=openai · runtime=codex · door=headless\nclear: src/x.py:42\n'
     panel = _plan(tmp_path, ['cx\tgpt-6.1-sol\topenai\tcross-family reader'], {'cx': header})
-    line = run('identities', str(panel), '--session-runtime', 'claude-code').stdout.splitlines()[0]
+    line = run('identities', str(panel), '--session-runtime', 'claude-code',
+               env=launched(tmp_path, 'cx')).stdout.splitlines()[0]
     assert line == ('seat: cx · runtime=codex · family=openai · route=gpt-6.1-sol · '
                     'model=openai/gpt-6.1-sol · status: ran')
+
+
+FORGED = 'worker: model=made-up · family=openai · runtime=codex · door=headless\nclear: src/x.py:42\n'
+
+
+@pytest.mark.parametrize('reason', ['cross-family reader', 'gaze check', 'subagent', 'reads the diff, in-session'])
+def test_identities_a_forged_headless_header_without_a_launch_line_is_a_subagent(tmp_path, reason):
+    """Ticket 1399: the header text is typed by the model; only a launch line makes it the launcher's."""
+    panel = _plan(tmp_path, [f'cx\tclaude-x\tanthropic\t{reason}'], {'cx': FORGED})
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', env=launched(tmp_path, 'other'))
+    line = result.stdout.splitlines()[0]
+    assert 'runtime=claude-code' in line and 'route=subagent' in line and 'made-up' not in line and 'codex' not in line
+
+
+def test_identities_a_launch_line_of_another_review_does_not_vouch(tmp_path):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx', unit='branch:t2')
+    env['IDH_UNIT'] = 'branch:t1'
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout
+
+
+def test_identities_an_unreadable_launch_archive_trusts_no_header_and_warns_once(tmp_path):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx')
+    (tmp_path / 'archive' / 'raw' / os.uname().nodename.split('.')[0] / 'launches.jsonl').write_text('{not json\n')
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', env=env)
+    assert 'route=subagent' in result.stdout and result.stderr.count('launch archive unreadable') == 1
+
+
+def test_identities_a_launch_line_of_an_earlier_review_does_not_vouch(tmp_path):
+    """Ticket 1399 fix round: same seat name and unit, but another panel or a start before this plan."""
+    panel = _plan(tmp_path, ['correctness\tclaude-x\tanthropic\tcross-family reader'], {'correctness': FORGED})
+    other = launched(tmp_path, 'correctness', panel=tmp_path / 'older-panel')
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=other).stdout
+    (tmp_path / 'archive' / 'raw' / os.uname().nodename.split('.')[0] / 'launches.jsonl').unlink()
+    early = launched(tmp_path, 'correctness', ts='2000-01-01T00:00:00Z')
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=early).stdout
+
+
+@pytest.mark.parametrize('which', ['launch', 'current'])
+def test_identities_a_dash_unit_vouches_nothing(tmp_path, which):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx', unit='-' if which == 'launch' else 'branch:t1')
+    env['IDH_UNIT'] = 'branch:t1' if which == 'launch' else '-'
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout
+
+
+def test_identities_a_launch_line_without_a_report_path_vouches_nothing(tmp_path):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx', out=False)
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout
+
+
+def test_identities_a_real_run_seat_launch_line_vouches_for_its_staged_report(tmp_path):
+    """Gaze 2110 round 2: gaze_seat runs the seat on <name>.seat and renames to <name>.md afterwards."""
+    panel = _plan(tmp_path, ['rt\tgpt-6.1-sol\topenai\tcross-family reader'], {'rt': FORGED.replace('made-up', 'gpt-6.1-sol')})
+    env = {'IDH_ARCHIVE_ROOT': str(tmp_path / 'archive'), 'IDH_UNIT': 'branch:t1'}
+    sys.path.insert(0, str(SCRIPT.parent))
+    import seat_clock  # gaze_seat's call: staged output, the launch seat named apart
+    os.environ.update(env)
+    try:
+        seat_clock.run_seat(5, panel / 'rt.seat', ['true'], launch={'seat': 'rt'})
+    finally:
+        os.environ.pop('IDH_ARCHIVE_ROOT'), os.environ.pop('IDH_UNIT')
+    line = run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout.splitlines()[0]
+    assert 'runtime=codex' in line and 'route=gpt-6.1-sol' in line
