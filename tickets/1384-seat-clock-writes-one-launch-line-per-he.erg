@@ -1,11 +1,12 @@
 %erg 0.1
-Title: seat_clock writes one launch line per headless seat
+Title: Every headless launcher writes one launch line per child
 Created: 2026-10-31
 Author: claude
 
 --- log ---
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: every launcher, child id pinned or captured, Pi parent id
+2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
 
 --- body ---
 ## Context
@@ -35,6 +36,8 @@ warns on stderr and never changes the seat's outcome or exit code.
       unchanged and prints one warning
 - [ ] A claude seat's line carries the `--session-id` it was launched with,
       and that id names a transcript file
+- [ ] Test: a Pi parent's line carries its session id, or the literal
+      `not exported` when the adapter does not export it
 - [ ] One real gaze run on padme with a seat of each reachable runtime, and one
       manuscript-review run: every child appears with parent and child ids, each
       child id naming a transcript file (lines quoted in the PR)

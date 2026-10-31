@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-31T08:39Z claude created
+2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
 
 --- body ---
 ## Context
@@ -20,7 +21,7 @@ Children, one merge request each:
 - 1380: no online refusal (widened: writer recorded at landing, capture warns)
 - 1383: raw archive of every runtime's transcripts, holes closed; date-bound,
   land before 2026-12-07
-- 1384: launch line from `seat_clock.py`
+- 1384: launch line from every headless launcher (`seat_clock.py`, `manuscript_review.py`)
 - 1385: timeline on demand (Blocked-by 1383, 1384)
 
 ## Exit criteria

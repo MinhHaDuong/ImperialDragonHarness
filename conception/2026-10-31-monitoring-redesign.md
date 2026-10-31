@@ -147,7 +147,9 @@ Every script that starts a headless child appends one JSON line per child
 to `~/archive/transcripts/<host>/launches.jsonl`, through one small helper:
 `seat_clock.py run` (gaze seats) and `manuscript_review.py` (which starts
 `claude -p` itself, `manuscript_review.py:462`) today, any new launcher
-tomorrow. A line has this shape:
+tomorrow. `scripts/coaching/seat-runner.sh` also starts aider (lines
+422–427); it was demoted with the coaching skill and is out of scope until it
+is used again, when it calls the same helper. A line has this shape:
 
 ```
 {"ts_start", "ts_end", "host", "parent_runtime", "parent_session",
@@ -164,6 +166,10 @@ the same folder, which makes such a join ambiguous. The launcher pins it
 (Codex's session id). The write is an append; a failed write prints a
 warning and the child runs.
 
+Children of the Pi subagent extension get a session file in the spool (§ 4.2)
+but no launch line: the extension is upstream example code. Linking them is
+deferred (§ 5).
+
 ### 4.4 Timeline on demand (execution flow)
 
 `scripts/trace_timeline.py <session>` reads one session, its subagents and
@@ -173,7 +179,10 @@ with model, tokens, shadow USD and the pointer `(file, call id)` in `args`.
 The call id is each runtime's own: `tool_use_id` (Claude Code), `call_id`
 (Codex), `toolCallId` (Pi); aider's history has none, so its pointer names the
 file only. Shadow USD comes from the price table `scripts/trace-stats.py`
-already holds (line 34), moved into `trace_events.py` and imported back. It reads the live tree first and falls back to the archive, so a
+already holds (line 34), moved into `trace_events.py` and imported back; that
+table prices only Claude models, so OpenAI rows are added with their source
+and date, and any unpriced model shows `cost unknown`, never zero. Pi records
+its own cost. It reads the live tree first and falls back to the archive, so a
 same-day session works.
 
 The reader is a module apart from the renderer: `scripts/trace_events.py`,
@@ -189,6 +198,7 @@ stored; nothing in the timeline script needs to change for it.
 | Migrating the eight transcript readers onto `trace_events.py` | a reader is touched for another reason | the same module |
 | Native OTel export | a question needs what transcripts lack (exact billed cost, beta trace nesting) | nothing to keep: it is additive |
 | Launch lines from adapter hooks, `SubagentStop`, a `Session:` commit trailer | a derivation proves ambiguous without them | the raw transcripts hold the Agent call and the `git commit` result already |
+| Launch lines for Pi subagent-extension children | a timeline needs a Pi subagent under its parent | their session files are archived (§ 4.2) |
 | Seekable compression, byte offsets | a transcript makes whole-file decompression slow (today: p99 5.9 MB, 0.01 s for 24 MB) | plain zstd files can be recompressed |
 | Archive encryption | the archive leaves the host | — |
 
