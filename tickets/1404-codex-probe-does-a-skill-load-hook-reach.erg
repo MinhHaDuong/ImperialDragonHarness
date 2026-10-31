@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Codex probe: does a skill-load hook reach the model (1394 stage 3)
+Created: 2026-10-31
+Author: reviewer
+
+--- log ---
+2026-10-31T19:48Z reviewer created
+
+--- body ---
+## Context
+Child of 1394. Stage 3 of the skill case notes pilot (`conception/2026-10-31-skill-case-notes.md` § 4). Stage 1 and the headless Claude read-back landed in PR #2114 (`scripts/skill-case-notes.sh`, wired on PostToolUse `Skill` and UserPromptSubmit).
+
+## Scope
+A Codex hook prints a token at skill load; ask the model whether it sees it. Positive control: the same token from `SessionStart`, known to reach the model. Pass: wire Codex to `scripts/skill-case-notes.sh` (adapters/codex/hooks.json). Fail: record it; Codex falls back to a step 0 in the skill (note § 3.5).
+
+## Exit criteria
+- [ ] Probe result and its positive control recorded on 1394 and here
+- [ ] Codex wired, or the fallback named with its reason

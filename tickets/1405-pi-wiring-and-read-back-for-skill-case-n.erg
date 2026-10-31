@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Pi wiring and read-back for skill case notes (1394 stage 4)
+Created: 2026-10-31
+Author: reviewer
+
+--- log ---
+2026-10-31T19:48Z reviewer created
+
+--- body ---
+## Context
+Child of 1394. Stage 4 of the skill case notes pilot (`conception/2026-10-31-skill-case-notes.md` § 4); stage 2 (Claude read-back) passed headless in PR #2114. Pi's `idh-guard.ts` handles only `session_start` and `tool_call` today.
+
+## Scope
+Pi extension wiring on a read of `skills/<name>/SKILL.md`, calling `scripts/skill-case-notes.sh` (or its logic) with the same marker per context, and the same planted-token read-back.
+
+## Exit criteria
+- [ ] Pi read-back passes (token quoted, delivered once), or the reason it stopped is recorded on 1394

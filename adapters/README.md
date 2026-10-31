@@ -229,6 +229,9 @@ turn enforcement into advice:
   context, not part of the guard. The Claude Code plugin runs two
   `SessionStart` hooks: `on-start-context.sh` (prints context) and
   `on-start-sync.sh` (sets `core.hooksPath`, backgrounds the local-main sync).
+  It also runs `skill-case-notes.sh` on `PostToolUse` (matcher `Skill`) and on
+  `UserPromptSubmit` (a typed `/<skill>`): it pushes the project's
+  `memory/skills/<skill>.md` once per context (ticket 1394; Claude only so far).
   Any future `pi --print` driver must assert the served provider:
   [pi/README.md](pi/README.md) (ticket 0979).
 
