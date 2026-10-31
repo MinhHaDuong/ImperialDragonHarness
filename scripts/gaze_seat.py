@@ -411,7 +411,7 @@ def reach_refusal(report: str) -> str | None:
         if line.lower().startswith('reach:'):
             return 'invalid reach declaration'
         return 'no valid reach line'
-    if len(lines) > 2 and lines[2].lower().startswith('reach:'):
+    if any(REACH.fullmatch(later) for later in lines[2:]) or (len(lines) > 2 and lines[2].lower().startswith('reach:')):
         return 'ambiguous reach declaration (repeated reach line)'
     return 'read=no' if m.group(1).lower() == 'no' else None
 

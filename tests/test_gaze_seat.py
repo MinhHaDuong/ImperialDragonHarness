@@ -1024,6 +1024,10 @@ def test_repeated_or_contradictory_reach_lines_are_refused():
     for first, second in ((yes, no), (no, yes), (yes, yes)):
         report = gs.stamp(f'{first}\n{second}\nbody\n', 'worker: launcher')
         assert gs.reach_refusal(report) is not None
+    late = gs.stamp(f'{yes}\nverdict: clear\n{no}\n', 'worker: launcher')  # not adjacent: still a complete second declaration
+    assert gs.reach_refusal(late) == 'ambiguous reach declaration (repeated reach line)'
+    prose = gs.stamp(f'{yes}\nfinding: the line reach: is parsed\nverdict: clear\n', 'worker: launcher')
+    assert gs.reach_refusal(prose) is None
 
 
 def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
