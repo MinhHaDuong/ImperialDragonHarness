@@ -1,0 +1,38 @@
+%erg 0.1
+Title: trace_timeline --html: self-contained SVG timeline for Firefox, no external code
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T12:39Z claude created
+
+--- body ---
+## Context
+
+Tracker 1382 (monitoring redesign), follow-up of 1385. `scripts/trace_timeline.py`
+writes Chrome Trace Event JSON, which only Perfetto (ui.perfetto.dev, an
+external site) or Chrome's `chrome://tracing` open. The author's hosts run
+Firefox only (padme: `/usr/bin/firefox`, default browser), and the memo's line
+is no service and no external site. Author chose 2026-10-31 a self-contained
+HTML output over Firefox Profiler or a self-hosted viewer.
+
+Add `--html <path>` (or `--format html`) to `trace_timeline.py`: one HTML file
+with inline SVG and inline CSS/JS only (no CDN, no network fetch), drawing the
+same lanes and events as the JSON export, reusing its lane assignment.
+
+## Exit criteria
+
+- [ ] `trace_timeline.py <session> --html out.html` writes one file that
+      references no external URL (test: no `http://`/`https://` src or href, no
+      `<link>`/`<script src>`)
+- [ ] One row per agent lane (session, subagents, seats under their parent) and
+      one bar per call, positioned and sized by start and duration; a time axis
+- [ ] Each bar shows on hover (SVG `<title>` is enough): name, kind, duration,
+      model, tokens, shadow USD or `cost unknown`, exit, pointer (file, call id)
+- [ ] Basic horizontal zoom or a scrollable width; readable for a 98-minute raid
+- [ ] Fixture test: lanes and bar count match the JSON export of the same
+      session; the existing JSON output is unchanged (byte-compare on a fixture)
+- [ ] The raid session d77349fe renders and opens in Firefox on padme
+      (screenshot or the author's look; the author checks it before 1382 closes)
+- [ ] INSTALL.md or the script's docstring names `--html` for Firefox users and
+      drops the Chrome-only advice
