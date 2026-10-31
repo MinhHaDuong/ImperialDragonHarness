@@ -3,9 +3,12 @@ Title: doudou: install the transcript archive timer and push to padme
 Created: 2026-10-31
 Author: claude
 Label: needs-human
+Closed: done 2026-10-31: doudou timer installed and run, archive pushed to padme, nightly push drop-in
 
 --- log ---
 2026-10-31T09:46Z claude created
+2026-10-31T11:08Z reviewer claude note doudou installed: timer enabled (next 2026-11-01 03:31), first run copied the backlog; --verify printed eligible: 24705 files 8297526821 bytes / archived: 24705 files 8297526821 bytes; rsync to padme exit 0, padme ~/archive/transcripts/doudou holds 24705 files, 2.6G; nightly push added as ExecStartPost drop-in push-padme.conf
+2026-10-31T11:08Z reviewer closed — done 2026-10-31: doudou timer installed and run, archive pushed to padme, nightly push drop-in
 
 --- body ---
 
