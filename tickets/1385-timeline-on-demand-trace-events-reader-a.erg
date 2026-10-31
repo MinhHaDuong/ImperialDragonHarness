@@ -2,7 +2,6 @@
 Title: Timeline on demand: trace_events reader and Perfetto export per session
 Created: 2026-10-31
 Author: claude
-Blocked-by: 1383
 Blocked-by: 1384
 
 --- log ---
@@ -10,6 +9,7 @@ Blocked-by: 1384
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: per-runtime call ids, price-table source, non-Claude seat in exit
 2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
 2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
+2026-10-31T09:42Z reviewer note blocker 1383 closed — Blocked-by removed.
 
 --- body ---
 ## Context
