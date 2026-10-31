@@ -2,6 +2,7 @@
 Title: Timeline on demand: trace_events reader and Perfetto export per session
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2074
 
 --- log ---
 2026-10-31T08:39Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
 2026-10-31T09:42Z reviewer note blocker 1383 closed — Blocked-by removed.
 2026-10-31T10:00Z reviewer note blocker 1384 closed — Blocked-by removed.
+2026-10-31T10:24Z reviewer closed — autoclosed — PR #2074
 
 --- body ---
 ## Context

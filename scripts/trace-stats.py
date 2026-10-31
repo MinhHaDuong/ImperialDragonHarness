@@ -21,6 +21,7 @@ Emits JSON summary: {window, files, sessions, totals, skipped_lines, rollup}
 
 import argparse
 import csv
+import importlib.util
 import json
 import logging
 import re
@@ -31,38 +32,14 @@ from pathlib import Path
 
 log = logging.getLogger("trace-stats")
 
-# $/MTok, per category. Source: claude-api skill pricing tables (2026-06).
-# Cache read = 0.1x input; 5m cache write = 1.25x; 1h cache write = 2x.
-PRICING = {
-    "fable": {
-        "input": 10.0,
-        "output": 50.0,
-        "cache_read": 1.0,
-        "cache_write_5m": 12.5,
-        "cache_write_1h": 20.0,
-    },
-    "opus": {
-        "input": 5.0,
-        "output": 25.0,
-        "cache_read": 0.5,
-        "cache_write_5m": 6.25,
-        "cache_write_1h": 10.0,
-    },
-    "sonnet": {
-        "input": 3.0,
-        "output": 15.0,
-        "cache_read": 0.3,
-        "cache_write_5m": 3.75,
-        "cache_write_1h": 6.0,
-    },
-    "haiku": {
-        "input": 1.0,
-        "output": 5.0,
-        "cache_read": 0.1,
-        "cache_write_5m": 1.25,
-        "cache_write_1h": 2.0,
-    },
-}
+# The price table, resolve_pricing and the per-message cost live in scripts/trace_events.py (ticket 1385);
+# they stay importable from here, where four scripts spec-load them.
+_spec = importlib.util.spec_from_file_location("trace_events", Path(__file__).resolve().parent / "trace_events.py")
+_te = importlib.util.module_from_spec(_spec)
+sys.modules.setdefault("trace_events", _te)
+_spec.loader.exec_module(_te)
+PRICING = _te.PRICING
+resolve_pricing = _te.resolve_pricing
 
 WRITE_TOOLS = {"Edit", "Write", "NotebookEdit"}
 
@@ -183,14 +160,6 @@ def _is_mandated_tool(name: str, tool_input: dict) -> bool:
     return False
 
 
-def resolve_pricing(model_id: str) -> dict | None:
-    """Map a model id to its pricing family; None for unknown models."""
-    for family in ("fable", "opus", "sonnet", "haiku"):
-        if family in model_id:
-            return PRICING[family]
-    return None
-
-
 def strip_worktree(project_dir_name: str) -> str:
     """Strip the worktree suffix from an encoded project dir name."""
     return re.sub(r"--claude-worktrees-.+$", "", project_dir_name)
@@ -204,24 +173,8 @@ def _parse_ts(s: str) -> datetime | None:
 
 
 def _message_cost(model: str, usage: dict) -> float:
-    p = resolve_pricing(model)
-    if p is None:
-        return 0.0
-    cache_creation = usage.get("cache_creation") or {}
-    total_write = usage.get("cache_creation_input_tokens", 0) or 0
-    write_1h = cache_creation.get("ephemeral_1h_input_tokens", 0) or 0
-    write_5m = cache_creation.get("ephemeral_5m_input_tokens")
-    if write_5m is None:
-        # No 5m key: whatever the 1h bucket doesn't account for was 5m.
-        write_5m = max(0, total_write - write_1h)
-    dollars = (
-        (usage.get("input_tokens", 0) or 0) * p["input"]
-        + (usage.get("output_tokens", 0) or 0) * p["output"]
-        + (usage.get("cache_read_input_tokens", 0) or 0) * p["cache_read"]
-        + (write_5m or 0) * p["cache_write_5m"]
-        + (write_1h or 0) * p["cache_write_1h"]
-    )
-    return dollars / 1_000_000
+    cost = _te.claude_cost(model, usage)
+    return 0.0 if cost is None else cost
 
 
 def parse_trace_file(path: Path) -> dict:
