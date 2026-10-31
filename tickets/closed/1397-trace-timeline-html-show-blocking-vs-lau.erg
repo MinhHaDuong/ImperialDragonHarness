@@ -1,0 +1,42 @@
+%erg 0.1
+Title: trace_timeline --html: show blocking vs launched delegation; toggleable launch connectors
+Created: 2026-10-31
+Author: claude
+Closed: autoclosed — PR #2100
+
+--- log ---
+2026-10-31T14:42Z claude created
+2026-10-31T14:55Z reviewer closed — autoclosed — PR #2100
+
+--- body ---
+## Context
+
+Follow-up of 1395 (PR #2090). The author asked why delegation orange is
+sometimes a long bar in an agent's main row and sometimes a short tick on its
+own row. Answer: long = a blocking delegation (e.g. a forked /gaze Skill call,
+2–4.5 min in d77349fe, the agent waits); short = a launch that returns at
+once (background Agent call, ~0.7 min), pushed to a lower row by overlapping
+calls, its work shown in the child's own lane. The author asked for both
+display aids, 2026-10-31, with a guard against "spaghettifying" the graph.
+
+## Exit criteria
+
+- [ ] Each delegation call is marked `blocking` or `launch`, by a documented
+      rule with unit tests (e.g. the tool input's background flag where the
+      runtime records one, else whether the call ends before its child agent's
+      span ends); unknown falls back to plain delegation
+- [ ] Blocking delegations are drawn distinctly (hatched or darker orange) and
+      the legend says what it means; the tooltip names the mode
+- [ ] Thin connectors run from each launch tick to the start of the child
+      agent's span in its lane (child matched to its launching call by a
+      recorded link, not by time proximity alone; unmatched launches draw no
+      connector)
+- [ ] A visible checkbox disables/enables the connectors (default on), no
+      reload needed
+- [ ] Launches that start at the same time (or within a few pixels at the
+      current zoom) get vertical paths offset so no two overlap; recomputed on
+      zoom
+- [ ] Self-contained page; any JSON change is additive only (test); existing
+      tests pass
+- [ ] Rendered for d77349fe-10eb-46dd-a58c-d5723e771c4d, headless Firefox
+      screenshot with connectors on and off; the author checks interaction
