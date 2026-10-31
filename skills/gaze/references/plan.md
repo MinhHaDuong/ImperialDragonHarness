@@ -34,7 +34,7 @@ covered, and no label claims more.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | the default whenever the host consents to spend on a family other than gaze's own (the `# spend:` line): at least one seat of a consented family, on the perspective the risk row names, else the widest one; without consent the plan names that perspective unavailable and a same-family seat takes it, never called independent |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference, not a requirement (`decorrelation.md` § Family is a preference, not a gate): worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), which callers discard. When the
@@ -43,19 +43,14 @@ same-family seat on the headless door (`"$IDH_ROOT/scripts/gaze_seat.py"`, which
 nesting) before it may fall back to `seats: self-only`; self-only stays only
 for "no door launched", that is, every door tried and none started.
 
-`plan-write` enforces both rules. It refuses a plan whose every item is self
-unless `--no-door "<doors tried>"` names them, and, when the host consents to
-a provider other than `--home-family`, a plan with no seat of another family
-billed by such a provider (its family, or its model's `<provider>/` prefix) unless `--no-cross-family "<reason>"` gives one. It reads consent from the
-host's file, not from `--spend`. Either flag becomes a header line that the
-plan check reports as a deviation. A cross-family seat that then files no
-report (timed out, refused, `NOT-RUN:`) fails the plan check like any missing
-item: the review is not accepted, and the run never falls back to
-`--no-cross-family` after the fact. On a high-risk change no opt-out reason
-holds: verify-gate refuses a review with no seat of another family that ran
-(ticket 1326). `gaze_close.py` refuses a `seats: panel`
-result that no non-self report backs. The first two worked cases below hold
-on a host with no consent; with consent each adds a consented-family seat.
+`plan-write` refuses a plan whose every item is self unless
+`--no-door "<doors tried>"` names them; the flag becomes a header line that
+the plan check reports as a deviation. A planned seat that files no report
+(timed out, refused, `NOT-RUN:`) fails the plan check like any missing item.
+`gaze_close.py` refuses a `seats: panel` result that no non-self report backs.
+A seat of another family is a routing preference, not a requirement
+(`skills/route/references/decorrelation.md`): plan one when the host consents
+to its spend and the risk, deadline and budget make it worth it.
 
 Choose each seat's model through the `route` skill (`skills/route/SKILL.md`),
 weaker or stronger as the what needs.
@@ -79,10 +74,8 @@ seats.
 #### The plan file
 
 Write it with `python3 "$IDH_ROOT/scripts/seat_clock.py" plan-write <panel>
---intent T --method T --budget <n>m --spend T --home-family F --item NAME MODEL
-FAMILY REASON` (`--item` repeats, once per plan item; `--home-family` is the
-family of the session running gaze, as for `gaze_seat.py launch`) before
-launching anything. The helper
+--intent T --method T --budget <n>m --spend T --item NAME MODEL FAMILY
+REASON` (`--item` repeats, once per plan item) before launching anything. The helper
 builds `<panel>/manifest.txt` and runs `panel-manifest-check.py` on it; a plan
 the checker cannot parse exits 2 and writes nothing. Never write the file by
 hand: free text there makes every sentence a seat with no report. Header lines
@@ -133,14 +126,15 @@ regression	script	none	fails on the base, passes on the head
 
 Arguments `1702` on a 300-line change to a merge gate script. The default what
 is the whole merge request against its ticket's exit criteria; a gate is a
-high-risk row, so one seat comes from another family.
+high-risk row, and the host consents to OpenAI, so the red team comes from
+another family.
 
 ```text
 # intent: the whole merge request against its ticket's exit criteria
-# method: panel; red team from another family because a gate is high risk
+# method: panel; red team from another family: high risk, consented, worth the spend
 # budget: 13m
 # spend: cross-family consented for OpenAI (<config path>)
 correctness	mid-model	anthropic	headless; logic of the gate against the exit criteria
 scope	small-model	anthropic	headless; only what the ticket asks
-redteam	other-model	openai	headless codex; gate bypass, another family for a high-risk row
+redteam	other-model	openai	headless codex; gate bypass, another family preferred on a high-risk row
 ```

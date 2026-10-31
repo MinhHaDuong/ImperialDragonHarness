@@ -18,18 +18,22 @@ Most changes are small and cheap to verify; one cheaper reviewer from the produc
 |---|---|
 | Trivial or mechanical (typo, ticket bookkeeping, data refresh, a rename with a green test) | One same-family reviewer. No cross-family seat. |
 | Ordinary (a feature or fix with tests, a doc rewrite) | The usual angles; same family is fine. Report the family; do not call it independent. |
-| High risk: a wrong approve would be hard to detect or reverse after merge (rules and guards, merge and release gates, credentials, deletion or migration), or the author asks | At least one seat from another family. |
+| High risk: a wrong approve would be hard to detect or reverse after merge (rules and guards, merge and release gates, credentials, deletion or migration), or the author asks | Prefer a seat from another family when the other criteria allow it (below). |
 
 The orchestrator picks the row. When unsure, take the lighter one.
-A failed `plan check:` is for a seat that was required and could not run, not for a same-family review.
+A failed `plan check:` is for a planned seat that could not run, not for a same-family review.
+
+## Family is a preference, not a gate
+
+No gate refuses a review for want of another family. The benefit is plausible but unproven: the literature finds strong models' errors correlated across vendors (`conception/research/ensemble-decorrelation-evidence.md`), and our own records show other-family seats adopting a few more findings per seat in mixed panels, confounded with seat angle and risk selection (`conception/research/2026-10-31-cross-family-seat-measure.md`). Weigh family against the other criteria: spend, latency (an interactive session wants a fast answer; a night run can wait), local compute and clearance, the hour and the providers' load.
 
 ## Independent means another family
 
 - A review is **independent** only when at least one seat comes from a different family than the producer. Take the producer's family from the grid `family` field of the model actually run, never from the provider or door (GLM served through Mistral is still GLM). A lineage twin counts as the same family.
 - Replication substitutes for lineage only when no other-family seat is reachable; the report then says "same family, not independent".
-- When a required other-family seat is unreachable, say so. Never simulate one.
+- When a wanted other-family seat is unreachable, say so. Never simulate one.
 
-A runtime's own subagents stay in its family, so a cross-family seat starts as a headless CLI from bash: the `headless` entry in `routes.json` `launch_doors` whose `families` excludes the producer's, through the cheapest live door, launched by `$IDH_ROOT/scripts/gaze_seat.py` with the full seat contract in the prompt (`skills/gaze/references/panel.md` § Launch and collection). If it cannot run, record `no report`; the plan check names the missing perspective. On a high-risk change verify-gate then refuses the review (`review_notes.py gate --require-cross-family`) and the PR waits for a seat launched by the interface session (`skills/raid/references/detached-gaze.md`). Cross-family seats cost real money (key caps, credit walls in `routes.json`): they launch only on the providers the author consented to once, in the host's `cross_family_spend` key (`gaze_seat.py consent`), and the plan states the spend before launch.
+A runtime's own subagents stay in its family, so a cross-family seat starts as a headless CLI from bash: the `headless` entry in `routes.json` `launch_doors` whose `families` excludes the producer's, through the cheapest live door, launched by `$IDH_ROOT/scripts/gaze_seat.py` with the full seat contract in the prompt (`skills/gaze/references/panel.md` § Launch and collection). If it cannot run, record `no report`; the plan check names the missing perspective. Cross-family seats cost real money (key caps, credit walls in `routes.json`): they launch only on the providers the author consented to once, in the host's `cross_family_spend` key (`gaze_seat.py consent`), and the plan states the spend before launch.
 
 ## The launch line
 

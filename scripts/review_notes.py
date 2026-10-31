@@ -117,9 +117,6 @@ HEADS = "refs/review-heads"
 FETCH_NOTES = f"+{REF}:{TRACK}"  # explicit fetches only, after ls-remote saw the ref
 FETCH_NOTES_GLOB = f"+{REF}*:{TRACK}*"  # the persistent spec: a glob tolerates a notes-less remote
 FETCH_HEADS = f"{HEADS}/*:{HEADS}/*"
-SEAT_LINE = re.compile(r"^seat: (?P<name>[^·\n]+?) · [^\n]*?\bfamily=(?P<family>[^\s·]*)"
-                       r"[^\n]*?\broute=(?P<route>[^\s·]*)[^\n]*· status: (?P<status>\w+)[ \t]*$", re.M)
-FAMILY_ALIASES = {"claude": "anthropic"}
 KINDS = ("request", "plan", "report", "answer", "verdict", "link", "writer")  # writer: ticket 1307
 REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publisher",
             "head", "base", "base_ref", "merge_base", "range_patch_id", "links")
@@ -875,32 +872,7 @@ def _bookkeeping_since(cwd, base_ref, head, since):
     return done.returncode == 0
 
 
-def _family(name):
-    """A family as a seat line writes it, folded; `claude` is the Anthropic lineage."""
-    name = (name or "").strip().casefold()
-    return FAMILY_ALIASES.get(name, name)
-
-
-def cross_family_seats(text, producer_family):
-    """Names of the answer's seats that ran with a family other than the producer's (ticket 1326).
-
-    Read from the generated `seat:` lines (seat_clock.py identities, ticket 1303), keyed on
-    `family=`, never on the runtime: a Claude model behind the codex door is still Anthropic,
-    GLM through Pi is GLM. `none`, `unknown` and an empty family never count, nor a `self`,
-    `subagent` or `unconfirmed` seat: only a headless seat whose report carries the launcher's
-    header has a launcher-set family (seat_clock.identities), so a plan's family column cannot
-    relabel gaze's own read, a same-runtime subagent or a report the launcher did not write."""
-    home = _family(producer_family)
-    out = []
-    for m in SEAT_LINE.finditer(text or ""):
-        fam = _family(m.group("family"))
-        if (m.group("status") == "ran" and m.group("route") not in ("self", "subagent", "unconfirmed")
-                and fam not in ("", "none", "unknown", home)):
-            out.append(m.group("name").strip())
-    return out
-
-
-def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
+def gate_state(cwd, review_id, head, remote="origin"):
     """What verify-gate needs before ruling `head` (spec §5, §8): the round it would rule,
     whether a completed review admits it, and why not. Refreshes first when there is a remote
     (fetch and merge, never a push), so verdicts and answers written by other clones count
@@ -912,12 +884,7 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds.
     `stale` is empty after a good read; after a failed fetch it names the failure: the state
-    rests on local entries and the round may be undercounted (ticket 1300).
-
-    `producer_family`, when given, says a cross-family seat was required (the decorrelation
-    high-risk row, judged by the gate's caller): an admission resting on an answer that ran no
-    seat of another family is refused, naming it (ticket 1326). `cross_family` lists the seats
-    that count; the round-2 re-gate of a REROLL fix re-checks the answer its REROLL cited."""
+    rests on local entries and the round may be undercounted (ticket 1300)."""
     report = refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
@@ -953,31 +920,11 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     else:
         state["reason"] = (f"stale: no gaze answer covers {head[:12]}, and it adds more than "
                            f"bookkeeping to the latest reviewed {state['reviewed_head'][:12]}")
-    # A REROLL-fix re-gate has no covering answer: re-check the one the REROLL verdict cites,
-    # else the latest answer.
-    if state["answer"]:
-        checked = state["answer"]
-    elif state["match"] == "reroll-fix":
-        ids = {e["id"] for e in answers}
-        cited = [i for i in verdicts[-1].get("evidence") or [] if i in ids]
-        checked = cited[-1] if cited else answers[-1]["id"]
-    else:
-        checked = None
-    if producer_family and state["ready"] and checked:
-        text = next((e.get("text", "") for e in answers if e["id"] == checked), "")
-        state["cross_family"] = cross_family_seats(text, producer_family)
-        if not state["cross_family"]:
-            opted = re.search(r"no cross-family seat: ([^;—\n]*)", text)
-            state.update(ready=False, reason=(
-                f"no cross-family seat: answer {checked} ran no seat outside family "
-                f"{_family(producer_family)}, and the change needs one (decorrelation.md, high-risk "
-                f"row){f'; the plan opted out: {opted.group(1).strip()}' if opted else ''}; "
-                "park it for a seat launched by the interface session"))
     return state
 
 
 def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_candidate="", text="",
-                   author=None, remote="origin", forge_read="unread", producer_family=None):
+                   author=None, remote="origin", forge_read="unread"):
     """Append the gate's `verdict` entry; the round is derived here from the review's recorded
     verdicts (all sessions), never passed, and only when `gate_state` admits the head.
     The write is local; a remote gets a background sync, never waited (ticket 1300). Returns
@@ -992,7 +939,7 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
         session = str(uuid.UUID(session))
     except (TypeError, ValueError):
         raise Refusal(f"gate session id must be a UUID, got {session!r}") from None
-    state = gate_state(cwd, review_id, head, remote, producer_family)  # refreshes first, never pushes
+    state = gate_state(cwd, review_id, head, remote)  # refreshes first, never pushes
     if not state["ready"]:
         raise Refusal(f"the gate may not rule {state['head'][:12]}: {state['reason']}")
     rnd = state["round"]
@@ -1035,14 +982,6 @@ def import_file(cwd, path):
 
 
 # --- command line ----------------------------------------------------------------
-
-def _producer_family(value):
-    """The producer's family must be known: against `unknown` every seat would differ."""
-    fam = _family(value)
-    if fam in ("", "none", "unknown"):
-        raise argparse.ArgumentTypeError("the producer's family must be named (grid `family` field)")
-    return fam
-
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0],
@@ -1093,9 +1032,6 @@ def main(argv=None):
     s = sub.add_parser("gate")
     s.add_argument("review")
     s.add_argument("head")
-    s.add_argument("--require-cross-family", metavar="PRODUCER_FAMILY", type=_producer_family,
-                   help="a cross-family seat is required: refuse a review with no seat of another "
-                        "family than the producer's that ran (ticket 1326)")
     s = sub.add_parser("verdict")
     s.add_argument("--review", required=True)
     s.add_argument("--session", required=True, help="the gate session UUID (session=)")
@@ -1106,8 +1042,6 @@ def main(argv=None):
     s.add_argument("--text-file", type=Path, help="the human-readable verdict summary")
     s.add_argument("--forge-read", default="unread",
                    help="the forge-read: time review_evidence.py forge printed, else unread (ticket 1308)")
-    s.add_argument("--require-cross-family", metavar="PRODUCER_FAMILY", type=_producer_family,
-                   help="as for gate: the admission re-checked here requires the same seat")
     s = sub.add_parser("keep-head")
     s.add_argument("review")
     s.add_argument("request")
@@ -1184,13 +1118,13 @@ def main(argv=None):
         elif a.cmd == "coverage":
             print(json.dumps(coverage(cwd, a.review, a.head)))
         elif a.cmd == "gate":
-            state = gate_state(cwd, a.review, a.head, remote, a.require_cross_family)
+            state = gate_state(cwd, a.review, a.head, remote)
             print(json.dumps(state))
             return 0 if state["ready"] else 1
         elif a.cmd == "verdict":
             done = record_verdict(cwd, a.review, a.session, a.verdict, a.head, a.evidence, a.candidate,
                                   a.text_file.read_text() if a.text_file else "", remote=remote,
-                                  forge_read=a.forge_read, producer_family=a.require_cross_family)
+                                  forge_read=a.forge_read)
             print(done["entry"]["id"], done["level"], f"round={done['entry']['round']}")
             if done["stale"]:
                 print(f"review_notes: notes: stale ({done['stale']}); the round may be undercounted",
