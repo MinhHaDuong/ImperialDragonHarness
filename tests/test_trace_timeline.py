@@ -185,7 +185,7 @@ def test_html_is_self_contained_and_matches_the_json_bars(tmp_path):
     lanes = {e["pid"] for e in bars}
     assert "\u21b3 calls" in page and "lane 1 / calls" not in page and len(lanes) >= 3
     assert "cost unknown" in page or "shadow USD: 0" in page
-    for needle in ('<h1>', 'id="mm"', "'wheel'", "'mousedown'", "data-band", "one tool call", "wall-clock"):
+    for needle in ('<h1>', 'id="mm"', "'wheel'", "'mousedown'", "data-band", "one model turn", "wall-clock"):
         assert needle in page
     assert "pointer: " in page and "tu-11" in page and "model: claude-sonnet-5-5" in page
 
@@ -229,8 +229,13 @@ def test_html_colours_tools_by_class_with_legend_tooltip_and_model_labels(tmp_pa
     tool["args"]["class"] = "tests"
     page = tl.render_html(doc, SID)
     assert tl._CLASS_COLORS["tests"] in page and "class: tests" in page
-    for cls in tl._CLASS_COLORS:
-        assert f"{cls}: " in page
+    colours = [c for _cap, entries in tl._LEGEND for _n, c, _m, _o in entries]
+    assert len(colours) == len(set(colours))  # no two legend entries share a colour
+    assert set(tl._CLASS_COLORS.values()) <= set(colours)
+    for _cap, entries in tl._LEGEND:
+        for name, _c, _m, _o in entries:
+            assert f"{name}: " in page
+    assert 'id="grip"' in page and "data-fb=" in page and "idle" not in page
     assert 'id="lab"' in page and 'id="cur"' in page and "position:sticky" in page
     assert 'data-m="claude-sonnet-5-5"' in page or 'data-m=""' in page
     assert "style=" not in page.split("<svg id=\"tl\"")[1].split("</svg>")[0]
