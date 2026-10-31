@@ -36,9 +36,10 @@ what) is in the transcripts or in git.
 | Claude Code sessions and Task subagents | `~/.claude/projects/<cwd>/<session>.jsonl`, subagents in `<session>/subagents/agent-*.jsonl`, large outputs in `<session>/tool-results/`; 5.5 GB, 282 project dirs, 7,735 subagent files | `cleanupPeriodDays: 180` (user and shared settings, the shared file first seen in commit 6193cb37 of 2026-07-22). The oldest transcript is of 2026-06-10, later than the 180-day horizon (2026-05-04): an earlier, shorter period, likely the 30-day default, deleted the rest | timestamp on every message, tool call and tool result; token usage per assistant message; no dollar cost |
 | Claude headless seats (`claude -p --restricted`) | same tree | as above, assuming `--restricted` (`skills/route/routes.json:90`) does not change the cleanup period (§ 2.3) | as above |
 | Codex | `~/.codex/sessions/YYYY/...`; 3.1 GB | oldest rollout 2026-09-08; no cleanup observed, too young to tell | event stream with cumulative token counts |
-| Pi | `~/.pi/agent/sessions`; 12 MB | kept | per-call usage with cost |
+| Pi interactive | `~/.pi/agent/sessions`; 12 MB | kept | per-call usage with cost |
+| Pi headless seats and subagents | `pi --no-session -p` (`skills/route/routes.json:104`); the subagent extension spawns `pi --mode json -p --no-session` (`:100`) | **lost** | none kept |
 | vibe seats | disposable `VIBE_HOME` written per seat by `gaze_seat.py` | **lost** at seat end | none kept |
-| aider seats | scratch cwd, `--no-restore-chat-history` | **lost** | none kept |
+| aider seats | scratch cwd; chat, LLM and input history sent to `/dev/null` (`routes.json:140`) so the review tree gains no `.aider*` file | **lost** | none kept |
 | `manuscript_review.py` readers | `claude -p ... --no-session-persistence` | **lost** | none kept |
 | OpenRouter and Padmé LLM calls made by scripts | not recorded by the harness | — | billed cost per API key, aggregated by `health_checkup.py` |
 | Raw command output | the `rtk` hook compacts Bash output before it enters the transcript; `~/.local/share/rtk/tee/` keeps 124 KB | short | compacted form only |
@@ -127,9 +128,13 @@ supersedes the old one. doudou pushes to padme when online. The archive keeps
 the runtime's own file names and contents, unmodified, so any later reader or
 index can rebuild from it. Nothing is committed to git.
 
-The coverage holes close at the door: vibe and aider seats get a persistent
-home under the archive's spool; `manuscript_review.py` drops
-`--no-session-persistence`.
+The coverage holes close at the door, five of them: vibe seats get a
+persistent `VIBE_HOME` under the archive's spool; aider's history flags point
+to a per-seat file in the spool instead of `/dev/null` (still outside the
+review tree); Pi seats and the Pi subagent extension write their session to
+the spool instead of passing `--no-session`; `manuscript_review.py` drops
+`--no-session-persistence`. Each route's change is checked against the CLI's
+own `--help` at implementation.
 
 The archive sits on the same disk as the live tree with the same
 permissions, so it adds no exposure; uncleared-project material is in the
@@ -138,26 +143,37 @@ copied off the host.
 
 ### 4.3 Launch line (the link that would be lost)
 
-`seat_clock.py run`, which already launches every headless seat, appends one
-JSON line per seat to `~/archive/transcripts/<host>/launches.jsonl`:
+Every script that starts a headless child appends one JSON line per child
+to `~/archive/transcripts/<host>/launches.jsonl`, through one small helper:
+`seat_clock.py run` (gaze seats) and `manuscript_review.py` (which starts
+`claude -p` itself, `manuscript_review.py:462`) today, any new launcher
+tomorrow. A line has this shape:
 
 ```
 {"ts_start", "ts_end", "host", "parent_runtime", "parent_session",
  "child_runtime", "child_session", "seat", "cwd", "unit", "exit"}
 ```
 
-`parent_session` comes from the runtime's session id (`runtime.py session
-id`); `child_session` is pinned at launch where the CLI allows it (`claude -p
---session-id`) or left empty with the child's start time for a later join.
-The write is an append; a failed write prints a warning and the seat runs.
+`parent_session` comes from `runtime.py session id`; Pi exports none today
+(`scripts/runtime_session.py`), so this step makes the Pi adapter export it,
+or the line says `not exported` explicitly. `child_session` is never left to
+a join by start time: gaze starts seats of one runtime at the same moment in
+the same folder, which makes such a join ambiguous. The launcher pins it
+(`claude -p --session-id <uuid>`), or names the session file it gave the child
+(Pi, aider, vibe under the spool), or reads it from the child's own output
+(Codex's session id). The write is an append; a failed write prints a
+warning and the child runs.
 
 ### 4.4 Timeline on demand (execution flow)
 
 `scripts/trace_timeline.py <session>` reads one session, its subagents and
 the seats its launch lines name, and writes Chrome Trace Event JSON: one lane
 per concurrent agent, one complete event per tool call, test or gate run,
-with model, tokens, shadow USD and the pointer `(file, tool_use_id)` in
-`args`. It reads the live tree first and falls back to the archive, so a
+with model, tokens, shadow USD and the pointer `(file, call id)` in `args`.
+The call id is each runtime's own: `tool_use_id` (Claude Code), `call_id`
+(Codex), `toolCallId` (Pi); aider's history has none, so its pointer names the
+file only. Shadow USD comes from the price table `scripts/trace-stats.py`
+already holds (line 34), moved into `trace_events.py` and imported back. It reads the live tree first and falls back to the archive, so a
 same-day session works.
 
 The reader is a module apart from the renderer: `scripts/trace_events.py`,
@@ -169,7 +185,7 @@ stored; nothing in the timeline script needs to change for it.
 
 | Deferred | Pick up when | Kept possible by |
 |---|---|---|
-| Span index (SQLite/DuckDB) | two consumers need fast cross-session queries (trace-doctor and derived attribution, a per-day raid timeline) | raw archive (§ 4.2), launch lines (§ 4.3), `trace_events.py` as a separate module, pointers by `(file, tool_use_id)` |
+| Span index (SQLite/DuckDB) | two consumers need fast cross-session queries (trace-doctor and derived attribution, a per-day raid timeline) | raw archive (§ 4.2), launch lines (§ 4.3), `trace_events.py` as a separate module, pointers by `(file, call id)` |
 | Migrating the eight transcript readers onto `trace_events.py` | a reader is touched for another reason | the same module |
 | Native OTel export | a question needs what transcripts lack (exact billed cost, beta trace nesting) | nothing to keep: it is additive |
 | Launch lines from adapter hooks, `SubagentStop`, a `Session:` commit trailer | a derivation proves ambiguous without them | the raw transcripts hold the Agent call and the `git commit` result already |
@@ -184,11 +200,11 @@ time; odds of meeting the exit on the first pass.
 | Step | Ticket content | Exit | Agent | USD | Author | Odds |
 |---|---|---|---|---|---|---|
 | 1. No online refusal | 1380, widened | an interactive-session landing and its roar capture print no `invalid` and need no hand-typed line | 1–2 h | 5–15 | 0 | 85 % |
-| 2. Raw archive | timer, plain zstd, re-copy on growth, both hosts, three holes closed, the headless-cleanup experiment | every transcript untouched for a day is in the archive at its current size; the experiment's result recorded | 2–3 h | 10–20 | 15 min (doudou access) | 85 % |
-| 3. Launch line | `seat_clock.py` appends the launch line | every seat of one gaze run appears in `launches.jsonl` with its parent session | 1 h | 5–10 | 0 | 85 % |
-| 4. Timeline | `trace_events.py` and `trace_timeline.py` | one raid session of the week renders in Perfetto with its subagents and seats, spot-checked against the transcript | 3–4 h | 20–40 | 15 min (look at one timeline) | 75 % |
+| 2. Raw archive | timer, plain zstd, re-copy on growth, both hosts, five holes closed, the headless-cleanup experiment | every transcript untouched for a day is in the archive at its current size; one seat per route (claude, codex, pi, aider, vibe) and one manuscript-review reader leave a session file in the archive; the experiment's result recorded | 3–4 h | 15–30 | 15 min (doudou access) | 75 % |
+| 3. Launch line | one helper used by `seat_clock.py` and `manuscript_review.py`; child id pinned or captured per runtime; Pi parent id exported | one gaze panel with a seat of each reachable runtime, and one manuscript-review run, appear in `launches.jsonl` with parent and child ids, each child id naming an archived file | 2 h | 10–20 | 0 | 80 % |
+| 4. Timeline | `trace_events.py` (three runtime readers, the price table) and `trace_timeline.py` | one raid session of the week renders in Perfetto with its subagents and seats, at least one seat from a non-Claude runtime, three events spot-checked against their pointers | 3–4 h | 20–40 | 15 min (look at one timeline) | 75 % |
 
-Total: about 7–10 agent hours, 40–85 USD, 30 author minutes. Steps 1, 2 and
+Total: about 9–12 agent hours, 50–105 USD, 30 author minutes. Steps 1, 2 and
 3 are independent; step 4 needs 3 for seat lanes and 2 for the archive
 fallback. Step 2 has a date: the oldest surviving transcript (2026-06-10)
 passes the 180-day horizon around 2026-12-07.
@@ -217,3 +233,15 @@ showed seekable compression to be unneeded; the friction fix sat in the last
 phase. This revision delivers the friction fix first and defers every piece
 without a present consumer, each with the condition that brings it back
 (§ 5).
+
+**Integrity re-review** of the second revision, rv-20261031-pr-2067-b6f9 on
+head a87e43f: FINDINGS. Seats: the orchestrator (Claude Opus) and GPT-6.1 Sol
+through `codex exec` (OpenAI family), who found the same two gaps
+independently. Folded here: Pi seats and subagents (`--no-session`) and aider
+(history to `/dev/null`) kept no transcript, so the holes are five, not three
+(§ 2.1, § 4.2); the launch line covers every launcher, not only
+`seat_clock.py`, names the child by a pinned or captured id rather than a
+start-time join, and exports Pi's parent id (§ 4.3); the step exits check
+each runtime, not Claude alone (§ 6); the pointer uses each runtime's call id
+and names its price-table source (§ 4.4). The reviewers confirmed the § 5
+deferrals optional, apart from child identification, now in step 3.
