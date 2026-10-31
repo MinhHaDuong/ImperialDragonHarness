@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Trust a headless seat header only when the launch line records that seat
+Created: 2026-10-31
+Author: reviewer
+
+--- log ---
+2026-10-31T14:54Z reviewer created
+
+--- body ---
+## Context
+`scripts/seat_clock.py` `identities()` decides from the plan's free-text reason
+column whether a `door=headless` worker header is the launcher's or a subagent's
+forgery (Blind-Spot 1, adf4b6ea). PR 2094 (1388) let the header win when the
+reason names no door, which reopened the forgery for reason `subagent`; the
+follow-up (ticket 1396) untrusts the header when the reason says `subagent`.
+A subagent seat with any other free-text reason can still forge a headless
+header, and a forged identity corrupts the attribution records the route grid
+reads.
+
+Since 1384, `seat_clock.py run` appends one launch line per headless seat
+(`launches.jsonl`): an observed fact, written by the launcher, not the model.
+
+## Scope
+- `identities()` trusts a `door=headless` header only when a launch line records
+  that seat for this review (seat name and unit or panel); otherwise the seat
+  takes the subagent identity. The plan's reason text stops deciding.
+- An unreadable launch archive falls back to untrusted, with one warning.
+
+## Exit criteria
+- [ ] Test: a forged headless header with a free-text reason and no launch line is recorded `route=subagent`
+- [ ] Test: a launcher-stamped seat with a launch line keeps its header identity whatever the reason says (1388 case)
+- [ ] The reason-text checks of 1388 and 1396 are removed
