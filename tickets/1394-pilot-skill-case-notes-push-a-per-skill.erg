@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-31T14:03Z reviewer created
+2026-10-31T19:30Z reviewer stage 1 + headless read-back (claude 2.1.316, haiku, temp repo, planted token ZEBRA-4417-QUILL in memory/skills/merge.md, hook via idh-hook): main: model quoted the token, log 'delivered agent=main'. Twice in one context: one 'delivered' then 'already-delivered', model saw the block once. Subagent: model relayed the quoted token, log 'delivered ... agent=a0940dabe45d19bd9' (own marker). Typed '/merge ...' headless, two runs: model answered NONE, no log line at all (neither delivered nor no-note), so a typed slash command bypasses the Skill tool; the deferred UserPromptSubmit trigger (note 3.5) is now warranted, not built here. Limits: headless only, interactive TUI not verified; marker survives compaction and resume. Stages 3-4 not started.
 
 --- body ---
 ## Context
