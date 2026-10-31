@@ -212,6 +212,9 @@ def test_trace_stats_reexports_the_moved_table():
     ("Bash", "cat <<'EOF'\npytest\nEOF", "other"),
     ("Bash", "cat notes.md | grep 'make check'", "other"),
     ("WebFetch", None, "other"),
+    ("Bash", "grep '|' pytest", "other"), ("Bash", "grep 'a;b' pytest", "other"),  # quoted separators
+    ("Bash", "# run pytest later\nls", "other"), ("Bash", "# c\npytest -q", "tests"),  # comments
+    ("Bash", "make check 2>&1 | tail -3", "tests"), ("Bash", "pytest &> out.log", "tests"),
 ])
 def test_classify_tool(name, command, expected):
     assert te.classify_tool(name, command) == expected
@@ -232,10 +235,12 @@ def test_codex_exec_calls_are_classified_by_their_command():
         row("2026-01-01T00:00:04.000Z", {"type": "function_call", "name": "spawn_agent", "call_id": "c4", "arguments": "{}"}),
         row("2026-01-01T00:00:05.000Z", {"type": "custom_tool_call", "name": "exec", "call_id": "c5",
                                          "input": "text(await tools.apply_patch(`*** Begin Patch`));"}),
+        row("2026-01-01T00:00:07.000Z", {"type": "custom_tool_call", "name": "exec", "call_id": "c7",
+                                         "input": 'text(await tools.exec_command({"cmd":"pytest -q","workdir":"/w"}));'}),
         row("2026-01-01T00:00:06.000Z", {"type": "local_shell_call", "call_id": "c6", "action": {"command": ["make", "check"]}}),
     ]
     tools = {t.pointer[1]: t.tool_class for t in by_kind(te.read_codex(lines(*rows), "f"), "tool")}
-    assert tools == {"c1": "tests", "c2": "other", "c3": "worker", "c4": "subagent", "c5": "file", "c6": "tests"}
+    assert tools == {"c1": "tests", "c2": "other", "c3": "worker", "c4": "subagent", "c5": "file", "c6": "tests", "c7": "tests"}
 
 
 def test_claude_tool_class_comes_from_the_command_and_non_tools_have_none():

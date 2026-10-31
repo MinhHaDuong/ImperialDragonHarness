@@ -119,10 +119,13 @@ WORKER_SCRIPTS = {"seat_clock.py", "gaze_seat.py", "runtime_launch.py"}
 WRAPPERS = {"sudo", "env", "time", "nohup", "nice", "rtk", "command", "exec", "xargs", "setsid", "stdbuf"}
 SHELLS = {"bash", "sh", "zsh", "dash"}
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
-SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")", "|&", ";;"}
 
 
-def _unquoted_newlines_to_semicolons(text: str) -> str:
+SEP = "\x1f"  # marks an unquoted command separator, so a quoted `|` or `;` stays an ordinary word
+
+
+def _mark_separators(text: str) -> str:
+    """Replace unquoted newlines and `| & ; ( )` by SEP and drop unquoted `#` comments (`2>&1`, `&>` stay)."""
     out, quote, i = [], None, 0
     while i < len(text):
         ch = text[i]
@@ -139,8 +142,14 @@ def _unquoted_newlines_to_semicolons(text: str) -> str:
             ch = text[i]
         elif ch in "'\"":
             quote = ch
-        elif ch == "\n":
-            ch = ";"
+        elif ch == "#" and (not out or out[-1].isspace() or out[-1] == SEP):
+            while i < len(text) and text[i] != "\n":
+                i += 1
+            continue
+        elif ch == "\n" or ch in "|;()":
+            ch = f" {SEP} "
+        elif ch == "&" and not (out and out[-1] in "<>") and text[i + 1:i + 2] != ">":
+            ch = f" {SEP} "
         out.append(ch)
         i += 1
     return "".join(out)
@@ -161,16 +170,14 @@ def _drop_heredocs(text: str) -> str:
 
 
 def _simple_commands(command: str) -> list[list[str]]:
-    text = _unquoted_newlines_to_semicolons(_drop_heredocs(command))
+    text = _mark_separators(_drop_heredocs(command))
     try:
-        lexer = shlex.shlex(text, posix=True, punctuation_chars="|&;()")
-        lexer.whitespace_split = True
-        tokens = list(lexer)
+        tokens = shlex.split(text, posix=True)
     except ValueError:
         tokens = text.split()
     commands, current = [], []
     for token in tokens:
-        if token in SEPARATORS:
+        if token == SEP:
             if current:
                 commands.append(current)
             current = []
@@ -241,7 +248,7 @@ def classify_tool(name: str, command: str | None = None) -> str:
     return "other"
 
 
-CODEX_CMD = re.compile(r"""\bcmd\s*:\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`)""")
+CODEX_CMD = re.compile(r"""["']?\bcmd["']?\s*:\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`)""")
 
 
 def codex_command(payload: dict) -> str | None:
