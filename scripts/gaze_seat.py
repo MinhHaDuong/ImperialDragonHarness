@@ -35,7 +35,10 @@ prefix of a pi model. The provider of the session running gaze
 (`--home-family`) needs no consent. A provider that is itself a model family
 (any family a door names) fixes the seat's family, so `--family` cannot claim
 another one; a host provider serving other makers' models leaves the label to
-the plan.
+the plan. A local server (routes.json `local_providers` on a loopback, private
+or CGNAT host) serves whatever is loaded, so its seat's family is read from the
+served id: the grid `family` of that model (`skills/route/grid.json`), else
+`unknown`. Being local is access, never a family; it only waives consent.
 """
 
 import argparse
@@ -283,6 +286,17 @@ def served_models(base_url: str) -> list[str] | None:
         return None
 
 
+def grid_family(model_id: str, grid: Path) -> str:
+    """The grid `family` of a served model id, else `unknown` (ids and grid names differ by case and separators)."""
+    def norm(name: str) -> str:
+        return re.sub(r'[\s_]+', '-', name.strip().lower())
+    try:
+        rows = json.loads(grid.read_text(encoding='utf-8'))['grid']
+    except (OSError, ValueError, KeyError, TypeError):
+        return 'unknown'
+    return next((str(row['family']) for row in rows if norm(str(row.get('model', ''))) == norm(model_id)), 'unknown')
+
+
 def is_local(door: dict, provider: str, base_url: str) -> bool:
     """A provider is local when its name matches and its declared host is loopback, private or CGNAT."""
     if not any(fnmatch.fnmatchcase(provider, pattern) for pattern in door.get('local_providers', [])):
@@ -389,9 +403,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         except (OSError, ValueError, KeyError, TypeError):
             return False, f'no report (provider {provider_id} has no baseUrl in {pi_models_path()})'
         local = is_local(door, provider_id, base_url)
-        if local and args.family.lower() != door['local_family'].lower():
-            return False, (f'no report (model {args.model} is served locally: family {door["local_family"]}, '
-                           f'not {args.family})')
+        if local:  # the plan's label cannot know what the server has loaded
+            args.family = grid_family(model_id, args.routes.parent / 'grid.json')
         values['baseUrl'], run_model = base_url, f'openai/{model_id}'
     if provider.lower() != args.home_family.lower() and not local and \
             provider.lower() not in (f.lower() for f in consented(config_path())):

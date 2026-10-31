@@ -547,7 +547,7 @@ def padme(rig):
     server.shutdown()
 
 
-def aider_seat(rig, model='padme/served-model', family='Local', **kw):
+def aider_seat(rig, model='padme/served-model', family='unknown', **kw):
     return launch(rig, runtime='aider', model=model, family=family, home='Anthropic', **kw)
 
 
@@ -556,7 +556,7 @@ def test_aider_seat_runs_read_only_against_the_declared_local_server(rig, padme)
     result = aider_seat(rig)  # no consent file: a local provider spends nothing
     assert result.returncode == 0, result.stdout + result.stderr
     report = rig['panel'] / 'correctness.md'
-    assert first_line(report) == 'worker: model=padme/served-model · family=Local · runtime=aider · door=headless'
+    assert first_line(report) == 'worker: model=padme/served-model · family=unknown · runtime=aider · door=headless'
     argv = (rig['log'] / 'aider.argv').read_text().splitlines()
     assert argv[argv.index('--model') + 1] == 'openai/served-model'
     assert argv[argv.index('--openai-api-base') + 1] == padme  # from Pi's declaration, not a copy
@@ -669,11 +669,19 @@ def test_local_exemption_follows_the_declared_host_not_the_provider_name(rig, pa
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('label', ['Anthropic', 'OpenAI', 'Alibaba'])
-def test_local_model_cannot_be_stamped_as_another_family(rig, padme, label):
-    result = aider_seat(rig, family=label)
-    assert result.returncode == 1 and 'family Local' in result.stdout
-    assert not (rig['panel'] / 'correctness.md').exists()
+@pytest.mark.parametrize('label', ['Anthropic', 'OpenAI', 'Local'])
+def test_local_seat_family_is_read_from_the_served_id_not_the_plan(rig, padme, label):
+    result = aider_seat(rig, family=label)  # served-model is in no grid row
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert 'family=unknown ·' in first_line(rig['panel'] / 'correctness.md')
+
+
+def test_grid_family_matches_served_ids_across_case_and_separators(tmp_path):
+    gaze_seat = load_module()
+    grid = ROOT / 'skills' / 'route' / 'grid.json'
+    assert gaze_seat.grid_family('qwen3.8-flash-next-iq3_s', grid) == 'Qwen'
+    assert gaze_seat.grid_family('gemma-4-27b', grid) == 'unknown'
+    assert gaze_seat.grid_family('qwen3.8-flash-next-iq3_s', tmp_path / 'missing.json') == 'unknown'
 
 
 @pytest.mark.integration
