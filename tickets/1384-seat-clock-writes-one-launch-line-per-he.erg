@@ -1,0 +1,33 @@
+%erg 0.1
+Title: seat_clock writes one launch line per headless seat
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T08:39Z claude created
+
+--- body ---
+## Context
+
+Memo `conception/2026-10-31-monitoring-redesign.md` § 4.3. The one link not reconstructible from transcripts is which
+session launched which headless seat. `scripts/seat_clock.py run` already
+launches every seat (`codex exec`, `claude -p`, `pi -p`) under a hard cap and
+writes `<out>.status`; it records no parent. Part of tracker 1382.
+
+Append one JSON line per seat to `~/archive/transcripts/<host>/launches.jsonl`
+with `ts_start, ts_end, host, parent_runtime, parent_session, child_runtime,
+child_session, seat, cwd, unit, exit`. `parent_session` from `runtime.py
+session id`; `child_session` pinned at launch where the CLI allows it
+(`claude -p --session-id`), else empty. The write is an append; a failure
+warns on stderr and never changes the seat's outcome or exit code.
+
+## Exit criteria
+
+- [ ] Test: a `seat_clock.py run` of a stub seat appends one well-formed line
+      with the parent session id from the environment and the stub's exit
+- [ ] Test: an unwritable launches file leaves the seat's status and exit code
+      unchanged and prints one warning
+- [ ] A claude seat's line carries the `--session-id` it was launched with,
+      and that id names a transcript file
+- [ ] One real gaze run on padme: every seat of the panel appears with its
+      parent session (lines quoted in the PR)

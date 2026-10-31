@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Timeline on demand: trace_events reader and Perfetto export per session
+Created: 2026-10-31
+Author: claude
+Blocked-by: 1383
+Blocked-by: 1384
+
+--- log ---
+2026-10-31T08:39Z claude created
+
+--- body ---
+## Context
+
+Memo `conception/2026-10-31-monitoring-redesign.md` § 4.4. The author wants timeline bars of the execution flow
+(session, subagents, seats, tool calls, test and gate runs) with timings and
+costs, and pointers back into the transcripts. Part of tracker 1382.
+
+Two scripts:
+
+- `scripts/trace_events.py`: a module, one reader per runtime (Claude Code
+  with `subagents/`, Codex rollouts with cumulative `token_count` turned into
+  differences, Pi sessions) yielding events with the same fields: kind, name,
+  start, end, model, tokens, shadow USD, exit, pointer `(file, tool_use_id)`.
+  It is the reader a later index will reuse (memo § 5), so it holds no
+  rendering code.
+- `scripts/trace_timeline.py <session>`: reads the session, its subagents and
+  the seats its launch lines (1384) name, live tree first then archive (1383),
+  and writes Chrome Trace Event JSON: one lane per concurrent agent, one
+  complete event per tool call, pointer and costs in `args`. Background
+  commands end at their completion notification.
+
+## Exit criteria
+
+- [ ] Fixture test per runtime reader (Claude Code, Codex, Pi): events with
+      start, end, tokens and pointer; Codex per-turn tokens are differences
+- [ ] Fixture test: overlapping subagents land on distinct lanes; a seat named
+      by a launch line lands under its parent
+- [ ] One raid session of the week renders in Perfetto; three events
+      spot-checked against the transcript lines their pointers name (quoted in
+      the PR)
+- [ ] `trace_timeline.py` reads a session already pruned from the live tree from
+      the archive
