@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Tolérer les enveloppes Markdown des en-têtes de revue sans inventer de portée
+Created: 2026-10-31
+Author: MinhHaDuong
+
+--- log ---
+2026-10-31T18:22Z MinhHaDuong created
+
+--- body ---
+## Incident constaté
+
+Demandé explicitement par l’auteur le 31 octobre 2026 : « Ticket l’incident dans le harnais. Le parseur doit être plus gentil. » Dépôt du ticket seulement ; aucun correctif du harnais ni changement d’admission Arena autorisé par cette écriture.
+
+Une revue réelle Arena 1187, candidat `8f2551644b9113a4b5e198bc0abdf8a9bdd015f6`, a répondu normalement après 591,067 s : 18 522 octets, Qwen/xhigh observé et lectures du code conservées. Pourtant `gaze_seat.py` termine en erreur « no valid reach line ». Le rapport commence ainsi :
+
+````text
+```text
+worker: model=padme/qwen3.8-flash-next-iq3_s:xhigh · family=Qwen
+reach: read=yes shell=no tests=not-run
+```
+
+[corps du rapport]
+````
+
+`stamp()` ne reconnaît pas le worker à l’intérieur du bloc initial et ajoute le worker du lanceur. `reach_refusal()` examine ensuite uniquement la deuxième ligne non vide : elle contient l’ouverture de bloc Markdown au lieu de la déclaration de portée réelle. Le modèle a fourni la déclaration attendue, mais une variation de présentation provoque le rejet. Un précédent rapport du même ticket utilisait `tests=ran=no` : c’est une déclaration distincte, réellement invalide, à ne pas assimiler automatiquement à `not-run`.
+
+## Reproduction portable et preuves
+
+Le fragment synthétique ci-dessus suffit à reproduire le défaut via les vraies fonctions `stamp()` et `reach_refusal()`, sans appel modèle ni données Arena privées. Remplacer le nom de modèle par un identifiant de fixture dans les tests.
+
+Preuves privées conservées dans Arena, sans copie dans ce dépôt :
+
+- Réponse ESCALATE : `20261031T162236665Z-padme-8fc066d1` ; son résultat historique reste inchangé.
+- Brut : `raid-9301d5-1187/.tmp/1187-fixed-qwen.raw.stdout`, SHA-256 `4466fd8e2a575461f5c05236214f52439c95f26088ed1fc75760c649e8253449`.
+- Diagnostic : `raid-9301d5-1187/.tmp/1187-fixed-format-diagnosis.json` ; helper observé SHA-256 `a718f1e1d040d3efda701661d443df4c7acc4dfcfb5a3d0ab0fc1e86f5932532`.
+- Session observée et brut ne valent pas acceptation manuelle du rapport ; la suite Arena (898 Python + 3 Node) est une preuve séparée.
+
+Ces chemins de réception sont des localisateurs historiques, pas des dépendances de la suite par défaut du harnais. Aucun secret, prompt privé ou source Arena n’est inclus ici.
+
+## Portée du correctif demandé
+
+Tolérer les enveloppes de présentation courantes autour de l’en-tête initial : en particulier un bloc Markdown équilibré, avec ou sans langage, contenant worker/reach. Définir une extraction bornée et explicable ; ne pas rechercher arbitrairement la première ou dernière ligne `reach:` dans le corps ou les citations.
+
+Le worker du lanceur reste l’autorité d’identité. Une normalisation de présentation ne doit jamais fabriquer ni corriger des valeurs read/shell/tests, transformer `read=no` en oui, accepter un en-tête ambigu, ou supprimer des éléments du corps pour simuler une revue valide.
+
+Liens : ticket 1389 (branche `tickets/arena-aider-parser-20261031`, commit `e56955a7178e0d74d55d4fa9d0d491c75646fb6b`) concerne une AUTRE erreur : sélection d’un marqueur Aider cité dans le raisonnement. Une solution commune est possible, mais les deux reproductions restent distinctes. Le tracker de monitoring 1382 est fermé : respecter sa direction raw-first/dérivation à la demande. Le ticket 1399 concerne la confiance dans l’identité du lanceur, à préserver.
+
+## Critères de sortie
+
+- [ ] Reproduire le rejet actuel avec un fixture synthétique, via le vrai pipeline extraction → stamp → validation ; aucun appel modèle requis.
+- [ ] Accepter un en-tête valide enveloppé dans un bloc Markdown initial équilibré ; couvrir bloc vide/langage text, lignes vides, et rapport ordinaire sans bloc.
+- [ ] Préserver strictement les déclarations de portée : missing reach, read=no, tests=ran=no, valeurs inconnues, en-têtes contradictoires ou ambigus restent des refus explicites.
+- [ ] Contrôles adverses : en-tête cité dans le corps, exemple de rapport, marqueurs/fragments répétés, clôture manquante et contenu après le bloc ; aucune promotion d’un exemple en déclaration réelle.
+- [ ] Conserver la provenance réelle du lanceur, les octets bruts et le corps du rapport ; décrire la normalisation appliquée sans modifier les anciens ESCALATE ni fabriquer une admission.
+- [ ] Diagnostiquer distinctement erreur de présentation, déclaration sémantique invalide, absence de réponse et timeout ; aucune relance automatique ou nouvelle cérémonie de monitoring.
+- [ ] Exécuter les tests ciblés du vrai harnais et ses vérifications applicables ; le ticket n’est pas validé par un shim Arena ni par une édition manuelle du rapport rejeté.
