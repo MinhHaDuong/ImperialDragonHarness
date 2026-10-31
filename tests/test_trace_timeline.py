@@ -183,7 +183,7 @@ def test_html_is_self_contained_and_matches_the_json_bars(tmp_path):
     bars = [e for e in doc["traceEvents"] if e.get("ph") == "X"]
     assert page.count("<rect") == len(bars)
     lanes = {e["pid"] for e in bars}
-    assert page.count("lane ") >= len({(e["pid"], e["tid"]) for e in bars}) and len(lanes) >= 3
+    assert "\u21b3 calls" in page and "lane 1 / calls" not in page and len(lanes) >= 3
     assert "cost unknown" in page or "shadow USD: 0" in page
     for needle in ('<h1>', 'id="mm"', "'wheel'", "'mousedown'", "data-band", "one tool call", "wall-clock"):
         assert needle in page

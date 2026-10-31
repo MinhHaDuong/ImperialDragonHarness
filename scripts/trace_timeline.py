@@ -323,7 +323,8 @@ if(dk!=day){day=dk;var u=document.createElementNS(NS,'text');u.setAttribute('x',
 u.setAttribute('font-size',11);u.setAttribute('font-weight','bold');u.textContent=dk;ticks.appendChild(u);}}}
 function lay(){var w=left+span*pps+20;svg.setAttribute('width',w);
 svg.querySelectorAll('[data-t]').forEach(function(n){var x=left+n.dataset.t*pps;
-n.setAttribute('x',x);n.setAttribute('width',Math.max(1,n.dataset.d*pps));});
+n.setAttribute('x',x);n.setAttribute('width',Math.max(1,n.dataset.d*pps));
+if(n.tagName=='text')n.style.display=n.dataset.d*pps>=n.textContent.length*5.5+6?'':'none';});
 document.querySelectorAll('[data-band]').forEach(function(n){var b=n.dataset.band.split(' ');
 n.setAttribute('d','M0 '+b[0]+'H'+w+'v'+b[1]+'H0z');});drawTicks();vp();}
 function mmW(){return mm.getBoundingClientRect().width;}
@@ -393,9 +394,9 @@ def first_prompt(tree: Tree, session: str) -> str:
 
 
 def default_author() -> str:
-    """The session's user: git `user.name`, else the host user."""
+    """The session's user: global git `user.name` (never the repo-local agent identity), else the host user."""
     try:
-        name = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True, timeout=5).stdout.strip()
+        name = subprocess.run(["git", "config", "--global", "user.name"], capture_output=True, text=True, timeout=5).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         name = ""
     if name:
@@ -435,15 +436,26 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
         rows = lane_rows[pid]
         y, h = top + rh * min(rows), rh * len(rows)
         parts.append(f'<path data-band="{y} {h}" fill="{"#eef2f7" if n % 2 == 0 else "#ffffff"}"/>')
+    lane_agents: dict[int, list[str]] = {}
+    for e in sorted(events, key=lambda e: e["ts"]):
+        if e["cat"] == "agent":
+            lane_agents.setdefault(e["pid"], []).append(e["name"].split(" (under")[0])
     parts.append('<g id="ticks"/>')
     for (pid, tid), i in row_of.items():
-        label = names.get(("process_name", pid, 0), f"lane {pid}") + " / " + names.get(("thread_name", pid, tid), "")
-        parts.append(f'<text x="4" y="{top + rh * i + 12}" font-size="11">{q(label)}</text>')
+        if tid == 0:
+            who = lane_agents.get(pid, [])
+            label = (who[0] + (f" +{len(who) - 1}" if len(who) > 1 else "")) if who else f"lane {pid}"
+        else:
+            label = "\u21b3 calls"
+        parts.append(f'<text x="4" y="{top + rh * i + 12}" font-size="11">{q(label[:20])}</text>')
     for e in events:
         i = row_of[(e["pid"], e["tid"])]
         parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" '
                      f'height="{rh - 4}" fill="{_COLORS.get(e["cat"], "#789")}" '
                      f'fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}"><title>{q(_tooltip(e))}</title></rect>')
+        if e["cat"] == "agent":
+            parts.append(f'<text data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 13}" font-size="10">'
+                         f'{q(e["name"].split(" (under")[0][:40])}</text>')
     heading = f"Session {session[:8]}" + (f": {title}" if title else "")
     meta = " · ".join(x for x in (f"id {session}" if session else "", f"author {author}" if author else "",
                                   f"started {_stamp(t0)}" if t0 else "",
