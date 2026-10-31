@@ -24,6 +24,7 @@ Paths come from `transcript_spool` (live roots, archive, host) and `launch_line`
 """
 import argparse
 import getpass
+import glob
 import html
 import importlib.util
 import json
@@ -80,9 +81,10 @@ class Tree:
     def session_ids(self, prefix: str) -> list[str]:
         """Claude session ids starting with `prefix`, live tree and archive together, sorted."""
         found: set[str] = set()
+        literal = glob.escape(prefix)  # user input: `*`, `?`, `[` match themselves, `**` cannot crash pathlib
         for root in self.live.get("claude", []):
-            found.update(hit.stem for hit in root.glob(f"*/{prefix}*.jsonl"))
-        found.update(hit.name.removesuffix(".jsonl.zst") for hit in (self.archive / "claude").glob(f"*/{prefix}*.jsonl.zst"))
+            found.update(hit.stem for hit in root.glob(f"*/{literal}*.jsonl"))
+        found.update(hit.name.removesuffix(".jsonl.zst") for hit in (self.archive / "claude").glob(f"*/{literal}*.jsonl.zst"))
         return sorted(found)
 
     def resolve(self, runtime: str, ref: str) -> tuple[str, Path] | None:
@@ -203,7 +205,7 @@ def link_delegations(agents: list[Agent]) -> None:
 
 def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
     """The session, its subagents, and the seats launched from it (and from them), live before archive."""
-    hit = tree.find("claude", f"*/{session}.jsonl")
+    hit = tree.find("claude", f"*/{glob.escape(session)}.jsonl")
     if hit is None:
         raise SystemExit(f"trace_timeline: session {session} is neither in the live tree nor in the archive")
     agents = _claude_agents(tree, hit[0], hit[1], session, None, f"claude {session[:8]}")
@@ -500,7 +502,7 @@ setLeft(left);pps=Math.max(MIN,Math.min(40,(box.clientWidth-left-20)/span));lay(
 
 def first_prompt(tree: Tree, session: str) -> str:
     """A human label for the session: its first typed prompt or slash command, one short line ("" if none)."""
-    hit = tree.find("claude", f"*/{session}.jsonl")
+    hit = tree.find("claude", f"*/{glob.escape(session)}.jsonl")
     if hit is None:
         return ""
     try:
