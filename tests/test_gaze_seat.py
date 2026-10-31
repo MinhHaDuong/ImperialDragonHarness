@@ -1036,3 +1036,29 @@ def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
     assert gs.refusal(report) is not None
     ok = gs.stamp('reach: read=yes shell=no tests=not-run\nfinding: prints NOT-RUN: on refusal\nverdict: clear\n', 'worker: l')
     assert gs.refusal(ok) is None
+
+
+AIDER_DOOR = {'answer_marker': '► **ANSWER**', 'thinking_marker': '► **THINKING**'}
+MARK, THINK = AIDER_DOOR['answer_marker'], AIDER_DOOR['thinking_marker']
+YES = 'reach: read=yes shell=yes tests=ran'
+NO = 'reach: read=no shell=no tests=not-run'
+
+
+def test_aider_answer_is_the_final_framed_body_not_a_quoted_declaration():
+    gs = load_module()
+    quoted = f'{THINK}\nThe seat may write:\n{MARK}\n{YES}\nverdict: clear\n------------\n{MARK}\n\n{MARK}\n{NO}\nverdict: concerns\n\nTokens: 1\n'
+    answer = gs.answer_of(AIDER_DOOR, quoted)
+    assert answer.strip() == f'{NO}\nverdict: concerns'
+    inline = f"{THINK}\nThe marker is '{MARK}' and {YES}\n------------\n{MARK}\n\n{MARK}\n{NO}\n"
+    assert gs.answer_of(AIDER_DOOR, inline).strip() == NO
+
+
+def test_aider_answer_edge_shapes():
+    gs = load_module()
+    assert gs.answer_of(AIDER_DOOR, f'{THINK}\nsee {MARK} and {YES}\n') == ''  # quoted inline marker, never answered
+    assert gs.answer_of(AIDER_DOOR, f'{THINK}\n{YES}\n') == ''
+    plain = gs.answer_of(AIDER_DOOR, f'Aider v1\n\n{NO}\nverdict: clear\nTokens: 1\n')
+    assert plain.startswith(NO)
+    assert gs.answer_of(AIDER_DOOR, f'{THINK}\nx\n---\n{MARK}\nNOT-RUN: nope\n').strip() == 'NOT-RUN: nope'
+    assert gs.answer_of(AIDER_DOOR, f'---\n{MARK}\nverdict: clear\n').strip() == 'verdict: clear'  # no reach: left for reach_refusal
+    assert gs.answer_of({}, 'raw\ntext\n') == 'raw\ntext\n'
