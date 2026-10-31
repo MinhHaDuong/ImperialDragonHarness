@@ -63,9 +63,10 @@ run_pool() {
     dir=$(mktemp -d "${work:-${TMPDIR:-/tmp}}/pool.XXXXXX") || return 1
     for item in "$@"; do
         if [ "$running" -ge "$limit" ]; then
-            # Throttle only. wait -n's status is not trusted: it can report 127 when
-            # two jobs end together, and counting that as a failure over-reported.
-            wait -n 2>/dev/null || true
+            # Throttle only, on this pool's own pids: a bare wait -n also takes the
+            # caller's background jobs (the podman service) and can block on one (1396).
+            # Its status is not trusted: it can report 127 when two jobs end together.
+            wait -n "${pids[@]}" 2>/dev/null || true
             running=$((running - 1))
         fi
         # Plain command, so the caller's set -e stays live inside $fn; the EXIT trap
