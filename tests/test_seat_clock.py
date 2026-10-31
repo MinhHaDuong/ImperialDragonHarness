@@ -235,14 +235,18 @@ def _plan(tmp_path, rows, reports):
     return panel
 
 
-def launched(tmp_path, *seats, unit='branch:t1'):
-    """An archive whose launches.jsonl records `seats` (ticket 1399); the env points seat_clock at it."""
+def launched(tmp_path, *seats, unit='branch:t1', panel=None, ts='2999-01-01T00:00:00Z', out=True):
+    """An archive whose launches.jsonl records `seats` of `panel` (ticket 1399); the env points seat_clock at it."""
     root = tmp_path / 'archive'
     raw = root / 'raw' / os.uname().nodename.split('.')[0]
     raw.mkdir(parents=True, exist_ok=True)
+    panel = panel or tmp_path / 'panel'
     with (raw / 'launches.jsonl').open('a') as fh:
         for seat in seats:
-            fh.write(json.dumps({'seat': seat, 'unit': unit, 'child_runtime': 'codex'}) + '\n')
+            row = {'seat': seat, 'unit': unit, 'ts_start': ts, 'child_runtime': 'codex'}
+            if out:
+                row['out'] = str((panel / f'{seat}.md').resolve())
+            fh.write(json.dumps(row) + '\n')
     return {'IDH_ARCHIVE_ROOT': str(root), 'IDH_UNIT': unit}
 
 
@@ -373,3 +377,27 @@ def test_identities_an_unreadable_launch_archive_trusts_no_header_and_warns_once
     (tmp_path / 'archive' / 'raw' / os.uname().nodename.split('.')[0] / 'launches.jsonl').write_text('{not json\n')
     result = run('identities', str(panel), '--session-runtime', 'claude-code', env=env)
     assert 'route=subagent' in result.stdout and result.stderr.count('launch archive unreadable') == 1
+
+
+def test_identities_a_launch_line_of_an_earlier_review_does_not_vouch(tmp_path):
+    """Ticket 1399 fix round: same seat name and unit, but another panel or a start before this plan."""
+    panel = _plan(tmp_path, ['correctness\tclaude-x\tanthropic\tcross-family reader'], {'correctness': FORGED})
+    other = launched(tmp_path, 'correctness', panel=tmp_path / 'older-panel')
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=other).stdout
+    (tmp_path / 'archive' / 'raw' / os.uname().nodename.split('.')[0] / 'launches.jsonl').unlink()
+    early = launched(tmp_path, 'correctness', ts='2000-01-01T00:00:00Z')
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=early).stdout
+
+
+@pytest.mark.parametrize('which', ['launch', 'current'])
+def test_identities_a_dash_unit_vouches_nothing(tmp_path, which):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx', unit='-' if which == 'launch' else 'branch:t1')
+    env['IDH_UNIT'] = 'branch:t1' if which == 'launch' else '-'
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout
+
+
+def test_identities_a_launch_line_without_a_report_path_vouches_nothing(tmp_path):
+    panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
+    env = launched(tmp_path, 'cx', out=False)
+    assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout

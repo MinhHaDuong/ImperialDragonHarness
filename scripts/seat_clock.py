@@ -37,8 +37,9 @@ per worker item of the manifest (ticket 1303), built from the plan and the
 launcher-set `worker:` header, never typed by the model: `seat: <item> ·
 runtime=<id> · family=<family> · route=<token> · model=<provider/id | not
 observed> · status: ran|failed|skipped`. A header with `door=headless` is the
-launcher's (its runtime and model) only when `launches.jsonl` holds a launch line for that seat and this
-unit (`IDH_UNIT`, else the branch; ticket 1399); the plan's reason text never decides, and an unreadable
+launcher's (its runtime and model) only when `launches.jsonl` holds a launch line for that seat's report file
+in this panel, this known unit (`IDH_UNIT`, else the branch; a `-` vouches nothing) and started after the
+plan was written (ticket 1399); the plan's reason text never decides, and an unreadable
 archive trusts no header, with one warning. Any other seat typed its own header, so its line takes the manifest pin and the session's runtime (`route=subagent`), and its
 family is the runtime door's (routes.json), the model's `<provider>/` prefix, else `unconfirmed`,
 never the plan label (a mismatch prints a `deviation:` line on stderr, ticket 1360);
@@ -66,6 +67,7 @@ import signal
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -102,7 +104,7 @@ def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
                                                           launch.get('spool'))
                 launch_line.record(seat=launch['seat'], child_runtime=runtime, child_session=session,
                                    ts_start=started, ts_end=time.time(), exit=info.get('exit', 'failed to start'),
-                                   cwd=cwd)
+                                   cwd=cwd, out=out)
             except Exception as error:  # bookkeeping never changes the seat's outcome
                 print(f'launch_line: {error}', file=sys.stderr)
 
@@ -307,17 +309,31 @@ def door_family(runtime: str, model: str) -> str:
     return model.split('/', 1)[0].lower() if '/' in model else 'unconfirmed'
 
 
-def launched_seats() -> set[tuple[str, str]] | None:
-    """(seat, unit) of every launch line the launchers wrote (ticket 1399); None when the archive is unreadable."""
+def launched_seats() -> list[dict] | None:
+    """Every launch line the launchers wrote (ticket 1399); None when the archive is unreadable."""
     try:
         path = launch_line.launches_path()
         if not path.exists():
-            return set()
+            return []
         rows = [json.loads(ln) for ln in path.read_text(encoding='utf-8').splitlines() if ln.strip()]
-        return {(str(r['seat']), str(r.get('unit', '-'))) for r in rows}
-    except (OSError, ValueError, KeyError, TypeError):
+        for r in rows:
+            r['seat'], r['unit'], r['ts_start'], r.get('out')  # KeyError: a malformed row is an unreadable archive
+        return rows
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
         print('seat_clock: launch archive unreadable; no headless header is trusted', file=sys.stderr)
         return None
+
+
+def vouches(row: dict, panel: Path, name: str, unit: str) -> bool:
+    """A launch line vouches for a seat of this review only when it names this panel's report file, the same
+    known unit, and started after the plan was written; a `-` unit or a missing path vouches nothing (ticket 1399)."""
+    try:
+        started = datetime.strptime(row['ts_start'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc).timestamp()
+        planned = (panel / 'manifest.txt').stat().st_mtime
+        return (row['seat'] == name and row['unit'] == unit != '-' and bool(row.get('out'))
+                and Path(row['out']) == (panel / f'{name}.md').resolve() and started >= int(planned) - 1)
+    except (OSError, ValueError, TypeError):
+        return False
 
 
 def identities(panel: Path, session_runtime: str = '', session_model: str = '') -> list[dict[str, str]]:
@@ -338,7 +354,7 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
         header = worker_header(panel / f'{name}.md')
         door = re.search(r'headless[ ]+(\S+)', reason)
         # a headless header is trusted only when the launcher recorded this seat for this review (1399)
-        stamped = any(seat == name and (u == unit or '-' in (u, unit)) for seat, u in launches or ())
+        stamped = any(vouches(r, panel, name, unit) for r in launches or ())
         if is_self(cells):
             runtime, model, route = session_runtime, session_model.strip() or 'not observed', 'self'
             family = door_family(runtime, model)  # the session's family, not the label (1360)
