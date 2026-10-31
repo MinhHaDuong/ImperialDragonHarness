@@ -157,11 +157,11 @@ def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
     queue, seen = [session], {session}
     while queue:
         parent = queue.pop(0)
-        for line in launches:
+        for index, line in enumerate(launches):
             if line.get("parent_session") != parent:
                 continue
             runtime, ref = line.get("child_runtime") or "?", line.get("child_session") or ""
-            key = (parent, runtime, ref, line.get("ts_start"))
+            key = (parent, runtime, ref, line.get("ts_start"), line.get("seat"), index)
             if key in seen:
                 continue
             seen.add(key)
@@ -171,6 +171,9 @@ def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
             found = tree.resolve(runtime, ref)
             child_id = Path(ref).stem if ref.startswith("/") else ref
             if found is None:
+                # No transcript: ref may be a placeholder ("not captured") shared by concurrent seats,
+                # so the agent id comes from the launch line itself, never from the ref text.
+                child_id = f"{line.get('seat') or '?'}@{line.get('ts_start')}#{index}"
                 log.warning("seat %s: transcript %s not found; span from its launch line", seat, ref)
                 events = te.read_opaque(runtime, ref, start, end, child_id, parent, seat)
                 agents.append(Agent(child_id, seat, parent, runtime, events))

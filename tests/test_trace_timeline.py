@@ -121,6 +121,16 @@ def test_unpriced_model_renders_cost_unknown_and_missing_seat_keeps_a_span(tmp_p
     assert span["args"]["pointer"]["call_id"] is None and span["args"]["shadow_usd"] == "cost unknown"
 
 
+def test_concurrent_seats_without_transcript_get_distinct_lanes(tmp_path):
+    live = build_live(tmp_path)
+    launches = [launch("codex", "not captured", "2026-01-01T00:00:20Z", "2026-01-01T00:01:00Z"),
+                launch("codex", "not captured", "2026-01-01T00:00:30Z", "2026-01-01T00:01:10Z")]
+    doc = render(tl.Tree(live, tmp_path / "archive"), launches)
+    spans = [e for e in doc["traceEvents"] if e.get("cat") == "agent" and e["name"].startswith("s/codex")]
+    assert len(spans) == 2
+    assert spans[0]["pid"] != spans[1]["pid"]
+
+
 def test_unknown_session_exits_with_a_message(tmp_path):
     with pytest.raises(SystemExit):
         tl.collect(tl.Tree({"claude": [tmp_path]}, tmp_path / "archive"), SID, [])
