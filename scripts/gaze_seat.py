@@ -356,8 +356,8 @@ def keep_raw(name: str, source: Path, sid: str | None = None) -> None:
         target = directory / f'{sid or transcript_spool.seat_id()}-{name}.raw'
         target.write_bytes(data)
         target.chmod(0o600)
-    except OSError as error:
-        print(f'gaze_seat: raw output of {name} not kept: {error.strerror or error}', file=sys.stderr)
+    except Exception as error:  # as launch_line.record: bookkeeping, so no failure kind may refuse a seat
+        print(f'gaze_seat: raw output of {name} not kept: {getattr(error, "strerror", None) or error}', file=sys.stderr)
 
 
 def git(tree: Path, *args: str) -> str | None:

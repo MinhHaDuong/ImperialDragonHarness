@@ -1086,3 +1086,16 @@ def test_raw_file_joins_its_launch_line_by_seat_id(rig):
     (row,) = [json.loads(line) for line in next((archive / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
     (kept,) = (archive / 'raw').glob('*/seat-raw/*.raw')
     assert kept.name == f"{row['seat_id']}-correctness.raw"
+
+
+@pytest.mark.integration
+def test_seat_completes_with_a_warning_when_no_archive_root_is_configured(rig):
+    """t1402: archive_root() raises RuntimeError; the raw copy must warn, never refuse the seat."""
+    env = {k: v for k, v in rig['env'].items() if k != 'IDH_ARCHIVE_ROOT'}
+    home = rig['tmp'] / 'empty-home'
+    home.mkdir()
+    rig['env'] = {**env, 'HOME': str(home)}
+    result = launch(rig)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (rig['panel'] / 'correctness.md').exists()
+    assert result.stderr.count('raw output of correctness not kept') == 1
