@@ -33,3 +33,24 @@ roar or smelt.
 - [ ] Codex probe result recorded on this ticket, with its positive control
 - [ ] Pi read-back passes, or the reason it was stopped is recorded
 - [ ] The scoped gate passes
+
+## Imagine (raid 3d5ae7)
+- Premise holds: nothing merged on 2026-10-31 touches hooks or `memory/skills/` (absent). Hook source is `adapters/claude-code/hooks/hooks.json`, launcher `adapters/claude-code/bin/idh-hook`.
+- Verified by headless probe (claude 2.1.316, haiku): PostToolUse matcher `Skill` payload carries `tool_input.skill`, `session_id`, `cwd`, and `agent_id` only inside a subagent; `hookSpecificOutput.additionalContext` reached the model (planted token quoted, main and subagent). A typed `/probe` as headless prompt also fired the hook; interactive TUI not verified.
+- Antipatterns to avoid: unsanitised skill name (`^[a-z0-9][a-z0-9_-]*$`, strip `plugin:`), fail-closed on bad input (fail open, log), generalising for Codex/Pi before stage 3.
+
+## Plan (raid 3d5ae7) — one PR, refs 1394, does not close it
+- `scripts/skill-case-notes.sh` (mode 755): payload → name → `git -C $cwd rev-parse --show-toplevel` → `memory/skills/<name>.md` → marker `${XDG_STATE_HOME:-~/.local/state}/idh/skill-notes/<session>-<agent|main>` → JSON additionalContext under a declarative header, ~400-word cap. Log one line per outcome (delivered, no-note, already-delivered, no-skill-name, bad-name, parse-error).
+- `adapters/claude-code/hooks/hooks.json`: PostToolUse matcher `Skill` via `idh-hook skill-case-notes.sh`, timeout 5.
+- `memory/skills/merge.md`: four dated, sourced cases from the journal; no invented case.
+- `tests/test_skill_case_notes.py`, first failing test `test_delivers_note_as_additional_context`; then dedup, agent_id re-delivery, no-note, bad name, plugin prefix, garbage stdin, subdirectory cwd, hooks.json wiring.
+- Headless read-back (main, subagent, typed `/merge`) with log lines recorded on this ticket.
+- Stages 3 (Codex) and 4 (Pi) become child tickets once stage 2 passes.
+
+## Blind spot (raid 3d5ae7)
+- Marker outlives compaction and `--resume` (same session_id): the note is not re-delivered after compaction. Accepted for the pilot, as § 3.4 defers it; the PR states the limit.
+- Hook is user-scope and fires in every project: only plaintext `memory/skills/*.md` is read (encrypted files skipped and logged as no-note); notes are written by hand in the pilot; smelt does not write `memory/skills/`.
+- The 1346 census counts tool reads of `memory/`; injected notes never appear there. The pilot is measured by the hook log.
+
+## Feasibility (raid 3d5ae7)
+- PASS. `tests/test_claude_code_adapter.py` checks the event set with `<=` and that every launched script exists; `idh-hook` requires the executable bit. No validator mirrors Claude hooks to Codex/Pi; no test sweeps `memory/` wholesale. Open PR #2049 touches `memory/topics/` and memory tests only, disjoint.
