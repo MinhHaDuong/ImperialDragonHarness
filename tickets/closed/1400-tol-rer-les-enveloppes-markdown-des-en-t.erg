@@ -2,10 +2,12 @@
 Title: Tolérer les enveloppes Markdown des en-têtes de revue sans inventer de portée
 Created: 2026-10-31
 Author: MinhHaDuong
+Closed: autoclosed — PR #2115
 
 --- log ---
 2026-10-31T18:22Z MinhHaDuong created
 2026-10-31T19:29Z reviewer implemented: bounded unwrap_header in gaze_seat.py
+2026-10-31T19:43Z reviewer closed — autoclosed — PR #2115
 
 --- body ---
 ## Incident constaté
