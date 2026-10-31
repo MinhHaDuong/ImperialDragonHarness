@@ -334,6 +334,29 @@ def answer_of(door: dict, text: str) -> str:
     return '\n'.join(lines[:cut]) if marker else text
 
 
+RAW_KEEP_BYTES = 256 * 1024  # one seat's kept output; a bound, not a quota
+
+
+def keep_raw(name: str, source: Path) -> None:
+    """Copy a seat's output as received to `<archive>/raw/<host>/seat-raw/<seat id>-<name>.raw`.
+
+    The panel dies with the review tree, so a refused seat's bytes would be gone before anyone
+    could diagnose it (monitoring memo, section 4.2). The archive's raw store is durable and never
+    pruned; nothing here can refuse a seat, and a failed copy is silent.
+    """
+    try:
+        data = source.read_bytes()[:RAW_KEEP_BYTES]
+        if not data:
+            return
+        directory = transcript_spool.raw_dir() / 'seat-raw'
+        transcript_spool.mkdir_private(directory)
+        target = directory / f'{transcript_spool.seat_id()}-{name}.raw'
+        target.write_bytes(data)
+        target.chmod(0o600)
+    except OSError:
+        pass
+
+
 def git(tree: Path, *args: str) -> str | None:
     result = subprocess.run(['git', '-C', str(tree), *args], capture_output=True, text=True)
     return result.stdout if result.returncode == 0 else None
@@ -555,6 +578,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             leftover.unlink(missing_ok=True)
         return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
+    keep_raw(args.name, last if wrote_last else staging)
 
     def failed(reason: str) -> tuple[bool, str]:
         # The panel dies with the review tree; the status line is the durable record and reaches

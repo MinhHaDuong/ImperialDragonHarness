@@ -429,3 +429,14 @@ def test_fenced_header_report_is_signed_for_the_plan_check(tmp_path):
     checked = run('plan-check', str(manifest.parent))
     assert checked.returncode == 0, checked.stdout
     assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: panel'
+
+
+def test_self_seat_without_family_is_no_deviation_but_a_worker_is(tmp_path):
+    result, manifest = plan(tmp_path, SELF, OPENAI, providers=['OpenAI'])
+    assert result.returncode == 0, result.stderr
+    (manifest.parent / 'self.md').write_text('worker: self\nverdict: clear\n')
+    (manifest.parent / 'redteam.md').write_text('worker: model=m\nverdict: clear\n')
+    (manifest.parent / 'redteam.md.status').write_text('redteam: reported in 5s\n')
+    (manifest.parent / 'self.md.status').write_text('self: reported in 5s\n')
+    out = run('plan-check', str(manifest.parent)).stdout
+    assert 'redteam: names no family' in out and 'self: names no family' not in out

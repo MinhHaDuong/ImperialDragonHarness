@@ -237,6 +237,8 @@ def _assess(panel: Path) -> tuple[bool, list[str], list[str], list[str]]:
         if planned == 'none':
             continue
         named = re.search(r'family=([\w.-]+)', first, re.IGNORECASE)
+        if not named and is_self(cells):
+            continue  # gaze's own line is typed by gaze; its family is the plan's and the session's (identities)
         if not named:
             deviations.append(f'{name}: names no family, planned {planned}')
         elif named.group(1).lower() != planned.lower():
