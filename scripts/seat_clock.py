@@ -37,7 +37,7 @@ per worker item of the manifest (ticket 1303), built from the plan and the
 launcher-set `worker:` header, never typed by the model: `seat: <item> ·
 runtime=<id> · family=<family> · route=<token> · model=<provider/id | not
 observed> · status: ran|failed|skipped`. A header with `door=headless` is the
-launcher's (its runtime and model), whatever the plan's reason column says; a subagent seat types its own header, so
+launcher's (its runtime and model) unless the plan's reason names another headless runtime or a subagent; a subagent seat types its own header, so
 its line takes the manifest pin and the session's runtime (`route=subagent`), and its
 family is the runtime door's (routes.json), the model's `<provider>/` prefix, else `unconfirmed`,
 never the plan label (a mismatch prints a `deviation:` line on stderr, ticket 1360);
@@ -321,12 +321,14 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
             continue  # free text is no plan item (the plan check fails it); a script is not a worker
         header = worker_header(panel / f'{name}.md')
         door = re.search(r'headless[ ]+(\S+)', reason)
+        in_session = re.search(r'\bsubagent\b', reason, re.IGNORECASE)  # the plan ran it in-session
         if is_self(cells):
             runtime, model, route = session_runtime, session_model.strip() or 'not observed', 'self'
             family = door_family(runtime, model)  # the session's family, not the label (1360)
         elif (header.get('door') == 'headless' and header.get('runtime')
-              and (not door or header['runtime'] == door.group(1).strip('.,;)('))):
-            # the launcher's header is the observed fact; the plan's free-text reason is not (1388)
+              and (header['runtime'] == door.group(1).strip('.,;)(') if door else not in_session)):
+            # the launcher's header is the observed fact; the plan's free-text reason is not (1388),
+            # but a seat the plan names a subagent typed its own header: a forged one is ignored (1396)
             runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
             family = header.get('family') or family  # launcher-set: the plan cannot relabel it (1326)
         elif door:
