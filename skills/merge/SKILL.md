@@ -177,8 +177,9 @@ marker; another forge needs the same writes in its own spelling.
    or the repository has no remote; a landing head missing locally is restored from the notes when its commit survives; a non-zero exit stops the merge. On a forge, then render
    the attribution block of notes into the body, right before the merge:
    `python3 "$IDH_ROOT/scripts/attribution_record.py" --render-pr N` (`references/claims.md`
-   § Attribution block warning); its exit 1 (`missing`, `invalid: …`, a lost edit) is a
-   warning, never a stop.
+   § Attribution block warning), with `--session-model <your verbatim model id>` so a review without a
+   writer records you as the writer; it exits 0 and prints one `not derivable: <fact>` line per lost fact
+   (a lost edit included): a warning, never a stop.
 6. **Merge.** Gated base:
    `gh pr merge N --merge --match-head-commit "$(git rev-parse HEAD)"`. <!-- harness-extension-point -->
    Never `--auto`; never `--delete-branch`. Ungated base:

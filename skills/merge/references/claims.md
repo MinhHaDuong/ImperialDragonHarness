@@ -45,14 +45,22 @@ at step 0:
 python3 "$IDH_ROOT/scripts/attribution_record.py" --from-notes pr:N   # no forge: branch:<name>
 ```
 
-It prints the block, or `missing` (no review) or `invalid: <reason>`. A request
-opened before the switch, whose notes hold no valid block, is checked from its body:
-`printf '%s\n' "$body" | python3 "$IDH_ROOT/scripts/attribution_record.py" --pr-body`.
-On a forge, step 5a renders the notes block into the body, one whole-block edit
-read back (`--render-pr N`); with no forge the block stays on notes.
-`raid_land.py` runs both. `ok` is clean; `missing` or `invalid: <reason>` is a
+It prints the block, or one `not derivable: <fact>` line per fact it could
+not derive (no review, a refused finding or reviewer line, no reviewer left),
+and exits 0 either way (ticket 1380). A review with no `step=execute` writer
+(an interactive session never records one) gets the landing session as writer,
+`route=landing`, at step 5a and in `raid_land.py`: pass `--session-model <your
+verbatim id>` (default `$IDH_SESSION_MODEL`; runtime from `--session-runtime`,
+`$IDH_SESSION_RUNTIME`, else detected). A raid or hunt writer is never
+overwritten. A request opened before the switch, whose notes hold no block, is
+checked from its body:
+`printf '%s\n' "$body" | python3 "$IDH_ROOT/scripts/attribution_record.py" --pr-body`
+(a strict check: it may exit 1).
+On a forge, step 5a renders the salvaged notes block into the body, one
+whole-block edit read back (`--render-pr N`); with no forge the block stays on
+notes. `raid_land.py` runs both. `ok` is clean; `not derivable: <fact>` is a
 warning; any other output or exit is `unchecked`, which is not an all-clear.
-**Never refuse** on it: a missing block costs the record, not the merge. Surface
+**Never refuse** on it: a lost fact costs the record, not the merge. Surface
 the warning in your report and let the author decide whether to complete the
 block first.
 

@@ -55,24 +55,27 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    --capture "$PROJECT_REPO" --audience public|private --project <name>`
    (no forge: `--capture-unit branch:<name>`) assembles it, swaps `pending` for
    the merge date (the forge's, or the landing merge commit's) and captures it.
-   It refuses an unmerged unit and a unit with no review on notes.
+   A review with no `step=execute` writer records the session as the writer (`--session-model <your
+   verbatim id>`, default `$IDH_SESSION_MODEL`). A lost fact (no review, a refused finding or reviewer
+   line) is one `attribution: not derivable: <fact>` warning, the rest is captured, the exit is 0
+   (ticket 1380); it refuses only an unmerged unit.
 
    **A PR merged before the switch** carries its block in the body only:
    `attribution_record.py --capture-pr <N> --capture
    "$PROJECT_REPO" --audience public|private --project <name>
    [--masked-evidence <path>:<line>]` runs the seats join, the extract with the
    forge's merge date and the capture below, in that order. It refuses an
-   unmerged PR and captures nothing while a seat fails; fix the cause and rerun
-   (appended seats are not repeated). The steps below remain the contract for
+   unmerged PR; a failing seat is a `not derivable:` warning and the rest is captured. Fix the
+   cause and rerun to add the seat (appended seats are not repeated). The steps below remain the contract for
    such a PR and the path for a record that needs hand completion.
 
    Before reading the body, run `attribution_record.py --seats-pr <N>
    --project <name> [--masked-evidence <path>:<line>]` (ticket 1155): it joins
    the gaze answers of the PR's review on notes (ticket 1301; a merged PR gazed
    before notes evidence: its `/gaze result` comments; an open PR with no notes
-   review is refused), each `seat:` line one attempt, appends
+   review is a `not derivable:` warning), each `seat:` line one attempt, appends
    the `reviewer:` lines the block lacks (creating the block if absent), and
-   exits 1 naming each capture failure; carry them into step 11's report. The
+   prints each capture failure as a `not derivable:` warning (exit 0); carry them into step 11's report. The
    evidence anchor is the durable runtime-masked evidence described below;
    without it, a seat whose model was `not observed` is a capture failure.
 

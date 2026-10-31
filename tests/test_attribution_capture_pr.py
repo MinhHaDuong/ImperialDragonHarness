@@ -98,7 +98,7 @@ def test_unmerged_pr_is_refused_before_any_edit(forge):
 def test_seat_failure_captures_nothing_and_a_rerun_resumes(forge):
     module, pr = forge
     pr["comments"] = "## /gaze result\n\n" + SEAT.format(model="not observed") + "\n"
-    assert run(module) == 1
+    assert run(module) == 0  # a lost seat is a warning (ticket 1380); the block has no reviewer left
     assert not pr["captured"]
     assert run(module, masked_evidence="memory/evidence/review-attribution-pr1155.md:3") == 0
     [(text, _)] = pr["captured"]

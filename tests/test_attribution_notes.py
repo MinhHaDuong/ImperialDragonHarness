@@ -148,10 +148,10 @@ def test_block_from_notes_keeps_the_latest_writer_per_step_and_every_attempt(rep
 
 
 def test_block_from_notes_missing_and_invalid(repo):
-    assert ar.notes_block(str(repo), "pr:7", "work") == (None, "missing")
+    assert ar.notes_block(str(repo), "pr:7", "work") == (None, "not derivable: review (none on notes)")
     ar.record_writer(str(repo), WRITER, "pr:7", branch="feat")  # a writer, no gaze answer yet
     text, status = ar.notes_block(str(repo), "pr:7", "work")
-    assert text is None and status.startswith("invalid: ")
+    assert text is None and status == "not derivable: reviewers"
 
 
 def test_put_block_replaces_or_creates_the_single_block():
@@ -228,3 +228,91 @@ def test_capture_unit_for_a_rebased_landing(repo, monkeypatch):
     git(repo, "branch", "-D", "feat")
     landed = git(repo, "show", "-s", "--format=%cs", "HEAD")
     assert ar.merged_date(str(repo), "branch:feat") == landed
+
+
+# --- ticket 1380: a lost fact is one `not derivable:` warning, never a refusal -----------------
+
+def answered(repo, unit, attribution=(REVIEWER, FINDING)):
+    """A review with a gaze answer and no writer entry: an interactive session's landing."""
+    rid = rn.open_review(str(repo), "feat", "origin/main", unit=unit if unit.startswith("pr:") else None,
+                         remote="")
+    rn.add(str(repo), "answer", rid, {"run_id": "gz-1", "result": "REVIEWED", "seats": "panel",
+                                      "coverage": {"scope": "full"}, "attribution": list(attribution),
+                                      "text": "result: REVIEWED\n"})
+    return rid
+
+
+@pytest.mark.parametrize("unit", ["pr:7", "branch:feat"])
+def test_no_writer_entry_lands_and_captures_without_invalid(repo, monkeypatch, caplog, unit):
+    rid = answered(repo, unit)
+    assert ar.ensure_writer(str(repo), unit, "claude-code", "claude-opus-5-5") is None
+    [line] = writers_of(repo, rid)
+    assert "step=execute" in line and "runtime=claude-code" in line and "model=anthropic/claude-opus-5-5" in line
+    text, status = ar.notes_block(str(repo), unit, "work")
+    assert status == "ok" and "invalid" not in status
+    captured = {}
+    monkeypatch.setattr(ar, "merged_date", lambda cwd, u: "2026-10-28")
+    monkeypatch.setattr(ar, "capture_record", lambda t, r, repo_, aud: captured.update(text=t, record=r) or "ok")
+    args = argparse.Namespace(capture_unit=unit, capture=repo, audience="public", project="work")
+    with caplog.at_level("WARNING"):
+        assert ar.capture_unit(args) == 0
+    assert captured["record"]["writer"]["model"] == "anthropic/claude-opus-5-5"
+    assert "invalid" not in caplog.text and "not derivable" not in caplog.text
+
+
+def test_ensure_writer_never_overwrites_a_raid_writer(repo):
+    rid = gazed(repo, "pr:7")
+    assert ar.ensure_writer(str(repo), "pr:7", "claude-code", "claude-opus-5-5") is None
+    assert writers_of(repo, rid) == [PLANNER, WRITER]
+
+
+def test_ensure_writer_reads_the_session_env_and_names_what_is_missing(repo, monkeypatch):
+    rid = answered(repo, "pr:7")
+    monkeypatch.delenv("IDH_SESSION_MODEL", raising=False)
+    assert ar.ensure_writer(str(repo), "pr:7", "claude-code", None) == \
+        "not derivable: writer model (no --session-model or IDH_SESSION_MODEL)"
+    assert writers_of(repo, rid) == []
+    monkeypatch.setenv("IDH_SESSION_MODEL", "claude-sonnet-5-5")
+    monkeypatch.setenv("IDH_SESSION_RUNTIME", "claude-code")
+    assert ar.ensure_writer(str(repo), "pr:7") is None
+    assert "model=anthropic/claude-sonnet-5-5" in writers_of(repo, rid)[0]
+
+
+def test_ticket_only_pr_with_no_review_is_a_warning(repo, monkeypatch, caplog):
+    monkeypatch.setattr(ar, "merged_date", lambda cwd, u: "2026-10-28")
+    monkeypatch.setattr(ar, "capture_record", lambda *a: pytest.fail("nothing to capture"))
+    assert ar.ensure_writer(str(repo), "pr:7", "claude-code", "m") == "not derivable: review (none on notes)"
+    args = argparse.Namespace(capture_unit="pr:7", capture=repo, audience="public", project="work")
+    with caplog.at_level("WARNING"):
+        assert ar.capture_unit(args) == 0
+    assert caplog.text.count("not derivable") == 1
+
+
+def test_duplicate_anchor_finding_is_dropped_with_one_warning(repo, monkeypatch, caplog):
+    """The PR 2060 failure text: a finding anchored without a line number."""
+    bad = "  finding: verifiable · scripts/gaze_close.py:cleanup-blocked branch · adopted: yes"
+    gazed(repo, "pr:7", (REVIEWER, FINDING, bad))
+    text, status = ar.notes_block(str(repo), "pr:7", "work")
+    assert text and FINDING in text and "cleanup-blocked" not in text
+    assert status.count("not derivable") == 1 and "invalid repository-relative anchor" in status
+    dup = FINDING.replace("adopted: yes", "adopted: no")
+    text, status = ar.salvage(ar.notes_record(str(repo), gazed(repo, "pr:8", (REVIEWER, FINDING, dup)), "work"))
+    assert text.count("scripts/x.py:3") == 1 and len(status) == 1 and "duplicate finding" in status[0]
+
+
+def test_second_writer_for_one_step_and_lost_reviewer(repo):
+    record = ("kind: review-attribution\npr: 7 · merged 2026-10-28 · project: work\n" + WRITER + "\n"
+              + WRITER.replace("route=opus", "route=sonnet") + "\n" + REVIEWER + "\n" + FINDING + "\n"
+              + REVIEWER.replace("status: ran", "status: bogus") + "\n" + FINDING.replace("x.py", "y.py") + "\n")
+    text, facts = ar.salvage(record)
+    assert len(facts) == 2 and all(f.startswith("not derivable: ") for f in facts)
+    assert "route=sonnet" not in text and "status: bogus" not in text and "y.py" not in text
+    assert ar.salvage("kind: review-attribution\npr: 7 · merged pending · project: w\n" + REVIEWER + "\n") == \
+        (None, ["not derivable: writer"])
+
+
+def test_cli_render_and_from_notes_exit_zero_on_lost_attribution(repo):
+    run = [sys.executable, str(SCRIPTS / "attribution_record.py")]
+    for args in (["--from-notes", "pr:7"], ["--render-pr", "7"]):  # no review at all
+        done = subprocess.run([*run, *args], cwd=repo, capture_output=True, text=True, env=child_env())
+        assert done.returncode == 0, done.stderr
