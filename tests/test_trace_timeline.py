@@ -239,3 +239,92 @@ def test_html_colours_tools_by_class_with_legend_tooltip_and_model_labels(tmp_pa
     assert 'id="lab"' in page and 'id="cur"' in page and "position:sticky" in page
     assert 'data-m="claude-sonnet-5-5"' in page or 'data-m=""' in page
     assert "style=" not in page.split("<svg id=\"tl\"")[1].split("</svg>")[0]
+
+
+# ---- delegation mode and launch connectors (ticket 1397) --------------------------------------------
+
+te = tl.te
+
+
+def test_delegation_mode_rule_from_the_recorded_result():
+    info = te.delegation_info
+    assert info("Agent", {"isAsync": True, "status": "async_launched", "agentId": "a1"}) == ("launch", "a1")
+    assert info("Skill", {"status": "forked", "background": True, "agentId": "a2"}) == ("launch", "a2")
+    assert info("Skill", {"status": "forked", "agentId": "a3"}) == ("blocking", "a3")
+    assert info("Agent", {"status": "completed", "agentId": "a4"}) == ("blocking", "a4")
+    assert info("Skill", {"success": True, "commandName": "merge"}) == (None, None)  # inline skill
+    assert info("Skill", None) == (None, None) and info("Bash", {"agentId": "x"}) == (None, None)
+
+
+def delegation_session(tmp_path, results):
+    """Parent session with one Agent/Skill call per `results` item ((tool, result dict, call end s)) and one
+    child file per agentId named in them; call i starts at second 10+i*10."""
+    root = tmp_path / "claude"
+    sub = root / "proj" / SID / "subagents"
+    rows = [{"type": "user", "timestamp": "2026-01-01T00:00:00.000Z", "sessionId": SID, "message": {"content": "go"}}]
+
+    def t(sec):
+        return f"2026-01-01T00:{sec // 60:02d}:{sec % 60:02d}.000Z"
+    for i, (tool, result, end) in enumerate(results):
+        start = 10 + i * 10
+        rows.append({"type": "assistant", "timestamp": t(start), "sessionId": SID, "message": {
+            "id": f"m{i}", "model": "claude-sonnet-5-5", "usage": {"input_tokens": 1, "output_tokens": 1},
+            "content": [{"type": "tool_use", "id": f"tu{i}", "name": tool, "input": {}}]}})
+        rows.append({"type": "user", "timestamp": t(end), "sessionId": SID, "toolUseResult": result, "message": {
+            "content": [{"type": "tool_result", "tool_use_id": f"tu{i}", "content": "ok"}]}})
+        child = (result or {}).get("agentId") if isinstance(result, dict) else None
+        if child and child != "ghost":  # "ghost": a recorded child with no transcript
+            put(sub / f"agent-{child}.jsonl", claude_rows(child, start + 2, start + 8, with_tool=False))
+            (sub / f"agent-{child}.meta.json").write_text(json.dumps({"description": child, "parentAgentId": None}))
+    rows.append({"type": "user", "timestamp": t(100), "sessionId": SID, "message": {"content": "end"}})
+    put(root / "proj" / f"{SID}.jsonl", rows)
+    return tl.Tree({"claude": [root]}, tmp_path / "archive")
+
+
+def delegations(doc):
+    return {e["name"] + e["args"]["pointer"]["call_id"]: e["args"] for e in doc["traceEvents"]
+            if e.get("cat") == "tool"}
+
+
+def test_delegation_calls_carry_mode_and_matched_child_additively(tmp_path):
+    tree = delegation_session(tmp_path, [
+        ("Agent", {"isAsync": True, "status": "async_launched", "agentId": "ca"}, 11),
+        ("Skill", {"status": "forked", "agentId": "cb"}, 28),
+        ("Skill", {"success": True, "commandName": "merge"}, 31),
+        ("Agent", {"isAsync": True, "status": "async_launched", "agentId": "ghost"}, 41)])
+    doc = tl.render(tl.collect(tree, SID, []))
+    got = delegations(doc)
+    assert got["Agenttu0"]["delegation"] == "launch" and got["Agenttu0"]["child_agent"] == "ca"
+    assert got["Skilltu1"]["delegation"] == "blocking" and got["Skilltu1"]["child_agent"] == "cb"
+    assert "delegation" not in got["Skilltu2"] and "child_agent" not in got["Skilltu2"]
+    # a recorded child that is not in the tree is an unmatched launch: mode kept, no link
+    assert got["Agenttu3"]["delegation"] == "launch" and "child_agent" not in got["Agenttu3"]
+    base = {"pointer", "runtime", "agent", "model", "tokens", "shadow_usd", "cost_source", "exit", "class", "detail"}
+    for args in got.values():
+        assert set(args) - base <= {"delegation", "child_agent"}
+
+
+def test_child_matched_by_meta_tool_use_id_and_timing_fallback(tmp_path):
+    tree = delegation_session(tmp_path, [("Agent", {"status": "x"}, 11), ("Agent", {"status": "x"}, 28)])
+    for n in (0, 1):  # no agentId in either result: only the child's meta names its launching call
+        sub = tmp_path / "claude" / "proj" / SID / "subagents"
+        put(sub / f"agent-k{n}.jsonl", claude_rows(f"k{n}", 12 + n * 10, 18 + n * 10, with_tool=False))
+        (sub / f"agent-k{n}.meta.json").write_text(json.dumps({"description": f"k{n}", "toolUseId": f"tu{n}"}))
+    got = delegations(tl.render(tl.collect(tree, SID, [])))
+    assert got["Agenttu0"]["child_agent"] == "k0" and got["Agenttu0"]["delegation"] == "launch"  # returned at 11 < 18
+    assert got["Agenttu1"]["child_agent"] == "k1" and got["Agenttu1"]["delegation"] == "blocking"  # returned at 28 >= 28
+
+
+def test_html_hatches_blocking_draws_link_data_and_has_the_toggle(tmp_path):
+    tree = delegation_session(tmp_path, [
+        ("Agent", {"isAsync": True, "status": "async_launched", "agentId": "ca"}, 11),
+        ("Skill", {"status": "forked", "agentId": "cb"}, 28),
+        ("Agent", {"isAsync": True, "status": "async_launched", "agentId": "ghost"}, 41)])
+    page = tl.render_html(tl.render(tl.collect(tree, SID, [])), SID)
+    assert 'id="lk" checked' in page and 'id="links"' in page and 'id="hatch"' in page
+    assert page.count('fill="url(#hatch)"') == 1  # the one blocking call
+    assert "delegation: blocking" in page and "delegation: launch" in page
+    links = json.loads(page.split('id="linkdata">')[1].split("</script>")[0])
+    assert len(links) == 1 and links[0][1] < links[0][3]  # the unmatched launch draws none; ends at the child's start
+    assert "2 launches, 1 linked to a child lane" in page
+    assert "http://" not in page.replace("http://www.w3.org/2000/svg", "") and "https://" not in page
