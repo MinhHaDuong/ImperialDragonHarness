@@ -70,11 +70,9 @@ POLICY_GLOBS = (
 
 # Model families a report may record: the grid `family` field of
 # skills/route/grid.json plus the cross-family doors of routes.json and the
-# families decorrelation.md names, and "local", the family gaze_seat.py stamps on
-# a seat served by a local provider (routes.json `local_family`), whose loaded
-# model it cannot confirm. "unknown" may be recorded.
+# families decorrelation.md names. "unknown" may be recorded.
 FAMILIES = frozenset({"anthropic", "openai", "google", "mistral", "deepseek", "glm",
-                      "qwen", "xiaomi", "local"})
+                      "qwen", "xiaomi"})
 
 
 @dataclass(frozen=True)
