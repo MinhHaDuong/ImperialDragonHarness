@@ -18,13 +18,16 @@ Every event carries its pointer (file, call id) in `args`; an unpriced model sho
 Paths come from `transcript_spool` (live roots, archive, host) and `launch_line` (launches file).
 """
 import argparse
+import getpass
 import html
 import importlib.util
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -279,22 +282,136 @@ def _tooltip(e: dict) -> str:
     return "\n".join(lines)
 
 
-_COLORS = {"agent": "#9ab", "turn": "#7a9", "tool": "#e90"}
+_COLORS = {"agent": "#8fa3b8", "turn": "#6aa88c", "tool": "#e69a1a"}
+
+_MEANINGS = {"agent": "an agent's whole span (session, subagent, or seat)", "turn": "one model turn",
+             "tool": "one tool call"}
+
+_CSS = """
+body{font-family:system-ui,sans-serif;margin:0;color:#222;background:#fafafa}
+header{padding:18px 24px 6px;max-width:960px}
+h1{font-size:22px;margin:0 0 4px}
+.meta{color:#555;font-size:13px;margin:0 0 10px}
+.how{font-size:14px;line-height:1.5;margin:0 0 10px}
+.legend{font-size:12px;color:#444;margin:0 0 8px}
+.legend i{display:inline-block;width:12px;height:12px;margin:0 4px 0 12px;vertical-align:-2px;border-radius:2px}
+.bar{padding:0 24px 6px;font-size:13px}
+button{font:inherit;padding:2px 10px;margin-right:4px}
+#mm{display:block;width:calc(100% - 48px);margin:0 24px 6px;border:1px solid #bbb;cursor:pointer}
+rect.view{fill:rgba(30,90,200,.18);stroke:#1e5ac8;stroke-width:1.5;pointer-events:none}
+#w{overflow:auto;max-height:78vh;margin:0 24px 24px;border:1px solid #bbb;background:#fff;cursor:grab}
+#w.drag{cursor:grabbing;user-select:none}
+rect.bar-ev:hover{stroke:#000;stroke-width:1}
+text{fill:#222;pointer-events:none}
+"""
 
 _JS = """
-var svg=document.getElementById('tl'),span=+svg.dataset.span,left=+svg.dataset.left,pps=+svg.dataset.pps;
+var NS='http://www.w3.org/2000/svg',svg=document.getElementById('tl'),box=document.getElementById('w'),
+mm=document.getElementById('mm'),ticks=document.getElementById('ticks'),
+span=+svg.dataset.span,left=+svg.dataset.left,pps=+svg.dataset.pps,t0=+svg.dataset.t0,H=+svg.dataset.h,
+MIN=pps/50,MAX=4000,STEPS=[1,2,5,10,15,30,60,120,300,600,900,1800,3600,7200,10800,21600,43200,86400];
+function p2(n){return (n<10?'0':'')+n;}
+function drawTicks(){while(ticks.firstChild)ticks.removeChild(ticks.firstChild);
+var step=STEPS[STEPS.length-1];for(var i=0;i<STEPS.length;i++){if(STEPS[i]*pps>=90){step=STEPS[i];break;}}
+var off=-new Date(t0*1000).getTimezoneOffset()*60,k=Math.ceil((t0+off)/step)*step-off-t0,day=null;
+for(;k<=span;k+=step){var d=new Date((t0+k)*1000),x=left+k*pps,dk=d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+var l=document.createElementNS(NS,'line');l.setAttribute('x1',x);l.setAttribute('x2',x);l.setAttribute('y1',34);
+l.setAttribute('y2',H);l.setAttribute('stroke','#ccc');ticks.appendChild(l);
+var t=document.createElementNS(NS,'text');t.setAttribute('x',x+3);t.setAttribute('y',30);t.setAttribute('font-size',10);
+t.textContent=p2(d.getHours())+':'+p2(d.getMinutes())+(step<60?':'+p2(d.getSeconds()):'');ticks.appendChild(t);
+if(dk!=day){day=dk;var u=document.createElementNS(NS,'text');u.setAttribute('x',x+3);u.setAttribute('y',16);
+u.setAttribute('font-size',11);u.setAttribute('font-weight','bold');u.textContent=dk;ticks.appendChild(u);}}}
 function lay(){var w=left+span*pps+20;svg.setAttribute('width',w);
-document.querySelectorAll('[data-t]').forEach(function(n){var x=left+n.dataset.t*pps;
-if(n.tagName=='rect'){n.setAttribute('x',x);n.setAttribute('width',Math.max(1,n.dataset.d*pps));}
-else if(n.tagName=='line'){n.setAttribute('x1',x);n.setAttribute('x2',x);}else{n.setAttribute('x',x+3);}});}
-function zoom(f){pps*=f;lay();}
-document.getElementById('zi').onclick=function(){zoom(2)};
-document.getElementById('zo').onclick=function(){zoom(0.5)};
-lay();
+svg.querySelectorAll('[data-t]').forEach(function(n){var x=left+n.dataset.t*pps;
+n.setAttribute('x',x);n.setAttribute('width',Math.max(1,n.dataset.d*pps));
+if(n.tagName=='text')n.style.display=n.dataset.d*pps>=n.textContent.length*5.5+6?'':'none';});
+document.querySelectorAll('[data-band]').forEach(function(n){var b=n.dataset.band.split(' ');
+n.setAttribute('d','M0 '+b[0]+'H'+w+'v'+b[1]+'H0z');});drawTicks();vp();}
+function mmW(){return mm.getBoundingClientRect().width;}
+var view=document.createElementNS(NS,'rect');view.setAttribute('class','view');
+function buildMini(){var W=mmW(),h=+mm.getAttribute('height'),bg=document.createElementNS(NS,'rect');
+bg.setAttribute('width','100%');bg.setAttribute('height',h);bg.setAttribute('fill','#f3f3f3');mm.appendChild(bg);
+document.querySelectorAll('rect.bar-ev').forEach(function(n){var r=document.createElementNS(NS,'rect');
+r.setAttribute('class','mb');r.setAttribute('data-t',n.dataset.t);r.setAttribute('data-d',n.dataset.d);
+r.setAttribute('y',2+(+n.getAttribute('y')-40)/(H-50)*(h-4));r.setAttribute('height',1.5);r.setAttribute('fill',n.getAttribute('fill'));
+mm.appendChild(r);});mm.appendChild(view);layMini();}
+function layMini(){var W=mmW();mm.querySelectorAll('rect.mb').forEach(function(r){
+r.setAttribute('x',r.dataset.t/span*W);r.setAttribute('width',Math.max(1,r.dataset.d/span*W));});vp();}
+function vp(){var W=mmW(),a=Math.max(0,(box.scrollLeft-left)/pps),b=Math.min(span,(box.scrollLeft+box.clientWidth-left)/pps);
+view.setAttribute('x',a/span*W);view.setAttribute('width',Math.max(2,(b-a)/span*W));
+view.setAttribute('y',0);view.setAttribute('height',mm.getAttribute('height'));}
+function seek(e){var W=mmW(),t=(e.clientX-mm.getBoundingClientRect().left)/W*span;
+box.scrollLeft=left+t*pps-box.clientWidth/2;}
+var mdrag=false;
+mm.addEventListener('mousedown',function(e){mdrag=true;seek(e);e.preventDefault();});
+window.addEventListener('mousemove',function(e){if(mdrag)seek(e);});
+box.addEventListener('scroll',vp);window.addEventListener('resize',layMini);
+function zoomAt(f,mx){var t=(box.scrollLeft+mx-left)/pps,np=Math.min(MAX,Math.max(MIN,pps*f));
+if(np==pps)return;pps=np;lay();box.scrollLeft=left+t*pps-mx;vp();}
+document.getElementById('zi').onclick=function(){zoomAt(2,box.clientWidth/2)};
+document.getElementById('zo').onclick=function(){zoomAt(0.5,box.clientWidth/2)};
+box.addEventListener('wheel',function(e){e.preventDefault();
+zoomAt(Math.exp(-e.deltaY*0.0015),e.clientX-box.getBoundingClientRect().left);},{passive:false});
+var drag=null;
+box.addEventListener('mousedown',function(e){if(e.button)return;
+drag={x:e.clientX,y:e.clientY,sl:box.scrollLeft,st:box.scrollTop};box.classList.add('drag');e.preventDefault();});
+window.addEventListener('mousemove',function(e){if(!drag)return;
+box.scrollLeft=drag.sl-(e.clientX-drag.x);box.scrollTop=drag.st-(e.clientY-drag.y);});
+window.addEventListener('mouseup',function(){drag=null;mdrag=false;box.classList.remove('drag');});
+lay();buildMini();
 """
 
 
-def render_html(doc: dict, session: str = "") -> str:
+def first_prompt(tree: Tree, session: str) -> str:
+    """A human label for the session: its first typed prompt or slash command, one short line ("" if none)."""
+    hit = tree.find("claude", f"*/{session}.jsonl")
+    if hit is None:
+        return ""
+    try:
+        for line in te.open_lines(hit[1]):
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(row, dict) or row.get("type") != "user" or row.get("isMeta") or row.get("isSidechain"):
+                continue
+            content = (row.get("message") or {}).get("content")
+            if isinstance(content, list):
+                content = " ".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
+            if not isinstance(content, str) or not content.strip():
+                continue
+            name = re.search(r"<command-name>(.*?)</command-name>", content, re.S)
+            if name:
+                args = re.search(r"<command-args>(.*?)</command-args>", content, re.S)
+                content = name.group(1).strip() + " " + (args.group(1).strip() if args else "")
+            elif content.lstrip().startswith("<"):
+                continue
+            text = " ".join(content.split())
+            return text if len(text) <= 120 else text[:117] + "..."
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return ""
+
+
+def default_author() -> str:
+    """The session's user: global git `user.name` (never the repo-local agent identity), else the host user."""
+    try:
+        name = subprocess.run(["git", "config", "--global", "user.name"], capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        name = ""
+    if name:
+        return name
+    try:
+        return getpass.getuser()
+    except (KeyError, OSError):
+        return os.environ.get("USER", "unknown")
+
+
+def _stamp(epoch_s: float) -> str:
+    return datetime.fromtimestamp(epoch_s, timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def render_html(doc: dict, session: str = "", title: str = "", author: str = "") -> str:
     """One self-contained HTML page (inline SVG, CSS, JS; no external reference) of a `render` document."""
     names, events = {}, []
     for e in doc["traceEvents"]:
@@ -305,31 +422,60 @@ def render_html(doc: dict, session: str = "") -> str:
     keys = sorted({(e["pid"], e["tid"]) for e in events})
     row_of = {k: i for i, k in enumerate(keys)}
     span = max((e["ts"] + e["dur"] for e in events), default=0) / 1e6
-    left, top, rh = 130, 30, 18
+    left, top, rh = 130, 40, 18
     pps = max(0.2, min(40.0, 1500 / span)) if span else 1.0
+    t0 = (doc.get("otherData") or {}).get("t0_epoch")
     height = top + rh * len(keys) + 10
     q = html.escape
     parts = []
-    step = next((s for s in (1, 5, 10, 30, 60, 300, 600, 1800, 3600) if span / s <= 20), 3600)
-    for i in range(int(span // step) + 1):
-        t = i * step
-        parts.append(f'<line data-t="{t}" x1="0" x2="0" y1="{top - 6}" y2="{height}" stroke="#ccc"/>')
-        parts.append(f'<text data-t="{t}" x="0" y="{top - 10}" font-size="10">{q(_fmt_dur(t))}</text>')
+    # Lane bands: one shade per lane (pid), alternating, spanning the full width (JS sets the width).
+    lane_rows: dict[int, list[int]] = {}
+    for (pid, _tid), i in row_of.items():
+        lane_rows.setdefault(pid, []).append(i)
+    for n, pid in enumerate(sorted(lane_rows)):
+        rows = lane_rows[pid]
+        y, h = top + rh * min(rows), rh * len(rows)
+        parts.append(f'<path data-band="{y} {h}" fill="{"#eef2f7" if n % 2 == 0 else "#ffffff"}"/>')
+    lane_agents: dict[int, list[str]] = {}
+    for e in sorted(events, key=lambda e: e["ts"]):
+        if e["cat"] == "agent":
+            lane_agents.setdefault(e["pid"], []).append(e["name"].split(" (under")[0])
+    parts.append('<g id="ticks"/>')
     for (pid, tid), i in row_of.items():
-        label = names.get(("process_name", pid, 0), f"lane {pid}") + " / " + names.get(("thread_name", pid, tid), "")
-        parts.append(f'<text x="4" y="{top + rh * i + 12}" font-size="11">{q(label)}</text>')
+        if tid == 0:
+            who = lane_agents.get(pid, [])
+            label = (who[0] + (f" +{len(who) - 1}" if len(who) > 1 else "")) if who else f"lane {pid}"
+        else:
+            label = "\u21b3 calls"
+        parts.append(f'<text x="4" y="{top + rh * i + 12}" font-size="11">{q(label[:20])}</text>')
     for e in events:
         i = row_of[(e["pid"], e["tid"])]
-        parts.append(f'<rect data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" height="{rh - 4}" '
-                     f'fill="{_COLORS.get(e["cat"], "#789")}" fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}">'
-                     f'<title>{q(_tooltip(e))}</title></rect>')
-    head = f"session {session}: {len(events)} bars, {_fmt_dur(span)}"
-    return (f'<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>{q(head)}</title>'
-            '<style>body{font-family:sans-serif;margin:8px}#w{overflow-x:auto;border:1px solid #ccc}'
-            'rect:hover{stroke:#000}</style></head><body>'
-            f'<p>{q(head)} <button id="zo">zoom out</button> <button id="zi">zoom in</button></p>'
+        parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" '
+                     f'height="{rh - 4}" fill="{_COLORS.get(e["cat"], "#789")}" '
+                     f'fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}"><title>{q(_tooltip(e))}</title></rect>')
+        if e["cat"] == "agent":
+            parts.append(f'<text data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 13}" font-size="10">'
+                         f'{q(e["name"].split(" (under")[0][:40])}</text>')
+    heading = f"Session {session[:8]}" + (f": {title}" if title else "")
+    meta = " · ".join(x for x in (f"id {session}" if session else "", f"author {author}" if author else "",
+                                  f"started {_stamp(t0)}" if t0 else "",
+                                  f"generated {_stamp(datetime.now(timezone.utc).timestamp())}",
+                                  f"{len(events)} bars over {_fmt_dur(span)}") if x)
+    how = ("This page is the timeline of one agent session. Each lane is an agent: the session itself, its "
+           "subagents, and the review or worker seats it launched, listed under their parent. Each bar is a call, "
+           "placed by its start time and sized by its duration; the pale wide bars are agent spans, the green bars "
+           "model turns, the orange bars tool calls. Hover a bar for its model, tokens, shadow cost, and transcript "
+           "pointer. Zoom with the mouse wheel (centred on the pointer) or the buttons, and pan by holding the "
+           "mouse button and dragging. The strip above the chart is a minimap of the whole session: the frame marks "
+           "the part in view; click or drag on the strip to move there. Time labels are local wall-clock time.")
+    legend = "".join(f'<i style="background:{_COLORS[k]}"></i>{k}: {m}' for k, m in _MEANINGS.items())
+    return (f'<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>{q(heading)}</title><style>{_CSS}</style>'
+            f'</head><body><header><h1>{q(heading)}</h1><p class="meta">{q(meta)}</p><p class="how">{q(how)}</p>'
+            f'<p class="legend">{legend}</p></header>'
+            '<svg id="mm" xmlns="http://www.w3.org/2000/svg" height="44"></svg>'
+            '<div class="bar"><button id="zo">zoom out</button><button id="zi">zoom in</button></div>'
             f'<div id="w"><svg id="tl" xmlns="http://www.w3.org/2000/svg" height="{height}" data-span="{span}" '
-            f'data-left="{left}" data-pps="{pps}">' + "".join(parts) + f'</svg></div><script>{_JS}</script></body></html>\n')
+            f'data-left="{left}" data-pps="{pps}" data-t0="{t0 or 0}" data-h="{height}">' + "".join(parts) + f'</svg></div><script>{_JS}</script></body></html>\n')
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -353,7 +499,7 @@ def main(argv: list[str] | None = None) -> int:
     doc = render(agents)
     out.write_text(json.dumps(doc) + "\n", encoding="utf-8")
     if args.html:
-        Path(args.html).write_text(render_html(doc, args.session), encoding="utf-8")
+        Path(args.html).write_text(render_html(doc, args.session, first_prompt(tree, args.session), default_author()), encoding="utf-8")
     log.info("%s: %d agents", out, len(agents))
     return 0
 
