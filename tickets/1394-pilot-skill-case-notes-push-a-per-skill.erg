@@ -55,3 +55,9 @@ roar or smelt.
 
 ## Feasibility (raid 3d5ae7)
 - PASS. `tests/test_claude_code_adapter.py` checks the event set with `<=` and that every launched script exists; `idh-hook` requires the executable bit. No validator mirrors Claude hooks to Codex/Pi; no test sweeps `memory/` wholesale. Open PR #2049 touches `memory/topics/` and memory tests only, disjoint.
+
+## Fix round: UserPromptSubmit trigger (raid 3d5ae7)
+- Condition of design note § 3.5 met: a typed `/merge` never fired PostToolUse on Skill. `scripts/skill-case-notes.sh` now also serves UserPromptSubmit, same marker as the Skill-tool path (typed then Skill tool, or the reverse, delivers once). Non-slash prompts exit in bash before python or git and log nothing.
+- Payload probe (claude 2.1.316, haiku): UserPromptSubmit carries `session_id`, `cwd`, `hook_event_name`, `prompt` (raw, `/merge ...`), no `tool_input`; `hookSpecificOutput.additionalContext` with `hookEventName: UserPromptSubmit` reached the model.
+- Read-back (headless, haiku, temp repo, planted token, `--allowedTools Skill`, real script wired on both events): prompt `/merge ...` answered with `PLANTED-TOKEN-RB-4410`; log: `delivered skill=merge session=35561396-0b00-4a8f-934f-def8ec806586 agent=main`, one line, one marker. A non-slash prompt (`hello`) created no log and no marker.
+- Limit: read-back was `-p` mode; interactive TUI typing is the same hook path but not separately verified.

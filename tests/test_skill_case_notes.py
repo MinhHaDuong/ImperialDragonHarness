@@ -48,6 +48,14 @@ def run(state, cwd, skill="merge", session="s1", agent=None, raw=None):
     return r, (log.read_text() if log.exists() else "")
 
 
+def typed(state, cwd, prompt, session="s1", agent=None):
+    payload = {"session_id": session, "cwd": str(cwd), "hook_event_name": "UserPromptSubmit",
+               "prompt": prompt}
+    if agent:
+        payload["agent_id"] = agent
+    return run(state, cwd, raw=json.dumps(payload))
+
+
 def context(r):
     return json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
 
@@ -130,6 +138,44 @@ def test_note_is_capped(project, state):
     (project / "memory" / "skills" / "merge.md").write_text("word " * 1000)
     r, _ = run(state, project)
     assert len(context(r).split()) <= 450
+
+
+def test_typed_slash_command_delivers(project, state):
+    r, log = typed(state, project, "/merge 2114 now")
+    out = json.loads(r.stdout)["hookSpecificOutput"]
+    assert out["hookEventName"] == "UserPromptSubmit"
+    assert TOKEN in out["additionalContext"]
+    assert "delivered skill=merge" in log
+
+
+def test_typed_then_skill_tool_delivers_once(project, state):
+    r1, _ = typed(state, project, "/merge")
+    r2, log = run(state, project)
+    assert TOKEN in context(r1) and r2.stdout == ""
+    assert "already-delivered" in log
+
+
+def test_skill_tool_then_typed_delivers_once(project, state):
+    run(state, project)
+    r, _ = typed(state, project, "/idh:merge")
+    assert r.stdout == ""
+
+
+def test_typed_unknown_command_is_no_note(project, state):
+    r, log = typed(state, project, "/help")
+    assert r.stdout == "" and "no-note skill=help" in log
+
+
+def test_non_slash_prompt_is_silent_and_unlogged(project, state):
+    r, log = typed(state, project, "please /merge this")
+    assert r.returncode == 0 and r.stdout == "" and log == ""
+
+
+def test_hooks_json_wires_prompt_submit():
+    hooks = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())["hooks"]
+    cmd = hooks["UserPromptSubmit"][0]["hooks"][0]
+    assert "idh-hook\" skill-case-notes.sh" in cmd["command"]
+    assert cmd["timeout"] == 5
 
 
 def test_hooks_json_wires_skill_matcher():
