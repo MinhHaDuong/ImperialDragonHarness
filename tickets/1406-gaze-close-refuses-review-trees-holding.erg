@@ -32,3 +32,11 @@ merges stall on a cleanup artifact.
 - [ ] Red test replays this case (copied .env + .dvc/config.local + symlinked .venv/.dvc/cache)
 - [ ] Decide how test-written ignored outputs (regenerated figures, empty data dirs) are treated;
       do not silently delete anything not provably a copy or cache
+
+## Same root cause in roar (added 2026-10-31)
+
+`skills/roar/close-and-clean.sh --phase exit-check` reports `PREFLIGHT: DIRTY` / `EXIT: KEEP-PENDING`
+on a fresh roar bundle tree whose only ignored entries are `.env`, `.dvc/config.local`
+(byte-identical to the primary, listed in `.worktreeinclude`) and the `.venv` / `.dvc/cache`
+symlinks into the primary. So roar can remove no worktree in a project with `.worktreeinclude`.
+Exit criterion 1 covers roar's preflight as well as gaze close.
