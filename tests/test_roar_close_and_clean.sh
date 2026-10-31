@@ -474,6 +474,7 @@ echo stray > stray.txt
 run "$SCRIPT" --phase preflight
 _check_rc "preflight phase, dirty worktree: rc 1" 1 "$rc"
 _check_says "…reports DIRTY" "$out" "PREFLIGHT: DIRTY"
+_check_says "…RESULT names the PREFLIGHT check" "$out" "RESULT: findings (exit 1): PREFLIGHT"
 # Failures reading either/both metadata paths must not skip the helper as
 # empty==empty; dirty state and scratch must remain without an all-clear.
 for metadata in both --git-dir --git-common-dir; do
