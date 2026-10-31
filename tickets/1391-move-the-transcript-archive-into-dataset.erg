@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-31T12:50Z claude created
+2026-10-31T14:11Z reviewer decisions (raid lead): archive_root() = agent-sessions dir, env IDH_ARCHIVE_ROOT, default /data/datasets/ours/agent-sessions if /data/datasets/ours is a dir else ~/data/datasets/ours/agent-sessions; layout raw/<host>/<runtime>, raw/<host>/launches.jsonl, spool/<host>/...; README source scripts/agent-sessions-README.md; doudou drop-in documented in INSTALL
 
 --- body ---
 ## Context

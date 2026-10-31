@@ -38,7 +38,7 @@ def world(tmp_path):
     spool.write_text("vibe session\n")
     os.utime(spool, (NOW - 2 * 86400, NOW - 2 * 86400))
     files["vibe"] = spool
-    return {"env": env, "files": files, "out": tmp_path / "archive/transcripts" / host, "home": home}
+    return {"env": env, "files": files, "out": tmp_path / "archive/raw" / host, "home": home}
 
 
 def archive(world, *extra, now=NOW):
@@ -121,3 +121,19 @@ def test_units_resolve_the_checkout_and_archive_from_the_home_of_the_running_use
     assert "ExecStart=/usr/bin/python3 %h/.agents/scripts/transcript_archive.py" in unit
     assert "/home/" not in unit + timer  # %h, so doudou installs the same files
     assert "Persistent=true" in timer and "Unit=transcript-archive.service" in timer
+
+
+def test_default_root_is_the_ours_store_where_it_exists_else_under_home(tmp_path, monkeypatch):
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import transcript_spool as ts
+    monkeypatch.delenv("IDH_ARCHIVE_ROOT")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setattr(ts, "OURS_PROBE", tmp_path / "absent")
+    assert ts.archive_root() == tmp_path / "home/data/datasets/ours/agent-sessions"
+    (tmp_path / "ours").mkdir()
+    monkeypatch.setattr(ts, "OURS_PROBE", tmp_path / "ours")
+    assert ts.archive_root() == tmp_path / "ours/agent-sessions"
+    assert ts.raw_dir("h") == tmp_path / "ours/agent-sessions/raw/h"
+    ts.mkdir_private(ts.raw_dir("h") / "claude")
+    assert {oct(p.stat().st_mode & 0o777) for p in (ts.raw_dir("h"), ts.raw_dir("h") / "claude")} == {"0o700"}

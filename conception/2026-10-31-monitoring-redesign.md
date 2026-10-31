@@ -138,8 +138,8 @@ a roar. This is ticket 1380, widened.
 
 A nightly job (systemd user timer) copies every transcript of the three
 runtimes untouched for a day, with Claude Code's `subagents/` and
-`tool-results/`, to `~/archive/transcripts/<host>/<runtime>/<original
-relative path>.zst`, one plain zstd file each. A source that changed since
+`tool-results/`, to `<root>/raw/<host>/<runtime>/<original
+relative path>.zst` (root: `datasets/ours/agent-sessions`, ticket 1391), one plain zstd file each. A source that changed since
 its last copy (the copy carries the source's mtime; an append moves it) is
 copied again: transcripts only append, so the new copy
 supersedes the old one. doudou pushes to padme when online. The archive keeps
@@ -164,7 +164,7 @@ copied off the host.
 ### 4.3 Launch line (the link that would be lost)
 
 Every script that starts a headless child appends one JSON line per child
-to `~/archive/transcripts/<host>/launches.jsonl`, through one small helper:
+to `<root>/raw/<host>/launches.jsonl`, through one small helper:
 `seat_clock.py run` (gaze seats) and `manuscript_review.py` (which starts
 `claude -p` itself, `manuscript_review.py:462`) today, any new launcher
 tomorrow. `scripts/coaching/seat-runner.sh` also starts aider (lines

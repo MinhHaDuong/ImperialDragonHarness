@@ -35,7 +35,7 @@ Path.read_text = _split_contract_read_text
 
 # --- archive isolation (ticket 1383) --------------------------------------------
 # Headless doors spool session files under IDH_ARCHIVE_ROOT (scripts/transcript_spool.py).
-# No test may write the real ~/archive: every test gets its own root, and a test that wants a
+# No test may write the real store: every test gets its own root, and a test that wants a
 # specific one overrides it with monkeypatch.setenv.
 import pytest  # noqa: E402
 

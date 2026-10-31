@@ -60,7 +60,7 @@ class Tree:
     def default(cls) -> "Tree":
         spool = _load("transcript_spool")
         live = {rt: spool.source_roots(rt) for rt in spool.ARCHIVED_RUNTIMES}
-        return cls(live, spool.archive_root() / "transcripts" / spool.host())
+        return cls(live, spool.raw_dir())
 
     def find(self, runtime: str, pattern: str) -> tuple[str, Path] | None:
         """(relative path, readable path) of the first match: live roots first, then the archive."""
@@ -483,7 +483,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("session", help="Claude Code session id")
     parser.add_argument("--out", help="output file (default: <session>.trace.json in the current directory)")
     parser.add_argument("--html", help="also write a self-contained HTML timeline (inline SVG, opens in Firefox)")
-    parser.add_argument("--archive-root", help="archive root (default: IDH_ARCHIVE_ROOT or ~/archive)")
+    parser.add_argument("--archive-root", help="agent-sessions root holding raw/<host>/ (default: IDH_ARCHIVE_ROOT, else the transcript_spool default)")
     parser.add_argument("--live-root", help="Claude live root (default: CLAUDE_CONFIG_DIR/projects or ~/.claude/projects)")
     parser.add_argument("--launches", help="launches.jsonl (default: the launch_line path)")
     args = parser.parse_args(argv)

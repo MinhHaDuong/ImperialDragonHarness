@@ -92,11 +92,14 @@ behavioral port yet. See `adapters/pilot-support.json` and
 Runtimes delete transcripts by age (Claude Code: `cleanupPeriodDays`, 180 on
 padme) and keep them on the host that ran them. `scripts/transcript_archive.py`
 compresses each file untouched for a day into
-`~/archive/transcripts/<host>/<runtime>/` (zstd, original relative path, source
+`<root>/raw/<host>/<runtime>/` (zstd, original relative path, source
 mtime stamped on the copy, so a grown file is copied again). Headless seats that
 keep no session of their own (Pi seats and Pi subagents, aider, vibe) write to
-`~/archive/spool/<host>/<runtime>/`, which the archive reads too. Path
-convention: `scripts/transcript_spool.py`. No encryption: the archive stays on
+`<root>/spool/<host>/<runtime>/`, which the archive reads too. `<root>` is the
+`agent-sessions` store: `IDH_ARCHIVE_ROOT`, else `/data/datasets/ours/agent-sessions`
+when `/data/datasets/ours` is a directory (padme), else
+`~/data/datasets/ours/agent-sessions` (ticket 1391). Path convention:
+`scripts/transcript_spool.py`; store description: `scripts/agent-sessions-README.md`. No encryption: the archive stays on
 the host disk with the permissions of the live tree; encrypt before it leaves
 the host (memo `conception/2026-10-31-monitoring-redesign.md` section 5).
 
@@ -111,6 +114,12 @@ systemctl --user start transcript-archive.service   # first run, backlog include
 python3 ~/.agents/scripts/transcript_archive.py --verify   # eligible: and archived: lines must match
 ```
 
+Install the store README on each host, once the root exists:
+
+```bash
+install -m 600 scripts/agent-sessions-README.md <root>/README.md
+```
+
 The Pi subagent extension is patched, not symlinked: `scripts/pi-subagent-link`
 (run by `pi-haiku` at every start) installs a copy of the example whose
 `--no-session` becomes `--session-dir <spool>`. It exits non-zero and warns when
@@ -121,10 +130,13 @@ a Pi upgrade renames the flag.
 doudou keeps its own transcripts. Run the install above on doudou, then push
 its archive to padme (compressed files only, resumable, skips unchanged ones):
 
-```bash
-rsync -a --partial ~/archive/transcripts/doudou/ padme:archive/transcripts/doudou/
+```ini
+# ~/.config/systemd/user/transcript-archive.service.d/push-padme.conf
+[Service]
+ExecStartPost=-/usr/bin/rsync -a --partial --update %h/data/datasets/ours/agent-sessions/raw/doudou/ padme:/data/datasets/ours/agent-sessions/raw/doudou/
 ```
 
-Run it nightly after the archive service, for example as `ExecStartPost=` in a
-drop-in of `transcript-archive.service` on doudou. Spool data for doudou stays
-under `~/archive/spool/doudou/` until archived. Not part of the padme timer.
+The leading `-` keeps an absent padme from failing the archive run; `--update`
+never overwrites a newer, longer copy on padme. Spool data for doudou stays
+under `~/data/datasets/ours/agent-sessions/spool/doudou/` until archived. Not
+part of the padme timer.
