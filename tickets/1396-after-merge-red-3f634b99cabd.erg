@@ -7,6 +7,7 @@ Author: merge-gate
 2026-10-31T14:28Z merge-gate created
 2026-10-31T14:40Z reviewer note cause isolated and reproduced: tests inherit IDH_SESSION_MODEL from raid_land.py --session-model via the after-merge runner; test_self_seat_without_a_session_model_is_loud_not_invented fails with it set, passes without. Fixed by an autouse conftest fixture. Separate red folded here by the runner's per-check dedupe: test_subagent_seat_forging_a_headless_header_takes_the_pin fails on origin/main since 2a88d52a (PR #2094, ticket 1388), with or without the variables; not covered by this fix
 2026-10-31T14:54Z reviewer note fix for the PR 2094 red: identities() untrusts a headless header when the plan reason says subagent (option A); robust fix ticketed as 1399. Close once an after-merge record on main passes pytest-guard
+2026-10-31T15:04Z reviewer note PR 2102 merged (b9de0b4a): both gaze_close tests pass on ae970e19. That record is red on test_local_ci_parallel.py::test_pool_does_not_wait_for_the_callers_other_background_jobs (the 1386 test; also red on 798d584b, green elsewhere). Hypothesis: run_pool's bare wait -n can block on the caller's background job; not reproduced in 3600 loaded runs, cause not established
 
 --- body ---
 ## Context
