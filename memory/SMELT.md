@@ -1,6 +1,6 @@
 # SMELT — project memory consolidation prompt
 
-Prompt revision: v8-r4 (2026-10-29)
+Prompt revision: v8-r5 (2026-10-30)
 
 This is the versioned consolidation prompt for this repository's project
 memory. Every smelt report states this revision. Changing the prompt is a
@@ -116,6 +116,12 @@ change in the report; otherwise expose the contradiction without presenting
 either claim as settled advice. The factual episode stays in the journal even
 when it relates a derogation.
 
+Ticket each exposed contradiction in `tickets/` for later discussion with the
+author: one ticket per contradiction, naming both claims, their sources and
+the page that exposes it; reuse an open ticket on the same contradiction. The
+ticket states the question, picks no side and proposes no rule. The page's
+open question links the ticket.
+
 ## Encrypted entries (.age)
 
 Material not cleared for the repository audience stays in this repository as
@@ -163,7 +169,7 @@ Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
   and retained sources; corrections with the evidence that revised them.
 - The bytes of each topic page against the cap, and the net change per page
   and in total (`memory_sizes.py --before`), with the reason for any growth.
-- Unresolved questions and exposed contradictions.
+- Unresolved questions and exposed contradictions, each with its ticket.
 - What the pass wrote, then a second pass over the same revision set: it
   imports nothing as new and re-examines each correction against its sources. It also compares each
   previous page with its rebuild: every caveat, condition or exception of the
@@ -178,8 +184,9 @@ review-attribution records move once, by `git mv` with their bytes intact, to
 `memory/evidence/attribution/`. `memory/MEMORY.md` stays at
 most 40 lines, headings and blank lines counted, one line per department with
 its most-used fact; check before committing.
-Smelt writes only `memory/MEMORY.md`, `memory/topics/` and
-`memory/smelts/` in this repository. It proposes no rule, edits no AGENTS.md
+Smelt writes only `memory/MEMORY.md`, `memory/topics/`, `memory/smelts/`
+and, for exposed contradictions only, new tickets in `tickets/` in this
+repository. It proposes no rule, edits no AGENTS.md
 or runbook, opens no crystallisation issue and writes nothing into the
 harness for another project. Commit on the smelt branch and submit a PR for
 review; do not merge automatically. Only an accepted report counts as
