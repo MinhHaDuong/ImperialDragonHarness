@@ -33,4 +33,4 @@ mirrors.
 - New category? Decide its lifecycle first (frozen, replica, cache, project),
   then its place.
 
-History: layout settled 2026-10-31 (harness tracker 1382).
+History: layout settled 2026-10-31 (harness trackers 1382 and 1401).

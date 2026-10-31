@@ -32,7 +32,8 @@ Children (one PR each, in their own repository):
 - archiveCIRED 0043 (PR archiveCIRED#63): archive path from `DATASETS_DIR`
 - climate-finance-het 2723 (PR climate-finance-het#2002): RePEc via
   `MIRRORS_DIR`, ISTEX via `DATASETS_DIR`
-- cadens 0050 (PR cadens#61): remove legacy `CADENS_RAW_DIR` leftovers
+- cadens 0050 (PR cadens#61): remove legacy `CADENS_RAW_DIR` leftovers and
+  derive its per-host `.env` data paths from `DATASETS_DIR`
 
 ## Exit criteria
 
