@@ -2,11 +2,13 @@
 Title: trace_timeline --html: tool-call classes, sticky label column with red cursor, sticky bar labels
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2083
 
 --- log ---
 2026-10-31T13:50Z claude created
 2026-10-31T13:55Z reviewer scope: author added model name on agent bar labels
 2026-10-31T14:05Z reviewer scope: orchestrator added git class and shell-read→file after measuring 79% other
+2026-10-31T14:12Z reviewer closed — autoclosed — PR #2083
 
 --- body ---
 ## Context
