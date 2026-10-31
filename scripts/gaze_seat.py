@@ -325,7 +325,8 @@ def answer_start(lines: list[str], marker: str) -> int | None:
     inside a sentence is prose, never a frame. The last frame wins, so a full answer quoted in the reasoning
     cannot stand for the real one; markers after the last `Tokens:` footer line are ignored. Limits: a truncated run
     whose last output is a bare marker then a quoted full answer is indistinguishable from a real answer, and
-    flat stdout carries no authentication, so a body that itself
+    a reasoning line starting `Tokens: ` with the real frame after it and no final footer hides that frame (same
+    as before this function); flat stdout carries no authentication, so a body that itself
     prints a framed marker is indistinguishable from the transport; the declaration is then read as written.
     """
     footer = max((i for i, line in enumerate(lines) if line.startswith('Tokens: ')), default=len(lines))
@@ -459,8 +460,10 @@ def derive(door: dict, raw: str, worker: str) -> tuple[str, str | None, str, boo
     answer, unwrapped = unwrap_header(answer)
     report = stamp(answer, worker)
     if not report:
-        thinking = door.get('thinking_marker')
-        truncated = thinking and any(line.strip() == thinking for line in raw.splitlines())
+        thinking, marker = door.get('thinking_marker'), door.get('answer_marker')
+        lines = raw.splitlines()
+        truncated = thinking and any(line.strip() == thinking for line in lines) and (
+            not marker or answer_start(lines, marker) is None)
         return '', ('no report (thinking without a framed answer: truncated run)' if truncated
                     else 'no report (empty output)'), raw_answer, unwrapped
     if refusal(report):

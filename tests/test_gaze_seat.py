@@ -1085,6 +1085,8 @@ def test_derive_separates_truncated_empty_refused_and_reach_failures():
         'reach': gs.derive(AIDER_DOOR, f'---\n{MARK}\nverdict: clear\n', WORKER)[1],
     }
     assert len(set(reasons.values())) == 4
+    framed_empty = gs.derive(AIDER_DOOR, f'{THINK}\nhmm\n---\n{MARK}\n\nTokens: 1\n', WORKER)[1]
+    assert 'empty' in framed_empty  # thinking was answered, with nothing: not a truncated run
     assert 'truncated' in reasons['truncated'] and 'empty' in reasons['empty']
     ok = gs.derive(AIDER_DOOR, FIXTURE.replace('read=no', 'read=yes'), WORKER)
     assert ok[1] is None and ok[0].startswith(WORKER)
