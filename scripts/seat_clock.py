@@ -225,7 +225,7 @@ def _assess(panel: Path) -> tuple[bool, list[str], list[str], list[str]]:
         if budget is not None and int(timed.group(1)) > budget:
             deviations.append(f'{name}: {timed.group(1)}s, over the {budget // 60}m budget')
         text = (panel / f'{name}.md').read_text(encoding='utf-8-sig', errors='replace')
-        lines_ = [ln.strip().strip('*').strip() for ln in text.splitlines() if re.search(r'\w', ln)]
+        lines_ = _gaze_seat().header_lines(text)  # the launcher's one header reader (ticket 1400)
         first = lines_[0] if lines_ else ''
         signed = first.lower().startswith('worker:')
         if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
@@ -250,13 +250,21 @@ def _assess(panel: Path) -> tuple[bool, list[str], list[str], list[str]]:
     return not missing and complete, [head, *lines], reported, accepted
 
 
+def _gaze_seat():
+    """gaze_seat.py as a sibling script, loaded on use (it loads this module at import)."""
+    spec = importlib.util.spec_from_file_location('gaze_seat', Path(__file__).with_name('gaze_seat.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def worker_header(report: Path) -> dict[str, str]:
     """The `key=value` fields of a report's first line when it is a `worker:` line, else {}."""
     try:
         text = report.read_text(encoding='utf-8-sig', errors='replace')
     except OSError:
         return {}
-    first = next((ln.strip().strip('*').strip() for ln in text.splitlines() if re.search(r'\w', ln)), '')
+    first = next(iter(_gaze_seat().header_lines(text)), '')
     if not first.lower().startswith('worker:'):
         return {}
     return {m.group(1).lower(): m.group(2) for m in re.finditer(r'(\w+)=([^\s·]+)', first)}
@@ -268,7 +276,7 @@ def substantive(report: Path) -> bool:
         text = report.read_text(encoding='utf-8-sig', errors='replace')
     except OSError:
         return False
-    body = '\n'.join([ln for ln in text.splitlines() if re.search(r'\w', ln)][1:])
+    body = '\n'.join(_gaze_seat().header_lines(text)[1:])
     return bool(re.search(r'[\w./-]+\.\w+:\d+', body)) or len(body.strip()) >= 200
 
 
@@ -280,9 +288,7 @@ def qualify(model: str, runtime: str) -> str:
     """Provider-qualify a bare model id with the provider that bills it on `runtime`'s door."""
     if '/' in model or model == 'not observed':
         return model
-    spec = importlib.util.spec_from_file_location('gaze_seat', Path(__file__).with_name('gaze_seat.py'))
-    gaze_seat = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gaze_seat)
+    gaze_seat = _gaze_seat()
     try:
         door = gaze_seat.load_doors(gaze_seat.ROUTES).get(runtime)
     except (OSError, ValueError, KeyError):

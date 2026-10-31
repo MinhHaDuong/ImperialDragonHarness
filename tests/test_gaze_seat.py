@@ -1015,3 +1015,20 @@ def test_unwrap_header_unit():
     fixed, _ = gs.unwrap_header(ok)
     assert gs.reach_refusal(gs.stamp(fixed, 'worker: launcher')) is None
     assert gs.reach_refusal(gs.stamp(ok, 'worker: launcher')) is not None
+
+
+def test_repeated_or_contradictory_reach_lines_are_refused():
+    """Ticket 1400 audit: only line 2 was read, so a second, contradicting reach line was admitted."""
+    gs = load_module()
+    yes, no = 'reach: read=yes shell=no tests=not-run', 'reach: read=no shell=no tests=not-run'
+    for first, second in ((yes, no), (no, yes), (yes, yes)):
+        report = gs.stamp(f'{first}\n{second}\nbody\n', 'worker: launcher')
+        assert gs.reach_refusal(report) is not None
+
+
+def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
+    gs = load_module()
+    report = gs.stamp('reach: read=yes shell=no tests=not-run\nNOT-RUN: x\nverdict: none\n', 'worker: launcher')
+    assert gs.refusal(report) is not None
+    ok = gs.stamp('reach: read=yes shell=no tests=not-run\nfinding: prints NOT-RUN: on refusal\nverdict: clear\n', 'worker: l')
+    assert gs.refusal(ok) is None
