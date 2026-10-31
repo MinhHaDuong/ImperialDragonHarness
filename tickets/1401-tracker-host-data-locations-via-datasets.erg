@@ -29,7 +29,7 @@ padme-traces and arena storage stay out of scope (sweep § NOT move).
 
 Children (one PR each, in their own repository):
 - harness 1402: `transcript_spool.py` reads `DATASETS_DIR`, no directory probe;
-  doudou push built from it
+  doudou push built from it — closed 2026-10-31 (PRs 2120, 2122; doudou drop-in installed)
 - archiveCIRED 0043 (PR archiveCIRED#63): archive path from `DATASETS_DIR`
 - climate-finance-het 2723 (PR climate-finance-het#2002): RePEc via
   `MIRRORS_DIR`, ISTEX via `DATASETS_DIR`
