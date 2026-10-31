@@ -2,10 +2,12 @@
 Title: Move the transcript archive into datasets/ours/agent-sessions and backfill from the cadens raw store
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2086
 
 --- log ---
 2026-10-31T12:50Z claude created
 2026-10-31T14:11Z reviewer decisions (raid lead): archive_root() = agent-sessions dir, env IDH_ARCHIVE_ROOT, default /data/datasets/ours/agent-sessions if /data/datasets/ours is a dir else ~/data/datasets/ours/agent-sessions; layout raw/<host>/<runtime>, raw/<host>/launches.jsonl, spool/<host>/...; README source scripts/agent-sessions-README.md; doudou drop-in documented in INSTALL
+2026-10-31T14:16Z reviewer closed — autoclosed — PR #2086
 
 --- body ---
 ## Context
@@ -34,15 +36,15 @@ Target layout:
 
 ## Exit criteria
 
-- [ ] The archive root is one setting (`transcript_spool.py`), default the
+- [x] The archive root is one setting (`transcript_spool.py`), default the
       target layout per host; `transcript_archive.py`, `trace_timeline.py` and the
       launch-line helper read it; tests updated
-- [ ] Existing archives moved (not re-copied from live trees) to the new root on
+- [x] Existing archives moved (not re-copied from live trees) to the new root on
       padme and doudou; counts and bytes before and after printed in the PR
-- [ ] Backfill: every cadens raw file absent from the archive (by relative path)
+- [x] Backfill: every cadens raw file absent from the archive (by relative path)
       is added, compressed, for both hosts; a file present in both keeps the
       larger (non-truncated) version; counts printed
-- [ ] doudou's push targets the new padme path and is prefixed `-` so an absent
+- [x] doudou's push targets the new padme path and is prefixed `-` so an absent
       padme does not fail the archive run
-- [ ] `agent-sessions/README.md` written; directories 700
-- [ ] memo § 4.2 and INSTALL.md name the new location
+- [x] `agent-sessions/README.md` written; directories 700
+- [x] memo § 4.2 and INSTALL.md name the new location
