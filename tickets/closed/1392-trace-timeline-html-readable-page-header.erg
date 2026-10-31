@@ -2,10 +2,12 @@
 Title: trace_timeline --html: readable page — header, how-to-read, lane shading, wheel zoom, drag pan
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2081
 
 --- log ---
 2026-10-31T13:12Z claude created
 2026-10-31T13:14Z reviewer scope: author added wall-clock time axis, colour legend, minimap
+2026-10-31T13:24Z reviewer closed — autoclosed — PR #2081
 
 --- body ---
 ## Context
