@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-31T19:22Z claude created
+2026-10-31T20:45Z reviewer done repo-side: archive_root from env/file, push script + drop-in source, docs; doudou drop-in install pending (doudou unreachable 2026-10-31)
 
 --- body ---
 ## Context

@@ -9,10 +9,11 @@ link) write into `spool_dir`; ticket 1384 imports it. Stdlib only.
     <ARCHIVE_ROOT>/raw/<host>/launches.jsonl
     <ARCHIVE_ROOT>/spool/<host>/<runtime>[/<seat id>]/...   (session files of doors that keep none)
 
-ARCHIVE_ROOT is the `agent-sessions` directory of the datasets/ours folder (ticket 1391); its README
+ARCHIVE_ROOT is the `agent-sessions` directory of the datasets/ours folder (ticket 1391; location from
+DATASETS_DIR, ticket 1402); its README
 is scripts/agent-sessions-README.md. `archive_root()` and `live_roots()` read the environment at call time, so a test or a caller that
 sets IDH_ARCHIVE_ROOT / CLAUDE_CONFIG_DIR / CODEX_HOME / PI_CODING_AGENT_DIR afterwards is honoured;
-`ARCHIVE_ROOT` and `LIVE_ROOTS` are the import-time snapshots.
+`LIVE_ROOTS` is the import-time snapshot; the archive root has none, since it may be unknown.
 
 CLI (for shell callers): `transcript_spool.py root` prints the root; `transcript_spool.py spool <runtime> [--seat]` prints, and creates, the dir.
 """
@@ -28,18 +29,36 @@ SPOOL_RUNTIMES = ('pi', 'aider', 'vibe')  # doors whose CLI keeps no session fil
 ARCHIVED_RUNTIMES = ('claude', 'codex', 'pi', 'aider', 'vibe')
 
 
-OURS_PROBE = Path('/data/datasets/ours')  # present (a directory) on padme only
-STORE = Path('datasets/ours/agent-sessions')
+ENV_FILE = Path('~/.config/environment.d/50-datasets.conf')  # declares DATASETS_DIR on every host
+STORE = Path('ours/agent-sessions')
+
+
+def _datasets_dir_from_file() -> str | None:
+    """DATASETS_DIR from the environment.d file: environment.d reaches systemd user services but not
+    interactive shells, subagents or ssh commands, hence this fallback."""
+    try:
+        lines = ENV_FILE.expanduser().read_text().splitlines()
+    except OSError:
+        return None
+    value = None
+    for line in lines:
+        key, sep, val = line.strip().partition('=')
+        if sep and key.strip() == 'DATASETS_DIR':
+            value = val.strip().strip('"\'') or None
+    return value
 
 
 def archive_root() -> Path:
-    """The agent-sessions directory: IDH_ARCHIVE_ROOT, else /data/datasets/ours/ when that
-    directory exists, else ~/data/datasets/ours/ (no hostname is consulted)."""
+    """The agent-sessions directory: IDH_ARCHIVE_ROOT, else $DATASETS_DIR/ours/agent-sessions, else
+    DATASETS_DIR parsed from ~/.config/environment.d/50-datasets.conf, else an error. An empty value
+    counts as unset; no directory is probed and no hostname is consulted."""
     if os.environ.get('IDH_ARCHIVE_ROOT'):
         return Path(os.environ['IDH_ARCHIVE_ROOT'])
-    if OURS_PROBE.is_dir():
-        return OURS_PROBE / 'agent-sessions'
-    return Path.home() / 'data' / STORE
+    datasets = os.environ.get('DATASETS_DIR') or _datasets_dir_from_file()
+    if not datasets:
+        raise RuntimeError('archive root unknown: set IDH_ARCHIVE_ROOT or DATASETS_DIR, or declare '
+                           'DATASETS_DIR in ~/.config/environment.d/50-datasets.conf')
+    return Path(datasets) / STORE
 
 
 def live_roots() -> dict[str, Path]:
@@ -51,7 +70,6 @@ def live_roots() -> dict[str, Path]:
             'pi': Path(pi) / 'sessions'}
 
 
-ARCHIVE_ROOT = archive_root()
 LIVE_ROOTS = live_roots()
 
 
@@ -98,6 +116,14 @@ def source_roots(runtime: str) -> list[Path]:
 
 
 def main(argv: list[str]) -> int:
+    try:
+        return _main(argv)
+    except RuntimeError as error:
+        print(f'transcript_spool: {error}', file=sys.stderr)
+        return 1
+
+
+def _main(argv: list[str]) -> int:
     if argv == ['root']:
         print(archive_root())
         return 0

@@ -96,9 +96,12 @@ compresses each file untouched for a day into
 mtime stamped on the copy, so a grown file is copied again). Headless seats that
 keep no session of their own (Pi seats and Pi subagents, aider, vibe) write to
 `<root>/spool/<host>/<runtime>/`, which the archive reads too. `<root>` is the
-`agent-sessions` store: `IDH_ARCHIVE_ROOT`, else `/data/datasets/ours/agent-sessions`
-when `/data/datasets/ours` is a directory (padme), else
-`~/data/datasets/ours/agent-sessions` (ticket 1391). Path convention:
+`agent-sessions` store: `IDH_ARCHIVE_ROOT`, else `$DATASETS_DIR/ours/agent-sessions`, else
+`DATASETS_DIR` parsed from `~/.config/environment.d/50-datasets.conf` (systemd user services
+see environment.d, interactive shells, subagents and ssh do not, hence the file fallback),
+else an error: no directory is probed and no hostname consulted (tickets 1391, 1402). Each host
+declares `DATASETS_DIR` there; the data layout is in `<DATASETS_DIR>/README.md` and the store in
+`<root>/README.md`. Path convention:
 `scripts/transcript_spool.py`; store description: `scripts/agent-sessions-README.md`. No encryption: the archive stays on
 the host disk with the permissions of the live tree; encrypt before it leaves
 the host (memo `conception/2026-10-31-monitoring-redesign.md` section 5).
@@ -127,16 +130,20 @@ a Pi upgrade renames the flag.
 
 ### doudou (author's step; nothing here installs on doudou)
 
-doudou keeps its own transcripts. Run the install above on doudou, then push
-its archive to padme (compressed files only, resumable, skips unchanged ones):
+doudou keeps its own transcripts. Run the install above on doudou, declare
+`DATASETS_DIR` in its `50-datasets.conf`, then install the push drop-in. The script
+`scripts/transcript-push-padme` takes the local source from `transcript_spool.py root` and
+the destination from `ssh padme transcript_spool.py root`, so padme's declared location is
+the only place its path is written; compressed files only, resumable, skips unchanged ones:
 
-```ini
-# ~/.config/systemd/user/transcript-archive.service.d/push-padme.conf
-[Service]
-ExecStartPost=-/usr/bin/rsync -a --partial --update %h/data/datasets/ours/agent-sessions/raw/doudou/ padme:/data/datasets/ours/agent-sessions/raw/doudou/
+```bash
+mkdir -p ~/.config/systemd/user/transcript-archive.service.d
+cp ~/.agents/scripts/systemd/push-padme.conf ~/.config/systemd/user/transcript-archive.service.d/
+systemctl --user daemon-reload
+systemctl --user cat transcript-archive.service   # the drop-in must appear
 ```
 
 The leading `-` keeps an absent padme from failing the archive run; `--update`
 never overwrites a newer, longer copy on padme. Spool data for doudou stays
-under `~/data/datasets/ours/agent-sessions/spool/doudou/` until archived. Not
+under `<root>/spool/doudou/` until archived. Not
 part of the padme timer.
