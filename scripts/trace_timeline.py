@@ -284,24 +284,36 @@ def _tooltip(e: dict) -> str:
     return "\n".join(lines)
 
 
-_COLORS = {"agent": "#8fa3b8", "turn": "#6aa88c", "tool": "#e69a1a"}
-_CLASS_COLORS = {"subagent": "#7b4fc9", "worker": "#c2185b", "tests": "#2d6fd0", "git": "#17a2b8", "file": "#a58e5a", "other": "#e69a1a"}
-_CLASS_MEANINGS = {"subagent": "Skill or Agent call", "worker": "shell launching a headless coder or reviewer",
-                   "tests": "pytest, make check or lint", "git": "version control, forge and tickets",
-                   "file": "read, edit, write, search files (incl. shell reads)",
-                   "other": "any other call"}
-
-_MEANINGS = {"agent": "an agent's whole span (session, subagent, or seat)", "turn": "one model turn",
-             "tool": "one tool call, coloured by its class"}
+# Colour encodes what the time is spent on, not the tool's name. Chromatic hues are slots of the
+# dataviz skill's validated palette (blue, orange, aqua: the first three validate all-pairs, light
+# mode); presence and the catch-all are neutrals, which carry no identity by design.
+_PRESENCE_AGENT, _PRESENCE_TURN = "#6b7f94", "#55606b"   # cool greys: an agent's life, a model turn
+_DELEGATION, _VERIFICATION, _HOUSEKEEPING, _OTHER = "#eb6834", "#2a78d6", "#1baf7a", "#9a958b"
+_COLORS = {"agent": _PRESENCE_AGENT, "turn": _PRESENCE_TURN, "tool": _OTHER}
+_CLASS_COLORS = {"subagent": _DELEGATION, "worker": _DELEGATION, "tests": _VERIFICATION,
+                 "git": _HOUSEKEEPING, "file": _HOUSEKEEPING, "other": _OTHER}
+# (group caption, ((legend entry, colour, meaning, swatch opacity), ...)): one colour per entry.
+_LEGEND = (
+    ("Presence", (("agent", _PRESENCE_AGENT, "an agent's whole span: session, subagent or seat", 0.45),
+                  ("turn", _PRESENCE_TURN, "one model turn: the agent thinking", 0.9))),
+    ("Delegation", (("delegation", _DELEGATION, "a Skill or Agent call, or a shell launching a headless coder or reviewer", 0.9),)),
+    ("Verification", (("tests", _VERIFICATION, "pytest, make check or lint", 0.9),)),
+    ("Housekeeping", (("files and git", _HOUSEKEEPING, "reading, editing and searching files; version control, forge and tickets", 0.9),)),
+    ("Anything else", (("other", _OTHER, "any other call", 0.9),)),
+)
 
 _CSS = """
 body{font-family:system-ui,sans-serif;margin:0;color:#222;background:#fafafa}
-header{padding:18px 24px 6px;max-width:960px}
+header{padding:18px 24px 6px}
+header>*:not(.legend){max-width:960px}
 h1{font-size:22px;margin:0 0 4px}
 .meta{color:#555;font-size:13px;margin:0 0 10px}
 .how{font-size:14px;line-height:1.5;margin:0 0 10px}
-.legend{font-size:12px;color:#444;margin:0 0 8px}
-.legend i{display:inline-block;width:12px;height:12px;margin:0 4px 0 12px;vertical-align:-2px;border-radius:2px}
+.legend{font-size:12px;color:#444;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px 22px}
+.legend .g{display:flex;flex-direction:column;gap:2px}
+.legend .g b{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#666;font-weight:600}
+.legend .g span{display:block}
+.legend i{display:inline-block;width:12px;height:12px;margin:0 5px 0 0;vertical-align:-2px;border-radius:2px}
 .bar{padding:0 24px 6px;font-size:13px}
 button{font:inherit;padding:2px 10px;margin-right:4px}
 #mm{display:block;width:calc(100% - 48px);margin:0 24px 6px;border:1px solid #bbb;cursor:pointer}
@@ -314,9 +326,11 @@ rect.view{fill:rgba(30,90,200,.18);stroke:#1e5ac8;stroke-width:1.5;pointer-event
 #lab{position:sticky;left:0;height:0;z-index:3;overflow:visible}
 #lab div{position:absolute;left:0;box-sizing:border-box;padding:0 4px;font-size:11px;white-space:nowrap;overflow:hidden;
 text-overflow:ellipsis;border-right:1px solid #bbb;pointer-events:none}
+#lab .lb{pointer-events:auto}
+#lab #grip{padding:0;border:0;width:7px;background:transparent;cursor:col-resize;pointer-events:auto;z-index:5;overflow:visible}
+#lab #grip:hover,#lab #grip.on{background:rgba(30,90,200,.35)}
 #lab .head{top:0;background:#fff;color:#a00;line-height:16px;padding-top:4px}
 #lab .lb{line-height:18px}
-#lab .idle{color:#999}
 rect.bar-ev:hover{stroke:#000;stroke-width:1}
 text{fill:#222;pointer-events:none}
 """
@@ -345,13 +359,20 @@ function labels(){var t=cursorT();ro.textContent=hms(Math.max(0,Math.min(span,t)
 for(var r=0;r<labs.length;r++){var best=null,list=ROWS[r];
 for(var j=0;j<list.length;j++){var e=list[j];if(t>=e[0]&&t<=e[0]+e[1]&&(!best||e[1]<best[1]))best=e;}
 var el=labs[r];if(best){el.textContent=(el.dataset.call?'\\u21b3 ':'')+best[2]+(best[3]?' \\u00b7 '+best[3]:'');
-el.title=el.textContent;el.className='lb';}else{el.textContent=el.dataset.fb;el.title='';el.className='lb idle';}}}
+el.title=el.textContent;}else{el.textContent='';el.title=el.dataset.fb;}}}
 function stick(){var s0=box.scrollLeft+left,s1=box.scrollLeft+box.clientWidth;
 svg.querySelectorAll('text[data-n]').forEach(function(n){var bx=X0+n.dataset.t*pps,v0=Math.max(bx,s0),
 v1=Math.min(bx+n.dataset.d*pps,s1),room=v1-v0-6,name=n.dataset.n,full=n.dataset.m?name+' \\u00b7 '+n.dataset.m:name,txt='';
 if(room>=full.length*5.5)txt=full;else if(room>=name.length*5.5)txt=name;
 else{var c=Math.floor(room/5.5);if(c>=4)txt=name.slice(0,c-1)+'\\u2026';}
 n.textContent=txt;n.style.display=txt?'':'none';n.setAttribute('x',v0+3);});}
+var grip=document.getElementById('grip'),lcols=document.querySelectorAll('#lab > div:not(#grip)');
+function setLeft(w){left=Math.round(Math.max(90,Math.min(w,Math.max(90,box.clientWidth-160))));
+lcols.forEach(function(n){n.style.width=left+'px';});grip.style.left=(left-4)+'px';grip.style.height=H+'px';}
+grip.addEventListener('mousedown',function(e){var x0=e.clientX,w0=left;grip.className='on';e.stopPropagation();e.preventDefault();
+function mv(ev){setLeft(w0+ev.clientX-x0);lay();}
+function up(){grip.className='';window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up);}
+window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up);});
 function lay(){pad=Math.max(0,(box.clientWidth-left)/2);X0=left+pad;var w=X0+span*pps+pad;svg.setAttribute('width',w);
 svg.querySelectorAll('rect.bar-ev').forEach(function(n){n.setAttribute('x',X0+n.dataset.t*pps);
 n.setAttribute('width',Math.max(1,n.dataset.d*pps));});
@@ -390,7 +411,7 @@ drag={x:e.clientX,y:e.clientY,sl:box.scrollLeft,st:box.scrollTop};box.classList.
 window.addEventListener('mousemove',function(e){if(!drag)return;
 box.scrollLeft=drag.sl-(e.clientX-drag.x);box.scrollTop=drag.st-(e.clientY-drag.y);});
 window.addEventListener('mouseup',function(){drag=null;mdrag=false;box.classList.remove('drag');});
-pps=Math.max(MIN,Math.min(40,(box.clientWidth-left-20)/span));lay();buildMini();box.scrollLeft=pad;stick();labels();vp();
+setLeft(left);pps=Math.max(MIN,Math.min(40,(box.clientWidth-left-20)/span));lay();buildMini();box.scrollLeft=pad;stick();labels();vp();
 """
 
 
@@ -482,8 +503,9 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
             label = (who[0] + (f" +{len(who) - 1}" if len(who) > 1 else "")) if who else f"lane {pid}"
         else:
             label = "↳ calls"
-        labels.append(f'<div class="lb idle" data-fb="{q(label)}"{" data-call=1" if tid else ""} '
+        labels.append(f'<div class="lb" data-fb="{q(label)}"{" data-call=1" if tid else ""} '
                       f'style="top:{top + rh * i}px;height:{rh}px;width:{left}px;background:{shade[pid]}">{q(label)}</div>')
+    labels.append('<div id="grip" title="drag to resize the label column"></div>')
     row_events: list[list] = [[] for _ in keys]
     for e in events:
         i = row_of[(e["pid"], e["tid"])]
@@ -507,8 +529,9 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
                                   f"{len(events)} bars over {_fmt_dur(span)}") if x)
     how = ("This page is the timeline of one agent session. Each lane is an agent: the session itself, its "
            "subagents, and the review or worker seats it launched, listed under their parent. Each bar is a call, "
-           "placed by its start time and sized by its duration; the pale wide bars are agent spans, the green bars "
-           "model turns, and the other bars tool calls, coloured by class (legend below). Hover a bar for its "
+           "placed by its start time and sized by its duration; the pale wide bars are agent spans, the dark grey "
+           "bars model turns, and the coloured bars tool calls, hued by what the time goes to: delegation, "
+           "verification or housekeeping (legend below). Hover a bar for its "
            "class, model, tokens, shadow cost, and transcript pointer. The red line marks the middle of the "
            "chart: the label column on the left names, for each row, the agent or call under that line, and "
            "an agent bar's name (with its model when there is room) stays at the left edge while the bar "
@@ -516,12 +539,12 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
            "holding the mouse button and dragging. The strip above the chart is a minimap of the whole "
            "session: the frame marks the part in view; click or drag on the strip to move there. Time "
            "labels are local wall-clock time.")
-    legend = "".join(f'<i style="background:{_COLORS[k]}"></i>{k}: {m}' for k, m in _MEANINGS.items())
-    legend += "<br>tool classes:" + "".join(f'<i style="background:{c}"></i>{k}: {_CLASS_MEANINGS[k]}'
-                                            for k, c in _CLASS_COLORS.items())
+    legend = "".join(f'<div class="g"><b>{q(cap)}</b>' + "".join(
+        f'<span><i style="background:{c};opacity:{o}"></i>{q(name)}: {q(m)}</span>' for name, c, m, o in entries) + "</div>"
+        for cap, entries in _LEGEND)
     return (f'<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>{q(heading)}</title><style>{_CSS}</style>'
             f'</head><body><header><h1>{q(heading)}</h1><p class="meta">{q(meta)}</p><p class="how">{q(how)}</p>'
-            f'<p class="legend">{legend}</p></header>'
+            f'<div class="legend">{legend}</div></header>'
             '<svg id="mm" xmlns="http://www.w3.org/2000/svg" height="44"></svg>'
             '<div class="bar"><button id="zo">zoom out</button><button id="zi">zoom in</button></div>'
             f'<div id="wrap"><div id="cur"></div><div id="w"><div id="lab">{"".join(labels)}</div>'

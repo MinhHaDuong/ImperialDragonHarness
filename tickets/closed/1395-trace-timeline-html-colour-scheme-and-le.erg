@@ -1,0 +1,37 @@
+%erg 0.1
+Title: trace_timeline --html: colour scheme and legend that convey meaning, blank empty labels, resizable label column
+Created: 2026-10-31
+Author: claude
+Closed: autoclosed — PR #2090
+
+--- log ---
+2026-10-31T14:16Z claude created
+2026-10-31T14:26Z reviewer closed — autoclosed — PR #2090
+
+--- body ---
+## Context
+
+Follow-up of 1393 (PR #2083). The author, viewing the d77349fe page on
+2026-10-31: "Nicer and nicer! Blank column 1 label when nothing to show
+(current is greyed). Col 1 width enlargeable. Rethink the color scheme and the
+legend -- convey sense."
+
+## Exit criteria
+
+- [ ] A cursor label row with nothing under the red line shows nothing (no
+      greyed fallback text); the static lane name stays available elsewhere
+      (e.g. on hover or the agent bar label), at the implementer's judgment
+- [ ] The label column width is user-resizable (drag handle on its right
+      edge), with a sensible minimum; bar layout follows
+- [ ] Colour scheme designed for meaning, using the `dataviz` skill: group
+      hues by what time is spent on. Proposed grouping (adjust with reason):
+      agent spans and model turns = neutral "thinking/presence"; subagent +
+      worker = one warm "delegation" family; tests = a distinct "verification"
+      hue; file and git = quiet "housekeeping" tones; other = faintest.
+      No two legend entries share a colour (today "tool" and "other" do)
+- [ ] The legend is grouped and labelled by those meanings, and reads in one
+      glance; colours pass a contrast/colour-blind check per the skill
+- [ ] Self-contained page; JSON export unchanged by this ticket (byte-compare
+      on a fixture); existing tests pass
+- [ ] Rendered for d77349fe-10eb-46dd-a58c-d5723e771c4d, headless Firefox
+      screenshot; the author checks interaction
