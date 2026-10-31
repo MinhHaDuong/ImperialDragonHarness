@@ -9,6 +9,7 @@ import importlib.util
 import json
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import threading
@@ -1036,3 +1037,65 @@ def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
     assert gs.refusal(report) is not None
     ok = gs.stamp('reach: read=yes shell=no tests=not-run\nfinding: prints NOT-RUN: on refusal\nverdict: clear\n', 'worker: l')
     assert gs.refusal(ok) is None
+
+
+@pytest.mark.integration
+def test_refused_seat_raw_output_survives_the_review_tree(rig):
+    """A seat refused for its reach line leaves its bytes in the archive's raw store."""
+    result = launch(rig, mode='fenced-quoted')
+    assert result.returncode == 1 and 'no valid reach line' in result.stdout
+    shutil.rmtree(rig['tree'])  # the review tree, panel included, is gone
+    kept = list((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'raw').glob('*/seat-raw/*-correctness.raw'))
+    assert len(kept) == 1
+    assert 'reach: read=yes' in kept[0].read_text() and kept[0].stat().st_size <= 256 * 1024
+
+
+def test_keep_raw_is_bounded_and_never_raises(tmp_path, monkeypatch):
+    monkeypatch.setenv('IDH_ARCHIVE_ROOT', str(tmp_path / 'archive'))
+    spec = importlib.util.spec_from_file_location('gaze_seat_under_test', SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    big = tmp_path / 'big'
+    big.write_bytes(b'x' * (module.RAW_KEEP_BYTES + 10))
+    module.keep_raw('s', big)
+    module.keep_raw('s', tmp_path / 'missing')  # no file: silent
+    (kept,) = (tmp_path / 'archive' / 'raw').glob('*/seat-raw/*-s.raw')
+    assert kept.stat().st_size == module.RAW_KEEP_BYTES
+
+
+def test_keep_raw_names_the_launch_seat_id_and_warns_on_a_failed_copy(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv('IDH_ARCHIVE_ROOT', str(tmp_path / 'archive'))
+    spec = importlib.util.spec_from_file_location('gaze_seat_under_test', SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    src = tmp_path / 'out'
+    src.write_text('raw bytes')
+    module.keep_raw('s', src, '20261031T000000Z-42')
+    (kept,) = (tmp_path / 'archive' / 'raw').glob('*/seat-raw/*.raw')
+    assert kept.name == '20261031T000000Z-42-s.raw'
+    monkeypatch.setenv('IDH_ARCHIVE_ROOT', str(src))  # a file, not a directory: the copy fails
+    module.keep_raw('s', src, 'x')  # warns, does not raise
+    assert 'raw output of s not kept' in capsys.readouterr().err
+
+
+@pytest.mark.integration
+def test_raw_file_joins_its_launch_line_by_seat_id(rig):
+    result = launch(rig, mode='fenced-quoted')
+    assert result.returncode == 1
+    archive = Path(rig['env']['IDH_ARCHIVE_ROOT'])
+    (row,) = [json.loads(line) for line in next((archive / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
+    (kept,) = (archive / 'raw').glob('*/seat-raw/*.raw')
+    assert kept.name == f"{row['seat_id']}-correctness.raw"
+
+
+@pytest.mark.integration
+def test_seat_completes_with_a_warning_when_no_archive_root_is_configured(rig):
+    """t1402: archive_root() raises RuntimeError; the raw copy must warn, never refuse the seat."""
+    env = {k: v for k, v in rig['env'].items() if k != 'IDH_ARCHIVE_ROOT'}
+    home = rig['tmp'] / 'empty-home'
+    home.mkdir()
+    rig['env'] = {**env, 'HOME': str(home)}
+    result = launch(rig)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (rig['panel'] / 'correctness.md').exists()
+    assert result.stderr.count('raw output of correctness not kept') == 1

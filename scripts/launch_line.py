@@ -101,7 +101,7 @@ def child_from(argv: list[str], log: Path | None = None, spool: Path | None = No
 
 
 def record(*, seat: str, child_runtime: str, child_session: str, ts_start: float, ts_end: float,
-           exit, cwd, env=None, path: Path | None = None, out=None) -> bool:
+           exit, cwd, env=None, path: Path | None = None, out=None, seat_id=None) -> bool:
     """Append one line; True when written. Never raises."""
     try:
         spool = _load('transcript_spool')
@@ -112,6 +112,8 @@ def record(*, seat: str, child_runtime: str, child_session: str, ts_start: float
                 'unit': unit(env), 'exit': exit}
         if out is not None:  # the report path: names the review's panel (ticket 1399)
             line['out'] = str(Path(out).resolve())
+        if seat_id:  # the launcher's id for the spool dir and the seat-raw file (additive)
+            line['seat_id'] = seat_id
         path = path or launches_path()
         spool.mkdir_private(path.parent)
         fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
