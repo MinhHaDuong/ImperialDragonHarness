@@ -16,7 +16,7 @@ worker and `skills/route/references/decorrelation.md` decides when a seat counts
 as independent; the active runtime only discovers which reviewers are reachable. Read `references/live-route.md` before routing or collecting
 evidence; it defines the request, result and unavailable-review contracts.
 
-Possible resources include llama.cpp on Padmé, OpenRouter, other local agents,
+Possible resources include the Padmé LLM service, OpenRouter, other local agents,
 and agents on another host. Use available helpers when useful. These are
 optional routes, with no mandatory provider, transport or preference order.
 Record the reviewer and route actually used, the material reviewed, the returned
