@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Pilot skill case notes: push a per-skill note of four cases at skill load, once per context
+Created: 2026-10-31
+Author: reviewer
+
+--- log ---
+2026-10-31T14:03Z reviewer created
+
+--- body ---
+## Context
+Design note: `conception/2026-10-31-skill-case-notes.md` (author's idea, 2026-10-31,
+KISS-reviewed). Child of 1346: the census there shows Claude Code main sessions
+almost never pull repository memory, so this pilot pushes it. Each project keeps
+`memory/skills/<skill>.md`, four dated cases (latest, usual, best, worst) in the
+case-method shape: context, what happened, reaction, outcome.
+
+## Scope
+Staged per the note § 4; each stage starts only when the previous read-back passes.
+1. Claude Code: one script in `scripts/` via `idh-hook`, `PostToolUse` on `Skill`,
+   marker-file dedup per session and agent, every outcome logged; the harness note
+   `memory/skills/merge.md`.
+2. Read-back on Claude: planted token quoted by the model; once per context; in a
+   subagent; with a typed `/merge`.
+3. Codex probe with a `SessionStart` positive control; wire Codex or fall back to step 0.
+4. Pi wiring and read-back.
+
+Not in scope: outcome measurement (1354 may add an arm), automatic note writing by
+roar or smelt.
+
+## Exit criteria
+- [ ] `memory/skills/merge.md` holds four dated, sourced cases; author has read it
+- [ ] Claude read-back passes: token quoted, delivered once, also in a subagent
+- [ ] Codex probe result recorded on this ticket, with its positive control
+- [ ] Pi read-back passes, or the reason it was stopped is recorded
+- [ ] The scoped gate passes
