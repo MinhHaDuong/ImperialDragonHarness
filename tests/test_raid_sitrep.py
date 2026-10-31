@@ -158,7 +158,7 @@ def test_unreadable_run_does_not_mark(repo, tmp_path, monkeypatch, capsys):
 def test_raid_log_helper_roundtrip(tmp_path, monkeypatch):
     import raid_log
     path = tmp_path / "x" / "raid.log"
-    fields = {"raid": "r1", "n": "5", "step": "gaze"}
+    fields = {"raid": "r1", "n": "5", "ticket": "9", "step": "gaze"}
     raid_log.append("PR", fields, path, now=1700000000)
     events, bad = raid_log.parse(path.read_text())
     assert bad == [] and events == [(1700000000.0, "PR", fields)]

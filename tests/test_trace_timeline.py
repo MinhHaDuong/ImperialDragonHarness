@@ -136,6 +136,24 @@ def test_unknown_session_exits_with_a_message(tmp_path):
         tl.collect(tl.Tree({"claude": [tmp_path]}, tmp_path / "archive"), SID, [])
 
 
+def test_unique_prefix_resolves_live_and_archive_and_ambiguous_lists_candidates(tmp_path):
+    live = build_live(tmp_path / "live")
+    other = "11111111-ffff-bbbb-cccc-000000000009"
+    put(live["claude"][0] / "proj" / f"{other}.jsonl", claude_rows(other, 0, 10))
+    archive = tmp_path / "archive"
+    packed = archive / "claude" / "proj" / "33333333-aaaa-bbbb-cccc-000000000003.jsonl.zst"
+    packed.parent.mkdir(parents=True)
+    packed.write_bytes(b"")
+    tree = tl.Tree(live, archive)
+    assert tl.resolve_session(tree, "11111111-a") == SID
+    assert tl.resolve_session(tree, SID) == SID
+    assert tl.resolve_session(tree, "3333") == "33333333-aaaa-bbbb-cccc-000000000003"  # archive only
+    with pytest.raises(SystemExit) as raised:
+        tl.resolve_session(tree, "1111")
+    assert SID in str(raised.value) and other in str(raised.value)
+    assert tl.resolve_session(tree, "zzzz") == "zzzz"  # unknown: collect reports it
+
+
 @pytest.mark.integration
 @pytest.mark.skipif(shutil.which("zstd") is None, reason="zstd CLI missing")
 def test_session_pruned_from_the_live_tree_renders_from_the_archive(tmp_path):

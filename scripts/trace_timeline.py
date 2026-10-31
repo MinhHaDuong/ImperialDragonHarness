@@ -72,6 +72,14 @@ class Tree:
             return hit.relative_to(base).as_posix().removesuffix(".zst"), hit
         return None
 
+    def session_ids(self, prefix: str) -> list[str]:
+        """Claude session ids starting with `prefix`, live tree and archive together, sorted."""
+        found: set[str] = set()
+        for root in self.live.get("claude", []):
+            found.update(hit.stem for hit in root.glob(f"*/{prefix}*.jsonl"))
+        found.update(hit.name.removesuffix(".jsonl.zst") for hit in (self.archive / "claude").glob(f"*/{prefix}*.jsonl.zst"))
+        return sorted(found)
+
     def resolve(self, runtime: str, ref: str) -> tuple[str, Path] | None:
         """A launch line's child_session: a session id, or the absolute path of a spooled file."""
         if ref.startswith("/"):
@@ -152,6 +160,16 @@ def _claude_agents(tree: Tree, rel: str, path: Path, sid: str, parent: str | Non
                             te.read_claude(te.open_lines(sub_path), sub_rel, agent=sub_id,
                                            parent_agent=meta.get("parentAgentId") or sid, name=sub_label)))
     return agents
+
+
+def resolve_session(tree: Tree, prefix: str) -> str:
+    """The full session id for an id or a unique prefix of one; an ambiguous prefix lists its candidates."""
+    ids = tree.session_ids(prefix)
+    if prefix in ids:
+        return prefix
+    if len(ids) > 1:
+        raise SystemExit(f"trace_timeline: prefix {prefix} is ambiguous, candidates:\n  " + "\n  ".join(ids))
+    return ids[0] if ids else prefix  # none: collect reports the unknown session
 
 
 def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
@@ -556,7 +574,7 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("session", help="Claude Code session id")
+    parser.add_argument("session", help="Claude Code session id, or a unique prefix of one")
     parser.add_argument("--out", help="output file (default: <session>.trace.json in the current directory)")
     parser.add_argument("--html", help="also write a self-contained HTML timeline (inline SVG, opens in Firefox)")
     parser.add_argument("--archive-root", help="agent-sessions root holding raw/<host>/ (default: IDH_ARCHIVE_ROOT, else the transcript_spool default)")
@@ -570,6 +588,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.live_root:
         tree.live["claude"] = [Path(args.live_root)]
     launches_file = Path(args.launches) if args.launches else _load("launch_line").launches_path()
+    args.session = resolve_session(tree, args.session)
     agents = collect(tree, args.session, read_launches(launches_file))
     out = Path(args.out or f"{args.session}.trace.json")
     doc = render(agents)
