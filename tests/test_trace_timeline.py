@@ -206,3 +206,31 @@ def test_cli_html_leaves_json_byte_identical(tmp_path):
         outs[name] = out.read_bytes()
     assert outs["plain"] == outs["html"]
     assert (tmp_path / "t.html").read_text().startswith("<!DOCTYPE html>")
+
+
+def test_json_gains_only_a_class_field_on_tool_events(tmp_path):
+    tree = tl.Tree(build_live(tmp_path), tmp_path / "archive")
+    doc = render(tree, [])
+    base = {"pointer", "runtime", "agent", "model", "tokens", "shadow_usd", "cost_source", "exit"}
+    for e in doc["traceEvents"]:
+        if e.get("ph") != "X":
+            continue
+        extra = set(e["args"]) - base
+        if e["cat"] == "tool":
+            assert e["args"]["class"] == "other" and extra <= {"class", "detail"}
+        else:
+            assert "class" not in e["args"]
+
+
+def test_html_colours_tools_by_class_with_legend_tooltip_and_model_labels(tmp_path):
+    tree = tl.Tree(build_live(tmp_path), tmp_path / "archive")
+    doc = render(tree, [])
+    tool = next(e for e in doc["traceEvents"] if e.get("cat") == "tool")
+    tool["args"]["class"] = "tests"
+    page = tl.render_html(doc, SID)
+    assert tl._CLASS_COLORS["tests"] in page and "class: tests" in page
+    for cls in tl._CLASS_COLORS:
+        assert f"{cls}: " in page
+    assert 'id="lab"' in page and 'id="cur"' in page and "position:sticky" in page
+    assert 'data-m="claude-sonnet-5-5"' in page or 'data-m=""' in page
+    assert "style=" not in page.split("<svg id=\"tl\"")[1].split("</svg>")[0]

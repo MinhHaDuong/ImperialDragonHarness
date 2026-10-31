@@ -1,0 +1,56 @@
+%erg 0.1
+Title: trace_timeline --html: tool-call classes, sticky label column with red cursor, sticky bar labels
+Created: 2026-10-31
+Author: claude
+Closed: autoclosed — PR #2083
+
+--- log ---
+2026-10-31T13:50Z claude created
+2026-10-31T13:55Z reviewer scope: author added model name on agent bar labels
+2026-10-31T14:05Z reviewer scope: orchestrator added git class and shell-read→file after measuring 79% other
+2026-10-31T14:12Z reviewer closed — autoclosed — PR #2083
+
+--- body ---
+## Context
+
+Follow-up of 1392 (PR #2081). The author viewed the polished d77349fe page
+("Much better!") and asked, 2026-10-31: distinguish tool calls by class, a
+sticky first column with dynamic labels keyed to a red line, and bar labels
+that stay on screen when scrolling a long agent bar.
+
+In d77349fe, 884 of ~1100 tool calls are Bash, and a Bash event carries only
+its description (`args.detail`), not the command. The command is available
+where `scripts/trace_events.py` reads the tool_use block input (around line
+240), so the class is computed there and travels as one additive field.
+
+## Exit criteria
+
+- [ ] Each tool event carries a class, computed in `trace_events.py` from the
+      tool name and (for shell calls) the command text:
+      `subagent` (Skill, Agent), `worker` (shell launching a headless
+      coder/reviewer: `codex exec`, `claude -p`, seat/gaze/gate launchers),
+      `tests` (pytest, make check/lint/check-fast), `file` (Read/Edit/Write/
+      Grep/Glob and Codex read/grep/apply_patch equivalents), `other`.
+      Codex `exec` shell calls are classified like Bash by their command.
+- [ ] The JSON export gains that field in `args` (additive only; every other
+      byte of each event unchanged — test on a fixture); Perfetto still loads it
+- [ ] The HTML colours tool bars by class, the legend lists each class, and the
+      tooltip names it
+- [ ] Unit tests for the classifier on representative commands, including a
+      negative (a command that mentions pytest in a string but runs grep → not tests,
+      or document the chosen precedence)
+- [ ] Sticky label column: lane labels stay visible while scrolling horizontally
+- [ ] A red vertical cursor at the middle of the viewport; each lane's label in
+      the sticky column shows the agent (or call) under that cursor, updating on
+      scroll, zoom and minimap moves
+- [ ] A bar label for a long agent span sticks to the left edge of the visible
+      area while the bar extends off-screen left
+- [ ] Self-contained page still (no external URL); existing tests pass
+- [ ] Rendered for d77349fe-10eb-46dd-a58c-d5723e771c4d, headless Firefox
+      screenshot; the author checks interaction
+- [ ] An agent bar's label appends the agent's model (e.g. "gaze seat correctness · gpt-6-luna") when
+      the bar's on-screen width leaves room for it; it drops the model first, then truncates, as the bar
+      narrows. Recomputed on zoom. The sticky label applies to the extended label too.
+- [ ] Orchestrator addition: class `git` (git, gh, erg) and shell reads (cat, grep, sed, ls, find...) classed
+      `file`; leading VAR=x, export, env, timeout, nice, time, `cd X &&` looked through; page opens with the
+      session start at the left edge of the chart area.
