@@ -1,0 +1,26 @@
+%erg 0.1
+Title: After-merge red on main 3f634b99cabd: pytest-guard
+Created: 2026-10-31
+Author: merge-gate
+
+--- log ---
+2026-10-31T14:28Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: 3f634b99cabd0981b39c9717df06c9634857a034
+Failing checks: pytest-guard
+Last green after-merge tip: eddb1c47b5326680f37a698dd782eb92e1784aaf
+Merges since (first parent, newest first):
+- 3f634b99cabd Merge pull request #2091 from MinhHaDuong/t1386-4025936-13788
+
+Failed tests (check, test id):
+- pytest-guard tests/test_gaze_close.py::test_self_seat_without_a_session_model_is_loud_not_invented
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
