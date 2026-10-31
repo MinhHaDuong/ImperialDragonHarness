@@ -111,7 +111,7 @@ pin a CLI cannot enforce is recorded in the report as that limitation.
 `$IDH_ROOT/scripts/coaching/seat-runner.sh` is an optional heavier transport.
 A worker report whose body, after the `worker:` line, cites no `path:line` and
 holds under 200 characters reviewed nothing: its seat line is `status: failed`,
-so it satisfies neither coverage nor `--require-cross-family` (ticket 1361).
+so it covers nothing (ticket 1361).
 An external reviewer routed by `skills/reviewers/SKILL.md` is a plan item
 like any other; its route's `SEAT-FAILED:`, `SEAT-MISSING:` and
 `PANEL-INTEGRITY:` records go verbatim into the plan check's deviations: an

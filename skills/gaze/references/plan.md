@@ -43,19 +43,14 @@ same-family seat on the headless door (`"$IDH_ROOT/scripts/gaze_seat.py"`, which
 nesting) before it may fall back to `seats: self-only`; self-only stays only
 for "no door launched", that is, every door tried and none started.
 
-`plan-write` enforces both rules. It refuses a plan whose every item is self
-unless `--no-door "<doors tried>"` names them, and, when the host consents to
-a provider other than `--home-family`, a plan with no seat of another family
-billed by such a provider (its family, or its model's `<provider>/` prefix) unless `--no-cross-family "<reason>"` gives one. It reads consent from the
-host's file, not from `--spend`. Either flag becomes a header line that the
-plan check reports as a deviation. A cross-family seat that then files no
-report (timed out, refused, `NOT-RUN:`) fails the plan check like any missing
-item: the review is not accepted, and the run never falls back to
-`--no-cross-family` after the fact. On a high-risk change no opt-out reason
-holds: verify-gate refuses a review with no seat of another family that ran
-(ticket 1326). `gaze_close.py` refuses a `seats: panel`
-result that no non-self report backs. The first two worked cases below hold
-on a host with no consent; with consent each adds a consented-family seat.
+`plan-write` refuses a plan whose every item is self unless
+`--no-door "<doors tried>"` names them; the flag becomes a header line that
+the plan check reports as a deviation. A planned seat that files no report
+(timed out, refused, `NOT-RUN:`) fails the plan check like any missing item.
+`gaze_close.py` refuses a `seats: panel` result that no non-self report backs.
+A seat of another family is a routing preference, not a requirement
+(`skills/route/references/decorrelation.md`): plan one when the host consents
+to its spend and the risk, deadline and budget make it worth it.
 
 Choose each seat's model through the `route` skill (`skills/route/SKILL.md`),
 weaker or stronger as the what needs.
@@ -79,10 +74,8 @@ seats.
 #### The plan file
 
 Write it with `python3 "$IDH_ROOT/scripts/seat_clock.py" plan-write <panel>
---intent T --method T --budget <n>m --spend T --home-family F --item NAME MODEL
-FAMILY REASON` (`--item` repeats, once per plan item; `--home-family` is the
-family of the session running gaze, as for `gaze_seat.py launch`) before
-launching anything. The helper
+--intent T --method T --budget <n>m --spend T --item NAME MODEL FAMILY
+REASON` (`--item` repeats, once per plan item) before launching anything. The helper
 builds `<panel>/manifest.txt` and runs `panel-manifest-check.py` on it; a plan
 the checker cannot parse exits 2 and writes nothing. Never write the file by
 hand: free text there makes every sentence a seat with no report. Header lines

@@ -99,9 +99,7 @@ worker or check, with its model and family), budget. Work gaze does itself is
 an item like any other, worker `self`, and writes its own report to
 `<panel>/<item>.md`, opening with the same `worker:` line every report
 carries. Read `references/plan.md` before planning: it holds the guidance and
-worked cases. `plan-write` takes `--home-family` (gaze's own family) and
-refuses a plan whose every item is self, and, when the host consents to
-another family, a plan with no seat of that family.
+worked cases. `plan-write` refuses a plan whose every item is self.
 
 <!-- inline: references/plan.md -->
 

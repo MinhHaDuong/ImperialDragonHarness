@@ -26,7 +26,7 @@ family=<family>` (leading blank lines and Markdown bold tolerated), or holds
 that line alone did not report either, which fails it too; one that names no
 family or another family than planned, or an item over the budget, is a
 deviation. An item planned with family `none` (a script) needs only a
-non-empty report. A `# no-cross-family:` or `# no-door:` header is a deviation
+non-empty report. A `# no-door:` header is a deviation
 too, so the posted line shows it. Exit 1 on FAIL only.
 
 `seats <panel>` prints `seats: panel` when an item other than self (name or
@@ -48,16 +48,12 @@ is provider-qualified by the door's billed provider (`gaze_seat.billed_provider`
 Session values default from `IDH_SESSION_RUNTIME` and `IDH_SESSION_MODEL`.
 
 `plan-write <panel> --intent T --method T --budget <n>m [--spend T]
---home-family F [--no-door T] [--no-cross-family T] --item NAME MODEL FAMILY
+[--no-door T] --item NAME MODEL FAMILY
 REASON ...` writes `<panel>/manifest.txt` (ticket 1267): the header and TAB
 lines are built here and checked by `panel-manifest-check.py` before anything
 is written, so a manifest the plan check cannot parse is never produced. It
 also refuses (ticket 1287) a plan whose every item is self, unless `--no-door`
-names the doors tried, and, when the host's consent file (`gaze_seat.py`)
-names a provider other than `--home-family`, a plan with no item of another
-family billed by such a provider (its family, or the `<provider>/` prefix of
-its model, case-insensitive), unless `--no-cross-family` gives the reason; either
-flag becomes a header line. Exit 2 and no file on a refused plan.
+names the doors tried; that flag becomes a header line. Exit 2 and no file on a refused plan.
 """
 
 import argparse
@@ -213,8 +209,6 @@ def _assess(panel: Path) -> tuple[bool, list[str], list[str], list[str]]:
     budget = next((int(m.group(1)) * 60 for line in manifest
                    if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
     missing, deviations, reported, accepted = [], [], [], []
-    deviations += [f'no cross-family seat: {line.split(":", 1)[1].strip()}' for line in manifest
-                   if line.startswith('# no-cross-family:')]
     deviations += [f'no door launched: {line.split(":", 1)[1].strip()}' for line in manifest
                    if line.startswith('# no-door:')]
     by_name = {line.split(': ', 1)[0]: line for line in lines}
@@ -355,49 +349,22 @@ def format_seat(ident: dict[str, str]) -> str:
             f"route={ident['route']} · model={ident['model']} · status: {ident['status']}")
 
 
-def cross_family_problems(items: list[list[str]], home_family: str, no_door: str | None,
-                          no_cross_family: str | None) -> list[str]:
-    """Ticket 1287: refuse the plans a run that skipped references/plan.md writes.
-
-    Every item self, unless `--no-door` names the doors tried. Under host consent
-    (read here from the consent file, never from `--spend`), no item of a consented
-    family other than the home family, unless `--no-cross-family` gives the reason."""
-    problems = []
+def self_only_problems(items: list[list[str]], no_door: str | None) -> list[str]:
+    """Ticket 1287: refuse a plan whose every item is self, unless `--no-door` names the doors tried."""
     if items and all(is_self(item) for item in items) and not (no_door or '').strip():
-        problems.append('every item is self, so the run would be seats: self-only; plan a seat on the '
-                        'headless door (gaze_seat.py launch), or pass --no-door "<doors tried>"')
-    spec = importlib.util.spec_from_file_location('gaze_seat', Path(__file__).with_name('gaze_seat.py'))
-    gaze_seat = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(gaze_seat)
-    path = gaze_seat.config_path()
-    home = home_family.strip().lower()
-    other = [f for f in gaze_seat.consented(path) if f.lower() != home]
-    allowed = {f.lower() for f in other}
-
-    def cross(item: list[str]) -> bool:
-        # Decorrelation by the family label; consent by the family or the `<provider>/` that bills it.
-        family, model = item[2].strip().lower(), item[1].strip()
-        provider = model.split('/', 1)[0].lower() if '/' in model else ''
-        return family not in (home, 'none') and (family in allowed or provider in allowed)  # a script never counts
-
-    if other and not any(cross(item) for item in items if not is_self(item)) \
-            and not (no_cross_family or '').strip():
-        problems.append(f'this host consents to cross-family spend on {", ".join(other)} ({path}) and no '
-                        f'seat of another family is billed by it; plan a headless seat of {other[0]} via gaze_seat.py, '
-                        'or pass --no-cross-family "<reason>"')
-    return problems
+        return ['every item is self, so the run would be seats: self-only; plan a seat on the '
+                'headless door (gaze_seat.py launch), or pass --no-door "<doors tried>"']
+    return []
 
 
 def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | None,
-               items: list[list[str]], home_family: str = '', no_door: str | None = None,
-               no_cross_family: str | None = None) -> list[str]:
+               items: list[list[str]], no_door: str | None = None) -> list[str]:
     """Write the manifest; return the problems (nothing is written when any)."""
     spec = importlib.util.spec_from_file_location(
         'panel_manifest_check', Path(__file__).with_name('panel-manifest-check.py'))
     checker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(checker)
-    flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '', home_family,
-                                                        no_door or '', no_cross_family or '']
+    flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '', no_door or '']
     early = []
     if any(re.search('[\udc80-\udcff]', cell) for cell in flat + [str(panel)]):
         return ['an argument is not valid UTF-8']
@@ -410,7 +377,7 @@ def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | 
         return early
     if any(c in cell for cell in flat for c in '\t\n\r'):
         return ['a tab or newline inside a field']
-    refused = cross_family_problems(items, home_family, no_door, no_cross_family)
+    refused = self_only_problems(items, no_door)
     if refused:
         return refused
     header = [f'# intent: {intent}', f'# method: {method}', f'# budget: {budget}']
@@ -418,8 +385,6 @@ def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | 
         header.append(f'# spend: {spend}')
     if no_door:
         header.append(f'# no-door: {no_door}')
-    if no_cross_family:
-        header.append(f'# no-cross-family: {no_cross_family}')
     text = '\n'.join(header + ['\t'.join(item) for item in items]) + '\n'
     problems = checker.check(text)
     if not problems:
@@ -451,15 +416,13 @@ def main(argv: list[str]) -> int:
     write_p.add_argument('--method', required=True)
     write_p.add_argument('--budget', required=True, help='<n>m')
     write_p.add_argument('--spend')
-    write_p.add_argument('--home-family', required=True, help='family of the session running gaze')
     write_p.add_argument('--no-door', help='doors tried, when every item is self')
-    write_p.add_argument('--no-cross-family', help='why no consented cross-family seat is planned')
     write_p.add_argument('--item', nargs=4, action='append', default=[],
                          metavar=('NAME', 'MODEL', 'FAMILY', 'REASON'))
     args = parser.parse_args(argv)
     if args.mode == 'plan-write':
         problems = plan_write(args.panel, args.intent, args.method, args.budget, args.spend, args.item,
-                              args.home_family, args.no_door, args.no_cross_family)
+                              args.no_door)
         for problem in problems:
             print(f'seat_clock: plan refused: {problem}', file=sys.stderr)
         if not problems:

@@ -24,18 +24,6 @@ and the structured result must return to the orchestrator. Inside it, gaze
 launches its own seats through the same headless door, so neither level
 needs the runtime to nest agents.
 
-## No cross-family seat
-
-A gaze run from a subagent reaches a cross-family seat: its headless door
-does not nest (ticket 1326 launched the codex seat from depth 1 and depth 2,
-2026-10-28). What lost the seat in raid f7fa41 was the plan's
-`--no-cross-family` opt-out, written by the gaze run itself. On a high-risk
-change (`skills/route/references/decorrelation.md`), an answer with no seat
-of another family that ran is refused by verify-gate (`review_notes.py gate
---require-cross-family`, `skills/verify-gate/SKILL.md` § Notes review): park
-the PR and have the interface session launch the seat
-(`"$IDH_ROOT/scripts/gaze_seat.py" launch`) through a fresh gaze run on it.
-
 ## No result
 
 No `result:` block is no result. Wait for the background reviewer
