@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-30T20:22Z claude created
+2026-10-31T08:45Z claude note widened as child of tracker 1382 (memo conception/2026-10-31-monitoring-redesign.md § 4.1): capture warns instead of refusing
 
 --- body ---
 ## Context
@@ -33,3 +34,9 @@ every landing.
 - [ ] Roar's `--capture-unit` works on such a PR without a hand-typed writer line
 - [ ] Test: a review on notes with gaze answers and no writer entry lands and
       captures with no `invalid` warning
+- [ ] Widened (tracker 1382, memo `conception/2026-10-31-monitoring-redesign.md`
+      § 4.1): when a fact is missing or malformed (duplicate finding at one
+      anchor, a second writer line for a fix step, a ticket-only PR with no
+      review), `--capture-unit` and the landing render what they can and print
+      one `not derivable: <fact>` warning instead of refusing; test per case
+- [ ] No path in landing or roar exits non-zero because of attribution alone
