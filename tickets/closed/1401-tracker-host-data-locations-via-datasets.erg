@@ -2,10 +2,13 @@
 Title: Tracker: host data locations via DATASETS_DIR and MIRRORS_DIR across projects
 Created: 2026-10-31
 Author: claude
+Closed: done 2026-10-31: four children merged and verified, final sweep clean with positive control
 
 --- log ---
 2026-10-31T19:22Z claude created
 2026-10-31T19:30Z reviewer claude note verify-reroll — round 1: agnostic-guard fails on tickets/1401-tracker-host-data-locations-via-datasets.erg:16 (a literal home-directory path); replaced by ~/data/datasets
+2026-10-31T21:17Z reviewer claude note final sweep 2026-10-31 (padme 23 repos, doudou 90 repos; planted positive control fired on both): no hardcoded datasets/ or mirrors/ root in EXEC or CONFIG files, systemd user units, rc files or crontabs; remaining hits are harness test fixtures under tmp_path and /remote (tests/test_transcript_archive.py:154,188,202) and a frozen rsync log on doudou (activity_report_writer attic/CNRS.rsync.diff). Children done and verified on both hosts: harness 1402, archiveCIRED 0043, climate-finance-het 2723, cadens 0050; cadens per-host .env lines deleted (files empty, removed); padme /data/README.md installed, empty external/RePEc removed; cadens 0052 (.merge-gate.json) filed as a follow-up
+2026-10-31T21:17Z reviewer closed — done 2026-10-31: four children merged and verified, final sweep clean with positive control
 
 --- body ---
 ## Context
