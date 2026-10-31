@@ -2,9 +2,12 @@
 Title: Monitoring friction: session-id prefix, raid_log key checks, merge-gate model-id message
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2101
 
 --- log ---
 2026-10-31T14:48Z claude created
+2026-10-31T15:01Z reviewer judgment criterion left: the bookkeeping 'no review' line needs the merge tier threaded through four sites in attribution_record.py and raid_land.py; below the ticket floor
+2026-10-31T15:01Z reviewer closed — autoclosed — PR #2101
 
 --- body ---
 ## Context
