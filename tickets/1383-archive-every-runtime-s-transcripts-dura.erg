@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: five holes, not three; per-route coverage exit
+2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
 
 --- body ---
 ## Context
@@ -50,3 +51,18 @@ committed to git.
       shipped in this ticket
 - [ ] doudou: the push path documented and run once when reachable, or the
       ticket says it was unreachable and leaves a `needs-human` follow-up note
+
+## Raid 8ad75a plan annotation (2026-10-31, lead)
+
+Phases 2-3 compressed (see 1380). Feasibility: WARN (resolved below). Plan text: /tmp/raid-8ad75a/plan-1383.md (host padme). Wave 1, parallel with 1380.
+
+Path: `scripts/transcript_spool.py` (ARCHIVE_ROOT honouring `IDH_ARCHIVE_ROOT`, `host()`, `archive_dir`, `spool_dir`, `seat_id`, LIVE_ROOTS), `scripts/transcript_archive.py` (zstd CLI, tmp+replace, dest mtime stamped to source), units in `scripts/systemd/` (use `%h`), flag changes at the five doors, INSTALL.md runbook.
+Lead rulings:
+- 1383 owns every session-persistence flag (routes.json pi `--session-dir <spool>`, aider history files, vibe output, pi-subagent-link patched copy, manuscript_review drop of `--no-session-persistence`). 1384 forks after this merges and imports `transcript_spool`.
+- Change detection by source mtime stamped on the archived copy (appends change mtime); meets "grown source re-copied".
+- vibe via `--output-dir <spool>` (memo said persistent VIBE_HOME; note deviation in PR). SIGKILL on timeout loses vibe's copy: either spool VIBE_HOME instead or state the loss in the PR.
+- Live roots honour `CLAUDE_CONFIG_DIR`, `CODEX_HOME`, `PI_CODING_AGENT_DIR` when set.
+- Tests must never write the real `~/archive`: add an autouse conftest fixture setting `IDH_ARCHIVE_ROOT` to tmp.
+- Update gaze tests that pin argv: `test_gaze_seat.py:717` (vibe argv[2]), `:507` (pi build_command without values).
+- doudou unreachable at 09:59 today (ssh: no route to host); unless reachable at execution, ship the runbook and leave the needs-human follow-up note. Installing anything on doudou is the author's call.
+- Headless-cleanup experiment only under scratch `CLAUDE_CONFIG_DIR`, positive control first; never touch real `~/.claude`.

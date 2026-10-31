@@ -7,6 +7,7 @@ Author: claude
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: every launcher, child id pinned or captured, Pi parent id
 2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
+2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
 
 --- body ---
 ## Context
@@ -41,3 +42,15 @@ warns on stderr and never changes the seat's outcome or exit code.
 - [ ] One real gaze run on padme with a seat of each reachable runtime, and one
       manuscript-review run: every child appears with parent and child ids, each
       child id naming a transcript file (lines quoted in the PR)
+
+## Raid 8ad75a plan annotation (2026-10-31, lead)
+
+Phases 2-3 compressed (see 1380). Feasibility: WARN (plan predates lead rulings; rulings below supersede it). Plan text: /tmp/raid-8ad75a/plan-1384.md (host padme). Wave 1b: forks after 1383 merges.
+
+Path: `scripts/launch_line.py` (`record`, `parent`, `child_from`, `pin`), hook in `seat_clock.run_seat` (finally, every return path), `manuscript_review.execute_stage` per stage, Pi parent id exported from `adapters/pi/extensions/idh-wake.ts` as `IDH_PI_SESSION_ID` and read via `runtime_session.ID_KEYS`.
+Lead rulings:
+- Import `transcript_spool` (from 1383): use its `ARCHIVE_ROOT` and `host()` for the launches path, never a bare `gethostname()`.
+- `pin` only adds `--session-id <uuid>` (claude; pi too if accepted alongside `--session-dir`); it never edits persistence flags (1383 owns them). aider/vibe child id = the spool path gaze_seat already computed for `build_command` values. Codex: `session id:` from the seat log, else `not captured`.
+- No `(not persisted)` fallback in manuscript_review: 1383 has already removed the flag.
+- Tests never write the real archive (conftest fixture from 1383, `IDH_ARCHIVE_ROOT`); `test_gaze_seat.py:501` normalises the random session id.
+- `unit` = `$IDH_UNIT`, else cwd git branch, else `-`.

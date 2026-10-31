@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-30T20:22Z claude created
 2026-10-31T08:45Z claude note widened as child of tracker 1382 (memo conception/2026-10-31-monitoring-redesign.md § 4.1): capture warns instead of refusing
+2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
 
 --- body ---
 ## Context
@@ -40,3 +41,14 @@ every landing.
       review), `--capture-unit` and the landing render what they can and print
       one `not derivable: <fact>` warning instead of refusing; test per case
 - [ ] No path in landing or roar exits non-zero because of attribution alone
+
+## Raid 8ad75a plan annotation (2026-10-31, lead)
+
+Phases 2-3 compressed (one Imagine+Plan seat, sonnet; Blind-Spot+feasibility seat, opus): memo reviewed by four gaze rounds incl. cross-family. Feasibility: WARN (resolved below). Plan text: /tmp/raid-8ad75a/plan-1380.md (host padme).
+
+Path: `salvage(text)` wrapper around the unchanged strict `parse_record`; `ensure_writer` records `writer: step=execute · ... · route=landing` when the review has none (never overwrites a raid/hunt writer); landing and capture print one `attribution: not derivable: <fact>` line per lost fact.
+Lead rulings:
+- Exit 5 keeps full scope: merge step 0 (`claims.md:45`, `--from-notes`), `raid_land`, `--render-pr`, `--capture-unit`, and roar runbook paths `--capture-pr` / `--seats-pr` never exit non-zero on attribution alone. A pure precondition (unit not merged) and an infrastructure failure (`memory-capture.sh`) may still exit 1.
+- Session model/runtime default from `IDH_SESSION_MODEL` / `IDH_SESSION_RUNTIME` (existing convention, `gaze_close.py:346`, `seat_clock.py:423`), flag overrides.
+- Fix-step case: build the fixture from the real failure text (journal entry of PR 2060), not a synthetic second execute writer that `notes_record` would collapse.
+- Update `tests/test_raid_land.py:382` (`attribution: invalid` -> `not derivable`) and `tests/test_attribution_capture_pr.py:101`.
