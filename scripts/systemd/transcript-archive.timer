@@ -1,0 +1,12 @@
+[Unit]
+Description=Nightly transcript archive
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# A machine that was off at 03:30 runs it once on next start.
+Persistent=true
+RandomizedDelaySec=600
+Unit=transcript-archive.service
+
+[Install]
+WantedBy=timers.target

@@ -2,11 +2,15 @@
 Title: Archive every runtime's transcripts durably, headless seats included
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2072
 
 --- log ---
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: five holes, not three; per-route coverage exit
 2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
+2026-10-31T09:29Z reviewer executed by hunt on padme: archive script, spool convention, five doors, timer installed and first run (23912 files 8622092939 bytes, archived equal), per-route coverage run, headless-cleanup experiment recorded in memo 2.3 (restricted seat keeps transcripts). doudou not reached by this session (ssh: no route to host at 2026-10-31 10:29): author's step, runbook in INSTALL.md 'doudou' section
+2026-10-31T09:38Z reviewer per-route coverage (padme, 2026-10-31, one tiny seat each via gaze_seat.py launch, archived with --now +2d): claude haiku -> ~/archive/transcripts/padme/claude/-home-...-tmp-cov-tree/*.jsonl.zst (1 file); codex gpt-6-luna -> codex/2026/10/31/rollout-...T10-24-*.zst (2); pi padme/qwen3.8-flash-next-iq3_s -> pi/<ts>_<uuid>.jsonl.zst (1); aider padme/qwen3.8-flash-next-iq3_s -> aider/20261031T092430Z-*/{chat,llm}.md.zst (2); vibe mistral-large-latest -> vibe/20261031T092430Z-*/ (17 files incl. journal); manuscript_review reader (haiku) -> claude/-...-review-r1/*.jsonl.zst (2). Seats reported NOT-RUN/read=no for claude, aider, vibe (tiny brief), which does not affect the session file. No route unreachable. Pi subagent child: patch verified on the real 1.4.0 release (one-line diff), not yet live-run
+2026-10-31T09:42Z reviewer closed — autoclosed — PR #2072
 
 --- body ---
 ## Context
@@ -66,3 +70,10 @@ Lead rulings:
 - Update gaze tests that pin argv: `test_gaze_seat.py:717` (vibe argv[2]), `:507` (pi build_command without values).
 - doudou unreachable at 09:59 today (ssh: no route to host); unless reachable at execution, ship the runbook and leave the needs-human follow-up note. Installing anything on doudou is the author's call.
 - Headless-cleanup experiment only under scratch `CLAUDE_CONFIG_DIR`, positive control first; never touch real `~/.claude`.
+
+## Follow-up (needs-human, author's call)
+
+doudou was unreachable at execution (ssh: no route to host). Installing on
+doudou and the first push are the author's steps; commands are in INSTALL.md
+section "Transcript archive", subsection doudou. When run once, log its
+`eligible:`/`archived:` lines here and close this follow-up.

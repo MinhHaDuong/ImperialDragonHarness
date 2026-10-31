@@ -7,7 +7,7 @@ Launch forms are in `routes.json` under `launch_doors.pi`.
 
 Run `pi --list-models` first: Pi only reaches the providers configured on the host. On padme it lists huggingface and the local padme seats; Albert (`albert/openweight-code`, `albert/openweight-large`) is reachable only through `pi-albert` (`scripts/pi-albert`), which loads its key into the Pi process; OpenRouter (`openrouter-deepseek`, `openrouter-minimax`) only through `pi-openrouter` (`scripts/pi-openrouter`), which requires a declared `--provider` and `--model` and bills `OPENROUTER_API_KEY_PI`; Anthropic is reachable only through `pi-haiku` (`scripts/pi-haiku`), which fixes Haiku 5.5 and refuses any other model.
 
-- Pi names a model by provider and id: `pi --no-session -p --model <provider>/<id> "<prompt>"`.
+- Pi names a model by provider and id: `pi --session-dir <spool> -p --model <provider>/<id> "<prompt>"` (the door fills the archive spool, ticket 1383).
 - A gaze seat on the Pi door also names its thinking level, `<provider>/<id>:<level>`, a level the model supports (grid pins carry none: add it when planning the seat): `gaze_seat.py` refuses a bare id, so the host `defaultThinkingLevel` never sets it.
 - A Pi subagent (the `subagent` extension, relinked by `scripts/pi-subagent-link`) takes its model from the `model:` line of its agent file in `~/.pi/agent/agents/`. Pi agent files therefore carry a model; this is the one sanctioned pin, and the orchestrator picks which agent file to launch. Verified on padme for a Haiku-pinned agent (`haiku-scout`).
 

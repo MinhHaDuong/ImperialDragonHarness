@@ -86,3 +86,45 @@ evidence for two skills (`perch`, `yawn`) and one guard across Claude
 Code, Codex and Pi. Mistral Vibe has a version and skill-path probe but no
 behavioral port yet. See `adapters/pilot-support.json` and
 `conception/adapter-operations.md` for the current evidence.
+
+## Transcript archive (ticket 1383)
+
+Runtimes delete transcripts by age (Claude Code: `cleanupPeriodDays`, 180 on
+padme) and keep them on the host that ran them. `scripts/transcript_archive.py`
+compresses each file untouched for a day into
+`~/archive/transcripts/<host>/<runtime>/` (zstd, original relative path, source
+mtime stamped on the copy, so a grown file is copied again). Headless seats that
+keep no session of their own (Pi seats and Pi subagents, aider, vibe) write to
+`~/archive/spool/<host>/<runtime>/`, which the archive reads too. Path
+convention: `scripts/transcript_spool.py`. No encryption: the archive stays on
+the host disk with the permissions of the live tree; encrypt before it leaves
+the host (memo `conception/2026-10-31-monitoring-redesign.md` section 5).
+
+Install per host (needs `zstd`; the checkout must be at `~/.agents`):
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp ~/.agents/scripts/systemd/transcript-archive.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now transcript-archive.timer
+systemctl --user start transcript-archive.service   # first run, backlog included
+python3 ~/.agents/scripts/transcript_archive.py --verify   # eligible: and archived: lines must match
+```
+
+The Pi subagent extension is patched, not symlinked: `scripts/pi-subagent-link`
+(run by `pi-haiku` at every start) installs a copy of the example whose
+`--no-session` becomes `--session-dir <spool>`. It exits non-zero and warns when
+a Pi upgrade renames the flag.
+
+### doudou (author's step; nothing here installs on doudou)
+
+doudou keeps its own transcripts. Run the install above on doudou, then push
+its archive to padme (compressed files only, resumable, skips unchanged ones):
+
+```bash
+rsync -a --partial ~/archive/transcripts/doudou/ padme:archive/transcripts/doudou/
+```
+
+Run it nightly after the archive service, for example as `ExecStartPost=` in a
+drop-in of `transcript-archive.service` on doudou. Spool data for doudou stays
+under `~/archive/spool/doudou/` until archived. Not part of the padme timer.
