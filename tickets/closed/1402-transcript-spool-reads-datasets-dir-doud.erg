@@ -2,10 +2,13 @@
 Title: transcript_spool reads DATASETS_DIR; doudou push built from it; no directory probe
 Created: 2026-10-31
 Author: claude
+Closed: all exit criteria met: PR 2120 merged; doudou drop-in installed and read back
 
 --- log ---
 2026-10-31T19:22Z claude created
 2026-10-31T20:45Z reviewer done repo-side: archive_root from env/file, push script + drop-in source, docs; doudou drop-in install pending (doudou unreachable 2026-10-31)
+2026-10-31T20:52Z reviewer doudou: drop-in installed from scripts/systemd/push-padme.conf, read back via systemctl --user cat; roots resolve (doudou ~/data/datasets/ours/agent-sessions, padme /data/datasets/ours/agent-sessions); manual push exit 0
+2026-10-31T20:52Z reviewer closed — all exit criteria met: PR 2120 merged; doudou drop-in installed and read back
 
 --- body ---
 ## Context
@@ -20,10 +23,10 @@ hardcodes both hosts' paths. `DATASETS_DIR` is now declared on both hosts in
 
 ## Exit criteria
 
-- [ ] `archive_root()` = `IDH_ARCHIVE_ROOT` (an empty value counts as unset), else `$DATASETS_DIR/ours/agent-sessions`,
+- [x] `archive_root()` = `IDH_ARCHIVE_ROOT` (an empty value counts as unset), else `$DATASETS_DIR/ours/agent-sessions`,
       else the value parsed from `~/.config/environment.d/50-datasets.conf`, else
       a clear error; no directory probe, no hostname
-- [ ] Tests: each branch, including the error and the file fallback (no env)
-- [ ] Doudou push target derived from padme's declared location (documented in
+- [x] Tests: each branch, including the error and the file fallback (no env)
+- [x] Doudou push target derived from padme's declared location (documented in
       INSTALL.md), not a literal path pair; the drop-in updated on doudou
-- [ ] INSTALL.md and memo § 4.2 point to the variable and to the data READMEs
+- [x] INSTALL.md and memo § 4.2 point to the variable and to the data READMEs
