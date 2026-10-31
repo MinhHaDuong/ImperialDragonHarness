@@ -13,6 +13,11 @@ buttons or the scrollbar.
 Layout: one process (lane) per set of non-overlapping agents, assigned greedily by start time, so
 concurrent agents land on distinct lanes. Thread 0 of a lane carries the agent span; threads 1.. carry its
 turns and tool calls, one row each where calls overlap. A subagent or seat names its parent in its span.
+A Skill or Agent call carries `delegation` ("launch": the child runs in the background; "blocking": the
+caller waited; absent: unknown) from the runtime's recorded result, and `child_agent` when the runtime
+recorded which agent it spawned (result `agentId`, else the child's meta `toolUseId`; never time proximity
+alone). The HTML hatches blocking calls and joins each linked launch to its child's lane by a thin line,
+toggled by the "launch connectors" checkbox; parallel lines are offset so none overlap.
 Every event carries its pointer (file, call id) in `args`; an unpriced model shows `cost unknown`.
 
 Paths come from `transcript_spool` (live roots, archive, host) and `launch_line` (launches file).
@@ -28,7 +33,7 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timezone
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -128,6 +133,7 @@ class Agent:
     parent: str | None
     runtime: str
     events: list = field(default_factory=list)
+    tool_use_id: str | None = None  # the parent's call that spawned it, when the runtime recorded one
 
     @property
     def span(self):
@@ -158,7 +164,8 @@ def _claude_agents(tree: Tree, rel: str, path: Path, sid: str, parent: str | Non
         sub_label = meta.get("description") or meta.get("agentType") or "subagent"
         agents.append(Agent(sub_id, sub_label, meta.get("parentAgentId") or sid, "claude",
                             te.read_claude(te.open_lines(sub_path), sub_rel, agent=sub_id,
-                                           parent_agent=meta.get("parentAgentId") or sid, name=sub_label)))
+                                           parent_agent=meta.get("parentAgentId") or sid, name=sub_label),
+                            meta.get("toolUseId")))
     return agents
 
 
@@ -170,6 +177,28 @@ def resolve_session(tree: Tree, prefix: str) -> str:
     if len(ids) > 1:
         raise SystemExit(f"trace_timeline: prefix {prefix} is ambiguous, candidates:\n  " + "\n  ".join(ids))
     return ids[0] if ids else prefix  # none: collect reports the unknown session
+
+
+def link_delegations(agents: list[Agent]) -> None:
+    """Attach each delegation call to the child agent the runtime recorded for it (ticket 1397).
+
+    A child is matched by a recorded link only: the `agentId` in the call's result, else the child's
+    `toolUseId` in its meta file. A link to an agent not in the tree is dropped, so an unmatched call draws
+    no connector. A call whose result gave no mode but whose child is known falls back to timing: it is a
+    launch if it returned before the child's span ended, else blocking.
+    """
+    by_id = {a.id: a for a in agents}
+    by_call = {a.tool_use_id: a.id for a in agents if a.tool_use_id}
+    for agent in agents:
+        for i, ev in enumerate(agent.events):
+            if ev.kind != "tool" or ev.tool_class != "subagent":
+                continue
+            child = ev.child_agent if ev.child_agent in by_id else by_call.get(ev.pointer[1])
+            mode = ev.delegation
+            if mode is None and child:
+                mode = "launch" if (ev.returned or ev.end) < by_id[child].span.end - 1 else "blocking"
+            if (child, mode) != (ev.child_agent, ev.delegation):
+                agent.events[i] = replace(ev, delegation=mode, child_agent=child)
 
 
 def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
@@ -215,6 +244,7 @@ def collect(tree: Tree, session: str, launches: list[dict]) -> list[Agent]:
             else:
                 agents.append(Agent(child_id, seat, parent, runtime,
                                     te.read_opaque(runtime, rel, start, end, child_id, parent, seat)))
+    link_delegations(agents)
     return agents
 
 
@@ -245,6 +275,10 @@ def _args(event, extra=None) -> dict:
         args["detail"] = event.detail
     if event.tool_class:
         args["class"] = event.tool_class
+    if event.delegation:
+        args["delegation"] = event.delegation
+    if event.child_agent:
+        args["child_agent"] = event.child_agent
     args.update(extra or {})
     return args
 
@@ -284,7 +318,8 @@ def render(agents: list[Agent]) -> dict:
             else:
                 free[row] = ev.end
             out.append({"ph": "X", "cat": ev.kind, "name": ev.name, "pid": pid, "tid": row + 1,
-                        "ts": micros(ev.start), "dur": micros(ev.end) - micros(ev.start), "args": _args(ev)})
+                        "ts": micros(ev.start), "dur": micros(ev.end) - micros(ev.start),
+                        "args": _args(ev, {"returned_us": micros(ev.returned)} if ev.returned and ev.delegation == "launch" else None)})
     return {"traceEvents": out, "displayTimeUnit": "ms", "otherData": {"t0_epoch": t0}}
 
 
@@ -296,9 +331,14 @@ def _tooltip(e: dict) -> str:
     a = e["args"]
     ptr = a.get("pointer") or {}
     usd = a.get("shadow_usd")
-    lines = [e["name"], f"kind: {e['cat']}", *([f"class: {a['class']}"] if a.get("class") else []), f"duration: {_fmt_dur(e['dur'] / 1e6)}", f"model: {a.get('model')}",
+    lines = [e["name"], f"kind: {e['cat']}", *([f"class: {a['class']}"] if a.get("class") else []),
+             *([f"delegation: {a['delegation']}" + (" (the caller waited)" if a["delegation"] == "blocking" else " (returned at once)")]
+               if a.get("delegation") else []), f"duration: {_fmt_dur(e['dur'] / 1e6)}", f"model: {a.get('model')}",
              f"tokens: {a.get('tokens')}", f"shadow USD: {usd if usd != COST_UNKNOWN else COST_UNKNOWN}",
              f"exit: {a.get('exit')}", f"pointer: {ptr.get('file')} / {ptr.get('call_id')}"]
+    if a.get("delegation") == "launch" and a.get("returned_us") is not None:
+        back = f"returned after: {_fmt_dur(max(0, a['returned_us'] - e['ts']) / 1e6)}"
+        lines[lines.index(f"duration: {_fmt_dur(e['dur'] / 1e6)}")] = back + f"\ncompleted after: {_fmt_dur(e['dur'] / 1e6)}"
     return "\n".join(lines)
 
 
@@ -307,6 +347,7 @@ def _tooltip(e: dict) -> str:
 # mode); presence and the catch-all are neutrals, which carry no identity by design.
 _PRESENCE_AGENT, _PRESENCE_TURN = "#6b7f94", "#55606b"   # cool greys: an agent's life, a model turn
 _DELEGATION, _VERIFICATION, _HOUSEKEEPING, _OTHER = "#eb6834", "#2a78d6", "#1baf7a", "#9a958b"
+_BLOCKING, _HATCH_LIGHT, _LINK = "blocking delegation", "#fbd9c9", "#4a4a4a"   # hatched = the caller waited
 _COLORS = {"agent": _PRESENCE_AGENT, "turn": _PRESENCE_TURN, "tool": _OTHER}
 _CLASS_COLORS = {"subagent": _DELEGATION, "worker": _DELEGATION, "tests": _VERIFICATION,
                  "git": _HOUSEKEEPING, "file": _HOUSEKEEPING, "other": _OTHER}
@@ -314,7 +355,9 @@ _CLASS_COLORS = {"subagent": _DELEGATION, "worker": _DELEGATION, "tests": _VERIF
 _LEGEND = (
     ("Presence", (("agent", _PRESENCE_AGENT, "an agent's whole span: session, subagent or seat", 0.45),
                   ("turn", _PRESENCE_TURN, "one model turn: the agent thinking", 0.9))),
-    ("Delegation", (("delegation", _DELEGATION, "a Skill or Agent call, or a shell launching a headless coder or reviewer", 0.9),)),
+    ("Delegation", (("delegation", _DELEGATION, "a Skill or Agent call that launches a child and returns at once, or a shell launching a "
+                     "headless coder or reviewer; a thin line joins a launch to its child's lane", 0.9),
+                    (_BLOCKING, _HATCH_LIGHT, "a Skill or Agent call that waited for its child agent to finish", 0.9))),
     ("Verification", (("tests", _VERIFICATION, "pytest, make check or lint", 0.9),)),
     ("Housekeeping", (("files and git", _HOUSEKEEPING, "reading, editing and searching files; version control, forge and tickets", 0.9),)),
     ("Anything else", (("other", _OTHER, "any other call", 0.9),)),
@@ -331,8 +374,11 @@ h1{font-size:22px;margin:0 0 4px}
 .legend .g{display:flex;flex-direction:column;gap:2px}
 .legend .g b{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#666;font-weight:600}
 .legend .g span{display:block}
+.legend i.h{background:repeating-linear-gradient(135deg,#eb6834 0 2px,#fbd9c9 2px 4px) !important;opacity:1 !important;outline:1px solid #b8461a}
 .legend i{display:inline-block;width:12px;height:12px;margin:0 5px 0 0;vertical-align:-2px;border-radius:2px}
 .bar{padding:0 24px 6px;font-size:13px}
+label{margin-left:12px;cursor:pointer}
+#links path{fill:none;stroke:#4a4a4a;stroke-width:1;stroke-opacity:.6;pointer-events:none}
 button{font:inherit;padding:2px 10px;margin-right:4px}
 #mm{display:block;width:calc(100% - 48px);margin:0 24px 6px;border:1px solid #bbb;cursor:pointer}
 rect.view{fill:rgba(30,90,200,.18);stroke:#1e5ac8;stroke-width:1.5;pointer-events:none}
@@ -357,7 +403,8 @@ _JS = """
 var NS='http://www.w3.org/2000/svg',svg=document.getElementById('tl'),box=document.getElementById('w'),
 mm=document.getElementById('mm'),ticks=document.getElementById('ticks'),cur=document.getElementById('cur'),
 ro=document.getElementById('cro'),labs=document.querySelectorAll('#lab .lb'),
-ROWS=JSON.parse(document.getElementById('rows').textContent),
+ROWS=JSON.parse(document.getElementById('rows').textContent),LINKS=JSON.parse(document.getElementById('linkdata').textContent),
+lg=document.getElementById('links'),lk=document.getElementById('lk'),TOP=+svg.dataset.top,RH=+svg.dataset.rh,
 span=+svg.dataset.span,left=+svg.dataset.left,pps=+svg.dataset.pps,t0=+svg.dataset.t0,H=+svg.dataset.h,
 pad=0,X0=left,MIN=pps/50,MAX=4000,STEPS=[1,2,5,10,15,30,60,120,300,600,900,1800,3600,7200,10800,21600,43200,86400];
 function p2(n){return (n<10?'0':'')+n;}
@@ -372,6 +419,24 @@ var t=document.createElementNS(NS,'text');t.setAttribute('x',x+3);t.setAttribute
 t.textContent=p2(d.getHours())+':'+p2(d.getMinutes())+(step<60?':'+p2(d.getSeconds()):'');ticks.appendChild(t);
 if(dk!=day){day=dk;var u=document.createElementNS(NS,'text');u.setAttribute('x',x+3);u.setAttribute('y',16);
 u.setAttribute('font-size',11);u.setAttribute('font-weight','bold');u.textContent=dk;ticks.appendChild(u);}}}
+function ov(a,b,c,d){return Math.min(b,d)-Math.max(a,c)>0.5;}
+function clash(sg,list){for(var i=0;i<list.length;i++){var o=list[i];
+if(o.v==sg.v&&Math.abs(o.p-sg.p)<2&&ov(o.a,o.b,sg.a,sg.b))return true;}return false;}
+function drawLinks(){while(lg.firstChild)lg.removeChild(lg.firstChild);if(!lk.checked)return;
+var placed=[],yc=function(r){return TOP+RH*r+RH/2;},order=LINKS.slice().sort(function(p,q){return p[1]-q[1];});
+order.forEach(function(L){var dir=L[2]>L[0]?1:-1,x1=X0+L[1]*pps,x2=X0+L[3]*pps,y1=yc(L[0])+dir*(RH/2-2),y2=yc(L[2])-dir*(RH/2-2),
+lo=Math.min(y1,y2),hi=Math.max(y1,y2),mid=(y1+y2)/2,ys=[mid];
+for(var j=1;j<12;j++){if(mid+3*j<=hi)ys.push(mid+3*j);if(mid-3*j>=lo)ys.push(mid-3*j);}
+var best=null;
+for(var tot=0;tot<16&&!best;tot++)for(var s1=0;s1<=tot&&!best;s1++){var a=x1+3*s1,b=x2+3*(tot-s1);
+for(var k=0;k<ys.length&&!best;k++){var y=ys[k],segs=[{v:1,p:a,a:Math.min(y1,y),b:Math.max(y1,y)},
+{v:0,p:y,a:Math.min(a,b),b:Math.max(a,b)},{v:1,p:b,a:Math.min(y,y2),b:Math.max(y,y2)}];
+if(!clash(segs[0],placed)&&!clash(segs[1],placed)&&!clash(segs[2],placed))best={a:a,b:b,y:y,segs:segs};}}
+if(!best)best={a:x1,b:x2,y:mid,segs:[{v:1,p:x1,a:Math.min(y1,mid),b:Math.max(y1,mid)},{v:0,p:mid,a:Math.min(x1,x2),b:Math.max(x1,x2)},{v:1,p:x2,a:Math.min(mid,y2),b:Math.max(mid,y2)}]};
+best.segs.forEach(function(sg){placed.push(sg);});
+var d=document.createElementNS(NS,'path');
+d.setAttribute('d','M'+x1+' '+y1+'H'+best.a+'V'+best.y+'H'+best.b+'V'+y2+'H'+x2);lg.appendChild(d);});}
+lk.addEventListener('change',drawLinks);
 function cursorT(){return box.scrollLeft/pps;}
 function labels(){var t=cursorT();ro.textContent=hms(Math.max(0,Math.min(span,t)));
 for(var r=0;r<labs.length;r++){var best=null,list=ROWS[r];
@@ -396,14 +461,14 @@ svg.querySelectorAll('rect.bar-ev').forEach(function(n){n.setAttribute('x',X0+n.
 n.setAttribute('width',Math.max(1,n.dataset.d*pps));});
 document.querySelectorAll('[data-band]').forEach(function(n){var b=n.dataset.band.split(' ');
 n.setAttribute('d','M0 '+b[0]+'H'+w+'v'+b[1]+'H0z');});
-cur.style.left=(1+left+pad)+'px';drawTicks();stick();labels();vp();}
+cur.style.left=(1+left+pad)+'px';drawLinks();drawTicks();stick();labels();vp();}
 function mmW(){return mm.getBoundingClientRect().width;}
 var view=document.createElementNS(NS,'rect');view.setAttribute('class','view');
 function buildMini(){var W=mmW(),h=+mm.getAttribute('height'),bg=document.createElementNS(NS,'rect');
 bg.setAttribute('width','100%');bg.setAttribute('height',h);bg.setAttribute('fill','#f3f3f3');mm.appendChild(bg);
 document.querySelectorAll('rect.bar-ev').forEach(function(n){var r=document.createElementNS(NS,'rect');
 r.setAttribute('class','mb');r.setAttribute('data-t',n.dataset.t);r.setAttribute('data-d',n.dataset.d);
-r.setAttribute('y',2+(+n.getAttribute('y')-40)/(H-50)*(h-4));r.setAttribute('height',1.5);r.setAttribute('fill',n.getAttribute('fill'));
+r.setAttribute('y',2+(+n.getAttribute('y')-40)/(H-50)*(h-4));r.setAttribute('height',1.5);r.setAttribute('fill',n.dataset.c||n.getAttribute('fill'));
 mm.appendChild(r);});mm.appendChild(view);layMini();}
 function layMini(){var W=mmW();mm.querySelectorAll('rect.mb').forEach(function(r){
 r.setAttribute('x',r.dataset.t/span*W);r.setAttribute('width',Math.max(1,r.dataset.d/span*W));});vp();}
@@ -531,20 +596,38 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
         cls = a.get("class")
         color = _CLASS_COLORS.get(cls) if e["cat"] == "tool" and cls else None
         fill = color or _COLORS.get(e["cat"], "#789")
-        parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" '
-                     f'height="{rh - 4}" fill="{fill}" '
+        # A launch bar ends where its call returned; the JSON keeps the completion-notification length.
+        if a.get("delegation") == "launch" and a.get("returned_us") is not None:
+            shown = max(0, min(e["dur"], a["returned_us"] - e["ts"]))
+        else:
+            shown = e["dur"]
+        stroke = 'stroke="#b8461a" stroke-width="1"'
+        hatch = e["cat"] == "tool" and a.get("delegation") == "blocking"
+        parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{shown / 1e6}" y="{top + rh * i + 2}" '
+                     f'height="{rh - 4}" fill="{"url(#hatch)" if hatch else fill}" data-c="{fill}" '
+                     f'{stroke if hatch else ""} '
                      f'fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}"><title>{q(_tooltip(e))}</title></rect>')
         base = e["name"].split(" (under")[0]
-        row_events[i].append([e["ts"] / 1e6, e["dur"] / 1e6, base, a.get("detail") or (a.get("model") if e["cat"] == "agent" else "") or ""])
+        row_events[i].append([e["ts"] / 1e6, shown / 1e6, base, a.get("detail") or (a.get("model") if e["cat"] == "agent" else "") or ""])
         if e["cat"] == "agent":
             parts.append(f'<text data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" data-n="{q(base)}" '
                          f'data-m="{q(a.get("model") or "")}" y="{top + rh * i + 13}" font-size="10"></text>')
     rows_json = json.dumps(row_events).replace("</", "<\\/")
+    spans = {e["args"].get("agent"): e for e in events if e["cat"] == "agent"}
+    links, launches = [], 0
+    for e in events:
+        if e["cat"] == "tool" and e["args"].get("delegation") == "launch":
+            launches += 1
+            child = spans.get(e["args"].get("child_agent"))
+            if child is not None:
+                links.append([row_of[(e["pid"], e["tid"])], e["ts"] / 1e6, row_of[(child["pid"], 0)], child["ts"] / 1e6])
+    links_json = json.dumps(links)
+    link_note = f"{launches} launches, {len(links)} linked to a child lane" if launches else ""
     heading = f"Session {session[:8]}" + (f": {title}" if title else "")
     meta = " · ".join(x for x in (f"id {session}" if session else "", f"author {author}" if author else "",
                                   f"started {_stamp(t0)}" if t0 else "",
                                   f"generated {_stamp(datetime.now(timezone.utc).timestamp())}",
-                                  f"{len(events)} bars over {_fmt_dur(span)}") if x)
+                                  f"{len(events)} bars over {_fmt_dur(span)}", link_note) if x)
     how = ("This page is the timeline of one agent session. Each lane is an agent: the session itself, its "
            "subagents, and the review or worker seats it launched, listed under their parent. Each bar is a call, "
            "placed by its start time and sized by its duration; the pale wide bars are agent spans, the dark grey "
@@ -556,19 +639,26 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
            "runs off-screen. Zoom with the mouse wheel (centred on the pointer) or the buttons, and pan by "
            "holding the mouse button and dragging. The strip above the chart is a minimap of the whole "
            "session: the frame marks the part in view; click or drag on the strip to move there. Time "
-           "labels are local wall-clock time.")
+           "labels are local wall-clock time. A hatched orange bar is a delegation that waited for its child agent; a "
+           "plain orange bar returned at once, and a thin line joins it to the start of its child's lane "
+           "(untick the box to hide the lines).")
     legend = "".join(f'<div class="g"><b>{q(cap)}</b>' + "".join(
-        f'<span><i style="background:{c};opacity:{o}"></i>{q(name)}: {q(m)}</span>' for name, c, m, o in entries) + "</div>"
+        f'<span><i{" class=h" if name == _BLOCKING else ""} style="background:{c};opacity:{o}"></i>{q(name)}: {q(m)}</span>' for name, c, m, o in entries) + "</div>"
         for cap, entries in _LEGEND)
     return (f'<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>{q(heading)}</title><style>{_CSS}</style>'
             f'</head><body><header><h1>{q(heading)}</h1><p class="meta">{q(meta)}</p><p class="how">{q(how)}</p>'
             f'<div class="legend">{legend}</div></header>'
             '<svg id="mm" xmlns="http://www.w3.org/2000/svg" height="44"></svg>'
-            '<div class="bar"><button id="zo">zoom out</button><button id="zi">zoom in</button></div>'
+            '<div class="bar"><button id="zo">zoom out</button><button id="zi">zoom in</button>'
+            '<label><input type="checkbox" id="lk" checked> launch connectors</label></div>'
             f'<div id="wrap"><div id="cur"></div><div id="w"><div id="lab">{"".join(labels)}</div>'
             f'<svg id="tl" xmlns="http://www.w3.org/2000/svg" height="{height}" data-span="{span}" '
-            f'data-left="{left}" data-pps="{pps}" data-t0="{t0 or 0}" data-h="{height}">' + "".join(parts)
+            f'data-left="{left}" data-pps="{pps}" data-t0="{t0 or 0}" data-h="{height}" data-top="{top}" data-rh="{rh}">'
+            '<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+            f'<path d="M0 0H6V6H0z" fill="{_HATCH_LIGHT}"/><path d="M0 0H3V6H0z" fill="{_DELEGATION}"/></pattern></defs>'
+            + "".join(parts) + '<g id="links"/>'
             + f'</svg></div></div><script type="application/json" id="rows">{rows_json}</script>'
+            f'<script type="application/json" id="linkdata">{links_json}</script>'
             f'<script>{_JS}</script></body></html>\n')
 
 
