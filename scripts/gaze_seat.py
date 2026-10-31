@@ -452,7 +452,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     command.argv, _ = launch_line.pin(command.argv)  # claude, pi: the child's id is ours (ticket 1384)
     try:
         if spool:
-            spool.mkdir(parents=True, exist_ok=True, mode=0o700)
+            transcript_spool.mkdir_private(spool)
         for leftover in (staging, last):  # a past run's output never stands in for this one
             leftover.unlink(missing_ok=True)
         diff_file.write_text(diff, encoding='utf-8')

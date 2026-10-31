@@ -2,7 +2,7 @@
 """Compress every runtime's transcripts into the archive (ticket 1383).
 
 One zstd file per source file, original relative path kept, contents unmodified, under
-`<archive>/transcripts/<host>/<runtime>/` (path convention: transcript_spool.py). A source
+`<archive>/raw/<host>/<runtime>/` (path convention: transcript_spool.py). A source
 touched within the last day is skipped (it may still grow). The archived copy carries its
 source's mtime: a transcript only appends, appending moves mtime, so "dest mtime equals source
 mtime" means unchanged and anything else is copied again. Plain files only, never a manifest.
@@ -58,7 +58,7 @@ def current(dest: Path, st: os.stat_result) -> bool:
 
 def archive_one(path: Path, st: os.stat_result, dest: Path, level: int) -> bool:
     """Compress path to dest via a temp file; False when the source moved under us."""
-    dest.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    spool.mkdir_private(dest.parent)
     tmp = dest.with_name(dest.name + '.tmp')
     try:
         subprocess.run(['zstd', '-q', '-T1', f'-{level}', '-f', '-o', str(tmp), str(path)], check=True)

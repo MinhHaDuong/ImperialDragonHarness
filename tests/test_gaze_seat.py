@@ -124,7 +124,7 @@ def rig(tmp_path):
         'PATH': f'{bin_dir}:/usr/bin:/bin',  # no real model CLI is reachable
         'HOME': str(tmp_path),
         'IDH_GAZE_SEATS_CONFIG': str(tmp_path / 'gaze-seats.json'),
-        'IDH_ARCHIVE_ROOT': str(tmp_path / 'archive'),  # spooled session files never reach the real ~/archive
+        'IDH_ARCHIVE_ROOT': str(tmp_path / 'archive'),  # spooled session files never reach the real store
     }
     return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env,
             'base': base, 'head': head}
@@ -940,6 +940,6 @@ def test_launch_line_carries_the_session_id_the_claude_seat_was_launched_with(ri
     assert launch(rig, name='lines').returncode == 0
     argv = (rig['log'] / 'claude.argv').read_text().splitlines()
     pinned = argv[argv.index('--session-id') + 1]
-    rows = [json.loads(line) for line in next((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'transcripts').glob('*/launches.jsonl')).read_text().splitlines()]
+    rows = [json.loads(line) for line in next((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
     assert [(r['seat'], r['child_runtime'], r['child_session'], r['exit']) for r in rows] == \
         [('lines', 'claude', pinned, 0)]

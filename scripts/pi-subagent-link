@@ -59,8 +59,9 @@ ln -sfn "$src/agents.ts" "$dest/agents.ts"
 
 # The example spawns every child with --no-session, so subagent runs leave no transcript. Install a
 # copy whose flag names the archive spool instead (ticket 1383; path convention
-# scripts/transcript_spool.py: <archive>/spool/<host>/pi). Never write through the old symlink.
-spool="${IDH_ARCHIVE_ROOT:-$HOME/archive}/spool/${HOSTNAME%%.*}/pi"
+# scripts/transcript_spool.py: <archive>/spool/<host>/pi; default root from `transcript_spool.py root`). Never write through the old symlink.
+root="${IDH_ARCHIVE_ROOT:-$(python3 "$(dirname "$(readlink -f "$0")")/transcript_spool.py" root)}"
+spool="$root/spool/${HOSTNAME%%.*}/pi"
 flag='"--no-session"'
 IFS= read -r -d '' body < "$src/index.ts" || true
 case "$spool" in *[\\\"\&$'\n']*) spool="" ;; esac

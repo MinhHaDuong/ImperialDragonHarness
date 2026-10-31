@@ -1,5 +1,5 @@
 [Unit]
-Description=Compress runtime transcripts into ~/archive (ticket 1383)
+Description=Compress runtime transcripts into the agent-sessions store (tickets 1383, 1391)
 
 [Service]
 Type=oneshot

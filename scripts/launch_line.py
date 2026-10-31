@@ -3,7 +3,7 @@
 
 The one link transcripts cannot reconstruct is which session launched which headless child. Both
 launchers (`seat_clock.run_seat`, `manuscript_review.execute_stage`) call `record` once per child; it
-appends one JSON line to `<ARCHIVE_ROOT>/transcripts/<host>/launches.jsonl` (the path of `transcript_spool`):
+appends one JSON line to `<ARCHIVE_ROOT>/raw/<host>/launches.jsonl` (the path of `transcript_spool`):
 
     ts_start ts_end host parent_runtime parent_session child_runtime child_session seat cwd unit exit
 
@@ -41,7 +41,7 @@ def _load(name: str):
 
 def launches_path() -> Path:
     spool = _load('transcript_spool')
-    return spool.archive_root() / 'transcripts' / spool.host() / 'launches.jsonl'
+    return spool.raw_dir() / 'launches.jsonl'
 
 
 def iso(epoch: float) -> str:
@@ -111,7 +111,7 @@ def record(*, seat: str, child_runtime: str, child_session: str, ts_start: float
                 'child_session': child_session, 'seat': seat, 'cwd': str(cwd or os.getcwd()),
                 'unit': unit(env), 'exit': exit}
         path = path or launches_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
+        spool.mkdir_private(path.parent)
         fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
         try:
             os.write(fd, (json.dumps(line) + '\n').encode())  # one write: parallel seats do not interleave

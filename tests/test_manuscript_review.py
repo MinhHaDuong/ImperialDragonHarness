@@ -620,7 +620,7 @@ def test_legacy_finding_text_must_be_the_whole_heading_block():
 
 def launches_file():
     import transcript_spool  # scripts/ is on sys.path once manuscript_review is loaded
-    return transcript_spool.archive_root() / "transcripts" / transcript_spool.host() / "launches.jsonl"
+    return transcript_spool.raw_dir() / "launches.jsonl"
 
 
 def test_reader_keeps_its_session_file_for_the_archive(tmp_path, monkeypatch):
