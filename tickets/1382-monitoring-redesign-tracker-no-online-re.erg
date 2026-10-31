@@ -10,6 +10,7 @@ Author: claude
 2026-10-31T11:08Z reviewer claude note August hole of memo § 2.3 explained: doudou holds 1260 Claude Code transcripts of 2026-08 (padme none); both hosts now archive to padme (1383, 1387)
 2026-10-31T12:50Z reviewer claude note child 1391 added: consolidate the archive into datasets/ours/agent-sessions with the cadens raw store (author ruling 2026-10-31); cadens side ticketed in the cadens repository
 2026-10-31T12:52Z reviewer 1390 merged as PR #2078 (64a9006): trace_timeline.py --html writes a self-contained SVG page for Firefox; d77349fe renders (headless Firefox screenshot on padme, 54 agents, ~2100 bars). The author's interactive look (hover, zoom) still pending; it may replace the Perfetto load named in the 10:34Z note.
+2026-10-31T13:28Z reviewer 1392 merged as PR #2081 (edf18ab): the --html page gains a header, how-to-read paragraph, legend, lane shading and names, wall-clock axis, wheel zoom, drag pan and minimap. Interaction (zoom, pan, minimap) still awaits the author's look in Firefox.
 
 --- body ---
 ## Context
