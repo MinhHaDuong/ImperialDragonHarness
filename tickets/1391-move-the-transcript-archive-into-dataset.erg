@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Move the transcript archive into datasets/ours/agent-sessions and backfill from the cadens raw store
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T12:50Z claude created
+
+--- body ---
+## Context
+
+Tracker 1382. Author's ruling 2026-10-31: the raw agent transcripts are data we
+generate and several projects use (the harness, cadens), so they live under the
+"our data" folder, beside the datasets: `datasets/ours/` (doudou already has
+`~/data/datasets/{external,ours}`; padme has `/data/datasets/external/` only,
+root-owned 755). Raw is not a dataset, but it belongs there.
+
+Today two nightly timers store the same transcripts at 03:30:
+`transcript-archive` (1383, `~/archive/transcripts/<host>/<runtime>/`, zstd,
+Claude Code + Codex + Pi + seat spool, re-copy on growth, from 2026-06) and
+cadens' `cadens-harvest` (`/data/projets/cadens/raw/claude-local/<host>/`,
+14 GB plain, Claude Code only, `rsync --ignore-existing` so grown files stay
+truncated, but holds 2026-02..05 already gone from the live trees). Consolidate
+into one store; cadens' side is its own ticket in its repository.
+
+Target layout:
+- padme: `/data/datasets/ours/agent-sessions/raw/<host>/<runtime>/...` (and the
+  spool beside it); the author creates `/data/datasets/ours` (root-owned parent)
+- doudou: `~/data/datasets/ours/agent-sessions/raw/doudou/...`, pushed to padme
+- one README in `agent-sessions/` (provenance, layout, runtimes, retention,
+  privacy: GDPR-sensitive behavioural data of the author, private permissions,
+  never leaves the hosts unencrypted; consumers: harness, cadens)
+
+## Exit criteria
+
+- [ ] The archive root is one setting (`transcript_spool.py`), default the
+      target layout per host; `transcript_archive.py`, `trace_timeline.py` and the
+      launch-line helper read it; tests updated
+- [ ] Existing archives moved (not re-copied from live trees) to the new root on
+      padme and doudou; counts and bytes before and after printed in the PR
+- [ ] Backfill: every cadens raw file absent from the archive (by relative path)
+      is added, compressed, for both hosts; a file present in both keeps the
+      larger (non-truncated) version; counts printed
+- [ ] doudou's push targets the new padme path and is prefixed `-` so an absent
+      padme does not fail the archive run
+- [ ] `agent-sessions/README.md` written; directories 700
+- [ ] memo § 4.2 and INSTALL.md name the new location
