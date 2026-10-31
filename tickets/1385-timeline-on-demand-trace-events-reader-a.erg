@@ -9,6 +9,7 @@ Blocked-by: 1384
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: per-runtime call ids, price-table source, non-Claude seat in exit
 2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
+2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
 
 --- body ---
 ## Context
@@ -50,3 +51,15 @@ Two scripts:
       the PR)
 - [ ] `trace_timeline.py` reads a session already pruned from the live tree from
       the archive
+
+## Raid 8ad75a plan annotation (2026-10-31, lead)
+
+Phases 2-3 compressed (see 1380). Feasibility: WARN. Plan text: /tmp/raid-8ad75a/plan-1385.md (host padme). Wave 2, after 1383 and 1384 merge.
+
+Path: stdlib `scripts/trace_events.py` (frozen Event dataclass; read_claude / read_codex / read_pi / read_aider; PRICING + price; open_transcript live-first then archive via `zstd -dc`) and `scripts/trace_timeline.py` (greedy interval lanes, Chrome Trace JSON written directly, no Perfetto library).
+Lead rulings:
+- PRICING is at `trace-stats.py:36`; trace-stats re-exports `PRICING` and `resolve_pricing` (spec-loaded by four scripts). OpenAI rows must not break `trace-hypotheses.py:70,138` (`cache_write_5m` key, `_MAX_PRICING`): same keys or a separate table; run `tests/test_trace_*`.
+- OpenAI prices looked up from the official pricing page, URL and date in a comment, only models seen in local rollouts; unknown -> `cost unknown` (None), never 0.
+- Pi cost taken as recorded, labelled `pi-recorded` (a recorded 0 for a local model shows as such, not as table-priced).
+- Archive path and host via `transcript_spool` (1383); launches via `launch_line`'s path (1384).
+- Fixtures hand-written, no real transcript content.
