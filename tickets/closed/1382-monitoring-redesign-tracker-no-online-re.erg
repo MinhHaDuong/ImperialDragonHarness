@@ -2,6 +2,7 @@
 Title: Monitoring redesign tracker: no online refusal, raw archive, launch line, timeline
 Created: 2026-10-31
 Author: claude
+Closed: integration review done; author confirmed the timeline
 
 --- log ---
 2026-10-31T08:39Z claude created
@@ -13,6 +14,8 @@ Author: claude
 2026-10-31T13:28Z reviewer 1392 merged as PR #2081 (edf18ab): the --html page gains a header, how-to-read paragraph, legend, lane shading and names, wall-clock axis, wheel zoom, drag pan and minimap. Interaction (zoom, pan, minimap) still awaits the author's look in Firefox.
 2026-10-31T14:25Z reviewer 1391 merged as PR #2086 (2d831b2): archive moved to datasets/ours/agent-sessions on padme and doudou, backfilled from cadens raw (padme 55965 files, doudou 27811), doudou push retargeted; cadens' reader switch is its ticket 0049.
 2026-10-31T14:32Z reviewer 1393 (PR #2083) and 1395 (PR #2090) merged: the --html timeline classes tool calls (delegation/verification/housekeeping/other, from the shell command), names lanes by agent and model, has a sticky label column with a centre cursor, a resizable column, and a grouped legend that carries meaning. Author is checking interaction in Firefox.
+2026-10-31T14:45Z reviewer integration review complete: children 1380/1383/1384/1385 (+1391) merged; d77349fe renders from the archive with its seats and the author checked it interactively in Firefox ('It works', 2026-10-31); memo § 5 still lists all seven deferred items with triggers. Polish beyond scope landed as 1390/1392/1393/1395; 1397 in flight outside this tracker.
+2026-10-31T14:45Z reviewer closed — integration review done; author confirmed the timeline
 
 --- body ---
 ## Context
