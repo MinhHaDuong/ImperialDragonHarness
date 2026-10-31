@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Launch one gaze review seat as a detached headless CLI (ticket 1256).
 
+`replay --raw F --sha256 H` re-derives a report from a preserved transcript, SHA-256 checked, no model call.
+
 `launch` builds the seat's command from the runtime's headless door in
 `skills/route/routes.json` (`launch_doors.<runtime>.headless`: its `template`,
 with the model pinned, and its `seat_rails` flags: read tools only, no shell
@@ -45,6 +47,7 @@ served id: the grid `family` of that model (`skills/route/grid.json`), else
 import argparse
 import importlib.util
 import fnmatch
+import hashlib
 import ipaddress
 import json
 import os
@@ -320,10 +323,13 @@ def answer_start(lines: list[str], marker: str) -> int | None:
 
     The frame is a standalone marker line, usually under a rule of dashes, which aider may repeat. A marker
     inside a sentence is prose, never a frame. The last frame wins, so a full answer quoted in the reasoning
-    cannot stand for the real one. Limit: flat stdout carries no authentication, so a body that itself
+    cannot stand for the real one; markers after the last `Tokens:` footer line are ignored. Limits: a truncated run
+    whose last output is a bare marker then a quoted full answer is indistinguishable from a real answer, and
+    flat stdout carries no authentication, so a body that itself
     prints a framed marker is indistinguishable from the transport; the declaration is then read as written.
     """
-    marks = [i for i, line in enumerate(lines) if line.strip() == marker]
+    footer = max((i for i, line in enumerate(lines) if line.startswith('Tokens: ')), default=len(lines))
+    marks = [i for i, line in enumerate(lines[:footer]) if line.strip() == marker]  # a marker after the footer is not a frame
     if not marks:
         return None
     last = marks[-1]
@@ -438,6 +444,47 @@ def reach_refusal(report: str) -> str | None:
 # Pi's warning line when it runs an id the provider does not list. Anchored at line start and
 # read for Pi only: codex echoes tool output (files, diffs) to stderr, phrase included.
 UNLISTED_MODEL = re.compile(r'Warning: Model ".*" not found for provider ')
+
+
+def derive(door: dict, raw: str, worker: str) -> tuple[str, str | None, str, bool]:
+    """Raw door output to (report, refusal reason, answer as received, header unwrapped).
+
+    The one path from a transcript to a filed report, shared by `launch` and `replay`. The reasons keep
+    parsing apart: thinking without a framed answer is a truncated run, not an empty one, and a seat that
+    answered but broke the header is a refusal of its answer. A timeout or a missing response is decided
+    earlier, by the clock and the exit status, and never reaches here.
+    """
+    answer = answer_of(door, raw)
+    raw_answer = answer
+    answer, unwrapped = unwrap_header(answer)
+    report = stamp(answer, worker)
+    if not report:
+        thinking = door.get('thinking_marker')
+        truncated = thinking and any(line.strip() == thinking for line in raw.splitlines())
+        return '', ('no report (thinking without a framed answer: truncated run)' if truncated
+                    else 'no report (empty output)'), raw_answer, unwrapped
+    if refusal(report):
+        return '', 'no report (seat refused: NOT-RUN)', raw_answer, unwrapped
+    if bad := reach_refusal(report):
+        return '', f'no report (seat reach: {bad})', raw_answer, unwrapped
+    return report, None, raw_answer, unwrapped
+
+
+def replay(args: argparse.Namespace) -> tuple[bool, str]:
+    """Re-derive a report from a preserved raw transcript: no model call, no panel written.
+
+    The file must hash to `--sha256` first; a mismatch is refused before anything is parsed.
+    """
+    raw = args.raw.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != args.sha256.lower():
+        return False, f'refused: sha256 {digest} does not match the expected {args.sha256.lower()}'
+    door = load_doors(args.routes).get(args.runtime)
+    if door is None:
+        return False, f'no report (no headless door for runtime {args.runtime})'
+    worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
+    report, reason, _, _ = derive(door, raw.decode('utf-8', errors='replace'), worker)
+    return (False, reason) if reason else (True, report)
 
 
 def launch(args: argparse.Namespace) -> tuple[bool, str]:
@@ -587,22 +634,15 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         outcome = 'reported in ' + outcome.rsplit(', ', 1)[-1].rstrip(')')
     text = last if wrote_last else staging
     worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
-    answer = answer_of(door, text.read_text(encoding='utf-8', errors='replace'))
-    raw_answer = answer
-    answer, unwrapped = unwrap_header(answer)
-    report = stamp(answer, worker)
+    report, reason, raw_answer, unwrapped = derive(door, text.read_text(encoding='utf-8', errors='replace'), worker)
     if unwrapped:
         # the seat's answer as received, kept beside the report: the normalisation is the only edit
         args.panel.joinpath(f'{args.name}.md.raw').write_text(raw_answer, encoding='utf-8')
         outcome += '; header unwrapped from a Markdown block'
     for leftover in (staging, last):
         leftover.unlink(missing_ok=True)
-    if not report:
-        return failed('no report (empty output)')
-    if refusal(report):
-        return failed('no report (seat refused: NOT-RUN)')
-    if bad := reach_refusal(report):
-        return failed(f'no report (seat reach: {bad})')
+    if reason:
+        return failed(reason)
     out = args.panel / f'{args.name}.md'
     part = out.with_name(out.name + '.part')
     part.write_text(report, encoding='utf-8')
@@ -633,6 +673,13 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest='mode', required=True)
     sub.add_parser('consent', help='print the manifest line declaring cross-family spend')
+    rep = sub.add_parser('replay', help='re-derive a seat report from a preserved raw transcript (no model call)')
+    rep.add_argument('--raw', type=Path, required=True)
+    rep.add_argument('--sha256', required=True, help='expected SHA-256 of the raw file; a mismatch is refused')
+    rep.add_argument('--runtime', default='aider')
+    rep.add_argument('--model', default='replayed')
+    rep.add_argument('--family', default='unknown')
+    rep.add_argument('--routes', type=Path, default=ROUTES)
     run = sub.add_parser('launch', help='launch one seat and file its report')
     run.add_argument('--runtime', required=True, help='launch_doors key: claude-code, codex, pi')
     run.add_argument('--model', required=True, help='model pinned on the door, from the route skill; a pi model ends in :<thinking level>')
@@ -654,6 +701,10 @@ def main(argv: list[str]) -> int:
     if args.mode == 'consent':
         print(consent_line(config_path()))
         return 0
+    if args.mode == 'replay':
+        ok, text = replay(args)
+        print(text, end='' if ok else '\n')
+        return 0 if ok else 1
     ok, outcome = launch(args)
     if args.dry_run and ok:
         return 0

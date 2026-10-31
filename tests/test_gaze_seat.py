@@ -716,7 +716,7 @@ def test_verdict_in_aider_thinking_does_not_hide_a_refusal(rig, padme):
 @pytest.mark.integration
 def test_thinking_without_an_answer_is_no_report(rig, padme):
     result = aider_seat(rig, mode='aider-truncated')  # truncated: a verdict inside thinking only
-    assert result.returncode == 1 and 'no report (empty output' in result.stdout
+    assert result.returncode == 1 and 'no report (thinking without a framed answer: truncated run' in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
 
 
@@ -1062,3 +1062,45 @@ def test_aider_answer_edge_shapes():
     assert gs.answer_of(AIDER_DOOR, f'{THINK}\nx\n---\n{MARK}\nNOT-RUN: nope\n').strip() == 'NOT-RUN: nope'
     assert gs.answer_of(AIDER_DOOR, f'---\n{MARK}\nverdict: clear\n').strip() == 'verdict: clear'  # no reach: left for reach_refusal
     assert gs.answer_of({}, 'raw\ntext\n') == 'raw\ntext\n'
+
+
+def test_aider_marker_after_the_tokens_footer_is_not_a_frame():
+    gs = load_module()
+    text = f'{THINK}\nx\n---\n{MARK}\n{NO}\nverdict: concerns\nTokens: 1\n---\n{MARK}\n{YES}\n'
+    assert gs.answer_of(AIDER_DOOR, text).strip() == f'{NO}\nverdict: concerns'
+    assert gs.answer_of(AIDER_DOOR, f'{THINK}\nx\nTokens: 1\n{MARK}\n{YES}\n') == ''
+
+
+FIXTURE = f'{THINK}\nThe seat may write:\n{MARK}\n{YES}\n------------\n{MARK}\n\n{MARK}\nreach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n\nTokens: 1\n'
+WORKER = 'worker: model=m · family=f · runtime=aider · door=headless'
+
+
+def test_derive_separates_truncated_empty_refused_and_reach_failures():
+    gs = load_module()
+    assert gs.derive(AIDER_DOOR, FIXTURE, WORKER)[1].startswith('no report (seat reach')
+    reasons = {
+        'truncated': gs.derive(AIDER_DOOR, f'{THINK}\nhmm\n', WORKER)[1],
+        'empty': gs.derive(AIDER_DOOR, f'---\n{MARK}\n\nTokens: 1\n', WORKER)[1],
+        'refused': gs.derive(AIDER_DOOR, f'---\n{MARK}\nNOT-RUN: x\n', WORKER)[1],
+        'reach': gs.derive(AIDER_DOOR, f'---\n{MARK}\nverdict: clear\n', WORKER)[1],
+    }
+    assert len(set(reasons.values())) == 4
+    assert 'truncated' in reasons['truncated'] and 'empty' in reasons['empty']
+    ok = gs.derive(AIDER_DOOR, FIXTURE.replace('read=no', 'read=yes'), WORKER)
+    assert ok[1] is None and ok[0].startswith(WORKER)
+
+
+def test_replay_checks_the_sha_then_runs_the_real_derivation(tmp_path):
+    import hashlib
+    raw = tmp_path / 'seat.raw'
+    good = FIXTURE.replace('read=no', 'read=yes')
+    raw.write_text(good, encoding='utf-8')
+    sha = hashlib.sha256(raw.read_bytes()).hexdigest()
+    cmd = [sys.executable, str(SCRIPT), 'replay', '--raw', str(raw), '--model', 'm', '--family', 'f']
+    done = subprocess.run([*cmd, '--sha256', sha], capture_output=True, text=True)
+    assert done.returncode == 0 and 'reach: read=yes shell=no tests=not-run' in done.stdout and YES not in done.stdout
+    bad = subprocess.run([*cmd, '--sha256', '0' * 64], capture_output=True, text=True)
+    assert bad.returncode == 1 and 'does not match' in bad.stdout
+    raw.write_text(f'{THINK}\nhmm\n', encoding='utf-8')
+    cut = subprocess.run([*cmd, '--sha256', hashlib.sha256(raw.read_bytes()).hexdigest()], capture_output=True, text=True)
+    assert cut.returncode == 1 and 'truncated run' in cut.stdout

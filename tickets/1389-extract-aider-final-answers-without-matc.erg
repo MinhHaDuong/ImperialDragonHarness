@@ -6,6 +6,7 @@ Author: MinhHaDuong
 --- log ---
 2026-10-31T11:01Z MinhHaDuong created
 2026-10-31T20:43Z reviewer raid note: parser audit (2026-10-31, after PR #2115) reproduced the dangerous direction: when the reasoning quotes a full answer with 'reach: read=yes shell=yes tests=ran', gaze_seat.py:328 split(marker, 1) admits it, so a real read=no answer is recorded as yes/yes/ran. The fix must never admit the quoted declaration; test this direction too. Ticket copied from local branch tickets/arena-aider-parser-20261031 (commit e56955a7) without its stale tracker-1382 edit (1382 closed).
+2026-10-31T20:50Z reviewer exit criteria met on PR 2118: (1) synthetic fixtures in tests/test_gaze_seat.py cover quoted marker, duplicated separators, plain answers, truncated thinking, missing reach/NOT-RUN, markers in body (documented limit) and after the Tokens footer; (2) answer_of takes the last framed marker, content untouched, stamp/reach checks unchanged, limits in answer_start docstring; (3) tests run through the real functions and the launch CLI; (4) 'gaze_seat.py replay --raw F --sha256 H' re-derives via derive(), refuses on SHA mismatch, no model call, tests use tmp files; (5) derive() gives distinct reasons: truncated run, empty output, NOT-RUN refusal, reach refusal; timeout and nonzero exit stay decided earlier by the clock and exit status, raw output untouched; (6) memo 1382 holds: no new online record refusal, ceremony, archive, index or retry. Not done: Arena raw 1184 replay (private, supplied by author).
 
 --- body ---
 ## Context
