@@ -106,8 +106,9 @@ listing the skill names already delivered. Present → silent.
 ### 3.6 Who writes notes
 
 Pilot: written by hand from the journal. Later, if the pilot pays: roar refreshes
-**Latest**; smelt re-derives the other three in its rebuild (1349). Not in the
-pilot.
+**Latest**; smelt re-derives the other three in its rebuild (1349). Smelt writes only
+`MEMORY.md` and `topics/` today (`memory/SMELT.md`), so this needs its own ticket.
+Not in the pilot.
 
 ## 4. Pilot
 
