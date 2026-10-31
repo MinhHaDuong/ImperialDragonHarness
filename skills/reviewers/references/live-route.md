@@ -10,7 +10,7 @@ the question to answer and a bounded completion deadline. Request only the
 material and access needed for review; preserve read-only containment and never
 include credentials in prompts, logs or evidence.
 
-Discover available routes at runtime. llama.cpp on Padmé, OpenRouter, other
+Discover available routes at runtime. The Padmé LLM service, OpenRouter, other
 local agents and agents on another host are possible resources. An unavailable
 endpoint or helper does not exhaust discovery; try a suitable available route
 within the budget. No roster, subscription or particular gateway is a
