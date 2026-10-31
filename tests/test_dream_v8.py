@@ -19,7 +19,12 @@ file pins mechanically, from the ticket's exit criteria:
 
 import hashlib
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
+
+from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
@@ -158,6 +163,7 @@ def test_two_passes_do_not_reimport_and_reexamine_the_correction():
     )
 
 
+@pytest.mark.integration
 def test_report_journal_ledger_pins_the_untouched_journal():
     text = report_text()
     sections = pass_sections(text)
@@ -170,6 +176,14 @@ def test_report_journal_ledger_pins_the_untouched_journal():
     for path in first:
         # Design history left docs/ for conception/ on 2026-10-27.
         path = path.replace("docs/", "conception/", 1) if path.startswith("docs/") else path
+        if path.startswith("memory/topics/") and not (REPO / path).is_file():
+            # A later smelt merged the page away; its revision stays in git.
+            kind = subprocess.run(
+                ["git", "-C", str(REPO), "cat-file", "-t", first[path]],
+                capture_output=True, text=True, env=child_env(),
+            ).stdout.strip()
+            assert kind == "blob", f"ledger names a lost page revision: {path}"
+            continue
         assert (REPO / path).is_file(), (
             f"ledger names a missing file: {path}"
         )

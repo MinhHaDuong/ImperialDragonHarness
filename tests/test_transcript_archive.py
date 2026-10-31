@@ -123,17 +123,82 @@ def test_units_resolve_the_checkout_and_archive_from_the_home_of_the_running_use
     assert "Persistent=true" in timer and "Unit=transcript-archive.service" in timer
 
 
-def test_default_root_is_the_ours_store_where_it_exists_else_under_home(tmp_path, monkeypatch):
+def _spool(tmp_path, monkeypatch):
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     import transcript_spool as ts
-    monkeypatch.delenv("IDH_ARCHIVE_ROOT")
+    for key in ("IDH_ARCHIVE_ROOT", "DATASETS_DIR"):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    monkeypatch.setattr(ts, "OURS_PROBE", tmp_path / "absent")
-    assert ts.archive_root() == tmp_path / "home/data/datasets/ours/agent-sessions"
-    (tmp_path / "ours").mkdir()
-    monkeypatch.setattr(ts, "OURS_PROBE", tmp_path / "ours")
-    assert ts.archive_root() == tmp_path / "ours/agent-sessions"
-    assert ts.raw_dir("h") == tmp_path / "ours/agent-sessions/raw/h"
+    monkeypatch.setattr(ts, "ENV_FILE", tmp_path / "home/.config/environment.d/50-datasets.conf")
+    return ts
+
+
+def _declare(tmp_path, text):
+    conf = tmp_path / "home/.config/environment.d/50-datasets.conf"
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    conf.write_text(text)
+
+
+def test_archive_root_override_wins_and_empty_counts_as_unset(tmp_path, monkeypatch):
+    ts = _spool(tmp_path, monkeypatch)
+    monkeypatch.setenv("DATASETS_DIR", str(tmp_path / "d"))
+    monkeypatch.setenv("IDH_ARCHIVE_ROOT", str(tmp_path / "x"))
+    assert ts.archive_root() == tmp_path / "x"
+    monkeypatch.setenv("IDH_ARCHIVE_ROOT", "")
+    assert ts.archive_root() == tmp_path / "d/ours/agent-sessions"
+
+
+def test_archive_root_from_datasets_dir_ignores_directories_present(tmp_path, monkeypatch):
+    ts = _spool(tmp_path, monkeypatch)
+    (tmp_path / "home/data/datasets/ours").mkdir(parents=True)  # a probe would have chosen this
+    monkeypatch.setenv("DATASETS_DIR", str(tmp_path / "d"))
+    assert ts.archive_root() == tmp_path / "d/ours/agent-sessions"
+
+
+def test_archive_root_file_fallback_without_environment(tmp_path, monkeypatch):
+    ts = _spool(tmp_path, monkeypatch)
+    _declare(tmp_path, f"# Host data locations\nMIRRORS_DIR=/m\nDATASETS_DIR={tmp_path / 'f'}\n")
+    assert ts.archive_root() == tmp_path / "f/ours/agent-sessions"
+    monkeypatch.setenv("DATASETS_DIR", "")  # empty environment value falls through to the file
+    assert ts.archive_root() == tmp_path / "f/ours/agent-sessions"
+
+
+def test_archive_root_unknown_is_a_clear_error(tmp_path, monkeypatch, capsys):
+    ts = _spool(tmp_path, monkeypatch)
+    with pytest.raises(RuntimeError, match="DATASETS_DIR"):
+        ts.archive_root()
+    _declare(tmp_path, "# nothing declared\nMIRRORS_DIR=/m\n")
+    with pytest.raises(RuntimeError, match="IDH_ARCHIVE_ROOT"):
+        ts.archive_root()
+    assert ts.main(["root"]) == 1 and "DATASETS_DIR" in capsys.readouterr().err
+
+
+def test_raw_dir_and_private_dirs_under_the_root(tmp_path, monkeypatch):
+    ts = _spool(tmp_path, monkeypatch)
+    monkeypatch.setenv("DATASETS_DIR", str(tmp_path / "ours0"))
+    assert ts.raw_dir("h") == tmp_path / "ours0/ours/agent-sessions/raw/h"
     ts.mkdir_private(ts.raw_dir("h") / "claude")
     assert {oct(p.stat().st_mode & 0o777) for p in (ts.raw_dir("h"), ts.raw_dir("h") / "claude")} == {"0o700"}
+
+
+def test_push_script_derives_both_ends_from_the_declared_root(tmp_path):
+    bin_ = tmp_path / "bin"
+    bin_.mkdir()
+    (bin_ / "ssh").write_text('#!/bin/sh\necho /remote/datasets/ours/agent-sessions\n')
+    (bin_ / "rsync").write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$RSYNC_OUT"\n')
+    for tool in bin_.iterdir():
+        tool.chmod(0o755)
+    home = tmp_path / "home"
+    (home / ".agents/scripts").mkdir(parents=True)
+    (home / ".agents/scripts/transcript_spool.py").symlink_to(ROOT / "scripts/transcript_spool.py")
+    env = child_env()
+    env.update(HOME=str(home), IDH_ARCHIVE_ROOT=str(tmp_path / "archive"), RSYNC_OUT=str(tmp_path / "out"),
+               PATH=f"{bin_}:{env['PATH']}")
+    subprocess.run([str(ROOT / "scripts/transcript-push-padme")], env=env, check=True)
+    args = (tmp_path / "out").read_text().split()
+    host = subprocess.check_output(["hostname", "-s"], text=True).strip()
+    assert args[-2:] == [f"{tmp_path}/archive/raw/{host}/",
+                         f"padme:/remote/datasets/ours/agent-sessions/raw/{host}/"]
+    unit = (ROOT / "scripts/systemd/push-padme.conf").read_text()
+    assert "/data/" not in unit and "ExecStartPost=-%h/.agents/scripts/transcript-push-padme" in unit

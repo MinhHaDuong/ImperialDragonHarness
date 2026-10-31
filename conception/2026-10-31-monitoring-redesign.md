@@ -139,10 +139,11 @@ a roar. This is ticket 1380, widened.
 A nightly job (systemd user timer) copies every transcript of the three
 runtimes untouched for a day, with Claude Code's `subagents/` and
 `tool-results/`, to `<root>/raw/<host>/<runtime>/<original
-relative path>.zst` (root: `datasets/ours/agent-sessions`, ticket 1391), one plain zstd file each. A source that changed since
+relative path>.zst` (root: `$DATASETS_DIR/ours/agent-sessions`, tickets 1391 and 1402; `DATASETS_DIR` is declared per host in
+`~/.config/environment.d/50-datasets.conf`, see the data READMEs `<DATASETS_DIR>/README.md` and `<root>/README.md`), one plain zstd file each. A source that changed since
 its last copy (the copy carries the source's mtime; an append moves it) is
 copied again: transcripts only append, so the new copy
-supersedes the old one. doudou pushes to padme when online. The archive keeps
+supersedes the old one. doudou pushes to padme when online (`scripts/transcript-push-padme`, destination read from padme's declared root). The archive keeps
 the runtime's own file names and contents, unmodified, so any later reader or
 index can rebuild from it. Nothing is committed to git.
 

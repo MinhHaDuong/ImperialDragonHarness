@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Contradiction: 1366 read-back ruling versus forge read-back rule
+Created: 2026-10-30
+Author: reviewer
+
+--- log ---
+2026-10-30T13:45Z reviewer created
+
+--- body ---
+## Context
+Exposed by the fifth smelt (PR #2049): git page open questions
+(`memory/topics/git-worktree-session-guards.md`); the ruling is pinned on the
+Commission page. Filed under SMELT.md v8-r5.
+
+Claim A, author ruling 2026-10-30 ("KISS on 1366"): PR 2035 kept the
+commit-id push and dropped the ls-remote read-back
+(`memory/journal/2026/2026-10-30-rulings-and-memory-design-input.md`). The
+gate flagged the departure; "The author merged anyway and declined to narrow
+the rule: the distinction below is memory, not rule"
+(`memory/journal/2026/2026-10-30-push-by-commit-id-exit-code-1366.md`). The
+distinction: a push by commit id lands or is refused, so its exit code answers.
+
+Claim B, `rules/git.md` § Reading state: "Verify a forge mutation by reading it
+back, in the same command. Exit codes and warnings do not tell you whether it
+landed."
+
+## Question for the author
+Does a push by commit id count as verified by its exit code, against the
+written rule? If yes, does the exception stay in memory (jurisprudence) or
+reach the rule? Smelt picks no side.
+
+## Exit criteria
+- [ ] The author's answer is recorded here
+- [ ] Memory pages and the rule agree, or the page keeps the conflict open by the author's choice
