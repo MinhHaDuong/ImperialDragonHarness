@@ -12,7 +12,7 @@ text.
 
 Attach to each skill a short note of cases from experience, kept per project, and
 deliver it to the model when the skill loads. One note holds four cases: the
-**latest**, the **usual**, the **best** and the **worst**. Each case follows the
+**most recent as of the note date**, the **usual**, the **best** and the **worst**. Each case follows the
 case method used in management teaching: **context**, **what happened**, **how we
 reacted**, **outcome**.
 
@@ -47,7 +47,7 @@ project copy forks the procedure. Too clever.
 # <skill> — cases
 Updated: YYYY-MM-DD · skill version: <commit or date>
 
-## Latest — YYYY-MM-DD
+## Most recent as of YYYY-MM-DD
 Context. What happened. Reaction. Outcome. Source: <journal entry / PR / ticket>.
 
 ## Usual
@@ -106,7 +106,7 @@ listing the skill names already delivered. Present → silent.
 ### 3.6 Who writes notes
 
 Pilot: written by hand from the journal. Later, if the pilot pays: roar refreshes
-**Latest**; smelt re-derives the other three in its rebuild (1349). Smelt writes only
+**Most recent**; smelt re-derives the other three in its rebuild (1349). Smelt writes only
 `MEMORY.md` and `topics/` today (`memory/SMELT.md`), so this needs its own ticket.
 Not in the pilot.
 
