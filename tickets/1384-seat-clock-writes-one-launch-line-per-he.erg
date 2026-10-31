@@ -6,19 +6,25 @@ Author: claude
 --- log ---
 2026-10-31T08:39Z claude created
 
+2026-10-31T09:30Z claude note integrity re-review of PR 2067: every launcher, child id pinned or captured, Pi parent id
 --- body ---
 ## Context
 
 Memo `conception/2026-10-31-monitoring-redesign.md` § 4.3. The one link not reconstructible from transcripts is which
-session launched which headless seat. `scripts/seat_clock.py run` already
-launches every seat (`codex exec`, `claude -p`, `pi -p`) under a hard cap and
-writes `<out>.status`; it records no parent. Part of tracker 1382.
+session launched which headless child. Two launchers start them today:
+`scripts/seat_clock.py run` (gaze seats: `codex exec`, `claude -p`, `pi -p`)
+and `skills/manuscript-review/manuscript_review.py:462` (`claude -p` itself).
+Neither records a parent. Part of tracker 1382.
 
 Append one JSON line per seat to `~/archive/transcripts/<host>/launches.jsonl`
 with `ts_start, ts_end, host, parent_runtime, parent_session, child_runtime,
-child_session, seat, cwd, unit, exit`. `parent_session` from `runtime.py
-session id`; `child_session` pinned at launch where the CLI allows it
-(`claude -p --session-id`), else empty. The write is an append; a failure
+child_session, seat, cwd, unit, exit`, through one helper both launchers call.
+`parent_session` from `runtime.py session id`; Pi exports none today
+(`scripts/runtime_session.py`): export it from the Pi adapter, or write
+`not exported`. `child_session` is never a start-time join (gaze starts
+same-runtime seats at once in one folder): pinned (`claude -p --session-id`),
+the session file the launcher gave the child (Pi, aider, vibe under the
+spool of 1383), or read from the child's output (Codex). The write is an append; a failure
 warns on stderr and never changes the seat's outcome or exit code.
 
 ## Exit criteria
@@ -29,5 +35,6 @@ warns on stderr and never changes the seat's outcome or exit code.
       unchanged and prints one warning
 - [ ] A claude seat's line carries the `--session-id` it was launched with,
       and that id names a transcript file
-- [ ] One real gaze run on padme: every seat of the panel appears with its
-      parent session (lines quoted in the PR)
+- [ ] One real gaze run on padme with a seat of each reachable runtime, and one
+      manuscript-review run: every child appears with parent and child ids, each
+      child id naming a transcript file (lines quoted in the PR)

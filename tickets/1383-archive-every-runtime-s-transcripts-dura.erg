@@ -6,14 +6,17 @@ Author: claude
 --- log ---
 2026-10-31T08:39Z claude created
 
+2026-10-31T09:30Z claude note integrity re-review of PR 2067: five holes, not three; per-route coverage exit
 --- body ---
 ## Context
 
 Memo `conception/2026-10-31-monitoring-redesign.md` § 4.2. Transcripts are deleted by age (`cleanupPeriodDays: 180`;
 the oldest surviving one, of 2026-06-10, passes the horizon around
-2026-12-07), stay on the host that ran them, and three seat routes keep none
-(vibe: disposable `VIBE_HOME` in `gaze_seat.py`; aider: scratch cwd with
-`--no-restore-chat-history`; `manuscript_review.py`: `--no-session-persistence`).
+2026-12-07), stay on the host that ran them, and five routes keep none
+(vibe: disposable `VIBE_HOME` in `gaze_seat.py`; aider: history to `/dev/null`,
+`skills/route/routes.json:140`; Pi seats: `--no-session`, `routes.json:104`;
+the Pi subagent extension: `--no-session`, `routes.json:100`;
+`manuscript_review.py`: `--no-session-persistence`).
 Measured: median transcript 0.4 MB, p99 5.9 MB; October volume about 5.8 GB raw,
 10–16x under zstd. Part of tracker 1382.
 
@@ -34,8 +37,13 @@ committed to git.
 - [ ] The timer unit is installed on padme and has run once; every transcript
       untouched for a day is in the archive at its current size (count and
       bytes compared, both printed)
-- [ ] vibe and aider seats keep their session files under the archive spool;
-      `manuscript_review.py` no longer passes `--no-session-persistence`
+- [ ] vibe, aider, Pi seats and Pi subagents keep their session files under the
+      archive spool (aider's history outside the review tree);
+      `manuscript_review.py` no longer passes `--no-session-persistence`; each
+      flag change checked against the CLI's `--help`
+- [ ] One seat per route (claude, codex, pi, aider, vibe, where reachable) and
+      one manuscript-review reader leave a session file that the archive holds;
+      an unreachable route is named in the PR, not counted as covered
 - [ ] The headless-cleanup experiment: a `claude -p --restricted` seat under a
       scratch `CLAUDE_CONFIG_DIR` holding a 40-day-old transcript; the result
       (deleted or kept) recorded in the memo § 2.3 and, if deleted, a fix

@@ -8,6 +8,7 @@ Blocked-by: 1384
 --- log ---
 2026-10-31T08:39Z claude created
 
+2026-10-31T09:30Z claude note integrity re-review of PR 2067: per-runtime call ids, price-table source, non-Claude seat in exit
 --- body ---
 ## Context
 
@@ -20,7 +21,10 @@ Two scripts:
 - `scripts/trace_events.py`: a module, one reader per runtime (Claude Code
   with `subagents/`, Codex rollouts with cumulative `token_count` turned into
   differences, Pi sessions) yielding events with the same fields: kind, name,
-  start, end, model, tokens, shadow USD, exit, pointer `(file, tool_use_id)`.
+  start, end, model, tokens, shadow USD, exit, pointer `(file, call id)`, the
+  call id being each runtime's own (`tool_use_id`, Codex `call_id`, Pi
+  `toolCallId`; aider: file only). Shadow USD from the price table now in
+  `scripts/trace-stats.py:34`, moved into this module and imported back.
   It is the reader a later index will reuse (memo § 5), so it holds no
   rendering code.
 - `scripts/trace_timeline.py <session>`: reads the session, its subagents and
@@ -35,7 +39,8 @@ Two scripts:
       start, end, tokens and pointer; Codex per-turn tokens are differences
 - [ ] Fixture test: overlapping subagents land on distinct lanes; a seat named
       by a launch line lands under its parent
-- [ ] One raid session of the week renders in Perfetto; three events
+- [ ] One raid session of the week renders in Perfetto with at least one
+      non-Claude seat; three events
       spot-checked against the transcript lines their pointers name (quoted in
       the PR)
 - [ ] `trace_timeline.py` reads a session already pruned from the live tree from
