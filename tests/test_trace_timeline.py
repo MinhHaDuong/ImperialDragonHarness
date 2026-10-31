@@ -301,7 +301,7 @@ def test_delegation_calls_carry_mode_and_matched_child_additively(tmp_path):
     assert got["Agenttu3"]["delegation"] == "launch" and "child_agent" not in got["Agenttu3"]
     base = {"pointer", "runtime", "agent", "model", "tokens", "shadow_usd", "cost_source", "exit", "class", "detail"}
     for args in got.values():
-        assert set(args) - base <= {"delegation", "child_agent"}
+        assert set(args) - base <= {"delegation", "child_agent", "returned_us"}
 
 
 def test_child_matched_by_meta_tool_use_id_and_timing_fallback(tmp_path):
@@ -328,3 +328,20 @@ def test_html_hatches_blocking_draws_link_data_and_has_the_toggle(tmp_path):
     assert len(links) == 1 and links[0][1] < links[0][3]  # the unmatched launch draws none; ends at the child's start
     assert "2 launches, 1 linked to a child lane" in page
     assert "http://" not in page.replace("http://www.w3.org/2000/svg", "") and "https://" not in page
+
+
+def test_launch_bar_ends_at_its_return_in_html_while_json_keeps_the_completion_length(tmp_path):
+    tree = delegation_session(tmp_path, [
+        ("Agent", {"isAsync": True, "status": "async_launched", "agentId": "ca"}, 11)])
+    path = tmp_path / "claude" / "proj" / f"{SID}.jsonl"
+    note = {"type": "queue-operation", "operation": "enqueue", "timestamp": "2026-01-01T00:01:00.000Z",
+            "content": "<task-notification><tool-use-id>tu0</tool-use-id></task-notification>"}
+    rows = [json.loads(x) for x in path.read_text().splitlines()]
+    put(path, rows[:-1] + [note, rows[-1]])
+    doc = tl.render(tl.collect(tree, SID, []))
+    call = next(e for e in doc["traceEvents"] if e.get("cat") == "tool")
+    assert call["dur"] == 50_000_000  # call start 10 s, completion notification at 60 s: the JSON bar length
+    assert call["args"]["returned_us"] == 11_000_000  # offset of the return from t0: 1 s after the call start
+    page = tl.render_html(doc, SID)
+    assert 'data-d="1.0"' in page and 'data-d="50.0"' not in page
+    assert "returned after: 1.0s" in page and "completed after: 50.0s" in page

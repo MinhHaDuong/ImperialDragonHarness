@@ -300,7 +300,8 @@ def render(agents: list[Agent]) -> dict:
             else:
                 free[row] = ev.end
             out.append({"ph": "X", "cat": ev.kind, "name": ev.name, "pid": pid, "tid": row + 1,
-                        "ts": micros(ev.start), "dur": micros(ev.end) - micros(ev.start), "args": _args(ev)})
+                        "ts": micros(ev.start), "dur": micros(ev.end) - micros(ev.start),
+                        "args": _args(ev, {"returned_us": micros(ev.returned)} if ev.returned and ev.delegation == "launch" else None)})
     return {"traceEvents": out, "displayTimeUnit": "ms", "otherData": {"t0_epoch": t0}}
 
 
@@ -317,6 +318,9 @@ def _tooltip(e: dict) -> str:
                if a.get("delegation") else []), f"duration: {_fmt_dur(e['dur'] / 1e6)}", f"model: {a.get('model')}",
              f"tokens: {a.get('tokens')}", f"shadow USD: {usd if usd != COST_UNKNOWN else COST_UNKNOWN}",
              f"exit: {a.get('exit')}", f"pointer: {ptr.get('file')} / {ptr.get('call_id')}"]
+    if a.get("delegation") == "launch" and a.get("returned_us") is not None:
+        back = f"returned after: {_fmt_dur(max(0, a['returned_us'] - e['ts']) / 1e6)}"
+        lines[lines.index(f"duration: {_fmt_dur(e['dur'] / 1e6)}")] = back + f"\ncompleted after: {_fmt_dur(e['dur'] / 1e6)}"
     return "\n".join(lines)
 
 
@@ -410,7 +414,7 @@ for(var tot=0;tot<16&&!best;tot++)for(var s1=0;s1<=tot&&!best;s1++){var a=x1+3*s
 for(var k=0;k<ys.length&&!best;k++){var y=ys[k],segs=[{v:1,p:a,a:Math.min(y1,y),b:Math.max(y1,y)},
 {v:0,p:y,a:Math.min(a,b),b:Math.max(a,b)},{v:1,p:b,a:Math.min(y,y2),b:Math.max(y,y2)}];
 if(!clash(segs[0],placed)&&!clash(segs[1],placed)&&!clash(segs[2],placed))best={a:a,b:b,y:y,segs:segs};}}
-if(!best)best={a:x1,b:x2,y:mid,segs:[]};
+if(!best)best={a:x1,b:x2,y:mid,segs:[{v:1,p:x1,a:Math.min(y1,mid),b:Math.max(y1,mid)},{v:0,p:mid,a:Math.min(x1,x2),b:Math.max(x1,x2)},{v:1,p:x2,a:Math.min(mid,y2),b:Math.max(mid,y2)}]};
 best.segs.forEach(function(sg){placed.push(sg);});
 var d=document.createElementNS(NS,'path');
 d.setAttribute('d','M'+x1+' '+y1+'H'+best.a+'V'+best.y+'H'+best.b+'V'+y2+'H'+x2);lg.appendChild(d);});}
@@ -574,14 +578,19 @@ def render_html(doc: dict, session: str = "", title: str = "", author: str = "")
         cls = a.get("class")
         color = _CLASS_COLORS.get(cls) if e["cat"] == "tool" and cls else None
         fill = color or _COLORS.get(e["cat"], "#789")
+        # A launch bar ends where its call returned; the JSON keeps the completion-notification length.
+        if a.get("delegation") == "launch" and a.get("returned_us") is not None:
+            shown = max(0, min(e["dur"], a["returned_us"] - e["ts"]))
+        else:
+            shown = e["dur"]
         stroke = 'stroke="#b8461a" stroke-width="1"'
         hatch = e["cat"] == "tool" and a.get("delegation") == "blocking"
-        parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" '
+        parts.append(f'<rect class="bar-ev" data-t="{e["ts"] / 1e6}" data-d="{shown / 1e6}" y="{top + rh * i + 2}" '
                      f'height="{rh - 4}" fill="{"url(#hatch)" if hatch else fill}" data-c="{fill}" '
                      f'{stroke if hatch else ""} '
                      f'fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}"><title>{q(_tooltip(e))}</title></rect>')
         base = e["name"].split(" (under")[0]
-        row_events[i].append([e["ts"] / 1e6, e["dur"] / 1e6, base, a.get("detail") or (a.get("model") if e["cat"] == "agent" else "") or ""])
+        row_events[i].append([e["ts"] / 1e6, shown / 1e6, base, a.get("detail") or (a.get("model") if e["cat"] == "agent" else "") or ""])
         if e["cat"] == "agent":
             parts.append(f'<text data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" data-n="{q(base)}" '
                          f'data-m="{q(a.get("model") or "")}" y="{top + rh * i + 13}" font-size="10"></text>')
