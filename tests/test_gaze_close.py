@@ -486,8 +486,8 @@ def test_subagent_seat_takes_the_pin_not_its_typed_header(tmp_path):
 
 
 def test_subagent_seat_forging_a_headless_header_takes_the_pin(tmp_path):
-    """Blind-Spot 1: a header claiming door=headless is trusted only when the manifest reason also
-    names `headless <runtime>`; a subagent seat forging one still takes the pin and the session."""
+    """Blind-Spot 1: a header claiming door=headless is trusted only when a launch line records the
+    seat (ticket 1399); a subagent seat forging one still takes the pin and the session."""
     primary, env, f = opened(tmp_path)
     seats_shim(tmp_path, env)
     panel(primary, "# budget: 10m\nscope\tclaude-x\tanthropic\tsubagent\n",
