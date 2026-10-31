@@ -5,6 +5,7 @@ import argparse
 import datetime
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
@@ -221,20 +222,29 @@ def append_line(body, line, pr=None, project=None):
     raise ValueError(f"attribution block opened at line {opens[0] + 1} is never closed")
 
 
-def extract_record(body, merged):
-    """Return the block as a lenient, capturable record with `pending` replaced by the merge date."""
-    datetime.date.fromisoformat(merged)
-    parse_pr_body(body)  # strict: exactly one closed block, every line well formed
-    inside, text = False, []
+def block_text(body, merged):
+    """The body's first attribution block as record text, `pending` replaced by the merge date;
+    None when it has none. No validation."""
+    inside, text = False, None
     for line in body.splitlines():
         if not inside:
             inside = bool(OPEN.fullmatch(line))
+            text = [] if inside else text
         elif CLOSE.fullmatch(line):
             break
         else:
             text.append(line)
-    text = "\n".join(text) + "\n"
-    text = re.sub(r"^(pr: [1-9][0-9]* · merged )pending", rf"\g<1>{merged}", text, count=1, flags=re.M)
+    if text is None:
+        return None
+    return re.sub(r"^(pr: [1-9][0-9]* · merged )pending", rf"\g<1>{merged}", "\n".join(text) + "\n",
+                  count=1, flags=re.M)
+
+
+def extract_record(body, merged):
+    """Return the block as a lenient, capturable record with `pending` replaced by the merge date."""
+    datetime.date.fromisoformat(merged)
+    parse_pr_body(body)  # strict: exactly one closed block, every line well formed
+    text = block_text(body, merged)
     parse_record(text)  # what --capture will accept
     return text
 
@@ -426,18 +436,83 @@ def notes_record(cwd, review_id, project, merged="pending"):
     return "\n".join(lines) + "\n"
 
 
+def salvage(text):
+    """(clean text or None, facts): what the strict parser accepts after dropping each line it
+    refuses, one `not derivable:` fact per loss (ticket 1380). A refused reviewer line takes its
+    finding lines with it; a record left with no writer or no reviewer is None. The strict
+    parser itself is unchanged: --pr-body and --from-notes checks keep their contract."""
+    lines, facts = text.splitlines(), []
+    for _ in range(len(lines) + 1):
+        try:
+            parse_record("\n".join(lines) + "\n", strict=True)
+            return "\n".join(lines) + "\n", facts
+        except ValueError as error:
+            reason = str(error)
+        match = re.match(r"line (\d+): (.*)", reason)
+        if not match:
+            if "step=execute" in reason:
+                facts.append("not derivable: writer")
+            else:
+                facts.append("not derivable: reviewers")
+            return None, facts
+        at, why = int(match[1]) - 1, match[2]
+        if at < 2 or "fact order" in why:  # header lines, or reviewers before any writer
+            facts.append("not derivable: " + ("writer" if "fact order" in why else "record header"))
+            return None, facts
+        dropped = [lines[at]]
+        if lines[at].startswith("reviewer: "):
+            end = at + 1
+            while end < len(lines) and lines[end].startswith("  finding: "):
+                end += 1
+            dropped = lines[at:end]
+        del lines[at:at + len(dropped)]
+        facts.append(f"not derivable: {dropped[0].strip()[:90]} ({why})")
+    return None, facts
+
+
+def ensure_writer(cwd, unit, runtime=None, model=None, skill="merge"):
+    """Record the landing session as the writer when the review holds no `step=execute` writer
+    (an interactive session never records one, ticket 1380). A raid or hunt writer is never
+    overwritten. Returns None, or one `not derivable:` fact. Local writes only."""
+    rid = review_for(cwd, unit)
+    if not rid:
+        return "not derivable: review (none on notes)"
+    for entry in review_notes.entries(cwd, rid):
+        if entry["kind"] == "writer" and re.search(r"\bstep=execute\b", entry.get("line") or ""):
+            return None
+    runtime = runtime or os.environ.get("IDH_SESSION_RUNTIME", "")
+    model = (model or os.environ.get("IDH_SESSION_MODEL", "")).strip()
+    if not runtime:
+        try:
+            import runtime as runtimes  # same directory
+            runtime = runtimes.detect()
+            runtime = "claude-code" if runtime == "claude" else runtime  # the identity vocabulary
+        except Exception:
+            return "not derivable: writer runtime (no --session-runtime or IDH_SESSION_RUNTIME)"
+    if not model:
+        return "not derivable: writer model (no --session-model or IDH_SESSION_MODEL)"
+    import seat_clock  # same directory
+    line = (f"writer: step=execute · runtime={runtime} · model={seat_clock.qualify(model, runtime)}"
+            " · effort=not-stated · route=landing · independence=not-stated")
+    try:
+        record_writer(cwd, line, unit, skill=skill)
+    except ValueError as exc:
+        return f"not derivable: writer ({exc})"
+    return None
+
+
 def notes_block(cwd, unit, project):
-    """(text, status) of the unit's block on notes: status `ok`, `missing` (no review) or
-    `invalid: <reason>` (the strict parser's); text only when ok. Local reads only."""
+    """(text, status) of the unit's block on notes: status `ok`, or the `not derivable: <fact>`
+    lines (`; `-joined) of what could not be derived. Text is whatever the salvage keeps (None
+    when no writer or reviewer survives). Local reads only; never raises on attribution."""
     try:
         rid = review_for(cwd, unit)
         if not rid:
-            return None, "missing"
-        text = notes_record(cwd, rid, project)
-        parse_record(text, strict=True)
+            return None, "not derivable: review (none on notes)"
+        text, facts = salvage(notes_record(cwd, rid, project))
     except (ValueError, review_notes.Refusal) as exc:
-        return None, f"invalid: {exc}"
-    return text, "ok"
+        return None, f"not derivable: block ({exc})"
+    return text, "; ".join(facts) or "ok"
 
 
 def put_block(body, text):
@@ -523,18 +598,25 @@ def merged_date(cwd, unit):
 
 
 def capture_unit(args):
-    """--capture-unit UNIT: the block from notes, its merge date, validated, captured."""
+    """--capture-unit UNIT: the block from notes, its merge date, salvaged, captured. A lost
+    fact is one `not derivable:` warning (ticket 1380); only an unmerged unit is refused."""
     cwd = "."
     merged = merged_date(cwd, args.capture_unit)
     if not merged:
         raise ValueError(f"{args.capture_unit} is not merged")
     rid = review_for(cwd, args.capture_unit)
     if not rid:
-        raise ValueError(f"{args.capture_unit} has no review on notes (a pre-switch PR: --capture-pr)")
+        LOG.warning("attribution: not derivable: review (none on notes; a pre-switch PR: --capture-pr)")
+        return 0
     project = args.project or Path(_git_out(cwd, "rev-parse", "--path-format=absolute",
                                             "--git-common-dir") or "./.git").parent.name
-    text = notes_record(cwd, rid, project, merged)
-    LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
+    fact = ensure_writer(cwd, args.capture_unit, getattr(args, "session_runtime", None),
+                         getattr(args, "session_model", None), skill="roar")
+    text, facts = salvage(notes_record(cwd, rid, project, merged))
+    for item in ([fact] if fact else []) + facts:
+        LOG.warning("attribution: %s", item)
+    if text:
+        LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
     return 0
 
 
@@ -542,27 +624,36 @@ def append_seats(args):
     """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
     if args.seats_pr:
         fg = forge_for(args.seats_pr)
-        results = review_results(args.seats_pr, fg)
+        try:
+            results = review_results(args.seats_pr, fg)
+        except ValueError as error:
+            if "has no review on notes" not in str(error):
+                raise
+            LOG.warning("attribution: not derivable: %s", error)  # a missing review is no failure (ticket 1380)
+            return 0
         body = forge_call(fg.resolve, str(args.seats_pr))["body"]
     else:
         results, body = args.seats.read_text(), sys.stdin.read()
     lines, failures = seat_lines(results, body, args.masked_evidence)
-    for failure in failures:
-        LOG.error("attribution-record: capture failure: %s", failure)
+    for failure in failures:  # --seats-pr is a landing/roar path: a warning (ticket 1380)
+        if args.seats_pr:
+            LOG.warning("attribution: not derivable: %s", failure)
+        else:
+            LOG.error("attribution-record: capture failure: %s", failure)
     if args.seats_pr:
         if lines:
             append_to_pr(args.seats_pr, "\n".join(lines), args.project)
     else:
         sys.stdout.write(append_line(body, "\n".join(lines), args.pr, args.project) if lines else body)
-    return 1 if failures else 0
+    return 1 if failures and not args.seats_pr else 0  # --seats-pr: a lost seat never exits non-zero
 
 
 def capture_pr(args):
     """--capture-pr PR: seats, extract and capture of one merged PR in a single call.
 
-    Nothing is captured while a seat fails: the body keeps what was appended, and a
-    rerun skips those seats, so fixing the cause (often --masked-evidence) and rerunning
-    resumes where it stopped.
+    A seat that fails is a warning: the body keeps what was appended, the record is salvaged
+    and captured with what is derivable, and a rerun (often with --masked-evidence) skips the
+    seats the body already carries. Only an unmerged PR is refused.
     """
     pr = args.capture_pr
     fg = forge_for(pr)
@@ -571,12 +662,18 @@ def capture_pr(args):
     if state != "MERGED" or not merged_at:
         raise ValueError(f"PR #{pr} is {state}, not merged")
     args.seats, args.seats_pr = None, pr
-    if append_seats(args):
-        LOG.error("attribution-record: PR #%s not captured; fix the failures above and rerun", pr)
-        return 1
+    append_seats(args)  # seat failures are warnings; the rerun skips seats the body carries
     body = forge_call(fg.resolve, str(pr))["body"]
-    text = extract_record(body, merged_at[:10])
-    LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
+    merged = merged_at[:10]
+    try:
+        text = extract_record(body, merged)
+    except ValueError as error:  # salvage what the strict reader refuses (ticket 1380)
+        raw = block_text(body, merged)
+        text, facts = salvage(raw) if raw else (None, [f"not derivable: block ({error})"])
+        for item in facts:
+            LOG.warning("attribution: %s", item)
+    if text:
+        LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
     return 0
 
 
@@ -597,12 +694,28 @@ def notes_main(parser, args):
         if args.from_notes or args.render_pr:
             project = args.project or Path(_git_out(".", "rev-parse", "--path-format=absolute",
                                                     "--git-common-dir") or "./.git").parent.name
-            text, status = notes_block(".", args.from_notes or f"pr:{args.render_pr}", project)
-            if args.from_notes or not text:
-                sys.stdout.write(text if text else status + "\n")
-                return 0 if text else 1
-            render_to_pr(args.render_pr, text)
-            sys.stdout.write("rendered\n")
+            unit = args.from_notes or f"pr:{args.render_pr}"
+            facts = []
+            if args.render_pr:  # landing: an interactive session records itself as the writer
+                fact = ensure_writer(".", unit, args.session_runtime, args.session_model)
+                facts += [fact] if fact and "review (none" not in fact else []
+            text, status = notes_block(".", unit, project)
+            if args.from_notes:
+                if text:
+                    sys.stdout.write(text)
+                    if status != "ok":
+                        LOG.warning("attribution: %s", status.replace("; ", "\nattribution: "))
+                else:
+                    sys.stdout.write(status + "\n")
+                return 0
+            for item in facts + ([] if status == "ok" else status.split("; ")):
+                LOG.warning("attribution: %s", item)
+            if text:
+                try:
+                    render_to_pr(args.render_pr, text)
+                    sys.stdout.write("rendered\n")
+                except ValueError as error:  # a failed render costs the record, never the landing
+                    LOG.warning("attribution: not derivable: render (%s)", error)
             return 0
         if not args.capture or not args.audience:
             parser.error("--capture-unit needs --capture PROJECT and --audience")
@@ -643,10 +756,16 @@ def main():
     parser.add_argument("--skill", default="raid", help="with --record-writer: the recording skill")
     parser.add_argument("--from-notes", metavar="UNIT",
                         help="print the block of a pr:<n>, branch:<name> or rv- review from notes; "
-                             "exit 1 printing missing or invalid: <reason>")
+                             "print the block, or `not derivable:` lines; exit 0 either way (ticket 1380)")
     parser.add_argument("--render-pr", type=int, metavar="PR",
                         help="landing (merge step 5a): write PR's notes block into its body, read back; "
-                             "exit 1 is a warning, never a refusal")
+                             "a lost fact is a `not derivable:` warning; exit 0")
+    parser.add_argument("--session-runtime", default=os.environ.get("IDH_SESSION_RUNTIME", ""),
+                        help="with --render-pr/--capture-unit: the landing session's runtime when the review "
+                             "holds no execute writer (default $IDH_SESSION_RUNTIME, else detected)")
+    parser.add_argument("--session-model", default=os.environ.get("IDH_SESSION_MODEL", ""),
+                        help="with --render-pr/--capture-unit: the session's verbatim model id "
+                             "(default $IDH_SESSION_MODEL)")
     parser.add_argument("--capture-unit", metavar="UNIT",
                         help="capture a merged pr:<n> or branch:<name> unit's block from notes "
                              "(needs --capture PROJECT and --audience)")

@@ -300,6 +300,12 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
         base = info.get("base") or base
         base_ref = f"origin/{base}"
     unit = (info.get("review_id") or pr) if local else f"pr:{pr}"
+    try:  # an interactive session records itself as the writer (ticket 1380); a raid's stays
+        fact = attribution_record.ensure_writer(str(cwd), unit)
+    except Exception as exc:  # a warning, never a refusal
+        fact = f"not derivable: writer ({exc})"
+    if fact and "review (none" not in fact:
+        out(f"attribution: {fact}")
     status, _ = attribution(cwd, unit, None if local else info.get("body") or "")
     out(f"attribution: {status}")
     claims = claims_of(info, local)
@@ -428,7 +434,13 @@ def main(argv=None) -> int:
                    help="comma list of ticket ids the gate ruled on, or - for none")
     p.add_argument("--base", default="main")
     p.add_argument("--cleanup", action="store_true", help="remove the merged worktree and branch")
+    p.add_argument("--session-runtime", help="writer runtime when the review has no execute writer "
+                                             "(default $IDH_SESSION_RUNTIME, else detected)")
+    p.add_argument("--session-model", help="the session's verbatim model id (default $IDH_SESSION_MODEL)")
     a = p.parse_args(argv)
+    for flag, name in ((a.session_runtime, "IDH_SESSION_RUNTIME"), (a.session_model, "IDH_SESSION_MODEL")):
+        if flag:
+            os.environ[name] = flag
     claims = [] if a.ruled_claims == "-" else [c for c in a.ruled_claims.split(",") if c]
     try:
         fg = forge.get_forge(None, a.pr, landing=True)

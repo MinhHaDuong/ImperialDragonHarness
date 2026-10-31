@@ -242,6 +242,22 @@ def test_forge_landing_renders_the_notes_block_right_before_the_merge(repo):
     assert forge.body.startswith(body)
 
 
+def test_forge_landing_with_no_writer_records_one_and_prints_no_invalid(repo, monkeypatch):
+    """Ticket 1380: an interactive session's review has gaze answers and no writer entry."""
+    import review_notes as rn
+    monkeypatch.setenv("IDH_SESSION_RUNTIME", "claude-code")
+    monkeypatch.setenv("IDH_SESSION_MODEL", "claude-opus-5-5")
+    rid = rn.open_review(str(repo), "feat", "origin/main", unit="pr:7", remote="")
+    rn.add(str(repo), "answer", rid, {"run_id": "gz-1", "result": "REVIEWED", "seats": "panel",
+                                      "coverage": {"scope": "full"}, "attribution": [REVIEWER], "text": "x"})
+    forge = RenderForge(head(repo), "Summary\n")
+    code, out = land(repo, forge, head(repo))
+    assert code == 0, out
+    assert not any("invalid" in line or "not derivable" in line for line in out), out
+    record = rl.attribution_record.parse_pr_body(forge.body)
+    assert record["writer"]["model"] == "anthropic/claude-opus-5-5" and record["reviewers"][0]["seat"] == "a"
+
+
 def test_failed_render_is_a_warning_and_the_merge_goes_on(repo):
     gazed(repo)
     forge = RenderForge(head(repo), "Summary\n", fail=True)
@@ -379,5 +395,5 @@ def test_render_reads_the_block_again_after_the_notes_push(repo, monkeypatch):
     forge = RenderForge(head(repo), "Summary\n")
     code, out = land(repo, forge, head(repo))
     assert code == 0, out
-    assert any(line.startswith("attribution: invalid") for line in out)  # step 0: no reviewer yet
+    assert any(line.startswith("attribution: not derivable") for line in out)  # step 0: no reviewer yet
     assert "render" in forge.calls and REVIEWER in forge.body

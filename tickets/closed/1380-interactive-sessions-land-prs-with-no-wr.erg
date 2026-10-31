@@ -2,11 +2,14 @@
 Title: Interactive sessions land PRs with no writer entry, so every landing warns attribution invalid
 Created: 2026-10-30
 Author: claude
+Closed: autoclosed — PR #2071
 
 --- log ---
 2026-10-30T20:22Z claude created
 2026-10-31T08:45Z claude note widened as child of tracker 1382 (memo conception/2026-10-31-monitoring-redesign.md § 4.1): capture warns instead of refusing
 2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
+2026-10-31T09:15Z reviewer executed on branch t1380-attribution-exit: salvage + ensure_writer, exit 0 on attribution at every landing and roar path
+2026-10-31T09:26Z reviewer closed — autoclosed — PR #2071
 
 --- body ---
 ## Context
