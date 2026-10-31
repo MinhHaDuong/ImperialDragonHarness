@@ -34,7 +34,7 @@ covered, and no label claims more.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | the default whenever the host consents to spend on a family other than gaze's own (the `# spend:` line): at least one seat of a consented family, on the perspective the risk row names, else the widest one; without consent the plan names that perspective unavailable and a same-family seat takes it, never called independent |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference, not a requirement (`decorrelation.md` § Family is a preference, not a gate): worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), which callers discard. When the
@@ -126,14 +126,15 @@ regression	script	none	fails on the base, passes on the head
 
 Arguments `1702` on a 300-line change to a merge gate script. The default what
 is the whole merge request against its ticket's exit criteria; a gate is a
-high-risk row, so one seat comes from another family.
+high-risk row, and the host consents to OpenAI, so the red team comes from
+another family.
 
 ```text
 # intent: the whole merge request against its ticket's exit criteria
-# method: panel; red team from another family because a gate is high risk
+# method: panel; red team from another family: high risk, consented, worth the spend
 # budget: 13m
 # spend: cross-family consented for OpenAI (<config path>)
 correctness	mid-model	anthropic	headless; logic of the gate against the exit criteria
 scope	small-model	anthropic	headless; only what the ticket asks
-redteam	other-model	openai	headless codex; gate bypass, another family for a high-risk row
+redteam	other-model	openai	headless codex; gate bypass, another family preferred on a high-risk row
 ```

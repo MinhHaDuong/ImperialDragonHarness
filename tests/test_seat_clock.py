@@ -185,9 +185,7 @@ def plan(tmp_path, *items, providers=None, extra=()):
 
 
 SELF = ('self', 'self', 'anthropic', 'gaze reads the diff')
-SAME = ('correctness', 'mid-model', 'anthropic', 'headless claude-code')
 OPENAI = ('redteam', 'other-model', 'openai', 'headless codex')
-CHECK = ('control', 'script', 'none', 'fails on base')
 
 
 def test_plan_write_refuses_all_self_plan(tmp_path):
