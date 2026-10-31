@@ -61,8 +61,17 @@ IDH_ROOT="${IDH_ROOT:-$(cd -P "$ROAR_DIR/../.." && pwd -P)}"
 
 SEV=0
 base=""; base_tip=""
-note() { echo "roar: $*"; }
-bump() { [ "$1" -gt "$SEV" ] && SEV=$1; return 0; }
+FIRED=""; LAST_TAG=""
+note() {
+    echo "roar: $*"
+    case "$1" in [A-Z]*:*) LAST_TAG=${1%%:*} ;; esac
+}
+# bump records the check of the note just printed, so RESULT can name it.
+bump() {
+    [ "$1" -gt "$SEV" ] && SEV=$1
+    case " $FIRED " in *" $LAST_TAG "*) ;; *) [ -n "$LAST_TAG" ] && FIRED="${FIRED:+$FIRED }$LAST_TAG" ;; esac
+    return 0
+}
 
 ticket_file() { # <id> → path of the ticket, open or archived
     local f
@@ -584,7 +593,7 @@ esac
 
 case "$SEV" in
     0) note "RESULT: clean" ;;
-    1) note "RESULT: findings (exit 1)" ;;
-    *) note "RESULT: could-not-look (exit 2) — not an all-clear" ;;
+    1) note "RESULT: findings (exit 1): ${FIRED// /, }" ;;
+    *) note "RESULT: could-not-look (exit 2): ${FIRED// /, } — not an all-clear" ;;
 esac
 exit "$SEV"
