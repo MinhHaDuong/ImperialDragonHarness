@@ -224,8 +224,11 @@ def _classify_simple(tokens: list[str], depth: int) -> str:
     if exe in ("claude", "pi") and ("-p" in args or "--print" in args):
         return "worker"
     if exe.startswith("python"):
-        if "-m" in args and args.index("-m") + 1 < len(args):
-            return "tests" if args[args.index("-m") + 1] in ("pytest", "py.test") else "other"
+        for i, arg in enumerate(args):  # interpreter options end at the first script or `-m MODULE`
+            if arg == "-m" and i + 1 < len(args):
+                return "tests" if args[i + 1] in ("pytest", "py.test") else "other"
+            if not arg.startswith("-"):
+                break
         script = next((a for a in args if not a.startswith("-")), "")
         return "worker" if Path(script).name in WORKER_SCRIPTS else "other"
     if exe in WORKER_SCRIPTS or exe.endswith(("-seat", "_seat")):
@@ -245,7 +248,7 @@ def _classify_simple(tokens: list[str], depth: int) -> str:
 
 def classify_command(command: str, depth: int = 0) -> str:
     """Class of a shell command line: `worker`, `tests`, `git`, `file` or `other` (precedence in that order)."""
-    found = {_classify_simple(c, depth) for c in _simple_commands(command or "")}
+    found = {_classify_simple(c, depth) for c in _simple_commands(command if isinstance(command, str) else "")}
     return next((c for c in ("worker", "tests", "git", "file") if c in found), "other")
 
 
@@ -519,8 +522,8 @@ def read_codex(lines: Iterable[str], file: str, agent: str | None = None,
             turn_id = payload.get("turn_id") or turn_id
         elif kind == "response_item" and ptype in CODEX_CALLS and ts is not None:
             call_id = payload.get("call_id") or payload.get("id")
-            name = payload.get("name") or ptype
-            pending[call_id] = {"name": name, "start": ts, "cls": _codex_class(name, payload)}
+            call_name = payload.get("name") or ptype
+            pending[call_id] = {"name": call_name, "start": ts, "cls": _codex_class(call_name, payload)}
         elif kind == "response_item" and ptype and ptype.endswith("_output") and ts is not None:
             call = pending.get(payload.get("call_id"))
             if call is not None and "end" not in call:

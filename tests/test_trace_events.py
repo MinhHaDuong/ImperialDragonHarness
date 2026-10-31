@@ -223,6 +223,8 @@ def test_trace_stats_reexports_the_moved_table():
     ("Bash", "sed -n 1,5p f", "file"), ("Bash", "find . -name '*.py' | wc -l", "file"),
     ("Bash", "git diff | grep pytest", "git"),  # precedence: git over file
     ("Bash", "git status && codex exec go", "worker"),
+    ("Bash", "python3 script.py -m pytest", "other"), ("Bash", "python3 -u -m pytest -q", "tests"),
+    ("Bash", ["not", "a", "string"], "other"),
     ("Bash", "echo done", "other"), ("Bash", "cd /w", "other"), ("Bash", "export A=1", "other"),
     ("Bash", "grep '|' pytest", "file"), ("Bash", "grep 'a;b' pytest", "file"),  # quoted separators
     ("Bash", "# run pytest later\nls", "file"), ("Bash", "# c\npytest -q", "tests"),  # comments
@@ -262,3 +264,9 @@ def test_claude_tool_class_comes_from_the_command_and_non_tools_have_none():
     tools = {t.pointer[1]: t.tool_class for t in by_kind(events, "tool")}
     assert tools == {"tu1": "tests", "tu2": "subagent"}
     assert events[0].tool_class is None and all(t.tool_class is None for t in by_kind(events, "turn"))
+
+
+def test_codex_agent_name_is_not_overwritten_by_a_tool_name():
+    rows = [{"timestamp": "2026-01-01T00:00:01.000Z", "type": "response_item", "payload": {
+        "type": "function_call", "name": "exec_command", "call_id": "c1", "arguments": "{}"}}]
+    assert te.read_codex(lines(*rows), "f", name="seat/codex")[0].name == "seat/codex"
