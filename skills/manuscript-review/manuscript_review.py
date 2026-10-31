@@ -10,6 +10,9 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
+import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -456,9 +459,21 @@ def brief(manifest, run, stage, question, review=None):
     )
 
 
+def record_launch(stage, session_id, started, code, run):
+    """Append this stage's launch line; a missing helper or a failed write only warns."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+        import launch_line
+        launch_line.record(seat=stage, child_runtime="claude", child_session=session_id,
+                           ts_start=started, ts_end=time.time(), exit=code, cwd=run)
+    except Exception as error:
+        print(f"launch_line: {error}", file=sys.stderr)
+
+
 def execute_stage(run, stage, prompt, args):
     """One CLI route only; its own authentication, no credentials touched here."""
-    command = ["claude", "-p", "--model", args.model, "--effort", args.effort,
+    session_id = str(uuid.uuid4())  # pinned, so the launch line names the child's transcript (ticket 1384)
+    command = ["claude", "-p", "--session-id", session_id, "--model", args.model, "--effort", args.effort,
                "--output-format", "stream-json", "--verbose",
                "--safe-mode", "--restricted", "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
                "--tools", "Read,WebSearch,WebFetch", "--allowedTools", "Read,WebSearch,WebFetch",
@@ -470,6 +485,7 @@ def execute_stage(run, stage, prompt, args):
                "requested_effort": args.effort, "route_reason": args.route_reason,
                "clearance": args.clearance, "prompt_sha256": digest(prompt_path)})
     completion = {"started": datetime.now(timezone.utc).isoformat(), "exit_code": None}
+    started = time.time()
     with prompt_path.open("rb") as stdin, (run / "private" / f"{stage}.stream.jsonl").open("wb") as stdout, \
             (run / "private" / f"{stage}.stderr.txt").open("wb") as stderr:
         process = subprocess.Popen(command, cwd=run, stdin=stdin, stdout=stdout, stderr=stderr,
@@ -488,6 +504,7 @@ def execute_stage(run, stage, prompt, args):
         finally:
             completion.update(exit_code=process.returncode, finished=datetime.now(timezone.utc).isoformat())
             write_json(run / f"{stage}.termination.json", completion)
+            record_launch(stage, session_id, started, process.returncode, run)
     return (run / "private" / f"{stage}.stream.jsonl").read_text(encoding="utf-8"), code
 
 

@@ -63,6 +63,8 @@ _spec.loader.exec_module(seat_clock)  # a sibling script, not a package
 _spec = importlib.util.spec_from_file_location('transcript_spool', HERE / 'transcript_spool.py')
 transcript_spool = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(transcript_spool)
+sys.path.insert(0, str(HERE))
+import launch_line  # noqa: E402  (ticket 1384)
 
 ROUTES = HERE.parent / 'skills' / 'route' / 'routes.json'
 CONSENT_KEY = 'cross_family_spend'
@@ -447,6 +449,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
                           'env': sorted(command.env),  # names only, never values
                           'cwd': 'scratch' if door.get('scratch_cwd') else str(args.review_tree)}))
         return True, 'dry run, nothing launched'
+    command.argv, _ = launch_line.pin(command.argv)  # claude, pi: the child's id is ours (ticket 1384)
     try:
         if spool:
             spool.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -471,7 +474,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             home = seat_home(door, run_model)
             command.env[door['seat_agent']['home_env']] = str(home)
         ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin,
-                                          env=command.env, replace_env=True)
+                                          env=command.env, replace_env=True,
+                                          launch={'seat': args.name, 'spool': spool})
     except OSError as error:
         return False, f'no report (cannot prepare the seat: {error.strerror})'
     finally:

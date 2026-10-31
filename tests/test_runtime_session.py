@@ -30,9 +30,14 @@ def test_registered():
     assert runtime_session in runtime.VERBS
 
 
-def test_pi_session_id_is_noop_exit_1(env, capsys):
-    rc, out, _ = cli(capsys, "--runtime", "pi", "session", "id")
-    assert rc == 1 and out.startswith("NOOP session id pi:")
+def test_pi_session_id_comes_from_the_adapter_export(env, monkeypatch, capsys):
+    monkeypatch.setenv("IDH_PI_SESSION_ID", "pi-3")  # exported by idh-wake.ts (ticket 1384)
+    assert cli(capsys, "--runtime", "pi", "session", "id")[:2] == (0, "pi-3")
+
+
+def test_pi_without_the_export_exits_3_not_an_empty_line(env, capsys):
+    rc, out, err = cli(capsys, "--runtime", "pi", "session", "id")
+    assert rc == 3 and out == "" and "IDH_PI_SESSION_ID unset" in err
 
 
 def test_claude_session_id(env, monkeypatch, capsys):
@@ -91,5 +96,5 @@ def test_which_goes_through_the_verb_helpers(env, monkeypatch, capsys):
 
 def test_can_session(env, capsys):
     assert cli(capsys, "--runtime", "claude", "can", "session.id")[0] == 0
-    assert cli(capsys, "--runtime", "pi", "can", "session.id")[0] == 1
+    assert cli(capsys, "--runtime", "pi", "can", "session.id")[0] == 0
     assert cli(capsys, "--runtime", "pi", "can", "session.headless")[0] == 0

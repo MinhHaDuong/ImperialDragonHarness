@@ -618,6 +618,11 @@ def test_legacy_finding_text_must_be_the_whole_heading_block():
         mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
 
 
+def launches_file():
+    import transcript_spool  # scripts/ is on sys.path once manuscript_review is loaded
+    return transcript_spool.archive_root() / "transcripts" / transcript_spool.host() / "launches.jsonl"
+
+
 def test_reader_keeps_its_session_file_for_the_archive(tmp_path, monkeypatch):
     """Ticket 1383: the reader's transcript lands in the live Claude tree, where the archive finds it."""
     seen = {}
@@ -629,15 +634,25 @@ def test_reader_keeps_its_session_file_for_the_archive(tmp_path, monkeypatch):
         def wait(self, timeout=None):
             return 0
 
+    real_popen = mr.subprocess.Popen
+
     def popen(command, **kwargs):
+        if command[0] != "claude":  # the launch line asks git for its unit
+            return real_popen(command, **kwargs)
         seen["command"] = command
         return Done()
 
     run = tmp_path / "run"
     (run / "private").mkdir(parents=True)
     monkeypatch.setattr(mr.subprocess, "Popen", popen)
+    monkeypatch.setenv("IDH_UNIT", "t-1384")
     args = type("A", (), dict(model="m", effort="medium", reader_turns=1, verifier_turns=1, timeout=5,
                               route_reason="r", clearance="c"))()
     mr.execute_stage(run, "review", "prompt", args)
     assert "--no-session-persistence" not in seen["command"] and seen["command"][0] == "claude"
     assert "--no-session-persistence" not in (run / "review.launch.json").read_text()
+    # Ticket 1384: one launch line per stage, naming the pinned session id.
+    sid = seen["command"][seen["command"].index("--session-id") + 1]
+    lines = [json.loads(line) for line in launches_file().read_text().splitlines()]
+    assert [(row["seat"], row["child_runtime"], row["child_session"], row["exit"], row["unit"]) for row in lines] == [
+        ("review", "claude", sid, 0, "t-1384")]

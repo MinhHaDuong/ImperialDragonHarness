@@ -2,12 +2,14 @@
 Title: Every headless launcher writes one launch line per child
 Created: 2026-10-31
 Author: claude
+Closed: autoclosed — PR #2073
 
 --- log ---
 2026-10-31T08:39Z claude created
 2026-10-31T09:30Z claude note integrity re-review of PR 2067: every launcher, child id pinned or captured, Pi parent id
 2026-10-31T10:10Z claude note third gaze of PR 2067 folded (OpenAI prices, Pi parent exit, launcher wording)
 2026-10-31T09:09Z reviewer note raid 8ad75a: plan annotation added (phases 2-3 compressed, blind-spot+feasibility pass)
+2026-10-31T10:00Z reviewer closed — autoclosed — PR #2073
 
 --- body ---
 ## Context

@@ -71,6 +71,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import launch_line  # noqa: E402  (ticket 1384)
+
 MAX_BUDGET_M = 13  # 15-minute deadline less the closing (skills/gaze/references/plan.md)
 DEFAULT_CAP_S = 600  # the panel's ten-minute collection deadline
 
@@ -88,7 +91,26 @@ def kill_group(pid: int) -> None:
 
 def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
              stdin: Path | None = None, env: dict[str, str] | None = None,
-             replace_env: bool = False) -> tuple[bool, str]:
+             replace_env: bool = False, launch: dict | None = None) -> tuple[bool, str]:
+    """Run one seat; with `launch` ({'seat', optional 'spool'}) append its launch line on every return
+    path (ticket 1384). The line is bookkeeping: a failed write warns and never changes the outcome."""
+    info: dict = {}
+    started = time.time()
+    try:
+        return _run_seat(cap, out, command, cwd, stdin, env, replace_env, info)
+    finally:
+        if launch is not None:
+            try:
+                runtime, session = launch_line.child_from(command, out.with_name(out.name + '.log'),
+                                                          launch.get('spool'))
+                launch_line.record(seat=launch['seat'], child_runtime=runtime, child_session=session,
+                                   ts_start=started, ts_end=time.time(), exit=info.get('exit', 'failed to start'),
+                                   cwd=cwd)
+            except Exception as error:  # bookkeeping never changes the seat's outcome
+                print(f'launch_line: {error}', file=sys.stderr)
+
+
+def _run_seat(cap, out, command, cwd, stdin, env, replace_env, info) -> tuple[bool, str]:
     # The reader's stdout goes beside the report, never onto it: a seat that
     # writes <out>.part and renames it to <out> itself keeps its report.
     # `cwd` pins the reader to the review tree; `stdin` feeds it a prompt file
@@ -114,7 +136,9 @@ def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
     except subprocess.TimeoutExpired:
         kill_group(child.pid)
         child.wait()
+        info['exit'] = 'timeout'
         return False, f'no report (timed out after {cap}s)'
+    info['exit'] = code
     kill_group(child.pid)  # reap anything the reader left running
     wall = round(time.monotonic() - started)
     if out.exists() and out.stat().st_mtime >= launched:  # a past run's report does not count
@@ -442,7 +466,8 @@ def main(argv: list[str]) -> int:
             print(f'plan written: {args.panel}/manifest.txt')
         return 2 if problems else 0
     if args.mode == 'run':
-        ok, outcome = run_seat(args.cap, args.out, args.command)
+        ok, outcome = run_seat(args.cap, args.out, args.command,
+                               launch={'seat': seat_name(args.out)})
         line = f'{seat_name(args.out)}: {outcome}'
         try:
             args.out.with_name(args.out.name + '.status').write_text(line + '\n')
