@@ -2,11 +2,14 @@
 Title: Make each hoard a rebuild of the topics, not a delta
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2049
 
 --- log ---
 2026-10-29T19:54Z reviewer created
 2026-10-29T20:27Z reviewer input design: native memories as inboxes, drain requirements (author)
 2026-10-29T21:55Z reviewer note blocker 1348 closed — Blocked-by removed.
+2026-10-31T20:45Z reviewer note author accepted the fifth smelt (PR #2049) on 2026-10-31: criterion 2 met; criterion 1 met by PR #2016
+2026-10-31T20:45Z reviewer closed — autoclosed — PR #2049
 
 --- body ---
 ## Context
@@ -21,8 +24,8 @@ forge as reference.
 - Run the next harness hoard this way; it replaces the closed fifth hoard.
 
 ## Exit criteria
-- [ ] The hoard skill and HOARD.md describe the rebuild and the net-change report
-- [ ] One harness hoard has run as a rebuild and was accepted by the author
+- [x] The hoard skill and HOARD.md describe the rebuild and the net-change report
+- [x] One harness hoard has run as a rebuild and was accepted by the author
 
 ## Input design: native memories as inboxes (author, 2026-10-29)
 The author's idea was to merge the tools' memories. Accepted shape (option A): each runtime keeps
