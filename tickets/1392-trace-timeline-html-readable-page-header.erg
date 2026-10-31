@@ -1,0 +1,40 @@
+%erg 0.1
+Title: trace_timeline --html: readable page — header, how-to-read, lane shading, wheel zoom, drag pan
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T13:12Z claude created
+
+--- body ---
+## Context
+
+Follow-up of 1390 (PR #2078). The author opened the d77349fe page in Firefox
+on 2026-10-31 and asked for "some serious prettyfication": the page works but
+reads as a raw chart. Same constraints as 1390: one self-contained file, inline
+SVG/CSS/JS, no external URL, JSON export unchanged.
+
+## Exit criteria
+
+- [ ] Header: a title (what session this is: id plus a human label such as its
+      first prompt or slash command when derivable), author (the session's
+      user, e.g. git `user.name`, else the host user), and date (session start;
+      generation time may follow)
+- [ ] One paragraph under the header saying what the page shows and how to
+      read it: lanes = agents (session, subagents, seats under their parent),
+      bars = calls positioned by start and sized by duration, hover for
+      details, how to zoom and pan
+- [ ] Lanes drawn on alternating background shades, so a row's lane is
+      readable across the full width
+- [ ] Mouse wheel zooms horizontally, centred on the pointer
+- [ ] Click-hold-drag pans the viewport (horizontally at least)
+- [ ] Existing tests still pass; the self-contained test still holds; the JSON
+      export stays byte-identical
+- [ ] Rendered for d77349fe-10eb-46dd-a58c-d5723e771c4d and checked in
+      Firefox (headless screenshot; the author looks at interaction)
+
+## Notes
+
+- The session argument needs the full id today (`d77349fe` alone fails:
+  "neither in the live tree nor in the archive"). Accepting a unique prefix is
+  a cheap usability fix the hunt may fold in if trivial; not an exit criterion.
