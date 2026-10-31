@@ -204,16 +204,28 @@ def test_trace_stats_reexports_the_moved_table():
     ("Bash", "python3 scripts/seat_clock.py run -- codex exec x", "worker"),
     ("Bash", "pytest -q && codex exec go", "worker"),  # precedence: worker over tests
     ("Bash", "bash -lc 'make check'", "tests"),
-    ("Bash", "git status", "other"), ("Bash", "ls -la", "other"), ("Bash", "", "other"),
+    ("Bash", "git status", "git"), ("Bash", "ls -la", "file"), ("Bash", "", "other"),
     # negatives: a command that only mentions the words is not that class
-    ("Bash", "grep -rn pytest tests/", "other"),
+    ("Bash", "grep -rn pytest tests/", "file"),
     ("Bash", "echo 'run pytest then codex exec'", "other"),
-    ("Bash", "git commit -m 'fix pytest flake\n\nmake check passes'", "other"),
-    ("Bash", "cat <<'EOF'\npytest\nEOF", "other"),
-    ("Bash", "cat notes.md | grep 'make check'", "other"),
+    ("Bash", "git commit -m 'fix pytest flake\n\nmake check passes'", "git"),
+    ("Bash", "cat <<'EOF'\npytest\nEOF", "file"),
+    ("Bash", "cat notes.md | grep 'make check'", "file"),
     ("WebFetch", None, "other"),
-    ("Bash", "grep '|' pytest", "other"), ("Bash", "grep 'a;b' pytest", "other"),  # quoted separators
-    ("Bash", "# run pytest later\nls", "other"), ("Bash", "# c\npytest -q", "tests"),  # comments
+    # prefixes are looked through
+    ("Bash", "IDH_ROOT=/x; P=/y; python3 -m pytest -q", "tests"),
+    ("Bash", "export IDH_ROOT=/x && cat a.md", "file"),
+    ("Bash", "timeout 110 make check-fast > log 2>&1", "tests"),
+    ("Bash", "cd /w && git fetch -q && git log --oneline", "git"),
+    ("Bash", "env FOO=1 nice -n 5 time grep -n x f", "file"),
+    ("Bash", "${ERG:-tickets/erg} log 1393 'note'", "git"),
+    ("Bash", "gh pr view 5", "git"), ("Bash", "tickets/erg close 3", "git"),
+    ("Bash", "sed -n 1,5p f", "file"), ("Bash", "find . -name '*.py' | wc -l", "file"),
+    ("Bash", "git diff | grep pytest", "git"),  # precedence: git over file
+    ("Bash", "git status && codex exec go", "worker"),
+    ("Bash", "echo done", "other"), ("Bash", "cd /w", "other"), ("Bash", "export A=1", "other"),
+    ("Bash", "grep '|' pytest", "file"), ("Bash", "grep 'a;b' pytest", "file"),  # quoted separators
+    ("Bash", "# run pytest later\nls", "file"), ("Bash", "# c\npytest -q", "tests"),  # comments
     ("Bash", "make check 2>&1 | tail -3", "tests"), ("Bash", "pytest &> out.log", "tests"),
 ])
 def test_classify_tool(name, command, expected):
@@ -240,7 +252,7 @@ def test_codex_exec_calls_are_classified_by_their_command():
         row("2026-01-01T00:00:06.000Z", {"type": "local_shell_call", "call_id": "c6", "action": {"command": ["make", "check"]}}),
     ]
     tools = {t.pointer[1]: t.tool_class for t in by_kind(te.read_codex(lines(*rows), "f"), "tool")}
-    assert tools == {"c1": "tests", "c2": "other", "c3": "worker", "c4": "subagent", "c5": "file", "c6": "tests", "c7": "tests"}
+    assert tools == {"c1": "tests", "c2": "file", "c3": "worker", "c4": "subagent", "c5": "file", "c6": "tests", "c7": "tests"}
 
 
 def test_claude_tool_class_comes_from_the_command_and_non_tools_have_none():

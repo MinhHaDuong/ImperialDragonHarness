@@ -285,9 +285,10 @@ def _tooltip(e: dict) -> str:
 
 
 _COLORS = {"agent": "#8fa3b8", "turn": "#6aa88c", "tool": "#e69a1a"}
-_CLASS_COLORS = {"subagent": "#7b4fc9", "worker": "#c2185b", "tests": "#2d6fd0", "file": "#a58e5a", "other": "#e69a1a"}
+_CLASS_COLORS = {"subagent": "#7b4fc9", "worker": "#c2185b", "tests": "#2d6fd0", "git": "#17a2b8", "file": "#a58e5a", "other": "#e69a1a"}
 _CLASS_MEANINGS = {"subagent": "Skill or Agent call", "worker": "shell launching a headless coder or reviewer",
-                   "tests": "pytest, make check or lint", "file": "read, edit, write, search files",
+                   "tests": "pytest, make check or lint", "git": "version control, forge and tickets",
+                   "file": "read, edit, write, search files (incl. shell reads)",
                    "other": "any other call"}
 
 _MEANINGS = {"agent": "an agent's whole span (session, subagent, or seat)", "turn": "one model turn",
@@ -389,7 +390,7 @@ drag={x:e.clientX,y:e.clientY,sl:box.scrollLeft,st:box.scrollTop};box.classList.
 window.addEventListener('mousemove',function(e){if(!drag)return;
 box.scrollLeft=drag.sl-(e.clientX-drag.x);box.scrollTop=drag.st-(e.clientY-drag.y);});
 window.addEventListener('mouseup',function(){drag=null;mdrag=false;box.classList.remove('drag');});
-lay();buildMini();
+pps=Math.max(MIN,Math.min(40,(box.clientWidth-left-20)/span));lay();buildMini();box.scrollLeft=pad;stick();labels();vp();
 """
 
 

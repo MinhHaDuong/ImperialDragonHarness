@@ -107,16 +107,21 @@ class Event:
 # A tool event carries one class so a timeline can tell a test run from a file read at a glance. The class
 # comes from the tool name and, for shell calls, the command text. A shell command is split into its
 # simple commands (quotes respected, heredoc bodies dropped) and each is judged by the program it RUNS,
-# never by words it mentions: `grep pytest f` is `other`. Precedence over the pieces of one command line:
-# worker > tests > other, so `pytest && codex exec ...` is a worker call.
-TOOL_CLASSES = ("subagent", "worker", "tests", "file", "other")
+# never by words it mentions: `grep pytest f` is `file`. Leading `VAR=x`, `export`, `env`, `timeout N`, `nice`,
+# `time` and `cd X &&` are looked through. Precedence over the pieces of one command line:
+# worker > tests > git > file > other, so `pytest && codex exec ...` is a worker call and `git diff | grep x`
+# is git. Shell reads (cat, grep, ls, find...) count as `file`, like the Read and Grep tools.
+TOOL_CLASSES = ("subagent", "worker", "tests", "git", "file", "other")
 SUBAGENT_TOOLS = {"skill", "agent", "task", "spawn_agent", "followup_task", "send_message", "wait_agent",
                   "list_agents", "interrupt_agent"}
 FILE_TOOLS = {"read", "edit", "write", "multiedit", "notebookedit", "grep", "glob", "ls", "find",
               "read_file", "grep_files", "list_dir", "apply_patch", "view_image"}
 SHELL_TOOLS = {"bash", "exec", "exec_command", "shell", "shell_command", "local_shell", "unified_exec"}
 WORKER_SCRIPTS = {"seat_clock.py", "gaze_seat.py", "runtime_launch.py"}
-WRAPPERS = {"sudo", "env", "time", "nohup", "nice", "rtk", "command", "exec", "xargs", "setsid", "stdbuf"}
+WRAPPERS = {"sudo", "env", "export", "time", "nohup", "nice", "rtk", "command", "exec", "xargs", "setsid", "stdbuf"}
+SHELL_READS = {"cat", "head", "tail", "sed", "grep", "egrep", "fgrep", "rg", "ls", "find", "wc", "awk", "jq",
+               "diff", "stat", "tree", "tee", "du", "less", "sort", "file", "realpath", "basename", "dirname"}
+VCS_PROGRAMS = {"git", "gh", "erg"}
 SHELLS = {"bash", "sh", "zsh", "dash"}
 HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
 
@@ -194,11 +199,15 @@ def _is_c_flag(arg: str) -> bool:
 
 def _classify_simple(tokens: list[str], depth: int) -> str:
     while tokens and (re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]) or tokens[0] in WRAPPERS
-                      or tokens[0] in ("timeout", "proxy", "uv", "run")):
+                      or tokens[0] in ("timeout", "proxy", "uv", "run", "nice")):
         if tokens[0] == "timeout":  # timeout [opts] DURATION cmd
             tokens = tokens[1:]
             while tokens and (tokens[0].startswith("-") or re.fullmatch(r"\d+(\.\d+)?[smhd]?", tokens[0])):
                 tokens = tokens[1:]
+            continue
+        if tokens[0] == "nice":  # nice [-n N | -N] cmd
+            tokens = tokens[3:] if tokens[1:2] == ["-n"] else tokens[1:]
+            tokens = tokens[1:] if tokens and re.fullmatch(r"-\d+", tokens[0]) else tokens
             continue
         tokens = tokens[1:]
     if not tokens:
@@ -227,13 +236,17 @@ def _classify_simple(tokens: list[str], depth: int) -> str:
         targets = [a for a in args if not a.startswith("-") and "=" not in a]
         if any(t.startswith(("check", "lint")) or t in ("test", "tests") for t in targets):
             return "tests"
+    if exe.rstrip("}") in VCS_PROGRAMS:  # also `${ERG:-tickets/erg}`
+        return "git"
+    if exe in SHELL_READS:
+        return "file"
     return "other"
 
 
 def classify_command(command: str, depth: int = 0) -> str:
-    """Class of a shell command line: `worker`, `tests` or `other` (precedence in that order)."""
+    """Class of a shell command line: `worker`, `tests`, `git`, `file` or `other` (precedence in that order)."""
     found = {_classify_simple(c, depth) for c in _simple_commands(command or "")}
-    return "worker" if "worker" in found else "tests" if "tests" in found else "other"
+    return next((c for c in ("worker", "tests", "git", "file") if c in found), "other")
 
 
 def classify_tool(name: str, command: str | None = None) -> str:
