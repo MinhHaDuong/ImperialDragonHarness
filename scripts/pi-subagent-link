@@ -55,6 +55,20 @@ fi
 
 dest="$pi_home/extensions/subagent"
 mkdir -p "$dest"
-for f in index.ts agents.ts; do
-  ln -sfn "$src/$f" "$dest/$f"
-done
+ln -sfn "$src/agents.ts" "$dest/agents.ts"
+
+# The example spawns every child with --no-session, so subagent runs leave no transcript. Install a
+# copy whose flag names the archive spool instead (ticket 1383; path convention
+# scripts/transcript_spool.py: <archive>/spool/<host>/pi). Never write through the old symlink.
+spool="${IDH_ARCHIVE_ROOT:-$HOME/archive}/spool/${HOSTNAME%%.*}/pi"
+flag='"--no-session"'
+IFS= read -r -d '' body < "$src/index.ts" || true
+case "$spool" in *[\\\"\&$'\n']*) spool="" ;; esac
+if [ -z "$spool" ] || [[ "$body" != *"$flag"* ]]; then
+  ln -sfn "$src/index.ts" "$dest/index.ts"
+  echo "pi-subagent-link: $src/index.ts has no $flag to patch (or the spool path is unsafe); subagent children keep no session file" >&2
+  exit 1
+fi
+mkdir -p "$spool"
+rm -f "$dest/index.ts"
+printf '%s' "${body//"$flag"/\"--session-dir\", \"$spool\"}" > "$dest/index.ts"

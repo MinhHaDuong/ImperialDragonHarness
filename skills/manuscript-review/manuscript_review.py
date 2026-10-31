@@ -459,7 +459,7 @@ def brief(manifest, run, stage, question, review=None):
 def execute_stage(run, stage, prompt, args):
     """One CLI route only; its own authentication, no credentials touched here."""
     command = ["claude", "-p", "--model", args.model, "--effort", args.effort,
-               "--output-format", "stream-json", "--verbose", "--no-session-persistence",
+               "--output-format", "stream-json", "--verbose",
                "--safe-mode", "--restricted", "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}',
                "--tools", "Read,WebSearch,WebFetch", "--allowedTools", "Read,WebSearch,WebFetch",
                "--permission-mode", "dontAsk", "--disable-slash-commands", "--max-turns",

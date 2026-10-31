@@ -60,6 +60,10 @@ _spec = importlib.util.spec_from_file_location('seat_clock', HERE / 'seat_clock.
 seat_clock = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(seat_clock)  # a sibling script, not a package
 
+_spec = importlib.util.spec_from_file_location('transcript_spool', HERE / 'transcript_spool.py')
+transcript_spool = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(transcript_spool)
+
 ROUTES = HERE.parent / 'skills' / 'route' / 'routes.json'
 CONSENT_KEY = 'cross_family_spend'
 MODEL_FLAGS = ('--model', '-m')
@@ -199,7 +203,12 @@ def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile
         else:
             argv.append(token)
     lead = next(i for i, token in enumerate(argv) if token.startswith('-'))
-    return Command(argv[:lead] + list(door['seat_rails']) + argv[lead:], stdin)
+    rails = list(door['seat_rails'])
+    if any('<spool>' in token for token in rails):
+        if 'spool' not in values:
+            raise ValueError('seat_rails placeholder <spool> has no value')
+        rails = [token.replace('<spool>', values['spool']) for token in rails]
+    return Command(argv[:lead] + rails + argv[lead:], stdin)
 
 
 def seat_home(door: dict, model: str) -> Path:
@@ -405,6 +414,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         brief = args.brief.read_text(encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot read the brief: {error.strerror})'
+    spool = None
+    if 'spool' in door:  # the door's session files go to the archive spool, never to /dev/null (ticket 1383)
+        spec = door['spool']
+        spool = transcript_spool.spool_dir(spec['runtime'],
+                                           transcript_spool.seat_id() if spec.get('per_seat') else None)
+        values['spool'] = str(spool)
     diff_file = args.panel / f'{args.name}.diff'
     values['diff'] = str(diff_file)
     try:
@@ -433,6 +448,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
                           'cwd': 'scratch' if door.get('scratch_cwd') else str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
+        if spool:
+            spool.mkdir(parents=True, exist_ok=True, mode=0o700)
         for leftover in (staging, last):  # a past run's output never stands in for this one
             leftover.unlink(missing_ok=True)
         diff_file.write_text(diff, encoding='utf-8')

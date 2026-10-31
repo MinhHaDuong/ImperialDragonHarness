@@ -17,12 +17,13 @@ pytestmark = pytest.mark.integration
 def fixture(tmp_path):
     utilities = tmp_path / "utilities"
     utilities.mkdir()
-    for name in ("bash", "tr", "readlink", "dirname", "mkdir", "ln"):
+    for name in ("bash", "tr", "readlink", "dirname", "mkdir", "ln", "rm"):
         target = shutil.which(name)
         assert target
         (utilities / name).symlink_to(target)
     env = child_env()
-    env.update(PI_HOME=str(tmp_path / "agent"), PATH=str(utilities))
+    env.update(PI_HOME=str(tmp_path / "agent"), PATH=str(utilities),
+               HOME=str(tmp_path / "home"), IDH_ARCHIVE_ROOT=str(tmp_path / "archive"), HOSTNAME="fixturehost.lan")
     return tmp_path, utilities, env
 
 
@@ -30,7 +31,7 @@ def modules(package):
     source = package / "examples/extensions/subagent"
     source.mkdir(parents=True)
     for name in ("index.ts", "agents.ts"):
-        (source / name).write_text("// fixture\n")
+        (source / name).write_text('// fixture\nconst args: string[] = ["--mode", "json", "-p", "--no-session"];\n')
     return source
 
 
@@ -55,9 +56,15 @@ def run_helper(fixture):
 
 def assert_links(fixture, source):
     dest = Path(fixture[2]["PI_HOME"]) / "extensions/subagent"
-    for name in ("index.ts", "agents.ts"):
-        assert (dest / name).is_symlink()
-        assert (dest / name).resolve() == source / name
+    assert (dest / "agents.ts").is_symlink()
+    assert (dest / "agents.ts").resolve() == source / "agents.ts"
+    patched = dest / "index.ts"  # a copy, never a link: the release file must stay untouched
+    assert not patched.is_symlink()
+    spool = Path(fixture[2]["IDH_ARCHIVE_ROOT"]) / "spool/fixturehost/pi"
+    assert spool.is_dir()
+    text = patched.read_text()
+    assert f'"-p", "--session-dir", "{spool}"];' in text and '"--no-session"' not in text
+    assert '"--no-session"' in (source / "index.ts").read_text()
 
 
 def test_npm_global_links_and_is_idempotent(fixture):
@@ -138,3 +145,21 @@ def test_wrapper_preserves_diagnostic_arguments_and_pi_status(fixture):
         "--provider", "anthropic", "--model", "claude-haiku-5-5",
         "--models", "anthropic/claude-haiku-5-5", "--print", "hello world",
     ]
+
+
+def test_unpatchable_release_warns_keeps_a_link_and_fails(fixture):
+    source = npm_install(fixture)
+    (source / "index.ts").write_text("// upstream renamed the flag\n")
+    result = run_helper(fixture)
+    assert result.returncode != 0 and "keep no session file" in result.stderr
+    assert (Path(fixture[2]["PI_HOME"]) / "extensions/subagent/index.ts").is_symlink()
+
+
+def test_relinking_over_an_old_symlink_leaves_the_release_file_alone(fixture):
+    source = npm_install(fixture)
+    dest = Path(fixture[2]["PI_HOME"]) / "extensions/subagent"
+    dest.mkdir(parents=True)
+    (dest / "index.ts").symlink_to(source / "index.ts")  # what the previous version of the helper left
+    original = (source / "index.ts").read_text()
+    assert run_helper(fixture).returncode == 0
+    assert (source / "index.ts").read_text() == original

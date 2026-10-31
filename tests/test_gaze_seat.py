@@ -123,6 +123,7 @@ def rig(tmp_path):
         'PATH': f'{bin_dir}:/usr/bin:/bin',  # no real model CLI is reachable
         'HOME': str(tmp_path),
         'IDH_GAZE_SEATS_CONFIG': str(tmp_path / 'gaze-seats.json'),
+        'IDH_ARCHIVE_ROOT': str(tmp_path / 'archive'),  # spooled session files never reach the real ~/archive
     }
     return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env,
             'base': base, 'head': head}
@@ -422,7 +423,8 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
     assert codex.argv[codex.argv.index('-o') + 1] == '/p/x.seat' and '<' not in codex.argv
     assert codex.argv[codex.argv.index('-c') + 1] == 'model_reasoning_effort="medium"'  # ticket 1365
     pi = gaze_seat.build_command(doors['pi'], 'anthropic/claude-haiku-5-5:medium', 'PROMPT', Path('/p/x.seat'),
-                                 Path('/p/x.prompt'))
+                                 Path('/p/x.prompt'), {'spool': '/arch/spool/h/pi'})
+    assert pi.argv[pi.argv.index('--session-dir') + 1] == '/arch/spool/h/pi' and '--no-session' not in pi.argv
     assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5:medium'
     assert pi.argv[pi.argv.index('--tools') + 1] == 'read,grep,find,ls' and pi.argv[-1] == 'PROMPT'
     with pytest.raises(ValueError):  # the claude door offers named aliases only
@@ -505,11 +507,12 @@ def test_seat_ignores_a_conflicting_host_user_config(rig, runtime, model, family
 def test_pi_door_pins_the_thinking_level_on_every_seat():
     gaze_seat = load_module()
     door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['pi']
-    pi = gaze_seat.build_command(door, 'anthropic/claude-haiku-5-5:medium', 'P', Path('/o'), Path('/f'))
+    spool = {'spool': '/s'}
+    pi = gaze_seat.build_command(door, 'anthropic/claude-haiku-5-5:medium', 'P', Path('/o'), Path('/f'), spool)
     assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5:medium'
     for unpinned in ('anthropic/claude-haiku-5-5', 'anthropic/claude-haiku-5-5:', 'anthropic/x:loud'):
         with pytest.raises(ValueError, match='thinking'):  # else the host's defaultThinkingLevel decides
-            gaze_seat.build_command(door, unpinned, 'P', Path('/o'), Path('/f'))
+            gaze_seat.build_command(door, unpinned, 'P', Path('/o'), Path('/f'), spool)
 
 
 class _Models(BaseHTTPRequestHandler):
@@ -714,7 +717,10 @@ def test_vibe_seat_is_read_only_pinned_by_a_disposable_home_and_stdin_closed(rig
                     caller_stdin='caller-secret')  # a live pipe: pytest's own fd 0 is /dev/null, which hides a leak
     assert result.returncode == 0, result.stdout
     argv = (rig['log'] / 'vibe.argv').read_text().splitlines()
-    assert argv[:2] == ['--enabled-tools', 'read_file'] and argv[2] == '-p'
+    assert argv[:2] == ['--enabled-tools', 'read_file'] and argv[4] == '-p'
+    spool = argv[argv.index('--output-dir') + 1]  # ticket 1383: the session journal outlives the disposable home
+    assert Path(spool).parent.parent.parent.name == 'spool' and Path(spool).parent.name == 'vibe'
+    assert Path(spool).is_dir() and Path(spool).is_relative_to(Path(rig['env']['IDH_ARCHIVE_ROOT']))
     assert argv[argv.index('--agent') + 1] == 'seat' and '--trust' not in argv
     assert (rig['log'] / 'vibe.stdin').read_text() == ''  # /dev/null, never the caller's stdin
     assert (rig['log'] / 'vibe.cwd').read_text().strip() == str(rig['tree'].resolve())
@@ -900,3 +906,22 @@ def test_seat_locale_is_pinned_whatever_the_caller_speaks(rig):
 def test_claude_door_declares_its_config_home():
     door = json.loads((ROOT / 'skills' / 'route' / 'routes.json').read_text())['launch_doors']['claude-code']['headless']
     assert 'CLAUDE_CONFIG_DIR' in door['env_keep']
+
+
+def test_doors_that_keep_no_session_file_name_their_spool():
+    """Ticket 1383: no door sends history to /dev/null or runs --no-session."""
+    gaze_seat = load_module()
+    doors = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')
+    aider = gaze_seat.build_command(doors['aider'], 'openai/m', 'P', Path('/o'), Path('/f'),
+                                    {'spool': '/s/a', 'baseUrl': 'http://x/v1', 'diff': '/d'})
+    for flag, name in (('--chat-history-file', 'chat.md'), ('--llm-history-file', 'llm.md'),
+                       ('--input-history-file', 'input.md')):
+        assert aider.argv[aider.argv.index(flag) + 1] == f'/s/a/{name}'
+    assert aider.argv[aider.argv.index('--env-file') + 1] == '/dev/null'  # credentials stay unread
+    with pytest.raises(ValueError, match='spool'):
+        gaze_seat.build_command(doors['aider'], 'openai/m', 'P', Path('/o'), Path('/f'), {'baseUrl': 'http://x/v1', 'diff': '/d'})
+    for name, door in doors.items():
+        argv = gaze_seat.shlex.split(door['template']) + door['seat_rails']
+        assert '--no-session' not in argv and '--no-session-persistence' not in argv, name
+        rails = door['seat_rails']
+        assert all(t != '/dev/null' or rails[n - 1] == '--env-file' for n, t in enumerate(rails)), name

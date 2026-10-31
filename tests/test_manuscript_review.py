@@ -616,3 +616,28 @@ def test_legacy_finding_text_must_be_the_whole_heading_block():
     data["findings"][0]["text"] = "The central claim"
     with pytest.raises(ValueError, match="absent from original"):
         mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+
+
+def test_reader_keeps_its_session_file_for_the_archive(tmp_path, monkeypatch):
+    """Ticket 1383: the reader's transcript lands in the live Claude tree, where the archive finds it."""
+    seen = {}
+
+    class Done:
+        pid = 1
+        returncode = 0
+
+        def wait(self, timeout=None):
+            return 0
+
+    def popen(command, **kwargs):
+        seen["command"] = command
+        return Done()
+
+    run = tmp_path / "run"
+    (run / "private").mkdir(parents=True)
+    monkeypatch.setattr(mr.subprocess, "Popen", popen)
+    args = type("A", (), dict(model="m", effort="medium", reader_turns=1, verifier_turns=1, timeout=5,
+                              route_reason="r", clearance="c"))()
+    mr.execute_stage(run, "review", "prompt", args)
+    assert "--no-session-persistence" not in seen["command"] and seen["command"][0] == "claude"
+    assert "--no-session-persistence" not in (run / "review.launch.json").read_text()
