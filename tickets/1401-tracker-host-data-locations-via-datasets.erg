@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-31T19:22Z claude created
+2026-10-31T19:30Z reviewer claude note verify-reroll — round 1: agnostic-guard fails on tickets/1401-tracker-host-data-locations-via-datasets.erg:16 (a literal home-directory path); replaced by ~/data/datasets
 
 --- body ---
 ## Context
@@ -13,7 +14,7 @@ Author ruling 2026-10-31: data locations are a host concern, not a project's.
 Each host declares them once in `~/.config/environment.d/50-datasets.conf`,
 organised by lifecycle (frozen dataset, live mirror, cache, project data):
 
-- `DATASETS_DIR`: padme `/data/datasets`, doudou `/home/haduong/data/datasets`
+- `DATASETS_DIR`: padme `/data/datasets`, doudou `~/data/datasets`
   (`ours/` = data we produce, `external/` = third-party frozen)
 - `MIRRORS_DIR`: padme `/data/mirrors` only; the RePEc mirror was removed from
   doudou 2026-10-31 (a work laptop keeps no mirror)
