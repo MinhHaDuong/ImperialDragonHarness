@@ -101,6 +101,9 @@ class Event:
     pointer: tuple  # (file relative to its root, call id or None)
     detail: str | None = None
     tool_class: str | None = None  # tool events only: subagent | worker | tests | file | other (ticket 1393)
+    delegation: str | None = None  # delegation calls only: "blocking" | "launch"; None = unknown (ticket 1397)
+    child_agent: str | None = None  # delegation calls only: id of the agent the runtime recorded as its child
+    returned: float | None = None  # delegation calls only: when the call's own result came back (epoch s)
 
 
 # ---- tool-call classes (ticket 1393) ----------------------------------------------------------------
@@ -388,6 +391,21 @@ def _result_text(content) -> str:
     return ""
 
 
+def delegation_info(name: str, result) -> tuple[str | None, str | None]:
+    """(mode, child agent id) of a Skill/Agent/Task call, from the runtime's recorded `toolUseResult`.
+
+    Rule (ticket 1397): `launch` when the result says the child runs in the background (`isAsync`,
+    `background`, or status `async_launched`); `blocking` when it names a child agent without that flag
+    (the caller waited for it); `(None, None)` for anything else, which draws as a plain delegation.
+    """
+    if name.lower() not in ("skill", "agent", "task") or not isinstance(result, dict):
+        return None, None
+    child = result.get("agentId") if isinstance(result.get("agentId"), str) else None
+    if result.get("isAsync") is True or result.get("background") is True or result.get("status") == "async_launched":
+        return "launch", child
+    return ("blocking", child) if child else (None, None)
+
+
 NOTIFICATION_ID = re.compile(r"<tool-use-id>([^<]+)</tool-use-id>")
 
 
@@ -444,6 +462,9 @@ def read_claude(lines: Iterable[str], file: str, agent: str | None = None,
                     if call is not None and "end" not in call:
                         call["end"] = ts
                         call["exit"] = 1 if block.get("is_error") else 0
+                        # one result per row carries its own toolUseResult; a batched row is ambiguous
+                        alone = sum(1 for b in content if isinstance(b, dict) and b.get("type") == "tool_result") == 1
+                        call["mode"], call["child"] = delegation_info(call["name"], row.get("toolUseResult") if alone else None)
         prev = ts
     last = max(times) if times else 0.0
     for call_id, call in pending.items():
@@ -453,7 +474,8 @@ def read_claude(lines: Iterable[str], file: str, agent: str | None = None,
             times.append(end)
         tools.append(Event("tool", call["name"], call["start"], end, "claude", agent or "?", parent_agent,
                            call["model"], None, None, "unpriced", call.get("exit"), (file, call_id),
-                           call["detail"], call["cls"]))
+                           call["detail"], call["cls"], call.get("mode"), call.get("child"),
+                           call.get("end") if call.get("mode") else None))
     turn_events = []
     for mid, turn in turns.items():
         if turn["model"] == "<synthetic>":
