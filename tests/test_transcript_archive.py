@@ -1,0 +1,123 @@
+"""Ticket 1383: the transcript archive copies each aged file once and again when it grows."""
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from child_env import child_env
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "transcript_archive.py"
+NOW = 2_000_000_000.0
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture
+def world(tmp_path):
+    env = child_env()
+    env.update(HOME=str(tmp_path / "home"), IDH_ARCHIVE_ROOT=str(tmp_path / "archive"))
+    for key in ("CLAUDE_CONFIG_DIR", "CODEX_HOME", "PI_CODING_AGENT_DIR"):
+        env.pop(key, None)
+    home = tmp_path / "home"
+    files = {
+        "claude": home / ".claude/projects/-p/aaa.jsonl",
+        "claude-sub": home / ".claude/projects/-p/aaa/subagents/agent-1.jsonl",
+        "claude-tool": home / ".claude/projects/-p/aaa/tool-results/t.txt",
+        "codex": home / ".codex/sessions/2026/10/31/rollout-1.jsonl",
+        "pi": home / ".pi/agent/sessions/--p--/s.jsonl",
+    }
+    for name, path in files.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{name} line\n" * 50)
+        os.utime(path, (NOW - 2 * 86400, NOW - 2 * 86400))
+    host = subprocess.run(["hostname"], capture_output=True, text=True).stdout.strip().split(".")[0]
+    spool = tmp_path / "archive/spool" / host / "vibe/20260101T000000Z-1/session/m.json"
+    spool.parent.mkdir(parents=True)
+    spool.write_text("vibe session\n")
+    os.utime(spool, (NOW - 2 * 86400, NOW - 2 * 86400))
+    files["vibe"] = spool
+    return {"env": env, "files": files, "out": tmp_path / "archive/transcripts" / host, "home": home}
+
+
+def archive(world, *extra, now=NOW):
+    return subprocess.run([sys.executable, str(SCRIPT), "--now", str(now), *extra],
+                          env=world["env"], capture_output=True, text=True, timeout=60)
+
+
+def zstd_text(path):
+    return subprocess.run(["zstd", "-dc", str(path)], capture_output=True, check=True).stdout
+
+
+def target(world, runtime, rel):
+    return world["out"] / runtime / (rel + ".zst")
+
+
+def test_every_layout_is_archived_at_its_relative_path_byte_identical(world):
+    result = archive(world)
+    assert result.returncode == 0, result.stderr
+    home = world["home"]
+    expected = {
+        "claude": ("claude", ".claude/projects", "claude"),
+        "claude-sub": ("claude", ".claude/projects", "claude-sub"),
+        "claude-tool": ("claude", ".claude/projects", "claude-tool"),
+        "codex": ("codex", ".codex/sessions", "codex"),
+        "pi": ("pi", ".pi/agent/sessions", "pi"),
+    }
+    for name, (runtime, live, key) in expected.items():
+        source = world["files"][key]
+        dest = target(world, runtime, str(source.relative_to(home / live)))
+        assert dest.is_file(), name
+        assert zstd_text(dest) == source.read_bytes(), name
+        assert dest.stat().st_mtime_ns == source.stat().st_mtime_ns
+        assert dest.stat().st_mode & 0o077 == 0  # as private as the live tree
+    vibe = world["out"] / "vibe/20260101T000000Z-1/session/m.json.zst"
+    assert zstd_text(vibe) == b"vibe session\n"
+
+
+def test_unchanged_is_not_recopied_and_grown_is(world):
+    archive(world)
+    stable, grown = target(world, "codex", "2026/10/31/rollout-1.jsonl"), target(world, "claude", "-p/aaa.jsonl")
+    before = {p: (p.stat().st_ino, p.stat().st_mtime_ns) for p in (stable, grown)}
+    source = world["files"]["claude"]
+    with source.open("a") as handle:
+        handle.write("appended\n")
+    os.utime(source, (NOW - 86400 - 60, NOW - 86400 - 60))
+    result = archive(world)
+    assert result.returncode == 0 and "copied: 1 files" in result.stdout, result.stdout
+    assert (stable.stat().st_ino, stable.stat().st_mtime_ns) == before[stable]
+    assert zstd_text(grown).endswith(b"appended\n")
+
+
+def test_a_file_touched_within_the_day_is_skipped(world):
+    source = world["files"]["pi"]
+    os.utime(source, (NOW - 3600, NOW - 3600))
+    archive(world)
+    assert not target(world, "pi", "--p--/s.jsonl").exists()
+    assert target(world, "codex", "2026/10/31/rollout-1.jsonl").exists()
+    assert archive(world, now=NOW + 86400).returncode == 0
+    assert target(world, "pi", "--p--/s.jsonl").exists()  # a day later it qualifies
+
+
+def test_verify_prints_matching_counts_and_bytes_and_detects_a_missing_copy(world):
+    result = archive(world, "--verify")
+    assert result.returncode == 0, result.stdout
+    size = sum(p.stat().st_size for p in world["files"].values())
+    assert f"eligible: 6 files {size} bytes" in result.stdout
+    assert f"archived: 6 files {size} bytes" in result.stdout
+    # A half-written copy never stands in for the file: no stray .tmp after a run.
+    assert not list(world["out"].rglob("*.tmp"))
+
+
+def test_the_archive_never_writes_where_idh_archive_root_does_not_point(world, tmp_path):
+    archive(world)
+    assert not (world["home"] / "archive").exists()
+
+
+def test_units_resolve_the_checkout_and_archive_from_the_home_of_the_running_user():
+    unit = (ROOT / "scripts/systemd/transcript-archive.service").read_text()
+    timer = (ROOT / "scripts/systemd/transcript-archive.timer").read_text()
+    assert "ExecStart=/usr/bin/python3 %h/.agents/scripts/transcript_archive.py" in unit
+    assert "/home/" not in unit + timer  # %h, so doudou installs the same files
+    assert "Persistent=true" in timer and "Unit=transcript-archive.service" in timer
