@@ -2,9 +2,11 @@
 Title: close-and-clean RESULT line does not name the checks that fired
 Created: 2026-10-30
 Author: claude
+Closed: autoclosed — PR #2108
 
 --- log ---
 2026-10-30T20:22Z claude created
+2026-10-31T17:02Z reviewer closed — autoclosed — PR #2108
 
 --- body ---
 ## Context
