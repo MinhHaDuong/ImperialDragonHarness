@@ -1,0 +1,28 @@
+%erg 0.1
+Title: transcript_spool reads DATASETS_DIR; doudou push built from it; no directory probe
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T19:22Z claude created
+
+--- body ---
+## Context
+
+Tracker 1401. `scripts/transcript_spool.py:31-42` chooses the archive root by
+probing for `/data/datasets/ours` (padme) and falls back to
+`~/data/datasets/ours` (doudou): creating or losing that directory silently
+moves or splits the store. Doudou's push drop-in
+(`~/.config/systemd/user/transcript-archive.service.d/push-padme.conf`)
+hardcodes both hosts' paths. `DATASETS_DIR` is now declared on both hosts in
+`~/.config/environment.d/50-datasets.conf`.
+
+## Exit criteria
+
+- [ ] `archive_root()` = `IDH_ARCHIVE_ROOT`, else `$DATASETS_DIR/ours/agent-sessions`,
+      else the value parsed from `~/.config/environment.d/50-datasets.conf`, else
+      a clear error; no directory probe, no hostname
+- [ ] Tests: each branch, including the error and the file fallback (no env)
+- [ ] Doudou push target derived from padme's declared location (documented in
+      INSTALL.md), not a literal path pair; the drop-in updated on doudou
+- [ ] INSTALL.md and memo § 4.2 point to the variable and to the data READMEs
