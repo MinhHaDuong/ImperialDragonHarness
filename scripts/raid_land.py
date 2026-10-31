@@ -304,7 +304,7 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
         fact = attribution_record.ensure_writer(str(cwd), unit)
     except Exception as exc:  # a warning, never a refusal
         fact = f"not derivable: writer ({exc})"
-    if fact and "no review" not in fact:
+    if fact and "review (none" not in fact:
         out(f"attribution: {fact}")
     status, _ = attribution(cwd, unit, None if local else info.get("body") or "")
     out(f"attribution: {status}")

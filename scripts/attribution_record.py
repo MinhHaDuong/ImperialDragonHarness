@@ -635,14 +635,17 @@ def append_seats(args):
     else:
         results, body = args.seats.read_text(), sys.stdin.read()
     lines, failures = seat_lines(results, body, args.masked_evidence)
-    for failure in failures:
-        LOG.warning("attribution: not derivable: %s", failure)
+    for failure in failures:  # --seats-pr is a landing/roar path: a warning (ticket 1380)
+        if args.seats_pr:
+            LOG.warning("attribution: not derivable: %s", failure)
+        else:
+            LOG.error("attribution-record: capture failure: %s", failure)
     if args.seats_pr:
         if lines:
             append_to_pr(args.seats_pr, "\n".join(lines), args.project)
     else:
         sys.stdout.write(append_line(body, "\n".join(lines), args.pr, args.project) if lines else body)
-    return 0  # a lost seat is a warning, never an exit code (ticket 1380)
+    return 1 if failures and not args.seats_pr else 0  # --seats-pr: a lost seat never exits non-zero
 
 
 def capture_pr(args):
@@ -695,7 +698,7 @@ def notes_main(parser, args):
             facts = []
             if args.render_pr:  # landing: an interactive session records itself as the writer
                 fact = ensure_writer(".", unit, args.session_runtime, args.session_model)
-                facts += [fact] if fact and "no review" not in fact else []
+                facts += [fact] if fact and "review (none" not in fact else []
             text, status = notes_block(".", unit, project)
             if args.from_notes:
                 if text:

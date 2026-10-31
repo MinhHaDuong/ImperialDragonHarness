@@ -195,10 +195,11 @@ def test_seats_pr_reads_notes_answers_not_comments(seats_pr, reader):
     assert "stale-comment" not in pr["body"] and pr["comment_reads"] == 0
 
 
-def test_seats_pr_open_pr_without_review_refuses_no_comment_fallback(seats_pr, reader):
+def test_seats_pr_open_pr_without_review_warns_no_comment_fallback(seats_pr, reader, caplog):
     pr, _, args = seats_pr
-    with pytest.raises(ValueError, match="no review on notes"):
-        reader.append_seats(args)
+    with caplog.at_level("WARNING"):
+        assert reader.append_seats(args) == 0  # ticket 1380: a missing review is a warning
+    assert "not derivable" in caplog.text and "no review on notes" in caplog.text
     assert pr["body"] == BODY and pr["comment_reads"] == 0
 
 
@@ -211,6 +212,6 @@ def test_seat_line_as_gaze_emits_it_is_captured(seats_pr, reader):
     review("## /gaze result\n\nresult: REVIEWED\n"
            "seat: red team reviewer · runtime=codex · family=openai · route=headless · model=gpt-6.1-sol"
            " · status: ran\n")
-    assert reader.append_seats(args) == 1  # the malformed body line is reported, not fatal
+    assert reader.append_seats(args) == 0  # the malformed body line is a warning (ticket 1380)
     assert ("reviewer: step=review · seat=red team reviewer · runtime=codex · model=openai/gpt-6.1-sol"
             " · effort=not-stated · route=headless · independence=not-stated · status: ran") in pr["body"]

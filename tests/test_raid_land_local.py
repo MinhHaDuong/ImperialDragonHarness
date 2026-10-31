@@ -364,4 +364,5 @@ def test_f2_landing_without_a_review_reads_missing_and_still_lands(tmp_path, mon
     work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
     code, out = land(wt)
     assert code == 0, out
-    assert "attribution: missing" in out
+    assert "attribution: not derivable: review (none on notes)" in out
+    assert out.count("attribution: not derivable: review (none on notes)") == 1
