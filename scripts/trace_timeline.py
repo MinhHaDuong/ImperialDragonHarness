@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Render one session as a Chrome Trace Event JSON timeline (ticket 1385; memo conception/2026-10-31-monitoring-redesign.md 4.4).
 
-    trace_timeline.py <claude session id> [--out FILE]
+    trace_timeline.py <claude session id> [--out FILE] [--html FILE]
 
 Reads the session, its `subagents/`, and the seats its launch lines (ticket 1384) name as children of
 it, each from the live tree first and the archive (ticket 1383) second, so a session already pruned from
-the live tree still renders. Writes the Chrome Trace Event format, which Perfetto (ui.perfetto.dev) and
-chrome://tracing open; no Perfetto library is involved.
+the live tree still renders. Writes the Chrome Trace Event format (Perfetto, chrome://tracing; no Perfetto
+library is involved). `--html FILE` also writes one self-contained HTML page of the same lanes and events:
+inline SVG, CSS and JS, no external URL, opens in Firefox; hover a bar for its details, zoom with the
+buttons or the scrollbar.
 
 Layout: one process (lane) per set of non-overlapping agents, assigned greedily by start time, so
 concurrent agents land on distinct lanes. Thread 0 of a lane carries the agent span; threads 1.. carry its
@@ -16,6 +18,7 @@ Every event carries its pointer (file, call id) in `args`; an unpriced model sho
 Paths come from `transcript_spool` (live roots, archive, host) and `launch_line` (launches file).
 """
 import argparse
+import html
 import importlib.util
 import json
 import logging
@@ -262,10 +265,78 @@ def render(agents: list[Agent]) -> dict:
     return {"traceEvents": out, "displayTimeUnit": "ms", "otherData": {"t0_epoch": t0}}
 
 
+def _fmt_dur(sec: float) -> str:
+    return f"{sec:.1f}s" if sec < 120 else f"{sec / 60:.1f}min"
+
+
+def _tooltip(e: dict) -> str:
+    a = e["args"]
+    ptr = a.get("pointer") or {}
+    usd = a.get("shadow_usd")
+    lines = [e["name"], f"kind: {e['cat']}", f"duration: {_fmt_dur(e['dur'] / 1e6)}", f"model: {a.get('model')}",
+             f"tokens: {a.get('tokens')}", f"shadow USD: {usd if usd != COST_UNKNOWN else COST_UNKNOWN}",
+             f"exit: {a.get('exit')}", f"pointer: {ptr.get('file')} / {ptr.get('call_id')}"]
+    return "\n".join(lines)
+
+
+_COLORS = {"agent": "#9ab", "turn": "#7a9", "tool": "#e90"}
+
+_JS = """
+var svg=document.getElementById('tl'),span=+svg.dataset.span,left=+svg.dataset.left,pps=+svg.dataset.pps;
+function lay(){var w=left+span*pps+20;svg.setAttribute('width',w);
+document.querySelectorAll('[data-t]').forEach(function(n){var x=left+n.dataset.t*pps;
+if(n.tagName=='rect'){n.setAttribute('x',x);n.setAttribute('width',Math.max(1,n.dataset.d*pps));}
+else if(n.tagName=='line'){n.setAttribute('x1',x);n.setAttribute('x2',x);}else{n.setAttribute('x',x+3);}});}
+function zoom(f){pps*=f;lay();}
+document.getElementById('zi').onclick=function(){zoom(2)};
+document.getElementById('zo').onclick=function(){zoom(0.5)};
+lay();
+"""
+
+
+def render_html(doc: dict, session: str = "") -> str:
+    """One self-contained HTML page (inline SVG, CSS, JS; no external reference) of a `render` document."""
+    names, events = {}, []
+    for e in doc["traceEvents"]:
+        if e.get("ph") == "M" and e["name"] in ("process_name", "thread_name"):
+            names[(e["name"], e["pid"], e["tid"])] = e["args"]["name"]
+        elif e.get("ph") == "X":
+            events.append(e)
+    keys = sorted({(e["pid"], e["tid"]) for e in events})
+    row_of = {k: i for i, k in enumerate(keys)}
+    span = max((e["ts"] + e["dur"] for e in events), default=0) / 1e6
+    left, top, rh = 130, 30, 18
+    pps = max(0.2, min(40.0, 1500 / span)) if span else 1.0
+    height = top + rh * len(keys) + 10
+    q = html.escape
+    parts = []
+    step = next((s for s in (1, 5, 10, 30, 60, 300, 600, 1800, 3600) if span / s <= 20), 3600)
+    for i in range(int(span // step) + 1):
+        t = i * step
+        parts.append(f'<line data-t="{t}" x1="0" x2="0" y1="{top - 6}" y2="{height}" stroke="#ccc"/>')
+        parts.append(f'<text data-t="{t}" x="0" y="{top - 10}" font-size="10">{q(_fmt_dur(t))}</text>')
+    for (pid, tid), i in row_of.items():
+        label = names.get(("process_name", pid, 0), f"lane {pid}") + " / " + names.get(("thread_name", pid, tid), "")
+        parts.append(f'<text x="4" y="{top + rh * i + 12}" font-size="11">{q(label)}</text>')
+    for e in events:
+        i = row_of[(e["pid"], e["tid"])]
+        parts.append(f'<rect data-t="{e["ts"] / 1e6}" data-d="{e["dur"] / 1e6}" y="{top + rh * i + 2}" height="{rh - 4}" '
+                     f'fill="{_COLORS.get(e["cat"], "#789")}" fill-opacity="{0.45 if e["cat"] == "agent" else 0.9}">'
+                     f'<title>{q(_tooltip(e))}</title></rect>')
+    head = f"session {session}: {len(events)} bars, {_fmt_dur(span)}"
+    return (f'<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>{q(head)}</title>'
+            '<style>body{font-family:sans-serif;margin:8px}#w{overflow-x:auto;border:1px solid #ccc}'
+            'rect:hover{stroke:#000}</style></head><body>'
+            f'<p>{q(head)} <button id="zo">zoom out</button> <button id="zi">zoom in</button></p>'
+            f'<div id="w"><svg id="tl" xmlns="http://www.w3.org/2000/svg" height="{height}" data-span="{span}" '
+            f'data-left="{left}" data-pps="{pps}">' + "".join(parts) + f'</svg></div><script>{_JS}</script></body></html>\n')
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("session", help="Claude Code session id")
     parser.add_argument("--out", help="output file (default: <session>.trace.json in the current directory)")
+    parser.add_argument("--html", help="also write a self-contained HTML timeline (inline SVG, opens in Firefox)")
     parser.add_argument("--archive-root", help="archive root (default: IDH_ARCHIVE_ROOT or ~/archive)")
     parser.add_argument("--live-root", help="Claude live root (default: CLAUDE_CONFIG_DIR/projects or ~/.claude/projects)")
     parser.add_argument("--launches", help="launches.jsonl (default: the launch_line path)")
@@ -279,7 +350,10 @@ def main(argv: list[str] | None = None) -> int:
     launches_file = Path(args.launches) if args.launches else _load("launch_line").launches_path()
     agents = collect(tree, args.session, read_launches(launches_file))
     out = Path(args.out or f"{args.session}.trace.json")
-    out.write_text(json.dumps(render(agents)) + "\n", encoding="utf-8")
+    doc = render(agents)
+    out.write_text(json.dumps(doc) + "\n", encoding="utf-8")
+    if args.html:
+        Path(args.html).write_text(render_html(doc, args.session), encoding="utf-8")
     log.info("%s: %d agents", out, len(agents))
     return 0
 
