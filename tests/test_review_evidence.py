@@ -499,6 +499,12 @@ def test_family_vocabulary_covers_the_route_grid():
     assert found and found <= re_mod.FAMILIES
 
 
+def test_family_vocabulary_covers_the_local_door_stamp():
+    routes = (REPO_ROOT / "skills" / "route" / "routes.json").read_text()
+    found = {m.casefold() for m in re.findall(r'"local_family":\s*"([^"]+)"', routes)}
+    assert found and found <= re_mod.FAMILIES
+
+
 @pytest.mark.integration
 def test_record_refuses_an_unknown_family(repo, policy):
     out = subprocess.run(
