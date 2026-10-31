@@ -43,3 +43,12 @@ import pytest  # noqa: E402
 @pytest.fixture(autouse=True)
 def _isolated_archive_root(tmp_path_factory, monkeypatch):
     monkeypatch.setenv("IDH_ARCHIVE_ROOT", str(tmp_path_factory.mktemp("archive")))
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_session_identity(monkeypatch):
+    """Ticket 1396: `raid_land.py --session-model` exports IDH_SESSION_MODEL, and the
+    after-merge runner it starts inherits it; a test that expects no session identity
+    then passes or fails by who landed the last merge. Tests that need one set it."""
+    monkeypatch.delenv("IDH_SESSION_MODEL", raising=False)
+    monkeypatch.delenv("IDH_SESSION_RUNTIME", raising=False)
