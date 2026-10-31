@@ -363,3 +363,14 @@ def test_launch_bar_ends_at_its_return_in_html_while_json_keeps_the_completion_l
     page = tl.render_html(doc, SID)
     assert 'data-d="1.0"' in page and 'data-d="50.0"' not in page
     assert "returned after: 1.0s" in page and "completed after: 50.0s" in page
+
+
+def test_glob_characters_in_a_session_prefix_match_literally_and_never_crash(tmp_path):
+    live = build_live(tmp_path / "live")
+    tree = tl.Tree(live, tmp_path / "archive")
+    assert tl.resolve_session(tree, "1111*") == "1111*"  # literal, not a wildcard: no session starts with it
+    assert tl.resolve_session(tree, "1?11") == "1?11"
+    assert tl.resolve_session(tree, "d77**") == "d77**"  # pathlib raised ValueError here before
+    with pytest.raises(SystemExit) as raised:
+        tl.collect(tree, "d77**", [])
+    assert "neither in the live tree nor in the archive" in str(raised.value)
