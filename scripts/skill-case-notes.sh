@@ -1,5 +1,5 @@
 #!/bin/bash
-# PostToolUse hook on Skill: push the project's case note for the skill (ticket 1394).
+# PostToolUse hook on Skill and UserPromptSubmit hook: push the project's case note for the skill (ticket 1394).
 #
 # Reads `memory/skills/<skill>.md` from the project repository holding the
 # payload's cwd and returns it as additionalContext, once per session and
@@ -11,6 +11,13 @@ set -uo pipefail
 trap 'exit 0' EXIT
 
 payload=$(cat 2>/dev/null) || payload=""
+# UserPromptSubmit fires on every prompt: bail out before python or git unless
+# the prompt starts with "/" (a typed skill command). Cheap pre-filter only;
+# python re-checks exactly.
+if [[ "$payload" == *'"hook_event_name":"UserPromptSubmit"'* ]] &&
+   ! [[ "$payload" =~ \"prompt\"[[:space:]]*:[[:space:]]*\"/ ]]; then
+    exit 0
+fi
 dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh/skill-notes"
 mkdir -p "$dir" 2>/dev/null || exit 0
 
@@ -35,8 +42,16 @@ except ValueError:
     log("parse-error")
     sys.exit(0)
 
-tin = p.get("tool_input")
-name = tin.get("skill") if isinstance(tin, dict) else None
+event = p.get("hook_event_name")
+if event == "UserPromptSubmit":
+    prompt = p.get("prompt")
+    if not isinstance(prompt, str) or not prompt.startswith("/"):
+        sys.exit(0)
+    name = prompt[1:].split(None, 1)[0] if prompt[1:].strip() else None
+else:
+    event = "PostToolUse"
+    tin = p.get("tool_input")
+    name = tin.get("skill") if isinstance(tin, dict) else None
 session = str(p.get("session_id") or "nosession")
 agent = str(p.get("agent_id") or "main")
 if not isinstance(name, str) or not name:
@@ -78,7 +93,7 @@ try:
 except OSError:
     pass
 ctx = f"Case notes for skill {name}, from this project's memory:\n\n{text.strip()}"
-print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": ctx}}))
+print(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": ctx}}))
 log("delivered", name, session, agent)
 PY
 exit 0
