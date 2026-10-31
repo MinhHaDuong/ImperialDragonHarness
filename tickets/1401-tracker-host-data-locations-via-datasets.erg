@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Tracker: host data locations via DATASETS_DIR and MIRRORS_DIR across projects
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T19:22Z claude created
+2026-10-31T19:30Z reviewer claude note verify-reroll — round 1: agnostic-guard fails on tickets/1401-tracker-host-data-locations-via-datasets.erg:16 (a literal home-directory path); replaced by ~/data/datasets
+
+--- body ---
+## Context
+
+Author ruling 2026-10-31: data locations are a host concern, not a project's.
+Each host declares them once in `~/.config/environment.d/50-datasets.conf`,
+organised by lifecycle (frozen dataset, live mirror, cache, project data):
+
+- `DATASETS_DIR`: padme `/data/datasets`, doudou `~/data/datasets`
+  (`ours/` = data we produce, `external/` = third-party frozen)
+- `MIRRORS_DIR`: padme `/data/mirrors` only; the RePEc mirror was removed from
+  doudou 2026-10-31 (a work laptop keeps no mirror)
+
+Both files were installed 2026-10-31. Layout explanations: doudou
+`~/data/README.md` (installed), padme `/data/README.md` (author installs, root
+dir); sources `conception/2026-10-31-data-layout-{padme,doudou}.md`. Evidence:
+`conception/2026-10-31-data-access-sweep.md` (read-only sweep of 46 padme and
+64 doudou repos, all positive controls fired; partly overtaken by cadens 0049,
+which landed during the sweep). Models, caches, DVC, project working data,
+padme-traces and arena storage stay out of scope (sweep § NOT move).
+
+Children (one PR each, in their own repository):
+- harness 1402: `transcript_spool.py` reads `DATASETS_DIR`, no directory probe;
+  doudou push built from it
+- archiveCIRED 0043 (PR archiveCIRED#63): archive path from `DATASETS_DIR`
+- climate-finance-het 2723 (PR climate-finance-het#2002): RePEc via
+  `MIRRORS_DIR`, ISTEX via `DATASETS_DIR`
+- cadens 0050 (PR cadens#61): remove legacy `CADENS_RAW_DIR` leftovers and
+  derive its per-host `.env` data paths from `DATASETS_DIR`
+
+## Exit criteria
+
+- [ ] All four children closed in their repositories
+- [ ] padme `/data/README.md` installed and the empty
+      `/data/datasets/external/RePEc` removed (author, sudo)
+- [ ] A final sweep with the same positive controls finds no hardcoded
+      `datasets/` or `mirrors/` root in EXEC or CONFIG sites
