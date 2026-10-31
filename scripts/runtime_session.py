@@ -3,9 +3,9 @@
     runtime.py session id        print the runtime's own session id
     runtime.py session headless  print yes or no
 
-Per backend: Claude Code `CLAUDE_CODE_SESSION_ID`, Codex `CODEX_THREAD_ID`, Pi exports none
-(`id` answers NOOP). A runtime that should have an id but exports none (`CLAUDECODE` without
-`CLAUDE_CODE_SESSION_ID`) exits 3, never an empty line. `headless` is yes for `claude -p`
+Per backend: Claude Code `CLAUDE_CODE_SESSION_ID`, Codex `CODEX_THREAD_ID`, Pi `IDH_PI_SESSION_ID`
+(exported by adapters/pi/extensions/idh-wake.ts, ticket 1384). A runtime that should have an id but exports none (`CLAUDECODE` without
+`CLAUDE_CODE_SESSION_ID`, Pi without `IDH_PI_SESSION_ID`) exits 3, never an empty line. `headless` is yes for `claude -p`
 (an sdk entrypoint) or a night sweep (`CLAUDE_NIGHT_SWEEP`). `CLAUDE_CODE_CHILD_SESSION` is not read:
 it is set on subagents whose wake fires and on main-thread SessionEnd alike. `can wake` depends on it. `runtime.py which` and the wake verb
 read the same two helpers, defined here.
@@ -16,7 +16,7 @@ The hooks keep reading their payloads and `CLAUDE_*` variables (shrink recorded 
 NAME = "session"
 DEFAULT_MODE = "id"
 MODES = ("id", "headless")
-ID_KEYS = {"claude": "CLAUDE_CODE_SESSION_ID", "codex": "CODEX_THREAD_ID"}
+ID_KEYS = {"claude": "CLAUDE_CODE_SESSION_ID", "codex": "CODEX_THREAD_ID", "pi": "IDH_PI_SESSION_ID"}
 
 
 def session_id(rt: str, env):

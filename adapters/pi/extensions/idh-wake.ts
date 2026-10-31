@@ -5,8 +5,8 @@
  * drops a job into an inbox directory and this extension is the reader. At
  * `session_start` (not in the factory: the factory runs for every load,
  * including ones that never become a session) it creates a per-session inbox
- * under $XDG_RUNTIME_DIR (else the OS temp dir), exports IDH_WAKE_INBOX into
- * process.env so the bash tool's children, and so `runtime.py can wake`,
+ * under $XDG_RUNTIME_DIR (else the OS temp dir), exports IDH_PI_SESSION_ID (the
+ * session's id, for launch lines) and IDH_WAKE_INBOX into process.env so the bash tool's children, and so `runtime.py can wake`,
  * see it, and starts a timer. That export is the whole of "the extension is
  * loaded": without this file nothing sets the variable and wake answers NOOP.
  *
@@ -35,6 +35,7 @@ export default function (pi: ExtensionAPI): void {
 	const delivered = new Set<string>();
 
 	function stop(): void {
+		delete process.env.IDH_PI_SESSION_ID;
 		if (timer) clearInterval(timer);
 		timer = undefined;
 		if (!inbox) return;
@@ -50,6 +51,12 @@ export default function (pi: ExtensionAPI): void {
 
 	pi.on("session_start", async (_event, ctx) => {
 		stop();
+		try {
+			// The session id for `runtime.py session id` (ticket 1384): launch lines name their parent by it.
+			process.env.IDH_PI_SESSION_ID = ctx.sessionManager.getSessionId();
+		} catch {
+			/* fail-open: the launch line says `not exported` */
+		}
 		try {
 			const base = join(process.env.XDG_RUNTIME_DIR || tmpdir(), "idh-wake");
 			mkdirSync(base, { recursive: true, mode: 0o700 });

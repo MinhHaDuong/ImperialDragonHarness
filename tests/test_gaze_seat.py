@@ -7,6 +7,7 @@ consent config is a temporary file, never the host's.
 
 import importlib.util
 import json
+import re
 import shlex
 import subprocess
 import sys
@@ -140,6 +141,11 @@ def launch(rig, *extra, runtime='claude-code', model='haiku', family='Anthropic'
          '--brief', str(rig['brief']), '--cap', '20', '--base', rig['base'],
          '--anchor', anchor or rig['head'], *extra],
         capture_output=True, text=True, timeout=60, env=env, input=caller_stdin)
+
+
+def unpin(argv):
+    """The pinned session id is fresh per seat (ticket 1384): compare argv without it."""
+    return re.sub(r'(--session-id\n)[0-9a-f-]{36}', r'\1<uuid>', argv)
 
 
 def first_line(path):
@@ -499,6 +505,7 @@ def test_seat_ignores_a_conflicting_host_user_config(rig, runtime, model, family
         result = launch(rig, runtime=runtime, model=model, family=family, name=f'seat{int(host_config)}')
         assert result.returncode == 0, result.stdout
         argv = (rig['log'] / f'{cli}.argv').read_text().replace(f'seat{int(host_config)}', 'seat')
+        argv = unpin(argv)
         runs.append((argv, (rig['log'] / f'{cli}.settings').read_text()))
     assert runs[0] == runs[1]  # the host file changes nothing the seat runs with
     assert runs[1][1] == 'effort=medium\nuser-config=no\n'
@@ -816,11 +823,11 @@ def test_conflicting_parent_variables_change_neither_seat_command_nor_environmen
     dumping_stubs(rig)
     rig['env']['ANTHROPIC_API_KEY'] = 'fake-credential'
     assert launch(rig).returncode == 0
-    quiet_argv = (rig['log'] / 'claude.argv').read_text()
+    quiet_argv = unpin((rig['log'] / 'claude.argv').read_text())
     quiet_env = (rig['log'] / 'claude.env').read_text()
     rig['env'].update(NOISE)
     assert launch(rig).returncode == 0
-    assert (rig['log'] / 'claude.argv').read_text() == quiet_argv
+    assert unpin((rig['log'] / 'claude.argv').read_text()) == quiet_argv
     assert (rig['log'] / 'claude.env').read_text() == quiet_env
     seen = seat_env(rig, 'claude')
     assert not set(NOISE) & set(seen)
@@ -925,3 +932,14 @@ def test_doors_that_keep_no_session_file_name_their_spool():
         assert '--no-session' not in argv and '--no-session-persistence' not in argv, name
         rails = door['seat_rails']
         assert all(t != '/dev/null' or rails[n - 1] == '--env-file' for n, t in enumerate(rails)), name
+
+
+@pytest.mark.integration
+def test_launch_line_carries_the_session_id_the_claude_seat_was_launched_with(rig):
+    """Ticket 1384: the child id is the pinned `--session-id`, never a start-time join."""
+    assert launch(rig, name='lines').returncode == 0
+    argv = (rig['log'] / 'claude.argv').read_text().splitlines()
+    pinned = argv[argv.index('--session-id') + 1]
+    rows = [json.loads(line) for line in next((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'transcripts').glob('*/launches.jsonl')).read_text().splitlines()]
+    assert [(r['seat'], r['child_runtime'], r['child_session'], r['exit']) for r in rows] == \
+        [('lines', 'claude', pinned, 0)]
