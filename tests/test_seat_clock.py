@@ -416,3 +416,16 @@ def test_identities_a_real_run_seat_launch_line_vouches_for_its_staged_report(tm
         os.environ.pop('IDH_ARCHIVE_ROOT'), os.environ.pop('IDH_UNIT')
     line = run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout.splitlines()[0]
     assert 'runtime=codex' in line and 'route=gpt-6.1-sol' in line
+
+
+def test_fenced_header_report_is_signed_for_the_plan_check(tmp_path):
+    """Ticket 1400: a subagent seat's report with its header in a balanced block is still signed."""
+    result, manifest = plan(tmp_path, SELF, OPENAI, providers=['OpenAI'])
+    assert result.returncode == 0, result.stderr
+    (manifest.parent / 'self.md').write_text('worker: model=m · family=anthropic\nverdict: clear\n')
+    (manifest.parent / 'redteam.md.status').write_text('redteam: reported in 5s\n')
+    (manifest.parent / 'redteam.md').write_text(
+        '```text\nworker: model=o · family=openai\nreach: read=yes shell=no tests=not-run\n```\nverdict: clear\n')
+    checked = run('plan-check', str(manifest.parent))
+    assert checked.returncode == 0, checked.stdout
+    assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: panel'

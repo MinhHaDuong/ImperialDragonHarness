@@ -62,6 +62,17 @@ case "$STUB_MODE" in
   noread) printf 'reach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
   lateread) printf 'Looking.\\nreach: read=yes shell=no tests=not-run\\nverdict: clear\\n' ;;
   noreach) printf 'finding: none\nverdict: clear\n' ;;
+  fenced) printf '```text\nworker: model=fixture-qwen · family=Qwen\nreach: read=yes shell=no tests=not-run\n```\n\nfinding: none\nverdict: clear\n' ;;
+  fenced-bare) printf '\n```\nreach: read=yes shell=no tests=not-run\n```\nfinding: none\nverdict: clear\n' ;;
+  fenced-noread) printf '```\nreach: read=no shell=no tests=not-run\n```\nverdict: clear\n' ;;
+  fenced-ranno) printf '```text\nreach: read=yes shell=no tests=ran=no\n```\nverdict: clear\n' ;;
+  fenced-open) printf '```text\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
+  fenced-two) printf '```\nreach: read=yes shell=no tests=not-run\nreach: read=no shell=no tests=not-run\n```\nverdict: clear\n' ;;
+  fenced-extra) printf '```\nreach: read=yes shell=no tests=not-run\nverdict: clear\n```\n' ;;
+  fenced-quoted) printf 'Looking.\n```\nreach: read=yes shell=no tests=not-run\n```\nverdict: clear\n' ;;
+  fenced-example) printf 'finding: example report below\n```text\nworker: x\nreach: read=yes shell=no tests=not-run\n```\nverdict: clear\n' ;;
+  fenced-lang) printf '```python\nreach: read=yes shell=no tests=not-run\n```\nverdict: clear\n' ;;
+  fenced-unknown) printf '```text\nreach: read=maybe shell=no tests=not-run\n```\nverdict: clear\n' ;;
   empty) : ;;
   aiderish)
     printf 'Aider v0.86.2\nModel: openai/x with ask edit format\n\n--------------\n> **THINKING**\n\nmaybe verdict: clear\n\n------------\n> **ANSWER**\n\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: concerns\n\nTokens: 1 sent, 2 received.\n' | sed 's/^> /\xe2\x96\xba /' ;;
@@ -951,3 +962,77 @@ def test_launch_line_carries_the_session_id_the_claude_seat_was_launched_with(ri
     rows = [json.loads(line) for line in next((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
     assert [(r['seat'], r['child_runtime'], r['child_session'], r['exit']) for r in rows] == \
         [('lines', 'claude', pinned, 0)]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('mode', ['fenced', 'fenced-bare'])
+def test_header_wrapped_in_a_balanced_block_is_accepted(rig, mode):
+    result = launch(rig, mode=mode)
+    assert result.returncode == 0, result.stdout
+    assert 'header unwrapped from a Markdown block' in result.stdout
+    report = (rig['panel'] / 'correctness.md').read_text()
+    lines = report.splitlines()
+    assert lines[0] == 'worker: model=haiku · family=Anthropic · runtime=claude-code · door=headless'  # launcher's
+    assert lines[1] == 'reach: read=yes shell=no tests=not-run'
+    assert 'fixture-qwen' not in report and '```' not in report
+    assert 'verdict: clear' in report and 'finding: none' in report  # body kept
+    raw = (rig['panel'] / 'correctness.md.raw').read_text()
+    assert raw.lstrip().startswith('```') and 'reach: read=yes' in raw
+
+
+@pytest.mark.integration
+def test_ordinary_report_is_not_noted_as_unwrapped(rig):
+    result = launch(rig)
+    assert 'unwrapped' not in result.stdout and not (rig['panel'] / 'correctness.md.raw').exists()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('mode,reason', [
+    ('fenced-noread', 'read=no'),
+    ('fenced-ranno', 'invalid reach declaration'),
+    ('fenced-unknown', 'invalid reach declaration'),
+    ('fenced-open', 'not a balanced header-only block'),
+    ('fenced-two', 'not a balanced header-only block'),
+    ('fenced-extra', 'not a balanced header-only block'),
+    ('fenced-lang', 'not a balanced header-only block'),
+    ('fenced-quoted', 'no valid reach line'),
+    ('fenced-example', 'no valid reach line'),
+])
+def test_wrapped_header_never_invents_or_promotes_a_declaration(rig, mode, reason):
+    result = launch(rig, mode=mode)
+    assert result.returncode == 1, result.stdout
+    assert reason in result.stdout and 'seat reach: ' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+def test_unwrap_header_unit():
+    gs = load_module()
+    ok = '```text\nworker: w\nreach: read=yes shell=no tests=not-run\n```\nbody\n'
+    assert gs.unwrap_header(ok) == ('worker: w\nreach: read=yes shell=no tests=not-run\nbody\n', True)
+    plain = 'reach: read=yes shell=no tests=not-run\nbody\n'
+    assert gs.unwrap_header(plain) == (plain, False)
+    # stamp + validation: the real pipeline on the ticket's fragment
+    fixed, _ = gs.unwrap_header(ok)
+    assert gs.reach_refusal(gs.stamp(fixed, 'worker: launcher')) is None
+    assert gs.reach_refusal(gs.stamp(ok, 'worker: launcher')) is not None
+
+
+def test_repeated_or_contradictory_reach_lines_are_refused():
+    """Ticket 1400 audit: only line 2 was read, so a second, contradicting reach line was admitted."""
+    gs = load_module()
+    yes, no = 'reach: read=yes shell=no tests=not-run', 'reach: read=no shell=no tests=not-run'
+    for first, second in ((yes, no), (no, yes), (yes, yes)):
+        report = gs.stamp(f'{first}\n{second}\nbody\n', 'worker: launcher')
+        assert gs.reach_refusal(report) is not None
+    late = gs.stamp(f'{yes}\nverdict: clear\n{no}\n', 'worker: launcher')  # not adjacent: still a complete second declaration
+    assert gs.reach_refusal(late) == 'ambiguous reach declaration (repeated reach line)'
+    prose = gs.stamp(f'{yes}\nfinding: the line reach: is parsed\nverdict: clear\n', 'worker: launcher')
+    assert gs.reach_refusal(prose) is None
+
+
+def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
+    gs = load_module()
+    report = gs.stamp('reach: read=yes shell=no tests=not-run\nNOT-RUN: x\nverdict: none\n', 'worker: launcher')
+    assert gs.refusal(report) is not None
+    ok = gs.stamp('reach: read=yes shell=no tests=not-run\nfinding: prints NOT-RUN: on refusal\nverdict: clear\n', 'worker: l')
+    assert gs.refusal(ok) is None

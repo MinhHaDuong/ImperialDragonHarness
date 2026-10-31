@@ -17,7 +17,8 @@ first line `worker: model=<pin> · family=<family> · runtime=<rt> ·
 door=headless` set by the launcher: the pin is what ran, and a CLI's own
 self-report of its model is not trusted. Whatever stops a seat (no door, a
 family the door cannot serve, no consent, an unreadable or moved review tree,
-a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, a missing or `read=no` `reach:` line, the
+a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, a missing, invalid or `read=no` `reach:` line (a header wrapped in one balanced header-only Markdown block is
+unwrapped first, noted in the status line, the seat's answer kept as `<name>.md.raw`), the
 cap) prints and saves
 `<name>: no report (<reason>)` (a seat whose CLI ran appends `; door=<rt>, model=<pin>`: harness-owned fields
 only, the CLI's stderr stays in the local `.log` and never reaches notes) to `<panel>/<name>.md.status` and writes no
@@ -338,11 +339,53 @@ def git(tree: Path, *args: str) -> str | None:
     return result.stdout if result.returncode == 0 else None
 
 
+FENCE = re.compile(r'```[ \t]*(?:text|txt|plain|plaintext|markdown|md)?[ \t]*')
+
+
+def unwrap_header(text: str) -> tuple[str, bool]:
+    """Lift a header the seat wrapped in one balanced Markdown block at the very top of its report.
+
+    Bounded on purpose: the block must be the first non-blank content, close on a bare fence line, and hold
+    only an optional `worker:` line then exactly one `reach:` line. The fences go, every other byte stays;
+    the reach values are checked later as written, never repaired. Any other shape is returned unchanged
+    and refused by `reach_refusal`; a header quoted further down is never looked at.
+    """
+    lines = text.splitlines()
+    start = next((i for i, line in enumerate(lines) if line.strip()), len(lines))
+    if start == len(lines) or not FENCE.fullmatch(lines[start].strip()):
+        return text, False
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip().startswith('```')), None)
+    if end is None or lines[end].strip() != '```':
+        return text, False
+    inner = [line for line in lines[start + 1:end] if line.strip()]
+    plain = [line.strip().strip('*`').strip().lower() for line in inner]
+    if not (1 <= len(inner) <= 2) or not plain[-1].startswith('reach:'):
+        return text, False
+    if len(inner) == 2 and not plain[0].startswith('worker:'):
+        return text, False
+    return '\n'.join(lines[:start] + inner + lines[end + 1:]) + '\n', True
+
+
+def header_lines(text: str) -> list[str]:
+    """The report's lines that hold a word character, stripped of `*` and backticks, after the header block
+    is unwrapped: a line of rules or bare markers (`---`, `**`) is blank.
+
+    The one reader of a report's header: the launcher's checks here and the plan check in
+    `seat_clock.py` both take their worker and reach lines from it.
+    """
+    return [line.strip().strip('*`').strip() for line in unwrap_header(text)[0].splitlines()
+            if re.search(r'\w', line)]
+
+
+def is_worker_line(line: str) -> bool:
+    return line.lower().startswith('worker:')
+
+
 def stamp(text: str, worker: str) -> str:
     """Put the launcher's worker line first, replacing any the seat wrote."""
     lines = text.splitlines()
     body = [line for line in lines if line.strip()]
-    if body and body[0].strip().strip('*').strip().lower().startswith('worker:'):
+    if body and is_worker_line(body[0].strip().strip('*`').strip()):
         drop = lines.index(body[0])
         lines = lines[:drop] + lines[drop + 1:]
     rest = '\n'.join(lines).strip('\n')
@@ -350,22 +393,26 @@ def stamp(text: str, worker: str) -> str:
 
 
 def refusal(report: str) -> str | None:
-    """The seat's `NOT-RUN:` line, in a report that reaches no verdict."""
-    lines = [line.strip().strip('*`').strip() for line in report.splitlines() if line.strip()]
-    if any(line.lower().startswith('verdict:') for line in lines):
-        return None
-    return next((line for line in lines if line.upper().startswith('NOT-RUN')), None)
+    """The seat's `NOT-RUN:` line: a refusal even when a later line carries a `verdict:`."""
+    return next((line for line in header_lines(report) if line.upper().startswith('NOT-RUN')), None)
 
 
 REACH = re.compile(r'reach:\s*read=(yes|no)\s+shell=(yes|no)\s+tests=(ran|not-run)\s*$', re.I)
 
 
 def reach_refusal(report: str) -> str | None:
-    """Why the seat's declared reach rules out a report: no `reach:` line, or `read=no`."""
-    lines = [line.strip().strip('*`').strip() for line in report.splitlines() if line.strip()]
+    """Why the seat's declared reach rules out a report: no valid `reach:` line, a repeated one, or `read=no`."""
+    raw = [line.strip() for line in report.splitlines() if line.strip()]
+    lines = [line.strip('*`').strip() for line in raw]
     line = lines[1] if len(lines) > 1 else ''  # the launcher's worker line is first
     if not (m := REACH.fullmatch(line)):
+        if raw[1:2] and raw[1].startswith('```'):
+            return 'header inside a Markdown block that is not a balanced header-only block'
+        if line.lower().startswith('reach:'):
+            return 'invalid reach declaration'
         return 'no valid reach line'
+    if any(REACH.fullmatch(later) for later in lines[2:]) or (len(lines) > 2 and lines[2].lower().startswith('reach:')):
+        return 'ambiguous reach declaration (repeated reach line)'
     return 'read=no' if m.group(1).lower() == 'no' else None
 
 
@@ -522,7 +569,13 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     text = last if wrote_last else staging
     worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
     answer = answer_of(door, text.read_text(encoding='utf-8', errors='replace'))
+    raw_answer = answer
+    answer, unwrapped = unwrap_header(answer)
     report = stamp(answer, worker)
+    if unwrapped:
+        # the seat's answer as received, kept beside the report: the normalisation is the only edit
+        args.panel.joinpath(f'{args.name}.md.raw').write_text(raw_answer, encoding='utf-8')
+        outcome += '; header unwrapped from a Markdown block'
     for leftover in (staging, last):
         leftover.unlink(missing_ok=True)
     if not report:
