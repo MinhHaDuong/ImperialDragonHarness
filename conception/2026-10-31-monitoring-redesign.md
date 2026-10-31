@@ -64,10 +64,24 @@ directly, each with its own reader (5,198 lines in the `trace*`,
   2026-07-30 and 2026-08-31, while the harness has 215 commits in August.
   Cause not established; the likely discriminator is doudou.
 - **Per-host stores.** Transcripts stay on the host that ran the session.
-- **Headless cleanup period.** `--restricted` ignores the settings files and
-  Claude Code's documented default is 30 days (§ 3). If a seat applied that
-  default at start it could delete every transcript older than a month; the
-  surviving June files argue against it. One experiment settles it.
+- **Headless cleanup period (settled 2026-10-31, ticket 1383).** A headless
+  `claude -p` session runs the retention sweep itself, a few minutes after
+  start, by the period it reads from settings. Claude Code 2.1.316, scratch
+  `CLAUDE_CONFIG_DIR` holding a 40-day-old and a 5-day-old transcript
+  (UUID-named, so the sweep sees session files), session kept alive 10 to 13
+  minutes with stdin open, API key in the process environment only. Positive
+  controls, both deleted the 40-day file and kept the 5-day one: unrestricted
+  with `cleanupPeriodDays: 30` in the scratch `settings.json`, and unrestricted
+  with no settings file (default, 30 days). Experiment,
+  `--restricted --safe-mode` with no settings file: **both files kept** after
+  the controls had fired. The CLI binary names the mechanism: the sweep is
+  skipped when no enabled settings source provides `cleanupPeriodDays`, and
+  `--restricted` disables the user source. So a seat does not delete, and no
+  fix is needed in the door. The converse holds: an unrestricted headless
+  session on a host with no `cleanupPeriodDays` would apply the 30-day default.
+  Two runs that look empty prove nothing: a first run on an empty config dir
+  showed nothing deleted for any arm, and a one-shot `claude -p "reply ok"`
+  exits before the sweep fires; only the held session did.
 
 ### 2.4 Volume (measured, padme)
 
@@ -122,14 +136,17 @@ a roar. This is ticket 1380, widened.
 A nightly job (systemd user timer) copies every transcript of the three
 runtimes untouched for a day, with Claude Code's `subagents/` and
 `tool-results/`, to `~/archive/transcripts/<host>/<runtime>/<original
-relative path>.zst`, one plain zstd file each. A source whose size changed
-since its last copy is copied again: transcripts only append, so the new copy
+relative path>.zst`, one plain zstd file each. A source that changed since
+its last copy (the copy carries the source's mtime; an append moves it) is
+copied again: transcripts only append, so the new copy
 supersedes the old one. doudou pushes to padme when online. The archive keeps
 the runtime's own file names and contents, unmodified, so any later reader or
 index can rebuild from it. Nothing is committed to git.
 
-The coverage holes close at the door, five of them: vibe seats get a
-persistent `VIBE_HOME` under the archive's spool; aider's history flags point
+The coverage holes close at the door, five of them: vibe seats pass
+`--output-dir <spool>`, which copies the session journal there at exit (the
+seat keeps its disposable `VIBE_HOME`; a timeout kill loses that copy, and
+such a seat produced no report anyway); aider's history flags point
 to a per-seat file in the spool instead of `/dev/null` (still outside the
 review tree); Pi seats and the Pi subagent extension write their session to
 the spool instead of passing `--no-session`; `manuscript_review.py` drops
