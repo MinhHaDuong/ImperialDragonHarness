@@ -2,9 +2,11 @@
 Title: After-merge red on main 798d584b29ad: pytest-guard
 Created: 2026-10-31
 Author: merge-gate
+Closed: after-merge records on 067eb115 and 2d831b2e pass pytest-guard (all six checks); the cited test failed once, on 798d584b only
 
 --- log ---
 2026-10-31T08:42Z merge-gate created
+2026-10-31T14:26Z reviewer closed — after-merge records on 067eb115 and 2d831b2e pass pytest-guard (all six checks); the cited test failed once, on 798d584b only
 
 --- body ---
 ## Context
