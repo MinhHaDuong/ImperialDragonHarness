@@ -401,3 +401,18 @@ def test_identities_a_launch_line_without_a_report_path_vouches_nothing(tmp_path
     panel = _plan(tmp_path, ['cx\tclaude-x\tanthropic\tcross-family reader'], {'cx': FORGED})
     env = launched(tmp_path, 'cx', out=False)
     assert 'route=subagent' in run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout
+
+
+def test_identities_a_real_run_seat_launch_line_vouches_for_its_staged_report(tmp_path):
+    """Gaze 2110 round 2: gaze_seat runs the seat on <name>.seat and renames to <name>.md afterwards."""
+    panel = _plan(tmp_path, ['rt\tgpt-6.1-sol\topenai\tcross-family reader'], {'rt': FORGED.replace('made-up', 'gpt-6.1-sol')})
+    env = {'IDH_ARCHIVE_ROOT': str(tmp_path / 'archive'), 'IDH_UNIT': 'branch:t1'}
+    sys.path.insert(0, str(SCRIPT.parent))
+    import seat_clock  # gaze_seat's call: staged output, the launch seat named apart
+    os.environ.update(env)
+    try:
+        seat_clock.run_seat(5, panel / 'rt.seat', ['true'], launch={'seat': 'rt'})
+    finally:
+        os.environ.pop('IDH_ARCHIVE_ROOT'), os.environ.pop('IDH_UNIT')
+    line = run('identities', str(panel), '--session-runtime', 'claude-code', env=env).stdout.splitlines()[0]
+    assert 'runtime=codex' in line and 'route=gpt-6.1-sol' in line

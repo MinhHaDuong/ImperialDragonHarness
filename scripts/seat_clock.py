@@ -325,13 +325,15 @@ def launched_seats() -> list[dict] | None:
 
 
 def vouches(row: dict, panel: Path, name: str, unit: str) -> bool:
-    """A launch line vouches for a seat of this review only when it names this panel's report file, the same
+    """A launch line vouches for a seat of this review only when it names this panel's report file (or its staging file), the same
     known unit, and started after the plan was written; a `-` unit or a missing path vouches nothing (ticket 1399)."""
     try:
         started = datetime.strptime(row['ts_start'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc).timestamp()
         planned = (panel / 'manifest.txt').stat().st_mtime
         return (row['seat'] == name and row['unit'] == unit != '-' and bool(row.get('out'))
-                and Path(row['out']) == (panel / f'{name}.md').resolve() and started >= int(planned) - 1)
+                and Path(row['out']).parent == panel.resolve()
+                and Path(row['out']).name in (f'{name}.md', f'{name}.seat')  # gaze_seat stages as .seat
+                and started >= int(planned) - 1)
     except (OSError, ValueError, TypeError):
         return False
 
