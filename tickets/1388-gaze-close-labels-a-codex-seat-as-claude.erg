@@ -1,0 +1,36 @@
+%erg 0.1
+Title: gaze_close labels a codex seat as claude-code/anthropic in the attribution record
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T10:04Z claude created
+
+--- body ---
+
+## Context
+
+Observed 2026-10-31, raid 8ad75a, PR 2073 (review rv-20261031-pr-2073-6e61).
+The gaze seat `cx` ran on Codex: rollout
+`~/.codex/sessions/2026/10/31/rollout-2026-10-31T10-57-59-01a19165-...jsonl`
+(started 09:57:59Z) carries `"model_provider":"openai"`, `"model":"gpt-6.1-sol"`,
+and the seat's own header said runtime=codex, family=openai, door=headless.
+gaze_close nevertheless wrote the answer's reviewer line as
+
+    reviewer: step=review · seat=cx · runtime=claude-code · model=anthropic/gpt-6.1-sol · ... · route=subagent
+
+and verify-gate read both seats as family=anthropic (same-family review),
+so a real cross-family seat was counted as same-family. The wrong line is
+now in `memory/evidence/attribution/2026-10-31-review-attribution-pr2073.md`.
+Cause not yet established (plan text named the seat openai; the close
+step derived runtime/family elsewhere).
+
+Severity: corrupts attribution state and can make a high-risk gate refuse a
+review that has its cross-family seat.
+
+## Exit criteria
+
+- [ ] Test: a gaze answer for a seat launched through the codex headless door
+      records `runtime=codex`, `model=openai/<id>` and its door route
+- [ ] The PR 2073 attribution record is corrected or annotated by a linked entry
+

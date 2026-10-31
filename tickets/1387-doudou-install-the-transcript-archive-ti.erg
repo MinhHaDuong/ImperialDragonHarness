@@ -1,0 +1,26 @@
+%erg 0.1
+Title: doudou: install the transcript archive timer and push to padme
+Created: 2026-10-31
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-10-31T09:46Z claude created
+
+--- body ---
+
+## Context
+
+Follow-up of ticket 1383 (PR 2072, raid 8ad75a, tracker 1382). The transcript
+archive runs nightly on padme. doudou was unreachable during the raid
+(2026-10-31 09:59 and again at execution: ssh no route to host), so its leg was
+not done. Installing a timer on doudou is the author's call.
+
+## Exit criteria
+
+- [ ] On doudou, the `transcript-archive` user timer is installed and has run
+      once by the commands in INSTALL.md § Transcript archive, subsection doudou;
+      its `eligible:` and `archived:` lines are logged here
+- [ ] doudou's archive is pushed to padme once (`rsync` command in the same
+      subsection) and present under `~/archive/transcripts/doudou/` on padme
+
