@@ -25,6 +25,7 @@ Stdlib only. Readers take an iterable of JSONL lines; a malformed line is skippe
 """
 import json
 import re
+import shlex
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
@@ -99,6 +100,177 @@ class Event:
     exit: int | None
     pointer: tuple  # (file relative to its root, call id or None)
     detail: str | None = None
+    tool_class: str | None = None  # tool events only: subagent | worker | tests | file | other (ticket 1393)
+
+
+# ---- tool-call classes (ticket 1393) ----------------------------------------------------------------
+# A tool event carries one class so a timeline can tell a test run from a file read at a glance. The class
+# comes from the tool name and, for shell calls, the command text. A shell command is split into its
+# simple commands (quotes respected, heredoc bodies dropped) and each is judged by the program it RUNS,
+# never by words it mentions: `grep pytest f` is `other`. Precedence over the pieces of one command line:
+# worker > tests > other, so `pytest && codex exec ...` is a worker call.
+TOOL_CLASSES = ("subagent", "worker", "tests", "file", "other")
+SUBAGENT_TOOLS = {"skill", "agent", "task", "spawn_agent", "followup_task", "send_message", "wait_agent",
+                  "list_agents", "interrupt_agent"}
+FILE_TOOLS = {"read", "edit", "write", "multiedit", "notebookedit", "grep", "glob", "ls", "find",
+              "read_file", "grep_files", "list_dir", "apply_patch", "view_image"}
+SHELL_TOOLS = {"bash", "exec", "exec_command", "shell", "shell_command", "local_shell", "unified_exec"}
+WORKER_SCRIPTS = {"seat_clock.py", "gaze_seat.py", "runtime_launch.py"}
+WRAPPERS = {"sudo", "env", "time", "nohup", "nice", "rtk", "command", "exec", "xargs", "setsid", "stdbuf"}
+SHELLS = {"bash", "sh", "zsh", "dash"}
+HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+SEPARATORS = {"&&", "||", ";", "|", "&", "(", ")", "|&", ";;"}
+
+
+def _unquoted_newlines_to_semicolons(text: str) -> str:
+    out, quote, i = [], None, 0
+    while i < len(text):
+        ch = text[i]
+        if quote:
+            if ch == "\\" and quote == '"' and i + 1 < len(text):
+                out.append(ch)
+                i += 1
+                ch = text[i]
+            elif ch == quote:
+                quote = None
+        elif ch == "\\" and i + 1 < len(text):
+            out.append(ch)
+            i += 1
+            ch = text[i]
+        elif ch in "'\"":
+            quote = ch
+        elif ch == "\n":
+            ch = ";"
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _drop_heredocs(text: str) -> str:
+    out, end = [], None
+    for line in text.split("\n"):
+        if end is not None:
+            if line.strip() == end:
+                end = None
+            continue
+        out.append(line)
+        found = HEREDOC.search(line)
+        if found:
+            end = found.group(2)
+    return "\n".join(out)
+
+
+def _simple_commands(command: str) -> list[list[str]]:
+    text = _unquoted_newlines_to_semicolons(_drop_heredocs(command))
+    try:
+        lexer = shlex.shlex(text, posix=True, punctuation_chars="|&;()")
+        lexer.whitespace_split = True
+        tokens = list(lexer)
+    except ValueError:
+        tokens = text.split()
+    commands, current = [], []
+    for token in tokens:
+        if token in SEPARATORS:
+            if current:
+                commands.append(current)
+            current = []
+        else:
+            current.append(token)
+    if current:
+        commands.append(current)
+    return commands
+
+
+def _is_c_flag(arg: str) -> bool:
+    return arg == "-c" or (arg.startswith("-") and not arg.startswith("--") and "c" in arg)
+
+
+def _classify_simple(tokens: list[str], depth: int) -> str:
+    while tokens and (re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", tokens[0]) or tokens[0] in WRAPPERS
+                      or tokens[0] in ("timeout", "proxy", "uv", "run")):
+        if tokens[0] == "timeout":  # timeout [opts] DURATION cmd
+            tokens = tokens[1:]
+            while tokens and (tokens[0].startswith("-") or re.fullmatch(r"\d+(\.\d+)?[smhd]?", tokens[0])):
+                tokens = tokens[1:]
+            continue
+        tokens = tokens[1:]
+    if not tokens:
+        return "other"
+    exe, args = Path(tokens[0]).name, tokens[1:]
+    if exe in SHELLS:
+        idx = next((i for i, a in enumerate(args) if _is_c_flag(a)), None)
+        if idx is not None and idx + 1 < len(args) and depth < 3:
+            return classify_command(args[idx + 1], depth + 1)
+        script = next((a for a in args if not a.startswith("-")), "")
+        return "worker" if Path(script).name in WORKER_SCRIPTS else "other"
+    if exe == "codex" and "exec" in args[:3]:
+        return "worker"
+    if exe in ("claude", "pi") and ("-p" in args or "--print" in args):
+        return "worker"
+    if exe.startswith("python"):
+        if "-m" in args and args.index("-m") + 1 < len(args):
+            return "tests" if args[args.index("-m") + 1] in ("pytest", "py.test") else "other"
+        script = next((a for a in args if not a.startswith("-")), "")
+        return "worker" if Path(script).name in WORKER_SCRIPTS else "other"
+    if exe in WORKER_SCRIPTS or exe.endswith(("-seat", "_seat")):
+        return "worker"
+    if exe in ("pytest", "py.test"):
+        return "tests"
+    if exe == "make":
+        targets = [a for a in args if not a.startswith("-") and "=" not in a]
+        if any(t.startswith(("check", "lint")) or t in ("test", "tests") for t in targets):
+            return "tests"
+    return "other"
+
+
+def classify_command(command: str, depth: int = 0) -> str:
+    """Class of a shell command line: `worker`, `tests` or `other` (precedence in that order)."""
+    found = {_classify_simple(c, depth) for c in _simple_commands(command or "")}
+    return "worker" if "worker" in found else "tests" if "tests" in found else "other"
+
+
+def classify_tool(name: str, command: str | None = None) -> str:
+    """Class of one tool call from its name and, for a shell tool, its command text."""
+    lowered = (name or "").lower()
+    if lowered in SUBAGENT_TOOLS:
+        return "subagent"
+    if lowered in FILE_TOOLS:
+        return "file"
+    if (lowered in SHELL_TOOLS or command) and command:
+        return classify_command(command)
+    return "other"
+
+
+CODEX_CMD = re.compile(r"""\bcmd\s*:\s*("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`)""")
+
+
+def codex_command(payload: dict) -> str | None:
+    """The shell command text of a Codex call: a `local_shell_call` action, JSON `arguments` (`cmd` or
+    `command`), or the JS of the `exec` custom tool (every `cmd:` string literal, one per line)."""
+    def joined(value):
+        return shlex.join(map(str, value)) if isinstance(value, list) else value if isinstance(value, str) else None
+
+    action = payload.get("action")
+    if isinstance(action, dict) and action.get("command"):
+        return joined(action["command"])
+    args = payload.get("arguments")
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except ValueError:
+            args = None
+    if isinstance(args, dict):
+        return joined(args.get("cmd") or args.get("command"))
+    code = payload.get("input")
+    if isinstance(code, str):
+        cmds = []
+        for lit in CODEX_CMD.findall(code):
+            try:
+                cmds.append(json.loads(lit) if lit[0] == '"' else lit[1:-1])
+            except ValueError:
+                cmds.append(lit[1:-1])
+        return "\n".join(cmds) or None
+    return None
 
 
 def resolve_pricing(model_id: str) -> dict | None:
@@ -240,7 +412,8 @@ def read_claude(lines: Iterable[str], file: str, agent: str | None = None,
                     inp = block.get("input") if isinstance(block.get("input"), dict) else {}
                     pending[block["id"]] = {"name": block.get("name") or "?", "start": ts,
                                             "model": message.get("model"),
-                                            "detail": inp.get("description") or inp.get("subagent_type")}
+                                            "detail": inp.get("description") or inp.get("subagent_type"),
+                                            "cls": classify_tool(block.get("name") or "?", inp.get("command"))}
         else:
             for block in content if isinstance(content, list) else []:
                 if isinstance(block, dict) and block.get("type") == "tool_result":
@@ -257,7 +430,7 @@ def read_claude(lines: Iterable[str], file: str, agent: str | None = None,
             times.append(end)
         tools.append(Event("tool", call["name"], call["start"], end, "claude", agent or "?", parent_agent,
                            call["model"], None, None, "unpriced", call.get("exit"), (file, call_id),
-                           call["detail"]))
+                           call["detail"], call["cls"]))
     turn_events = []
     for mid, turn in turns.items():
         if turn["model"] == "<synthetic>":
@@ -284,6 +457,15 @@ def _codex_tokens(delta: dict) -> dict:
     return {"input": max(0, (delta.get("input_tokens", 0) or 0) - cached),
             "output": delta.get("output_tokens", 0) or 0, "cache_read": cached,
             "cache_write": delta.get("cache_write_input_tokens", 0) or 0}
+
+
+def _codex_class(name: str, payload: dict) -> str:
+    """Class of a Codex call: shell calls (`exec`, `exec_command`, `shell`, local shell) by their command;
+    an `exec` script that patches files and runs no command is `file`."""
+    command = codex_command(payload)
+    if command is None and name == "exec" and "apply_patch" in str(payload.get("input")):
+        return "file"
+    return classify_tool("bash" if name == "exec" or payload.get("type") == "local_shell_call" else name, command)
 
 
 def read_codex(lines: Iterable[str], file: str, agent: str | None = None,
@@ -317,7 +499,8 @@ def read_codex(lines: Iterable[str], file: str, agent: str | None = None,
             turn_id = payload.get("turn_id") or turn_id
         elif kind == "response_item" and ptype in CODEX_CALLS and ts is not None:
             call_id = payload.get("call_id") or payload.get("id")
-            pending[call_id] = {"name": payload.get("name") or ptype, "start": ts}
+            name = payload.get("name") or ptype
+            pending[call_id] = {"name": name, "start": ts, "cls": _codex_class(name, payload)}
         elif kind == "response_item" and ptype and ptype.endswith("_output") and ts is not None:
             call = pending.get(payload.get("call_id"))
             if call is not None and "end" not in call:
@@ -341,7 +524,7 @@ def read_codex(lines: Iterable[str], file: str, agent: str | None = None,
     for call_id, call in pending.items():
         tools.append(Event("tool", call["name"], call["start"], call.get("end", last), "codex",
                            agent or "?", parent_agent, model, None, None, "unpriced", call.get("exit"),
-                           (file, call_id)))
+                           (file, call_id), None, call["cls"]))
     span = _span("codex", name, agent or "?", parent_agent, file, turn_events, times, model)
     return [span, *turn_events, *tools]
 
@@ -384,7 +567,9 @@ def read_pi(lines: Iterable[str], file: str, agent: str | None = None,
                                      (file, row.get("id"))))
             for block in message.get("content") if isinstance(message.get("content"), list) else []:
                 if isinstance(block, dict) and block.get("type") == "toolCall" and block.get("id"):
-                    pending[block["id"]] = {"name": block.get("name") or "?", "start": ts}
+                    pargs = block.get("arguments") if isinstance(block.get("arguments"), dict) else {}
+                    pending[block["id"]] = {"name": block.get("name") or "?", "start": ts,
+                                            "cls": classify_tool(block.get("name") or "?", pargs.get("command"))}
         elif role == "toolResult":
             call = pending.get(message.get("toolCallId"))
             if call is not None and "end" not in call:
@@ -393,12 +578,14 @@ def read_pi(lines: Iterable[str], file: str, agent: str | None = None,
         elif role == "bashExecution":
             code = message.get("exitCode")
             tools.append(Event("tool", "bash", ts, ts, "pi", agent or "?", parent_agent, model, None, None,
-                               "unpriced", code if isinstance(code, int) else None, (file, None)))
+                               "unpriced", code if isinstance(code, int) else None, (file, None), None,
+                               classify_tool("bash", message.get("command"))))
         prev = ts
     last = max(times) if times else 0.0
     for call_id, call in pending.items():
         tools.append(Event("tool", call["name"], call["start"], call.get("end", last), "pi", agent or "?",
-                           parent_agent, model, None, None, "unpriced", call.get("exit"), (file, call_id)))
+                           parent_agent, model, None, None, "unpriced", call.get("exit"), (file, call_id), None,
+                           call["cls"]))
     span = _span("pi", name, agent or "?", parent_agent, file, turn_events, times, model)
     return [span, *turn_events, *tools]
 

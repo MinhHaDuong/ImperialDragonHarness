@@ -187,3 +187,61 @@ def test_trace_stats_reexports_the_moved_table():
     assert stats.resolve_pricing("claude-opus-5") is stats.PRICING["opus"]
     assert stats.resolve_pricing("gpt-6-luna") is None
     assert stats._message_cost("gpt-6-luna", {"input_tokens": 9}) == 0.0
+
+
+# ---- tool-call classes (ticket 1393) ---------------------------------------------------------------
+
+@pytest.mark.parametrize("name,command,expected", [
+    ("Skill", None, "subagent"), ("Agent", None, "subagent"),
+    ("Read", None, "file"), ("Edit", None, "file"), ("Grep", None, "file"), ("apply_patch", None, "file"),
+    ("Bash", "pytest tests/test_x.py -q", "tests"),
+    ("Bash", "cd /w && uv run pytest -x", "tests"),
+    ("Bash", "RUN=1 python3 -m pytest tests", "tests"),
+    ("Bash", "rtk proxy python3 -m pytest tests", "tests"),
+    ("Bash", "make check-fast", "tests"), ("Bash", "make -j4 lint", "tests"),
+    ("Bash", "codex exec --model gpt-6-sol 'review this'", "worker"),
+    ("Bash", "claude -p 'say OK' --model haiku", "worker"),
+    ("Bash", "python3 scripts/seat_clock.py run -- codex exec x", "worker"),
+    ("Bash", "pytest -q && codex exec go", "worker"),  # precedence: worker over tests
+    ("Bash", "bash -lc 'make check'", "tests"),
+    ("Bash", "git status", "other"), ("Bash", "ls -la", "other"), ("Bash", "", "other"),
+    # negatives: a command that only mentions the words is not that class
+    ("Bash", "grep -rn pytest tests/", "other"),
+    ("Bash", "echo 'run pytest then codex exec'", "other"),
+    ("Bash", "git commit -m 'fix pytest flake\n\nmake check passes'", "other"),
+    ("Bash", "cat <<'EOF'\npytest\nEOF", "other"),
+    ("Bash", "cat notes.md | grep 'make check'", "other"),
+    ("WebFetch", None, "other"),
+])
+def test_classify_tool(name, command, expected):
+    assert te.classify_tool(name, command) == expected
+
+
+def test_codex_exec_calls_are_classified_by_their_command():
+    def row(ts, payload):
+        return {"timestamp": ts, "type": "response_item", "payload": payload}
+
+    def js(cmd):
+        return 'text(await tools.exec_command({cmd:%s,"workdir":"/w"}));' % json.dumps(cmd)
+
+    rows = [
+        row("2026-01-01T00:00:01.000Z", {"type": "custom_tool_call", "name": "exec", "call_id": "c1", "input": js("pytest -q")}),
+        row("2026-01-01T00:00:02.000Z", {"type": "custom_tool_call", "name": "exec", "call_id": "c2", "input": js("rg pytest docs")}),
+        row("2026-01-01T00:00:03.000Z", {"type": "function_call", "name": "shell", "call_id": "c3",
+                                         "arguments": json.dumps({"command": ["bash", "-lc", "codex exec x"]})}),
+        row("2026-01-01T00:00:04.000Z", {"type": "function_call", "name": "spawn_agent", "call_id": "c4", "arguments": "{}"}),
+        row("2026-01-01T00:00:05.000Z", {"type": "custom_tool_call", "name": "exec", "call_id": "c5",
+                                         "input": "text(await tools.apply_patch(`*** Begin Patch`));"}),
+        row("2026-01-01T00:00:06.000Z", {"type": "local_shell_call", "call_id": "c6", "action": {"command": ["make", "check"]}}),
+    ]
+    tools = {t.pointer[1]: t.tool_class for t in by_kind(te.read_codex(lines(*rows), "f"), "tool")}
+    assert tools == {"c1": "tests", "c2": "other", "c3": "worker", "c4": "subagent", "c5": "file", "c6": "tests"}
+
+
+def test_claude_tool_class_comes_from_the_command_and_non_tools_have_none():
+    rows = _claude_rows()
+    rows[2]["message"]["content"][0]["input"] = {"command": "pytest -q", "description": "run tests"}
+    events = te.read_claude(lines(*rows), "proj/s1.jsonl")
+    tools = {t.pointer[1]: t.tool_class for t in by_kind(events, "tool")}
+    assert tools == {"tu1": "tests", "tu2": "subagent"}
+    assert events[0].tool_class is None and all(t.tool_class is None for t in by_kind(events, "turn"))
