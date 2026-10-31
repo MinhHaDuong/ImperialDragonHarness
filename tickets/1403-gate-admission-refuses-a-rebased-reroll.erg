@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Gate admission refuses a rebased reroll fix
+Created: 2026-10-31
+Author: reviewer
+
+--- log ---
+2026-10-31T19:48Z reviewer created
+
+--- body ---
+## Context
+Raid 3d5ae7, PR #2114 (2026-10-31). Gate round 1 REROLLed on 9b70c368. The fix commit was rebased onto origin/main, as `rules/git.md` requires before every gate, giving 5f13e765. Round 2 was refused at admission: `scripts/review_notes.py` `gate_state` (reroll-fix branch, about line 913) admits a round-2 head only when the rerolled head is its ancestor (`merge-base --is-ancestor`), which a rebase never satisfies. `git range-diff` showed the three reviewed commits identical. Workaround used: a delta re-gaze on the rebased head, then round 2 was admitted and APPROVED.
+
+The two rules contradict: following "rebase before every gate" makes the reroll-fix admission unreachable, and each rebased fix costs one extra gaze.
+
+## Scope
+Admit a round-2 head when the rerolled head is its ancestor OR its commits since the merge base are patch-equivalent (patch-id, as `coverage()` already uses) to the rerolled range plus new commits.
+
+## Exit criteria
+- [ ] A test: reroll on head A, rebase A's commits onto a moved base and add a fix commit; `gate_state` admits it as `reroll-fix`
+- [ ] A test: a rebased head whose earlier commits changed content is still refused
