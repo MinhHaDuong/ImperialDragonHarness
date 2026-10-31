@@ -1,0 +1,12 @@
+#!/bin/sh
+# Push this host's raw transcript archive to padme (ticket 1402). Both ends come from
+# transcript_spool.py's archive root: here the local one, there the one padme declares through
+# DATASETS_DIR (ssh sees no environment.d, so the file fallback answers). No literal path pair.
+# Compressed files only, resumable; --update never overwrites a newer copy on padme.
+set -eu
+spool="${HOME}/.agents/scripts/transcript_spool.py"
+host=$(hostname -s)
+local_root=$(python3 "$spool" root)
+remote_root=$(ssh -o BatchMode=yes padme 'python3 ~/.agents/scripts/transcript_spool.py root')
+[ -n "$remote_root" ] || { echo "transcript-push-padme: padme reports no archive root" >&2; exit 1; }
+exec rsync -a --partial --update "$local_root/raw/$host/" "padme:$remote_root/raw/$host/"
