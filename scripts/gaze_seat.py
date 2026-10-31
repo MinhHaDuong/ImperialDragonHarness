@@ -315,23 +315,42 @@ def is_local(door: dict, provider: str, base_url: str) -> bool:
 BANNER = re.compile(r'(Aider v|Main model:|Model:|Git repo:|Repo-map:|Added |Warning|You can skip|Open documentation|https?://|\s*$)')
 
 
+def answer_start(lines: list[str], marker: str) -> int | None:
+    """Index of the first body line of the final answer, or None when the output frames none.
+
+    The frame is a standalone marker line, usually under a rule of dashes, which aider may repeat. A marker
+    inside a sentence is prose, never a frame. The last frame wins, so a full answer quoted in the reasoning
+    cannot stand for the real one. Limit: flat stdout carries no authentication, so a body that itself
+    prints a framed marker is indistinguishable from the transport; the declaration is then read as written.
+    """
+    marks = [i for i, line in enumerate(lines) if line.strip() == marker]
+    if not marks:
+        return None
+    last = marks[-1]
+    while last + 1 < len(lines) and (not lines[last + 1].strip() or lines[last + 1].strip() == marker):
+        last += 1
+    return last + 1
+
+
 def answer_of(door: dict, text: str) -> str:
-    """A door's answer: after its marker when it prints one, else the output after the leading banner.
+    """A door's answer: after its final framed marker when it prints one, else the output after the leading banner.
 
     aider prints the answer marker only around reasoning content, so a plain answer has none.
-    Thinking without its answer marker is a truncated run: no answer, so no report.
+    Thinking without a framed answer marker is a truncated run: no answer, so no report.
     """
     marker = door.get('answer_marker')
     thinking = door.get('thinking_marker')
-    marked = {line.strip() for line in text.splitlines()}
-    if marker and thinking and thinking in marked and marker not in text:
-        return ''
-    lines = text.split(marker, 1)[1].splitlines() if marker and marker in text else text.splitlines()
-    if not (marker and marker in text):
+    lines = text.splitlines()
+    start = answer_start(lines, marker) if marker else None
+    if start is None:
+        if not marker:
+            return text
+        if thinking and any(line.strip() == thinking for line in lines):
+            return ''
         start = next((i for i, line in enumerate(lines) if not BANNER.match(line)), len(lines))
-        lines = lines[start:]
-    cut = next((i for i, line in enumerate(lines) if line.startswith('Tokens: ')), len(lines))
-    return '\n'.join(lines[:cut]) if marker else text
+    body = lines[start:]
+    cut = next((i for i, line in enumerate(body) if line.startswith('Tokens: ')), len(body))
+    return '\n'.join(body[:cut])
 
 
 def git(tree: Path, *args: str) -> str | None:
