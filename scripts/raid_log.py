@@ -24,6 +24,43 @@ from pathlib import Path
 LINE = re.compile(r"^(\d+(?:\.\d+)?) ([A-Z][A-Z_]*)((?: [A-Za-z_]+=\S*)*)$")
 
 
+SITREP_DOC = Path(__file__).resolve().parent.parent / "skills/raid/references/sitrep.md"
+NUMERIC = {"n"}  # keys the doc row describes as counts
+
+
+def event_table(doc: Path = SITREP_DOC) -> dict[str, tuple[list[str], list[str] | None]]:
+    """Event -> (required keys, allowed `step=` values or None), read from the sitrep doc's event table,
+    the single source of the key rows. A field cell lists `key=` in backticks; one preceded by `optional`
+    is not required; the backticked words in the parentheses after `step=` are the allowed steps."""
+    table = {}
+    for row in doc.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in row.strip().strip("|").split("|")]
+        match = re.fullmatch(r"`([A-Z][A-Z_]*)`", cells[0]) if len(cells) == 3 else None
+        if not match:
+            continue
+        cell = cells[2]
+        required = [k for opt, k in re.findall(r"(optional )?`(\w+)=", cell) if not opt]
+        step = re.search(r"`step=`\s*\(([^)]*)\)", cell)
+        table[match[1]] = (required, re.findall(r"`(\w+)`", step[1]) if step else None)
+    return table
+
+
+def check_fields(event: str, fields: dict[str, str], doc: Path = SITREP_DOC) -> None:
+    """ValueError naming the missing key and the expected form when the event lacks a documented key."""
+    required, steps = event_table(doc).get(event, ([], None))
+    for key in required:
+        if key == "raid" and event == "RAID_START":
+            continue  # minted when absent
+        if not fields.get(key):
+            expected = f"{event} " + " ".join(f"{k}=<{'number' if k in NUMERIC else k}>" for k in required)
+            raise ValueError(f"{event} is missing {key}=; expected form: {expected}")
+    for key in NUMERIC & fields.keys() & set(required):
+        if not re.fullmatch(r"\d+", fields[key]):
+            raise ValueError(f"{event} {key}= must be a number, got {fields[key]!r}")
+    if steps and "step" in fields and not any(re.fullmatch(s.replace("N", r"\d+"), fields["step"]) for s in steps):
+        raise ValueError(f"{event} step= must be one of {', '.join(steps)}; got {fields['step']!r}")
+
+
 def log_path(cwd: Path | None = None) -> Path:
     override = os.environ.get("IDH_RAID_LOG")
     if override:
@@ -43,6 +80,7 @@ def append(event: str, fields: dict[str, str], path: Path, now: float | None = N
             fields["raid"] = secrets.token_hex(3)
     elif not fields.get("raid"):
         raise ValueError(f"{event} needs raid=<id>, printed by the RAID_START line")
+    check_fields(event, fields)
     line = f"{int(now if now is not None else time.time())} {event}"
     line += "".join(f" {k}={v}" for k, v in fields.items())
     if not LINE.match(line):

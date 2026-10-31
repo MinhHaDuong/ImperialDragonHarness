@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Monitoring friction: session-id prefix, raid_log key checks, merge-gate model-id message
+Created: 2026-10-31
+Author: claude
+Closed: autoclosed — PR #2101
+
+--- log ---
+2026-10-31T14:48Z claude created
+2026-10-31T15:01Z reviewer judgment criterion left: the bookkeeping 'no review' line needs the merge tier threaded through four sites in attribution_record.py and raid_land.py; below the ticket floor
+2026-10-31T15:01Z reviewer closed — autoclosed — PR #2101
+
+--- body ---
+## Context
+
+After tracker 1382 closed (PR #2098), the author asked whether monitoring is
+now frictionless. The 2026-10-31 raid session (5e95a6, tickets 1390–1397)
+hit these rough edges; the author said "Do it" to one small PR. Below the
+ticket floor individually, bundled here. Gaze seat labelling stays ticket 1388.
+
+## Exit criteria
+
+- [ ] `trace_timeline.py <prefix>` resolves a unique session-id prefix
+      (live tree and archive); an ambiguous prefix lists the candidates and
+      exits non-zero; the change stays inside session lookup (ticket 1397
+      edits the HTML part of the same file in parallel)
+- [ ] `raid_log.py append` refuses an event missing the keys its row in
+      `skills/raid/references/sitrep.md` requires (`WAVE n= tickets=`,
+      `PR n= ticket= step=` with step in the documented set, `QUEUE n=`
+      numeric, …), naming the missing key and the expected form; one source
+      of truth for the key table (no second copy drifting from the doc)
+- [ ] `merge-gate.py run --model <bare id>` either accepts a known bare id by
+      qualifying it (claude-* → anthropic/, gpt-* → openai/) or its error
+      names the expected `provider/model-id` form with an example; no silent
+      skip of the gate record
+- [ ] (judgment) the bookkeeping-tier landing of a PR with no review prints an
+      informational "no review (bookkeeping)" line instead of
+      "attribution: not derivable: review (none on notes)", if that is a
+      one-site change; otherwise leave it and say why
+- [ ] Tests for each change; `make check-fast` green

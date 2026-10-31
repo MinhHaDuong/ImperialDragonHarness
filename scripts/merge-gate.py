@@ -319,6 +319,9 @@ def _attribution():
     return module
 
 
+BARE_MODEL_PROVIDERS = (("claude-", "anthropic"), ("gpt-", "openai"))
+
+
 def actor_line(runtime, model, effort):
     """Writer identity in the attribution vocabulary, plus OS user and git name.
 
@@ -327,9 +330,16 @@ def actor_line(runtime, model, effort):
     states `runtime=human`. Nothing here detects or requires an agent runtime.
     """
     runtime, model, effort = runtime or NOT_STATED, model or NOT_STATED, effort or NOT_STATED
+    for prefix, provider in BARE_MODEL_PROVIDERS:
+        if model.startswith(prefix):
+            model = f"{provider}/{model}"  # a known bare id is qualified, never dropped
     ident = f"runtime={runtime} · model={model} · effort={effort}"
     if model != NOT_STATED:
-        _attribution().identity(ident, writer=True)
+        try:
+            _attribution().identity(ident, writer=True)
+        except ValueError as error:
+            raise ValueError(f"--model {model!r}: {error}; expected provider/model-id, "
+                             "e.g. anthropic/claude-sonnet-5-5") from error
     name = git("config", "user.name", check=False).stdout.strip() or NOT_STATED
     return f"{ident} · user={getpass.getuser()} · git-name={name}"
 

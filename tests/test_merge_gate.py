@@ -189,8 +189,10 @@ def test_conflicting_merge_has_no_candidate(repo):
 
 def test_actor_model_reuses_attribution_vocabulary(module):
     assert "model=example/model-v1" in module.actor_line("fixture", "example/model-v1", "not-stated")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"provider/model-id, e\.g\. anthropic/claude-sonnet-5-5"):
         module.actor_line("fixture", "bare-model-name", "not-stated")
+    assert "model=anthropic/claude-sonnet-5-5" in module.actor_line("fixture", "claude-sonnet-5-5", "not-stated")
+    assert "model=openai/gpt-5" in module.actor_line("fixture", "gpt-5", "not-stated")
     assert "model=not-stated" in module.actor_line("human", "", "")
 
 
