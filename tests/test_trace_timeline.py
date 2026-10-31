@@ -171,3 +171,36 @@ def test_cli_writes_trace_json(tmp_path):
     assert result.returncode == 0, result.stderr
     doc = json.loads(out.read_text())
     assert doc["traceEvents"] and "not found" in result.stderr  # the seat's transcript is absent: warned, span kept
+
+
+def test_html_is_self_contained_and_matches_the_json_bars(tmp_path):
+    tree = tl.Tree(build_live(tmp_path), tmp_path / "archive")
+    doc = render(tree, [launch("pi", str(tmp_path / "pi" / "seat.jsonl"))])
+    page = tl.render_html(doc, SID)
+    import re
+    assert not re.search(r"https?://(?!www\.w3\.org/2000/svg)", page)
+    assert "<link" not in page and "<script src" not in page and " src=" not in page and " href=" not in page
+    bars = [e for e in doc["traceEvents"] if e.get("ph") == "X"]
+    assert page.count("<rect") == len(bars)
+    lanes = {e["pid"] for e in bars}
+    assert page.count("lane ") >= len({(e["pid"], e["tid"]) for e in bars}) and len(lanes) >= 3
+    assert "cost unknown" in page or "shadow USD: 0" in page
+    assert "pointer: " in page and "tu-11" in page and "model: claude-sonnet-5-5" in page
+
+
+@pytest.mark.integration
+def test_cli_html_leaves_json_byte_identical(tmp_path):
+    live = build_live(tmp_path / "live")
+    launches = tmp_path / "launches.jsonl"
+    launches.write_text("")
+    outs = {}
+    for name, extra in (("plain", []), ("html", ["--html", str(tmp_path / "t.html")])):
+        out = tmp_path / f"{name}.json"
+        r = subprocess.run(["python3", str(SCRIPTS / "trace_timeline.py"), SID, "--out", str(out), "--live-root",
+                            str(live["claude"][0]), "--archive-root", str(tmp_path / "arch"), "--launches",
+                            str(launches)] + extra, capture_output=True, text=True,
+                           env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"})
+        assert r.returncode == 0, r.stderr
+        outs[name] = out.read_bytes()
+    assert outs["plain"] == outs["html"]
+    assert (tmp_path / "t.html").read_text().startswith("<!DOCTYPE html>")
