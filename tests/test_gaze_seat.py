@@ -1061,3 +1061,28 @@ def test_keep_raw_is_bounded_and_never_raises(tmp_path, monkeypatch):
     module.keep_raw('s', tmp_path / 'missing')  # no file: silent
     (kept,) = (tmp_path / 'archive' / 'raw').glob('*/seat-raw/*-s.raw')
     assert kept.stat().st_size == module.RAW_KEEP_BYTES
+
+
+def test_keep_raw_names_the_launch_seat_id_and_warns_on_a_failed_copy(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv('IDH_ARCHIVE_ROOT', str(tmp_path / 'archive'))
+    spec = importlib.util.spec_from_file_location('gaze_seat_under_test', SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    src = tmp_path / 'out'
+    src.write_text('raw bytes')
+    module.keep_raw('s', src, '20261031T000000Z-42')
+    (kept,) = (tmp_path / 'archive' / 'raw').glob('*/seat-raw/*.raw')
+    assert kept.name == '20261031T000000Z-42-s.raw'
+    monkeypatch.setenv('IDH_ARCHIVE_ROOT', str(src))  # a file, not a directory: the copy fails
+    module.keep_raw('s', src, 'x')  # warns, does not raise
+    assert 'raw output of s not kept' in capsys.readouterr().err
+
+
+@pytest.mark.integration
+def test_raw_file_joins_its_launch_line_by_seat_id(rig):
+    result = launch(rig, mode='fenced-quoted')
+    assert result.returncode == 1
+    archive = Path(rig['env']['IDH_ARCHIVE_ROOT'])
+    (row,) = [json.loads(line) for line in next((archive / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
+    (kept,) = (archive / 'raw').glob('*/seat-raw/*.raw')
+    assert kept.name == f"{row['seat_id']}-correctness.raw"

@@ -91,7 +91,7 @@ def kill_group(pid: int) -> None:
 def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
              stdin: Path | None = None, env: dict[str, str] | None = None,
              replace_env: bool = False, launch: dict | None = None) -> tuple[bool, str]:
-    """Run one seat; with `launch` ({'seat', optional 'spool'}) append its launch line on every return
+    """Run one seat; with `launch` ({'seat', optional 'spool', 'seat_id'}) append its launch line on every return
     path (ticket 1384). The line is bookkeeping: a failed write warns and never changes the outcome."""
     info: dict = {}
     started = time.time()
@@ -104,7 +104,7 @@ def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
                                                           launch.get('spool'))
                 launch_line.record(seat=launch['seat'], child_runtime=runtime, child_session=session,
                                    ts_start=started, ts_end=time.time(), exit=info.get('exit', 'failed to start'),
-                                   cwd=cwd, out=out)
+                                   cwd=cwd, out=out, seat_id=launch.get('seat_id'))
             except Exception as error:  # bookkeeping never changes the seat's outcome
                 print(f'launch_line: {error}', file=sys.stderr)
 
