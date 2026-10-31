@@ -324,3 +324,12 @@ def test_identities_mark_a_hollow_subagent_report_failed_on_any_session_runtime(
                   {'h': 'worker: x\nverdict: clear\n', 'c': 'worker: x\nclear: src/x.py:1\n'})
     lines = run('identities', str(panel), '--session-runtime', runtime).stdout.splitlines()
     assert [ln.rsplit('status: ', 1)[1] for ln in lines] == ['failed', 'ran']
+
+
+def test_identities_trust_the_launcher_header_when_the_plan_reason_is_free_text(tmp_path):
+    """Ticket 1388: a seat the launcher stamped door=headless is a headless seat, whatever its reason column says."""
+    header = 'worker: model=gpt-6.1-sol · family=openai · runtime=codex · door=headless\nclear: src/x.py:42\n'
+    panel = _plan(tmp_path, ['cx\tgpt-6.1-sol\topenai\tcross-family reader'], {'cx': header})
+    line = run('identities', str(panel), '--session-runtime', 'claude-code').stdout.splitlines()[0]
+    assert line == ('seat: cx · runtime=codex · family=openai · route=gpt-6.1-sol · '
+                    'model=openai/gpt-6.1-sol · status: ran')
