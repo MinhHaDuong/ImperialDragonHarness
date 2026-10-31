@@ -76,7 +76,10 @@ directly, each with its own reader (5,198 lines in the `trace*`,
   `--restricted --safe-mode` with no settings file: **both files kept** after
   the controls had fired. The CLI binary names the mechanism: the sweep is
   skipped when no enabled settings source provides `cleanupPeriodDays`, and
-  `--restricted` disables the user source. So a seat does not delete, and no
+  `--restricted` disables the user source. The unrestricted no-settings
+  control deleting at 30 days fits that reading only if some other enabled
+  source supplied the period; which source did is not established (noted at
+  the PR 2072 review). The operative result does not depend on it. So a seat does not delete, and no
   fix is needed in the door. The converse holds: an unrestricted headless
   session on a host with no `cleanupPeriodDays` would apply the 30-day default.
   Two runs that look empty prove nothing: a first run on an empty config dir
