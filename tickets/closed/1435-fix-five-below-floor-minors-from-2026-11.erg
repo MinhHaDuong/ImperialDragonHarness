@@ -2,10 +2,12 @@
 Title: Fix five below-floor minors from 2026-11-01
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2193
 
 --- log ---
 2026-11-01T20:54Z reviewer created
 2026-11-01T20:55Z reviewer finding 5 skipped: check-close-claims.sh and its test already treat a ticket in tickets/closed/ with a Closed: header as satisfied; run today it reports 0 findings over the same window incl. #2181, #2189
+2026-11-01T21:02Z reviewer closed — autoclosed — PR #2193
 
 --- body ---
 ## Context
