@@ -152,6 +152,20 @@ def test_a_cd_in_the_command_moves_the_base(tmp_path, rules, project):
     assert PY_TOKEN in context(hook(tmp_path, rules, bash(project, "cd sub && cat calc.py")))
 
 
+@pytest.mark.parametrize(
+    "command,expected",
+    [
+        ("rg 'cd' notes.txt; cat src/a.py", ["notes.txt", "src/a.py"]),
+        ("grep -n cd notes.txt && cat src/a.py", ["notes.txt", "src/a.py"]),
+        ("(cd src && cat a.py); cat STATE.md", ["src/a.py", "STATE.md"]),
+        ("cd; cat src/a.py", []),
+    ],
+)
+def test_only_a_cd_in_command_position_moves_the_base(project, command, expected):
+    m = _module()
+    assert m.touched({"command": command}, project, project) == expected
+
+
 @pytest.mark.integration
 def test_a_cd_keeps_a_root_only_rule_off_a_same_named_file(tmp_path, rules, project):
     (project / "sub").mkdir()

@@ -21,6 +21,7 @@ Fails open: any error leaves stdout empty and exits 0.
 
 import argparse
 import fcntl
+import functools
 import json
 import logging
 import os
@@ -38,6 +39,7 @@ LOG = logging.getLogger("conditional_rules")
 SAFE_ID = re.compile(r"[A-Za-z0-9_.-]+")
 PATCH_HEADER = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$|^\*\*\* Move to: (.+?)\s*$", re.M)
 MAX_WORDS = 400
+PUNCT = set("&|;<>()")
 
 
 def glob_regex(glob: str) -> re.Pattern[str]:
@@ -106,22 +108,34 @@ def command_paths(command: str, cwd: Path) -> list[Path]:
         words = list(lexer)
     except ValueError:
         words = command.split()
-    base, after_cd = cwd, False
+    base, stack, at_start, after_cd = cwd, [], True, False
     for w in words[:MAX_WORDS]:
+        if set(w) <= PUNCT:  # a separator: the next word starts a command
+            if after_cd:
+                base = Path.home()  # a bare cd goes home
+            for ch in w:
+                if ch == "(":
+                    stack.append(base)
+                elif ch == ")" and stack:
+                    base = stack.pop()  # a subshell's cd ends with it
+            at_start, after_cd = True, False
+            continue
         if after_cd:
             after_cd = False
-            if not set(w) <= set("&|;<>()") and w != "-":
-                base = base / os.path.expanduser(w)
-                continue
-        if w == "cd":
+            if w != "-":  # cd - returns to an OLDPWD this parser does not know
+                base = base / os.path.expanduser(os.path.expandvars(w))
+            continue
+        if at_start and w == "cd":
             after_cd = True
             continue
+        at_start = False
         w = re.sub(r"^--?[A-Za-z0-9-]+=", "", w)
-        if w and not w.startswith("-") and len(w) < 4096 and not set(w) <= set("&|;<>()"):
+        if w and not w.startswith("-") and len(w) < 4096:
             found.append(base / os.path.expanduser(w))
     return found
 
 
+@functools.lru_cache(maxsize=256)
 def git_root(path: Path) -> Path | None:
     try:
         top = subprocess.run(["git", "-C", str(path), "rev-parse", "--show-toplevel"],
