@@ -1,0 +1,7 @@
+1. split it. Stop and hand a proposed split to whoever launched you. Never answer a context wall with a bigger window, KV tricks or compaction.
+2. The stack is repo-global: on a clean tree `stash` saves nothing and the `pop` grabs someone else's. Use a throwaway `git worktree add` or a WIP commit.
+3. Delegate when the work is substantial, needs decorrelation, or must run unattended — not to avoid doing it.
+4. NONE
+5. NONE
+6. the route skill, `skills/route/SKILL.md`, not by skills or this file. A skill states a role and a need; it never names a model or a capability tier.
+7. NONE
