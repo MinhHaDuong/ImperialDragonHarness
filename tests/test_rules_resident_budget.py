@@ -55,9 +55,10 @@ import resident_census as rc  # noqa: E402
 # channel, a different budget that grants no credit here.
 # Raised 2026-10-29 (ticket 1341, author-authorized rule edit): workflow.md
 # § Delegation gains "Cross-project work", four runtime-neutral lines with a
-# stated channel per runtime. Re-ratcheted 2026-11-01 by the author after a
-# git.md review pass: measured 17369, cap 18000 (was 18350).
-RESIDENT_BUDGET = 18000
+# stated channel per runtime. Re-ratcheted 2026-11-01 twice: after the git.md
+# review (cap 18350 -> 18000), then the workflow.md diet (ticket 1410):
+# measured 14784, cap 15000.
+RESIDENT_BUDGET = 15000
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.

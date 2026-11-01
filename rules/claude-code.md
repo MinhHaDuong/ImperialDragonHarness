@@ -5,7 +5,7 @@ True of this runtime only: adapters on other runtimes skip this file.
 
 ## Entering the session
 
-Worktree, naming and opening line: `workflow.md` § Session start. The `cd`
+Worktree, naming and opening line: `workflow.md` § Session start, details in `skills/hunt/references/session-start.md`. The `cd`
 moves the session; a restart resets it, so paths stay absolute.
 
 Never call `EnterWorktree`. It switches on a runtime guard that refuses git

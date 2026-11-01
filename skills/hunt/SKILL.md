@@ -58,7 +58,7 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   criterion, anything irreversible or outward-facing) is asked before
   executing, by the same escalation protocol.
 - **Too big or multipart** (`rules/workflow.md` § Ticket discipline for
-  multi-request work): return it, unsplit, to whoever launched the hunt with a
+  multi-request work; drafting: `references/decomposition.md`): return it, unsplit, to whoever launched the hunt with a
   proposed decomposition; execute only on "go as one". Found mid-Execute:
   commit the partial branch (push it where there is a forge), name it in the proposal, unlock the
   worktree and leave it for the caller.
@@ -86,7 +86,8 @@ Every route, building or not, starts in the worktree.
 
 ### Worktree
 
-Work in the ticket's **own** worktree, on its own branch.
+Work in the ticket's **own** worktree, on its own branch. A session's own
+worktree name, phase and opening line: `references/session-start.md`.
 
 - **Owned already?** Yes if you created it in this run, or the spawner's brief
   names its path explicitly and `git status --porcelain` prints nothing:

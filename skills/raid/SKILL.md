@@ -106,7 +106,7 @@ briefing (each ticket and the decisions it waits on) rather than an
 empty-run report. One question round the author can answer in a single pass
 is the deliverable.
 
-Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for multi-request work) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
+Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for multi-request work; drafting: `skills/hunt/references/decomposition.md`) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
 
