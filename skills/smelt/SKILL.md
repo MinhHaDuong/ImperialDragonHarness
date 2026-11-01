@@ -107,6 +107,35 @@ reuse an open ticket on the same contradiction. The page and the report link
 it. The ticket states the question; it picks no side and proposes no rule.
 A project without a ticket store lists them in the report as unfiled.
 
+## Native-note triage lane
+
+Claude Code keeps its own auto-memory outside the repository, and the author
+keeps it on purpose (ticket 1350, option b, 2026-11-01): dictated notes land
+there, and about 41% of them are working rules (brood run
+`conception/2026-11-01-brood-harness-run.md`). Smelt therefore ends every
+writing run with a listing for the author. Run, with `PROJECT` the project's
+primary checkout (the store is keyed by the path Claude Code ran in, so an
+isolated worktree resolves to another, usually absent, store):
+
+```bash
+python3 "$IDH_ROOT/scripts/smelt_native_notes.py" "$PROJECT"
+```
+
+The helper is read-only: file, type, blob sha, description per note, and the
+resolved store path. A missing store is reported as unavailable, never
+created. Read each note, then put in the smelt report a table with one row per
+note: file, one-line substance, and a proposed disposition, exactly one of
+
+- **promote to rules**, naming the destination file and section;
+- **promote to repo memory**, naming the topic (an experience or a project fact);
+- **delete** (stale, done, or already in force), saying where it is in force.
+
+The author decides. Smelt writes no rule, edits no native note and deletes none;
+the disposition column is a proposal, not an action. Notes already carried in a
+previous accepted report with an unchanged sha are listed as "unchanged" without
+a new proposal. This lane is the single exception to "propose no rules" in
+this skill, and it reaches the author only through the report.
+
 ## Procedure
 
 After the writing run's migration succeeds, continue sequentially:
@@ -118,7 +147,8 @@ After the writing run's migration succeeds, continue sequentially:
    entries when the project key is unavailable, recording the skipped count;
    never treat a skipped or unavailable source as empty. Read native notes only
    as attributed sources when available; report unavailable sources. Native
-   notes are not the canonical reference or a write destination.
+   notes are not the canonical reference or a write destination; the
+   § Native-note triage lane lists them for the author.
 2. Re-derive each topic from its previous page and the journal, by
    department (never the whole journal in one context), instead of appending;
    apply pruning, merging and refreshing in the rewrite, carrying pinned
@@ -129,7 +159,7 @@ After the writing run's migration succeeds, continue sequentially:
 3. Write a report in `memory/smelts/` listing sources and revisions, changes,
    the net change in bytes per page and in total
    (the size helper named in `memory/SMELT.md` § Rebuild; growth explained), unresolved
-   questions, runtime/model and prompt revision. The second pass checks that
+   questions, the native-note triage table, runtime/model and prompt revision. The second pass checks that
    no caveat of a previous page was dropped without a Retired line. Preserve the text of
    native notes actually used in the report or a versioned appendix, adapted to
    the project's audience. A fingerprint alone cannot preserve a mutable note.
@@ -174,7 +204,8 @@ selected project repository. Uncleared material stays in that same
 repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not
 modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,
-propose promotions, or write cross-project provenance into the harness.
+propose promotions, or write cross-project provenance into the harness. The native-note triage
+table is a report listing, not a promotion.
 Crystallisation requires a separate explicit user request naming its scope and
 destination. A useful pattern or a reviewed memory PR is not that request.
 
