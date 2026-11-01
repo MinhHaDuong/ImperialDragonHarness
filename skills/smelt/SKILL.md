@@ -136,6 +136,20 @@ previous accepted report with an unchanged sha are listed as "unchanged" without
 a new proposal. This lane is the single exception to "propose no rules" in
 this skill, and it reaches the author only through the report.
 
+## Case-note curation lane
+
+Skill case notes (`memory/skills/<skill>.md`) are pushed at skill load, and
+nothing else maintains them (tickets 1431, 1432; principle in
+`conception/2026-10-31-skill-case-notes.md`). At each writing run, for every
+existing note and for any skill whose memory shows recurring observed episodes,
+re-select its cases by judged usefulness: one to four observed cases, each
+dated, sourced to a journal episode or topic, ending in a `Use:` line, the
+whole under the ~400-word cap. Prefer the cases most likely to change a
+decision at the next load; drop stale, superseded or merely illustrative ones.
+`memory/skills/merge.md` is the worked example. The report lists each case
+added or dropped with one line of why. Smelt proposes; the author's acceptance
+of the smelt merge request is the review. This lane writes no rule.
+
 ## Procedure
 
 After the writing run's migration succeeds, continue sequentially:
@@ -199,7 +213,7 @@ This exception is limited to migration in its isolated branch: no policy
 rewriting, rule promotion, historical-ledger edits or cross-project writes.
 
 Consolidation writes only `memory/MEMORY.md`, `memory/topics/`,
-`memory/smelts/` and, for exposed contradictions only, new tickets within the
+`memory/skills/`, `memory/smelts/` and, for exposed contradictions only, new tickets within the
 selected project repository. Uncleared material stays in that same
 repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not
