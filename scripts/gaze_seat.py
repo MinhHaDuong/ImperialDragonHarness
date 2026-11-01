@@ -360,6 +360,32 @@ def answer_of(door: dict, text: str) -> str:
     return '\n'.join(body[:cut])
 
 
+RAW_KEEP_BYTES = 256 * 1024  # one seat's kept output; a bound, not a quota
+
+
+def keep_raw(name: str, source: Path, sid: str | None = None) -> None:
+    """Copy a seat's output as received to `<archive>/raw/<host>/seat-raw/<seat id>-<name>.raw`.
+
+    The panel dies with the review tree, so a refused seat's bytes would be gone before anyone
+    could diagnose it (monitoring memo, section 4.2). The archive's raw store is durable and never
+    pruned; nothing here can refuse a seat. `sid` is the launch's seat id (the launch line and the
+    spool dir carry it), so the file joins its launch exactly; a failed copy warns on stderr.
+    """
+    if not source.exists():
+        return  # the seat wrote nothing
+    try:
+        data = source.read_bytes()[:RAW_KEEP_BYTES]
+        if not data:
+            return
+        directory = transcript_spool.raw_dir() / 'seat-raw'
+        transcript_spool.mkdir_private(directory)
+        target = directory / f'{sid or transcript_spool.seat_id()}-{name}.raw'
+        target.write_bytes(data)
+        target.chmod(0o600)
+    except Exception as error:  # as launch_line.record: bookkeeping, so no failure kind may refuse a seat
+        print(f'gaze_seat: raw output of {name} not kept: {getattr(error, "strerror", None) or error}', file=sys.stderr)
+
+
 def git(tree: Path, *args: str) -> str | None:
     result = subprocess.run(['git', '-C', str(tree), *args], capture_output=True, text=True)
     return result.stdout if result.returncode == 0 else None
@@ -545,11 +571,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         brief = args.brief.read_text(encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot read the brief: {error.strerror})'
+    sid = transcript_spool.seat_id()  # one id for the spool dir, the launch line and the raw file
     spool = None
     if 'spool' in door:  # the door's session files go to the archive spool, never to /dev/null (ticket 1383)
         spec = door['spool']
         spool = transcript_spool.spool_dir(spec['runtime'],
-                                           transcript_spool.seat_id() if spec.get('per_seat') else None)
+                                           sid if spec.get('per_seat') else None)
         values['spool'] = str(spool)
     diff_file = args.panel / f'{args.name}.diff'
     values['diff'] = str(diff_file)
@@ -604,8 +631,9 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             command.env[door['seat_agent']['home_env']] = str(home)
         ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin,
                                           env=command.env, replace_env=True,
-                                          launch={'seat': args.name, 'spool': spool})
+                                          launch={'seat': args.name, 'spool': spool, 'seat_id': sid})
     except OSError as error:
+        # the seat never started: there is no output to keep
         return False, f'no report (cannot prepare the seat: {error.strerror})'
     finally:
         if home:
@@ -620,10 +648,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
                     if line.strip()] if log.exists() else []
     if ok and args.runtime == 'pi' and any(UNLISTED_MODEL.match(line) for line in stderr_lines):
         # A local provider answers to any id and the CLI exits 0: the run is not the pinned model's.
+        # No raw is kept: the output is another model's, not this seat's.
         for leftover in (staging, last):
             leftover.unlink(missing_ok=True)
         return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
+    keep_raw(args.name, last if wrote_last else staging, sid)
 
     def failed(reason: str) -> tuple[bool, str]:
         # The panel dies with the review tree; the status line is the durable record and reaches

@@ -64,7 +64,7 @@ concrete fixes and trivial swaps are not.
 - Triage is an LLM read of title + body + exit criteria, priced in the value
   class (~0.01 $). Mechanical features (stratum, size, files) do NOT
   separate difficulty — do not use them alone.
-- The 256K monster guard is a hard floor and stays: oversize context is a
+- The 230K context guard (`rules/guards.md`) is a hard floor and stays: oversize context is a
   split-the-work ticket, never a bigger-window ticket.
 
 ## Choosing a worker
@@ -97,7 +97,7 @@ General recommendations:
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
   monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ (Albert counts as PRIVÉ by author ruling 2026-10-28; its seats are not in the grid and serve single-shot calls only, `routes-recommendations-pi.md` § Albert seats stay out of the grid). Ambiguous
   tasks wait for a human before any spend; when `rules/workflow.md` batches
-  decisions, the batched list wins: collect, ask once, with a recommended default. The 256K guard outranks all of
+  decisions, the batched list wins: collect, ask once, with a recommended default. The 230K context guard outranks all of
   it: oversize context is a split-the-work ticket.
 - Choose the lineage on purpose. A reviewer that shares the producer's
   `family` adds replication, not independence. When the risk calls for an
@@ -127,6 +127,22 @@ Within-cluster selection keys: cost per leg (grid above), latency, and
 environment: privacy/clearance (forces LOCAL/PRIVÉ), offline, GPU idle vs
 the local lane busy, provider rate limits. Within LOCAL/PRIVÉ, IQ3_S for
 quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
+
+## Escalation: advisor first
+
+The procedure behind `rules/workflow.md` § Escalation protocol, for a decision
+or a judgment outside your domain docs. The author's calls by right (scope,
+money, irreversible) are never branched or delegated; they wait.
+
+1. **Ask up first**: an advisor model. It agrees with your pick and the call
+   is reversible → act and report.
+2. **Otherwise ask the author**, advisor's view beside your pick, and keep
+   working. Reversible options worth building → build each on its own
+   branch in ≤5 min, gaze it (merge § Gating tiers); no merge.
+3. **Author back within 5 minutes** → their pick; delete the other branch.
+   Still away, or no author in the loop → the advisor picks on the built
+   evidence (a cross-family seat if stakes are high); keep the loser
+   until the author sees the report.
 
 ## routes.json
 

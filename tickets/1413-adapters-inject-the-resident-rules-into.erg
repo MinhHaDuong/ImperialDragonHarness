@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Adapters inject the resident rules into Codex and Pi
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T09:40Z reviewer created
+
+--- body ---
+## Context
+Measured 2026-11-01 on padme with sentinel probes (rules/README.md § Loading per
+runtime): Claude Code loads the four resident rules in every session (TUI and
+`-p`); Codex (`exec`) and Pi (`--print`) load none of them, guards.md
+included. Both load the project's AGENTS.md and the session-start hook output.
+rules/README.md already says the adapters "must inject" the resident set; none
+does.
+
+Only Claude Code has a rules/ concept (`~/.claude/rules`, `paths:` for
+conditional loading, HTML comments stripped). Codex reads AGENTS.md from
+`$CODEX_HOME` then the project hierarchy (capped by `project_doc_max_bytes`);
+its `~/.codex/rules/*.rules` are command policies, not instructions. Pi reads
+context files from `~/.pi/agent/`, the cwd and its parents, and extensions can
+add instructions. Neither strips HTML comments.
+
+## Approach
+Generate, never hand-maintain: at install time an adapter writes one global
+file from the four resident rules minus claude-code.md, HTML comments stripped
+(Codex: `~/.codex/AGENTS.md`; Pi: `~/.pi/agent/AGENTS.md` or the idh-guard
+extension). Conditional rules stay reachable through the skills that name them.
+Writing a global file changes every session of that runtime on the host: the
+install step is the author's to run or approve.
+
+## Exit criteria
+- [ ] The sentinel probe finds workflow.md, git.md and guards.md text in Codex and Pi sessions, and no HTML comment text
+- [ ] The generated files are rebuilt by the installer when rules/ changes (no hand-edited copy)
+- [ ] rules/README.md § Loading per runtime updated from a new measurement

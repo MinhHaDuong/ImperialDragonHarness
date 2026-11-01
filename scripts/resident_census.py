@@ -128,10 +128,16 @@ def is_auto_loaded(path: Path) -> bool:
     return not globs or is_catch_all(path)
 
 
+def loaded_rule_text(path: Path) -> str:
+    """A rule as the model receives it: Claude Code, the only runtime that
+    loads rules/, strips HTML comments (rules/README.md § Loading per runtime)."""
+    return re.sub(r"<!--.*?-->\n?", "", path.read_text(encoding="utf-8"), flags=re.S)
+
+
 def rules_entries(root: Path) -> list[Entry]:
     rules = root / "rules"
     return [
-        Entry("rules", str(p.relative_to(root)), len(p.read_text(encoding="utf-8")))
+        Entry("rules", str(p.relative_to(root)), len(loaded_rule_text(p)))
         for p in sorted(rules.rglob("*.md"))
         if is_auto_loaded(p)
     ]

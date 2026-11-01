@@ -8,13 +8,15 @@ Author: reviewer
 2026-10-31T19:30Z reviewer stage 1 + headless read-back (claude 2.1.316, haiku, temp repo, planted token ZEBRA-4417-QUILL in memory/skills/merge.md, hook via idh-hook): main: model quoted the token, log 'delivered agent=main'. Twice in one context: one 'delivered' then 'already-delivered', model saw the block once. Subagent: model relayed the quoted token, log 'delivered ... agent=a0940dabe45d19bd9' (own marker). Typed '/merge ...' headless, two runs: model answered NONE, no log line at all (neither delivered nor no-note), so a typed slash command bypasses the Skill tool; the deferred UserPromptSubmit trigger (note 3.5) is now warranted, not built here. Limits: headless only, interactive TUI not verified; marker survives compaction and resume. Stages 3-4 not started.
 2026-10-31T19:41Z reviewer note verify-reroll — round 1: pipefail-guard fails on scripts/skill-case-notes.sh (set -uo pipefail, not set -euo pipefail); fixed by set -euo pipefail
 2026-10-31T19:48Z reviewer note children filed: 1404 (Codex probe, stage 3), 1405 (Pi, stage 4). Stage 1 and the headless read-back incl. typed /merge (UserPromptSubmit) merged in PR #2114 (68e7f6b8). Open here: the author's read of memory/skills/merge.md; interactive TUI typed /merge unverified.
+2026-10-31T20:52Z reviewer note author: 'Latest' misleads, it is relative to note-writing time; heading reworded to 'Most recent as of <date>'. Advisors asked how much case notes would help (one-shot, same brief): Fable 5.1 (claude-fable-5-1) 35-50% chance of a measurable drop in the named repeat failures; GPT-6 Astra (gpt-6-astra, via codex exec) 60%. Both: staleness and over-anchoring are the top risks and this note shows them (the most recent case narrates a removed cross-family rule without stating the current rule; Worst is fixed); both propose a per-case 'applies when / current status' line (Astra) or a short 'Watch for' block of failure signatures with the current rule (Fable), and a two-week randomized on/off trial scored per opportunity.
+2026-10-31T21:24Z reviewer note author ruling 2026-10-31: a stale case needs no mention (drop it, do not annotate its status), so Astra's per-case status line is out; in merge.md the most recent case (removed cross-family rule) and Worst (fixed) are stale. Open for the author (paused to 2026-11-01): the rewrite shape. Fable's proposal: a 3-5 line 'Watch for' block (failure signature, current rule, one-line check) first, then at most two cases, drop Best and the counts, slots recurring/fixed/recent dated 'as of'; conflicts with the ruling on the fixed slot, and risks a second rulebook unless phrased as observed patterns.
 
 --- body ---
 ## Context
 Design note: `conception/2026-10-31-skill-case-notes.md` (author's idea, 2026-10-31,
 KISS-reviewed). Child of 1346: the census there shows Claude Code main sessions
 almost never pull repository memory, so this pilot pushes it. Each project keeps
-`memory/skills/<skill>.md`, four dated cases (latest, usual, best, worst) in the
+`memory/skills/<skill>.md`, four dated cases (most recent as of the note date, usual, best, worst) in the
 case-method shape: context, what happened, reaction, outcome.
 
 ## Scope

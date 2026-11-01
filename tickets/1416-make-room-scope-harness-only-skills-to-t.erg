@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Make room: scope harness-only skills to their projects
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T11:25Z reviewer created
+2026-11-01T11:26Z reviewer author ruling 2026-11-01: trace-doctor is harness-specific; scope it with harness-doctor and arena (saving ~365 description chars)
+
+--- body ---
+Parent: 1415
+
+## Context
+Skill descriptions are listed in every session of every project: 38 harness
+skills plus arena, 6282 description chars (measured 2026-11-01). The author's
+option: make the harness doctors and arena project-specific. Candidates:
+harness-doctor ("harness only", 121), arena (lives in ~/CNRS/code/arena, feeds
+the harness route grid, 86), trace-doctor (surveys all sessions but runs from
+the harness, 158; author's call). test-doctor stays global: coding-python.md
+and workflow.md send any project to it. rules/workflow.md points to
+skills/harness-doctor/references/diagnosis-discipline.md by path; that file
+must stay readable from any project.
+
+## Exit criteria
+- [ ] The scoped skills are listed only in their project on Claude Code, Codex and Pi (project_skill_roots in adapters/pilot-support.json), and the installer stops projecting them globally
+- [ ] Pointers to their files from global rules and skills still resolve
+- [ ] Measured catalog saving recorded in the PR

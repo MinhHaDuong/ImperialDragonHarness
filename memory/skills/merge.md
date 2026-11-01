@@ -1,7 +1,7 @@
 # merge — cases
 Updated: 2026-10-31 · skill version: cf514383
 
-## Latest — 2026-10-31
+## Most recent as of 2026-10-31
 Context: three merges (PR 2065, 2066, 2085) in one interactive session, the last removing the cross-family gate. What happened: on PR 2085's fix round (a same-family seat only), main's verify-gate refused admission with "no cross-family seat", applying the rule the PR removes; `raid_land.py` also warned on all three that the attribution block could not be rendered. Reaction: a re-gaze with an OpenAI seat cleared it, and verify-gate APPROVED in round 1; attribution was captured from notes. Outcome: merged at 7d546daf, d704081a, 95ede53f. Source: memory/journal/2026/2026-10-31-cross-family-gate-dropped.md.
 
 ## Usual

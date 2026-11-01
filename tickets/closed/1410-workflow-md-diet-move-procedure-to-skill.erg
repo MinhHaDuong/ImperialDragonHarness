@@ -1,0 +1,34 @@
+%erg 0.1
+Title: workflow.md diet: move procedure to skills, keep principles
+Created: 2026-11-01
+Author: reviewer
+Closed: workflow.md diet landed (proposals A-H), resident budget 18000 -> 15000
+
+--- log ---
+2026-11-01T08:15Z reviewer created
+2026-11-01T08:32Z reviewer author accepted all eight proposals (A-H) in an interactive pass 2026-11-01; F settled on decorrelation.md's 'prefer', H on 'run the invoked skill to its endpoint'
+2026-11-01T08:32Z reviewer closed — workflow.md diet landed (proposals A-H), resident budget 18000 -> 15000
+2026-11-01T09:59Z reviewer verify-reroll — round 1: unresolved verifiable minor AGENTS.md:1-6 ("load in every session" false for the comment's only readers, Codex and Pi); fixed
+2026-11-01T09:59Z reviewer scope note: the Cycle section in rules/workflow.md and conception/design-note-template.md were added at the author's request in the 2026-11-01 interactive round 2, beyond the diet; author-sanctioned, no separate ticket
+
+--- body ---
+## Context
+Source: Fable (claude-fable-5-1) and Astra (gpt-6-astra) review of the ruleset, 2026-11-01; reports in the session scratchpad, findings verified against main by the session. Both reviewers, independently: `rules/workflow.md` (resident, the largest
+body, ~11 000 chars) carries procedure that belongs in skills. Estimated
+savings 2 500-3 000 resident chars with no rule lost:
+- § Escalation protocol (numbered steps, 5-minute timings, build-each-option-and-gaze) -> route skill; keep "the author's calls by right wait; reversible calls go to an advisor first".
+- § Diagnosis discipline elaboration -> a reference the gaze/raid/doctor skills point to; keep the four one-line principles. Astra: the heuristic "deterministic or independently reproduced ... points toward intended behaviour" is a logic error (ordinary bugs are deterministic); separate confirming the observation from evidence of intent.
+- § Session start: naming table, pid recipe, presentation line -> hunt § Worktree / a startup reference; keep the isolation principle and its exceptions. Astra: "Before answering, create a worktree" and "Run to the end ... merge" conflict with read-only skills (dashboard) and skills that end before merge (hunt, smelt).
+- § Monster ticket -> hunt decomposition; keep the signal.
+- Duplicates to resolve: project-memory boundary (workflow.md § Worktree paths, guards.md, AGENTS.md); reviewer independence (workflow.md says high risk "needs" another family, decorrelation.md says no gate refuses for want of one).
+- Scoped gate (§ Check scope) vs verify-gate's narrower eligibility.
+
+## Shape
+Interactive with the author, like the 2026-11-01 git.md pass: the author
+edits in the primary checkout, the session proposes cuts with char counts. Not
+delegated: this is the rule text read in every session.
+
+## Exit criteria
+- [ ] workflow.md keeps principles only; moved procedure lands in the named skills in the same change
+- [ ] Resident budget re-ratcheted to the new measured total
+- [ ] The two contradictions (independence, completion endpoint) are settled in one place

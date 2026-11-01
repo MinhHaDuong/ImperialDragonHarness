@@ -2,10 +2,10 @@
 Title: Settle the two memory stores in Claude Code: native auto-memory versus repository memory
 Created: 2026-10-29
 Author: reviewer
-Blocked-by: 1346
 
 --- log ---
 2026-10-29T19:54Z reviewer created
+2026-11-01T11:33Z reviewer note blocker 1346 closed — Blocked-by removed.
 
 --- body ---
 ## Context

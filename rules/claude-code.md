@@ -1,11 +1,15 @@
 <!-- last-reviewed: 2026-09-24 -->
+<!-- Module: Claude Code only; adapters for other runtimes skip it. Owns the
+runtime levers (worktree tool, subagent model and effort, allow rules, hook
+output). Adds mechanics to workflow.md and git.md, never policy.
+Loading: rules/README.md § Loading per runtime. -->
 # Claude Code idiosyncrasies
 
 True of this runtime only: adapters on other runtimes skip this file.
 
 ## Entering the session
 
-Worktree, naming and opening line: `workflow.md` § Session start. The `cd`
+Worktree, naming and opening line: `workflow.md` § Session start, details in `skills/hunt/references/session-start.md`. The `cd`
 moves the session; a restart resets it, so paths stay absolute.
 
 Never call `EnterWorktree`. It switches on a runtime guard that refuses git
@@ -18,8 +22,7 @@ inherit it: review seats cannot reach their review tree.
   Agent definitions carry no `model:`: an unpinned `Agent` child or
   `Workflow` `agent()` inherits the session model. Choose per
   `skills/route/SKILL.md` and state why; a skill that launches workers must say
-  so (`tests/test_launch_model_choice.py`). Independence is a family question
-  (`skills/route/references/decorrelation.md`).
+  so (`tests/test_launch_model_choice.py`).
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
   the only per-call lever. Unreliable on models with a pinned effort.
@@ -30,7 +33,7 @@ inherit it: review seats cannot reach their review tree.
 
 ## Allow rules
 
-The classifier refuses rule-mandated force-pushes and `git branch -D` despite
+The classifier refuses skill-prescribed force-pushes and `git branch -D` despite
 the blanket `Bash` allow: `scripts/claude-allow-check.py` lists the narrow rules.
 A classifier denial is rewritten to match an allow rule literally (`git -C`,
 no `cd` prefix) or logged and skipped, never retried verbatim.

@@ -385,12 +385,14 @@ def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():
     assert "a branch head that adds at most a bookkeeping delta to the `ruled_tip_sha`" in dash
 
 
-def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
+def test_git_rule_rebases_before_every_gate_and_merge_syncs_after_gaze():
+    """git.md keeps the principle; the merge skill keeps sync-after-gaze and
+    the tier rule; skills/hunt keeps the first-submission rebase mechanics."""
     rule = " ".join((REPO / "rules" / "git.md").read_text().split())
-    assert "syncs after gaze" in rule
-    assert "before the round-1 verify-gate" in rule
-    assert "a later rebase is gated by the tier of what it changes" in rule
-    assert "(merge § Gating tiers)" in rule
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "Rebase before every gate" in rule
+    assert "After gaze, sync" in merge
+    assert "gated by the tier of its own diff" in merge
 
 
 def test_gate_tree_is_per_session_and_round_and_repo_is_required():

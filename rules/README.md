@@ -41,8 +41,37 @@ That is the whole index. It is short because the runtime already did the work.
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`; figures are script-built, never drawn inline. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
-Not a rules file, nor loaded here: `tickets/AGENTS.md` — `@`-imported by the
-harness `CLAUDE.md`, reached in projects via their `AGENTS.md` pointer.
+Not a rules file, nor loaded here: `tickets/AGENTS.md` — reached through the
+`AGENTS.md` pointer ("For ticket operations, read and follow"), in the harness and in projects.
+
+## Loading per runtime
+
+Measured 2026-11-01 on padme with sentinel sentences (the model completes a
+sentence only if it is in its context; a fake sentence and the session-start
+hook line are the controls).
+
+| Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
+|---|---|---|---|
+| Resident rules (workflow, git, guards, claude-code) | every session | **none** | **none** |
+| Conditional rules (`paths:`) | on a matching file | none | none |
+| Session-start hook (`scripts/on-start-context.sh`) | yes | yes | yes |
+| The project's `AGENTS.md` | yes | yes | yes |
+| HTML comments in loaded files | **stripped** | kept | kept |
+
+Claude Code reads `~/.claude/rules/` (symlinks into this directory). Codex and
+Pi have no global instruction file, so rules reach them only through an adapter
+that injects them; none does yet. Neither CLI can strip comments. Codex TUI was
+not probed: it reads the same configuration as `codex exec`. `pi --print` waits
+on an open stdin: run it with `</dev/null`.
+
+Comments are therefore free in the rules (Claude Code is their only reader) and
+paid by Codex and Pi in `AGENTS.md`. Module docstrings are for the people who
+edit a file; anything an agent must know is plain text.
+
+How the four resident files share the work: workflow.md says how to work,
+git.md how to use git, guards.md what no role may do, claude-code.md how
+Claude Code's levers behave. A project's `AGENTS.md` holds that project's
+bylaws; the harness's own `AGENTS.md` holds the harness's.
 
 ## Axis model
 
@@ -54,7 +83,7 @@ guessing it.
 
 | Axis | Resolved from | Rule path |
 |------|---------------|-----------|
-| **format** | filename extension (project-agnostic) | `format/<value>.md` (legacy alias: `coding-<value>.md`) |
+| **format** | filename extension (project-agnostic) | `coding-<value>.md` |
 | **doctype** | `\documentclass` sniff for `.tex`; else project manifest | `doctype/<value>.md` |
 | **lang** | project manifest (`lang` per glob, else `default_lang`) | `lang/<value>.md` |
 | **prose** | implied for prose formats | `prose/_all.md` |
@@ -83,7 +112,7 @@ split as `paths:`, for triggers a filename cannot express.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters, the resident set must be injected by the adapter
-or made genuinely on-demand; `~6 000 tokens` is what that decision moves.
+or made genuinely on-demand; the resident cap (`tests/test_rules_resident_budget.py`) is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 
