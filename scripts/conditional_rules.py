@@ -9,7 +9,8 @@ conditional rule a path matches that this session and agent has not had yet.
 
 Paths come from `tool_input.path` / `tool_input.file_path` (Pi read, write,
 edit) and from a shell command (`tool_input.command`): its words that name an
-existing file, and `*** Add/Update File:` patch headers. A glob matches the
+existing file, and `*** Add/Update File:` patch headers, all resolved against
+the payload's cwd. No `cd` tracking: `cd x && cat y` may miss (advisory only). A glob matches the
 path relative to the project root (git top level of the payload's cwd), as
 Claude's do. Bodies arrive with frontmatter and HTML comments stripped, as the
 1413 generator ships the resident ones. Resident and catch-all rules are
@@ -40,7 +41,6 @@ SAFE_ID = re.compile(r"[A-Za-z0-9_.-]+")
 PATCH_HEADER = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$|^\*\*\* Move to: (.+?)\s*$", re.M)
 MAX_WORDS = 400
 PUNCT = set("&|;<>()\n")
-KEEP_START = {"then", "do", "else", "elif", "if", "while", "until", "!", "{", "time"}
 
 
 def glob_regex(glob: str) -> re.Pattern[str]:
@@ -100,8 +100,9 @@ def rule_body(path: Path) -> str:
 
 
 def command_paths(command: str, cwd: Path) -> list[Path]:
-    """Paths a shell command may name, each resolved against the directory a
-    preceding `cd` in the same command moved to, plus patch-header paths."""
+    """Paths a shell command may name: its file-looking words and patch-header
+    paths, each resolved against `cwd`. No shell state is modelled, so a `cd x &&
+    cat y` resolves `y` against `cwd` and may miss (advisory only)."""
     found = [cwd / (a or b) for a, b in PATCH_HEADER.findall(command)]
     # posix=False keeps quotes on a token, so a quoted ')' or ';' stays a word;
     # a newline separates commands as ';' does
@@ -112,36 +113,14 @@ def command_paths(command: str, cwd: Path) -> list[Path]:
         tokens = list(lexer)
     except ValueError:
         tokens = command.split()
-    base, stack, at_start, after_cd = cwd, [], True, False
     for tok in tokens[:MAX_WORDS]:
         quoted = len(tok) > 1 and tok[0] in "'\"" and tok[-1] == tok[0]
         w = tok[1:-1] if quoted else tok
-        if not quoted and set(w) <= PUNCT:  # a separator: the next word starts a command
-            if after_cd:
-                base = Path.home()  # a bare cd goes home
-            for ch in w:
-                if ch == "(":
-                    stack.append(base)
-                elif ch == ")" and stack:
-                    base = stack.pop()  # a subshell's cd ends with it
-            at_start, after_cd = True, False
+        if not quoted and set(w) <= PUNCT:
             continue
-        if after_cd:
-            if w.startswith("-") and w != "-":  # cd -P, cd --: the directory follows
-                continue
-            after_cd = False
-            if w != "-":  # cd - returns to an OLDPWD this parser does not know
-                base = base / os.path.expanduser(os.path.expandvars(w))
-            continue
-        if at_start and not quoted and w == "cd":
-            after_cd = True
-            continue
-        if at_start and not quoted and w in KEEP_START:
-            continue  # then cd, do cd, ! cd: the command slot is still open
-        at_start = False
         w = re.sub(r"^--?[A-Za-z0-9-]+=", "", w)
         if w and not w.startswith("-") and len(w) < 4096:
-            found.append(base / os.path.expanduser(w))
+            found.append(cwd / os.path.expanduser(w))
     return found
 
 
