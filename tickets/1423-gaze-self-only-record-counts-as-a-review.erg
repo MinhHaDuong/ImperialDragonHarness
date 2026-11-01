@@ -1,0 +1,16 @@
+%erg 0.1
+Title: Gaze self-only record counts as a review; README runtime-rules wording
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T16:53Z reviewer created
+
+--- body ---
+Author rulings typed 2026-11-01: "Gate should NOT REFUSE self only"; "Prose: self-only is valid".
+A gaze record with `seats: self-only` (or no `seats:` line, treated alike) counts as a review.
+Change every prose restatement together (merge Gating tiers, gaze SKILL 4 and plan.md,
+raid Phase 6, detached-gaze); gate code already ignores seats.
+Second change: rules/README.md Loading per runtime, wording only, mark measured vs earlier vs unmeasured cells.
+
+Exit: no prose says self-only counts as no record; README cells carry provenance.

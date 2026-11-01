@@ -46,10 +46,10 @@ it is on main.
 **The review evidence is on notes** (F1, ticket 1301): a gaze record is the
 review's latest `answer` entry (`review_notes.py answers --unit pr:<n> --latest`)
 and a verdict is its `verdict` entry; the PR comments are one-line pointers to
-them. **A gaze record with `seats: self-only`, or with no `seats:` line, counts
-as no record** (definition: `skills/gaze/SKILL.md` § 4): gaze runs again, from
-a session that can launch seats. A second self-only record on the same head
-goes to the author.
+them. **A gaze record with `seats: self-only`, or with no `seats:` line, is a
+review like any other** (author ruling 2026-11-01; definition:
+`skills/gaze/SKILL.md` § 4): the gate takes it, and reuse follows its result
+and its head. A panel is preferred, never required.
 
 **A branch review carries over to the PR** (ticket 1379). A gaze answered on
 `branch:<name>` before the PR existed is the PR's review when its reviewed
