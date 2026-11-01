@@ -2,10 +2,13 @@
 Title: Contradiction: no wait tickets versus Blocked-by reminders
 Created: 2026-10-30
 Author: reviewer
+Closed: claim B located and withdrawn by the author (2026-11-01)
 
 --- log ---
 2026-10-30T13:45Z reviewer created
 2026-11-01T12:59Z reviewer raid 1f0534: claim B located on padme: ~/.claude/projects/-home-haduong-CNRS-papiers-actif-AEDIST-technical-report/memory/MEMORY.md ("a reminder is an OPEN ticket Blocked-by its trigger, which auto-fires in erg ready"). Author answer still pending.
+2026-11-01T18:04Z reviewer author answer 2026-11-01: claim B is withdrawn everywhere; no wait tickets in any project. The native line in AEDIST-technical-report is ticketed there for deletion (aedist-technical-report ticket 0684, PR #1180).
+2026-11-01T18:04Z reviewer closed — claim B located and withdrawn by the author (2026-11-01)
 
 --- body ---
 ## Context
