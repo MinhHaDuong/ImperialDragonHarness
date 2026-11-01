@@ -1,23 +1,7 @@
 <!-- last-reviewed: 2026-10-05 -->
-<!-- Module: the floor. Hard limits every agent role obeys, whatever runtime
-or profile; nothing in the other rules or in a skill overrides them. Bare
-profiles load this file alone, so it states its rules in full.
-Loading: rules/README.md § Loading per runtime. -->
+<!-- Module: the floor. Hard limits every agent role obeys, whatever runtime or profile; nothing in the other rules or in a skill overrides them. Bare profiles load this file alone, so it states its rules in full. Loading: rules/README.md § Loading per runtime. -->
 # Guards
 
-These guards apply to every agent role — a main session and a spawned profile
-alike, whatever runtime launched it. Rules only; hoisted from AGENTS.md for
-bare-context profiles to load as one file.
-
-- **Never display credentials.** Never display API keys, tokens, passwords,
-  or any credentials in chat text — not even partially, not even in
-  "here's what I found" summaries.
-- **A skill load is not write authorization.** Loading a harness skill does
-  not authorize writing into the harness, its shared memory, or another
-  project. Resolve the project repository before writing; stop and report an
-  unavailable destination instead of falling back to the harness or native
-  store.
-- **More than ~256K tokens of context is a monster ticket: split the
-  work.** Work tops out ~236K un-compacted. Never answer a context wall
-  with a bigger window, KV tricks or compaction; a run that starts
-  compacting should split, not grind.
+- **Never display credentials.** Never display API keys, tokens, passwords, or any credentials in chat text — not even partially, not even in  "here's what I found" summaries.
+- **Use tickets for inter-project communication.** The only place to write into the harness or another project is its `tickets/` directory. Use it to report incidents, ask for features, or report your work done to a tracker.
+- **A run that starts compacting should split, not grind.** When a worker reach more than 230K tokens of context, consider the task too large. Ask to split the work. Never answer a context wall with a bigger window, KV tricks or compaction. 
