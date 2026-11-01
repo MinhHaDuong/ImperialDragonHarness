@@ -2,9 +2,12 @@
 Title: Pi adapter installs no agents for the subagent extension; agents/ carry Claude tool names
 Created: 2026-11-01
 Author: MinhHaDuong
+Closed: autoclosed — PR #2189
 
 --- log ---
 2026-11-01T20:30Z MinhHaDuong created
+2026-11-01T20:22Z reviewer decisions: (1) adapters/pi/agents/ generated from agents/*.md by scripts/render-pi-agents.py, projected to ~/.pi/agent/agents (children: markdown); rejected: hand copies (drift) and a runtime tool-name shim (Pi matches tool names case-sensitively and drops unknown ones silently, nothing to hook). (2) no model: pin in Pi renderings; the padme pin of code-reviewer is dropped: an unpinned child inherits the dispatcher's model and thinking level (subagent index.ts runSingleAgent), a projected padme pin names a provider the arena's sealed HOME and other hosts lack, and 1063 keeps model choice per launch; rejected: pinned exception. (3) pi headless door gets no local_providers: gaze_seat runs is_local only when the door template carries <baseUrl>, the pi door never does, so the key would be inert; padme seats route through the aider door. (4) Codex needs no agents projection: spawn_agent has no named-agent registry; roles arrive by the Step-0 pointer in the prompt.
+2026-11-01T20:34Z reviewer closed — autoclosed — PR #2189
 
 --- body ---
 

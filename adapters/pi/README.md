@@ -49,7 +49,25 @@ unresolvable id leaves the sovereign backend usable only through warnings.
 ## Scope today
 
 The Pi adapter ships the bash guard extension and the wake reader
-(`extensions/idh-guard.ts`, ticket 0809; `extensions/idh-wake.ts`, ticket 1316); it does not drive Pi. No
+(`extensions/idh-guard.ts`, ticket 0809; `extensions/idh-wake.ts`, ticket 1316),
+and the harness agents for the subagent extension (`agents/`, ticket 1426): `idh
+install` links each file into `~/.pi/agent/agents/`, beside the user's own
+agents. The files are generated from the repo's `agents/*.md` by
+`scripts/render-pi-agents.py`; edit the source and rerun it. Only `tools:`
+changes, to Pi names: Pi drops an unknown tool name such as `Read` without a
+word, so a verbatim copy would launch a child with no tools. They carry no
+`model:`: the extension then passes the dispatcher's own model and thinking
+level to the child, and a pinned provider would be absent on other hosts
+(the arena's sealed HOME). A host that wants a role on a given model keeps
+its own agent file under another name.
+
+The `pi` headless door in `skills/route/routes.json` declares no
+`local_providers` (decision, ticket 1426): `gaze_seat.py` runs its local-server
+check only for a door whose template carries `<baseUrl>`, and the pi door
+passes `--model <provider>/<id>` instead, so the key would do nothing there. A
+padme seat goes through the `aider` door, which does run the check.
+
+Apart from the agents, the adapter does not drive Pi. No
 `pi --print` call sites exist in harness code today (grep-verified in the
 raid log, 2026-10-02), so this rule is a documentation guard for the adapter
 pilots (tickets 0923 and 0924): when a `pi --print` driver is wired, the
