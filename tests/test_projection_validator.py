@@ -61,6 +61,8 @@ def _checkout(root: Path) -> Path:
     (root / "rules/workflow.md").write_text("rules")
     (root / "agents").mkdir()
     (root / "agents/helper.md").write_text("agent")
+    (root / "adapters/pi/agents").mkdir()
+    (root / "adapters/pi/agents/helper.md").write_text("agent")
     for skill in ("perch", "yawn"):
         (root / "skills" / skill).mkdir(parents=True)
     return root

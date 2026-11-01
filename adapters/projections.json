@@ -155,6 +155,16 @@
       "why": "Additive harness registration; unrelated children remain owned by the runtime"
     },
     {
+      "path": "~/.pi/agent/agents",
+      "target": "$IDH_ROOT/adapters/pi/agents",
+      "runtimes": [
+        "pi"
+      ],
+      "required": true,
+      "children": "markdown",
+      "why": "Pi renderings of agents/*.md for the subagent extension (ticket 1426): Pi tool names, no model pin; unrelated user agents remain owned by the runtime"
+    },
+    {
       "path": "~/.claude/skills",
       "target": "$IDH_ROOT/skills",
       "runtimes": [

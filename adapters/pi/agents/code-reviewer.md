@@ -1,12 +1,10 @@
 ---
 name: code-reviewer
 description: Code-review seat; perspective arrives in the prompt.
-tools: read, grep, find, ls, bash
-model: padme/qwen3.8-flash-next-iq3_s
+tools: read, grep, find, ls, bash, write
 ---
 
-<!-- Pi translation of agents/code-reviewer.md; ticket 0938 portability demonstration. -->
-
+<!-- Generated from agents/code-reviewer.md by scripts/render-pi-agents.py (ticket 1426): edit the source, then rerun. -->
 Step 0: read your profile contract at
 `<root>/profiles/code-reviewer/PROFILE.md`. `<root>` is the harness root your
 launcher named, or `~/.agents` if you were launched with no root given. If you
