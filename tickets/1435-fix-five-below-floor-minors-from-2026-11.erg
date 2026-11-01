@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-01T20:54Z reviewer created
+2026-11-01T20:55Z reviewer finding 5 skipped: check-close-claims.sh and its test already treat a ticket in tickets/closed/ with a Closed: header as satisfied; run today it reports 0 findings over the same window incl. #2181, #2189
 
 --- body ---
 ## Context
