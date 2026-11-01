@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Observe mode before going live for new autonomous behaviour
+Created: 2026-11-01
+Author: claude
+
+--- log ---
+2026-11-01T22:54Z claude created
+
+--- body ---
+## Context
+
+From `conception/2026-11-01-dsh-superagent-ideas.md` § 1. DeepSeek's
+dsh-superagent starts every proactive rule in `observe` mode: the model
+judges, a positive judgement is recorded as "would accept", nothing runs.
+The operator reads the records, then switches the rule to `auto`.
+
+In the harness a new guard is on or off, with no shadow period; misfires are
+found in use and the guard is then deleted.
+
+## Author remark (2026-11-01)
+
+"Just for guards, or who else?" Settling the scope is the first step, not a
+given. Candidates to weigh, each with its cost and the misfire it would catch:
+
+- guards and hooks that refuse or rewrite a tool call;
+- sweeps that file tickets (molt, yawn → molt): "would file" before filing;
+- raid's target selection and its auto-merge of APPROVED PRs;
+- a newly added skill step that writes outside its worktree (forge, memory,
+  other projects' tickets);
+- route changes that move work to another model.
+
+Some may already have a dry-run (`molt` cleanup has `--dry-run`); reuse
+before adding. Say which candidates are excluded and why.
+
+## Exit criteria
+
+- [ ] Scope decided with the author: which kinds of behaviour must start in observe mode, which are exempt, with reasons
+- [ ] One convention for "would have done X" records: where they land, how long the observe period lasts, who reads them, what flips a behaviour live
+- [ ] The convention written where authors of guards/sweeps read it (e.g. `rules/authoring-skills.md` or test-doctor), not in a new rule file
+- [ ] Applied to at least one real case as positive control: an observe log shows a "would" entry for a known trigger
