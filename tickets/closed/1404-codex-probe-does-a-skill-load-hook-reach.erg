@@ -2,10 +2,12 @@
 Title: Codex probe: does a skill-load hook reach the model (1394 stage 3)
 Created: 2026-10-31
 Author: reviewer
+Closed: probe passed; Codex wired (PR #2155)
 
 --- log ---
 2026-10-31T19:48Z reviewer created
 2026-11-01T13:11Z reviewer probe result (codex-cli 0.166.0, model gpt-6.1-sol, throwaway CODEX_HOME, 5 codex exec calls): hooks run only when trusted (untrusted = silent no-op, no warning in exec); trust is per entry (key hooks.json:event:i:j, sha256 of the entry): adding UserPromptSubmit/PostToolUse entries to the adapter file left the live pre_tool_use and session_start hashes (795b2af1, 4d2274fb) trusted and the two new ones untrusted until /hooks review, so the destructive-bash guard is not dropped. Model read-back of CODEWORD tokens: SessionStart plain stdout seen (positive control); UserPromptSubmit JSON additionalContext seen; PostToolUse(Bash) JSON additionalContext seen; PostToolUse plain stdout NOT seen. Payloads: no Skill tool; explicit $name is injected by Codex with no shell read, so only UserPromptSubmit sees it (prompt '$probe-skill'); implicit use is a Bash cat of .../skills/<name>/SKILL.md seen by PostToolUse (tool_name Bash, tool_input.command; no agent_id; turn_id present). PASS. Wired: adapters/codex/hooks.json UserPromptSubmit + PostToolUse ^Bash$ -> skill-case-notes.sh (additive branches: $name prompt gated on turn_id, Bash read verbs of skills/<name>/SKILL.md). End-to-end with the real script and planted memory/skills note: implicit cat read and typed $probe-skill each answered with the token, log 'delivered ... agent=main' twice. Limits: exec mode only; Codex subagents not probed; typed $name and shell read share one marker. Host effect on merge: ~/.codex/hooks.json (symlink) gains two entries, inert until the author trusts them via /hooks.
+2026-11-01T13:21Z reviewer closed — probe passed; Codex wired (PR #2155)
 
 --- body ---
 ## Context
