@@ -1,0 +1,5 @@
+# 2026-11-01 — Roar step 8 cross-repo hand-off (ticket 1409, PR 2139)
+
+- Context: PR 2139 (merged at 9d5fd1cf, head 5b8cf7ec) rewrote `skills/roar/SKILL.md` step 8. When a closed ticket is cited by an open harness tracker from another repository, roar hands off with one append-only `erg log <id> "child <repo> <ticket> closed by <PR> on <date>; tracker update due"`. The log line is run in a harness worktree on its own branch from `origin/main`, landed by merge request and read back. Gaze rv-20261101-pr-2139-30df: REVIEWED. Verify-gate: APPROVED, round 1.
+- Dissent on record: the cross-family rules seat (openai gpt-6-luna via codex) noted that a harness `erg log` landed by a merge request from another project still edits the harness, against `rules/workflow.md` § Cross-project work item 4 ("Never edit it from here"). Gaze and the gate downgraded it to a consider finding (`skills/roar/SKILL.md:174`, adopted: no) because the ticket itself names a log line as the hand-off. The author may revisit.
+- Cleanup: the task worktree and local branch `t1409-roar-cross-repo-handoff` were removed by `raid_land.py --cleanup`; roar found no remote branch left at step 10.
