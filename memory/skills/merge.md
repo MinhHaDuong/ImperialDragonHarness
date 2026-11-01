@@ -1,14 +1,14 @@
 # merge — cases
-Updated: 2026-10-31 · skill version: cf514383
+Updated: 2026-11-01 · skill version: 8bc0d4d2
 
-## Most recent as of 2026-10-31
-Context: three merges (PR 2065, 2066, 2085) in one interactive session, the last removing the cross-family gate. What happened: on PR 2085's fix round (a same-family seat only), main's verify-gate refused admission with "no cross-family seat", applying the rule the PR removes; `raid_land.py` also warned on all three that the attribution block could not be rendered. Reaction: a re-gaze with an OpenAI seat cleared it, and verify-gate APPROVED in round 1; attribution was captured from notes. Outcome: merged at 7d546daf, d704081a, 95ede53f. Source: memory/journal/2026/2026-10-31-cross-family-gate-dropped.md.
+## Most recent — 2026-11-01
+Context: PR 2150 (Pi case notes) was ready when PR 2155 landed first. What happened: rebase onto main conflicted in the shared test file. Reaction: resolved as the union of the Codex and Pi tests, re-gazed narrow, gated again. Outcome: APPROVED in round 1, merged as a5fd217e; `raid_land.py --cleanup` removed worktree and branch. Use: a conflict from a sibling's merge is routine; rebase, rerun a narrow gaze, do not escalate. Source: memory/journal/2026/2026-11-01-raid-1f0534-late-merges.md.
 
-## Usual
-Context: a merge request with a close claim and a gate record. What happened: the helper refuses while CI runs and succeeds on retry; a bare or short `Ticket:` claim is rewritten to name the ticket path. Of the last 400 merged PRs to 2026-10-13: 196 close claims, 155 `Ticket: none`, 86 `Ticket-ref`, 16 no ticket text (derived counts, may overlap). Reaction: fix the claim line, retry. Outcome: no dropped claims in the period. Source: memory/topics/raid-review-and-merge.md § Merge mechanics.
+## Usual — 2026-10-27
+Context: ticket-only PR 1725, gate record on a busy main. What happened: two records went stale as PRs 1726 and 1722 merged meanwhile. Reaction: stopped after one re-record and reported, as the recipe says; the author answered "Just merge, dont rerun the tests", and the merge used `--match-head-commit`. Outcome: MERGED, bypass noted on the PR. Use: record, merge, retry once, then report; an author waiver covers that PR only. Source: memory/journal/2026/2026-10-27-raid-sitrep-ticket-1246.md; memory/topics/commission.md.
 
-## Best — 2026-10-27
-Context: raid afternoon, about 45 PRs merged. What happened: the before-merge gate shrank to about 13 s, the full suite ran after the merge, landing went through `scripts/raid_land.py`; #1774 took 10m26s from first review to merge. Reaction: the author said "Stay optimistic. Trust, Verify, Monitor." Outcome: main green at dd222149. Caveat from the same run: `/merge` step 8 (sync local main) was skipped on the first 13 merges, so helpers ran from a stale primary checkout. Source: memory/journal/2026/2026-10-27-raid-optimistic-merge-afternoon.md.
+## Trap — 2026-10-28
+Context: PR 1924 for ticket 1316, closed by hand. What happened: `erg close` already moved the file, so `git add -u tickets/` staged only the deletion; the pushed commit dropped the ticket and `erg check` passed. Reaction: amended, force-pushed with lease before the gate. Outcome: no ticket lost. Use: land through `scripts/raid_land.py`, which stages both sides; after any hand close, read `git show --stat HEAD`. Source: memory/journal/2026/2026-10-28-erg-close-hand-recipe-dropped-ticket.md.
 
-## Worst — 2026-10-30
-Context: the after-merge gate record for main tip 0645f247 reached local `refs/notes/gate` but never origin's, with no warning logged. What happened: a forced notes fetch from another process sharing the repository rewound the ref, so a push by ref name exited 0 and sent nothing. Reaction: raid 85542d reproduced it with a bare remote; PR 2033 pushes by commit id and reads the remote back. Outcome: fixed by 1493043e (ticket 1366); a recurrence now logs a warning. Status: fixed. Source: memory/journal/2026/2026-10-30-gate-record-lost-shared-ref-rewind-1366.md.
+## Fixed, with a ruling — 2026-10-30
+Context: the gate record reached local `refs/notes/gate` but not origin's. What happened: another process rewound the local ref, so a push by ref name exited 0 and sent nothing (ticket 1366). Reaction: PR 2033 pushed by commit id with an `ls-remote` read-back; PR 2035 kept the commit-id push and dropped the read-back. Outcome: the author ruled 2026-11-01 (ticket 1373) that the exit code answers for a commit-id push; the exception stays in memory, `rules/git.md` unchanged. Use: add no read-back to a push by commit id (`scripts/merge-gate.py`); a push by ref name still needs one. Source: memory/journal/2026/2026-10-30-push-by-commit-id-exit-code-1366.md.
