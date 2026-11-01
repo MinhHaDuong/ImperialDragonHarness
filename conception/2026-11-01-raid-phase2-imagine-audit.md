@@ -32,8 +32,8 @@ Classes:
 
 | Class | Tickets | Share |
 |---|---|---|
-| E premise corrected or expired | 9 | 20% |
-| S scope narrowed, dropped or split | 6 | 13% |
+| E premise corrected or expired | 8 | 18% |
+| S scope narrowed, dropped or split | 7 | 16% |
 | G grounded confirmation only | 28 | 62% |
 | R pure restatement | 2 | 4% |
 
@@ -45,8 +45,8 @@ Classes:
   contract. Scope changes happen in the orchestrator's decisions and in the
   coder's reading of the annotation.
 - 26 of 45 sections state "premise holds" or equivalent in so many words;
-  27 carry a YAGNI or antipattern line
-  named rejected library or helper); only 6 mention a Blind-Spot pass.
+  27 carry a YAGNI or antipattern line (some name a rejected library or
+  helper); only 6 mention a Blind-Spot pass.
 
 ## Examples
 
@@ -69,24 +69,27 @@ Premise expiry or correction (E):
   (ten dead tips masked by a later green record). A different defect.
 - 1287: the report blamed nesting; transcripts showed the fork never loaded
   `plan.md`. Cause established, two of three symptoms already fixed by 1267.
-- 1348, 1349: the ticket text named `HOARD.md` and the hoard skill, renamed
-  to smelt the same week.
+- 1348: the ticket text named `HOARD.md` and the hoard skill, renamed to
+  smelt the same week.
 - 1366: a third candidate (a local ref race) fitted every observation
   better than the two the ticket carried; reproduced with a bare remote.
 
 Scope change proposed (S):
 
-- 0254: wontfix. The close-and-archive dance failed in about 1 of 150
-  merges; one `git add -u tickets/` bullet in `rules/git.md` is the whole
+- 0254: wontfix. All 86 close-and-archive commits went through the normal
+  path; a hand-rolled chore-close runs about 1 in 150 merges. One
+  `git add -u tickets/` bullet in `rules/git.md` is the whole
   deliverable. The cleanest case of Phase 2 deleting work.
 - 1346: nothing left to execute; children 1353 and 1354 already carry the
   criteria; keep the parent as tracker.
-- 1349: PR closes criterion 1 only; the native-store drain is out; the
+- 1349: the premise held (only the wording was stale); PR closes criterion 1 only; the native-store drain is out; the
   criterion 2 run needs author spend and acceptance.
 - 1355: only the "reported by lair/yawn" branch of criterion 1 attempted.
 - 1292: drop the nits that are not a few lines with an existing test seat.
 - 1008: narrowing allowed to assisted mining with no committed pipeline;
   the incumbent's replay run goes to a follow-up.
+- 1362: restore route only, landing-side, no writer-side change; a subset
+  the ticket allowed.
 - (1362 and 1008 chose a subset the ticket itself allowed.)
 
 Grounded confirmation (G), typical: 1291 (swap `sync` for `refresh` in
@@ -147,7 +150,7 @@ already cleared. Counted from journal text, not re-run.
 
 | Class | Tickets |
 |---|---|
-| E | 0943, 0944, 0945, 1232, 1283, 1287, 1348, 1349, 1366 |
-| S | 0254, 1008, 1292, 1346, 1355, 1362 |
+| E | 0943, 0944, 0945, 1232, 1283, 1287, 1348, 1366 |
+| S | 0254, 1008, 1292, 1346, 1349, 1355, 1362 |
 | R | 1036, 1043 |
 | G | 0984, 0987, 1151, 1230, 1231, 1233, 1234, 1238, 1282, 1284, 1286, 1288, 1289, 1290, 1291, 1294, 1303, 1327, 1347, 1352, 1353, 1356, 1357, 1358, 1360, 1361, 1363, 1394 |
