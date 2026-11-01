@@ -19,8 +19,8 @@ Seats with relevant expertise use the tools available to them (literature search
   (blacklisted words and phrases, density limits, patterns), the plan scans
   the revised text against it as a script item, reporting every hit with line
   and context; it is never a seat.
-- **Editorial-brief auditor, when `docs/editorial-brief.md` exists and the what touches the manuscript.** Skip it
-  silently otherwise. The skill owns the schema, projects own the content: one
+- **Editorial-brief auditor, when `conception/editorial-brief.md` exists and the what touches the manuscript.** Skip it
+  otherwise, saying in the panel output that `conception/editorial-brief.md` is absent. The skill owns the schema, projects own the content: one
   standing decision per entry, with a title, **Decision:** (one sentence),
   **Rationale:** (one or two) and **Ticket:**. The seat reads the brief and the
   manuscript diff and returns a table, carried verbatim into the synthesis;
