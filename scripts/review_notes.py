@@ -879,9 +879,18 @@ def _carries(cwd, rerolled, head):
     carries nothing."""
     if _git(cwd, "merge-base", "--is-ancestor", rerolled, head, check=False).returncode == 0:
         return True
-    done = _git(cwd, "cherry", head, rerolled, check=False)
-    marks = [ln[:1] for ln in done.stdout.splitlines() if ln]
-    return done.returncode == 0 and bool(marks) and set(marks) == {"-"}
+    mb = _git(cwd, "merge-base", rerolled, head, check=False)
+    if mb.returncode != 0 or not mb.stdout.strip():
+        return False
+
+    def ids(tip):
+        log = _git(cwd, "log", "-p", "--no-merges", f"{mb.stdout.strip()}..{tip}", check=False)
+        if log.returncode != 0:
+            return None
+        return {ln.split()[0] for ln in _out(cwd, "patch-id", "--verbatim", stdin=log.stdout).splitlines() if ln}
+
+    old, new = ids(rerolled), ids(head)
+    return bool(old) and new is not None and old <= new
 
 
 def gate_state(cwd, review_id, head, remote="origin"):
@@ -892,8 +901,8 @@ def gate_state(cwd, review_id, head, remote="origin"):
 
     Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id);
     or the head adds only bookkeeping to the latest reviewed head; or it is
-    the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head or carrying its commits patch-equivalent
-    (rebased onto a moved base).
+    the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head or
+    carrying its commits verbatim patch-equal (rebased onto a moved base).
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds.
     `stale` is empty after a good read; after a failed fetch it names the failure: the state
