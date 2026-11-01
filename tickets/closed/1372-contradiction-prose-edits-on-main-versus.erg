@@ -2,9 +2,12 @@
 Title: Contradiction: prose edits on main versus the harness gate
 Created: 2026-10-30
 Author: reviewer
+Closed: rules/git.md and rules/prose/workpackages.md amended at the author's explicit request; native note rewritten
 
 --- log ---
 2026-10-30T13:45Z reviewer created
+2026-11-01T07:18Z reviewer author ruling 2026-11-01: worktrees isolate agents, so the primary checkout is the author's workspace; author edits land via an agent-managed branch, or for a trivial change directly on main through git -c idh.mainGuard=warn (author only)
+2026-11-01T07:18Z reviewer closed — rules/git.md and rules/prose/workpackages.md amended at the author's explicit request; native note rewritten
 
 --- body ---
 ## Context
