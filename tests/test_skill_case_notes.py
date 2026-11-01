@@ -185,3 +185,63 @@ def test_hooks_json_wires_skill_matcher():
     cmd = blocks[0]["hooks"][0]
     assert "idh-hook\" skill-case-notes.sh" in cmd["command"]
     assert cmd["timeout"] == 5
+
+
+# Codex shapes (ticket 1404): no Skill tool, so a skill load is a shell read of
+# skills/<name>/SKILL.md (PostToolUse, tool_name Bash) or a typed `$name`.
+def codex_bash(state, cwd, command, session="c1"):
+    payload = {"session_id": session, "turn_id": "t1", "cwd": str(cwd),
+               "hook_event_name": "PostToolUse", "tool_name": "Bash",
+               "tool_input": {"command": command}, "tool_response": "x"}
+    return run(state, cwd, raw=json.dumps(payload, separators=(",", ":")))
+
+
+def codex_prompt(state, cwd, prompt, session="c1", turn=True):
+    payload = {"session_id": session, "cwd": str(cwd), "hook_event_name": "UserPromptSubmit",
+               "prompt": prompt}
+    if turn:
+        payload["turn_id"] = "t1"
+    return run(state, cwd, raw=json.dumps(payload, separators=(",", ":")))
+
+
+def test_codex_shell_read_of_skill_file_delivers(project, state):
+    r, log = codex_bash(state, project, "cat /home/u/.codex/skills/merge/SKILL.md")
+    out = json.loads(r.stdout)["hookSpecificOutput"]
+    assert out["hookEventName"] == "PostToolUse" and TOKEN in out["additionalContext"]
+    assert "delivered skill=merge" in log
+
+
+def test_codex_sed_read_and_relative_path_deliver(project, state):
+    r, _ = codex_bash(state, project, "sed -n '1,200p' skills/merge/SKILL.md")
+    assert TOKEN in context(r)
+
+
+def test_codex_unrelated_shell_command_is_silent_and_unlogged(project, state):
+    r, log = codex_bash(state, project, "git status --short")
+    assert r.returncode == 0 and r.stdout == "" and log == ""
+
+
+def test_codex_non_read_mention_of_skill_file_is_silent(project, state):
+    r, log = codex_bash(state, project, "git add skills/merge/SKILL.md")
+    assert r.stdout == "" and log == ""
+
+
+def test_codex_dollar_prompt_delivers_once_with_shell_read(project, state):
+    r1, _ = codex_prompt(state, project, "$merge 2114")
+    assert json.loads(r1.stdout)["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
+    assert TOKEN in context(r1)
+    r2, log = codex_bash(state, project, "cat skills/merge/SKILL.md")
+    assert r2.stdout == "" and "already-delivered" in log
+
+
+def test_dollar_prompt_without_codex_turn_is_ignored(project, state):
+    r, log = codex_prompt(state, project, "$merge", turn=False)
+    assert r.stdout == "" and log == ""
+
+
+def test_codex_hooks_json_wires_prompt_and_shell_read():
+    hooks = json.loads((REPO / "adapters" / "codex" / "hooks.json").read_text())["hooks"]
+    for event in ("UserPromptSubmit", "PostToolUse"):
+        cmds = [h["command"] for b in hooks[event] for h in b["hooks"]]
+        assert any("skill-case-notes.sh" in c for c in cmds), event
+    assert [b["matcher"] for b in hooks["PostToolUse"]] == ["^Bash$"]

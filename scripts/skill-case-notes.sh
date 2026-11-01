@@ -12,10 +12,14 @@ trap 'exit 0' EXIT
 
 payload=$(cat 2>/dev/null) || payload=""
 # UserPromptSubmit fires on every prompt: bail out before python or git unless
-# the prompt starts with "/" (a typed skill command). Cheap pre-filter only;
-# python re-checks exactly.
+# the prompt starts with "/" (a typed skill command) or "$" (Codex's spelling).
+# Codex PostToolUse fires on every shell call: bail out unless the payload
+# mentions a SKILL.md. Cheap pre-filters only; python re-checks exactly.
 if [[ "$payload" == *'"hook_event_name":"UserPromptSubmit"'* ]] &&
-   ! [[ "$payload" =~ \"prompt\"[[:space:]]*:[[:space:]]*\"/ ]]; then
+   ! [[ "$payload" =~ \"prompt\"[[:space:]]*:[[:space:]]*\"[/\$] ]]; then
+    exit 0
+fi
+if [[ "$payload" == *'"tool_name":"Bash"'* && "$payload" != *'SKILL.md'* ]]; then
     exit 0
 fi
 dir="${XDG_STATE_HOME:-$HOME/.local/state}/idh/skill-notes"
@@ -45,13 +49,22 @@ except ValueError:
 event = p.get("hook_event_name")
 if event == "UserPromptSubmit":
     prompt = p.get("prompt")
-    if not isinstance(prompt, str) or not prompt.startswith("/"):
+    # "$name" is Codex's spelling of a typed skill; Codex payloads carry turn_id
+    if not isinstance(prompt, str) or not (prompt.startswith("/") or (prompt.startswith("$") and "turn_id" in p)):
         sys.exit(0)
     name = prompt[1:].split(None, 1)[0] if prompt[1:].strip() else None
 else:
     event = "PostToolUse"
     tin = p.get("tool_input")
     name = tin.get("skill") if isinstance(tin, dict) else None
+    if p.get("tool_name") == "Bash":
+        # Codex has no Skill tool: a skill load is a shell read of skills/<name>/SKILL.md
+        cmd = tin.get("command") if isinstance(tin, dict) else None
+        m = re.match(r"\s*(?:cat|sed|head|tail|nl|bat|less|more)\b[^;&|]*?(?:^|[\s'\"=/])skills/([a-z0-9][a-z0-9_-]*)/SKILL\.md",
+                     cmd) if isinstance(cmd, str) else None
+        if not m:
+            sys.exit(0)
+        name = m.group(1)
 session = str(p.get("session_id") or "nosession")
 agent = str(p.get("agent_id") or "main")
 if not isinstance(name, str) or not name:
