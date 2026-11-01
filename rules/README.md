@@ -20,6 +20,8 @@ question — does its frontmatter declare `paths:`?
 
 That is the whole index. It is short because the runtime already did the work.
 
+Rules state principles; skills and scripts hold procedures; configuration holds settings; memory holds cases and rulings.
+
 ## Conditional rules — absent until a matching file is touched
 
 | File | Loads on | Summary |
