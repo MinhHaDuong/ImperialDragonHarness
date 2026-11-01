@@ -1,0 +1,4 @@
+2026-11-01T19:26:30Z delivered rules=lang/en.md,lang/fr.md,prose/_all.md session=01a19893-d25a-773d-b59e-2b1590442d29
+2026-11-01T19:26:30Z delivered rules=coding-python.md session=01a19893-d25a-773d-b59e-2b1590442d29
+2026-11-01T19:26:38Z already-delivered rules=coding-python.md session=01a19893-d25a-773d-b59e-2b1590442d29
+2026-11-01T19:26:40Z already-delivered rules=coding-python.md session=01a19893-d25a-773d-b59e-2b1590442d29

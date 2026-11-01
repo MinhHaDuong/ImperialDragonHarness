@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Codex and Pi inject conditional rules when a session touches a matching path
+Created: 2026-11-01
+Author: reviewer
+Closed: autoclosed — PR #2179
+
+--- log ---
+2026-11-01T19:16Z reviewer created
+2026-11-01T19:31Z reviewer probe Pi 1.4.0 (mistral-large-4, throwaway extension): tool_result inputs read{path} write{path} edit{path} bash{command}; CODEWORD-READ/WRITE/EDIT/BASH all quoted. E2E with branch extension: coding-python, prose/_all, lang/en, lang/fr headings quoted; log delivered x2 then already-delivered x2; decoy rule denied. PASS.
+2026-11-01T19:31Z reviewer probe Codex 0.166.0 apply_patch: NOT RUN, classifier denied --dangerously-bypass-hook-trust; logged and skipped. Codex covered via PostToolUse ^Bash$ (payload measured in 1404); apply_patch only when patch text rides a shell command. Author follow-up: one-call dump probe, memory/evidence/2026-11-01-conditional-rules-1424/PROBES.md.
+2026-11-01T20:12Z reviewer closed — autoclosed — PR #2179
+
+--- body ---
+## Context
+Ticket 1414's A/B (`memory/evidence/2026-11-01-ab-conditional-rules/FINDINGS.md`) found `coding-python` needed on Codex and Pi; both reach conditional rules only through skills today (`rules/README.md` § Loading per runtime: "Conditional rules (`paths:`) ... none"). Asked how coding-python should reach them, the author answered on 2026-11-01: "1 but general. Handroll Claude's paths: auto injection mechanisms."
+
+Meaning: for EVERY conditional rule (frontmatter `paths:`), when a Codex or Pi session reads or writes a matching file, inject the rule body (HTML comments stripped, as the 1413 generator does) once per session per rule, as Claude Code does natively.
+
+## Scope
+- One shared matcher (rule globs -> rule ids, Claude `paths:` glob semantics) called from both adapters, with marker dedup as in `scripts/skill-case-notes.sh`.
+- Codex: hook entries in `adapters/codex/hooks.json` on the events whose payload carries a path (probe first: shell commands, apply_patch).
+- Pi: `adapters/pi/extensions/idh-guard.ts` tool_result handler on the tools whose events carry a path (read, write, edit, bash).
+- Probe each runtime headless with a positive control; where a runtime gives no path, record it and cover what it does give.
+
+## Exit criteria
+- [ ] Probe results per runtime and event recorded here, with a positive control
+- [ ] Shared matcher with tests: glob match, once per session, comment stripping, no match -> no output, fail-open on bad input
+- [ ] Codex and Pi wired; rules/README.md § Loading per runtime updated
+- [ ] PR states the host effect: Codex entries inert until trusted via /hooks; the Pi extension is live on merge

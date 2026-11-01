@@ -56,7 +56,7 @@ from the earlier measurement, not the re-probe.
 | Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
 |---|---|---|---|
 | Resident rules (workflow, git, guards; claude-code.md is Claude-only) | every session (earlier) | found in the re-probe (generated `~/.codex/AGENTS.md`) | found in the re-probe (generated `~/.pi/agent/AGENTS.md`) |
-| Conditional rules (`paths:`) | on a matching file (earlier) | none (earlier) | none (earlier) |
+| Conditional rules (`paths:`) | on a matching file (earlier) | wired, unmeasured end to end: a shell command naming a matching file, once the hook is trusted (1424; apply_patch unprobed) | on a read, write, edit or bash of a matching file (1424: payloads of all four measured, delivery end to end on read, write and bash; the weight the model gives it is not) |
 | Session-start hook (`scripts/on-start-context.sh`) | yes (earlier) | yes (earlier) | yes (earlier) |
 | The project's `AGENTS.md` | yes (earlier) | found in the re-probe | found in the re-probe |
 | HTML comments of the rules | **stripped** (earlier) | absent from context in the re-probe | absent from context in the re-probe |
@@ -70,6 +70,12 @@ generated files. Evidence: `memory/evidence/2026-11-01-runtime-rules-reprobe/`.
 The Codex TUI was not probed (unmeasured; expected to read the same
 configuration as `codex exec`). `pi --print` waits on an open stdin (earlier
 observation): run it with `</dev/null`.
+
+Codex and Pi get the conditional rules from `scripts/conditional_rules.py`,
+called by a Codex PostToolUse hook on shell calls and by the Pi extension on
+read, write, edit and bash results: the same globs, matched against the path
+relative to the project root, each rule once per session and agent, comments and
+frontmatter stripped. Probes: `memory/evidence/2026-11-01-conditional-rules-1424/`.
 
 Comments are therefore free in the rules and in the generated `AGENTS.md`,
 since the generator strips them; Claude Code strips them itself (earlier).
@@ -119,8 +125,9 @@ the catalog and its body loads on invocation — the same pointer-and-payload
 split as `paths:`, for triggers a filename cannot express.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
-adapters, the resident set must be injected by the adapter
-or made genuinely on-demand; the resident cap (`tests/test_rules_resident_budget.py`) is what that decision moves.
+adapters, the resident set is injected by the adapter (the generated
+`AGENTS.md`) and the conditional set by `conditional_rules.py`; the resident cap
+(`tests/test_rules_resident_budget.py`) bounds what the first costs.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 

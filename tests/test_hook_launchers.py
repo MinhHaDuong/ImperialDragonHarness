@@ -43,14 +43,16 @@ def _launcher_hooks():
 
 
 ALL_LAUNCHER_HOOKS = _launcher_hooks()
-# Advisory hooks (skill case notes, ticket 1404) are deliberately fail-soft: a
-# missing launcher must not exit 2, which on UserPromptSubmit would block every
-# prompt. They are pinned by their own test below, not by the fail-loud contract.
-SOFT_FORM = (
-    '[ -x "$HOME/.local/bin/idh-hook" ] || exit 0; '
-    'exec "$HOME/.local/bin/idh-hook" skill-case-notes.sh'
-)
-LAUNCHER_HOOKS = [(e, c) for e, c in ALL_LAUNCHER_HOOKS if c != SOFT_FORM]
+# Advisory hooks (skill case notes, ticket 1404; conditional rules, ticket 1424)
+# are deliberately fail-soft: a missing launcher must not exit 2, which on
+# UserPromptSubmit would block every prompt and on PostToolUse would flag every
+# shell call. They are pinned by their own test below, not by the fail-loud contract.
+SOFT_FORMS = {
+    script: '[ -x "$HOME/.local/bin/idh-hook" ] || exit 0; '
+    f'exec "$HOME/.local/bin/idh-hook" {script}'
+    for script in ("skill-case-notes.sh", "conditional_rules.py")
+}
+LAUNCHER_HOOKS = [(e, c) for e, c in ALL_LAUNCHER_HOOKS if c not in SOFT_FORMS.values()]
 
 
 def test_every_launcher_hook_is_found():
@@ -65,9 +67,12 @@ def test_hook_checks_the_exact_script_before_running(event, command):
     assert command.startswith(f'[ -x "{script}" ] || {{'), command
 
 
-def test_advisory_hooks_fail_soft_and_are_only_the_case_notes_form():
-    soft = [(e, c) for e, c in ALL_LAUNCHER_HOOKS if c == SOFT_FORM]
-    assert {e for e, _ in soft} == {"UserPromptSubmit", "PostToolUse"}
+def test_advisory_hooks_fail_soft_and_are_only_the_known_forms():
+    def events(script):
+        return {e for e, c in ALL_LAUNCHER_HOOKS if c == SOFT_FORMS[script]}
+
+    assert events("skill-case-notes.sh") == {"UserPromptSubmit", "PostToolUse"}
+    assert events("conditional_rules.py") == {"PostToolUse"}
 
 
 def _guard_input(cwd: Path) -> str:

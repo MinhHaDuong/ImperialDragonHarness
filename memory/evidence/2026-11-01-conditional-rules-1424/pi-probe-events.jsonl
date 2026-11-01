@@ -1,0 +1,4 @@
+{"tool":"read","input":{"path":"existing.py","offset":1,"limit":2000},"isError":false}
+{"tool":"write","input":{"path":"new.py","content":"print(1)\n"},"isError":false}
+{"tool":"edit","input":{"path":"new.py","edits":[{"oldText":"print(1)","newText":"print(2)"}]},"isError":false}
+{"tool":"bash","input":{"command":"cat new.py","timeout":30},"isError":false}

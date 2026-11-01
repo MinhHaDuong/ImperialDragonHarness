@@ -232,6 +232,9 @@ turn enforcement into advice:
   It also runs `skill-case-notes.sh` on `PostToolUse` (matcher `Skill`) and on
   `UserPromptSubmit` (a typed `/<skill>`): it pushes the project's
   `memory/skills/<skill>.md` once per context (ticket 1394; Claude only so far).
+  Codex (PostToolUse `^Bash$`) and the Pi extension (`tool_result` on read,
+  write, edit, bash) also run `conditional_rules.py`: the body of each rule
+  whose `paths:` match a touched file, once per session (ticket 1424).
   Any future `pi --print` driver must assert the served provider:
   [pi/README.md](pi/README.md) (ticket 0979).
 
