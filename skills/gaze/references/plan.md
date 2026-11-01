@@ -34,7 +34,7 @@ covered, and no label claims more.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference (`decorrelation.md` § Family is a preference, not a gate), except on the machinery paths above where the plan includes one: worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference (`decorrelation.md` § Family is a preference, not a gate), except on the machinery paths (below the table) where the plan includes one: worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), valid but the weakest record. When the
