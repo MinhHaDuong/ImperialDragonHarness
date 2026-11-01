@@ -46,23 +46,24 @@ Not a rules file, nor loaded here: `tickets/AGENTS.md` — reached through the
 
 ## Loading per runtime
 
-Measured 2026-11-01 on padme with sentinel sentences (the model completes a
+Measured 2026-11-01 on padme (codex-cli 0.166.0, pi 1.4.0; after `idh install`)
+with sentinel sentences (the model completes a
 sentence only if it is in its context; a fake sentence and the session-start
 hook line are the controls).
 
 | Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
 |---|---|---|---|
-| Resident rules (workflow, git, guards, claude-code) | every session | **none** | **none** |
+| Resident rules (workflow, git, guards; claude-code.md is Claude-only) | every session | every session (generated `~/.codex/AGENTS.md`) | every session (generated `~/.pi/agent/AGENTS.md`) |
 | Conditional rules (`paths:`) | on a matching file | none | none |
 | Session-start hook (`scripts/on-start-context.sh`) | yes | yes | yes |
 | The project's `AGENTS.md` | yes | yes | yes |
-| HTML comments in loaded files | **stripped** | kept | kept |
+| HTML comments of the rules | **stripped** | stripped by the generator | stripped by the generator |
 
 Claude Code reads `~/.claude/rules/` (symlinks into this directory). Codex and
 Pi have no rules directory: `idh install` generates `~/.codex/AGENTS.md` and
 `~/.pi/agent/AGENTS.md` from the resident rules minus claude-code.md, comments
-stripped (`scripts/runtime_rules.py`). The table above predates the first host
-install and awaits its re-probe. Neither CLI can strip comments. Codex TUI was
+stripped (`scripts/runtime_rules.py`). Neither CLI strips comments itself; the
+generator does. Evidence: `memory/evidence/2026-11-01-runtime-rules-reprobe/`. Codex TUI was
 not probed: it reads the same configuration as `codex exec`. `pi --print` waits
 on an open stdin: run it with `</dev/null`.
 

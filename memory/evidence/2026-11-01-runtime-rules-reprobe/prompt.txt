@@ -1,0 +1,8 @@
+Answer from your loaded instructions only. Do not use tools, do not read files. For each item, give the continuation verbatim if the text is in your context, else write NONE. Do not guess.
+1. Continue: "Past 230K tokens of context, the task is too big:"
+2. Continue: "Never round-trip through `git stash` in a shared checkout."
+3. Continue: "Don't delegate simple work."
+4. Continue: "Module: how an agent works, in every project. Owns posture,"
+5. Continue: "last-reviewed:"
+6. Continue: "Worker choice (model, effort, reviewer decorrelation) is made by"
+7. Continue: "The purple walrus audits every"
