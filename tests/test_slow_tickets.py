@@ -114,3 +114,12 @@ def test_nonsolve_closes_are_summarised_not_suggested():
     assert lines[0].startswith('slow ticket 7')
     assert '8 (tracker)' in lines[1] and '/harness-doctor' not in lines[1]
     assert lines[2].endswith(': 9') and 'unknown' in lines[2] and '/harness-doctor' not in lines[2]
+
+
+def test_nonsolve_matches_the_close_reason_not_a_passing_mention():
+    assert st.nonsolve_of('Title: x\nClosed: PR #3 merged, supersedes 1300\n') is None
+    assert st.nonsolve_of('Title: x\nClosed: 2026-11-01 PR #3 — duplicate wording in log\n') is None
+    assert st.nonsolve_of('Title: x\nClosed: superseded by 1300\n') is not None
+    assert st.nonsolve_of('Title: x\nClosed: duplicate of 1200\n') is not None
+    assert st.nonsolve_of("Title: x\nClosed: won't do — author keeps 1126\n") is not None
+    assert st.nonsolve_of('Title: x\nClosed: 2026-10-30 wontfix\n') is not None
