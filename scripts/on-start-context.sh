@@ -35,6 +35,16 @@ if [ -n "$_disk_output" ]; then
     printf '%s\n' "$_disk_output"
 fi
 
+# Editor autosave (author ruling 2026-11-01, rules/git.md § Branch and commit):
+# agents edit files the author may have open in the primary checkout, and an
+# unsaved buffer is invisible to them. Silent when VS Code's user settings are
+# absent or set an autosave mode other than off. A grep, not a JSON parse:
+# settings.json is JSONC, comments and trailing commas allowed.
+_vsc="${XDG_CONFIG_HOME:-$HOME/.config}/Code/User/settings.json"
+if [ -f "$_vsc" ] && ! grep -qE '"files\.autoSave"[[:space:]]*:[[:space:]]*"(afterDelay|onFocusChange|onWindowChange)"' "$_vsc"; then
+    echo "VS Code autosave is off on this host: an agent editing a file the author has open cannot see unsaved changes. Setting \"files.autoSave\": \"afterDelay\" in $_vsc closes that gap; it is suggested to the author once per session."
+fi
+
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Resident-text budget for the project's own directives (0971): the zero-LLM
