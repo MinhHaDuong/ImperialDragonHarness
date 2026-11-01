@@ -42,7 +42,15 @@ def _launcher_hooks():
     return out
 
 
-LAUNCHER_HOOKS = _launcher_hooks()
+ALL_LAUNCHER_HOOKS = _launcher_hooks()
+# Advisory hooks (skill case notes, ticket 1404) are deliberately fail-soft: a
+# missing launcher must not exit 2, which on UserPromptSubmit would block every
+# prompt. They are pinned by their own test below, not by the fail-loud contract.
+SOFT_FORM = (
+    '[ -x "$HOME/.local/bin/idh-hook" ] || exit 0; '
+    'exec "$HOME/.local/bin/idh-hook" skill-case-notes.sh'
+)
+LAUNCHER_HOOKS = [(e, c) for e, c in ALL_LAUNCHER_HOOKS if c != SOFT_FORM]
 
 
 def test_every_launcher_hook_is_found():
@@ -55,6 +63,11 @@ def test_every_launcher_hook_is_found():
 def test_hook_checks_the_exact_script_before_running(event, command):
     script = "$HOME/.local/bin/idh-hook"
     assert command.startswith(f'[ -x "{script}" ] || {{'), command
+
+
+def test_advisory_hooks_fail_soft_and_are_only_the_case_notes_form():
+    soft = [(e, c) for e, c in ALL_LAUNCHER_HOOKS if c == SOFT_FORM]
+    assert {e for e, _ in soft} == {"UserPromptSubmit", "PostToolUse"}
 
 
 def _guard_input(cwd: Path) -> str:

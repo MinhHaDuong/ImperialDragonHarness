@@ -28,7 +28,7 @@ Principles which settle any case the rules below do not cover:
 Rules:
 - Commit `pyproject.toml` and `uv.lock` (`--frozen` fails without it); generate any required `requirements.txt` from the lock. A repo that is not a package sets `[tool.uv] package = false`. `pytest`, `pytest-xdist` and a pinned `ruff` go in the `dev` group. A legacy repo (`requirements.txt`, hand-made venv) migrates when next touched.
 - Every Python tool a project runs comes from its lock (or a script's inline metadata), never from the system: `ruff` and `pytest` included. uv is the one exception, the bootstrap that the host or CI installs before `uv sync --locked`.
-- Makefile recipes that run Python take the `RUN` prefix: see [make.md](./make.md).
+- Makefile recipes that run Python take the `RUN` prefix: see `make.md`.
 - Linux is the target. Use `pathlib`, `/` separators and `env` shebangs; a Linux-only tool needs a concrete need that no portable tool meets.
 
 
