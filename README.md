@@ -74,8 +74,9 @@ explains the layout.
 
 ### 2. Guardrails
 
-- `rules/guards.md`: guards for every agent role (no credentials in chat,
-  skill loads are not write authorization, context ceiling).
+- `rules/guards.md`: guards for every agent role (no credentials in chat;
+  project files only in the assigned project, tickets as the channel to any
+  other; the 230K context guard).
 - A destructive-command guard on every shell call (Claude Code `PreToolUse`,
   Codex hook, Pi extension): it refuses `git reset --hard` over uncommitted
   tracked changes, and a `pgrep -f`/`pkill -f` without `-A`, which would match

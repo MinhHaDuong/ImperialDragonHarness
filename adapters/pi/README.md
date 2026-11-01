@@ -31,6 +31,9 @@ answer**. Concretely:
 - If the served provider differs from the requested one, treat the run as
   failed and assume the prompt content has egressed to the fallback provider —
   potentially uncleared material leaving the sovereign perimeter.
+- Close stdin: `pi --print ... </dev/null`. With stdin open, `pi --print`
+  (1.4.0, padme, 2026-11-01) waits indefinitely and prints nothing, which
+  reads like a dead model.
 - Always pass both flags together, non-empty: `--provider <sovereign> --model
   <id>`; an empty `--model` is the reroute trigger characterized on 0.87.1
   (Pi 1.0.0 rejects the combination visibly).
