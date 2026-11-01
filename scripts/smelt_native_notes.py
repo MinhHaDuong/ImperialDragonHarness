@@ -4,7 +4,8 @@
 Read-only: prints one tab-separated row per note (file, type, git blob sha,
 description) so smelt can propose a disposition for the author. It writes and
 deletes nothing. The store path is derived the way Claude Code names it:
-the project's absolute path with every non-alphanumeric character replaced by
+the project's primary-checkout path (a linked worktree maps to it, via
+git's common dir) with every non-alphanumeric character replaced by
 a dash, under ``~/.claude/projects/<name>/memory``.
 
 Usage: smelt_native_notes.py <project-repository> [--store DIR]
@@ -12,8 +13,23 @@ Usage: smelt_native_notes.py <project-repository> [--store DIR]
 import argparse
 import hashlib
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+
+def primary_checkout(path):
+    """Primary checkout of the repository holding ``path`` (a worktree maps to it).
+
+    A path outside any git repository is returned resolved, unchanged.
+    """
+    path = Path(path).resolve()
+    r = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        capture_output=True, text=True)
+    if r.returncode != 0 or not r.stdout.strip():
+        return path
+    return Path(r.stdout.strip()).resolve().parent
 
 
 def store_path(project, home=None):
@@ -55,7 +71,7 @@ def main(argv=None):
     ap.add_argument("project", type=Path)
     ap.add_argument("--store", type=Path)
     a = ap.parse_args(argv)
-    store = a.store or store_path(a.project.resolve())
+    store = a.store or store_path(primary_checkout(a.project))
     try:
         rows = list_notes(store)
     except FileNotFoundError as e:

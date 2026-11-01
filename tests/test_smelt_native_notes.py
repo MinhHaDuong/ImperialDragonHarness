@@ -35,3 +35,23 @@ def test_missing_store_is_reported_not_created(tmp_path):
     with pytest.raises(FileNotFoundError):
         native.list_notes(tmp_path / "absent")
     assert not (tmp_path / "absent").exists()
+
+
+@pytest.mark.integration
+def test_worktree_path_resolves_to_primary_store(tmp_path):
+    import subprocess
+    primary = tmp_path / "repo"
+    primary.mkdir()
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(g + ["init", "-q", str(primary)], check=True)
+    subprocess.run(g + ["-C", str(primary), "commit", "-q", "--allow-empty", "-m", "x"], check=True)
+    wt = tmp_path / "wt"
+    subprocess.run(g + ["-C", str(primary), "worktree", "add", "-q", str(wt)], check=True)
+    assert native.primary_checkout(wt) == primary.resolve()
+    assert native.primary_checkout(primary) == primary.resolve()
+    assert native.store_path(native.primary_checkout(wt), home=tmp_path) == \
+        native.store_path(primary.resolve(), home=tmp_path)
+
+
+def test_non_git_path_is_left_as_given(tmp_path):
+    assert native.primary_checkout(tmp_path) == tmp_path.resolve()

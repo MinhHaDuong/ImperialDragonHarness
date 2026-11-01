@@ -5,11 +5,18 @@ metadata:
 name: smelt
 description: "Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. Use to tidy accumulated memory; not for new facts (/roar)."
 user-invocable: true
+argument-hint: "[<project-repository>] [--dry-run]"
 ---
 
 # Smelt — project memory consolidation
 
-Use `/smelt <project-repository> [--dry-run]`. The explicitly selected project
+Use `/smelt [<project-repository>] [--dry-run]`. With no argument the project
+is the repository of the current working directory, resolved to its primary
+checkout, never a worktree path:
+`PROJECT=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")`.
+Outside a git repository that command fails: refuse and write nothing. The
+report's first line names the resolved project. An explicit argument selects
+another project. The selected project
 repository is the destination; the installed skill directory is never a
 destination. Read its AGENTS.md and inspect its memory convention. Missing
 paths or permissions are visible failures; do not create a replacement store
