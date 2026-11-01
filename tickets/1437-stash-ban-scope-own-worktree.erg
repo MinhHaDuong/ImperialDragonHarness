@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Contradiction: does the git.md stash ban cover a session's own worktree
+Created: 2026-11-01
+Author: smelt
+
+--- log ---
+2026-11-01T21:30Z smelt created
+
+--- body ---
+## Context
+Exposed by the sixth smelt (2026-11-01), page
+`memory/topics/git-worktree-session-guards.md` open questions.
+
+Claim A: `rules/git.md` § Commands that destroy silently — "Never round-trip
+through `git stash` in a shared checkout. The stack is repo-global: on a
+clean tree `stash` saves nothing and the `pop` grabs someone else's." The
+prohibition is scoped to a *shared* checkout, but the stated rationale (the
+stack is repo-global) also applies to a session's own worktree: there the
+`pop` can still grab another worktree's stash.
+
+Claim B: `rules/git.md` § Branch and commit — "Worktrees are throwaway",
+which could be read as making a stash round-trip in one's own throwaway
+worktree safe.
+
+## Question for the author
+Does the stash ban cover a session's own worktree (stack is repo-global), or
+only genuinely shared checkouts? Smelt picks no side and proposes no rule.

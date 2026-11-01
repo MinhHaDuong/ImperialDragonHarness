@@ -1,76 +1,33 @@
 # Environment: hosts, services and external tools
 
 Scope: the author's two machines (padme, doudou), their shells, permissions,
-credentials, and the Zotero and DOIfetch tools the harness drives. Rules: `rules/guards.md`, `rules/coding-python.md`, `rules/zotero.md`.
+credentials, data locations, and the Zotero and DOIfetch tools the harness
+drives. Rules: `rules/guards.md`, `rules/coding-python.md`, `rules/zotero.md`.
 
 ## Current guidance
+Hosts (dated measurements and author statements).
+- padme: Threadripper PRO 3975WX, 32 physical cores / 64 threads (`lscpu`, 2026-10-30); shared with arena coders — one suite at `-n 24` took ~30 s alone, 57 s with a second suite (2026-10-29). State concurrent load with any timing.
+- padme disk: `/` and `/home` one btrfs; `/scratch` unsnapshotted ext4 (TMPDIR); snapper held no home snapshots 2026-10-30, timeline timer stopped until the backup disk. `tmp-sweep.timer` (6 h) deletes `/tmp` entries idle > 24 h; skips worktree `.tmp/`.
+- doudou alone runs the Nextcloud client (`~/CNRS`, `~/Media`, `~/perso`); padme syncs nothing; name excludes in `sync-exclude.lst`, read at client start. Sync problems are doudou's (author, 2026-10-30). Non-login `ssh` PATH omits `~/.local/bin` ([episode](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md)); uv: one subvolume for cache+env or `UV_LINK_MODE=clone`.
 
-Hosts (author statements and measurements, dated).
-- padme: Threadripper PRO 3975WX, 32 physical cores, 64 threads (`lscpu`,
-  `nproc` = 64, checked 2026-10-30).
-  Reason in physical cores. Shared with arena coders: one suite at `-n 24`
-  took ~30 s alone, 57 s with a second suite plus coders (2026-10-29); state
-  concurrent load with any timing.
-- padme disk: `/` and `/home` share one btrfs; `/scratch` is unsnapshotted
-  ext4 (`TMPDIR`). The `home_haduong` snapper config held no snapshots on
-  2026-10-30; the hourly timeline timer was stopped by the author until the
-  backup disk arrives (restarts on reboot). Measure with `btrfs filesystem du -s`;
-  deleting files frees little while a snapshot holds them.
-- padme `tmp-sweep.timer` (every 6 h) deletes `/tmp` entries idle over 24 h;
-  reports in `~/.local/state/tmp-sweep/`; skips worktree `.tmp/`, `/scratch/tmp`.
-- doudou alone runs the Nextcloud client (on `~/CNRS`, `~/Media`, `~/perso`);
-  padme syncs no files. Excludes are by name in
-  `~/.config/Nextcloud/sync-exclude.lst`, read at client start, so restart
-  after editing. Sync problems are doudou's, not padme's (author, 2026-10-30).
-- A non-login `ssh` PATH omits `~/.local/bin`; use a login shell before calling a tool missing ([episode](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md)).
-- uv: one subvolume for cache and env, or `UV_LINK_MODE=clone`.
+Data locations (author ruling 2026-10-31, tracker 1401): per host by lifecycle in `~/.config/environment.d/50-datasets.conf` — `DATASETS_DIR` both, `MIRRORS_DIR` padme only. One store under the "our data" folder: transcript archive `$DATASETS_DIR/ours/agent-sessions` (`raw/<host>/<runtime>/`, `launches.jsonl`, `spool/<host>/`), backfilled from cadens (~3.4 k padme, ~3.1 k doudou; 1391, PR 2086 [store](../journal/2026/2026-10-31-agent-sessions-store-1391.md)); doudou's drop-in rsyncs to padme (PR 2120). Monitoring (1382 open): four steps, 40-85 USD; median transcript 0.4 MB so compression dropped; padme archive timer first run 23 912 files / 8.6 GB; the August hole was doudou's 1 260 transcripts. [redesign](../journal/2026/2026-10-31-monitoring-and-data-locations.md), [raid 8ad75a](../journal/2026/2026-10-31-raid-8ad75a-monitoring-redesign.md)
 
-Credentials and permissions.
-- Agent sessions use `GH_CONFIG_DIR=~/.config/gh-agent` with a narrow
-  fine-grained token (no administration); settings writes return 403 and are
-  the author's acts (author, 2026-10-27). The token expires about 2027-10-27;
-  after regeneration, sync `~/.config/keys/github.env` to each host and
-  re-login the agent config on padme and doudou.
-- `settings.shared.json`: `Bash` plus named tools, no deny block
-  ([episode](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md)).
-- Pass secrets to `curl` via stdin (`-H @-`), never argv.
+Credentials. Agent sessions use `GH_CONFIG_DIR=~/.config/gh-agent`, a narrow fine-grained token (no admin); settings writes 403, the author's acts; token expires ~2027-10-27 — after rotation sync `~/.config/keys/github.env` per host and re-login. `settings.shared.json`: `Bash` plus named tools, no deny block ([episode](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md)). Secrets to `curl` via stdin, never argv.
 
-Zotero (`scripts/zotero.py`, pyzotero, local only). Author rulings
-2026-10-15/16: local API only, never sqlite, no Web API, no cache; writes
-reach existing items only as reports. Tests start Zotero on a private Xvfb or
-skip, no mocks ([1](../journal/2026/2026-10-16-zotero-local-only-decisions.md),
-[2](../journal/2026/2026-10-16-zotero-pyzotero-and-display-leak.md)).
-Matching is exact normalised identifier or PDF md5; title hits are candidates
-([3](../journal/2026/2026-10-16-zotero-verbs-exact-match.md)). Zotero 10 accepts local writes (9.x does not). Ask the author to open Zotero; it is
-faster ([preference](../journal/2026/2026-10-14-zotero-local-api-preference.md)).
-Reconcile runs on demand, not in Molt
-([episode](../journal/2026/2026-10-15-molt-zotero-reconcile-removed.md)).
-Web API group file downloads need a key (anonymous 404, 2026-09-07); keys are under `~/.config/keys`.
-
-DOIfetch is not installed by `idh install`: `scripts/doifetch.sh` runs it via
-pinned `uvx`; failed download exits 69; batch input is `.txt` only
-([episode](../journal/2026/2026-10-29-doifetch-out-of-install.md)).
-
+Zotero (`scripts/zotero.py`, pyzotero, local only; rulings 2026-10-15/16): local API only, never sqlite/Web API/cache; writes reach existing items only as reports; tests on a private Xvfb or skip, no mocks ([1](../journal/2026/2026-10-16-zotero-local-only-decisions.md), [2](../journal/2026/2026-10-16-zotero-pyzotero-and-display-leak.md)); exact identifier or PDF md5 matching ([3](../journal/2026/2026-10-16-zotero-verbs-exact-match.md)); Zotero 10 takes local writes (9.x not); ask the author to open Zotero, faster ([preference](../journal/2026/2026-10-14-zotero-local-api-preference.md)); reconcile on demand, not in Molt. DOIfetch: not in `idh install`; `scripts/doifetch.sh` via pinned `uvx`, failed download exits 69, batch `.txt` only ([episode](../journal/2026/2026-10-29-doifetch-out-of-install.md)).
 ## Hazards
-
-- `ssh host bash -s < script`: a stdin-reading command swallows the script,
-  exit 0, no output; use `< /dev/null`. A mis-quoted ssh heredoc ran doc text as shell on doudou
-  ([episode](../journal/2026/2026-10-27-raid-prep-wave0-and-1206-doudou.md)).
-- `grep` is a ripgrep function honouring `.gitignore`; use `/usr/bin/grep`
-  for credential sweeps. Use `python3 -m pytest`, not bare `pytest`.
-- Dotfile block replacement "to EOF" dropped lines on padme; use an end marker.
-- A tool output once displayed an API key (rotated).
-
+- `ssh host bash -s < script`: a stdin-reading command swallows the script, exit 0, no output; use `< /dev/null` ([episode](../journal/2026/2026-10-27-raid-prep-wave0-and-1206-doudou.md)).
+- `grep` is a ripgrep function honouring `.gitignore`; use `/usr/bin/grep` for credential sweeps. Use `python3 -m pytest`, not bare `pytest`.
+- A sweep is blind when positive `-g` globs drop `-t py`; fire a positive control first (2026-10-31). Dotfile "to EOF" replacement dropped lines; use an end marker. A tool output once displayed an API key (rotated).
 ## Open questions
-
-- Snapshots pinning old venv copies is the entry's reading, unverified.
-- Doudou Nextcloud trash emptying (2026-10-30) was in progress; outcome unknown.
-
+- Silent fallback to `~/data` if `/data/datasets/ours` vanished on padme (gaze note, PR 2086); `gaze_seat.py:482` calls `spool_dir()` outside its try (below the ticket floor).
 ## Retired
 
 - Per-skill Zotero transport choice and Web API reads: replaced by local-only (2026-10-15/16).
 - Delegated GitHub admin (2026-10-21): superseded by the narrow token (2026-10-27).
-- padme "3945WX/12 cores": contradicted by `lscpu` on 2026-10-30.
+- padme "3945WX/12 cores": contradicted by `lscpu` 2026-10-30.
+- Separate cadens transcript store (`cadens-harvest`): merged into the one `datasets/ours/agent-sessions` store (1391).
+- Doudou Nextcloud trash emptying "in progress, outcome unknown" (2026-10-30): dropped; sync is doudou's concern (author, 2026-10-30).
 
 ## Sources
 
