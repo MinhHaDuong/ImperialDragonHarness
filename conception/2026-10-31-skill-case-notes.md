@@ -11,10 +11,10 @@ text.
 ## 1. Idea
 
 Attach to each skill a short note of cases from experience, kept per project, and
-deliver it to the model when the skill loads. One note holds four cases: the
-**most recent as of the note date**, the **usual**, the **best** and the **worst**. Each case follows the
-case method used in management teaching: **context**, **what happened**, **how we
-reacted**, **outcome**.
+deliver it to the model when the skill loads. One note holds one to four cases, chosen by judged usefulness
+(§3.2). Each case follows the case method used in management teaching:
+**context**, **what happened**, **how we reacted**, **outcome**, plus a **Use:**
+line.
 
 ## 2. Why
 
@@ -41,28 +41,38 @@ Code ranks personal over project skills, so the harness copy wins; Codex lists
 both; Pi keeps the first discovered, order undocumented. Even where it worked, a
 project copy forks the procedure. Too clever.
 
-### 3.2 Note format
+### 3.2 Note format and case selection
+
+**Selection principle (author, 2026-11-01).** A note holds the cases most likely
+to change what an agent running the skill does next: a trap, a normal friction, an
+author stance. The author's brief was agentic judgment on which memories are
+likely useful, not a quota. One to four cases, within the word cap. The earlier
+four slots (most recent, usual, best, worst) are a guide to what to look for, not
+a count to fill; a slot with no useful case stays empty.
+
+**Observed, not composed.** Each case is one observed episode with a date and a
+source (journal entry, ticket, PR, commit). Never a composed or blended story. An
+aggregate ("12 of 15 runs since 2026-09-01") stays only when it is itself a
+recorded measurement, with its source.
+
+**The "Use:" line.** Each case ends with `Use:`, one sentence naming the decision
+the case changes ("land through `scripts/raid_land.py`", "add no read-back to a
+push by commit id"). A case with no such decision is cut. A case about a defect
+states whether its cause was fixed since: an undated scare over-anchors the model
+and outlives its fix.
 
 ```markdown
 # <skill> — cases
 Updated: YYYY-MM-DD · skill version: <commit or date>
 
-## Most recent as of YYYY-MM-DD
-Context. What happened. Reaction. Outcome. Source: <journal entry / PR / ticket>.
-
-## Usual
-…  (with the count it summarises: "12 of 15 runs since 2026-09-01")
-
-## Best — YYYY-MM-DD
-…
-
-## Worst — YYYY-MM-DD
-…  Status: fixed by <commit/ticket> | still open.
+## <short title>, <PR/ticket> — YYYY-MM-DD
+Context: … What happened: … Reaction: … Outcome: … Use: … Source: <journal entry / PR / ticket>.
 ```
 
-Cap: about 400 words. Each case is dated and sourced. The worst case states
-whether its cause was fixed since: an undated scare over-anchors the model and
-outlives its fix.
+Worked example: `memory/skills/merge.md` (refreshed 2026-11-01, PR 2184).
+
+Cap: about 400 words (`scripts/skill-case-notes.sh` truncates at 400). The
+script and its tests assume no slot count.
 
 ### 3.3 Delivery: one script, wired per runtime
 
@@ -106,7 +116,7 @@ listing the skill names already delivered. Present → silent.
 ### 3.6 Who writes notes
 
 Pilot: written by hand from the journal. Later, if the pilot pays: roar refreshes
-**Most recent**; smelt re-derives the other three in its rebuild (1349). Smelt writes only
+the most recent case; smelt re-derives the rest in its rebuild (1349). Smelt writes only
 `MEMORY.md` and `topics/` today (`memory/SMELT.md`), so this needs its own ticket.
 Not in the pilot.
 
@@ -116,7 +126,7 @@ The design stays portable; the pilot is staged so each stage starts only when th
 previous one is shown working.
 
 1. **Claude Code.** Script, `PostToolUse` wiring on `Skill`, a fixture test, and
-   one note: `memory/skills/merge.md` in the harness, four cases from the journal
+   one note: `memory/skills/merge.md` in the harness, one to four cases from the journal
    (candidates: gate record staleness, local main sync, classifier refusals).
 2. **Read-back, Claude.** In a fresh session, run `/merge` on a dry target and
    have the model quote a token planted in the note; check the log shows one
