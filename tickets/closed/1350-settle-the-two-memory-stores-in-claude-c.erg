@@ -2,12 +2,14 @@
 Title: Settle the two memory stores in Claude Code: native auto-memory versus repository memory
 Created: 2026-10-29
 Author: reviewer
+Closed: autoclosed — PR #2170
 
 --- log ---
 2026-10-29T19:54Z reviewer created
 2026-11-01T11:33Z reviewer note blocker 1346 closed — Blocked-by removed.
 2026-11-01T16:53Z reviewer author chose option b (2026-11-01, typed in session): keep native auto-memory; each smelt lists the native notes for the author to promote (rules or repo memory) or delete. Rationale: cheapest option, keeps the author's dictation habit; brood run conception/2026-11-01-brood-harness-run.md found 41% of native notes are working rules, so they need a triage lane, not deletion.
 2026-11-01T16:53Z reviewer implemented: skills/smelt § Native-note triage lane + scripts/smelt_native_notes.py (read-only lister, tests/test_smelt_native_notes.py). Census run once 2026-11-01 on padme (scripts/census/memory-recall.py, repo-memory-reads.py --since 2026-10-15): native store 39 notes (index excluded). memory-recall: 9379 sessions; maintenance (control) 263, 105 touched a repo-memory body (39.92%); working 1018, 36 (3.54%); harness working 4/15 (26.67%), consumer projects 32/1003 (3.19%); subagents 8098, 125 (1.54%); 429 body writes. repo-memory-reads: claude main-working 199 sessions, 1 read index; claude main-maintenance 85, 8; control OK (46). Reading: repo memory is rarely consulted in working sessions, so the native store stays the live channel and smelt's triage lane is where its rules reach the author.
+2026-11-01T18:04Z reviewer closed — autoclosed — PR #2170
 
 --- body ---
 ## Context
