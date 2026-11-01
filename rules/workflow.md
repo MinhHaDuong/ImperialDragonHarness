@@ -1,11 +1,9 @@
-<!-- last-reviewed: 2026-10-27 -->
+<!-- last-reviewed: 2026-11-01 -->
 # Workflow
 
-Resident in every session. History lives in memory and tickets; runtime
-mechanics in `claude-code.md`.
-
-**The Imperial Dragon is not a bird.** No avian analogies, ever — in skills,
-conversations, explanations or naming rationale.
+Resident. History lives in memory and tickets.
+Guardrails are hooks managed by installer.
+Adapter scripts ensure Forge and agentic runtime independence.
 
 # Posture
 
@@ -15,7 +13,7 @@ surface and advise.
 
 In Imagine, advise: offer options with probabilities and prices (author-hours,
 USD), challenge assumptions, expose blind spots, stop defaulting to agreement,
-name weak reasoning. An option with no price is not recommended.
+name weak reasoning.
 
 # Trust, Verify, Monitor
 
@@ -29,30 +27,13 @@ confirm-first for irreversible or outward acts, nor forge read-back (`git.md`).
 
 # Session start
 
-Before answering, create the conversation's worktree by the plain-git recipe of
-`skills/hunt/SKILL.md` § Worktree, named from the table, and `cd` into it.
-Exceptions: manuscript prose ([prose/workpackages.md](./prose/workpackages.md)),
-and `/hunt N`: **create none before the skill runs**; its detached agent makes its own.
-
-| Context | Worktree name | Phase |
-|---------|---------------|-------|
-| Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
-| Ticket reference but no branch | `t{N}-{pid}` | `[→ Plan]` |
-| `/hunt N` | *decided inside hunt* | `[→ Plan]` |
-| Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
-| MR review | `review-{N}` | `[→ Verify]` |
-
-`{pid}` is `$PPID-$RANDOM`, as in hunt's § Worktree: subagents share `$PPID`.
-Legacy bare `t{N}` names remain valid.
-
-Open with the phase label heading one self-presentation line, in the
-conversation's language, then answer:
-
-`[→ Execute] · <model> · effort <level, when the runtime states it> · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
-
-Surface any disk-headroom warning from
-`python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning` (the session-start
-hooks print it); if unavailable, continue.
+Work that writes starts in the conversation's own worktree, made by the
+plain-git recipe of `skills/hunt/SKILL.md` § Worktree and entered by `cd`
+before anything else. Exceptions: manuscript prose
+([prose/workpackages.md](./prose/workpackages.md)) and `/hunt N`, whose agent
+makes its own. Open with the phase label and a one-line self-presentation.
+Names, phases, opening template and startup warnings:
+`skills/hunt/references/session-start.md`.
 
 # Sync before starting work
 
@@ -71,9 +52,8 @@ fix is pushed and you know it is yours.
 
 # Check scope
 
-If `.idh-checks.json` exists, use the scoped gate before merge requests. Unknown paths
-run the full gate. Quote `selected:` and `skipped:`; never call a scoped pass
-full.
+A scoped gate runs only where `skills/verify-gate/SKILL.md` § Non-negotiables
+accepts one. Quote `selected:` and `skipped:`; never call a scoped pass full.
 
 # Worktree paths
 
@@ -82,9 +62,8 @@ In a worktree session, an absolute path such as `~/<repo>/<file>` — for
 **primary checkout**, on main. Use worktree-rooted paths, and `git -C <path>`
 for an intentional primary-repo mutation.
 
-**Project memory:** write only in the assigned project's worktree, never the
-installed harness; a refused write stays pending (AGENTS.md § Project memory
-boundary).
+**Project memory:** writes follow `guards.md` (resolve the project first; a
+refused write stays pending).
 
 **Parked-cwd trap.** Before creating the worktree, check `git rev-parse
 --show-toplevel` names the expected project: an off-project cwd resolves the
@@ -100,39 +79,22 @@ failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
 right (scope, money, irreversible) are never branched or delegated; they wait.
-1. **Ask up first**: an advisor model. It agrees with your pick and the call
-   is reversible → act and report.
-2. **Otherwise ask the author**, advisor's view beside your pick, and keep
-   working. Reversible options worth building → build each on its own
-   branch in ≤5 min, gaze it (merge § Gating tiers); no merge.
-3. **Author back within 5 minutes** → their pick; delete the other branch.
-   Still away, or no author in the loop → the advisor picks on the built
-   evidence (a cross-family seat if stakes are high); keep the loser
-   until the author sees the report.
+A reversible call goes to an advisor model first: if it agrees with your pick,
+act and report; otherwise ask the author and keep working
+(`skills/route/SKILL.md` § Escalation).
 
 # Diagnosis discipline
 
-**Report the observation; hold the cause until isolated.** Loaded
-labels — *corrupt*, *broken*, *tampered*, *hacked* — misdirect the fix. Check
-the cheap discriminators first (tool intact? deterministic? reproduced by an
-independent path? documented upstream?); any yes points toward intended
-behaviour. Write "X emits Y for input Z; cause not yet established".
+Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`.
 
-**A null result is not a finding until a positive control has fired.** An
-empty probe cannot tell "absent" from "invisible to me". Produce a known
-positive and watch the probe react; where your tooling cannot, report the one
-experiment that would settle it, not a null. Three independent zeros are one
-zero measured three times. A null result supports only the tested scope.
-
-**A number you divided out is not a number you measured.** Label derived
-quantities as derived, show the arithmetic, say which machine a number came
-from, and take the cheap direct measurement *before* recommending on the
-inference. An unexplained gap is an open question, not a residual to attribute.
-
-**Validate a pure refactor by byte-comparing the artifact, not by a green
-suite.** Produce it before and after on the same inputs (`SOURCE_DATE_EPOCH`
-set) and compare content; tests pass on a refactor that misplaced its output.
-A clean-room render is usually seconds — run it yourself.
+- **Report the observation; hold the cause until isolated.** Write "X emits Y
+  for input Z; cause not yet established". Reproducing it confirms the
+  observation, not that it is intended.
+- **A null result is not a finding until a positive control has fired.**
+- **A number you divided out is not a number you measured.** Label it derived
+  and show the arithmetic.
+- **Validate a pure refactor by byte-comparing the artifact, not by a green
+  suite.**
 
 # Delegation
 
@@ -144,8 +106,9 @@ A clean-room render is usually seconds — run it yourself.
   relevant memory topics by path; the delegate chooses the method.
 - **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
   a trivial change takes one cheaper same-family reviewer; a high-risk change
-  needs a seat from another model family. A same-family review is never called
-  independent; report any required perspective that was unreachable.
+  prefers a seat from another model family, though no gate refuses without one.
+  A same-family review is never called independent; report any perspective
+  that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
   registry → open a coordination change first. One gaze per request at a time
   (merge § Gating tiers).
@@ -173,14 +136,10 @@ merge request closing its own child (close-claim syntax: the merge skill). The p
 tracker listing every child, closed only after the integration review
 (roar step 8), never on the bare event of the last child merging.
 
-**Monster ticket → propose a decomposition.** A large blast radius (15+ files,
-or a symbol other tickets depend on), a build-gated exit, bundled sign-off
-units or a hidden dependency chain: draft a tracker (partition boundary,
-up-front decisions, wave order) and children sized to one sign-off unit,
-`Blocked-by` their real prerequisite, never the tracker. An autonomous
-orchestrator files it; a hunt or an interactive session proposes it; a lone
-session proposes it in its report and stops. The 15-file count is a signal, not
-a wall. A large diff splits the review, not necessarily the merge request.
+**Monster ticket → propose a decomposition.** Signals: 15+ files, a symbol
+other tickets depend on, a build-gated exit, bundled sign-off units or a hidden
+dependency chain; the count is a signal, not a wall. Drafting the tracker and
+children: `skills/hunt/references/decomposition.md`.
 
 # Compaction
 
@@ -194,8 +153,9 @@ one compound call: each idle turn re-reads the whole context.
 # Autonomous action
 
 **Run to the end.** The author's attention is the scarcest resource: ask only
-when § Escalation protocol says so, run through verification, merge,
-cleanup, deliver one report. Return mid-run only for new scope or an
+when § Escalation protocol says so, run the invoked skill to its endpoint
+(verification, then merge and cleanup where the skill includes them), deliver
+one report. Return mid-run only for new scope or an
 irreversible act; skill-prescribed steps (roar, gaze) run unasked.
 
 **Questions to the author: one at a time, executive format.** The author

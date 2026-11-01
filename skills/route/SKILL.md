@@ -128,6 +128,22 @@ environment: privacy/clearance (forces LOCAL/PRIVÉ), offline, GPU idle vs
 the local lane busy, provider rate limits. Within LOCAL/PRIVÉ, IQ3_S for
 quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
 
+## Escalation: advisor first
+
+The procedure behind `rules/workflow.md` § Escalation protocol, for a decision
+or a judgment outside your domain docs. The author's calls by right (scope,
+money, irreversible) are never branched or delegated; they wait.
+
+1. **Ask up first**: an advisor model. It agrees with your pick and the call
+   is reversible → act and report.
+2. **Otherwise ask the author**, advisor's view beside your pick, and keep
+   working. Reversible options worth building → build each on its own
+   branch in ≤5 min, gaze it (merge § Gating tiers); no merge.
+3. **Author back within 5 minutes** → their pick; delete the other branch.
+   Still away, or no author in the loop → the advisor picks on the built
+   evidence (a cross-family seat if stakes are high); keep the loser
+   until the author sees the report.
+
 ## routes.json
 
 Cache of the doors: provider, endpoint, key name (names only, never values),

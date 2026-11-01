@@ -59,7 +59,7 @@ any other delta discards it and the PR gets a fresh review. One gaze per
 request at a time still holds.
 
 This is what lets an escalation's built option be reviewed before the author
-answers (`rules/workflow.md` § Escalation protocol, step 2). The 5-minute cap
+answers (`skills/route/SKILL.md` § Escalation, step 2). The 5-minute cap
 binds the building only. Gaze `branch:<name>` on the recommended option, plus
 the option the author is likely to pick, not on every option. The question to
 the author carries the result, or is dropped when the result settles it. Each

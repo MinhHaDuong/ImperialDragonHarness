@@ -18,6 +18,8 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 The harness's skills and rules are the patient. A practitioner: follow both
 layers of `references/doctor-practice.md` (ethic, then consultation), in the
 manner of `skills/test-doctor/SKILL.md`; the specialty below is what differs.
+A diagnosis follows `references/diagnosis-discipline.md`, the reasoning behind
+`rules/workflow.md` § Diagnosis discipline.
 
 ## Precondition
 
