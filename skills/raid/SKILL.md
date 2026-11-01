@@ -110,6 +110,12 @@ Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for
 
 ## Phase 2: Imagine (parallel)
 
+Imagine has two steps, both inside this phase: the per-ticket reimagine, then
+the cross-ticket Blind-Spot pass that closes it. The phase ends only after the
+Blind-Spot verdict is reported.
+
+### Step 1: per-ticket reimagine
+
 For each ticket, launch an agent (background, no isolation needed — read-only;
 worker chosen per § Model policy):
 - Read ticket + STATE.md + surrounding code
@@ -118,9 +124,9 @@ worker chosen per § Model policy):
   don't hand-roll what a library already does), premature abstraction.
   Annotate any hits with the proposed fix.
 
-Wait for all.
+Wait for all of these agents before step 2; this is not the end of Imagine.
 
-### Blind-Spot pass (cross-ticket)
+### Step 2: Blind-Spot pass (cross-ticket, closes Imagine)
 
 Before committing the reimagined tickets, launch **one** additional read-only
 agent (worker chosen per § Model policy) over the original tickets **and all
