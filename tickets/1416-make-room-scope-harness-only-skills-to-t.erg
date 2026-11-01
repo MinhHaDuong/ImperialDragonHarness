@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-01T11:25Z reviewer created
+2026-11-01T11:26Z reviewer author ruling 2026-11-01: trace-doctor is harness-specific; scope it with harness-doctor and arena (saving ~365 description chars)
 
 --- body ---
 Parent: 1415
