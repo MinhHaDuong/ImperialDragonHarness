@@ -6,8 +6,8 @@ memory notes and tickets.
 
 ## Branch and commit
 
-- **Agents work on a branch.** Main is read-only to them: everything (code, docs, tickets, STATE, memory, config) lands via branch + merge request, except below.
-- **The author edits in the primary checkout.** Agents sync it, assist the author's prose edits there ([prose/workpackages.md](./prose/workpackages.md)) and commit or land them on request; a trivial one the author may commit to main with `git -c idh.mainGuard=warn` (journaled; author only).
+- **Agents work on a branch.** Main is read-only to them: everything (code, docs, tickets, memory, config) lands via a merge request, except below.
+- **The author edits in the primary checkout.** Agents sync it, assist the author's prose edits ([prose/workpackages.md](./prose/workpackages.md)) and commit or land them on request; a trivial one the author may commit to main with `ALLOW_MAIN_COMMIT=1 git -c idh.mainGuard=warn commit` (author only).
 - **One change per commit.** The message explains *why this change and not another*: alternatives considered, local design choices made. Merge commits carry the strategic level — architecture decisions, cross-file impacts, residual debt.
 - **Git is the project's long-term memory.** Top-level files reflect *now*; history lives in `git log`.
 - **Worktrees are throwaway, branches hold durable state.** Never `rm -rf` a worktree the runtime created; `git worktree prune` after deleting the branch.
