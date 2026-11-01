@@ -77,3 +77,32 @@ def test_installer_step_rebuilds_for_codex_and_pi(tmp_path, monkeypatch):
     (home / ".codex" / "AGENTS.md").write_text("stale\n")  # hand edit: refused, not clobbered
     assert lc.install_runtime_rules() == 1
     assert (home / ".codex" / "AGENTS.md").read_text() == "stale\n"
+
+
+def test_installer_step_reports_undecodable_rule_file(tmp_path, monkeypatch, capsys):
+    home = tmp_path / "home"
+    (home / ".codex").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    lc = _lifecycle()
+    bad = tmp_path / "rules"
+    bad.mkdir()
+    (bad / "a.md").write_bytes(b"caf\xe9\n")
+    monkeypatch.setattr(rr, "build", lambda rules: (bad / "a.md").read_bytes().decode("utf-8"))
+    assert lc.install_runtime_rules() == 1
+    assert "REFUSED" in capsys.readouterr().err
+
+
+def test_check_flags_stale_generated_file(tmp_path, monkeypatch, capsys):
+    home = tmp_path / "home"
+    (home / ".codex").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    lc = _lifecycle()
+    dest = home / ".codex" / "AGENTS.md"
+    assert lc.check_runtime_rules() == 0  # absent: nothing to check
+    dest.write_text("hand written\n")
+    assert lc.check_runtime_rules() == 0  # not ours: install reports it
+    dest.write_text(rr.MARKER + "\nold rules\n")
+    assert lc.check_runtime_rules() == 1
+    assert "stale" in capsys.readouterr().err
+    assert lc.install_runtime_rules() == 0
+    assert lc.check_runtime_rules() == 0

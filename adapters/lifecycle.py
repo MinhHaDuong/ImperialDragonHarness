@@ -395,8 +395,9 @@ def check(runtime=None) -> int:
     failures = [p for e in entries(runtime) if (p := V.check_entry(e, root()))]
     for problem in failures:
         report(*problem)
-    print(f"idh check: {len(failures)} broken" if failures else "idh check: ok")
-    return 1 if failures else 0
+    stale = check_runtime_rules()
+    print(f"idh check: {len(failures)} broken" if failures or stale else "idh check: ok")
+    return 1 if failures or stale else 0
 
 
 BEGIN, END = b"# >>> Imperial Dragon Harness loader", b"# <<< Imperial Dragon Harness loader"
@@ -530,8 +531,8 @@ def install_runtime_rules() -> int:
     for dest in (home / ".codex" / "AGENTS.md", home / ".pi" / "agent" / "AGENTS.md"):
         try:
             state = runtime_rules.write(REPO / "rules", dest)
-        except OSError as exc:
-            report("REFUSED", f"{dest}: {exc}", "make the directory writable and rerun idh install")
+        except (OSError, ValueError) as exc:  # ValueError: UnicodeDecodeError on a rule file
+            report("REFUSED", f"{dest}: {exc}", "fix the file named, then rerun idh install")
             rc = 1
             continue
         if state == "refused":
@@ -540,6 +541,27 @@ def install_runtime_rules() -> int:
             rc = 1
         elif state == "written":
             print(f"installed: {dest} (resident rules)")
+    return rc
+
+
+def check_runtime_rules() -> int:
+    """Flag a generated resident-rules file that rules/ has outgrown (1413)."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    import runtime_rules
+
+    home = Path(os.environ["HOME"])
+    rc = 0
+    for dest in (home / ".codex" / "AGENTS.md", home / ".pi" / "agent" / "AGENTS.md"):
+        try:
+            if not dest.is_file():
+                continue
+            old = dest.read_text(encoding="utf-8")
+            if old.startswith(runtime_rules.MARKER) and old != runtime_rules.build(REPO / "rules"):
+                report("STALE", f"{dest} is stale against rules/", "run idh install")
+                rc = 1
+        except (OSError, ValueError) as exc:
+            report("UNREADABLE", f"{dest}: {exc}", "fix the file named, then rerun idh check")
+            rc = 1
     return rc
 
 
