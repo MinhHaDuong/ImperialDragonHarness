@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Skill case notes: cases chosen by judged usefulness, not four fixed slots (design note)
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T20:18Z reviewer created
+
+--- body ---
+## Context
+Author, 2026-11-01, while refreshing memory/skills/merge.md: "I want agentic judgment on which
+memories likely useful." conception/2026-10-31-skill-case-notes.md prescribes four fixed slots
+(most recent, usual, best, worst). The merge.md refresh (ticket 1394's closing PR) already chose
+its cases by judged usefulness, with one "Use:" line per case naming the decision it changes.
+
+## Scope
+Amend the design note: a case note holds the dated, sourced cases most likely to change what an
+agent running the skill does next (a trap, a normal friction, an author stance). The four slots
+become a guide, not a quota. Each case carries a "Use:" line. The word cap and the
+dated-and-sourced requirement stay.
+
+## Exit criteria
+- [ ] conception/2026-10-31-skill-case-notes.md states the selection principle and the "Use:" line
+- [ ] Any test or script that assumes exactly four slots (scripts/skill-case-notes.sh, tests) agrees
