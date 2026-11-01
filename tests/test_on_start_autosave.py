@@ -20,7 +20,7 @@ SCRIPT = REPO / "scripts" / "on-start-context.sh"
 MARK = "VS Code autosave is off"
 
 
-def run(tmp_path: Path, settings: str | None) -> str:
+def run(tmp_path: Path, settings: str | None, night: bool = False) -> str:
     home = tmp_path / "home"
     home.mkdir()
     if settings is not None:
@@ -31,6 +31,9 @@ def run(tmp_path: Path, settings: str | None) -> str:
     env["HOME"] = str(home)
     env.pop("XDG_CONFIG_HOME", None)
     env.pop("CLAUDE_PROJECT_DIR", None)
+    env.pop("CLAUDE_NIGHT_SWEEP", None)
+    if night:
+        env["CLAUDE_NIGHT_SWEEP"] = "1"
     r = subprocess.run(
         ["bash", str(SCRIPT)], cwd=tmp_path, env=env,
         capture_output=True, text=True, input="{}",
@@ -42,6 +45,7 @@ def run(tmp_path: Path, settings: str | None) -> str:
 @pytest.mark.parametrize("settings", [
     '{\n  "editor.fontSize": 14\n}\n',
     '{ "files.autoSave": "off" }',
+    '{\n  // "files.autoSave": "afterDelay",\n  "editor.fontSize": 14\n}\n',
 ])
 def test_line_when_autosave_off(tmp_path, settings):
     out = run(tmp_path, settings)
@@ -57,3 +61,7 @@ def test_silent_when_autosave_on(tmp_path, mode):
 
 def test_silent_without_vscode(tmp_path):
     assert MARK not in run(tmp_path, None)
+
+
+def test_silent_in_night_sweep(tmp_path):
+    assert MARK not in run(tmp_path, '{ "files.autoSave": "off" }', night=True)
