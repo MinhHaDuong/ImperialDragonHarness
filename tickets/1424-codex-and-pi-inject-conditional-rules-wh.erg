@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Codex and Pi inject conditional rules when a session touches a matching path
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T19:16Z reviewer created
+
+--- body ---
+## Context
+Ticket 1414's A/B (`memory/evidence/2026-11-01-ab-conditional-rules/FINDINGS.md`) found `coding-python` needed on Codex and Pi; both reach conditional rules only through skills today (`rules/README.md` § Loading per runtime: "Conditional rules (`paths:`) ... none"). Asked how coding-python should reach them, the author answered on 2026-11-01: "1 but general. Handroll Claude's paths: auto injection mechanisms."
+
+Meaning: for EVERY conditional rule (frontmatter `paths:`), when a Codex or Pi session reads or writes a matching file, inject the rule body (HTML comments stripped, as the 1413 generator does) once per session per rule, as Claude Code does natively.
+
+## Scope
+- One shared matcher (rule globs -> rule ids, Claude `paths:` glob semantics) called from both adapters, with marker dedup as in `scripts/skill-case-notes.sh`.
+- Codex: hook entries in `adapters/codex/hooks.json` on the events whose payload carries a path (probe first: shell commands, apply_patch).
+- Pi: `adapters/pi/extensions/idh-guard.ts` tool_result handler on the tools whose events carry a path (read, write, edit, bash).
+- Probe each runtime headless with a positive control; where a runtime gives no path, record it and cover what it does give.
+
+## Exit criteria
+- [ ] Probe results per runtime and event recorded here, with a positive control
+- [ ] Shared matcher with tests: glob match, once per session, comment stripping, no match -> no output, fail-open on bad input
+- [ ] Codex and Pi wired; rules/README.md § Loading per runtime updated
+- [ ] PR states the host effect: Codex entries inert until trusted via /hooks; the Pi extension is live on merge
