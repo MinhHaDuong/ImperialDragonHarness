@@ -12,7 +12,7 @@ Memory and rules:
 
 > pinned 2026-10-30 — Rules carry principles; detail goes to memory: "That level of details belong to memory" ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
 > pinned 2026-10-30 — "NO EXPLICIT FORGE DEPENDENCY IN RULES"; memory is jurisprudence, not décret d'application (native `feedback_rules_are_law_memory_is_decree`; [source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
-> pinned 2026-10-30 — KISS on 1366: the ls-remote read-back removed (PR 2035); the commit-id push stays ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
+> pinned 2026-10-30 — KISS on 1366: the ls-remote read-back removed (PR 2035); the commit-id push stays; 2026-11-01: the exception stays in memory, `rules/git.md` unchanged (ticket 1373) ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
 > pinned 2026-10-30 — Government memo accepted as doctrine, under cooldown: "It is easy to be overenthusiastic about a metaphor." Nothing is implemented from it before ticket 1369 closes ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
 > pinned 2026-10-29 — Departments (Commission, Site practice, Environment, History, plus work-type departments, provisional); 4 KB pages, 40-line index; the journal stays the intact source; pinned rulings; hoard renamed smelt. Now in memory/SMELT.md ([source](../journal/2026/2026-10-29-memory-redesign-day.md))
 > pinned 2026-10-29 — Native-note rulings are filed in Commission, "never promoted to rules" (tickets 1349, 1351)
