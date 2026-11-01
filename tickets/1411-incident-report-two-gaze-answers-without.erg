@@ -1,0 +1,85 @@
+%erg 0.1
+Title: Incident report: two gaze answers without a reviewer seat on arena fix/f1b-production-port (2026-10-31)
+Created: 2026-11-01
+Author: MinhHaDuong
+
+--- log ---
+2026-11-01T08:21Z MinhHaDuong created
+
+--- body ---
+## Nature of this ticket
+
+Incident report, written at the author's request (2026-11-01): a record of
+facts. It proposes no rule, guard, check or change, and draws no conclusion
+about cause. Source: the arena repository's `refs/notes/review` journal
+(`/home/haduong/CNRS/code/arena`, review `rv-20261031-fix-f1b-production-port-1e9a`).
+
+## Setting
+
+Project: arena (local-only repository, host padme). During an autonomous
+session on 2026-10-31, a team lead (Claude Opus 5.5) fixed the port of arm
+f1b on branch `fix/f1b-production-port` (2 files: `runner.py` +4/-1,
+new `tests/test_f1b_profile_port.py` +21) so that the Q0/Q1 night could be
+relaunched before its deadline. Gaze was invoked by that lead on the
+branch, with no prior review request ("gaze invoked on a branch with no
+request").
+
+## Timeline (UTC, from the journal)
+
+| Time | Record id | Kind | Head | Facts |
+|---|---|---|---|---|
+| 23:09:09 | `20261031T230909355Z-padme-fbe685be` | request | `7fdb24d` | base `451fc05`; intent empty |
+| 23:09:54 | `20261031T230954325Z-padme-5f5af213` | answer | `7fdb24d` | **incident 1**, see below; run `gz-20261031T230909370Z-5737`; 45 s after the request |
+| 23:11:24 | `20261031T231124791Z-padme-3ec52ca6` | request | `a7e83fc` | branch rebased on `3985e25`; range-diff identical patch |
+| 23:13:55 | `20261031T231355129Z-padme-bec2d6ee` | answer | `a7e83fc` | **incident 2**, see below; run `gz-20261031T231124802Z-a7d1` |
+| 23:18:23 | `20261031T231823895Z-padme-b54a9405` | answer | `a7e83fc` | REVIEWED, `seats: panel`, one correctness seat (claude-code, anthropic/haiku, route=subagent, status ran), targeted tests 2 passed; run `gz-20261031T231718895Z-517a` |
+| 23:29:02 | `…-padme-46938dc5` | verify-gate verdict | `a7e83fc` | APPROVED |
+
+The branch merged on arena main as `bb7d898` after the 23:18 answer and the
+gate. The lead's report states that it did not count the two earlier
+answers because of their seats lines.
+
+## Incident 1 — answer 23:09:54 on 7fdb24d
+
+- `result: REVIEWED`.
+- Text body: the line `seats:` is present with an empty value; it is followed
+  by `reviewed_head_sha: 7fdb24d…`.
+- Structured field `seats` in the answer JSON holds the string
+  `"reviewedheadsha"`, i.e. the letters of the following line's key.
+  `attribution` is an empty list.
+- Review plan as written: `script check (port-check, script, none); 10m`.
+  Plan check: `PASS with deviations — no door launched: no GPU/model calls,
+  one seat acceptable`.
+- The body reports three checked points with file-level content (pinned
+  `models.json` entry for padme on :8080; `stop-arm.sh` still reading
+  :8081, filed as consider; both new tests failing on main). It names no
+  reviewer seat, runtime or model.
+
+## Incident 2 — answer 23:13:55 on a7e83fc
+
+- `result: REVIEWED`.
+- Structured field `seats`: `"self-only"`.
+- `attribution`: one entry, `seat=reading · runtime=claude ·
+  model=unconfirmed/claude-sonnet-5-5 · route=self · independence=not-stated
+  · status: ran`.
+- Review plan as written: `check plus self read; regression (script, none),
+  reading (self, anthropic); 8m`. Plan check: `PASS`.
+- The body carries no finding and no file citation.
+
+## What is not established
+
+- Why the empty `seats:` line produced `"reviewedheadsha"` in the structured
+  field (the text and JSON were not compared with the gaze source here).
+- Why gaze chose a script-only plan in incident 1 and a self-read in
+  incident 2 for the same patch; whether the lead's brief or the time
+  pressure of the night relaunch shaped the plans.
+- Whether the same pattern occurred on other branches: only this review was
+  examined.
+
+## Consequence observed
+
+None beyond one extra gaze run (about 5 minutes). No merge rested on either
+answer.
+
+## Exit criteria
+- [ ] Facts read by the harness maintainer; ticket closed as filed.
