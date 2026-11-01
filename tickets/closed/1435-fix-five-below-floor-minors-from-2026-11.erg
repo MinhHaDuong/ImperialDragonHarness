@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Fix five below-floor minors from 2026-11-01
+Created: 2026-11-01
+Author: reviewer
+Closed: autoclosed — PR #2193
+
+--- log ---
+2026-11-01T20:54Z reviewer created
+2026-11-01T20:55Z reviewer finding 5 skipped: check-close-claims.sh and its test already treat a ticket in tickets/closed/ with a Closed: header as satisfied; run today it reports 0 findings over the same window incl. #2181, #2189
+2026-11-01T21:02Z reviewer closed — autoclosed — PR #2193
+
+--- body ---
+## Context
+Five below-floor findings from 2026-11-01, one PR.
+1. routes.json Pi subagent sentence says the model comes from the agent file; since #2189 no Pi agent pins one.
+2. slow_tickets.py NONSOLVE matches anywhere on the Closed line ("supersedes 1300" in a real solve).
+3. gaze plan.md other-family trigger list omits review-anchor.py, review_evidence.py.
+4. PROBES.md:26 still describes cd handling that #2179 dropped.
+5. Roar close-claims check flags a claim whose ticket sits in tickets/closed/ (reported on #2181, #2189).
+
+## Exit criteria
+- [ ] each finding fixed, or skipped with the reason
+- [ ] make check-fast and make lint pass

@@ -29,7 +29,9 @@ THRESHOLD_MIN = 30  # the single home of the threshold
 
 DURATION = re.compile(r'^(?:.*?\b)?duration: (?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?\s*$', re.M)
 PR_LINK = re.compile(r'^Closed:.*?\bPR\s*#?(\d+)', re.M)
-NONSOLVE = re.compile(r"won'?t[ -]?do|wontfix|supersed|duplicate", re.I)
+# The close reason's leading word, after an optional date: a solve that merely
+# mentions "supersedes 1300" later in the line is still a solve.
+NONSOLVE = re.compile(r"\s*(?:\d{4}-\d\d-\d\d\S*\s*[-—:]?\s*)?(?:won'?t[ -]?do|wontfix|supersed|duplicate)", re.I)
 CLOSED_LINE = re.compile(r'^Closed:(.*)$', re.M)
 TITLE_LINE = re.compile(r'^Title:\s*(.*)$', re.M)
 
@@ -42,7 +44,7 @@ def pr_of(text):
 def nonsolve_of(text):
     """Why this close is not a solve (explicit signals only), else None."""
     m = CLOSED_LINE.search(text)
-    if m and NONSOLVE.search(m.group(1)):
+    if m and NONSOLVE.match(m.group(1)):
         return 'won\'t-do/superseded/duplicate'
     t = TITLE_LINE.search(text)
     if t and re.match(r'(?:tracker|epic)\b', t.group(1).strip(), re.I):

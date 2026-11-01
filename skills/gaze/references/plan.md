@@ -46,7 +46,7 @@ for "no door launched", that is, every door tried and none started.
 **Machinery diffs take an other-family seat** (author ruling 2026-11-01;
 evidence: PR #2149, where the coder's self-only gaze missed a blocking
 `git cherry` whitespace-amend defect that an OpenAI red-team seat found). When
-the changed files include, under `"$IDH_ROOT/scripts/"`, `review_notes.py`,
+the changed files include, under `"$IDH_ROOT/scripts/"`, `review-anchor.py`, `review_evidence.py`, `review_notes.py`,
 `merge-gate.py`, `raid_land.py`, `seat_clock.py`, `panel-manifest-check.py`, or
 any `gate_*.py` or `gaze_*.py`, or anything under `skills/gaze/`, `skills/merge/`
 or `skills/verify-gate/`, the plan includes at least one seat

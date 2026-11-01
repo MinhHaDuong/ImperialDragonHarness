@@ -9,7 +9,7 @@ Run `pi --list-models` first: Pi only reaches the providers configured on the ho
 
 - Pi names a model by provider and id: `pi --session-dir <spool> -p --model <provider>/<id> "<prompt>"` (the door fills the archive spool, ticket 1383).
 - A gaze seat on the Pi door also names its thinking level, `<provider>/<id>:<level>`, a level the model supports (grid pins carry none: add it when planning the seat): `gaze_seat.py` refuses a bare id, so the host `defaultThinkingLevel` never sets it.
-- A Pi subagent (the `subagent` extension, relinked by `scripts/pi-subagent-link`) takes its model from the `model:` line of its agent file in `~/.pi/agent/agents/`. Pi agent files therefore carry a model; this is the one sanctioned pin, and the orchestrator picks which agent file to launch. Verified on padme for a Haiku-pinned agent (`haiku-scout`).
+- A Pi subagent (the `subagent` extension, relinked by `scripts/pi-subagent-link`) takes the model pinned by a `model:` line in its agent file in `~/.pi/agent/agents/`, else the dispatcher's. Since PR #2189 (ticket 1426) no Pi agent rendering pins one, so only a hand-written agent file does (verified on padme for the Haiku-pinned `haiku-scout`); the orchestrator picks which agent file to launch.
 
 ## Which model for which work
 
