@@ -166,8 +166,9 @@ def respond(payload: object, rules: Path, state: Path) -> str:
     paths = touched(tin, cwd, project_root(cwd))
     if not paths or not rules.is_dir():
         return ""
+    index = dict(rule_index(rules))
     hits: dict[str, str] = {}
-    for rid, globs in rule_index(rules):
+    for rid, globs in index.items():
         for path in paths:
             if any(glob_matches(g, path) for g in globs):
                 hits.setdefault(rid, path)
@@ -186,7 +187,7 @@ def respond(payload: object, rules: Path, state: Path) -> str:
     with open(marker, "a", encoding="utf-8") as f:
         f.write("".join(r + "\n" for r in new))
     parts = [
-        f"Conditional rule rules/{rid} (paths: {', '.join(dict(rule_index(rules))[rid])}), "
+        f"Conditional rule rules/{rid} (paths: {', '.join(index[rid])}), "
         f"loaded because this session touched {hits[rid]}:\n\n{rule_body(rules / rid)}"
         for rid in new
     ]
