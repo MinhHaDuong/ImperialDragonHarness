@@ -59,10 +59,10 @@ def pi_tools(claude: str | None) -> list[str]:
 
 def render(source: Path) -> str:
     text = source.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        raise ValueError(f"{source}: no frontmatter")
-    _, front, body = text.split("---", 2)
-    lines = front.strip("\n").splitlines()
+    front, fence, body = text[4:].partition("\n---\n")
+    if not text.startswith("---\n") or not fence:
+        raise ValueError(f"{source}: no frontmatter fenced by --- lines")
+    lines = front.splitlines()
     claude = next((ln.partition(":")[2].strip() for ln in lines if ln.startswith("tools:")), None)
     kept = [ln for ln in lines if not ln.startswith(("tools:", "model:"))]
     kept.append("tools: " + ", ".join(pi_tools(claude)))

@@ -14,6 +14,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -100,9 +101,11 @@ def test_install_in_a_temp_home_lets_pi_resolve_gate_seat(tmp_path):
     (home / ".pi" / "agent" / "agents").mkdir(parents=True)
     user_agent = home / ".pi" / "agent" / "agents" / "scout.md"
     user_agent.write_text("---\nname: scout\ndescription: user agent\n---\n")
-    env = {**os.environ, "HOME": str(home), "XDG_STATE_HOME": str(tmp_path / "state")}
-    env.pop("IDH_ROOT", None)
-    subprocess.run([str(REPO / "bin" / "idh"), "install"], env=env, capture_output=True, text=True, timeout=120)
+    # The live ~/.local/bin stays off PATH: its commands would collide with install's.
+    env = {"HOME": str(home), "XDG_STATE_HOME": str(tmp_path / "state"), "PATH": f"{home}/.local/bin:/usr/bin:/bin"}
+    run = subprocess.run([sys.executable, str(REPO / "bin" / "idh"), "install"], env=env,
+                         capture_output=True, text=True, timeout=120)
+    assert run.returncode == 0, run.stdout + run.stderr
     agents_dir = home / ".pi" / "agent" / "agents"
     names = {}
     for entry in os.scandir(agents_dir):  # agents.ts loadAgentsFromDir: *.md, file or symlink
