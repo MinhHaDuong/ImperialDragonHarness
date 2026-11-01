@@ -2,9 +2,11 @@
 Title: gaze_close records the next line's key as the seats claim when seats: is empty
 Created: 2026-11-01
 Author: reviewer
+Closed: seats value stays on its line (PR #2153)
 
 --- log ---
 2026-11-01T12:59Z reviewer created
+2026-11-01T13:22Z reviewer closed — seats value stays on its line (PR #2153)
 
 --- body ---
 ## Context
