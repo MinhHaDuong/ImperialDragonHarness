@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Contradiction: night-mode escalation target vs author's calls by right
+Created: 2026-11-01
+Author: smelt
+
+--- log ---
+2026-11-01T21:30Z smelt created
+
+--- body ---
+## Context
+Exposed by the sixth smelt (2026-11-01), page `memory/topics/commission.md`
+open questions. Flagged earlier by PR #1975 (closed unmerged) as one of three
+conflicts awaiting the author.
+
+Claim A: native note `feedback_dont_idle_on_background` (Claude Code store,
+read 2026-11-01, blob f7579ac3) has description line "ask the top model
+(Fable) before EVERY author decision, even ones that look like the author's
+by right", and the pinned night-mode line: "Not to me, it goes to Fable for
+finishing. You are in night mode autonomous." The note's body was updated
+2026-11-01 22:10Z to scope author-by-right calls to wait for the author, which
+matches claim B; the description line still carries the unscoped wording and
+is what the runtime injects.
+
+Claim B: `rules/workflow.md` § Escalation protocol — "The author's calls by
+right (scope, money, irreversible) are never branched or delegated; they
+wait." A memory (or native note) cannot override a rule; the rule governs.
+
+## Question for the author
+In night mode, do calls that are the author's by right still wait for the
+author, or may they go to the top advisor model first? Smelt picks no side and
+proposes no rule.
