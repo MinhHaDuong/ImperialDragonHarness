@@ -253,12 +253,14 @@ brief marked protected (e.g. "do not edit `rapport/`") is a `scope_overflow`
 entry whatever its kind, comments included: scope is the author's call, and the
 gate never overrides a withheld authorisation. Its suggested disposition is
 ESCALATE (§ Decision rules: any ESCALATE entry escalates the verdict). An exception
-the author states in the brief or the PR body makes that path authorised scope,
-and the comment leniency below then applies inside it.
+makes that path authorised scope only when it stands in the brief or in a forge
+comment by the author's own login; the PR description or a commit message, which the
+gated agent writes, never lifts the guard. The comment leniency below then
+applies inside it.
 
 **Comment-only hunks inside authorised scope never block.** A hunk confined to
-comments (LaTeX `%`, code comments, Markdown/HTML comments) in a path the brief
-did not protect is never a scope or authorisation blocker: record it as a
+comments (LaTeX `%`, code comments, Markdown/HTML comments) inside authorised
+scope is never a scope or authorisation blocker: record it as a
 `nofollow:` minor, no `scope_overflow` entry. Typeset text and argument changes
 keep the guard.
 
