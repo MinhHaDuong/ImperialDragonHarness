@@ -1,0 +1,27 @@
+%erg 0.1
+Title: lair slow-ticket report flags closes that were never solves
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T13:48Z reviewer created
+
+--- body ---
+## Context
+Lair step 15 on 2026-11-01 (`scripts/slow_tickets.py`) listed six tickets as
+slow with "unknown duration, no PR" and a /harness-doctor suggestion each:
+1396, 1401, 1402, 1408, 1410, 1411. None was a slow solve:
+- `PR_LINK` (slow_tickets.py:25) requires `PR #NNN`; hand-written closes say
+  `PR 2120 merged` or `fixes PR 2…` (1396, 1402), so their PR is not found.
+  Only the merge skill's autoclose writes `PR #N`.
+- Closes that are not solves have no solve time at all: won't-do (1408),
+  a tracker closed after its children (1401), a decision closed by hand
+  inside its PR (1410), a fact-reading ticket (1411). "Unknown is never
+  treated as fast" (by design) turns each into a slow-ticket suggestion.
+Six false suggestions in one report train the reader to skip the line.
+
+## Exit criteria
+- [ ] A Closed line naming a PR with or without `#` resolves to that PR (test with both forms)
+- [ ] Closes that are not solves (won't-do, superseded/duplicate, tracker closes) are excluded or reported in one summary line, not as per-ticket /harness-doctor suggestions
+- [ ] Genuinely unmeasurable solves still surface (one line with their ids), so the report never reads as an all-clear it cannot back
+- [ ] Rerun on the 2026-11-01 window: none of the six above is suggested for a visit
