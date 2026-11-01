@@ -16,7 +16,7 @@ identical to main `2a5547b8`).
   departments and native-note annex, as merged (last touched `666423f8`,
   2026-10-31). The fifth smelt is the accepted rebuild ticket 1351 waited on
   (blocker 1349 closed 2026-10-31).
-- Consolidated topics: all nine `memory/topics/*.md` at the base. One topic
+- Consolidated topics: all eight `memory/topics/*.md` at the base. One topic
   changed after the smelt: `skills-docs-and-hooks.md`, a budget figure
   (`2d025ff2`, resident rule cap 18350 to 18000).
 - Native notes: the Claude Code store
@@ -29,7 +29,7 @@ identical to main `2a5547b8`).
   `feedback_regex_filtering_rarely_works` (`917d2e56`),
   `project_verify_gate_double_test_run` (`b7749cb7`),
   `reference_padme_llm_service` (`f303e369`), `reference_pi_print_stdin`
-  (`9a14edea`), and `feedback_prose_edits_are_on_main`, rewritten (`22336610`)
+  (`9a14edea`), and `feedback_prose_edits_are_on_main`, rewritten (`2233661e`)
   after ticket 1372 closed.
 - Current rules at the base (`rules/*.md`, `rules/README.md`), with the skills
   they point to, read to check whether each note's ruling is already in force.
