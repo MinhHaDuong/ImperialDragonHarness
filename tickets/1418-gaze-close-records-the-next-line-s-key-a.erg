@@ -1,0 +1,27 @@
+%erg 0.1
+Title: gaze_close records the next line's key as the seats claim when seats: is empty
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T12:59Z reviewer created
+
+--- body ---
+## Context
+Found by raid 1f0534 while reading incident 1411 (arena, answer 20261031T230954325Z-padme-5f5af213).
+`scripts/gaze_close.py` `seats_claims` matches `^[\s>#-]*seats\s*:\s*([A-Za-z][\w-]*)` on text whose
+`*_\`` marks were stripped first. `\s*` after the colon crosses the newline and the stripping removed
+the underscores of the next key, so an empty `seats:` line followed by `reviewed_head_sha: …` records
+`reviewedheadsha` as the seats claim in refs/notes/review. Reproduced on main 2a5547b8:
+`seats_claim('result: REVIEWED\nseats:\nreviewed_head_sha: 7fdb24d\n') == 'reviewedheadsha'`.
+
+## Scope
+The value must sit on the key's own line; an empty `seats:` yields no claim (the caller's `self-only`
+fallback then applies). Check `field()` (same file, `^{name}:\s*(\S+)`) for the same newline crossing.
+
+## Exit criteria
+- [ ] A test: an empty `seats:` line followed by another key yields no claim
+- [ ] Existing seats-claim tests (list, quote, heading marks, markup around the key) still pass
+
+## Imagine (raid 1f0534)
+- Fix is one regex: `[ \t]*` instead of `\s*` around the colon, so the value stays on the key's line. Bounded; cheap worker.

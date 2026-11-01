@@ -25,3 +25,9 @@ must stay readable from any project.
 - [ ] The scoped skills are listed only in their project on Claude Code, Codex and Pi (project_skill_roots in adapters/pilot-support.json), and the installer stops projecting them globally
 - [ ] Pointers to their files from global rules and skills still resolve
 - [ ] Measured catalog saving recorded in the PR
+
+## Imagine (raid 1f0534)
+- Premise holds: no project scoping yet beyond `project_skill_roots` in adapters/pilot-support.json. Author ruling on the ticket adds trace-doctor to harness-doctor and arena.
+- Simplest path: drive scoping from the existing `project_skill_roots` data; the installer skips those skills when projecting globally. test-doctor stays global.
+- Check: rules/workflow.md's pointer to skills/harness-doctor/references/diagnosis-discipline.md is a repo path, so it resolves only from the harness; confirm how other projects read it today (installed absolute path?) and keep that reachable.
+- Shares the installer with 1413 (wave 2).

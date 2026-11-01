@@ -22,3 +22,9 @@ repo sees it only through the roar/smelt skills and a pointer in workflow.md
 - [ ] The cross-project memory policy lives where every project sees it: procedure in skills/roar and skills/smelt, the boundary in rules/guards.md
 - [ ] The harness AGENTS.md keeps only what is specific to the harness repo
 - [ ] Resident budget still passes (tests/test_rules_resident_budget.py)
+
+## Imagine (raid 1f0534)
+- Premise holds: AGENTS.md § Project memory boundary still carries the cross-project policy.
+- Simplest path: procedure sentences move to skills/roar and skills/smelt, the boundary sentence (facts only, crystallisation on explicit request with a destination) to rules/guards.md; AGENTS.md keeps a harness-only remainder.
+- Grep every site that cites "AGENTS.md § Project memory boundary" (skills, rules, tests) and repoint them in the same commit (rename-sweep rule).
+- Risk: guards.md is resident on every runtime; keep the addition short and run tests/test_rules_resident_budget.py.

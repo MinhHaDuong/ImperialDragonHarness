@@ -18,3 +18,8 @@ Admit a round-2 head when the rerolled head is its ancestor OR its commits since
 ## Exit criteria
 - [ ] A test: reroll on head A, rebase A's commits onto a moved base and add a fix commit; `gate_state` admits it as `reroll-fix`
 - [ ] A test: a rebased head whose earlier commits changed content is still refused
+
+## Imagine (raid 1f0534)
+- Premise holds on 2a5547b8: `scripts/review_notes.py:915` admits reroll-fix only when the rerolled head is an ancestor.
+- Simplest path: OR the ancestor test with patch-equivalence of the rerolled range (merge-base..A) against the new range, reusing the patch-id helper `coverage()` already has; no new git plumbing.
+- Antipatterns: none; do not add a range-diff dependency.

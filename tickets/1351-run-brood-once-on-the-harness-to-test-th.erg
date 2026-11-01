@@ -30,3 +30,7 @@ example `prose_edits_on_main` versus `rules/git.md`). The author decides each on
 needs the explicit request with a destination (AGENTS.md § Project memory boundary).
 Extra exit criterion:
 - [ ] Rule candidates from the drained native notes listed with source, destination and conflicts
+
+## Imagine (raid 1f0534)
+- Premise: blocker 1349 closed 2026-10-31. Brood is author-invoked (`disable-model-invocation`); the author's /raid over this ticket is the explicit request, scoped by the ticket: a report only, no implementation.
+- Output: one brood report with lesson candidates and the rule-candidate lane (ruling, source note and date, destination rule file, conflicts), filed under conception/ or memory/evidence/.

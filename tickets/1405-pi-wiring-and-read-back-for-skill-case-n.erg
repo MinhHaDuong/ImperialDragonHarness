@@ -15,3 +15,8 @@ Pi extension wiring on a read of `skills/<name>/SKILL.md`, calling `scripts/skil
 
 ## Exit criteria
 - [ ] Pi read-back passes (token quoted, delivered once), or the reason it stopped is recorded on 1394
+
+## Imagine (raid 1f0534)
+- Premise holds: `adapters/pi/extensions/idh-guard.ts` handles session_start and tool_call only.
+- Simplest path: in the extension, on a read tool call whose path ends `skills/<name>/SKILL.md`, call `scripts/skill-case-notes.sh` with a synthesized payload and inject its additionalContext through the extension API; probe first that an injected message reaches the model (`pi --print </dev/null`).
+- Shares `scripts/skill-case-notes.sh` with 1404: additive changes only.

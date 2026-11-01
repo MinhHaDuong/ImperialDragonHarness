@@ -26,3 +26,6 @@ whose past use the author doubts was constructive.
 - [ ] An audit of past raid logs records what Phase 2 actually produced
 - [ ] One real design note produced with the skill
 - [ ] The catalog entry fits in the room made by 1416
+
+## Imagine (raid 1f0534)
+- Raid 1f0534 executes only exit criterion 3 (audit of past raid logs: what Phase 2 produced); the skill itself is interactive with the author and waits. Not closed by this raid.

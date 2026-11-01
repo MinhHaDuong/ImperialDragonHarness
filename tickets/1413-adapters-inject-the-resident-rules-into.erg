@@ -34,3 +34,8 @@ install step is the author's to run or approve.
 - [ ] The sentinel probe finds workflow.md, git.md and guards.md text in Codex and Pi sessions, and no HTML comment text
 - [ ] The generated files are rebuilt by the installer when rules/ changes (no hand-edited copy)
 - [ ] rules/README.md § Loading per runtime updated from a new measurement
+
+## Imagine (raid 1f0534)
+- Premise holds: rules/README.md says adapters must inject the resident set; none does.
+- Simplest path: one generator script (resident rules minus claude-code.md, HTML comments stripped) called by the installer; tests on the generator output. Writing `~/.codex/AGENTS.md` / `~/.pi/agent/AGENTS.md` on the host is the author's to run (ticket says so): the PR ships the generator and installer step, the install and the sentinel re-probe wait for the author, so this PR refs 1413 and does not close it.
+- Runs after 1416 (shared installer) and 1412 (guards.md content).
