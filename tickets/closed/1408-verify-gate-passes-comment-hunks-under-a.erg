@@ -2,9 +2,11 @@
 Title: verify-gate passes comment hunks under author-protected paths
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2138
 
 --- log ---
 2026-11-01T08:15Z reviewer created
+2026-11-01T08:47Z reviewer closed — autoclosed — PR #2138
 
 --- body ---
 ## Context
