@@ -39,8 +39,9 @@ fi
 # agents edit files the author may have open in the primary checkout, and an
 # unsaved buffer is invisible to them. Silent when VS Code's user settings are
 # absent or set an autosave mode other than off, and in night sweeps (no
-# author). A grep, not a JSON parse: settings.json is JSONC; `//` comment lines
-# are dropped first so a commented-out setting reads as off. Linux stable VS
+# author). A grep, not a JSON parse: settings.json is JSONC; whole-line `//`
+# comments are dropped first so a commented-out setting reads as off (trailing
+# and /* */ comments, and language-scoped settings, still read as on). Linux stable VS
 # Code path only: macOS, Insiders, VSCodium and Remote-SSH stay silent.
 _vsc="${XDG_CONFIG_HOME:-$HOME/.config}/Code/User/settings.json"
 if [ -f "$_vsc" ] && [ -z "${CLAUDE_NIGHT_SWEEP:-}" ] &&
