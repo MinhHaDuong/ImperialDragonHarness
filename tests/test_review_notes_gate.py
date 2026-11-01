@@ -375,6 +375,34 @@ def test_reroll_fix_must_descend_from_the_rerolled_head(repo):
     assert not state["ready"] and state["match"] == "none"
 
 
+def test_reroll_fix_admits_a_rebase_of_the_rerolled_commits_plus_a_fix(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer(repo, rid)
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature")
+    sh(repo, "switch", "-q", "main")
+    commit(repo, "moved.txt", "m\n", "main moves")
+    sh(repo, "switch", "-q", "feature")
+    sh(repo, "rebase", "-q", "main")  # the reviewed commit is now a new sha
+    fix(repo, 14)
+    state = rn.gate_state(repo, rid, "feature")
+    assert state["ready"] and state["match"] == "reroll-fix" and state["round"] == 2
+
+
+def test_reroll_fix_refuses_a_rebase_that_changed_a_reviewed_commit(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer(repo, rid)
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature")
+    sh(repo, "switch", "-q", "main")
+    commit(repo, "moved.txt", "m\n", "main moves")
+    sh(repo, "switch", "-q", "feature")
+    sh(repo, "rebase", "-q", "main")
+    (Path(repo) / "f.py").write_text("def f():\n    return 99\n")  # a reviewed commit's content changed
+    sh(repo, "commit", "-qa", "--amend", "--no-edit")
+    fix(repo, 14)
+    state = rn.gate_state(repo, rid, "feature")
+    assert not state["ready"] and state["match"] == "none"
+
+
 # --- ticket 1291: the gate reads through refresh; the verdict write is the only push ---------
 
 def logging_hook(origin, log):

@@ -872,6 +872,18 @@ def _bookkeeping_since(cwd, base_ref, head, since):
     return done.returncode == 0
 
 
+def _carries(cwd, rerolled, head):
+    """Does `head` carry the rerolled head's work: it descends from it, or every commit the
+    rerolled head adds over their merge base has a patch-equivalent in `head` (a rebase of the
+    reviewed commits onto a moved base, ticket 1403). A rerolled head the repository lacks
+    carries nothing."""
+    if _git(cwd, "merge-base", "--is-ancestor", rerolled, head, check=False).returncode == 0:
+        return True
+    done = _git(cwd, "cherry", head, rerolled, check=False)
+    marks = [ln[:1] for ln in done.stdout.splitlines() if ln]
+    return done.returncode == 0 and bool(marks) and set(marks) == {"-"}
+
+
 def gate_state(cwd, review_id, head, remote="origin"):
     """What verify-gate needs before ruling `head` (spec §5, §8): the round it would rule,
     whether a completed review admits it, and why not. Refreshes first when there is a remote
@@ -880,7 +892,8 @@ def gate_state(cwd, review_id, head, remote="origin"):
 
     Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id);
     or the head adds only bookkeeping to the latest reviewed head; or it is
-    the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head.
+    the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head or carrying its commits patch-equivalent
+    (rebased onto a moved base).
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds.
     `stale` is empty after a good read; after a failed fetch it names the failure: the state
@@ -912,7 +925,7 @@ def gate_state(cwd, review_id, head, remote="origin"):
     elif cov["match"] != "none":
         state["ready"] = True
     elif (verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS
-          and _git(cwd, "merge-base", "--is-ancestor", verdicts[-1]["head"], head, check=False).returncode == 0):
+          and _carries(cwd, verdicts[-1]["head"], head)):
         state.update(ready=True, match="reroll-fix", answer=None, result=None)
     elif _bookkeeping_since(cwd, answers[-1]["base_ref"], head, state["reviewed_head"]):
         state.update(ready=True, match="bookkeeping", answer=answers[-1]["id"],
