@@ -11,8 +11,9 @@ checkout or refs. Authority: `rules/git.md`, `rules/claude-code.md`.
   an unchained failed add locked the spawner's tree ([b6aabf](../journal/2026/2026-10-28-raid-b6aabf-worktree-adoption.md)).
 - rtk excludes `^git\b` on padme and doudou since 2026-10-09 (padme re-read
   2026-10-30, `rtk hook check`; other hosts unverified; `rules/git.md` still governs SHA reads) ([1078](../journal/2026/2026-10-09-rtk-git-exclusion.md)).
-- A push by commit id (`<oid>:<ref>`) lands or is refused, so its exit code
-  answers; a push by ref name can exit 0 sending nothing after another process
+- Settled by the author, 2026-11-01 ("Keep it in memory only", ticket 1373): the
+  exception lives here, not in `rules/git.md`. A push by commit id (`<oid>:<ref>`)
+  lands or is refused, so its exit code answers; a push by ref name can exit 0 sending nothing after another process
   rewound the ref ([1366](../journal/2026/2026-10-30-gate-record-lost-shared-ref-rewind-1366.md), [2035](../journal/2026/2026-10-30-push-by-commit-id-exit-code-1366.md)).
 - Test each gating git command's own status: `rebase | tail` let a
   force-push send a half rebase; GitHub closed PR 1568 (native).
@@ -52,8 +53,6 @@ checkout or refs. Authority: `rules/git.md`, `rules/claude-code.md`.
 
 ## Open questions
 
-- `rules/git.md` requires forge read-back; the author merged 2035 without it
-  and declined to narrow the rule. Ticket 1373.
 - Hypothesis: the shared primary checkout as common cause.
 - `worktree-tmp-guard.py` keeps any tree whose commits cite `.tmp/`.
 

@@ -2,9 +2,12 @@
 Title: Contradiction: 1366 read-back ruling versus forge read-back rule
 Created: 2026-10-30
 Author: reviewer
+Closed: settled by author: exception kept in memory only
 
 --- log ---
 2026-10-30T13:45Z reviewer created
+2026-11-01T18:05Z reviewer author answer 2026-11-01: "Keep it in memory only"; push-by-commit-id exception stays jurisprudence, rules/git.md unchanged; memory pages updated
+2026-11-01T18:05Z reviewer closed — settled by author: exception kept in memory only
 
 --- body ---
 ## Context
