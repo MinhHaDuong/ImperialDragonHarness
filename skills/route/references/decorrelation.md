@@ -18,7 +18,7 @@ Most changes are small and cheap to verify; one cheaper reviewer from the produc
 |---|---|
 | Trivial or mechanical (typo, ticket bookkeeping, data refresh, a rename with a green test) | One same-family reviewer. No cross-family seat. |
 | Ordinary (a feature or fix with tests, a doc rewrite) | The usual angles; same family is fine. Report the family; do not call it independent. |
-| High risk: a wrong approve would be hard to detect or reverse after merge (rules and guards, merge and release gates, credentials, deletion or migration), or the author asks | Prefer a seat from another family when the other criteria allow it (below). |
+| High risk: a wrong approve would be hard to detect or reverse after merge (rules and guards, merge and release gates, credentials, deletion or migration), or the author asks | Prefer a seat from another family when the other criteria allow it (below). A gaze of gate, merge or review machinery plans one (`skills/gaze/references/plan.md`). |
 
 The orchestrator picks the row. When unsure, take the lighter one.
 A failed `plan check:` is for a planned seat that could not run, not for a same-family review.

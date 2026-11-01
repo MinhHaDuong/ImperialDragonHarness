@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Gaze plan adds an other-family seat when the diff touches gate, merge or review machinery
+Created: 2026-11-01
+Author: reviewer
+Closed: done: rule in plan.md
+
+--- log ---
+2026-11-01T19:17Z reviewer created
+2026-11-01T19:21Z reviewer closed — done: rule in plan.md
+
+--- body ---
+## Context
+Author decision 2026-11-01 (brood report row 21, conception/2026-11-01-brood-harness-run.md): "Coder gazes; risky code adds a seat". Gaze stays in hunt Verify, run by the coder. When the diff touches gate, merge or review machinery, gaze's plan must include at least one seat from a family other than the producer's.
+
+Evidence: PR #2149 (ticket 1403). The coder's own gaze was a self-only test-and-read and missed a blocking defect; the orchestrator's inline gaze with an OpenAI red-team seat found it: `git cherry` admitted a whitespace amend.
+
+## Exit criteria
+- [ ] skills/gaze/references/plan.md names the trigger paths and the requirement, in its one home
+- [ ] When no other-family door is reachable the plan says so; the result stays valid (PR #2171). No gate refusal.
+- [ ] `make lint` passes
