@@ -1093,6 +1093,7 @@ def test_derive_separates_truncated_empty_refused_and_reach_failures():
     assert ok[1] is None and ok[0].startswith(WORKER)
 
 
+@pytest.mark.integration
 def test_replay_checks_the_sha_then_runs_the_real_derivation(tmp_path):
     import hashlib
     raw = tmp_path / 'seat.raw'
