@@ -1,5 +1,5 @@
 {
-  "description": "IDH dirty-reset guard wiring (ticket 0809, reviewed by two third-party seats 2026-09-28). The same canonical script as the Claude Code PreToolUse wiring in the adapter plugin (claude-code/hooks/hooks.json — the single Claude hook source since 0887): Codex's PreToolUse payload carries tool_input.command and its block contract accepts exit 2 with the reason on stderr, so the guard runs unchanged. The installed hook launcher resolves the checkout from its own real location. Scope: the PreToolUse entry wires the ONE dirty-reset guard; it is not a general Git-mutation boundary. A SessionStart entry also runs scripts/on-start-context.sh, whose stdout reaches the model as context (measured on Codex 0.163.0). Install: run <checkout>/bin/idh install to merge this hook into ~/.codex/hooks.json, verify the guard script exists and answers exit 2 on a fixture (conception/adapter-operations.md), then review and trust it once via /hooks (headless one-offs: --dangerously-bypass-hook-trust). Codex hook trust authenticates the hook definition, not the script it invokes; the script's integrity is the harness checkout's business.",
+  "description": "IDH dirty-reset guard wiring (ticket 0809, reviewed by two third-party seats 2026-09-28). The same canonical script as the Claude Code PreToolUse wiring in the adapter plugin (claude-code/hooks/hooks.json \u2014 the single Claude hook source since 0887): Codex's PreToolUse payload carries tool_input.command and its block contract accepts exit 2 with the reason on stderr, so the guard runs unchanged. The installed hook launcher resolves the checkout from its own real location. Scope: the PreToolUse entry wires the ONE dirty-reset guard; it is not a general Git-mutation boundary. A SessionStart entry also runs scripts/on-start-context.sh, whose stdout reaches the model as context (measured on Codex 0.163.0). Install: run <checkout>/bin/idh install to merge this hook into ~/.codex/hooks.json, verify the guard script exists and answers exit 2 on a fixture (conception/adapter-operations.md), then review and trust it once via /hooks (headless one-offs: --dangerously-bypass-hook-trust). Codex hook trust authenticates the hook definition, not the script it invokes; the script's integrity is the harness checkout's business. Skill case notes (ticket 1404): UserPromptSubmit (typed $skill) and PostToolUse on Bash (a shell read of skills/<name>/SKILL.md) run scripts/skill-case-notes.sh; its additionalContext reaches the model on both events (probe, Codex 0.166.0), plain stdout does so on SessionStart only. Each hook entry is trusted separately by key and hash.",
   "hooks": {
     "SessionStart": [
       {
@@ -23,6 +23,31 @@
             "command": "[ -x \"$HOME/.local/bin/idh-hook\" ] || { echo \"IDH: hook launcher missing; run <checkout>/bin/idh install from a plain terminal\" >&2; exit 2; }; exec \"$HOME/.local/bin/idh-hook\" guard-destructive-bash.sh",
             "timeout": 8,
             "statusMessage": "Checking dirty-reset guard"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.local/bin/idh-hook\" ] || exit 0; exec \"$HOME/.local/bin/idh-hook\" skill-case-notes.sh",
+            "timeout": 5,
+            "statusMessage": "Loading skill case notes"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -x \"$HOME/.local/bin/idh-hook\" ] || exit 0; exec \"$HOME/.local/bin/idh-hook\" skill-case-notes.sh",
+            "timeout": 5,
+            "statusMessage": "Loading skill case notes"
           }
         ]
       }
