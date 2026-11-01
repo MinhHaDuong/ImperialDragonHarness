@@ -20,6 +20,7 @@ Fails open: any error leaves stdout empty and exits 0.
 """
 
 import argparse
+import fcntl
 import json
 import logging
 import os
@@ -95,50 +96,64 @@ def rule_body(path: Path) -> str:
     return skill_frontmatter.FRONTMATTER.sub("", text, count=1).strip()
 
 
-def command_paths(command: str) -> list[str]:
-    """Words of a shell command that may name a file, plus patch-header paths."""
-    found = [a or b for a, b in PATCH_HEADER.findall(command)]
+def command_paths(command: str, cwd: Path) -> list[Path]:
+    """Paths a shell command may name, each resolved against the directory a
+    preceding `cd` in the same command moved to, plus patch-header paths."""
+    found = [cwd / (a or b) for a, b in PATCH_HEADER.findall(command)]
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
     try:
-        words = shlex.split(command, comments=False)
+        words = list(lexer)
     except ValueError:
         words = command.split()
+    base, after_cd = cwd, False
     for w in words[:MAX_WORDS]:
-        w = re.sub(r"^(?:\d?>>?|<|--?[A-Za-z0-9-]+=)", "", w)
-        if w and not w.startswith("-") and len(w) < 4096:
-            found.append(w)
+        if after_cd:
+            after_cd = False
+            if not set(w) <= set("&|;<>()") and w != "-":
+                base = base / os.path.expanduser(w)
+                continue
+        if w == "cd":
+            after_cd = True
+            continue
+        w = re.sub(r"^--?[A-Za-z0-9-]+=", "", w)
+        if w and not w.startswith("-") and len(w) < 4096 and not set(w) <= set("&|;<>()"):
+            found.append(base / os.path.expanduser(w))
     return found
 
 
+def git_root(path: Path) -> Path | None:
+    try:
+        top = subprocess.run(["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True, timeout=3).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        top = ""
+    return Path(top) if top else None
+
+
 def touched(tool_input: dict, cwd: Path, root: Path) -> list[str]:
-    """Paths touched by the call, relative to the project root when inside it."""
-    raw = [tool_input.get(k) for k in ("path", "file_path")]
-    named = [r for r in raw if isinstance(r, str) and r]
+    """Paths touched by the call, relative to their project root. A file outside
+    the session's project matches from its own repository root; outside any
+    repository, from `/`, where only `**/` globs can reach it."""
+    named = [cwd / os.path.expanduser(r) for r in (tool_input.get(k) for k in ("path", "file_path"))
+             if isinstance(r, str) and r]
     cmd = tool_input.get("command")
-    candidates = named + (command_paths(cmd) if isinstance(cmd, str) else [])
+    words = command_paths(cmd, cwd) if isinstance(cmd, str) else []
     out = []
-    for c in candidates:
-        p = Path(os.path.expanduser(c))
-        p = p if p.is_absolute() else cwd / p
+    for p in named + words:
         # a direct path tool may name a file it just deleted; a shell word must name a file
-        if c not in named and not p.is_file():
+        if p not in named and not p.is_file():
             continue
         p = Path(os.path.normpath(p))
-        try:
-            rel = p.relative_to(root).as_posix()
-        except ValueError:
-            rel = p.as_posix().lstrip("/")
+        own = root if p.is_relative_to(root) else git_root(p.parent)
+        rel = p.relative_to(own).as_posix() if own and p.is_relative_to(own) else p.as_posix().lstrip("/")
         if rel not in out:
             out.append(rel)
     return out
 
 
 def project_root(cwd: Path) -> Path:
-    try:
-        top = subprocess.run(["git", "-C", str(cwd), "rev-parse", "--show-toplevel"],
-                             capture_output=True, text=True, timeout=3).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        top = ""
-    return Path(top) if top else cwd
+    return git_root(cwd) or cwd
 
 
 def log_line(state: Path, outcome: str, session: str = "-", rules: str = "-") -> None:
@@ -176,21 +191,20 @@ def respond(payload: object, rules: Path, state: Path) -> str:
     if not hits:
         return ""
     marker = state / f"{session}-{agent}"
-    try:
-        seen = set(marker.read_text().split())
-    except OSError:
-        seen = set()
-    new = [r for r in hits if r not in seen]
-    if not new:
-        log_line(state, "already-delivered", session, ",".join(hits))
-        return ""
-    with open(marker, "a", encoding="utf-8") as f:
-        f.write("".join(r + "\n" for r in new))
-    parts = [
-        f"Conditional rule rules/{rid} (paths: {', '.join(index[rid])}), "
-        f"loaded because this session touched {hits[rid]}:\n\n{rule_body(rules / rid)}"
-        for rid in new
-    ]
+    with open(marker, "a+", encoding="utf-8") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)  # two tool calls ending together deliver once
+        f.seek(0)
+        seen = set(f.read().split())
+        new = [r for r in hits if r not in seen]
+        if not new:
+            log_line(state, "already-delivered", session, ",".join(hits))
+            return ""
+        parts = [
+            f"Conditional rule rules/{rid} (paths: {', '.join(index[rid])}), "
+            f"loaded because this session touched {hits[rid]}:\n\n{rule_body(rules / rid)}"
+            for rid in new
+        ]
+        f.write("".join(r + "\n" for r in new))  # only once every body was read
     log_line(state, "delivered", session, ",".join(new))
     event = payload.get("hook_event_name") or "PostToolUse"
     return json.dumps({"hookSpecificOutput": {"hookEventName": event,
