@@ -65,9 +65,11 @@ page), `pi --print` hitting 300 s timeouts that were first blamed on padme's
 model (2026-11-01, native `reference_pi_print_stdin`). Common origin: two of
 the three involve Pi, so this is two independent tools, not three. Current
 home: `rules/README.md:64` covers `pi --print` only, and README is not loaded
-as a rule. Proposal: one line in `rules/coding-bash.md` (conditional, zero
-resident cost): "A non-interactive call that does not need stdin gets
-`</dev/null`." Counterexample: a call that does read stdin (`bash -s` itself)
+as a rule. Proposal: one line, "A non-interactive call that does not need
+stdin gets `</dev/null`." In `rules/coding-bash.md` it costs no resident
+budget, but that file loads only on `*.sh`, so it would miss the agent
+one-liners where two of the three incidents happened; reaching them takes a
+resident line. Counterexample: a call that does read stdin (`bash -s` itself)
 must get its input explicitly; the rule must not tell agents to close it there.
 Evidence: moderate; cost: low.
 
@@ -77,7 +79,7 @@ rebase and GitHub closed PR 1568 (2026-10-21; raids page, native
 `feedback_check_exit_codes_not_pipe_tails`). `coding-bash.md` requires
 `set -euo pipefail` in scripts, but agent one-liners are not scripts and do not
 set it. Proposal: one bullet in `rules/git.md` § Commands that destroy silently,
-or in `coding-bash.md`. Counterexample: none found; the cost is the resident
+or in `coding-bash.md` (which agent one-liners do not load). Counterexample: none found; the cost is the resident
 budget if it goes to git.md. Evidence: a single incident with severe
 consequence; one recurrence would settle it. The `rtk` proxy that rewrites
 output makes piped tails more common, which favours the rule.
@@ -126,17 +128,17 @@ a current rule or skill states the ruling, **candidate** means no rule holds it,
 **not a rule** means its destination is a skill, configuration or memory under
 the taxonomy. The ticket's 2026-10-29 probe counted 41 % of notes prescribing
 behaviour that `rules/` did not hold. Since then several were promoted: of
-the 24 rows below, 7 are in force in a rule, 10 are candidates, 7 are not a rule.
+the 24 rows below, 6 are in force in a rule, 11 are candidates, 7 are not a rule.
 
 | # | Ruling (condensed) | Source note, date | Destination | Status | Conflict with current text |
 |---|---|---|---|---|---|
-| 1 | Trust, Verify, Monitor; judge findings against a bar fixed before review | review_trust_verify_monitor, 2026-10-21/28 | workflow.md § Trust, Verify, Monitor | in force | none |
+| 1 | Trust, Verify, Monitor; judge findings against a bar fixed before review | review_trust_verify_monitor, 2026-10-21/28 | workflow.md § Trust, Verify, Monitor (the fixed bar: skills/gaze/references/panel.md) | in force | none |
 | 2 | No second-order guards; guard management is test-doctor's | no_second_order_guards, 2026-10-21 | workflow.md § Autonomous action | in force | none |
-| 3 | Bounded waits only; the author is not the waiter | no_blocking_waits, 2026-10-07/21 | coding-bash.md § Waiting | in force | none |
+| 3 | Bounded waits only; the author is not the waiter | no_blocking_waits, 2026-10-07/21 | coding-bash.md § Waiting (loads on `*.sh` only); "not the waiter" in no rule | candidate (partly in a conditional rule that agent one-liners do not load) | none |
 | 4 | Sync local main after each merge | sync_local_main_after_merge, 2026-10-27 | git.md § Reading state | in force | none |
 | 5 | Author edits in the primary checkout; trivial commits via the backdoor | prose_edits_are_on_main, 2026-10-26, rewritten 2026-11-01 | git.md § Branch and commit | in force | resolved by 1372 (closed 2026-11-01) |
-| 6 | A classifier denial is not retried verbatim | classifier_blocks_rule_mandated_git, 2026-10-28, rewritten 2026-11-01 | claude-code.md § Allow rules | in force | minor: the note says "hand the author a `!` command"; the rule says "logged and skipped" |
-| 7 | Rules carry no forge dependency; memory is jurisprudence | rules_are_law_memory_is_decree, 2026-10-30 | workflow.md preamble ("independent of forge and runtime"); taxonomy itself: rules/README.md | in force (principle); candidate (taxonomy) | none |
+| 6 | A classifier denial is not retried verbatim | classifier_blocks_rule_mandated_git, 2026-10-28, rewritten 2026-11-01 | claude-code.md § Allow rules | in force | **conflict**: the rule says to rewrite a denial in the `git -C` form; the note, rewritten 2026-11-01, says the allow rules are prefix matches (`Bash(git branch -D:*)`), so `git -C <path> branch -D` does not match, and prescribes a separate `cd` call, then `git branch -D` (auto mode not yet measured). Also: the note hands the author a `!` command; the rule says "logged and skipped" |
+| 7 | Rules carry no forge dependency; memory is jurisprudence | rules_are_law_memory_is_decree, 2026-10-30 | workflow.md preamble ("independent of forge and runtime"); taxonomy itself: in no rule; proposed home rules/README.md | in force (principle); candidate (taxonomy) | none |
 | 8 | No wait tickets; post-merge measurement goes in a doctor's journal revisit | no_wait_tickets, 2026-10-29 | workflow.md § Autonomous action (by the severity floor) | candidate | **ticket 1374, open**: AEDIST's native index says "a reminder is an OPEN ticket Blocked-by its trigger"; author answer pending |
 | 9 | A wanted diagnostic is built now as a ready probe, not a ticket in line | doctor_kit_tools, 2026-10-28 | same line as 8, or the doctor skills | candidate | none; shares 8's stance (two incidents, tickets 1297 and 1336), so one line could carry both |
 | 10 | Start independent work before yielding on a background job; ask up first | dont_idle_on_background, 2026-10-21 | workflow.md § Autonomous action | candidate (yielding); in force (ask-up-first: § Escalation) | none |
@@ -162,18 +164,22 @@ idh_tracked_tmp_leak, and the `reference_*` host facts.
 
 Conflicts in summary: row 5's conflict was resolved on 2026-11-01. Ticket
 1373 (forge read-back versus the 1366 KISS ruling) remains open and sits in
-Commission, not in a native note. Ticket 1374 (row 8) remains open. Rows 12 and
-21 are new conflicts with no ticket.
+Commission, not in a native note. Ticket 1374 (row 8) remains open. Rows 6, 12 and
+21 are new conflicts with no ticket; row 6 sits in a resident rule, so a
+session following it may issue the form the note says the allow rules miss.
 
 ## Recommendation
 
 The evidence supports few promotions. The resident budget, not the evidence,
 is the binding constraint:
 
-1. Zero resident cost, moderate evidence: L1 into `coding-bash.md`.
+1. Moderate evidence: L1. In `coding-bash.md` it costs no resident budget but
+   reaches only sessions touching a `*.sh` file; reaching agent one-liners
+   takes a resident line.
 2. One resident bullet, if the author wants it: L2 (row 13). It is the only
    candidate whose single incident did irreversible-looking damage.
-3. The author to rule: row 12 (peer-relayed rulings against the cross-project
+3. The author to rule: row 6 (`git -C` in claude-code.md against the note's
+   prefix-match finding; a probe in auto mode would settle it), row 12 (peer-relayed rulings against the cross-project
    rule) and row 8 (ticket 1374). Either outcome removes a live
    contradiction between the native store and the rules.
 4. Bounded experiment, then a skill change: L3 / row 21.
@@ -183,5 +189,5 @@ is the binding constraint:
 The Commission page holds 9088 bytes on disk (7769 capped bytes by the
 smelt's measure) against a 4096 cap, the overflow all pinned rulings. The smelt marked that overflow as rulings waiting for promotion. This
 run finds that most of them are better left as jurisprudence than promoted:
-seven are already in force, and the resident budget cannot take the rest.
+six are already in force, and the resident budget cannot take the rest.
 Pruning the page's "Now in" lines down to links would be a smelt task.

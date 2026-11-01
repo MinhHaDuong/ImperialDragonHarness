@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-29T20:27Z reviewer rule-candidate lane from native notes (author)
 2026-10-31T20:45Z reviewer note blocker 1349 closed — Blocked-by removed.
 2026-11-01T13:10Z reviewer brood run (raid 1f0534): report conception/2026-11-01-brood-harness-run.md — 5 lesson candidates (1 no change), 24 native-note rule rows (7 in force, 10 candidates, 7 not a rule); 2 new unticketed conflicts (peer-relayed rulings vs workflow.md cross-project; nested gaze vs hunt Verify); nothing implemented
+2026-11-01T13:18Z reviewer gaze rv-20261101-pr-2152-fb37 FINDINGS fixed: row 6 conflict (git -C vs prefix match), row 3 reclassified candidate, row 7 destination proposed, L1 load scope; tally now 6/11/7
 
 --- body ---
 ## Context
