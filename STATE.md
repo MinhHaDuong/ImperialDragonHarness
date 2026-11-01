@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-30
+Last updated: 2026-11-01
 
 Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 
@@ -17,12 +17,12 @@ F1 review evidence on notes (tracker 1298; children 1299, 1300, 1301): gaze's an
 Raid 2026-10-27b: gaze and verify-gate run `scripts/touched-tests.py` (1283); after-merge runner reports a stale venv as `environment` (1288) and builds the forge only on red; main_sweep lists crashed-on tips (1293); headless seats declare a reach line (1290); attribution writer lines append before reviewers (1286). Gaze cross-family default (1287, PR #1836; no further normaliser widening) and stopguard measure (1294, PR #1832) merged 2026-10-27.
 Model-service transmission authorization now prints in every session's start context (PR #1783); whether Codex's managed approval reviewer reads it is untested.
 Raids 29bf18 and d2253c (2026-10-29/30, all merged): smelt v8-r3/r4 with a 4 KB topic cap and `memory_sizes.py` (1348, 1349 criterion 1); worktree deletion keeps a build/ child unless every file matches a tracked blob (1357); seat family comes from the launch door (1360) and a seat without a path:line citation or 200 characters counts as hollow (1361; fixture follow-up 1364). Open: 1365, codex seat intermittently refuses the review tree.
+Ruleset review 2026-11-01 (Fable + Astra): the author rewrote git.md, workflow.md (Cycle section, procedure moved to skills) and guards.md (tickets are the only channel into another project). The resident budget counts loaded text, HTML comments stripped (cap 15100). Measured: Codex and Pi load none of rules/ (1413); `pi --print` needs stdin closed.
 Doc propagation (1333, PR #1945): roar step 6 names its contracts and documents, `tests/test_root_doc_paths.py` checks root-doc paths and make targets, lair step 10 refreshes ROADMAP facts. Harness-doctor weight loss (1334, PR #1957) and the whole-docs visit (1335, PR #1959) closed.
 
 ## Next session (from 2026-10-29)
 1. Smelt rebuild (1349): the fifth consolidation, PR #1975, was closed unmerged on 2026-10-29 (branch `hoard-2026-10-29` kept as reference); the rebuild process landed (SMELT v8-r3/r4, PRs #2006, #2016). Criterion 2 waits on the first real rebuild run and the author's acceptance.
-2. Rule the four conflicts PR #1975 flagged (rules are the author's):
-   - rules/README.md says tickets/AGENTS.md is @-imported by the harness CLAUDE.md, removed 2026-10-19.
+2. Rule the three remaining conflicts PR #1975 flagged (rules are the author's):
    - rules/git.md stash ban "in a shared checkout": does it cover a session's own worktree (stash stack is repo-global)?
    - Severity floor wording ("misleads a model" in harness-doctor vs "bites the science" in workflow.md); North star required by rules/state.md but kept in ROADMAP.md.
    - Night-mode "escalations go to Fable" memory vs "author's calls by right are never delegated".
