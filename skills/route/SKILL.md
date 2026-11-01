@@ -64,7 +64,7 @@ concrete fixes and trivial swaps are not.
 - Triage is an LLM read of title + body + exit criteria, priced in the value
   class (~0.01 $). Mechanical features (stratum, size, files) do NOT
   separate difficulty — do not use them alone.
-- The 256K monster guard is a hard floor and stays: oversize context is a
+- The 230K context guard (`rules/guards.md`) is a hard floor and stays: oversize context is a
   split-the-work ticket, never a bigger-window ticket.
 
 ## Choosing a worker
@@ -97,7 +97,7 @@ General recommendations:
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
   monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ (Albert counts as PRIVÉ by author ruling 2026-10-28; its seats are not in the grid and serve single-shot calls only, `routes-recommendations-pi.md` § Albert seats stay out of the grid). Ambiguous
   tasks wait for a human before any spend; when `rules/workflow.md` batches
-  decisions, the batched list wins: collect, ask once, with a recommended default. The 256K guard outranks all of
+  decisions, the batched list wins: collect, ask once, with a recommended default. The 230K context guard outranks all of
   it: oversize context is a split-the-work ticket.
 - Choose the lineage on purpose. A reviewer that shares the producer's
   `family` adds replication, not independence. When the risk calls for an

@@ -21,7 +21,7 @@ oversize context, uncleared content, or a cross-family need).
 | Independent review of a risky change | `codex exec -m` (OpenAI), `vibe` (Mistral) | other | headless seat from bash; on padme `pi -p` serves only the local seats and huggingface |
 | Cheap work, different family wanted | `codex exec -m gpt-6-luna` | OpenAI | headless seat |
 | Uncleared content | local model via `pi -p`, or Albert via `pi-albert` | local; Albert: Qwen (`openweight-code`), OpenAI lineage (`openweight-large`), DINUM-hosted | Albert is PRIVÉ by author ruling 2026-10-28, not yet in the grid: smoke and spot check (arena) before routing work to it; never another hosted door |
-| Context over 256K | none | n/a | split the work |
+| Context over 230K | none | n/a | split the work |
 
 ## Launching
 
