@@ -283,8 +283,8 @@ the verify-gate skill on the head it reviewed. Hunt's Verify phase already ran g
 fixed its findings, so the raid reads that record first (the review's latest
 answer on notes, `review_notes.py answers --unit pr:<n> --latest --json`) and re-runs gaze
 only when it is missing, ESCALATE, or stale against the tip
-(`skills/merge/SKILL.md` § Gating tiers, which also counts a `seats:
-self-only` record as missing); a second review of a head gaze
+(`skills/merge/SKILL.md` § Gating tiers, which takes a `seats:
+self-only` record as a review); a second review of a head gaze
 already reviewed buys nothing and costs a full gaze run. Gaze reviews and
 never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
 NEEDS-AUTHOR. The orchestrator itself

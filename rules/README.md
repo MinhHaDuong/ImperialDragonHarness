@@ -46,30 +46,35 @@ Not a rules file, nor loaded here: `tickets/AGENTS.md` — reached through the
 
 ## Loading per runtime
 
-Measured 2026-11-01 on padme (codex-cli 0.166.0, pi 1.4.0; after `idh install`)
-with sentinel sentences (the model completes a
-sentence only if it is in its context; a fake sentence and the session-start
-hook line are the controls).
+Re-probed 2026-11-01 on padme (codex-cli 0.166.0, pi 1.4.0; after `idh install`),
+one run per CLI from one harness worktree, with sentinel sentences (the model
+completes a sentence only if it is in its context; a fake sentence is the
+control). It covered three rules sentences, two comments and the project's
+`AGENTS.md`, for `codex exec` and `pi --print` only. Cells marked (earlier) come
+from the earlier measurement, not the re-probe.
 
 | Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
 |---|---|---|---|
-| Resident rules (workflow, git, guards; claude-code.md is Claude-only) | every session | every session (generated `~/.codex/AGENTS.md`) | every session (generated `~/.pi/agent/AGENTS.md`) |
-| Conditional rules (`paths:`) | on a matching file | none | none |
-| Session-start hook (`scripts/on-start-context.sh`) | yes | yes | yes |
-| The project's `AGENTS.md` | yes | yes | yes |
-| HTML comments of the rules | **stripped** | stripped by the generator | stripped by the generator |
+| Resident rules (workflow, git, guards; claude-code.md is Claude-only) | every session (earlier) | found in the re-probe (generated `~/.codex/AGENTS.md`) | found in the re-probe (generated `~/.pi/agent/AGENTS.md`) |
+| Conditional rules (`paths:`) | on a matching file (earlier) | none (earlier) | none (earlier) |
+| Session-start hook (`scripts/on-start-context.sh`) | yes (earlier) | yes (earlier) | yes (earlier) |
+| The project's `AGENTS.md` | yes (earlier) | found in the re-probe | found in the re-probe |
+| HTML comments of the rules | **stripped** (earlier) | absent from context in the re-probe | absent from context in the re-probe |
 
 Claude Code reads `~/.claude/rules/` (symlinks into this directory). Codex and
 Pi have no rules directory: `idh install` generates `~/.codex/AGENTS.md` and
 `~/.pi/agent/AGENTS.md` from the resident rules minus claude-code.md, comments
-stripped (`scripts/runtime_rules.py`). Neither CLI strips comments itself; the
-generator does. Evidence: `memory/evidence/2026-11-01-runtime-rules-reprobe/`. Codex TUI was
-not probed: it reads the same configuration as `codex exec`. `pi --print` waits
-on an open stdin: run it with `</dev/null`.
+stripped (`scripts/runtime_rules.py`); the generated files held no `<!--`.
+Whether the CLIs strip comments themselves is unmeasured: the re-probe read the
+generated files. Evidence: `memory/evidence/2026-11-01-runtime-rules-reprobe/`.
+The Codex TUI was not probed (unmeasured; expected to read the same
+configuration as `codex exec`). `pi --print` waits on an open stdin (earlier
+observation): run it with `</dev/null`.
 
-Comments are therefore free in the rules (Claude Code is their only reader) and
-paid by Codex and Pi in `AGENTS.md`. Module docstrings are for the people who
-edit a file; anything an agent must know is plain text.
+Comments are therefore free in the rules and in the generated `AGENTS.md`,
+since the generator strips them; Claude Code strips them itself (earlier).
+Module docstrings are for the people who edit a file; anything an agent must
+know is plain text.
 
 How the four resident files share the work: workflow.md says how to work,
 git.md how to use git, guards.md what no role may do, claude-code.md how

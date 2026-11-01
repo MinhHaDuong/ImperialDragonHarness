@@ -138,9 +138,9 @@ Whatever the result, say who reviewed: `seats: self-only` when no item but
 `self` has a report, else `seats: panel` (a script check counts: its evidence
 is not gaze's judgment). This is the one definition; `gaze_close.py` refuses
 `seats: panel` when no non-self item filed a report. A self-only result
-is the caller reviewing its own work, so the reuse rule
-(`skills/merge/SKILL.md` § Gating tiers) counts it, and a record with no
-`seats:` line, as no record. Seats launch on the headless door
+is the caller reviewing its own work, and it is a valid review: the reuse
+rule (`skills/merge/SKILL.md` § Gating tiers) and the gate take it, as they
+take a record with no `seats:` line (author ruling 2026-11-01). Seats launch on the headless door
 (`references/panel.md`), which needs no agent nesting on any runtime; a seat
 that cannot launch is `no report`, never replaced by gaze's own read.
 

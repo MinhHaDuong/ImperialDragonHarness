@@ -37,7 +37,7 @@ covered, and no label claims more.
 | Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference, not a requirement (`decorrelation.md` § Family is a preference, not a gate): worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
-is `seats: self-only` (SKILL.md § 4), which callers discard. When the
+is `seats: self-only` (SKILL.md § 4), valid but the weakest record. When the
 subagent door cannot launch (nesting limit, no delegation tool), plan a
 same-family seat on the headless door (`"$IDH_ROOT/scripts/gaze_seat.py"`, which needs no
 nesting) before it may fall back to `seats: self-only`; self-only stays only
