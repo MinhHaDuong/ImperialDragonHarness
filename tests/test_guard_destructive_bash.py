@@ -216,3 +216,46 @@ def test_refused_form_really_matches_its_shell():
     r = subprocess.run(["sh", "-c", "pgrep -f '[i]dhmarker1324x' >/dev/null; echo $?"],
                        capture_output=True, text=True, env=child_env())
     assert r.stdout.split() == ["1"], r
+
+
+@pytest.mark.parametrize("command", [
+    "pi --print 'hello'",
+    "pi -p hello",
+    "rtk pi -p hello",
+    "FOO=1 pi --print hello",
+    "timeout 60 pi -p hello",
+    "cd /tmp && pi -p hello",
+    "pi -p hello | tail -3",  # stdin of the first command is still open
+    "pi -p hello > out.txt 2>&1",
+    "codex exec 'say ok'",
+    "codex exec --skip-git-repo-check 'say ok'",
+])
+def test_open_stdin_cli_is_blocked(tmp_path, command):
+    res = _run(command, tmp_path)
+    assert res.returncode == 2, (command, res.stderr)
+    assert "</dev/null" in res.stderr and "coding-bash.md" in res.stderr
+
+
+@pytest.mark.parametrize("command", [
+    "pi --print hello </dev/null",
+    "pi -p hello < prompt.txt",
+    "pi -p <<< 'hello'",
+    "pi -p <<EOF\nhello\nEOF",
+    "echo hello | pi -p",
+    "cat prompt.txt | pi --print",
+    "codex exec 'say ok' </dev/null",
+    "pi --help",
+    "pi",
+    "pi chat",
+    "codex --help",
+    "codex login",
+    'echo "pi -p hello"',
+    "grep 'pi --print' notes.md",
+    "# pi -p hello",
+    "command -v pi",
+    "git log -p",
+    "cat <<'EOF'\npi -p hello\nEOF",
+])
+def test_closed_stdin_or_other_cli_is_allowed(tmp_path, command):
+    res = _run(command, tmp_path)
+    assert res.returncode == 0, (command, res.stderr)
