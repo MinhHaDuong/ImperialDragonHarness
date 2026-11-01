@@ -38,3 +38,6 @@ Budget: about an hour of agent time, a few USD.
 - Premise holds; independent of 1413 by using the prompt-prefix arm (ticket allows it).
 - Spend within the ticket's budget (about an hour, a few USD). Blind scorer from another family than the producer when reachable.
 - Evidence under memory/evidence/; the PR closes 1414 only if both runtimes ran both arms.
+
+## Feasibility (raid 1f0534)
+- WARN. Pi's default provider is local qwen (`~/.pi/agent/settings.json`): record the served provider/model per arm; a finding reads "<model> on <runtime>". Run before any 1413 install (clean baseline). Moved to wave 1.

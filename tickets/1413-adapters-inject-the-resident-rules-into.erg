@@ -39,3 +39,6 @@ install step is the author's to run or approve.
 - Premise holds: rules/README.md says adapters must inject the resident set; none does.
 - Simplest path: one generator script (resident rules minus claude-code.md, HTML comments stripped) called by the installer; tests on the generator output. Writing `~/.codex/AGENTS.md` / `~/.pi/agent/AGENTS.md` on the host is the author's to run (ticket says so): the PR ships the generator and installer step, the install and the sentinel re-probe wait for the author, so this PR refs 1413 and does not close it.
 - Runs after 1416 (shared installer) and 1412 (guards.md content).
+
+## Feasibility (raid 1f0534)
+- PASS for generator + installer step. Shares adapters/projections.json and lifecycle.py with 1416 (pulled), follows 1412 (guards.md). Wave 2.

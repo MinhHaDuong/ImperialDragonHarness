@@ -28,3 +28,6 @@ repo sees it only through the roar/smelt skills and a pointer in workflow.md
 - Simplest path: procedure sentences move to skills/roar and skills/smelt, the boundary sentence (facts only, crystallisation on explicit request with a destination) to rules/guards.md; AGENTS.md keeps a harness-only remainder.
 - Grep every site that cites "AGENTS.md § Project memory boundary" (skills, rules, tests) and repoint them in the same commit (rename-sweep rule).
 - Risk: guards.md is resident on every runtime; keep the addition short and run tests/test_rules_resident_budget.py.
+
+## Feasibility (raid 1f0534)
+- WARN. Resident text loads at 15036/15100 chars: a guards.md addition must be paid by a trim (e.g. workflow.md:142's pointer). `scripts/census/repo-memory-reads.py:41` MARKER = "Project memory boundary" (tests/test_repo_memory_reads.py:76,136): keep the AGENTS.md heading or update MARKER in the same commit. Citing sites: AGENTS.md:64, rules/workflow.md:142, memory/topics/commission.md:19-20, conception/* (history, leave).

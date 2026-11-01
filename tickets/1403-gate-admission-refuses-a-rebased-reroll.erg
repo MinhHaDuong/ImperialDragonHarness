@@ -23,3 +23,6 @@ Admit a round-2 head when the rerolled head is its ancestor OR its commits since
 - Premise holds on 2a5547b8: `scripts/review_notes.py:915` admits reroll-fix only when the rerolled head is an ancestor.
 - Simplest path: OR the ancestor test with patch-equivalence of the rerolled range (merge-base..A) against the new range, reusing the patch-id helper `coverage()` already has; no new git plumbing.
 - Antipatterns: none; do not add a range-diff dependency.
+
+## Feasibility (raid 1f0534)
+- PASS. `gate_state` :875, reroll-fix :914-916. No per-commit patch-id helper exists: `_binding` (:618-627) hashes the whole range; per-commit equivalence needs `git cherry` or per-commit `patch-id`. Check the rerolled head's objects survive a force-push on a fresh gate host (are verdict heads pinned under refs/review-heads, :116, like answer heads?).

@@ -25,3 +25,6 @@ fallback then applies). Check `field()` (same file, `^{name}:\s*(\S+)`) for the 
 
 ## Imagine (raid 1f0534)
 - Fix is one regex: `[ \t]*` instead of `\s*` around the colon, so the value stays on the key's line. Bounded; cheap worker.
+
+## Feasibility (raid 1f0534)
+- PASS. The function is `_field` (gaze_close.py:261-263), unstripped text, same newline crossing. This repo's notes hold no corrupted seats values (panel 241, self-only 35, seat 2); the 1411 record lives in arena (its cleanup is arena's).

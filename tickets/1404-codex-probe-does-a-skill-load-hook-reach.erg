@@ -21,3 +21,8 @@ A Codex hook prints a token at skill load; ask the model whether it sees it. Pos
 - Premise holds: no Codex wiring for skill-case-notes on main. Codex has no Skill tool, so "skill load" is a shell read of `skills/<name>/SKILL.md`: probe whatever hook event Codex fires around that read (PostToolUse on shell, if offered), with the SessionStart positive control.
 - Spend: a few `codex exec` calls, authorized by the session's model-service clause.
 - Shares `scripts/skill-case-notes.sh` with 1405: change the script only additively (a new payload shape), never its Claude paths.
+
+## Feasibility (raid 1f0534)
+- WARN. `~/.codex/hooks.json` is a symlink into the checkout: merging a hooks.json change changes the host. Codex hook trust is hash-recorded (adapters/README.md § dirty-reset guard): probe in a throwaway CODEX_HOME whether 0.166.0 trusts per entry or per file before wiring; a whole-file distrust would silently drop the destructive-bash guard.
+- Codex invokes skills as `$name`, not `/name`: the `"prompt":"/` pre-filter in scripts/skill-case-notes.sh:17-19 drops them.
+- Record probe results on this ticket only; the orchestrator copies them to 1394 (avoids log conflicts with 1405).
