@@ -35,6 +35,21 @@ if [ -n "$_disk_output" ]; then
     printf '%s\n' "$_disk_output"
 fi
 
+# Editor autosave (author ruling 2026-11-01, rules/git.md § Branch and commit):
+# agents edit files the author may have open in the primary checkout, and an
+# unsaved buffer is invisible to them. Silent when VS Code's user settings are
+# absent or set an autosave mode other than off, and in night sweeps (no
+# author). A grep, not a JSON parse: settings.json is JSONC; whole-line `//`
+# comments are dropped first so a commented-out setting reads as off (trailing
+# and /* */ comments, and language-scoped settings, still read as on). Linux stable VS
+# Code path only: macOS, Insiders, VSCodium and Remote-SSH stay silent.
+_vsc="${XDG_CONFIG_HOME:-$HOME/.config}/Code/User/settings.json"
+if [ -f "$_vsc" ] && [ -z "${CLAUDE_NIGHT_SWEEP:-}" ] &&
+    ! grep -qE '"files\.autoSave"[[:space:]]*:[[:space:]]*"(afterDelay|onFocusChange|onWindowChange)"' \
+        <<<"$(grep -vE '^[[:space:]]*//' "$_vsc")"; then
+    echo "VS Code autosave is off on this host: an agent editing a file the author has open cannot see unsaved changes. Setting \"files.autoSave\": \"afterDelay\" in $_vsc closes that gap. The session offers once to set it for the author, waits for the answer, and edits that file only on a yes."
+fi
+
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Resident-text budget for the project's own directives (0971): the zero-LLM
