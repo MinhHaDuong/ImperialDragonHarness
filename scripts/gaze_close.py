@@ -259,7 +259,7 @@ def containment(primary, entry_branch, entry_status=(), entry_primary=(), sessio
 
 
 def _field(text, name):
-    m = re.search(rf"^{name}:\s*(\S+)", text, re.MULTILINE)
+    m = re.search(rf"^{name}:[ \t]*(\S+)", text, re.MULTILINE)
     return m.group(1) if m else None
 
 
@@ -268,7 +268,7 @@ def seats_claims(text):
     notes record (ticket 1287). A leading list, quote or heading mark, markup around the key,
     and spaces before the colon do not hide the claim."""
     plain = re.sub(r"[*_`]", "", text or "")
-    return [v.lower() for v in re.findall(r"^[\s>#-]*seats\s*:\s*([A-Za-z][\w-]*)", plain, re.M | re.I)]
+    return [v.lower() for v in re.findall(r"^[\s>#-]*seats[ \t]*:[ \t]*([A-Za-z][\w-]*)", plain, re.M | re.I)]
 
 
 def seats_claim(text):

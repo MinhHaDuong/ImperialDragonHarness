@@ -591,6 +591,17 @@ def test_one_normaliser_reads_the_seats_claim(line, value):
     assert gaze_close.seats_claim(f"result: REVIEWED\n{line}\n") == value
 
 
+def test_empty_seats_line_claims_nothing_and_field_stays_on_its_line():
+    """Ticket 1418: the value sits on the key's own line; the next key is never the claim."""
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+    text = "result: REVIEWED\nseats:\nreviewed_head_sha: 7fdb24d\n"
+    assert gaze_close.seats_claim(text) is None
+    assert gaze_close._field("seats:\nreviewed_head_sha: 7fdb24d\n", "seats") is None
+    assert gaze_close._field("reviewed_head_sha: 7fdb24d\n", "reviewed_head_sha") == "7fdb24d"
+
+
 def test_record_answer_reads_the_claim_through_the_one_normaliser(monkeypatch):
     """Ticket 1287: the notes record reads `seats:` through seats_claim, as main() does. The old
     `_field` reader saw nothing in marked-up `**seats:** panel` and recorded `self-only`."""
