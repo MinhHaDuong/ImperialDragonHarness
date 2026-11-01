@@ -39,7 +39,8 @@ LOG = logging.getLogger("conditional_rules")
 SAFE_ID = re.compile(r"[A-Za-z0-9_.-]+")
 PATCH_HEADER = re.compile(r"^\*\*\* (?:Add|Update|Delete) File: (.+?)\s*$|^\*\*\* Move to: (.+?)\s*$", re.M)
 MAX_WORDS = 400
-PUNCT = set("&|;<>()")
+PUNCT = set("&|;<>()\n")
+KEEP_START = {"then", "do", "else", "elif", "if", "while", "until", "!", "{", "time"}
 
 
 def glob_regex(glob: str) -> re.Pattern[str]:
@@ -102,15 +103,20 @@ def command_paths(command: str, cwd: Path) -> list[Path]:
     """Paths a shell command may name, each resolved against the directory a
     preceding `cd` in the same command moved to, plus patch-header paths."""
     found = [cwd / (a or b) for a, b in PATCH_HEADER.findall(command)]
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    # posix=False keeps quotes on a token, so a quoted ')' or ';' stays a word;
+    # a newline separates commands as ';' does
+    lexer = shlex.shlex(command, posix=False, punctuation_chars="();<>|&\n")
+    lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
     try:
-        words = list(lexer)
+        tokens = list(lexer)
     except ValueError:
-        words = command.split()
+        tokens = command.split()
     base, stack, at_start, after_cd = cwd, [], True, False
-    for w in words[:MAX_WORDS]:
-        if set(w) <= PUNCT:  # a separator: the next word starts a command
+    for tok in tokens[:MAX_WORDS]:
+        quoted = len(tok) > 1 and tok[0] in "'\"" and tok[-1] == tok[0]
+        w = tok[1:-1] if quoted else tok
+        if not quoted and set(w) <= PUNCT:  # a separator: the next word starts a command
             if after_cd:
                 base = Path.home()  # a bare cd goes home
             for ch in w:
@@ -121,13 +127,17 @@ def command_paths(command: str, cwd: Path) -> list[Path]:
             at_start, after_cd = True, False
             continue
         if after_cd:
+            if w.startswith("-") and w != "-":  # cd -P, cd --: the directory follows
+                continue
             after_cd = False
             if w != "-":  # cd - returns to an OLDPWD this parser does not know
                 base = base / os.path.expanduser(os.path.expandvars(w))
             continue
-        if at_start and w == "cd":
+        if at_start and not quoted and w == "cd":
             after_cd = True
             continue
+        if at_start and not quoted and w in KEEP_START:
+            continue  # then cd, do cd, ! cd: the command slot is still open
         at_start = False
         w = re.sub(r"^--?[A-Za-z0-9-]+=", "", w)
         if w and not w.startswith("-") and len(w) < 4096:

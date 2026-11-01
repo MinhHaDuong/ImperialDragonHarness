@@ -159,6 +159,10 @@ def test_a_cd_in_the_command_moves_the_base(tmp_path, rules, project):
         ("grep -n cd notes.txt && cat src/a.py", ["notes.txt", "src/a.py"]),
         ("(cd src && cat a.py); cat STATE.md", ["src/a.py", "STATE.md"]),
         ("cd; cat src/a.py", []),
+        ("pwd\ncd src\ncat a.py", ["src/a.py"]),
+        ("if true; then cd src; cat a.py; fi", ["src/a.py"]),
+        ("(cd src; rg ')' a.py)", ["src/a.py"]),
+        ("cd -- src && cat a.py", ["src/a.py"]),
     ],
 )
 def test_only_a_cd_in_command_position_moves_the_base(project, command, expected):
