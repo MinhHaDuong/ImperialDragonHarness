@@ -139,6 +139,13 @@ def test_once_per_session_per_rule(tmp_path, rules, project):
 
 
 @pytest.mark.integration
+def test_each_agent_of_a_session_gets_its_own_delivery(tmp_path, rules, project):
+    context(hook(tmp_path, rules, bash(project, "cat src/a.py")))
+    sub = {**bash(project, "cat src/a.py"), "agent_id": "sub1"}
+    assert PY_TOKEN in context(hook(tmp_path, rules, sub))
+
+
+@pytest.mark.integration
 def test_no_match_gives_no_output(tmp_path, rules, project):
     r = hook(tmp_path, rules, bash(project, "cat notes.txt"))
     assert r.returncode == 0 and r.stdout == ""
