@@ -1,0 +1,28 @@
+%erg 0.1
+Title: claude-code.md allow rules: git -C example contradicts probe
+Created: 2026-11-01
+Author: MinhHaDuong
+Closed: autoclosed — PR #2175
+
+--- log ---
+2026-11-01T19:20Z MinhHaDuong created
+2026-11-01T19:23Z reviewer closed — autoclosed — PR #2175
+
+--- body ---
+## Context
+
+Brood report row 6 (conception/2026-11-01-brood-harness-run.md): rules/claude-code.md
+§ Allow rules told agents to rewrite a denied git act in the `git -C` form; the native
+note said allow rules are prefix matches, so `-C` misses. Author ruled "Probe first".
+
+Probe 2026-11-01 (throwaway branch, each force-push once, needing a force each time;
+plain push as positive control, allowed): `git -C <wt> push --force-with-lease origin b`
+allowed; `cd <wt> && git push --force-with-lease origin b` allowed; plain push after a
+separate call allowed (cwd had reset to the primary checkout; the branch ref is shared);
+`git -C <wt> push origin --force-with-lease b` allowed. No denial reproduced, so form
+is not shown to matter; the earlier "Git Destructive" denials remain unexplained.
+
+## Exit criteria
+
+- [ ] rules/claude-code.md § Allow rules no longer claims `git -C` is the matching form, in no more characters
+- [ ] native note feedback_classifier_blocks_rule_mandated_git agrees
