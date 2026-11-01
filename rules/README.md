@@ -59,8 +59,10 @@ hook line are the controls).
 | HTML comments in loaded files | **stripped** | kept | kept |
 
 Claude Code reads `~/.claude/rules/` (symlinks into this directory). Codex and
-Pi have no global instruction file, so rules reach them only through an adapter
-that injects them; none does yet. Neither CLI can strip comments. Codex TUI was
+Pi have no rules directory: `idh install` generates `~/.codex/AGENTS.md` and
+`~/.pi/agent/AGENTS.md` from the resident rules minus claude-code.md, comments
+stripped (`scripts/runtime_rules.py`). The table above predates the first host
+install and awaits its re-probe. Neither CLI can strip comments. Codex TUI was
 not probed: it reads the same configuration as `codex exec`. `pi --print` waits
 on an open stdin: run it with `</dev/null`.
 
