@@ -27,10 +27,22 @@ def test_protected_path_hunk_is_scope_overflow_whatever_its_kind():
 def test_comment_leniency_applies_only_inside_authorised_scope():
     body = _scope_section()
     assert "inside authorised scope" in body
-    assert "in a path the brief did not protect" in body
+    assert "inside authorised scope is never" in body
 
 
 def test_protected_path_disposition_is_escalate_and_author_exception_authorises():
     body = _scope_section()
     assert "suggested disposition is ESCALATE" in body
     assert "makes that path authorised scope" in body
+
+
+def test_exception_comes_from_brief_or_author_forge_comment_never_the_pr_body():
+    body = _scope_section()
+    assert "PR body" not in body
+    assert "commit message" in body
+    assert "author's own login" in body
+
+
+def test_comment_leniency_wording_is_authorised_scope_only():
+    body = _scope_section()
+    assert "did not protect" not in body
