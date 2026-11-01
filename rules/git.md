@@ -6,7 +6,8 @@ memory notes and tickets.
 
 ## Branch and commit
 
-- **Always work on a branch.** Main is read-only. Everything (code, docs, tickets, STATE, memory, config) lands via branch + merge request. Sole exception: manuscript prose — [prose/workpackages.md](./prose/workpackages.md).
+- **Agents work on a branch.** Main is read-only to them: everything (code, docs, tickets, STATE, memory, config) lands via branch + merge request, except below.
+- **The author edits in the primary checkout.** Agents sync it, assist the author's prose edits there ([prose/workpackages.md](./prose/workpackages.md)) and commit or land them on request; a trivial one the author may commit to main with `git -c idh.mainGuard=warn` (journaled; author only).
 - **One change per commit.** The message explains *why this change and not another*: alternatives considered, local design choices made. Merge commits carry the strategic level — architecture decisions, cross-file impacts, residual debt.
 - **Git is the project's long-term memory.** Top-level files reflect *now*; history lives in `git log`.
 - **Worktrees are throwaway, branches hold durable state.** Never `rm -rf` a worktree the runtime created; `git worktree prune` after deleting the branch.
@@ -27,13 +28,10 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Branch cleanup
 
-- **Roar cleans only the just-completed ticket and its merge.** Roar's step 10 takes
-  explicitly identified source branches and full approved head OIDs from the
-  task's merged requests, then checks ancestry before cleanup. All foreign
-  branches/worktrees remain, even when merged; repository-wide housekeeping
-  belongs to lair/molt. Worktree removal also requires task ownership.
-  Local cleanup retains ordinary Git merge/worktree refusal with `-d`; drift
-  or unreadable evidence means retain and report, never force or compensate.
+- **Roar's step 10 cleans only the just-completed ticket and its merge**: branches
+  named by its merged requests, at full approved head OIDs, ancestry checked,
+  `-d` only, worktrees it owns. Others stay, even merged (lair/molt). Drift or
+  unreadable evidence: retain and report, never force or compensate.
 
 ## Reading state you will act on
 
