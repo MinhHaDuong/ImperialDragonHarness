@@ -1,0 +1,115 @@
+%erg 0.1
+Title: Extract Aider final answers without matching quoted reasoning markers
+Created: 2026-10-31
+Author: MinhHaDuong
+Closed: autoclosed — PR #2118
+
+--- log ---
+2026-10-31T11:01Z MinhHaDuong created
+2026-10-31T20:43Z reviewer raid note: parser audit (2026-10-31, after PR #2115) reproduced the dangerous direction: when the reasoning quotes a full answer with 'reach: read=yes shell=yes tests=ran', gaze_seat.py:328 split(marker, 1) admits it, so a real read=no answer is recorded as yes/yes/ran. The fix must never admit the quoted declaration; test this direction too. Ticket copied from local branch tickets/arena-aider-parser-20261031 (commit e56955a7) without its stale tracker-1382 edit (1382 closed).
+2026-10-31T20:50Z reviewer exit criteria met on PR 2118: (1) synthetic fixtures in tests/test_gaze_seat.py cover quoted marker, duplicated separators, plain answers, truncated thinking, missing reach/NOT-RUN, markers in body (documented limit) and after the Tokens footer; (2) answer_of takes the last framed marker, content untouched, stamp/reach checks unchanged, limits in answer_start docstring; (3) tests run through the real functions and the launch CLI; (4) 'gaze_seat.py replay --raw F --sha256 H' re-derives via derive(), refuses on SHA mismatch, no model call, tests use tmp files; (5) derive() gives distinct reasons: truncated run, empty output, NOT-RUN refusal, reach refusal; timeout and nonzero exit stay decided earlier by the clock and exit status, raw output untouched; (6) memo 1382 holds: no new online record refusal, ceremony, archive, index or retry. Not done: Arena raw 1184 replay (private, supplied by author).
+2026-11-01T11:41Z reviewer closed — autoclosed — PR #2118
+
+--- body ---
+## Context
+
+Related to monitoring redesign tracker **1382** and its accepted memo
+`conception/2026-10-31-monitoring-redesign.md`; raw archive and launch-link
+work are 1383/1384. Keep their direction: preserve raw evidence, derive on
+demand, and do not add online record/schema refusals or another collector.
+This is a separate parsing defect, not structured-output follow-up 1377.
+The author explicitly requested filing this ticket, not applying a fix.
+
+Arena ticket 1184 obtained a real Aider/Qwen response, but the launcher's
+`answer_of()` selected a quoted answer marker inside reasoning before the
+actual final response. `gaze_seat.py` currently uses
+`text.split(marker, 1)`. The wrong segment then failed `reach` validation.
+There was a response; this case must not be recorded as no inference or a
+model timeout. Earlier Pi timeouts are separate observations.
+
+Minimal synthetic framing (no private project content required):
+
+```text
+► **THINKING**
+The required marker is '► **ANSWER**'.
+------------
+► **ANSWER**
+
+► **ANSWER**
+worker: fixture
+reach: read=yes shell=no tests=not-run
+
+Verdict: REVIEWED
+```
+
+The first marker occurrence is prose, whereas the transport's standalone
+separator and the duplicated leading answer marker frame the final body.
+Do not solve this by editing a model's declarations, taking an arbitrary
+last substring, or synthesizing missing evidence.
+
+## Fit with the monitoring redesign
+
+Choose the extraction owner in the current architecture (runtime answer
+extraction or an on-demand raw-transcript reader); do not revive a legacy
+online monitoring veto just to deploy the old proposal. Keep raw bytes and
+launch provenance intact. A failed derived view should explain its limits,
+not discard the response or retroactively change the original exit status.
+Semantic code-review/gate requirements remain distinct from monitoring
+record completeness; this ticket grants no Arena merge admission.
+
+## Existing evidence and proposal
+
+Evidence stays in the local Arena repository; do not copy its private raw
+response or sources into this repository or publish them without clearance.
+
+- Arena candidate: `73c2decb45d94605b971aa6ae9180d6287bcafad`.
+- Actual launch: Aider 0.86.2, Qwen3.8 Flash-Next IQ3_S, explicit xhigh;
+  response returned after 265.459 s, launcher exit 1 on extraction.
+- Raw: 159461 bytes, SHA256
+  `037ac243b37b7613fb97fcfab511456965c40b1cd58e7fc236d2cbfdf8f9f168`.
+  Quoted marker at raw line 69; transport marker at 2686; repeated model
+  marker at 2688; genuine reach line at 2690.
+- Durable raw locator in Arena: commit
+  `b0fb11ce700eccb26781c3a2efa524070c7dbb1f`, path
+  `docs/raids/9301d5-1184-current-stop-20261031/aider-rejected-evidence/1184-aider-qwen.raw.stdout`,
+  blob `9f38389686195d84f3ba23871657ca0c32a57aaf`.
+- Arena proposal branch `proposal/gaze-answer-parser-20261031`, commit
+  `eac92285e2dfcc98c455da2f366ff90b7fe8d387`, directory
+  `docs/raids/gaze-answer-parser-proposal/`: unapplied patch, 15 portable
+  synthetic harness cases, 12 Arena cases including the real raw replay.
+  The 27 focused cases passed through a pure-function shim, NOT the actual
+  installed harness loader/CLI/integrations. `git apply --check` only.
+- That proposal extracts the exact 3843-byte final-body slice, preserves
+  stamp/reach validation and documents ambiguity of flat stdout, including
+  impersonation of complete transport framing. It is a starting point,
+  not an approved implementation or a mandate to retain legacy architecture.
+
+## Exit criteria
+
+- [ ] Reproduce quoted-marker confusion with portable synthetic fixtures;
+      cover duplicated leading separators, ordinary unmarked answers,
+      truncated thinking, missing/refused reach, and markers in the body.
+- [ ] Extract the actual final answer without rewriting its content or
+      inventing worker/reach/tests declarations. State limitations where
+      unstructured framing is ambiguous; avoid claims of cryptographic
+      transport authenticity.
+- [ ] Integrate equivalent portable regression coverage into the real
+      harness tests, not only an Arena shim. Run the repository's applicable
+      checks on the actual implementation.
+- [ ] Provide an optional local replay of a supplied preserved raw artifact
+      with its SHA checked; no dependency on volatile .tmp paths, private
+      Arena checkout availability for default tests, or a new model call.
+- [ ] Keep raw transcripts and launch links available through the monitoring
+      archive; preserve original failure outcomes and distinguish parsing
+      failure, unavailable response, and timeout in derived diagnostics.
+- [ ] Respect memo 1382: no new online monitoring-record refusal, mandatory
+      launch ceremony, parallel archive, index without its trigger, or
+      automatic retry. Any necessary semantic review-contract change must
+      be explicit rather than smuggled through normalization.
+
+## Scope of this filing
+
+Ticket and coordination only. No parser patch applied, no model/service
+change, no new inference, no Arena review/gate relabelled and no publication
+of private evidence. Arena 1184 remains held until its actual review and
+admission requirements are satisfied under the then-current harness.
