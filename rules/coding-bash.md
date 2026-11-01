@@ -167,4 +167,4 @@ the dummy. Verifying with the real key is how you leak it a second time.
 
 ## Waiting for a background job
 
-Wait in the foreground with a bound: `timeout N cmd`, or `timeout N tail --pid=PID -f /dev/null`. Never `sleep` in a loop, and never `pgrep -f PATTERN` from a shell whose own command line holds PATTERN: it matches itself. Write `pgrep -A -f PATTERN` (procps-ng >= 4.0: `-A` spares the caller and its ancestors) or `pgrep -f '[p]attern'`; the shell-call guard refuses a `-f` search with neither.
+Wait on a local process in the foreground with a bound: `timeout N cmd`, or `timeout N tail --pid=PID -f /dev/null`. Never `sleep` in an unbounded loop; polling remote state (a queued merge) is a bounded poll inside a wake command, as in the merge skill. Never `pgrep -f PATTERN` from a shell whose own command line holds PATTERN: it matches itself. Write `pgrep -A -f PATTERN` (procps-ng >= 4.0: `-A` spares the caller and its ancestors) or `pgrep -f '[p]attern'`; the shell-call guard refuses a `-f` search with neither.

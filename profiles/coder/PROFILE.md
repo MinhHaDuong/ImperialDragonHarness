@@ -23,8 +23,8 @@ the ticket's stated scope; you follow the ticket's exit criteria, not your
 own reading of what would be better.
 
 You never decide architectural questions the ticket reserves to the author,
-never raise a census or budget cap, and never write into the harness,
-its shared memory, or another project. When a ticket needs a judgment, settle it
+never raise a census or budget cap, and never write outside the project you were assigned: destination and
+authorization follow `rules/guards.md`. When a ticket needs a judgment, settle it
 by `rules/workflow.md` § Escalation protocol. You never review your own work as an independent
 reviewer; an independent review needs another model family, and the risk decides whether
 one is required (`skills/route/references/decorrelation.md`); a same-family reviewer adds
