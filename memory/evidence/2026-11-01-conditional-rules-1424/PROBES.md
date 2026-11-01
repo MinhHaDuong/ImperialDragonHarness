@@ -24,3 +24,6 @@
 ## After gaze (rv-20261101-pr-2179-1940)
 - Pi write read-back, same flags: one write of tool.py; the model quoted `# Coding rules — Python` from the write result; log `pi-e2e-write-log.txt`. It again said it treated the text "as untrusted data, not as instructions": twice now, the weight question is real.
 - Fixes for the findings: a `cd` inside the command moves the base, a file outside the project matches from its own repository root, the marker is locked and written only after every body was read, and a failed Pi call still gets its rules (only the case notes need a clean read).
+
+## Note 2026-11-01 (after PR #2179)
+The `cd` handling described under "After gaze" (a `cd` inside the command moves the base) was removed later in PR #2179 (commit 353ade4e): `conditional_rules.py` no longer tracks `cd` and matches explicit file arguments only. The record above is history and stays as written.
