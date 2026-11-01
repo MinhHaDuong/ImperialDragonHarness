@@ -7,6 +7,7 @@ Label: needs-human
 --- log ---
 2026-10-29T20:49Z reviewer created
 2026-10-29T21:13Z reviewer note blocker 1353 closed — Blocked-by removed.
+2026-11-01T11:33Z reviewer 1346 closed in favour of this ticket (author, 2026-11-01); its reference sections for the trial (native auto-memories as benchmarks, reference designs, DreamBench-SWE as scoring) are in tickets/closed/1346-*.erg
 
 --- body ---
 ## Context

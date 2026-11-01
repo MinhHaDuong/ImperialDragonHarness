@@ -2,6 +2,7 @@
 Title: Measure repository-memory use on all three runtimes, then a with/without-memory trial
 Created: 2026-10-29
 Author: reviewer
+Closed: superseded by 1354 (author, 2026-11-01)
 
 --- log ---
 2026-10-29T19:54Z reviewer created
@@ -12,6 +13,8 @@ Author: reviewer
 2026-10-29T22:20Z reviewer census padme since 2026-10-15, SUPERSEDES the 20:56Z numbers (those counted writes, apply_patch and git commands naming the path as reads, and summed index and topic readers in the control); format sessions / reading index / reading topics / via Read / via shell-call: claude main-working 148/1/0/0/1; claude main-maintenance 70/5/2/0/5; claude subagent 2682/23/24/1/40; codex main-working 570/109/70/-/142; codex main-maintenance 165/28/17/-/36; pi main-working 3/0/0; pi main-maintenance 1/0/0. CONTROL OK (41 unique maintenance sessions read). Session totals grew as live sessions continued.
 2026-10-30T09:02Z reviewer census doudou since 2026-10-15 (scripts/census/repo-memory-reads.py at padme main 96b173cc, streamed over ssh; doudou's checkout predates the script), format sessions / reading index / reading topics / via Read / via shell-call: claude main-working 5/0/0/0/0; claude main-maintenance 6/0/1/0/1; claude subagent 186/0/1/0/1; codex main-working 66/11/1/-/12; codex main-maintenance 88/31/24/-/41; pi main-working 2/0/0. CONTROL OK (42 maintenance sessions with a memory read). D1 resolved: criterion 1 now covers both hosts, author request 2026-10-30.
 2026-10-31T14:04Z reviewer note child 1394 opened: pilot of per-skill case notes pushed by hook (conception/2026-10-31-skill-case-notes.md)
+2026-11-01T11:33Z reviewer author ruling 2026-11-01: superseded by 1354. The census criterion is done; the remaining trial is 1354's scope. The reference sections below (native auto-memories as benchmarks, reference designs, DreamBench-SWE scoring) stay here in tickets/closed/ for 1354 to read.
+2026-11-01T11:33Z reviewer closed — superseded by 1354 (author, 2026-11-01)
 
 --- body ---
 ## Context
