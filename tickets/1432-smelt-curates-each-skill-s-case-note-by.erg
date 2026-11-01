@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Smelt curates each skill's case note by judged usefulness
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T20:18Z reviewer created
+
+--- body ---
+## Context
+Author, 2026-11-01: "I want agentic judgment on which memories likely useful." Skill case notes
+(memory/skills/<skill>.md) are pushed at skill load (tickets 1394, 1404, 1405) but nothing maintains
+them: in the pilot they are written by hand, and smelt does not write memory/skills/. Smelt already
+reads the whole project memory at each consolidation.
+
+## Scope
+At each smelt, for each skill that has a case note (and any skill whose memory shows recurring
+episodes), re-select the cases by judged usefulness per ticket 1431's principle: dated, sourced, a
+"Use:" line each, under the cap. List added and dropped cases with one line of why each in the
+smelt report. Smelt proposes; the author's acceptance of the smelt merge request is the review.
+No rule writes (AGENTS.md § Project memory boundary).
+
+## Exit criteria
+- [ ] skills/smelt describes the case-note curation step
+- [ ] One smelt run produces or refreshes at least one case note with its add/drop list
