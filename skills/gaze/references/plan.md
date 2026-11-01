@@ -46,10 +46,10 @@ for "no door launched", that is, every door tried and none started.
 **Machinery diffs take an other-family seat** (author ruling 2026-11-01;
 evidence: PR #2149, where the coder's self-only gaze missed a blocking
 `git cherry` whitespace-amend defect that an OpenAI red-team seat found). When
-the changed files include `scripts/review_notes.py`, `scripts/merge-gate.py`,
-`scripts/raid_land.py`, `scripts/gate_*.py`, `scripts/gaze_*.py`,
-`scripts/seat_clock.py`, `scripts/panel-manifest-check.py`, `skills/gaze/`,
-`skills/merge/`, or `skills/verify-gate/`, the plan includes at least one seat
+the changed files include, under `"$IDH_ROOT/scripts/"`, `review_notes.py`,
+`merge-gate.py`, `raid_land.py`, `seat_clock.py`, `panel-manifest-check.py`, or
+any `gate_*.py` or `gaze_*.py`, or anything under `skills/gaze/`, `skills/merge/`
+or `skills/verify-gate/`, the plan includes at least one seat
 whose family differs from the producer's (a red team by default), subject to the
 spend consent of the `# spend:` line. When no other-family door is reachable or
 consented, the plan's `# method:` line says so and a same-family seat takes the
