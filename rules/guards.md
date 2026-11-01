@@ -18,7 +18,7 @@ overrides them.
   change, or report work done to a tracker. An unreachable destination is
   reported, never replaced by another.
 - **Memory stays in its project's repository**, uncleared material encrypted;
-  it becomes a rule only on an explicit request naming the destination.
+  it becomes a rule only on an explicit user request naming the destination.
 - **Past 230K tokens of context, the task is too big: split it.** Stop and
   hand a proposed split to whoever launched you. Never answer a context wall
   with a bigger window, KV tricks or compaction.
