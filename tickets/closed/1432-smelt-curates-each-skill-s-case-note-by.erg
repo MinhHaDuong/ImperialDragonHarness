@@ -2,10 +2,12 @@
 Title: Smelt curates each skill's case note by judged usefulness
 Created: 2026-11-01
 Author: reviewer
+Closed: case-note curation lane ran in the sixth smelt (PR #2197): memory/skills/merge.md re-selected, all four cases kept with reasons in the report; smelt SKILL describes the step
 
 --- log ---
 2026-11-01T20:18Z reviewer created
 2026-11-01T20:34Z reviewer PR for exit criterion 1 (smelt SKILL case-note lane); criterion 2 waits for the next explicit smelt; ticket stays open
+2026-11-01T21:35Z reviewer closed — case-note curation lane ran in the sixth smelt (PR #2197): memory/skills/merge.md re-selected, all four cases kept with reasons in the report; smelt SKILL describes the step
 
 --- body ---
 ## Context
