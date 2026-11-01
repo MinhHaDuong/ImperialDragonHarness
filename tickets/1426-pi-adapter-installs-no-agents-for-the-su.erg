@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Pi adapter installs no agents for the subagent extension; agents/ carry Claude tool names
+Created: 2026-11-01
+Author: MinhHaDuong
+
+--- log ---
+2026-11-01T20:30Z MinhHaDuong created
+
+--- body ---
+
+## Context
+
+Reported from the arena (arena ticket 1111, Q3 smoke leg 0338-f1b, 2026-11-01, harness pin
+night-pins/2026-11-01-q3-smoke, harness 4782cf0c). The arena runs the harness as installed by
+`idh install` in a sealed HOME. A Pi contestant called the subagent tool for `gate-seat` and got
+`Unknown agent: ... Available agents: none`.
+
+Observations (cause not checked beyond reading the code):
+
+1. Pi's subagent extension (`agents.ts`, `discoverAgents`) reads user agents from
+   `getAgentDir()/agents` (`$PI_CODING_AGENT_DIR/agents`, default `~/.pi/agent/agents`); the project
+   scope (`.pi/agents` above the cwd) is opt-in per call (`agentScope`). The installed HOME links
+   `agents/*.md` into `~/.claude/agents` only; `~/.pi/agent/` receives no `agents/`. So on Pi the
+   harness roles (gate-seat, coder, team-lead, prose-reviewer, code-reviewer) are not delegable.
+2. `adapters/pi/agents/` holds only `code-reviewer.md` (Pi tool names). The runtime-neutral
+   `agents/*.md` declare Claude tool names (`tools: Read, Grep, Glob, Bash, Write`); the extension
+   passes them to the child as `--tools Read,Grep,Glob,Bash,Write`. Whether Pi maps these to its
+   `read, grep, find, ls, bash, write` tools or drops them is not verified.
+3. `skills/route/routes.json` declares no `local_providers` on the `pi` headless door, so
+   `gaze_seat.py` treats a padme seat as cross-family spend needing consent (the leg's refusals
+   were all on padme).
+
+The arena now works around 1 on its own side, for its Q3 rung only: it links the pinned
+`agents/*.md` (with `adapters/pi/agents/` winning by name) into the leg's Pi agent dir, and steps
+aside if the installed home ever ships `~/.pi/agent/agents`. That makes the arena add something
+the harness does not install, which a harness-side projection would remove.
+
+## Scope
+
+- Install-time projection of the harness agents for Pi (`~/.pi/agent/agents`), as for Claude Code.
+- Pi renderings (or a tool-name mapping) for the agents whose `tools:` use Claude names.
+- Decide whether padme belongs in the `pi` door's `local_providers`.
+
+## Exit criteria
+
+- [ ] After `idh install`, `~/.pi/agent/agents/` lists the harness agents and a Pi subagent call to
+      `gate-seat` resolves.
+- [ ] A Pi child launched for a harness agent gets the intended tools (test on the `--tools` value).
+- [ ] The padme/local_providers decision is recorded.
