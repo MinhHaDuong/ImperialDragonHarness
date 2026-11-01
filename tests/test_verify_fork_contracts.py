@@ -386,8 +386,8 @@ def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():
 
 
 def test_git_rule_rebases_before_every_gate_and_merge_syncs_after_gaze():
-    """The resident rule keeps the principle; since the 2026-11-01 git.md
-    review the timing lives in the merge skill, its canonical home."""
+    """git.md keeps the principle; the merge skill keeps sync-after-gaze and
+    the tier rule; skills/hunt keeps the first-submission rebase mechanics."""
     rule = " ".join((REPO / "rules" / "git.md").read_text().split())
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Rebase before every gate" in rule
