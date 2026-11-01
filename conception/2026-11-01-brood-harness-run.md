@@ -180,14 +180,14 @@ is the binding constraint:
    candidate whose single incident did irreversible-looking damage.
 3. The author to rule: row 6 (`git -C` in claude-code.md against the note's
    prefix-match finding; a probe in auto mode would settle it), row 12 (peer-relayed rulings against the cross-project
-   rule) and row 8 (ticket 1374). Either outcome removes a live
+   rule) and row 8 (ticket 1374). Each ruling removes a live
    contradiction between the native store and the rules.
 4. Bounded experiment, then a skill change: L3 / row 21.
 5. No change: L4, L5, row 17. The rest stay jurisprudence in Commission,
    where the smelt already filed them.
 
 The Commission page holds 9088 bytes on disk (7769 capped bytes by the
-smelt's measure) against a 4096 cap, the overflow all pinned rulings. The smelt marked that overflow as rulings waiting for promotion. This
-run finds that most of them are better left as jurisprudence than promoted:
+smelt's measure) against a 4096 cap, the overflow all pinned rulings. The smelt marked that overflow as
+rulings waiting for promotion. This run finds that most of them are better left as jurisprudence than promoted:
 six are already in force, and the resident budget cannot take the rest.
 Pruning the page's "Now in" lines down to links would be a smelt task.
