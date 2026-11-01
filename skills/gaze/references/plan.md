@@ -34,7 +34,7 @@ covered, and no label claims more.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference, not a requirement (`decorrelation.md` § Family is a preference, not a gate): worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a preference (`decorrelation.md` § Family is a preference, not a gate), except on the machinery paths above where the plan includes one: worth it on a high-risk row when the host consents to the spend (the `# spend:` line) and the deadline allows; without it a same-family seat takes the perspective, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), valid but the weakest record. When the
@@ -43,12 +43,25 @@ same-family seat on the headless door (`"$IDH_ROOT/scripts/gaze_seat.py"`, which
 nesting) before it may fall back to `seats: self-only`; self-only stays only
 for "no door launched", that is, every door tried and none started.
 
+**Machinery diffs take an other-family seat** (author ruling 2026-11-01;
+evidence: PR #2149, where the coder's self-only gaze missed a blocking
+`git cherry` whitespace-amend defect that an OpenAI red-team seat found). When
+the changed files include `scripts/review_notes.py`, `scripts/merge-gate.py`,
+`scripts/raid_land.py`, `scripts/gate_*.py`, `scripts/gaze_*.py`,
+`scripts/seat_clock.py`, `scripts/panel-manifest-check.py`, `skills/gaze/`,
+`skills/merge/`, or `skills/verify-gate/`, the plan includes at least one seat
+whose family differs from the producer's (a red team by default), subject to the
+spend consent of the `# spend:` line. When no other-family door is reachable or
+consented, the plan's `# method:` line says so and a same-family seat takes the
+perspective; the result stays valid and is never called independent. No gate
+refuses it.
+
 `plan-write` refuses a plan whose every item is self unless
 `--no-door "<doors tried>"` names them; the flag becomes a header line that
 the plan check reports as a deviation. A planned seat that files no report
 (timed out, refused, `NOT-RUN:`) fails the plan check like any missing item.
 `gaze_close.py` refuses a `seats: panel` result that no non-self report backs.
-A seat of another family is a routing preference, not a requirement
+Elsewhere a seat of another family is a routing preference, not a requirement
 (`skills/route/references/decorrelation.md`): plan one when the host consents
 to its spend and the risk, deadline and budget make it worth it.
 
