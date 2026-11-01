@@ -8,6 +8,8 @@ Closed: workflow.md diet landed (proposals A-H), resident budget 18000 -> 15000
 2026-11-01T08:15Z reviewer created
 2026-11-01T08:32Z reviewer author accepted all eight proposals (A-H) in an interactive pass 2026-11-01; F settled on decorrelation.md's 'prefer', H on 'run the invoked skill to its endpoint'
 2026-11-01T08:32Z reviewer closed — workflow.md diet landed (proposals A-H), resident budget 18000 -> 15000
+2026-11-01T09:59Z reviewer verify-reroll — round 1: unresolved verifiable minor AGENTS.md:1-6 ("load in every session" false for the comment's only readers, Codex and Pi); fixed
+2026-11-01T09:59Z reviewer scope note: the Cycle section in rules/workflow.md and conception/design-note-template.md were added at the author's request in the 2026-11-01 interactive round 2, beyond the diet; author-sanctioned, no separate ticket
 
 --- body ---
 ## Context
