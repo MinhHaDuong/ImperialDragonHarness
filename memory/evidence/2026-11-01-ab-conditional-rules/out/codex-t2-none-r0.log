@@ -1,0 +1,21 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: /tmp/ab1414.AeLIey
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: 01a19739-6496-7af1-81ce-8727d57e8507
+--------
+user
+Rédige un paragraphe d'environ 120 mots, pour un article académique, sur l'effet d'une taxe carbone sur la consommation d'énergie des ménages. Inclus un chiffre illustratif avec une décimale et une courte citation d'un auteur fictif. Réponds uniquement par le paragraphe, sans outil ni commentaire.
+hook: SessionStart
+hook: SessionStart Completed
+codex
+Une taxe carbone modifie la consommation d’énergie des ménages en renchérissant les combustibles fossiles et en favorisant les économies d’énergie ainsi que le recours à des équipements moins émetteurs. Son effet dépend toutefois des possibilités de substitution, du revenu disponible et des caractéristiques du logement. À titre purement illustratif, une hausse du prix de l’énergie de 10,0 % pourrait entraîner une réduction de la consommation, sans que cette relation soit uniforme entre catégories sociales. Comme l’écrit l’auteur fictif Julien Morel, « le signal de prix reste tributaire des capacités d’adaptation ». Les ménages modestes, souvent contraints dans leurs choix résidentiels et techniques, peuvent ainsi supporter une charge proportionnellement supérieure. Une redistribution ciblée des recettes peut atténuer cette inégalité tout en préservant l’incitation à réduire les usages carbonés.
+tokens used
+5 587
+Une taxe carbone modifie la consommation d’énergie des ménages en renchérissant les combustibles fossiles et en favorisant les économies d’énergie ainsi que le recours à des équipements moins émetteurs. Son effet dépend toutefois des possibilités de substitution, du revenu disponible et des caractéristiques du logement. À titre purement illustratif, une hausse du prix de l’énergie de 10,0 % pourrait entraîner une réduction de la consommation, sans que cette relation soit uniforme entre catégories sociales. Comme l’écrit l’auteur fictif Julien Morel, « le signal de prix reste tributaire des capacités d’adaptation ». Les ménages modestes, souvent contraints dans leurs choix résidentiels et techniques, peuvent ainsi supporter une charge proportionnellement supérieure. Une redistribution ciblée des recettes peut atténuer cette inégalité tout en préservant l’incitation à réduire les usages carbonés.

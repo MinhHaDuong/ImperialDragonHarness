@@ -1,0 +1,108 @@
+**temps.py**
+
+```python
+#!/usr/bin/env python3
+"""Read a CSV file of daily temperatures and print summary statistics."""
+
+import csv
+import sys
+
+
+def summarize(filepath: str) -> tuple[float, float, float, str]:
+    """Return (mean, min, max, date_of_max) from a CSV with columns date, temp_c."""
+    dates: list[str] = []
+    temps: list[float] = []
+
+    with open(filepath, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            dates.append(row["date"])
+            temps.append(float(row["temp_c"]))
+
+    if not temps:
+        raise ValueError("CSV contains no data rows")
+
+    mean = sum(temps) / len(temps)
+    minimum = min(temps)
+    maximum = max(temps)
+    max_date = dates[temps.index(maximum)]
+
+    return mean, minimum, maximum, max_date
+
+
+def main() -> None:
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <csv_file>", file=sys.stderr)
+        sys.exit(1)
+
+    mean, minimum, maximum, max_date = summarize(sys.argv[1])
+
+    print(f"Mean: {mean:.2f}")
+    print(f"Min:  {minimum}")
+    print(f"Max:  {maximum} on {max_date}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**test_temps.py**
+
+```python
+import csv
+import os
+import tempfile
+
+from temps import summarize
+
+
+def _write_csv(rows: list[tuple[str, float]]) -> str:
+    """Write rows to a temporary CSV file and return its path."""
+    fd, path = tempfile.mkstemp(suffix=".csv")
+    with os.fdopen(fd, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["date", "temp_c"])
+        writer.writerows(rows)
+    return path
+
+
+def test_basic_summary():
+    path = _write_csv([
+        ("2024-01-01", 10.0),
+        ("2024-01-02", 15.5),
+        ("2024-01-03", 12.0),
+        ("2024-01-04", 20.0),
+        ("2024-01-05", 8.0),
+    ])
+    try:
+        mean, minimum, maximum, max_date = summarize(path)
+        assert mean == 13.1
+        assert minimum == 8.0
+        assert maximum == 20.0
+        assert max_date == "2024-01-04"
+    finally:
+        os.unlink(path)
+
+
+def test_single_row():
+    path = _write_csv([("2024-06-01", 30.0)])
+    try:
+        mean, minimum, maximum, max_date = summarize(path)
+        assert mean == 30.0
+        assert minimum == 30.0
+        assert maximum == 30.0
+        assert max_date == "2024-06-01"
+    finally:
+        os.unlink(path)
+
+
+def test_empty_raises():
+    path = _write_csv([])
+    try:
+        summarize(path)
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
+    finally:
+        os.unlink(path)
+```

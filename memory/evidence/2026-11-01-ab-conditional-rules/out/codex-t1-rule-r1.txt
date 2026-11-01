@@ -1,0 +1,127 @@
+temperatures.py
+```python
+import argparse
+import csv
+import logging
+import math
+from dataclasses import dataclass
+from pathlib import Path
+from statistics import mean
+
+
+@dataclass(frozen=True)
+class TemperatureSummary:
+    mean: float
+    minimum: float
+    maximum: float
+    maximum_date: str
+
+
+def summarize(path: Path) -> TemperatureSummary:
+    with path.open(newline="", encoding="utf-8") as source:
+        reader = csv.DictReader(source)
+        if not {"date", "temp_c"}.issubset(reader.fieldnames or []):
+            raise ValueError("CSV must contain date and temp_c columns")
+
+        readings = []
+        for line, row in enumerate(reader, start=2):
+            date = (row.get("date") or "").strip()
+            try:
+                temperature = float(row.get("temp_c") or "")
+            except ValueError as exc:
+                raise ValueError(f"Invalid temperature on line {line}") from exc
+            if not date or not math.isfinite(temperature):
+                raise ValueError(f"Invalid reading on line {line}")
+            readings.append((date, temperature))
+
+    if not readings:
+        raise ValueError("CSV contains no readings")
+
+    # For tied maxima, report the first occurrence in the CSV.
+    maximum_date, maximum = max(readings, key=lambda reading: reading[1])
+    temperatures = [temperature for _, temperature in readings]
+    return TemperatureSummary(
+        mean(temperatures), min(temperatures), maximum, maximum_date
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Summarize daily temperatures.")
+    parser.add_argument("input", type=Path, help="CSV with date,temp_c columns")
+    parser.add_argument(
+        "--output", type=Path, default=None,
+        help="Write the report to this file (default: standard error)",
+    )
+    args = parser.parse_args()
+
+    try:
+        summary = summarize(args.input)
+    except (OSError, ValueError, csv.Error) as exc:
+        parser.error(str(exc))
+
+    handler = (
+        logging.FileHandler(args.output, encoding="utf-8")
+        if args.output else logging.StreamHandler()
+    )
+    logger = logging.getLogger("temperatures")
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(handler)
+    try:
+        logger.info(
+            "Mean: %.2f °C\nMinimum: %.2f °C\nMaximum: %.2f °C\n"
+            "Date of maximum: %s",
+            summary.mean, summary.minimum, summary.maximum, summary.maximum_date,
+        )
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+tests/test_temperatures.py
+```python
+import pytest
+
+from temperatures import summarize
+
+
+def test_summary_and_first_date_of_tied_maximum(tmp_path):
+    source = tmp_path / "temperatures.csv"
+    source.write_text(
+        "date,temp_c\n"
+        "2026-01-01,-4\n"
+        "2026-01-02,8\n"
+        "2026-01-03,8\n",
+        encoding="utf-8",
+    )
+
+    result = summarize(source)
+
+    assert result.mean == pytest.approx(4.0)
+    assert result.minimum == -4
+    assert result.maximum == 8
+    assert result.maximum_date == "2026-01-02"
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        "date,temp_c\n",
+        "date,temperature\n2026-01-01,4\n",
+        "date,temp_c\n2026-01-01,invalid\n",
+        "date,temp_c\n2026-01-01,nan\n",
+        "date,temp_c\n,4\n",
+    ],
+)
+def test_rejects_invalid_input(tmp_path, contents):
+    source = tmp_path / "temperatures.csv"
+    source.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        summarize(source)
+```

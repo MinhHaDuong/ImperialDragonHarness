@@ -1,0 +1,18 @@
+{
+ "T1-00": "pi-t1-none-r0",
+ "T1-01": "pi-t1-none-r1",
+ "T1-02": "pi-t1-rule-r1",
+ "T1-03": "codex-t1-rule-r1",
+ "T1-04": "codex-t1-rule-r0",
+ "T1-05": "pi-t1-rule-r0",
+ "T1-06": "codex-t1-none-r0",
+ "T1-07": "codex-t1-none-r1",
+ "T2-00": "codex-t2-rule-r0",
+ "T2-01": "codex-t2-none-r1",
+ "T2-02": "pi-t2-none-r1",
+ "T2-03": "codex-t2-rule-r1",
+ "T2-04": "codex-t2-none-r0",
+ "T2-05": "pi-t2-none-r0",
+ "T2-06": "pi-t2-rule-r0",
+ "T2-07": "pi-t2-rule-r1"
+}

@@ -30,8 +30,8 @@ against the rule by a reviewer that does not know the arm:
 Budget: about an hour of agent time, a few USD.
 
 ## Exit criteria
-- [ ] Both tasks run on Codex and Pi, both arms, outputs and blind scores recorded under memory/evidence/
-- [ ] A finding per rule class: needed on Codex/Pi or not, with the evidence
+- [x] Both tasks run on Codex and Pi, both arms, outputs and blind scores recorded under memory/evidence/
+- [x] A finding per rule class: needed on Codex/Pi or not, with the evidence
 - [ ] If needed: a follow-up names how the rule reaches those runtimes (skill pointer, injection, or the ticket 1413 global file)
 
 ## Imagine (raid 1f0534)

@@ -1,0 +1,198 @@
+`temps.py`:
+```python
+"""Report summary statistics for daily temperatures from a CSV file."""
+
+import argparse
+import csv
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+def compute_stats(dates: list[str], temps: list[float]) -> dict[str, object]:
+    """Compute mean, min, max, and the date of the maximum temperature."""
+    if not temps:
+        return {"mean": None, "min": None, "max": None, "max_date": None}
+
+    mean = sum(temps) / len(temps)
+    min_temp = min(temps)
+    max_temp = max(temps)
+    max_index = temps.index(max_temp)  # first occurrence of max
+    max_date = dates[max_index]
+
+    return {
+        "mean": round(mean, 2),
+        "min": min_temp,
+        "max": max_temp,
+        "max_date": max_date,
+    }
+
+
+def read_csv(path: Path) -> tuple[list[str], list[float]]:
+    """Read a CSV with columns date, temp_c. Returns (dates, temps)."""
+    dates: list[str] = []
+    temps: list[float] = []
+
+    with path.open(newline="") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None:
+            raise ValueError(f"Empty CSV file: {path}")
+        missing = {"date", "temp_c"} - set(reader.fieldnames)
+        if missing:
+            raise ValueError(f"CSV missing required columns: {missing}")
+
+        for row in reader:
+            date_val = row["date"].strip()
+            temp_raw = row["temp_c"].strip()
+            if not date_val:
+                logger.warning("Skipping row with empty date")
+                continue
+            try:
+                temp_val = float(temp_raw)
+            except ValueError:
+                logger.warning("Skipping row %r: bad temp_c value %r", date_val, temp_raw)
+                continue
+            dates.append(date_val)
+            temps.append(temp_val)
+
+    return dates, temps
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Summarize daily temperature CSV.")
+    parser.add_argument("csv_file", type=Path, help="Path to CSV with columns date, temp_c")
+    parser.add_argument("--log-level", default="WARNING", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    args = parser.parse_args()
+
+    logging.basicConfig(level=args.log_level, format="%(levelname)s: %(message)s")
+
+    try:
+        dates, temps = read_csv(args.csv_file)
+    except FileNotFoundError:
+        logger.error("File not found: %s", args.csv_file)
+        raise SystemExit(1)
+    except ValueError as exc:
+        logger.error(str(exc))
+        raise SystemExit(1)
+
+    if not temps:
+        logger.error("No valid data rows found in %s", args.csv_file)
+        raise SystemExit(1)
+
+    stats = compute_stats(dates, temps)
+    print(f"Mean: {stats['mean']} °C")
+    print(f"Min:  {stats['min']} °C")
+    print(f"Max:  {stats['max']} °C")
+    print(f"Max on date: {stats['max_date']}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+`test_temps.py`:
+```python
+"""Tests for temps.compute_stats and temps.read_csv."""
+
+import csv
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from temps import compute_stats, read_csv
+
+
+# --- compute_stats (fast tier, pure logic) ---
+
+
+def test_compute_stats_basic():
+    dates = ["2025-01-01", "2025-01-02", "2025-01-03"]
+    temps = [10.0, 25.0, 15.0]
+    result = compute_stats(dates, temps)
+    assert result["mean"] == 16.67
+    assert result["min"] == 10.0
+    assert result["max"] == 25.0
+    assert result["max_date"] == "2025-01-02"
+
+
+def test_compute_stats_single_value():
+    result = compute_stats(["2025-06-01"], [7.5])
+    assert result == {"mean": 7.5, "min": 7.5, "max": 7.5, "max_date": "2025-06-01"}
+
+
+def test_compute_stats_empty():
+    result = compute_stats([], [])
+    assert result == {"mean": None, "min": None, "max": None, "max_date": None}
+
+
+def test_compute_stats_first_max_wins():
+    dates = ["2025-03-01", "2025-03-02"]
+    temps = [20.0, 20.0]
+    result = compute_stats(dates, temps)
+    assert result["max_date"] == "2025-03-01"
+
+
+def test_compute_stats_negative_temps():
+    dates = ["2025-12-24", "2025-12-25", "2025-12-26"]
+    temps = [-5.0, -2.0, -8.0]
+    result = compute_stats(dates, temps)
+    assert result["max"] == -2.0
+    assert result["min"] == -8.0
+    assert result["max_date"] == "2025-12-25"
+
+
+# --- read_csv (fast tier) ---
+
+
+def _write_csv(tmp_path: Path, rows: list[dict[str, str]]) -> Path:
+    p = tmp_path / "temps.csv"
+    with p.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["date", "temp_c"])
+        writer.writeheader()
+        writer.writerows(rows)
+    return p
+
+
+def test_read_csv_ok(tmp_path: Path):
+    p = _write_csv(
+        tmp_path,
+        [
+            {"date": "2025-01-01", "temp_c": "3.0"},
+            {"date": "2025-01-02", "temp_c": "7.5"},
+        ],
+    )
+    dates, temps = read_csv(p)
+    assert dates == ["2025-01-01", "2025-01-02"]
+    assert temps == [3.0, 7.5]
+
+
+def test_read_csv_skips_bad_rows(tmp_path: Path):
+    p = _write_csv(
+        tmp_path,
+        [
+            {"date": "2025-01-01", "temp_c": "5"},
+            {"date": "", "temp_c": "9"},
+            {"date": "2025-01-02", "temp_c": "not_a_number"},
+            {"date": "2025-01-03", "temp_c": "11"},
+        ],
+    )
+    dates, temps = read_csv(p)
+    assert dates == ["2025-01-01", "2025-01-03"]
+    assert temps == [5.0, 11.0]
+
+
+def test_read_csv_missing_columns(tmp_path: Path):
+    p = tmp_path / "bad.csv"
+    p.write_text("date,temperature\n2025-01-01,10\n")
+    with pytest.raises(ValueError, match="missing required columns"):
+        read_csv(p)
+
+
+def test_read_csv_empty(tmp_path: Path):
+    p = tmp_path / "empty.csv"
+    p.write_text("")
+    with pytest.raises(ValueError, match="Empty CSV"):
+        read_csv(p)
+```

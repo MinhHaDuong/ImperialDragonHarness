@@ -1,0 +1,1 @@
+Write a small Python command-line script that reads a CSV file of daily temperatures (columns: date, temp_c) and reports the mean, the minimum, the maximum, and the date of the maximum. Also write a test for it. Do not run anything or use any tool: reply only with the two files, each in a fenced code block preceded by its file name.

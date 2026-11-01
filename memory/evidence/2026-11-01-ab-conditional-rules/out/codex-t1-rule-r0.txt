@@ -1,0 +1,65 @@
+temperatures.py
+```python
+import argparse
+import csv
+import logging
+from pathlib import Path
+from statistics import mean
+
+
+def summarize(path: Path) -> tuple[float, float, float, str]:
+    with path.open(newline="", encoding="utf-8") as source:
+        reader = csv.DictReader(source)
+        assert {"date", "temp_c"} <= set(reader.fieldnames or []), (
+            "CSV must contain date and temp_c columns"
+        )
+        readings = [(row["date"], float(row["temp_c"])) for row in reader]
+
+    if not readings:
+        raise ValueError("CSV contains no temperature readings")
+
+    temperatures = [temperature for _, temperature in readings]
+    # For tied maxima, report the first date encountered.
+    maximum_date, maximum = max(readings, key=lambda reading: reading[1])
+    return mean(temperatures), min(temperatures), maximum, maximum_date
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Summarize daily temperatures.")
+    parser.add_argument("csv_file", type=Path, help="CSV with date,temp_c columns")
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    try:
+        average, minimum, maximum, maximum_date = summarize(args.csv_file)
+    except (OSError, ValueError, AssertionError, csv.Error) as error:
+        parser.error(str(error))
+
+    logging.info("Mean: %.2f °C", average)
+    logging.info("Minimum: %.2f °C", minimum)
+    logging.info("Maximum: %.2f °C", maximum)
+    logging.info("Date of maximum: %s", maximum_date)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+tests/test_temperatures.py
+```python
+from temperatures import summarize
+
+
+def test_summarize(tmp_path):
+    csv_file = tmp_path / "temperatures.csv"
+    csv_file.write_text(
+        "date,temp_c\n"
+        "2026-01-01,-4\n"
+        "2026-01-02,8\n"
+        "2026-01-03,0\n"
+        "2026-01-04,8\n",
+        encoding="utf-8",
+    )
+
+    assert summarize(csv_file) == (3.0, -4.0, 8.0, "2026-01-02")
+```
