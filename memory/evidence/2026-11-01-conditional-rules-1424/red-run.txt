@@ -1,0 +1,33 @@
+      1 25 failed, 9 passed in 0.52s
+      1 E         
+      5 E       assert ''
+      1 E       assert 'conditional_rules.py' in '/**\n * IDH dirty-reset guard adapter for Pi (ticket 0809).\n *\n * The guard owns the decision; this extension only ...acked files.",\n\t\t\t};\n\t\t}\n\t\treturn undefined; // 0 (allow) and any other status: the guard allows\n\t});\n}\n'
+      1 E       AssertionError: assert [] == ['^Bash$']
+      6 E       AssertionError: assert None is False
+     11 E       AssertionError: assert None is True
+      1 E       AssertionError: assert None == ['**/*.py']
+      5 E       AssertionError: expected a rule to be injected
+      1 E         Right contains one more item: '^Bash$'
+      1 E         Use -v to get more diff
+      1 E        +    where <built-in method get of dict object at 0x7ada4c38a880> = {}.get
+      5 E        +  where '' = CompletedProcess(args=['/usr/bin/python3', '/home/haduong/.agents/.claude/worktrees/tcondrules-2517877-12409/scripts/conditional_rules.py'], returncode=0, stdout='', stderr='').stdout
+     17 E        +    where <function glob_matches at 0x7ada4c6a7600> = <module 'conditional_rules' from '/home/haduong/.agents/.claude/worktrees/tcondrules-2517877-12409/scripts/conditional_rules.py'>.glob_matches
+     17 E        +      where <module 'conditional_rules' from '/home/haduong/.agents/.claude/worktrees/tcondrules-2517877-12409/scripts/conditional_rules.py'> = _module()
+      1 E        +  where None = <built-in method get of dict object at 0x7ada4c38a880>('coding-python.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/docs/**', 'a/docs/b/c.pdf')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/docs/**', 'a/docsx/c.pdf')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/docs/**', 'docs/a.txt')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/*.latexmkrc', 'paper/.latexmkrc')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/*.py', 'a.py')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/*.py', 'a.pyc')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/*.py', 'a.py/readme.txt')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/*.py', 'src/pkg/a.py')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/_quarto.y{a,}ml', '_quarto.yml')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('rules/**', 'myrules/a.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('rules/**', 'rules/lang/fr.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/rules/**', 'x/rules/a.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('STATE.md', 'STATE.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('STATE.md', 'sub/STATE.md')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/test_*.py', 'pkg/atest_a.py')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/test_*.py', 'pkg/test_a.py')
+      1 E        +  where None = <function glob_matches at 0x7ada4c6a7600>('**/tests/**/*.py', 'tests/test_a.py')
