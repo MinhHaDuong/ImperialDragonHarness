@@ -42,7 +42,7 @@ fi
 # settings.json is JSONC, comments and trailing commas allowed.
 _vsc="${XDG_CONFIG_HOME:-$HOME/.config}/Code/User/settings.json"
 if [ -f "$_vsc" ] && ! grep -qE '"files\.autoSave"[[:space:]]*:[[:space:]]*"(afterDelay|onFocusChange|onWindowChange)"' "$_vsc"; then
-    echo "VS Code autosave is off on this host: an agent editing a file the author has open cannot see unsaved changes. Setting \"files.autoSave\": \"afterDelay\" in $_vsc closes that gap; it is suggested to the author once per session."
+    echo "VS Code autosave is off on this host: an agent editing a file the author has open cannot see unsaved changes. Setting \"files.autoSave\": \"afterDelay\" in $_vsc closes that gap. The session offers once to set it for the author, waits for the answer, and edits that file only on a yes."
 fi
 
 _script_dir="$(cd "$(dirname "$0")" && pwd)"

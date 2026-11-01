@@ -47,6 +47,7 @@ def test_line_when_autosave_off(tmp_path, settings):
     out = run(tmp_path, settings)
     assert MARK in out
     assert '"files.autoSave": "afterDelay"' in out
+    assert "offers once to set it" in out
 
 
 @pytest.mark.parametrize("mode", ["afterDelay", "onFocusChange", "onWindowChange"])
