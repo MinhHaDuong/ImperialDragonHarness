@@ -76,6 +76,13 @@ answers because of their seats lines.
 - Whether the same pattern occurred on other branches: only this review was
   examined.
 
+## Related record
+
+Closed ticket 0870 (2026-09-03, "A reviewer panel that runs zero seats
+reports success", closed by PR #793) concerns the review panel's `request`
+exit status when every attempted seat failed. Whether today's answers fall
+within its scope was not examined.
+
 ## Consequence observed
 
 None beyond one extra gaze run (about 5 minutes). No merge rested on either
