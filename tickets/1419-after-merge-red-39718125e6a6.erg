@@ -5,6 +5,7 @@ Author: merge-gate
 
 --- log ---
 2026-11-01T13:34Z merge-gate created
+2026-11-01T14:17Z reviewer note after-merge red widened at 993990bc (#2155, ticket 1404, raid 1f0534): tests/test_hook_launchers.py fails 9 cases on the new adapters/codex/hooks.json skill-case-notes.sh entries (test_translate_recognizes_exactly_the_checked_forms plus parametrized UserPromptSubmit/PostToolUse launcher cases); the runner folded it into this ticket because the check name (pytest-guard) matched, so no new ticket opened. Still red on a5fd217e.
 
 --- body ---
 ## Context
