@@ -2,9 +2,12 @@
 Title: verify-gate passes comment hunks under author-protected paths
 Created: 2026-11-01
 Author: reviewer
+Closed: won't do — author keeps the 1126 decision; PR 2138 closed
 
 --- log ---
 2026-11-01T08:15Z reviewer created
+2026-11-01T09:12Z reviewer author ruling 2026-11-01: keep ticket 1126 (comment-only hunks under a protected path are recorded, not blocking). This ticket was filed by a session from a model review without checking 1126; PR 2138 closed unmerged.
+2026-11-01T09:12Z reviewer closed — won't do — author keeps the 1126 decision; PR 2138 closed
 
 --- body ---
 ## Context
