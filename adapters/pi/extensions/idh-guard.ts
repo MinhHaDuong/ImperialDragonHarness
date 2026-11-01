@@ -34,6 +34,13 @@
  * Claude PostToolUse hook gets (`tool_input.skill`, session id, cwd) and
  * appends its additionalContext to the read result. The script owns the
  * once-per-session marker, the project lookup and the log. Fail-open.
+ *
+ * Conditional rules (ticket 1424): Claude Code loads a rule whose `paths:`
+ * globs match a file the session touches; Pi does not. The same
+ * `tool_result` handler, on read, write, edit and bash (their inputs carry
+ * `path` or `command`, probe 2026-11-01 on Pi 1.4.0), feeds
+ * `scripts/conditional_rules.py` the Codex-shaped payload and appends the rule
+ * bodies it returns. The script owns matching, the marker and the log. Fail-open.
  */
 
 import { spawnSync } from "node:child_process";
@@ -48,6 +55,9 @@ const ON_START_RELATIVE = join("scripts", "on-start-context.sh");
 const ON_START_TIMEOUT_MS = 30000;
 const CASE_NOTES_RELATIVE = join("scripts", "skill-case-notes.sh");
 const CASE_NOTES_TIMEOUT_MS = 10000;
+const RULES_RELATIVE = join("scripts", "conditional_rules.py");
+const RULES_TIMEOUT_MS = 10000;
+const RULES_TOOLS = new Set(["read", "write", "edit", "bash"]);
 const SKILL_FILE = /(?:^|[\\/])skills[\\/]([a-z0-9][a-z0-9_-]*)[\\/]SKILL\.md$/;
 
 /** Walk up from this file until the harness root that carries the guard. */
@@ -94,30 +104,56 @@ export default function (pi: ExtensionAPI): void {
 		}
 	});
 
-	pi.on("tool_result", async (event, ctx) => {
-		if (event.toolName !== "read" || event.isError) return undefined;
+	/** Run a context hook script on a payload; its additionalContext, or "" on any failure. */
+	function hookContext(command: string, args: string[], payload: object, timeout: number): string {
 		try {
-			const path = (event.input as { path?: unknown }).path;
-			const match = typeof path === "string" ? SKILL_FILE.exec(path) : null;
-			if (!match) return undefined;
-			const script = guardPath(CASE_NOTES_RELATIVE);
-			if (!script) return undefined;
-			const result = spawnSync("bash", [script], {
-				input: JSON.stringify({
-					hook_event_name: "PostToolUse",
-					session_id: ctx.sessionManager.getSessionId(),
-					cwd: ctx.sessionManager.getCwd(),
-					tool_name: "Skill",
-					tool_input: { skill: match[1] },
-				}),
-				timeout: CASE_NOTES_TIMEOUT_MS,
+			const result = spawnSync(command, args, {
+				input: JSON.stringify(payload),
+				timeout,
 				encoding: "utf8" as const,
 				stdio: ["pipe", "pipe", "ignore"],
 			});
-			if (result.error || result.status !== 0 || !result.stdout) return undefined;
-			const note = JSON.parse(result.stdout)?.hookSpecificOutput?.additionalContext;
-			if (typeof note !== "string" || !note) return undefined;
-			return { content: [...event.content, { type: "text" as const, text: "\n\n" + note }] };
+			if (result.error || result.status !== 0 || !result.stdout) return "";
+			const text = JSON.parse(result.stdout)?.hookSpecificOutput?.additionalContext;
+			return typeof text === "string" ? text : "";
+		} catch {
+			return ""; /* fail-open */
+		}
+	}
+
+	pi.on("tool_result", async (event, ctx) => {
+		if (event.isError) return undefined;
+		try {
+			const notes: string[] = [];
+			const session_id = ctx.sessionManager.getSessionId();
+			const cwd = ctx.sessionManager.getCwd();
+			const path = (event.input as { path?: unknown }).path;
+			const match = event.toolName === "read" && typeof path === "string" ? SKILL_FILE.exec(path) : null;
+			const caseNotes = match ? guardPath(CASE_NOTES_RELATIVE) : null;
+			if (match && caseNotes) {
+				notes.push(hookContext("bash", [caseNotes], {
+					hook_event_name: "PostToolUse",
+					session_id,
+					cwd,
+					tool_name: "Skill",
+					tool_input: { skill: match[1] },
+				}, CASE_NOTES_TIMEOUT_MS));
+			}
+			const rules = RULES_TOOLS.has(event.toolName) ? guardPath(RULES_RELATIVE) : null;
+			if (rules) {
+				notes.push(hookContext("python3", [rules], {
+					hook_event_name: "PostToolUse",
+					session_id,
+					cwd,
+					tool_name: event.toolName,
+					tool_input: event.input,
+				}, RULES_TIMEOUT_MS));
+			}
+			const extra = notes.filter((n) => n);
+			if (!extra.length) return undefined;
+			return {
+				content: [...event.content, ...extra.map((text) => ({ type: "text" as const, text: "\n\n" + text }))],
+			};
 		} catch {
 			return undefined; /* fail-open */
 		}
