@@ -36,12 +36,12 @@ def test_protected_path_disposition_is_escalate_and_author_exception_authorises(
     assert "makes that path authorised scope" in body
 
 
-def test_exception_comes_from_brief_or_author_forge_comment_never_the_pr_body():
+def test_exception_comes_from_the_brief_only():
     body = _scope_section()
     para = body[body.index("**Protected paths"):body.index("**Comment-only")]
-    assert "PR body" not in para
-    assert "commit message" in para
-    assert "author's own login" in para
+    assert "only when it stands in the brief." in para
+    for route in ("forge comment", "login", "PR body", "PR description", "commit message"):
+        assert route not in para
 
 
 def test_comment_leniency_wording_is_authorised_scope_only():
