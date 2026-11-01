@@ -2,9 +2,11 @@
 Title: lair slow-ticket report flags closes that were never solves
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2183
 
 --- log ---
 2026-11-01T13:48Z reviewer created
+2026-11-01T20:19Z reviewer closed — autoclosed — PR #2183
 
 --- body ---
 ## Context
