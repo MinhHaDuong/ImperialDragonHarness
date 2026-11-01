@@ -41,8 +41,8 @@ That is the whole index. It is short because the runtime already did the work.
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`; figures are script-built, never drawn inline. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
-Not a rules file, nor loaded here: `tickets/AGENTS.md` — `@`-imported by the
-harness `CLAUDE.md`, reached in projects via their `AGENTS.md` pointer.
+Not a rules file, nor loaded here: `tickets/AGENTS.md` — reached through the
+`AGENTS.md` pointer ("For ticket operations, read and follow"), in the harness and in projects.
 
 ## Axis model
 
@@ -54,7 +54,7 @@ guessing it.
 
 | Axis | Resolved from | Rule path |
 |------|---------------|-----------|
-| **format** | filename extension (project-agnostic) | `format/<value>.md` (legacy alias: `coding-<value>.md`) |
+| **format** | filename extension (project-agnostic) | `coding-<value>.md` |
 | **doctype** | `\documentclass` sniff for `.tex`; else project manifest | `doctype/<value>.md` |
 | **lang** | project manifest (`lang` per glob, else `default_lang`) | `lang/<value>.md` |
 | **prose** | implied for prose formats | `prose/_all.md` |
@@ -83,7 +83,7 @@ split as `paths:`, for triggers a filename cannot express.
 
 **A runtime without this auto-load gets none of it.** On the Pi and Codex
 adapters, the resident set must be injected by the adapter
-or made genuinely on-demand; `~6 000 tokens` is what that decision moves.
+or made genuinely on-demand; the resident cap (`tests/test_rules_resident_budget.py`) is what that decision moves.
 
 Compliance is verified ex post by the `verify-adherence` skill.
 
