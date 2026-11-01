@@ -1,0 +1,19 @@
+%erg 0.1
+Title: Guard: block pi --print and codex exec with an open stdin
+Created: 2026-11-01
+Author: reviewer
+Closed: autoclosed — PR #2178
+
+--- log ---
+2026-11-01T19:25Z reviewer created
+2026-11-01T19:30Z reviewer closed — autoclosed — PR #2178
+
+--- body ---
+## Context
+Author decision 2026-11-01: "Guard L1 only". Brood lesson L1 (conception/2026-11-01-brood-harness-run.md): a non-interactive CLI hangs on an open stdin. Enforce in scripts/guard-destructive-bash.sh.
+Probe (timeout 20, `sleep 30 | codex exec "say ok"`): codex exec hung (rc 124, "Reading additional input from stdin..."), so it is included.
+
+## Exit criteria
+- [ ] `pi --print|-p` and `codex exec` with no stdin redirect, heredoc, here-string or pipe-in are blocked, message names `</dev/null` and rules/coding-bash.md
+- [ ] `pi --help`, `pi` without print flag, quoted/commented text stay allowed
+- [ ] tests in tests/test_guard_destructive_bash.py

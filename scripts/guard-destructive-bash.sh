@@ -33,6 +33,10 @@ set -euo pipefail
 # not a command. Not parsed: a command nested in `bash -c '...'` or `eval`;
 # the guard is a seatbelt for the common shape, not a sandbox.
 #
+# Ticket 1429 adds one more clause (brood lesson L1): `pi --print`/`pi -p` or
+# `codex exec` with no `<` redirect and not fed by a pipe hangs on an open
+# stdin (codex probed: hangs under `sleep 30 | codex exec`), so it is refused.
+#
 # Fail-open: a payload it cannot parse, or a missing python3, allows. A guard
 # that denies on its own breakage blocks every Bash call.
 
@@ -66,19 +70,27 @@ def strip_heredocs(text):
 
 
 def simple_commands(text):
+    for cmd, _piped in piped_commands(text):
+        yield cmd
+
+
+def piped_commands(text):
+    """Yield (argv, fed_by_pipe) for each simple command."""
     lexer = shlex.shlex(strip_heredocs(text).replace("\n", " ; "),
                         posix=True, punctuation_chars=True)
     lexer.whitespace_split = True
-    cmd = []
+    cmd, piped, next_piped = [], False, False
     for tok in lexer:
         if tok in SEPARATORS:
             if cmd:
-                yield cmd
-            cmd = []
+                yield cmd, piped
+            cmd, piped, next_piped = [], False, tok in ("|", "|&")
         else:
+            if not cmd:
+                piped = next_piped
             cmd.append(tok)
     if cmd:
-        yield cmd
+        yield cmd, piped
 
 
 def resolve(base, path):
@@ -170,6 +182,36 @@ def self_matching_pgrep(argv):
     return None
 
 
+def open_stdin_cli(argv, piped):
+    """`pi --print`/`pi -p` or `codex exec` whose stdin nothing closes or feeds."""
+    i = 0
+    while i < len(argv):
+        tok = argv[i]
+        if tok in LEADERS or tok in PREFIXES or "=" in tok and not tok.startswith("-"):
+            i += 1
+        elif tok == "timeout":
+            i += 1
+            while i < len(argv) and argv[i].startswith("-"):
+                i += 2 if argv[i] in ("-s", "-k", "--signal", "--kill-after") else 1
+            i += 1  # the duration
+        else:
+            break
+    if i >= len(argv) or piped:
+        return None
+    tool, args = os.path.basename(argv[i]), argv[i + 1:]
+    if tool == "pi":
+        hit = "--print" in args or "-p" in args
+    elif tool == "codex":
+        rest = [a for a in args if not a.startswith("-")]
+        hit = bool(rest) and rest[0] == "exec"
+    else:
+        return None
+    # A `<` token (file, here-string, heredoc, `<&`) feeds or closes stdin.
+    if hit and not any(a and set(a) <= set("<") or a.startswith("<&") for a in args):
+        return tool
+    return None
+
+
 def dirty(path):
     try:
         res = subprocess.run(
@@ -188,18 +230,28 @@ def main():
     except Exception:
         return 0
     if not isinstance(command, str) or not (
-            "--hard" in command or "pgrep" in command or "pkill" in command):
+            "--hard" in command or "pgrep" in command or "pkill" in command
+            or re.search(r"\b(pi|codex)\b", command)):
         return 0
     cwd = payload.get("cwd") or os.getcwd()
     try:
-        commands = list(simple_commands(command))
+        commands = list(piped_commands(command))
     except ValueError:
         return 0  # unbalanced quotes: not a shape this guard can read
-    for argv in commands:
+    for argv, piped in commands:
         if argv[0] == "cd":
             dirs = [a for a in argv[1:] if not a.startswith("-")]
             cwd = resolve(cwd, dirs[0] if dirs else "~")
             continue
+        tool = open_stdin_cli(argv, piped)
+        if tool:
+            print(
+                f"BLOCKED: `{tool}` run non-interactively with an open stdin waits "
+                f"for input that never ends. Close stdin with `</dev/null` (or "
+                f"feed it a file, here-string or pipe); see rules/coding-bash.md.",
+                file=sys.stderr,
+            )
+            return 2
         tool = self_matching_pgrep(argv)
         if tool:
             print(
