@@ -2,9 +2,11 @@
 Title: smelt: default project from cwd; native notes resolve primary checkout
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2194
 
 --- log ---
 2026-11-01T21:03Z reviewer created
+2026-11-01T21:14Z reviewer closed — autoclosed — PR #2194
 
 --- body ---
 Author-approved 2026-11-01. (1) /smelt takes an optional project; default is the
