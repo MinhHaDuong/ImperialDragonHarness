@@ -436,6 +436,8 @@ WNAME=sen-causal-reading ticket_world "$T/c12"
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_rc "external tracker cites the closed ticket: finding, rc 1" 1 "$rc"
 _check_says "…names the tracker" "$out" "TRACKER: CITED-BY 0900"
+_check_says "…cross-repo: hands off to the harness (1409)" "$out" "hand off to the harness (step 8)"
+_check_lacks "…cross-repo: never asks to edit the tracker" "$out" "update its child line"
 _check_lacks "…not a tracker citing another repo's 0101" "$out" "CITED-BY 0901"
 _check_lacks "…not a closed tracker" "$out" "CITED-BY 0902"
 _check_lacks "…not a longer id" "$out" "CITED-BY 0903"
@@ -459,6 +461,8 @@ TRACKERS="$W/tickets"
 tracker "$TRACKERS" 0910 "- 0101 child one"
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_says "same-store tracker: bare id on a child line" "$out" "CITED-BY 0910"
+_check_says "…same store: update the tracker in the bundle" "$out" "update its child line and exit criteria (step 8)"
+_check_lacks "…same store: no hand-off" "$out" "hand off to the harness"
 _check_says "…beside the parent check" "$out" "INTEGRATION-REVIEW-DUE 0100"
 unset TRACKERS
 

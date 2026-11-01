@@ -164,13 +164,25 @@ base, once a passing gate record covers the bundle's candidate.
     A tracker can also cite the ticket without a `Parent:` header: an open
     harness tracker whose `## Children` section names this repository and
     the ticket id, often a child in another repository. Each one prints
-    `TRACKER: CITED-BY <id> (<path>)`. Update that tracker's child line
-    (state, PR, date) and tick the exit criteria the close settles; the
-    wording is yours. A tracker in this repository's own store goes in the
-    wrap-up bundle; a harness tracker cited from another repository lands
-    through a harness branch and merge request, never on the harness's main checkout.
+    `TRACKER: CITED-BY <id> (<path>)`; its note says which case holds.
+    - **Same store** (roar runs in the harness): update the tracker's child
+      line (state, PR, date) and tick the exit criteria the close settles,
+      in the wrap-up bundle; the wording is yours.
+    - **Another repository**: hand off, do not edit (`rules/workflow.md`
+      § Cross-project work). The harness owns the tracker's content; its
+      child line and exit criteria stay as they are. The hand-off is one
+      append-only log line on that tracker, the "ticket there" act:
+      `erg log <id> "child <repo> <ticket> closed by <PR> on <date>; tracker update due"`,
+      run in a harness worktree on its own branch from `origin/main` and
+      landed by merge request, never on the harness's main checkout. When
+      timing matters, also message a live harness session (§ Cross-project
+      work item 2); a message never replaces the log line. A harness you
+      cannot reach goes to step 11 as a pending hand-off.
+
     The line repeats on a re-run while the tracker stays open: check the
-    child line before editing again.
+    child line (same store) or the tracker's log and open harness merge
+    requests (another repository) before acting again; the script cannot
+    see a hand-off already made.
 9. **Exit worktree** (if in one):
     Remove only a worktree owned by this session for the completed ticket/PR,
     or explicitly handed over for that task with proven ownership. Ancestry,
