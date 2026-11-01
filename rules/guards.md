@@ -1,4 +1,8 @@
 <!-- last-reviewed: 2026-10-05 -->
+<!-- Module: the floor. Hard limits every agent role obeys, whatever runtime
+or profile; nothing in the other rules or in a skill overrides them. Bare
+profiles load this file alone, so it states its rules in full.
+Loading: rules/README.md § Loading per runtime. -->
 # Guards
 
 These guards apply to every agent role — a main session and a spawned profile

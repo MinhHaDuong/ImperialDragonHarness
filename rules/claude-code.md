@@ -1,11 +1,15 @@
 <!-- last-reviewed: 2026-09-24 -->
+<!-- Module: Claude Code only; adapters for other runtimes skip it. Owns the
+runtime levers (worktree tool, subagent model and effort, allow rules, hook
+output). Adds mechanics to workflow.md and git.md, never policy.
+Loading: rules/README.md § Loading per runtime. -->
 # Claude Code idiosyncrasies
 
 True of this runtime only: adapters on other runtimes skip this file.
 
 ## Entering the session
 
-Worktree, naming and opening line: `workflow.md` § Session start. The `cd`
+Worktree, naming and opening line: `workflow.md` § Session start, details in `skills/hunt/references/session-start.md`. The `cd`
 moves the session; a restart resets it, so paths stay absolute.
 
 Never call `EnterWorktree`. It switches on a runtime guard that refuses git

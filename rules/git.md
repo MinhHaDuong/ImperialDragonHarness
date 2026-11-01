@@ -1,4 +1,8 @@
 <!-- last-reviewed: 2026-11-01 -->
+<!-- Module: git discipline, in every project. Owns branches and commits,
+silently destructive commands, merging and reading git state. Answers to
+workflow.md for when to work; the merge and roar skills hold the procedure.
+Loading: rules/README.md § Loading per runtime. -->
 # Git Discipline
 
 Resident. Rules only; incidents live in memory and tickets.

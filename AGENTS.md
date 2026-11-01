@@ -1,3 +1,9 @@
+<!-- Scope: this file is the harness repository's own bylaws, read only when a
+session works on the harness itself. Law for every project lives in rules/:
+four resident files (workflow.md, git.md, claude-code.md, guards.md) load in
+every Claude Code session (Codex and Pi load none yet, ticket 1413), the others when a session touches matching files (paths:).
+Each research project keeps its own AGENTS.md.
+Policy here that binds all projects belongs in rules/ or a skill (ticket 1412). -->
 # Harness agent profiles
 
 Worker choice (model, effort, reviewer decorrelation) is made by the route skill,

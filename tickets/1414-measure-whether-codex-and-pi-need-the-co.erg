@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Measure whether Codex and Pi need the conditional rules
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T09:45Z reviewer created
+
+--- body ---
+## Context
+Only Claude Code has conditional rules (`paths:`, rules/README.md § Loading
+per runtime). Codex and Pi reach a conditional rule only through a skill that
+names it. A 2026-11-01 map of the 17 conditional rules splits them in two:
+- mechanically enforced (coding-python: ruff and hygiene tests; coding-bash:
+  pipefail and shell-call guards; manuscript-build: build gate;
+  authoring-skills: frontmatter and agnostic tests): a miss is caught by the
+  gate, so the expected cost on Codex/Pi is fix rounds, not quality;
+- judgment-only (prose/_all, doctype/*, lang/en, lang/fr, make.md,
+  prose-adherence-tests): only review catches a miss; lang/* and
+  prose-adherence-tests are named by no skill.
+Whether Codex and Pi do worse without them has not been measured.
+
+## Approach
+An arena-style A/B, same task, same runtime, rule absent vs supplied
+(`pi --append-system-prompt <rule>`, `pi --print` with `</dev/null`; Codex
+through the ticket 1413 mechanism or a prompt prefix), each output scored
+against the rule by a reviewer that does not know the arm:
+1. a small Python script with its test, against coding-python.md;
+2. one paragraph of French prose, against prose/_all.md and lang/fr.md.
+Budget: about an hour of agent time, a few USD.
+
+## Exit criteria
+- [ ] Both tasks run on Codex and Pi, both arms, outputs and blind scores recorded under memory/evidence/
+- [ ] A finding per rule class: needed on Codex/Pi or not, with the evidence
+- [ ] If needed: a follow-up names how the rule reaches those runtimes (skill pointer, injection, or the ticket 1413 global file)
