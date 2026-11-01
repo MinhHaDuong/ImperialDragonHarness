@@ -1,0 +1,26 @@
+%erg 0.1
+Title: After-merge red on main eae83a245bac: pytest-guard
+Created: 2026-11-01
+Author: merge-gate
+
+--- log ---
+2026-11-01T16:13Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: eae83a245bacdedc38cca0b2bba829a2cf670d69
+Failing checks: pytest-guard
+Last green after-merge tip: 0c1c3ae3bc588a3a60329951fa712c46a8d66d9a
+Merges since (first parent, newest first):
+- eae83a245bac Merge pull request #2161 from MinhHaDuong/t1413-runtime-rules-generator
+
+Failed tests (check, test id):
+- pytest-guard tests/test_probe_memory_symlink.py::test_sigterm_kills_the_child_group_before_exit
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
