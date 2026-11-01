@@ -2,9 +2,11 @@
 Title: Guard: block pi --print and codex exec with an open stdin
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2178
 
 --- log ---
 2026-11-01T19:25Z reviewer created
+2026-11-01T19:30Z reviewer closed — autoclosed — PR #2178
 
 --- body ---
 ## Context
