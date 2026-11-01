@@ -2,11 +2,14 @@
 Title: Make room: scope harness-only skills to their projects
 Created: 2026-11-01
 Author: reviewer
+Closed: moot by recount (author ruling 2026-11-01); 1417 unblocked
 
 --- log ---
 2026-11-01T11:25Z reviewer created
 2026-11-01T11:26Z reviewer author ruling 2026-11-01: trace-doctor is harness-specific; scope it with harness-doctor and arena (saving ~365 description chars)
 2026-11-01T13:05Z reviewer raid 1f0534: pulled at feasibility (BLOCK); see section; 1417 stays blocked
+2026-11-01T16:15Z reviewer author ruling 2026-11-01: close moot. Recount on padme (model-invocable descriptions): Claude Code 5330 chars, scoping saves 81 (arena only; harness-doctor and trace-doctor already hidden by disable-model-invocation); Codex/Pi 5249, saves 0-253 depending on whether they honour the flag (unverified). Not worth moving skills and about 10 path pointers.
+2026-11-01T16:15Z reviewer closed — moot by recount (author ruling 2026-11-01); 1417 unblocked
 
 --- body ---
 Parent: 1415
