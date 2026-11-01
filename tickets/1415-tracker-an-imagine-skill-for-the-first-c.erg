@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Tracker: an Imagine skill for the first claw
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T11:25Z reviewer created
+
+--- body ---
+## Context
+rules/workflow.md § Cycle (PR 2137): all work moves Imagine → Plan → Execute →
+Verify → Celebrate, and cycles nest. Every claw has a skill except Imagine:
+Plan to Verify have hunt, gaze and verify-gate; Celebrate has merge, roar and
+lair. Imagine has one resident sentence, conception/design-note-template.md
+and raid's Phase 2, which the 2026-11-01 raid ran inline with only a
+blind-spot agent. The author asked for the skill on 2026-11-01, step 1 being
+to make room for it in the always-listed skill catalog.
+
+## Children
+- 1416 make room (project-scoped skills)
+- 1417 the Imagine skill, Blocked-by 1416
+
+## Exit criteria
+- [ ] Both children closed; integration review per roar step 8

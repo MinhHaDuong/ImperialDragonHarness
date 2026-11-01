@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Imagine skill: interactive design note and raid's agentic phase
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T11:25Z reviewer created
+
+--- body ---
+Parent: 1415
+Blocked-by: 1416
+
+## Context
+The author's description (2026-11-01): Imagine can be interactive, working
+towards a design note in conception/ on the standard plan (problem; situation
+from git; state of the art from docs, web and forums; alternative solutions,
+the most direct one and one from a different family; synthesis and
+recommendation with cost estimates; phased implementation plan; double
+advisor-level review plus KISS), now written as
+conception/design-note-template.md. It can also be agentic, as raid's Phase 2,
+whose past use the author doubts was constructive.
+
+## Exit criteria
+- [ ] A skill drives the template with the author section by section, then the double advisor review and the KISS pass
+- [ ] raid Phase 2 delegates to it per ticket instead of its inline prompt
+- [ ] An audit of past raid logs records what Phase 2 actually produced
+- [ ] One real design note produced with the skill
+- [ ] The catalog entry fits in the room made by 1416
