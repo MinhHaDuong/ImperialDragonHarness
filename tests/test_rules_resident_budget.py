@@ -57,8 +57,9 @@ import resident_census as rc  # noqa: E402
 # § Delegation gains "Cross-project work", four runtime-neutral lines with a
 # stated channel per runtime. Re-ratcheted 2026-11-01 twice: after the git.md
 # review (cap 18350 -> 18000), then the workflow.md diet (ticket 1410):
-# measured 14784, cap 15000.
-RESIDENT_BUDGET = 15000
+# measured 14784, cap 15000; then counted as loaded (comments stripped)
+# and raised to 15100 for the Cycle section (author, 2026-11-01).
+RESIDENT_BUDGET = 15100
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.
@@ -72,7 +73,8 @@ def resident_files() -> list[Path]:
 
 
 def test_resident_rules_stay_within_budget():
-    sizes = {p.relative_to(RULES): len(p.read_text(encoding="utf-8")) for p in resident_files()}
+    # What the model receives (rc.loaded_rule_text strips HTML comments).
+    sizes = {p.relative_to(RULES): len(rc.loaded_rule_text(p)) for p in resident_files()}
     total = sum(sizes.values())
     worst = sorted(sizes.items(), key=lambda kv: -kv[1])[:3]
     detail = ", ".join(f"{name} {size}" for name, size in worst)

@@ -12,7 +12,7 @@ user-invocable: true
 
 Neighbouring skills and when to prefer each: [session-lifecycle](../lair/references/session-lifecycle.md).
 
-`[Execute → Reflect]`
+`[Verify → Celebrate]`
 
 Run after the branch has been merged. Do not skip steps.
 

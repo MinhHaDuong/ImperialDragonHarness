@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Move cross-project memory policy out of the harness AGENTS.md
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T08:43Z reviewer created
+
+--- body ---
+## Context
+Found 2026-11-01 while comparing rules/workflow.md with the harness AGENTS.md.
+workflow.md is law for every project (resident, injected on Codex and Pi);
+the harness AGENTS.md is the harness repo's own bylaws, loaded only when the
+session's repo is the harness. AGENTS.md § Project memory boundary nonetheless
+holds policy for every project (roar records facts only, smelt consolidates,
+crystallisation needs an explicit request with a destination, journals are
+append-only, attribution records outside the journal). A session in a paper
+repo sees it only through the roar/smelt skills and a pointer in workflow.md
+(now to guards.md).
+
+## Exit criteria
+- [ ] The cross-project memory policy lives where every project sees it: procedure in skills/roar and skills/smelt, the boundary in rules/guards.md
+- [ ] The harness AGENTS.md keeps only what is specific to the harness repo
+- [ ] Resident budget still passes (tests/test_rules_resident_budget.py)

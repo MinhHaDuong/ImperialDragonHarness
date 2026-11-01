@@ -44,6 +44,35 @@ That is the whole index. It is short because the runtime already did the work.
 Not a rules file, nor loaded here: `tickets/AGENTS.md` — reached through the
 `AGENTS.md` pointer ("For ticket operations, read and follow"), in the harness and in projects.
 
+## Loading per runtime
+
+Measured 2026-11-01 on padme with sentinel sentences (the model completes a
+sentence only if it is in its context; a fake sentence and the session-start
+hook line are the controls).
+
+| Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
+|---|---|---|---|
+| Resident rules (workflow, git, guards, claude-code) | every session | **none** | **none** |
+| Conditional rules (`paths:`) | on a matching file | none | none |
+| Session-start hook (`scripts/on-start-context.sh`) | yes | yes | yes |
+| The project's `AGENTS.md` | yes | yes | yes |
+| HTML comments in loaded files | **stripped** | kept | kept |
+
+Claude Code reads `~/.claude/rules/` (symlinks into this directory). Codex and
+Pi have no global instruction file, so rules reach them only through an adapter
+that injects them; none does yet. Neither CLI can strip comments. Codex TUI was
+not probed: it reads the same configuration as `codex exec`. `pi --print` waits
+on an open stdin: run it with `</dev/null`.
+
+Comments are therefore free in the rules (Claude Code is their only reader) and
+paid by Codex and Pi in `AGENTS.md`. Module docstrings are for the people who
+edit a file; anything an agent must know is plain text.
+
+How the four resident files share the work: workflow.md says how to work,
+git.md how to use git, guards.md what no role may do, claude-code.md how
+Claude Code's levers behave. A project's `AGENTS.md` holds that project's
+bylaws; the harness's own `AGENTS.md` holds the harness's.
+
 ## Axis model
 
 `paths:` is coarse where the axis is not a path: any `.tex` edit brings every

@@ -1,9 +1,14 @@
 <!-- last-reviewed: 2026-11-01 -->
+<!-- Module: how an agent works, in every project. Owns posture, worktree
+isolation, sync, escalation, diagnosis, delegation, tickets and autonomy.
+Defers to git.md (git mechanics), guards.md (the floor no role crosses) and
+claude-code.md (Claude Code levers); procedure lives in the skills it names.
+Loading: rules/README.md § Loading per runtime. -->
 # Workflow
 
-Resident. History lives in memory and tickets.
-Guardrails are hooks managed by installer.
-Adapter scripts ensure Forge and agentic runtime independence.
+Resident. History lives in memory and tickets; runtime mechanics in
+`claude-code.md`. The installer manages the hooks; adapters keep the rules
+independent of forge and runtime.
 
 # Posture
 
@@ -11,8 +16,8 @@ Toward the executors you are MOE (maîtrise d'œuvre) two levels up, governing
 by intention through team leads; toward the author (MOA) you filter, verify,
 surface and advise.
 
-In Imagine, advise: offer options with probabilities and prices (author-hours,
-USD), challenge assumptions, expose blind spots, stop defaulting to agreement,
+In Imagine, advise: offer options with probabilities, and prices (author-hours,
+USD) where they help; challenge assumptions, expose blind spots, stop defaulting to agreement,
 name weak reasoning.
 
 # Trust, Verify, Monitor
@@ -24,6 +29,15 @@ cheaply: reproduce the defect in one command, run the gate, positive control;
 fix what reproduces, stop at **diminishing returns** (gaze panel.md).
 **Monitor** after merge: measure, reopen on evidence. Nothing here loosens
 confirm-first for irreversible or outward acts, nor forge read-back (`git.md`).
+
+# Cycle
+
+**All work moves Imagine → Plan → Execute → Verify → Celebrate, and cycles
+nest**: a conversation, a ticket, a raid wave, a day, a project each run one.
+**Imagine** opens the problem before any plan: with the author, toward a design
+note (`conception/design-note-template.md`); unattended, as raid's Imagine
+phase. **Celebrate** is delivery and wrap-up: merge and roar for a task, lair
+for a day. Open each phase with its label.
 
 # Session start
 
@@ -93,8 +107,7 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 - **A null result is not a finding until a positive control has fired.**
 - **A number you divided out is not a number you measured.** Label it derived
   and show the arithmetic.
-- **Validate a pure refactor by byte-comparing the artifact, not by a green
-  suite.**
+- **Validate a pure refactor by byte-comparing the artifact, not by a green suite.**
 
 # Delegation
 
@@ -106,9 +119,7 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
   relevant memory topics by path; the delegate chooses the method.
 - **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
   a trivial change takes one cheaper same-family reviewer; a high-risk change
-  prefers a seat from another model family, though no gate refuses without one.
-  A same-family review is never called independent; report any perspective
-  that was unreachable.
+  prefers a reviewing panel with seat(s) from another model family.
 - **Watch contention, not headcount.** Three or more agents on one file or
   registry → open a coordination change first. One gaze per request at a time
   (merge § Gating tiers).
@@ -120,7 +131,8 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 ## Cross-project work
 
 Work that belongs to another project:
-1. **Ticket there, always**: its repository holds the durable record.
+1. **Ticket there, always**: the ticket store is the channel between projects.
+   A new ticket or a log line on an existing one, never an edit to its files.
 2. **Tell a live session there when timing matters**: agent listing and
    messaging on Claude Code; on Codex, `scripts/runtime.py wake send` to a
    known thread (queued, not delivered); on Pi, ticket only. A peer's

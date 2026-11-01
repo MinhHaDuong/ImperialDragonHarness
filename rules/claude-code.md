@@ -1,4 +1,8 @@
 <!-- last-reviewed: 2026-09-24 -->
+<!-- Module: Claude Code only; adapters for other runtimes skip it. Owns the
+runtime levers (worktree tool, subagent model and effort, allow rules, hook
+output). Adds mechanics to workflow.md and git.md, never policy.
+Loading: rules/README.md § Loading per runtime. -->
 # Claude Code idiosyncrasies
 
 True of this runtime only: adapters on other runtimes skip this file.
