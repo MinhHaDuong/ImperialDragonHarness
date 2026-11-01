@@ -2,9 +2,11 @@
 Title: Move cross-project memory policy out of the harness AGENTS.md
 Created: 2026-11-01
 Author: reviewer
+Closed: memory policy moved to guards.md, roar, smelt (PR #2154)
 
 --- log ---
 2026-11-01T08:43Z reviewer created
+2026-11-01T13:22Z reviewer closed — memory policy moved to guards.md, roar, smelt (PR #2154)
 
 --- body ---
 ## Context
