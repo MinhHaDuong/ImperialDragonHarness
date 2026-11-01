@@ -21,7 +21,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 0. **Review session scope**: use today's commits and the current ticket state to identify work for steps 1–2. Always perform steps 11 and 12: the reconcile proposal and pending experiences are independent of new commits.
 
 1. **Housekeeping** — load the molt skill (git sync, yawn, eager fix-now repairs, ticket creation).
-2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
+2. **Celebrate the day** (`rules/workflow.md` § Cycle) — summarize work done. `git log --since="6am" --oneline` as starting point.
    Then run the report-only temporary-candidate scan for the host, using the
    exact current runtime name and session id from its live metadata:
    ```bash

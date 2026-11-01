@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only check: are the allow rules that skill-prescribed git acts need present?
 
-Ticket 1331. The auto-mode classifier refuses `rules/git.md`'s own acts (a
+Ticket 1331. The auto-mode classifier refuses skill-prescribed git acts (a
 rebased force-push, `git branch -D` on a superseded branch) as "Git Destructive"
 despite a blanket `Bash` allow. These narrow rules, which the author adds to the
 live `~/.claude/settings.json`, settle it. This script never edits that file.
