@@ -157,6 +157,8 @@ detect_tracker() {
 # free text, which no Parent: header reaches. The match needs the repo's name
 # (main checkout or origin) and the id as words on one line of `## Children`;
 # in the harness's own store the bare id suffices. Wording stays the model's.
+# Same store: roar updates the tracker. From another repository roar hands
+# off (a log line, a message), never edits it (ticket 1409).
 real_dir() { cd -P "$1" 2>/dev/null && pwd -P; }
 cited_children() { # <tracker file>: its Children section
     awk '/^## /{inside = ($0 ~ /^## Children[[:space:]]*$/); next} inside' "$1"
@@ -191,7 +193,11 @@ detect_citing_trackers() {
             done
         fi
         [ "$hit" -eq 1 ] || continue
-        note "TRACKER: CITED-BY $tid ($t) — update its child line and exit criteria (step 8)"
+        if [ "$same" -eq 1 ]; then
+            note "TRACKER: CITED-BY $tid ($t) — same store: update its child line and exit criteria (step 8)"
+        else
+            note "TRACKER: CITED-BY $tid ($t) — another repository's tracker: hand off to the harness (step 8)"
+        fi
         bump 1
     done
 }
