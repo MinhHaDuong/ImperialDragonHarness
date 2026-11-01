@@ -1,0 +1,29 @@
+%erg 0.1
+Title: raid SKILL: say the Blind-Spot pass is part of Imagine, not a step after it
+Created: 2026-11-01
+Author: MinhHaDuong
+
+--- log ---
+2026-11-01T13:52Z MinhHaDuong created
+
+--- body ---
+
+## Context
+
+Reported from an arena session (raid 4f385e on arena ticket 1111, 2026-11-01). In
+`skills/raid/SKILL.md` § Phase 2 the parallel Imagine agents end with "Wait for all.",
+then a `### Blind-Spot pass (cross-ticket)` subsection follows. The orchestrator read this
+as two steps and told the author "after Imagine comes the Blind-Spot pass". The author
+corrected: the Blind-Spot pass is part of Imagine. The wording invites the misreading.
+
+## Scope
+
+Wording only, in `skills/raid/SKILL.md` § Phase 2: make the Blind-Spot pass read as the
+closing step of Imagine (for example, open § Phase 2 with its two steps, per-ticket
+reimagine then cross-ticket blind spot, and move "Wait for all" so it does not read as the
+phase's end). No change to what the pass does. Coordinate with 1415 (Imagine skill
+tracker), which may absorb this.
+
+## Exit criteria
+
+- [ ] § Phase 2 names the Blind-Spot pass as part of Imagine; a reader cannot take it for a separate phase
