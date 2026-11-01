@@ -29,9 +29,9 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 ## Branch cleanup
 
 - **Roar's step 10 cleans only the just-completed ticket and its merge**: branches
-  named by its merged requests, at approved head OIDs, ancestry checked, `-d`
-  only, worktrees it owns. Foreign branches/worktrees stay, even merged
-  (lair/molt). Drift or unreadable evidence: retain and report, never force.
+  named by its merged requests, at full approved head OIDs, ancestry checked,
+  `-d` only, worktrees it owns. Others stay, even merged (lair/molt). Drift or
+  unreadable evidence: retain and report, never force or compensate.
 
 ## Reading state you will act on
 
