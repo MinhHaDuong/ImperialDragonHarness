@@ -12,6 +12,8 @@ skills-only pilot. Host registration is described in the installation guide.
 - `perch.py` and `bin/idh` — the multi-harness skill installer, generalized
   from the perch pilot (tickets 0802 and 0949).
 
+Every mechanism ships for Claude Code, Codex and Pi together; no runtime is optional or staged last.
+
 ## Adapter map
 
 The harness depends on three independent outside systems. Each has one

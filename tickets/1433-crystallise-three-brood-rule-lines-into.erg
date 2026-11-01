@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Crystallise three brood rule lines into README and coding-bash
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T20:26Z reviewer created
+
+--- body ---
+## Context
+Author crystallisation request, 2026-11-01, after the Fable + Astra panel on the brood rule candidates (conception/2026-11-01-brood-harness-run.md, rows 3, 7, 15). Author selected exactly these three lines, destinations rules/README.md, adapters/README.md, rules/coding-bash.md. Zero resident cost: no resident file touched.
+
+## Exit criteria
+- [ ] rules/README.md carries: "Rules state principles; skills and scripts hold procedures; configuration holds settings; memory holds cases and rulings."
+- [ ] adapters/README.md carries: "Every mechanism ships for Claude Code, Codex and Pi together; no runtime is optional or staged last."
+- [ ] coding-bash.md § Waiting for a background job carries: "Never hand the wait to the author: one background command with a hard timeout that exits on the condition, then finish the chain yourself." reconciled with the bounded foreground wait
+- [ ] tests/test_rules_resident_budget.py and make lint pass
