@@ -2,11 +2,13 @@
 Title: Skill case notes: cases chosen by judged usefulness, not four fixed slots (design note)
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2190
 
 --- log ---
 2026-11-01T20:18Z reviewer created
 2026-11-01T20:19Z reviewer author 2026-11-01: "Variable number of cases then. Observed, not invented!" No fixed count; every case is an observed, sourced episode (journal, ticket, PR, commit), never a composed or blended story; an aggregate stays only if it is itself a recorded measurement.
 2026-11-01T20:20Z reviewer author 2026-11-01: "Variable number under a size limit of course, no more than 4." One to four observed cases, within the word cap.
+2026-11-01T20:33Z reviewer closed — autoclosed — PR #2190
 
 --- body ---
 ## Context
