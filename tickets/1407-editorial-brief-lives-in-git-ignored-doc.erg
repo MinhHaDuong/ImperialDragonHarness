@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Editorial brief lives in git-ignored docs/
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T08:15Z reviewer created
+
+--- body ---
+## Context
+Source: Fable (claude-fable-5-1) and Astra (gpt-6-astra) review of the ruleset, 2026-11-01; reports in the session scratchpad, findings verified against main by the session. Astra finding, verifiable.
+
+`rules/prose-adherence-tests.md:18` puts standing editorial decisions in
+`docs/editorial-brief.md`. `rules/zotero.md:25` makes `docs/` git-ignored in
+full (`*.md` included). The brief is therefore never committed, durable
+decisions live in one checkout only, and `skills/gaze/references/prose-panel.md`
+skips the editorial-brief auditor silently when the file is absent (a fresh
+clone or a reviewer worktree).
+
+## Decision for the author
+Where the brief lives: a tracked path (e.g. `editorial-brief.md` at the repo
+root, or `docs/` re-included for that one file), then the rule, the panel and
+the `paths:` trigger move together.
+
+## Exit criteria
+- [ ] The brief has a tracked home; prose-adherence-tests.md, prose-panel.md and the paths: glob name it
+- [ ] Existing briefs in paper repos are located and moved (ticket there, per cross-project rule)

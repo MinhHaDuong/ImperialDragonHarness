@@ -1,0 +1,21 @@
+%erg 0.1
+Title: verify-gate passes comment hunks under author-protected paths
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T08:15Z reviewer created
+
+--- body ---
+## Context
+Source: Fable (claude-fable-5-1) and Astra (gpt-6-astra) review of the ruleset, 2026-11-01; reports in the session scratchpad, findings verified against main by the session. Astra finding, verifiable.
+
+`skills/verify-gate/SKILL.md:251-255`: a comment-only hunk "is never a scope or
+authorisation blocker, even under a path the brief marked protected (e.g. \"do
+not edit `rapport/`\")". Scope is the author's call by right
+(`rules/workflow.md` § Escalation protocol). A protected path means the author
+withheld authorization; the gate overrides it for comments.
+
+## Exit criteria
+- [ ] A hunk under a path the brief marked protected is scope_overflow whatever its kind; comment leniency applies only inside authorized scope
+- [ ] A test pins the protected-path case

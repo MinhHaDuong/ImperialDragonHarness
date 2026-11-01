@@ -1,0 +1,21 @@
+%erg 0.1
+Title: roar step 8 edits the harness from another project
+Created: 2026-11-01
+Author: reviewer
+
+--- log ---
+2026-11-01T08:15Z reviewer created
+
+--- body ---
+## Context
+Source: Fable (claude-fable-5-1) and Astra (gpt-6-astra) review of the ruleset, 2026-11-01; reports in the session scratchpad, findings verified against main by the session. Astra finding, verifiable.
+
+`skills/roar/SKILL.md:170`: "a harness tracker cited from another repository
+lands through a harness branch and merge request". A roar run in project X then
+edits the harness, against `rules/workflow.md` § Cross-project work ("Never edit
+it from here"; ticket there, tell a live session) and AGENTS.md § Project memory
+boundary (a named harness receives nominations only).
+
+## Exit criteria
+- [ ] roar step 8 hands a cited harness tracker update to the harness (a ticket log line or a message to a live harness session) instead of editing it
+- [ ] The cross-project rule and roar agree; close-and-clean.sh's TRACKER: CITED-BY report wording matches
