@@ -1,0 +1,16 @@
+%erg 0.1
+Title: claude-code.md allow rules: restore the rewrite-or-skip policy, keep the probe fact
+Created: 2026-11-01
+Author: reviewer
+Closed: policy restored with the probe fact
+
+--- log ---
+2026-11-01T19:42Z reviewer created
+2026-11-01T19:42Z reviewer closed — policy restored with the probe fact
+
+--- body ---
+## Context
+Author ruling 2026-11-01: revert PR #2175 policy change to a factual edit. The probe (ticket 1427) reproduced no denial, so it cannot support dropping the rewrite-to-allow-rule escape; it only shows the `git -C` example was not special.
+
+## Exit criteria
+- [ ] rules/claude-code.md keeps the rewrite-or-skip policy and states the probe fact
