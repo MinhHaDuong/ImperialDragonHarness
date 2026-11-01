@@ -2,9 +2,11 @@
 Title: Measure whether Codex and Pi need the conditional rules
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2156
 
 --- log ---
 2026-11-01T09:45Z reviewer created
+2026-11-01T13:32Z reviewer closed — autoclosed — PR #2156
 
 --- body ---
 ## Context
@@ -30,6 +32,14 @@ against the rule by a reviewer that does not know the arm:
 Budget: about an hour of agent time, a few USD.
 
 ## Exit criteria
-- [ ] Both tasks run on Codex and Pi, both arms, outputs and blind scores recorded under memory/evidence/
-- [ ] A finding per rule class: needed on Codex/Pi or not, with the evidence
+- [x] Both tasks run on Codex and Pi, both arms, outputs and blind scores recorded under memory/evidence/
+- [x] A finding per rule class: needed on Codex/Pi or not, with the evidence
 - [ ] If needed: a follow-up names how the rule reaches those runtimes (skill pointer, injection, or the ticket 1413 global file)
+
+## Imagine (raid 1f0534)
+- Premise holds; independent of 1413 by using the prompt-prefix arm (ticket allows it).
+- Spend within the ticket's budget (about an hour, a few USD). Blind scorer from another family than the producer when reachable.
+- Evidence under memory/evidence/; the PR closes 1414 only if both runtimes ran both arms.
+
+## Feasibility (raid 1f0534)
+- WARN. Pi's default provider is local qwen (`~/.pi/agent/settings.json`): record the served provider/model per arm; a finding reads "<model> on <runtime>". Run before any 1413 install (clean baseline). Moved to wave 1.

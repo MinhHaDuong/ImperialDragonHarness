@@ -1,0 +1,216 @@
+### `temps.py`
+
+```python
+#!/usr/bin/env python3
+"""Report summary statistics for daily temperatures from a CSV file."""
+
+import argparse
+import csv
+import logging
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+log = logging.getLogger("temps")
+
+COLUMNS = ("date", "temp_c")
+
+
+@dataclass(frozen=True)
+class Stats:
+    count: int
+    mean: float
+    minimum: float
+    maximum: float
+    max_date: str
+
+
+def read_rows(path: Path) -> list[tuple[str, float]]:
+    """Return (date, temp_c) pairs, skipping unparseable rows."""
+    rows: list[tuple[str, float]] = []
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            raise ValueError(f"{path}: empty file, no header row")
+        missing = sorted(set(COLUMNS) - set(reader.fieldnames))
+        if missing:
+            raise ValueError(f"{path}: missing column(s): {', '.join(missing)}")
+        for lineno, raw in enumerate(reader, start=2):
+            date = (raw.get("date") or "").strip()
+            temp = (raw.get("temp_c") or "").strip()
+            if not date or not temp:
+                log.warning("line %d: blank field, skipped", lineno)
+                continue
+            try:
+                value = float(temp)
+            except ValueError:
+                log.warning("line %d: temp_c %r is not a number, skipped", lineno, temp)
+                continue
+            rows.append((date, value))
+    return rows
+
+
+def compute_stats(rows: list[tuple[str, float]]) -> Stats:
+    if not rows:
+        raise ValueError("no usable temperature rows")
+    temps = [temp for _, temp in rows]
+    maximum = max(temps)
+    max_date = next(date for date, temp in rows if temp == maximum)
+    return Stats(
+        count=len(temps),
+        mean=sum(temps) / len(temps),
+        minimum=min(temps),
+        maximum=maximum,
+        max_date=max_date,
+    )
+
+
+def format_stats(stats: Stats) -> str:
+    return (
+        f"days: {stats.count}\n"
+        f"mean: {stats.mean:.2f}\n"
+        f"min: {stats.minimum:.2f}\n"
+        f"max: {stats.maximum:.2f}\n"
+        f"max_date: {stats.max_date}"
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "csv",
+        nargs="?",
+        type=Path,
+        default=Path("temperatures.csv"),
+        help="CSV file with date,temp_c columns (default: temperatures.csv)",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+    if not args.csv.is_file():
+        log.error("%s: no such file", args.csv)
+        return 1
+    try:
+        stats = compute_stats(read_rows(args.csv))
+    except ValueError as exc:
+        log.error("%s", exc)
+        return 1
+    log.info("%s", format_stats(stats))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+### `tests/test_temps.py`
+
+```python
+"""Fast tests for temps.py — pure logic, no subprocess, no network."""
+
+import inspect
+from pathlib import Path
+
+import pytest
+
+import temps
+
+
+def write_csv(path: Path, text: str) -> Path:
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_compute_stats_reports_all_four_numbers():
+    stats = temps.compute_stats(
+        [("2026-01-01", 10.0), ("2026-01-02", 25.5), ("2026-01-03", 4.0)]
+    )
+    assert stats.count == 3
+    assert stats.mean == pytest.approx(13.166666, abs=1e-5)
+    assert stats.minimum == 4.0
+    assert stats.maximum == 25.5
+    assert stats.max_date == "2026-01-02"
+
+
+def test_compute_stats_ties_take_the_earliest_date():
+    stats = temps.compute_stats([("2026-01-01", 7.0), ("2026-01-02", 7.0)])
+    assert stats.maximum == 7.0
+    assert stats.max_date == "2026-01-01"
+
+
+def test_compute_stats_handles_negative_temps():
+    stats = temps.compute_stats([("2026-02-01", -12.0), ("2026-02-02", -3.5)])
+    assert stats.minimum == -12.0
+    assert stats.maximum == -3.5
+    assert stats.max_date == "2026-02-02"
+
+
+def test_compute_stats_rejects_no_rows():
+    with pytest.raises(ValueError, match="no usable temperature rows"):
+        temps.compute_stats([])
+
+
+def test_read_rows_parses_a_good_file(tmp_path: Path):
+    csv_path = write_csv(
+        tmp_path / "t.csv",
+        "date,temp_c\n2026-01-01,10.5\n2026-01-02,-3\n",
+    )
+    assert temps.read_rows(csv_path) == [("2026-01-01", 10.5), ("2026-01-02", -3.0)]
+
+
+def test_read_rows_skips_bad_and_blank_rows(tmp_path: Path):
+    csv_path = write_csv(
+        tmp_path / "t.csv",
+        "date,temp_c\n2026-01-01,10.0\n2026-01-02,nonsense\n,7.0\n2026-01-03,\n",
+    )
+    assert temps.read_rows(csv_path) == [("2026-01-01", 10.0)]
+
+
+def test_read_rows_rejects_missing_column(tmp_path: Path):
+    csv_path = write_csv(tmp_path / "t.csv", "date,temperature\n2026-01-01,10.0\n")
+    with pytest.raises(ValueError, match="missing column\\(s\\): temp_c"):
+        temps.read_rows(csv_path)
+
+
+def test_read_rows_rejects_empty_file(tmp_path: Path):
+    csv_path = tmp_path / "t.csv"
+    csv_path.write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="no header row"):
+        temps.read_rows(csv_path)
+
+
+def test_format_stats_labels_and_rounds():
+    stats = temps.Stats(count=3, mean=13.166666, minimum=4.0, maximum=25.5, max_date="2026-01-02")
+    text = temps.format_stats(stats)
+    assert text.splitlines() == [
+        "days: 3",
+        "mean: 13.17",
+        "min: 4.00",
+        "max: 25.50",
+        "max_date: 2026-01-02",
+    ]
+
+
+def test_main_returns_zero_and_reports(tmp_path: Path):
+    csv_path = write_csv(tmp_path / "t.csv", "date,temp_c\n2026-01-01,10\n2026-01-02,20\n")
+    assert temps.main([str(csv_path)]) == 0
+
+
+def test_main_fails_on_missing_file(tmp_path: Path, caplog):
+    assert temps.main([str(tmp_path / "nope.csv")]) == 1
+    assert "no such file" in caplog.text
+
+
+def test_main_fails_on_bad_header(tmp_path: Path):
+    csv_path = write_csv(tmp_path / "t.csv", "day,temp\n2026-01-01,10\n")
+    assert temps.main([str(csv_path)]) == 1
+
+
+def test_entry_point_uses_argparse():
+    source = inspect.getsource(temps)
+    assert "argparse.ArgumentParser" in source
+    assert "__name__ == '__main__'" in source or '__name__ == "__main__"' in source
+```

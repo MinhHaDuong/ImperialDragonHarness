@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-01T11:25Z reviewer created
 2026-11-01T11:26Z reviewer author ruling 2026-11-01: trace-doctor is harness-specific; scope it with harness-doctor and arena (saving ~365 description chars)
+2026-11-01T13:05Z reviewer raid 1f0534: pulled at feasibility (BLOCK); see section; 1417 stays blocked
 
 --- body ---
 Parent: 1415
@@ -25,3 +26,16 @@ must stay readable from any project.
 - [ ] The scoped skills are listed only in their project on Claude Code, Codex and Pi (project_skill_roots in adapters/pilot-support.json), and the installer stops projecting them globally
 - [ ] Pointers to their files from global rules and skills still resolve
 - [ ] Measured catalog saving recorded in the PR
+
+## Imagine (raid 1f0534)
+- Premise holds: no project scoping yet beyond `project_skill_roots` in adapters/pilot-support.json. Author ruling on the ticket adds trace-doctor to harness-doctor and arena.
+- Simplest path: drive scoping from the existing `project_skill_roots` data; the installer skips those skills when projecting globally. test-doctor stays global.
+- Check: rules/workflow.md's pointer to skills/harness-doctor/references/diagnosis-discipline.md is a repo path, so it resolves only from the harness; confirm how other projects read it today (installed absolute path?) and keep that reachable.
+- Shares the installer with 1413 (wave 2).
+
+## Feasibility (raid 1f0534): BLOCK, returned to author
+- On Codex and Pi the global skills root IS the harness skills/ (adapters/pilot-support.json:30,43; projections.json:168-177 maps ~/.agents/skills to $IDH_ROOT/skills, a self-map on padme). project_skill_roots names where a runtime looks for project-local skills, not which to scope. Scoping there means moving skills out of skills/ (to a git-ignored .agents/skills today), breaking path pointers: rules/workflow.md:102, rules/authoring-skills.md:9, scripts/check-agnostic.sh:25, tests/test_harness_doctor_skill.py, test_skill_frontmatter.py:160, test_check_agnostic.py, test_test_doctor_skill.py:50; gen_skills_catalog.py globs skills/*/SKILL.md.
+- The saving is likely overstated: harness-doctor and trace-doctor carry disable-model-invocation: true, which Claude Code already leaves out of the model's listing (this session lists arena, not them). Recount per runtime over model-invocable skills only.
+- arena is a link to ~/CNRS/code/arena/skills/arena that no harness code makes, and Codex/Pi do not list it: scoping it is arena's ticket.
+- Global lair offers /harness-doctor (skills/lair/SKILL.md:134,143) and test-doctor names /trace-doctor.
+- Decision for the author: move skills physically, or hide per runtime (Codex allow_implicit_invocation, Pi disable-model-invocation), after the recount.

@@ -1,0 +1,201 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0
+--------
+workdir: /tmp/ab1414.qQVywh
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: 01a19739-32b2-7a80-8411-d6c04f51c246
+--------
+user
+Write a small Python command-line script that reads a CSV file of daily temperatures (columns: date, temp_c) and reports the mean, the minimum, the maximum, and the date of the maximum. Also write a test for it. Do not run anything or use any tool: reply only with the two files, each in a fenced code block preceded by its file name.
+hook: SessionStart
+hook: SessionStart Completed
+codex
+temperatures.py
+```python
+import argparse
+import csv
+from datetime import date
+from statistics import mean
+
+
+def summarize(path):
+    with open(path, newline="", encoding="utf-8") as source:
+        reader = csv.DictReader(source)
+        if not {"date", "temp_c"}.issubset(reader.fieldnames or []):
+            raise ValueError("CSV must contain date and temp_c columns")
+        rows = [
+            (date.fromisoformat(row["date"]), float(row["temp_c"]))
+            for row in reader
+        ]
+
+    if not rows:
+        raise ValueError("CSV contains no temperature records")
+
+    maximum_date, maximum = max(rows, key=lambda row: row[1])
+    temperatures = [temperature for _, temperature in rows]
+    return mean(temperatures), min(temperatures), maximum, maximum_date
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Summarize daily temperatures.")
+    parser.add_argument("csv_file", help="CSV with date (YYYY-MM-DD) and temp_c")
+    args = parser.parse_args()
+
+    try:
+        average, minimum, maximum, maximum_date = summarize(args.csv_file)
+    except (OSError, ValueError, KeyError) as error:
+        parser.error(str(error))
+
+    print(f"Mean: {average:.2f} °C")
+    print(f"Minimum: {minimum:.2f} °C")
+    print(f"Maximum: {maximum:.2f} °C")
+    print(f"Date of maximum: {maximum_date.isoformat()}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+test_temperatures.py
+```python
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+class TemperatureCLITest(unittest.TestCase):
+    def test_reports_statistics_and_first_date_of_tied_maximum(self):
+        with tempfile.TemporaryDirectory() as directory:
+            csv_path = Path(directory) / "temperatures.csv"
+            csv_path.write_text(
+                "date,temp_c\n"
+                "2026-01-01,-5\n"
+                "2026-01-02,10\n"
+                "2026-01-03,5\n"
+                "2026-01-04,10\n",
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("temperatures.py")),
+                    str(csv_path),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=True,
+            )
+
+        self.assertEqual(
+            result.stdout,
+            "Mean: 5.00 °C\n"
+            "Minimum: -5.00 °C\n"
+            "Maximum: 10.00 °C\n"
+            "Date of maximum: 2026-01-02\n",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
+```
+tokens used
+4 511
+temperatures.py
+```python
+import argparse
+import csv
+from datetime import date
+from statistics import mean
+
+
+def summarize(path):
+    with open(path, newline="", encoding="utf-8") as source:
+        reader = csv.DictReader(source)
+        if not {"date", "temp_c"}.issubset(reader.fieldnames or []):
+            raise ValueError("CSV must contain date and temp_c columns")
+        rows = [
+            (date.fromisoformat(row["date"]), float(row["temp_c"]))
+            for row in reader
+        ]
+
+    if not rows:
+        raise ValueError("CSV contains no temperature records")
+
+    maximum_date, maximum = max(rows, key=lambda row: row[1])
+    temperatures = [temperature for _, temperature in rows]
+    return mean(temperatures), min(temperatures), maximum, maximum_date
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Summarize daily temperatures.")
+    parser.add_argument("csv_file", help="CSV with date (YYYY-MM-DD) and temp_c")
+    args = parser.parse_args()
+
+    try:
+        average, minimum, maximum, maximum_date = summarize(args.csv_file)
+    except (OSError, ValueError, KeyError) as error:
+        parser.error(str(error))
+
+    print(f"Mean: {average:.2f} °C")
+    print(f"Minimum: {minimum:.2f} °C")
+    print(f"Maximum: {maximum:.2f} °C")
+    print(f"Date of maximum: {maximum_date.isoformat()}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+test_temperatures.py
+```python
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+class TemperatureCLITest(unittest.TestCase):
+    def test_reports_statistics_and_first_date_of_tied_maximum(self):
+        with tempfile.TemporaryDirectory() as directory:
+            csv_path = Path(directory) / "temperatures.csv"
+            csv_path.write_text(
+                "date,temp_c\n"
+                "2026-01-01,-5\n"
+                "2026-01-02,10\n"
+                "2026-01-03,5\n"
+                "2026-01-04,10\n",
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("temperatures.py")),
+                    str(csv_path),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=True,
+            )
+
+        self.assertEqual(
+            result.stdout,
+            "Mean: 5.00 °C\n"
+            "Minimum: -5.00 °C\n"
+            "Maximum: 10.00 °C\n"
+            "Date of maximum: 2026-01-02\n",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
+```

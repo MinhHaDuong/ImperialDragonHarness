@@ -1,0 +1,78 @@
+temperatures.py
+```python
+import argparse
+import csv
+from statistics import mean
+
+
+def summarize(stream):
+    rows = [
+        (row["date"], float(row["temp_c"]))
+        for row in csv.DictReader(stream)
+    ]
+    if not rows:
+        raise ValueError("CSV contains no temperature records")
+
+    temperatures = [temp for _, temp in rows]
+    max_date, max_temp = max(rows, key=lambda row: row[1])
+    return mean(temperatures), min(temperatures), max_temp, max_date
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Summarize daily temperatures.")
+    parser.add_argument("csv_file", help="CSV file with date,temp_c columns")
+    args = parser.parse_args()
+
+    try:
+        with open(args.csv_file, newline="", encoding="utf-8") as stream:
+            average, minimum, maximum, max_date = summarize(stream)
+    except (OSError, ValueError, KeyError) as error:
+        parser.error(str(error))
+
+    print(f"Mean: {average:.2f} °C")
+    print(f"Minimum: {minimum:.2f} °C")
+    print(f"Maximum: {maximum:.2f} °C")
+    print(f"Date of maximum: {max_date}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+test_temperatures.py
+```python
+import io
+import unittest
+
+from temperatures import summarize
+
+
+class TemperatureTests(unittest.TestCase):
+    def test_summary(self):
+        stream = io.StringIO(
+            "date,temp_c\n"
+            "2026-01-01,-5\n"
+            "2026-01-02,10\n"
+            "2026-01-03,4\n"
+        )
+        average, minimum, maximum, max_date = summarize(stream)
+
+        self.assertAlmostEqual(average, 3.0)
+        self.assertEqual(minimum, -5.0)
+        self.assertEqual(maximum, 10.0)
+        self.assertEqual(max_date, "2026-01-02")
+
+    def test_tied_maximum_uses_first_date(self):
+        stream = io.StringIO(
+            "date,temp_c\n2026-01-01,10\n2026-01-02,10\n"
+        )
+        self.assertEqual(summarize(stream)[3], "2026-01-01")
+
+    def test_empty_csv(self):
+        with self.assertRaisesRegex(ValueError, "no temperature records"):
+            summarize(io.StringIO("date,temp_c\n"))
+
+
+if __name__ == "__main__":
+    unittest.main()
+```

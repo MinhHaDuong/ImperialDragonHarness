@@ -2,9 +2,12 @@
 Title: Incident report: two gaze answers without a reviewer seat on arena fix/f1b-production-port (2026-10-31)
 Created: 2026-11-01
 Author: MinhHaDuong
+Closed: facts read by the harness maintainer (raid 1f0534); parse defect filed as 1418
 
 --- log ---
 2026-11-01T08:21Z MinhHaDuong created
+2026-11-01T12:59Z reviewer raid 1f0534: facts read. Incident 1's structured seats value reproduces from gaze_close.seats_claims (newline-crossing \s* after an empty seats: plus underscore stripping); filed as 1418. Closed as filed.
+2026-11-01T12:59Z reviewer closed — facts read by the harness maintainer (raid 1f0534); parse defect filed as 1418
 
 --- body ---
 ## Nature of this ticket
