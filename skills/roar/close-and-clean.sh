@@ -194,7 +194,7 @@ detect_citing_trackers() {
         fi
         [ "$hit" -eq 1 ] || continue
         if [ "$same" -eq 1 ]; then
-            note "TRACKER: CITED-BY $tid ($t) — update its child line and exit criteria (step 8)"
+            note "TRACKER: CITED-BY $tid ($t) — same store: update its child line and exit criteria (step 8)"
         else
             note "TRACKER: CITED-BY $tid ($t) — another repository's tracker: hand off to the harness (step 8)"
         fi

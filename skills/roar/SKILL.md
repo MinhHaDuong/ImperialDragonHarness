@@ -171,13 +171,14 @@ base, once a passing gate record covers the bundle's candidate.
     - **Another repository**: hand off, do not edit (`rules/workflow.md`
       § Cross-project work). The harness owns the tracker's content; its
       child line and exit criteria stay as they are. The hand-off is one
-      append-only log line on that tracker, the "ticket there" act:
+      append-only log line on that tracker, the "ticket there" act of
+      § Cross-project work item 1:
       `erg log <id> "child <repo> <ticket> closed by <PR> on <date>; tracker update due"`,
       run in a harness worktree on its own branch from `origin/main` and
-      landed by merge request, never on the harness's main checkout. When
-      timing matters, also message a live harness session (§ Cross-project
-      work item 2); a message never replaces the log line. A harness you
-      cannot reach goes to step 11 as a pending hand-off.
+      landed by merge request (read it back), never on the harness's main
+      checkout. When timing matters, also message a live harness session
+      (§ Cross-project work item 2); a message never replaces the log line.
+      A harness you cannot reach goes to step 11 as a pending hand-off.
 
     The line repeats on a re-run while the tracker stays open: check the
     child line (same store) or the tracker's log and open harness merge

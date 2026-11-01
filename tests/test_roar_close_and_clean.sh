@@ -461,7 +461,7 @@ TRACKERS="$W/tickets"
 tracker "$TRACKERS" 0910 "- 0101 child one"
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_says "same-store tracker: bare id on a child line" "$out" "CITED-BY 0910"
-_check_says "…same store: update the tracker in the bundle" "$out" "update its child line and exit criteria (step 8)"
+_check_says "…same store: update the tracker in the bundle" "$out" "same store: update its child line and exit criteria (step 8)"
 _check_lacks "…same store: no hand-off" "$out" "hand off to the harness"
 _check_says "…beside the parent check" "$out" "INTEGRATION-REVIEW-DUE 0100"
 unset TRACKERS
