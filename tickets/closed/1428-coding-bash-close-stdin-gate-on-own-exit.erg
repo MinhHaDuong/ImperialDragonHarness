@@ -2,9 +2,11 @@
 Title: coding-bash: close stdin, gate on own exit status
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2177
 
 --- log ---
 2026-11-01T19:22Z reviewer created
 2026-11-01T19:22Z reviewer author decision 2026-11-01: both to coding-bash.md (brood lessons L1, L2). L2 was already covered by the last bullet of General discipline: sharpened, not duplicated; L1 added.
+2026-11-01T19:25Z reviewer closed — autoclosed — PR #2177
 
 --- body ---
