@@ -2,9 +2,11 @@
 Title: After-merge red on main eae83a245bac: pytest-guard
 Created: 2026-11-01
 Author: merge-gate
+Closed: flake: tests/test_probe_memory_symlink.py::test_sigterm_kills_the_child_group_before_exit failed once on eae83a24 under -n 24; later tips containing that code pass the full after-merge set (3a64c9be, bd696fcf), and the test passed 3/3 isolated
 
 --- log ---
 2026-11-01T16:13Z merge-gate created
+2026-11-01T16:18Z reviewer closed — flake: tests/test_probe_memory_symlink.py::test_sigterm_kills_the_child_group_before_exit failed once on eae83a24 under -n 24; later tips containing that code pass the full after-merge set (3a64c9be, bd696fcf), and the test passed 3/3 isolated
 
 --- body ---
 ## Context
