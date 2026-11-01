@@ -3,11 +3,14 @@ Title: Memory outcome trial on DreamBench-SWE and ten harness tickets
 Created: 2026-10-29
 Author: reviewer
 Label: needs-human
+Closed: superseded by today's memory decisions; monitor instead (author, 2026-11-01)
 
 --- log ---
 2026-10-29T20:49Z reviewer created
 2026-10-29T21:13Z reviewer note blocker 1353 closed — Blocked-by removed.
 2026-11-01T11:33Z reviewer 1346 closed in favour of this ticket (author, 2026-11-01); its reference sections for the trial (native auto-memories as benchmarks, reference designs, DreamBench-SWE as scoring) are in tickets/closed/1346-*.erg
+2026-11-01T21:14Z reviewer author 2026-11-01: close, monitor instead. The ticket stated no question and deferred its design to closed 1346; today's decisions (1350 native memory + smelt triage; case notes pushed on Claude/Codex/Pi via 1394/1404/1405) supersede its arms. Monitoring: skill-case-notes hook logs (delivered/no-note per skill) and smelt's case-note curation lane (1432). Reopen with a concrete question if those show a problem.
+2026-11-01T21:14Z reviewer closed — superseded by today's memory decisions; monitor instead (author, 2026-11-01)
 
 --- body ---
 ## Context
