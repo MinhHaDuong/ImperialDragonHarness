@@ -27,6 +27,13 @@
  * (`deliverAs: "nextTurn"`; measured on Pi 1.3.0 to reach the model). The
  * script's Claude-only lines stay silent because CLAUDE_PROJECT_DIR is
  * removed from its environment. Fail-open: nothing is injected on any failure.
+ *
+ * Skill case notes (ticket 1405, pilot 1394): Pi has no Skill tool, a skill
+ * loads when the model reads `skills/<name>/SKILL.md`. A `tool_result`
+ * handler on `read` feeds `scripts/skill-case-notes.sh` the payload the
+ * Claude PostToolUse hook gets (`tool_input.skill`, session id, cwd) and
+ * appends its additionalContext to the read result. The script owns the
+ * once-per-session marker, the project lookup and the log. Fail-open.
  */
 
 import { spawnSync } from "node:child_process";
@@ -39,6 +46,9 @@ const GUARD_RELATIVE = join("scripts", "guard-destructive-bash.sh");
 const GUARD_TIMEOUT_MS = 5000;
 const ON_START_RELATIVE = join("scripts", "on-start-context.sh");
 const ON_START_TIMEOUT_MS = 30000;
+const CASE_NOTES_RELATIVE = join("scripts", "skill-case-notes.sh");
+const CASE_NOTES_TIMEOUT_MS = 10000;
+const SKILL_FILE = /(?:^|[\\/])skills[\\/]([a-z0-9][a-z0-9_-]*)[\\/]SKILL\.md$/;
 
 /** Walk up from this file until the harness root that carries the guard. */
 function guardPath(relative: string = GUARD_RELATIVE): string | null {
@@ -81,6 +91,35 @@ export default function (pi: ExtensionAPI): void {
 			);
 		} catch {
 			/* fail-open */
+		}
+	});
+
+	pi.on("tool_result", async (event, ctx) => {
+		if (event.toolName !== "read" || event.isError) return undefined;
+		try {
+			const path = (event.input as { path?: unknown }).path;
+			const match = typeof path === "string" ? SKILL_FILE.exec(path) : null;
+			if (!match) return undefined;
+			const script = guardPath(CASE_NOTES_RELATIVE);
+			if (!script) return undefined;
+			const result = spawnSync("bash", [script], {
+				input: JSON.stringify({
+					hook_event_name: "PostToolUse",
+					session_id: ctx.sessionManager.getSessionId(),
+					cwd: ctx.sessionManager.getCwd(),
+					tool_name: "Skill",
+					tool_input: { skill: match[1] },
+				}),
+				timeout: CASE_NOTES_TIMEOUT_MS,
+				encoding: "utf8" as const,
+				stdio: ["pipe", "pipe", "ignore"],
+			});
+			if (result.error || result.status !== 0 || !result.stdout) return undefined;
+			const note = JSON.parse(result.stdout)?.hookSpecificOutput?.additionalContext;
+			if (typeof note !== "string" || !note) return undefined;
+			return { content: [...event.content, { type: "text" as const, text: "\n\n" + note }] };
+		} catch {
+			return undefined; /* fail-open */
 		}
 	});
 

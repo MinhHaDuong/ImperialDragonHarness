@@ -185,3 +185,14 @@ def test_hooks_json_wires_skill_matcher():
     cmd = blocks[0]["hooks"][0]
     assert "idh-hook\" skill-case-notes.sh" in cmd["command"]
     assert cmd["timeout"] == 5
+
+
+def test_pi_extension_wires_case_notes_on_skill_read():
+    """Ticket 1405: Pi has no Skill tool; the idh-guard extension feeds the same
+    script on a read of skills/<name>/SKILL.md and appends the note to the result."""
+    src = (REPO / "adapters" / "pi" / "extensions" / "idh-guard.ts").read_text()
+    assert 'pi.on("tool_result"' in src
+    assert 'event.toolName !== "read"' in src
+    assert "skill-case-notes.sh" in src
+    assert "tool_input: { skill:" in src
+    assert "SKILL" in src and "additionalContext" in src
