@@ -16,8 +16,8 @@ Memory and rules:
 > pinned 2026-10-30 — Government memo accepted as doctrine, under cooldown: "It is easy to be overenthusiastic about a metaphor." Nothing is implemented from it before ticket 1369 closes ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
 > pinned 2026-10-29 — Departments (Commission, Site practice, Environment, History, plus work-type departments, provisional); 4 KB pages, 40-line index; the journal stays the intact source; pinned rulings; hoard renamed smelt. Now in memory/SMELT.md ([source](../journal/2026/2026-10-29-memory-redesign-day.md))
 > pinned 2026-10-29 — Native-note rulings are filed in Commission, "never promoted to rules" (tickets 1349, 1351)
-> pinned 2026-10-02 — Uncleared material stays in the repository as age ciphertext from birth. Now in AGENTS.md § Project memory boundary
-> pinned 2026-10-05 — Brood adopted (PR #1187). Now in AGENTS.md § Project memory boundary ([source](../journal/2026/2026-10-05-brood-adoption-pr1187.md))
+> pinned 2026-10-02 — Uncleared material stays in the repository as age ciphertext from birth. Now in rules/guards.md
+> pinned 2026-10-05 — Brood adopted (PR #1187). Now in skills/brood/SKILL.md ([source](../journal/2026/2026-10-05-brood-adoption-pr1187.md))
 
 Review, guards, escalation:
 

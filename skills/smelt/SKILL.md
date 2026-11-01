@@ -73,7 +73,8 @@ Apply these to consolidated `memory/topics/` and the index:
 - **Refreshing:** update stale context that remains relevant using current
   evidence; flag uncertainty when it cannot be verified.
 
-The raw journal stays append-only. Pruning a consolidated claim never deletes
+The raw journal stays append-only: a correction is a new entry linking
+the one it corrects. Pruning a consolidated claim never deletes
 its source experience. One carve-out: legacy review-attribution records move
 once, by `git mv` with their bytes intact, to `memory/evidence/attribution/`.
 `memory/MEMORY.md` has **at most 40 lines**, counting headings and blank

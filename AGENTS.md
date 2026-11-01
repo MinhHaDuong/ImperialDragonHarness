@@ -63,26 +63,7 @@ For shell tooling conventions, read and follow [RTK.md](RTK.md).
 
 ## Project memory boundary
 
-Project experiences and consolidated memories belong only in that project's
-repository; uncleared material stays encrypted. When the harness itself is
-the explicitly assigned project, its own project memory follows the same
-convention.
-
-Roar records significant facts only. Smelt consolidates project memory only.
-Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into
-instructions. Crystallisation is a separate task requiring an explicit user
-request, including the intended destination. Repetition, general usefulness and
-acceptance of a memory PR do not grant that authorization. Explicit Brood may
-implement project improvements; a named harness receives nominations only,
-until separately authorized implementation.
-
-At Roar, commit significant facts; do not derive lessons. Smelt prunes, merges
-and refreshes themes while preserving sources. Journal entries remain
-append-only; link corrections from new entries. Review-attribution records
-live in `memory/evidence/attribution/`, outside the journal. Keep MEMORY.md at most
-40 lines; no automatic rule proposals or timer.
-
-On explicit Smelt invocation, one-way migration may mechanically update
-inventoried active path/command references in the selected project's isolated
-branch, including AGENTS.md. This grants no policy changes or consolidation
-writes outside memory.
+When the harness itself is the explicitly assigned project, its own project
+memory follows the policy every project follows: the boundary in
+`rules/guards.md`, capture in `skills/roar`, consolidation in `skills/smelt`,
+crystallisation in `skills/brood`.
