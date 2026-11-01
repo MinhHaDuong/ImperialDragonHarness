@@ -96,3 +96,21 @@ def test_collect_returns_every_closed_ticket_with_solve_time_and_source(tmp_path
     monkeypatch.setattr(st, '_gh_record', lambda t, pr: {**_fake_gh(t, pr), 'merged': '2026-10-27T10:05:00Z'})
     got = st.collect(str(tmp_path), now - timedelta(days=1))
     assert [(r['ticket'], r['secs'], r['source'].split(' ')[0]) for r in got] == [('0001', 300.0, 'derived')]
+
+
+def test_pr_link_accepts_pr_with_or_without_hash():
+    assert st.pr_of('Closed: all met: PR 2120 merged') == 2120
+    assert st.pr_of('Closed: fixes PR 2097 (x), 2102') == 2097
+    assert st.pr_of('Closed: done') is None
+
+
+def test_nonsolve_closes_are_summarised_not_suggested():
+    assert st.nonsolve_of('Title: x\nClosed: won\'t do — author keeps 1126\n') is not None
+    assert st.nonsolve_of('Title: Tracker: data\nClosed: done\n') == 'tracker'
+    assert st.nonsolve_of('Title: x\nClosed: PR #3 merged\n') is None
+    recs = [{'ticket': '8', 'pr': 5, 'nonsolve': 'tracker'}, {'ticket': '9', 'pr': None}, rec(31, ticket='7')]
+    lines = st.render(st.classify(recs)).splitlines()
+    assert len(lines) == 3
+    assert lines[0].startswith('slow ticket 7')
+    assert '8 (tracker)' in lines[1] and '/harness-doctor' not in lines[1]
+    assert lines[2].endswith(': 9') and 'unknown' in lines[2] and '/harness-doctor' not in lines[2]

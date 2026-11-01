@@ -10,6 +10,12 @@ Solve time, defined once: the sum of the measured `duration:` lines that gaze,
 verify-gate and merge post on the ticket's merge request ("read from a record").
 Without any, the request's opening to its merge ("derived", an upper bound that
 includes queue wait). Without either, unknown, which is listed, never treated as fast.
+
+A close that is not a solve (ticket 1420) has no solve time: won't-do, superseded
+or duplicate wording on the Closed line, or a "Tracker" title. Those and the
+unknown ones are reported as one summary line each with their ids, never as a
+per-ticket /harness-doctor suggestion, so the report neither cries wolf nor
+reads as an all-clear it cannot back.
 """
 import argparse
 import json
@@ -22,12 +28,26 @@ from pathlib import Path
 THRESHOLD_MIN = 30  # the single home of the threshold
 
 DURATION = re.compile(r'^(?:.*?\b)?duration: (?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?\s*$', re.M)
-PR_LINK = re.compile(r'^Closed:.*?PR\s*#(\d+)', re.M)
+PR_LINK = re.compile(r'^Closed:.*?\bPR\s*#?(\d+)', re.M)
+NONSOLVE = re.compile(r"won'?t[ -]?do|wontfix|supersed|duplicate", re.I)
+CLOSED_LINE = re.compile(r'^Closed:(.*)$', re.M)
+TITLE_LINE = re.compile(r'^Title:\s*(.*)$', re.M)
 
 
 def pr_of(text):
     m = PR_LINK.search(text)
     return int(m.group(1)) if m else None
+
+
+def nonsolve_of(text):
+    """Why this close is not a solve (explicit signals only), else None."""
+    m = CLOSED_LINE.search(text)
+    if m and NONSOLVE.search(m.group(1)):
+        return 'won\'t-do/superseded/duplicate'
+    t = TITLE_LINE.search(text)
+    if t and re.match(r'(?:tracker|epic)\b', t.group(1).strip(), re.I):
+        return 'tracker'
+    return None
 
 
 def _measured(comments):
@@ -65,6 +85,9 @@ def solve(r):
 def classify(records, threshold=THRESHOLD_MIN):
     out = []
     for r in records:
+        if r.get('nonsolve'):
+            out.append({**r, 'minutes': None, 'source': 'non-solve', 'doctor': None})
+            continue
         secs, source = solve(r)
         if secs is None:
             out.append({**r, 'minutes': None, 'source': 'unknown', 'doctor': '/harness-doctor'})
@@ -78,11 +101,21 @@ def classify(records, threshold=THRESHOLD_MIN):
 
 
 def render(items):
-    lines = []
+    lines, unknown, nonsolve = [], [], []
     for i in items:
+        if i.get('nonsolve'):
+            nonsolve.append(f"{i['ticket']} ({i['nonsolve']})")
+            continue
+        if i['minutes'] is None:
+            unknown.append(str(i['ticket']))
+            continue
         pr = f"PR #{i['pr']}" if i.get('pr') else 'no PR'
-        dur = 'unknown duration' if i['minutes'] is None else f"{i['minutes']}m [{i['source']}]"
+        dur = f"{i['minutes']}m [{i['source']}]"
         lines.append(f"slow ticket {i['ticket']}: {dur}, {pr}; suggest {i['doctor']} with this as the complaint")
+    if nonsolve:
+        lines.append(f"closed without a solve, not measured: {', '.join(nonsolve)}")
+    if unknown:
+        lines.append(f"unknown solve time, could not be measured (not shown fast): {', '.join(unknown)}")
     return '\n'.join(lines)
 
 
@@ -108,14 +141,14 @@ def _gh_record(ticket, pr):
 
 
 def _closed_since(root, since):
-    """(ticket, pr) of every ticket under `root` whose last close falls at or after `since`."""
+    """(ticket, pr, nonsolve reason) of every ticket under `root` whose last close falls at or after `since`."""
     out = []
     for p in sorted(Path(root).glob('*.erg')):
         text = p.read_text()
         m = re.findall(r'^(\d{4}-\d\d-\d\dT\d\d:\d\dZ) \S+ closed\b', text, re.M)
         if not m or datetime.fromisoformat(m[-1].replace('Z', '+00:00')) < since:
             continue
-        out.append((p.name.split('-')[0], pr_of(text)))
+        out.append((p.name.split('-')[0], pr_of(text), nonsolve_of(text)))
     return out
 
 
@@ -123,7 +156,8 @@ def _records(root, since):
     # One gh read per request, run side by side: a week of closes is otherwise minutes of serial waits.
     pairs = _closed_since(root, since)
     with ThreadPoolExecutor(max_workers=8) as pool:
-        return list(pool.map(lambda tp: _gh_record(*tp), pairs))
+        return list(pool.map(
+            lambda t: {'ticket': t[0], 'pr': t[1], 'nonsolve': t[2]} if t[2] else _gh_record(t[0], t[1]), pairs))
 
 
 def collect(root, since):
