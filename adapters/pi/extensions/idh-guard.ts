@@ -122,13 +122,13 @@ export default function (pi: ExtensionAPI): void {
 	}
 
 	pi.on("tool_result", async (event, ctx) => {
-		if (event.isError) return undefined;
+		// A failed call still touched its files: only the case notes need a clean read.
 		try {
 			const notes: string[] = [];
 			const session_id = ctx.sessionManager.getSessionId();
 			const cwd = ctx.sessionManager.getCwd();
 			const path = (event.input as { path?: unknown }).path;
-			const match = event.toolName === "read" && typeof path === "string" ? SKILL_FILE.exec(path) : null;
+			const match = event.toolName === "read" && !event.isError && typeof path === "string" ? SKILL_FILE.exec(path) : null;
 			const caseNotes = match ? guardPath(CASE_NOTES_RELATIVE) : null;
 			if (match && caseNotes) {
 				notes.push(hookContext("bash", [caseNotes], {

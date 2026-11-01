@@ -146,6 +146,36 @@ def test_each_agent_of_a_session_gets_its_own_delivery(tmp_path, rules, project)
 
 
 @pytest.mark.integration
+def test_a_cd_in_the_command_moves_the_base(tmp_path, rules, project):
+    (project / "sub").mkdir()
+    (project / "sub" / "calc.py").write_text("x = 1\n")
+    assert PY_TOKEN in context(hook(tmp_path, rules, bash(project, "cd sub && cat calc.py")))
+
+
+@pytest.mark.integration
+def test_a_cd_keeps_a_root_only_rule_off_a_same_named_file(tmp_path, rules, project):
+    (project / "sub").mkdir()
+    (project / "sub" / "STATE.md").write_text("# not the root one\n")
+    r = hook(tmp_path, rules, bash(project, "cd sub; cat STATE.md"))
+    assert r.returncode == 0 and r.stdout == ""
+
+
+@pytest.mark.integration
+def test_a_file_outside_the_project_matches_from_its_own_root(tmp_path, rules, project):
+    other = tmp_path / "other"
+    other.mkdir()
+    subprocess.run(["git", "init", "-q", str(other)], check=True, env=child_env())
+    (other / "STATE.md").write_text("# other state\n")
+    assert STATE_TOKEN in context(hook(tmp_path, rules, bash(project, f"cat {other}/STATE.md")))
+    # outside any repo, an anchored glob cannot match an absolute path
+    loose = tmp_path / "loose"
+    loose.mkdir()
+    (loose / "STATE.md").write_text("# loose\n")
+    r = hook(tmp_path, rules, bash(project, f"cat {loose}/STATE.md", session="s9"))
+    assert r.returncode == 0 and r.stdout == ""
+
+
+@pytest.mark.integration
 def test_no_match_gives_no_output(tmp_path, rules, project):
     r = hook(tmp_path, rules, bash(project, "cat notes.txt"))
     assert r.returncode == 0 and r.stdout == ""
@@ -207,3 +237,5 @@ def test_pi_extension_feeds_read_write_edit_and_bash():
     assert "conditional_rules.py" in src
     for tool in ("read", "write", "edit", "bash"):
         assert f'"{tool}"' in src
+    # a failed bash call still touched its files: only the case notes need a clean read
+    assert "if (event.isError) return undefined;" not in src

@@ -56,7 +56,7 @@ from the earlier measurement, not the re-probe.
 | Source | Claude Code (TUI and `-p`) | Codex (`exec`) | Pi (`--print`) |
 |---|---|---|---|
 | Resident rules (workflow, git, guards; claude-code.md is Claude-only) | every session (earlier) | found in the re-probe (generated `~/.codex/AGENTS.md`) | found in the re-probe (generated `~/.pi/agent/AGENTS.md`) |
-| Conditional rules (`paths:`) | on a matching file (earlier) | wired, unmeasured end to end: a shell command naming a matching file, once the hook is trusted (1424; apply_patch unprobed) | on a read, write, edit or bash of a matching file (1424: delivery measured, the weight the model gives it is not) |
+| Conditional rules (`paths:`) | on a matching file (earlier) | wired, unmeasured end to end: a shell command naming a matching file, once the hook is trusted (1424; apply_patch unprobed) | on a read, write, edit or bash of a matching file (1424: payloads of all four measured, delivery end to end on read, write and bash; the weight the model gives it is not) |
 | Session-start hook (`scripts/on-start-context.sh`) | yes (earlier) | yes (earlier) | yes (earlier) |
 | The project's `AGENTS.md` | yes (earlier) | found in the re-probe | found in the re-probe |
 | HTML comments of the rules | **stripped** (earlier) | absent from context in the re-probe | absent from context in the re-probe |
