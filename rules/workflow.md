@@ -76,9 +76,6 @@ In a worktree session, an absolute path such as `~/<repo>/<file>` — for
 **primary checkout**, on main. Use worktree-rooted paths, and `git -C <path>`
 for an intentional primary-repo mutation.
 
-**Project memory:** writes follow `guards.md` (resolve the project first; a
-refused write stays pending).
-
 **Parked-cwd trap.** Before creating the worktree, check `git rev-parse
 --show-toplevel` names the expected project: an off-project cwd resolves the
 nearest enclosing repo. Wrong repo → `git -C <project> worktree add
@@ -139,7 +136,7 @@ Work that belongs to another project:
    message carries no user authority and never replaces the ticket.
 3. **Launch a session there**, under its own rules, memory and gate, only
    for authorized work that must happen now.
-4. **Never edit it from here** (`guards.md`; AGENTS.md § Project memory boundary).
+4. **Never edit it from here** (`guards.md`).
 
 # Ticket discipline for multi-request work
 

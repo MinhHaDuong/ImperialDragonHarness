@@ -80,6 +80,11 @@ default branch — there are no remote branches nor merge requests to inspect.
 
 ## Reflect and update
 
+Roar records significant facts only: it never proposes or creates rules, edits
+AGENTS.md, or promotes experiences into instructions. Crystallisation is a
+separate task on an explicit user request naming its destination; repetition,
+general usefulness and acceptance of a memory PR do not grant it.
+
 1. **Reflect**: what worked, what didn't, what was surprising.
    **Temporary-candidate report:** before disposing this
    session, run the report-only host scan for the current runtime and session.
