@@ -2,9 +2,12 @@
 Title: Pi wiring and read-back for skill case notes (1394 stage 4)
 Created: 2026-10-31
 Author: reviewer
+Closed: autoclosed — PR #2150
 
 --- log ---
 2026-10-31T19:48Z reviewer created
+2026-11-01T13:08Z reviewer Pi read-back PASS (pi 1.4.0, served model qwen3.8-flash-next-iq3_s via provider padme): extension tool_result handler on read of skills/<name>/SKILL.md appends script output; token PLANTED-TOKEN-PI-4417 quoted by the model, log: one delivered then already-delivered (second read had no note). Branch t1405-pi-case-notes.
+2026-11-01T13:52Z reviewer closed — autoclosed — PR #2150
 
 --- body ---
 ## Context

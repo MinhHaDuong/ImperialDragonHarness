@@ -245,3 +245,14 @@ def test_codex_hooks_json_wires_prompt_and_shell_read():
         cmds = [h["command"] for b in hooks[event] for h in b["hooks"]]
         assert any("skill-case-notes.sh" in c for c in cmds), event
     assert [b["matcher"] for b in hooks["PostToolUse"]] == ["^Bash$"]
+
+
+def test_pi_extension_wires_case_notes_on_skill_read():
+    """Ticket 1405: Pi has no Skill tool; the idh-guard extension feeds the same
+    script on a read of skills/<name>/SKILL.md and appends the note to the result."""
+    src = (REPO / "adapters" / "pi" / "extensions" / "idh-guard.ts").read_text()
+    assert 'pi.on("tool_result"' in src
+    assert 'event.toolName !== "read"' in src
+    assert "skill-case-notes.sh" in src
+    assert "tool_input: { skill:" in src
+    assert "SKILL" in src and "additionalContext" in src
