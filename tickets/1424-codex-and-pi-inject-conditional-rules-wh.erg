@@ -5,6 +5,8 @@ Author: reviewer
 
 --- log ---
 2026-11-01T19:16Z reviewer created
+2026-11-01T19:31Z reviewer probe Pi 1.4.0 (mistral-large-4, throwaway extension): tool_result inputs read{path} write{path} edit{path} bash{command}; CODEWORD-READ/WRITE/EDIT/BASH all quoted. E2E with branch extension: coding-python, prose/_all, lang/en, lang/fr headings quoted; log delivered x2 then already-delivered x2; decoy rule denied. PASS.
+2026-11-01T19:31Z reviewer probe Codex 0.166.0 apply_patch: NOT RUN, classifier denied --dangerously-bypass-hook-trust; logged and skipped. Codex covered via PostToolUse ^Bash$ (payload measured in 1404); apply_patch only when patch text rides a shell command. Author follow-up: one-call dump probe, memory/evidence/2026-11-01-conditional-rules-1424/PROBES.md.
 
 --- body ---
 ## Context
