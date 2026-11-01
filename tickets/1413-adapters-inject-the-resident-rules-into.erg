@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-01T09:40Z reviewer created
 2026-11-01T14:07Z reviewer wave 2: generator scripts/runtime_rules.py + idh install step on branch t1413-runtime-rules-generator; host install and sentinel re-probe wait for the author
+2026-11-01T16:17Z reviewer generator merged (PR #2161, eae83a24; refs only). Remaining: author runs idh install, then sentinel re-probe and rules/README.md update.
 
 --- body ---
 ## Context
