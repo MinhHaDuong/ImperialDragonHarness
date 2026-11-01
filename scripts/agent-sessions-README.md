@@ -16,6 +16,7 @@ live trees.
     raw/<host>/<runtime>/<path relative to the runtime's own tree>.zst
     raw/<host>/launches.jsonl      which session launched which headless child
     raw/<host>/seat-raw/<seat id>-<seat>.raw   a headless gaze seat's output as received, up to 256 KiB
+                                   re-judge one offline: gaze_seat.py replay --raw <file> --sha256 <hex>
     spool/<host>/<runtime>[/<seat>]/   session files of doors that keep none, read by the archive
     README.md                      this file
 
