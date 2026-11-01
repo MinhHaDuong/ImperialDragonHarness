@@ -598,7 +598,7 @@ def test_session_start_reminds_only_when_the_loader_is_absent(
         text=True,
         input="{}",
     )
-    assert ("harness loader is not in your shell config" in r.stdout) is reminded, (
+    assert ("harness loader is not in the shell config" in r.stdout) is reminded, (
         r.stdout
     )
 

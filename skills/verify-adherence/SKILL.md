@@ -339,5 +339,5 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 - Writing style / AI-tells (a check gaze's plan may run over `config/ai-tells.yml`).
 - Ticket format (enforced by pre-commit hook).
-- Git branch naming (enforced by pre-commit hook).
+- Git branch naming (not mechanically enforced; its only branch check in the pre-commit hook refuses commits on main in the primary checkout).
 - Merging decisions. This skill never affects merge state.

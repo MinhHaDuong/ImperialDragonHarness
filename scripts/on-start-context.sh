@@ -28,7 +28,7 @@ echo "Running on host: ${_host%%.*}"
 # Show low disk headroom before the rest of the startup context is assembled.
 # This is advisory: failure to inspect storage is visible, but never blocks.
 _disk_output=$(python3 "$(dirname "$0")/tmp_report.py" --disk-warning 2>&1) || {
-    echo "Disk headroom probe unavailable; check /tmp and /home manually."
+    echo "Disk headroom probe unavailable; /tmp and /home headroom is unchecked."
     _disk_output=""
 }
 if [ -n "$_disk_output" ]; then
@@ -73,7 +73,7 @@ fi
 # stubs do not. `_idh_refuse` and `_idh_unreachable` are the two marker names
 # an installed block carries.
 if ! grep -qE "_idh_refuse|_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
-    echo "SETUP REMINDER: the harness loader is not in your shell config. Run ${_script_dir%/scripts}/bin/idh install (it writes $_script_dir/bashrc-loader.sh into ~/.bashrc; remove any bare shell-init.sh source line)."
+    echo "Setup gap: the harness loader is not in the shell config. ${_script_dir%/scripts}/bin/idh install writes $_script_dir/bashrc-loader.sh into ~/.bashrc and fixes it; a bare shell-init.sh source line is to be removed."
 fi
 
 # Live ticket counts, computed now so STATE.md need not store them. The project

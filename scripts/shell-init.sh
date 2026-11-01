@@ -67,7 +67,7 @@ _idh_preflight() {
 _idh_disk_warning() {
   local output
   output=$(python3 "$_IDH_ROOT/scripts/tmp_report.py" --disk-warning 2>&1) || {
-    echo "Disk headroom probe unavailable; check /tmp and /home manually." >&2
+    echo "Disk headroom probe unavailable; /tmp and /home headroom is unchecked." >&2
     return 0
   }
   [ -z "$output" ] || printf '%s\n' "$output" >&2
