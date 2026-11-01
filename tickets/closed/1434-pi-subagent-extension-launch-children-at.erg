@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Pi subagent extension: launch children at the parent's thinking level
+Created: 2026-11-01
+Author: MinhHaDuong
+Closed: already met: Pi 1.4.0 inherits parent thinking for model-less agents; harness agents are model-less (test_pi_agents.py); probed xhigh and low
+
+--- log ---
+2026-11-01T20:26Z MinhHaDuong created
+2026-11-01T21:06Z reviewer already met, no code change. Probe 2026-11-01, Pi 1.4.0, provider padme model qwen3.8-flash-next-iq3_s (local up, HTTP 200). Subagent extension (examples/extensions/subagent/index.ts l.299-304) pushes --thinking <ctx.thinkingLevel> to the child whenever the agent file has no model:. Harness Pi agents carry none (tests/test_pi_agents.py::test_rendering_carries_name_description_body_and_no_model). Positive control: parent --thinking xhigh -> child code-reviewer assistant turns thinkingLevel xhigh; parent --thinking low -> child low (default is medium, so inheritance, not default). Arena 1111 child at medium: cause not established; likely an agent file with a model: pin or no harness agents in that HOME (1426 landed later), not this extension.
+2026-11-01T21:06Z reviewer closed — already met: Pi 1.4.0 inherits parent thinking for model-less agents; harness agents are model-less (test_pi_agents.py); probed xhigh and low
+
+--- body ---
+
+## Context
+
+Reported from arena ticket 1111 (Q3 re-smoke, 2026-11-01, runs-q3-resmoke-20261101/0338-f1b).
+The parent Pi ran at `--thinking xhigh` (94 turns xhigh); its one subagent child
+(`code-reviewer`, 16 calls) ran at `medium`, Pi's `defaultThinkingLevel`. The subagent
+extension builds the child's argv and passes no thinking level, so a delegated reviewer
+silently runs at a lower effort than its parent. The author ruled (2026-11-01) that this
+belongs to the harness; arena only records the child's level.
+
+## Exit criteria
+
+- [x] A Pi subagent child inherits the parent's thinking level unless its agent definition sets one
+- [x] A test shows the child argv carries the level
