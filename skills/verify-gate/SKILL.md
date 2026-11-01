@@ -248,11 +248,19 @@ not create tickets or edit the PR body — the caller handles disposition.
 
 Never rebase or amend commits to excise scope creep.
 
-**Comment-only hunks never block.** A hunk confined to comments (LaTeX `%`, code
-comments, Markdown/HTML comments) is never a scope or authorisation blocker, even
-under a path the brief marked protected (e.g. "do not edit `rapport/`"): record it
-as a `nofollow:` minor, no `scope_overflow` entry. Typeset text and argument
-changes keep the guard.
+**Protected paths are scope_overflow, whatever the hunk.** A hunk under a path the
+brief marked protected (e.g. "do not edit `rapport/`") is a `scope_overflow`
+entry whatever its kind, comments included: scope is the author's call, and the
+gate never overrides a withheld authorisation. Its suggested disposition is
+ESCALATE (§ Decision rules: any ESCALATE entry escalates the verdict). An exception
+the author states in the brief or the PR body makes that path authorised scope,
+and the comment leniency below then applies inside it.
+
+**Comment-only hunks inside authorised scope never block.** A hunk confined to
+comments (LaTeX `%`, code comments, Markdown/HTML comments) in a path the brief
+did not protect is never a scope or authorisation blocker: record it as a
+`nofollow:` minor, no `scope_overflow` entry. Typeset text and argument changes
+keep the guard.
 
 ## Verdict shape
 
