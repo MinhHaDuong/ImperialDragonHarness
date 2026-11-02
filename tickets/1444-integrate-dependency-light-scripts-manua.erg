@@ -1,0 +1,63 @@
+%erg 0.1
+Title: Integrate dependency-light scripts, manual procedures, and honest measurement limits
+Created: 2026-11-02
+Author: codex
+
+--- log ---
+2026-11-02T10:56Z codex created
+
+--- body ---
+## Context
+The author requests integration of three harnessing principles: keep scripts
+dependency-free using standard Python where practical; document a manual route
+that an agent can follow without running the script; and accept an explicit
+"I cannot measure this" when evidence is insufficient. These reduce installation
+failures, preserve useful procedures when automation is unavailable, and reduce
+pressure to invent results.
+
+## Scope
+Integrate the principles into toolkit authoring guidance and demonstrate them on
+one existing scripted workflow. Inventory existing guidance first, including
+dependency management and diagnosis discipline; reconcile overlaps rather than
+adding a parallel rule set. Prefer standard-library scripts, with justified
+exceptions where a dependency materially improves reliability or capability.
+State interpreter, system-tool, and service prerequisites honestly.
+
+The manual route describes inputs, decisions, checks, and outputs without
+requiring the helper script or newly written code. Keep one procedural
+specification that automation implements; explain any limits or extra cost of
+the manual route. Preserve authorization and verification requirements.
+
+Measurement outputs distinguish measured, derived, estimated, and unavailable
+results. An unavailable result states the missing evidence, what was attempted,
+and what would permit measurement. Missing access or failed execution must not
+be reported as zero, absence, or an all-clear.
+
+## Relevant files
+- rules/coding-python.md
+- skills/harness-doctor/references/authoring-skills.md
+- skills/skill-creator/SKILL.md, if present; otherwise locate its maintained source
+- rules/workflow.md (diagnosis discipline)
+- One existing scripted skill and its helper, selected after inventory
+
+## Exit criteria
+- [ ] Record where each principle already exists and the remaining integration gaps.
+- [ ] Update the maintained authoring guidance with the dependency default,
+      justified exceptions, manual procedure, and explicit measurement limits;
+      reconcile conflicts with existing environment rules.
+- [ ] Apply the guidance to one existing scripted workflow and identify it in
+      the implementation report; defer a toolkit-wide migration to separately
+      scoped work if the inventory establishes a need.
+- [ ] Demonstrate the selected workflow's manual route without its helper and
+      compare its outcome with automation on the same known input.
+- [ ] Demonstrate an unavailable-measurement case and a positive control,
+      showing that missing evidence cannot produce a fabricated result or all-clear.
+- [ ] Run checks appropriate to changed files; regenerate generated guidance
+      or catalogs only when their sources change.
+
+## Verification
+Use a bounded procedural walkthrough and reproducible examples for the pilot.
+Add behavioral tests only where script behavior changes; do not pin prose with
+wording tests or introduce a new enforcement guard merely to police the principles.
+This ticket authorizes integration work, not immediate replacement of every
+existing dependency or a repository-wide rewrite.
