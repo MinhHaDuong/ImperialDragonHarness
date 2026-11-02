@@ -56,3 +56,23 @@ tests are the gate, this is why.
 - **A new slash-invocable automation is a skill**, not a legacy command file.
 - **Test one before blasting.** A skill that fans out batch API calls dry-runs
   prompt assembly and runs one real call per regime before the full batch.
+
+## Toolkit principles (ticket 1444)
+
+- **Minimize external dependencies.** A bundled helper runs on a bare host,
+  where no venv exists: it MUST use the standard library — no third-party
+  imports. A bundled third-party helper is allowed only as an optional
+  specialized tool, with a working standard-library or manual route alongside.
+  (The harness's own `scripts/` is a different perimeter: its tools come from
+  the lock, `rules/coding-python.md` § Environment.) The harness-doctor
+  checklist probes this with a scan of the imports; hits are judged by the
+  doctor, not gated by CI.
+- **A documented manual route.** Every automated helper also states the manual
+  procedure — inputs, decisions, checks, outputs — that an agent can follow
+  without running it, and the extra cost of that route. Authorization and
+  verification requirements apply unchanged on the manual route.
+- **Explicit measurement limits.** Outputs distinguish measured, derived,
+  estimated and unavailable; an unavailable result names the missing evidence,
+  what was attempted, and what would permit measurement. A missing source is a
+  gap — never zero, never an all-clear (`rules/workflow.md` § Diagnosis
+  discipline; `scripts/health_checkup.py`).
