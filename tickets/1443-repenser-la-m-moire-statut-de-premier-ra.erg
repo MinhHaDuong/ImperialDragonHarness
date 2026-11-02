@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Repenser la mémoire : statut de premier rang des mémoires explicitement demandées
+Created: 2026-11-02
+Author: codex
+Label: deferred
+
+--- log ---
+2026-11-02T10:03Z codex created
+
+--- body ---
+## Demande de l’auteur
+
+Le 2 novembre 2026 : « Formaliser que les mémoires demandées par l’utilisateur explicitement sont first class par rapport aux mémoires auto. » L’auteur demande de consigner cette idée pour plus tard : tout le design mémoire doit être remis à plat ; aucune mise en œuvre aujourd’hui.
+
+## Travail attendu
+
+Intégrer cette distinction dans la remise à plat du système mémoire, en partant des usages et du cycle complet de capture, consultation, consolidation et retrait. Examiner l’existant, notamment la Commission (`memory/topics/commission.md`), les arbitrages de l’auteur et `memory/topics/memory-v8-governance.md`, avant de proposer un mécanisme supplémentaire.
+
+Questions à instruire avec l’auteur :
+- Comment conserver une provenance explicite et la distinguer d’une inférence automatique ?
+- Que signifie le statut de premier rang : conservation, priorité de rappel, traitement des contradictions, ou autre garantie ?
+- Comment permettre correction, obsolescence et retrait sans effacement silencieux de l’intention de l’auteur ?
+- Comment distinguer demande de mémorisation, vérité factuelle et instruction normative ? Une mémoire ne devient pas automatiquement une règle.
+
+Les emplacements évoqués dans la conversation (`rules/guards.md`, `rules/workflow.md`, `skills/smelt/SKILL.md`) sont des pistes de l’assistant, pas des décisions de l’auteur. La protection contre l’élagage et le rappel prioritaire sont également des propositions à examiner, pas des exigences déjà arbitrées.
+
+## Critères de sortie
+
+- [ ] Le design mémoire révisé traite explicitement la demande de l’auteur et explique son articulation avec les mémoires automatiques et la Commission.
+- [ ] Les garanties retenues, les contradictions et le retrait sont arbitrés avec l’auteur et documentés.
+- [ ] Les emplacements et changements nécessaires sont identifiés dans ce design, sans disperser prématurément une règle entre plusieurs documents.
+
+Ce ticket reste différé jusqu’à la reprise du design mémoire ; il ne commande pas de refonte immédiate.
