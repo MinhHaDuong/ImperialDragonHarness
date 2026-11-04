@@ -1,0 +1,74 @@
+%erg 0.1
+Title: Test targets must leave the tree as found: doc, injunction, test-doctor probe, sweep
+Created: 2026-11-04
+Author: Minh Ha-Duong
+
+--- log ---
+2026-11-04T15:49Z Minh Ha-Duong created
+2026-11-04T16:28Z Minh-Ha-Duong redesigned with the author: doc + injunction + no guard + test-doctor throwaway-worktree probe + sweep (was: harden yawn's probe)
+
+--- body ---
+
+## Context
+
+Yawn's probe (`scripts/project-state.py --tests`, `test_state()`) runs the
+project's `make check-fast|check|test` target in the project's primary
+checkout. Yawn's SKILL.md calls itself read-only; that holds only when the
+project's test target leaves the tree as it found it.
+
+Observed 2026-11-04 in VN-Power-Scenario (2018 research repo, not
+harness-shaped): `test: cleaner`, `cleaner: clean`, and `clean` does `rm -f`
+on every generated table and figure. A plain `/yawn` deleted 19 untracked
+build outputs in the author's checkout. Regenerable with `make all` once the
+environment worked; any copy differing from current code was lost. The same
+Makefile's `%.txt` rule also runs `sed -i` on tracked `init.py`.
+
+## Decision (author, 2026-11-04)
+
+Fix at the source, not with a guard on yawn. Five parts:
+
+1. **Documentation.** Yawn's SKILL.md stops claiming unconditional
+   read-only: the test check executes the project's test target in the
+   checkout and is read-only only if that target is.
+2. **Injunction.** A project-facing rule: a project's test target
+   (`check-fast`, `check`, `test`) leaves the working tree as it found it:
+   it deletes, rewrites or creates nothing outside ignored caches.
+3. **No guard.** `project-state.py` keeps running the target in place; no
+   recipe parsing, no blocking check (rules/workflow.md: prefer deleting a
+   guard to growing one; test-doctor owns test-hygiene diagnostics).
+4. **test-doctor probe.** Occasionally, per project: make a throwaway
+   detached worktree of HEAD, plant a sentinel untracked file, snapshot
+   (`git status --porcelain --ignored` plus sentinel hash), run the test
+   target, compare. A diff is a diagnostic finding (report, and a ticket in
+   that project's store when it has one), never a block. The worktree cost is
+   paid at doctor cadence, not on every yawn.
+5. **Sweep.** Run the probe once across the author's projects now; each
+   offender gets a ticket in its own store (cross-project rule: ticket there,
+   never edit it from here). Projects without a store are reported to the
+   author.
+
+Rejected: running yawn's tests in a throwaway worktree every time (env setup
+cost on every yawn, e.g. a full uv sync); test only declared targets (loses
+the signal on legacy repos); `make -n` keyword heuristic (misses other
+destruction shapes).
+
+Residual risk accepted: an unswept or new project can still be hit between
+probe runs; typical damage is regenerable outputs.
+
+## First sweep case
+
+VN-Power-Scenario (no ticket store; report to author): drop `cleaner` from
+the `test` prerequisites, and move the `sed -i ... init.py` out of the
+`%.txt` rule (VERBOSE is already False on master).
+
+## Exit criteria
+
+- [ ] Yawn's SKILL.md states the test check's read-only condition.
+- [ ] The test-target injunction is in the rule set where project-facing
+      rules live, one sentence, with its reason.
+- [ ] test-doctor carries the throwaway-worktree probe, with a test: a
+      fixture repo whose `test` target deletes an untracked file is flagged;
+      a clean target is not; the primary checkout is untouched by the probe.
+- [ ] The probe never blocks a merge or a yawn (diagnostic only).
+- [ ] Sweep run across the author's projects; offenders ticketed in their
+      own stores or listed for the author; VN-Power-Scenario reported.
