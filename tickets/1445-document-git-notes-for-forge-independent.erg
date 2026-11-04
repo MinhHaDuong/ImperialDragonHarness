@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Document Git notes for forge-independent pull request review
+Created: 2026-11-04
+Author: Minh Ha-Duong
+
+--- log ---
+2026-11-04T15:05Z Minh Ha-Duong created
+
+--- body ---
+
+## Context
+
+The author closes git-erg's Dyne design and implementation work in favor of
+documenting the harness's existing Git-notes review workflow. Git notes are
+the review-evidence store; a separate Dyne binary is not commissioned.
+The reassessment is in git-erg `docs/dyne-review-contract.md` (PR #377).
+
+## Deliverables
+
+- A technical note for HAL describing the problem, the implemented approach,
+  evidence and limits: request, review and gate records; identity across
+  rebases; retained heads; multi-writer synchronization; transport, recovery,
+  and the boundary between Git, the harness and a forge.
+- A practical blog post with a reproducible end-to-end example: create and
+  review a request, publish and retrieve notes and retained heads from another
+  clone, and handle a new revision. Clearly identify commands supplied by Git
+  and those supplied by the harness. Verify examples against actual behavior.
+
+## Exit criteria
+
+- [ ] Draft both deliverables and make their intended audiences and relationship clear.
+- [ ] Compare relevant prior art, including git-appraise, without an unsupported novelty claim.
+- [ ] Demonstrate the documented workflow and report limitations and prerequisites,
+      including note transport, concurrent writers, rebase, and the absence of a
+      standalone forge interface, CI runner, or access-control guarantee.
+- [ ] Provide the drafts and reproducible example for author review before any
+      deposit or publication; no outward deposit is authorized by this ticket alone.
