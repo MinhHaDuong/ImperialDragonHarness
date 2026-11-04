@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Gaze close refuses review trees holding its own setup copies (.env, .dvc/config.local)
+Created: 2026-10-31
+Author: claude
+
+--- log ---
+2026-10-31T21:00Z claude created
+
+--- body ---
+## Context
+
+Observed 2026-10-31 in climate-finance-het, PR #2003 (ticket 2723), two gaze runs in a row:
+`gaze_close.py` refused to remove `.claude/worktrees/review-2003` because `worktree_residue`
+(scripts/worktree-clean-lib.sh) flags ignored entries that gaze setup itself placed there from
+the project's `.worktreeinclude`, plus files the test seats wrote:
+`.env` and `.dvc/config.local` (byte-identical to the primary checkout's), `.venv` and
+`.dvc/cache` (symlinks to the primary), `.pytest_cache/`, `__pycache__/`, empty `data/pool/istex/`,
+and two regenerated `deliverables/_shared/figures/fig_lexical_tfidf_*.png`.
+The review content was PASS (panel, no blocking finding), but the answer is recorded ESCALATE,
+so verify-gate refuses (`review_notes.py gate`: "latest gaze answer is ESCALATE") and the PR
+cannot merge without the author. The leftover tree also blocks the next gaze's setup (exit 1).
+Commit 3948d6cb (ticket 1357) tolerated setuptools build output and an untracked .venv only.
+
+Impact: in any project with a `.worktreeinclude`, every gaze that runs tests ends ESCALATE;
+merges stall on a cleanup artifact.
+
+## Exit criteria
+
+- [ ] A review tree holding only setup-made copies (byte-identical files or symlinks into the
+      primary checkout, per `.worktreeinclude`) and tool caches is removed by gaze close without
+      ESCALATE; a hand-made ignored file still stays residue
+- [ ] Red test replays this case (copied .env + .dvc/config.local + symlinked .venv/.dvc/cache)
+- [ ] Decide how test-written ignored outputs (regenerated figures, empty data dirs) are treated;
+      do not silently delete anything not provably a copy or cache
+
+## Same root cause in roar (added 2026-10-31)
+
+`skills/roar/close-and-clean.sh --phase exit-check` reports `PREFLIGHT: DIRTY` / `EXIT: KEEP-PENDING`
+on a fresh roar bundle tree whose only ignored entries are `.env`, `.dvc/config.local`
+(byte-identical to the primary, listed in `.worktreeinclude`) and the `.venv` / `.dvc/cache`
+symlinks into the primary. So roar can remove no worktree in a project with `.worktreeinclude`.
+Exit criterion 1 covers roar's preflight as well as gaze close.
