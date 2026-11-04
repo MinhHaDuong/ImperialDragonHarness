@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-11-04T15:49Z Minh Ha-Duong created
 2026-11-04T16:28Z Minh-Ha-Duong redesigned with the author: doc + injunction + no guard + test-doctor throwaway-worktree probe + sweep (was: harden yawn's probe)
+2026-11-04T16:30Z Minh-Ha-Duong author: yawn stays read-only; contract is make test read-only on a clean repo; yawn runs tests only on a clean tree
 
 --- body ---
 
@@ -13,8 +14,7 @@ Author: Minh Ha-Duong
 
 Yawn's probe (`scripts/project-state.py --tests`, `test_state()`) runs the
 project's `make check-fast|check|test` target in the project's primary
-checkout. Yawn's SKILL.md calls itself read-only; that holds only when the
-project's test target leaves the tree as it found it.
+checkout. Yawn's SKILL.md calls itself read-only, and that stays the contract.
 
 Observed 2026-11-04 in VN-Power-Scenario (2018 research repo, not
 harness-shaped): `test: cleaner`, `cleaner: clean`, and `clean` does `rm -f`
@@ -27,19 +27,22 @@ Makefile's `%.txt` rule also runs `sed -i` on tracked `init.py`.
 
 Fix at the source, not with a guard on yawn. Five parts:
 
-1. **Documentation.** Yawn's SKILL.md stops claiming unconditional
-   read-only: the test check executes the project's test target in the
-   checkout and is read-only only if that target is.
-2. **Injunction.** A project-facing rule: a project's test target
-   (`check-fast`, `check`, `test`) leaves the working tree as it found it:
-   it deletes, rewrites or creates nothing outside ignored caches.
+1. **Yawn stays read-only; the documentation says how.** Yawn's test
+   check runs the project's test target only on a clean checkout
+   (`git status --porcelain` empty: no tracked change, no untracked file);
+   otherwise it reports `skip: dirty tree` and runs nothing. SKILL.md states
+   this and the contract it relies on (part 2). This is a precondition of
+   the check, not a guard: it blocks nothing else.
+2. **Injunction.** A project-facing rule: on a clean checkout, a project's
+   test target (`check-fast`, `check`, `test`) is read-only: it leaves
+   `git status --porcelain` empty and rewrites no tracked file.
 3. **No guard.** `project-state.py` keeps running the target in place; no
    recipe parsing, no blocking check (rules/workflow.md: prefer deleting a
    guard to growing one; test-doctor owns test-hygiene diagnostics).
 4. **test-doctor probe.** Occasionally, per project: make a throwaway
-   detached worktree of HEAD, plant a sentinel untracked file, snapshot
-   (`git status --porcelain --ignored` plus sentinel hash), run the test
-   target, compare. A diff is a diagnostic finding (report, and a ticket in
+   detached worktree of HEAD (clean by construction), snapshot
+   (`git status --porcelain` and tracked-file hashes), run the test
+   target, compare. Any change breaks the part 2 contract. A diff is a diagnostic finding (report, and a ticket in
    that project's store when it has one), never a block. The worktree cost is
    paid at doctor cadence, not on every yawn.
 5. **Sweep.** Run the probe once across the author's projects now; each
@@ -57,13 +60,22 @@ probe runs; typical damage is regenerable outputs.
 
 ## First sweep case
 
-VN-Power-Scenario (no ticket store; report to author): drop `cleaner` from
-the `test` prerequisites, and move the `sed -i ... init.py` out of the
-`%.txt` rule (VERBOSE is already False on master).
+VN-Power-Scenario. The 2026-11-04 incident happened on a dirty checkout
+(19 untracked outputs); part 1's clean-tree precondition alone would have
+prevented it. On a clean checkout its `make test` (`cleaner` prerequisite)
+deletes nothing tracked but removes ignored caches; the `%.txt` rule's
+`sed -i ... init.py` is a no-op since VERBOSE is False on master. The probe
+decides whether it meets the contract; report to the author (no ticket
+store there).
 
 ## Exit criteria
 
-- [ ] Yawn's SKILL.md states the test check's read-only condition.
+- [ ] `project-state.py --tests` runs the test target only when
+      `git status --porcelain` is empty, else reports `skip: dirty tree`;
+      test: a fixture with an untracked file and a deleting `test` target
+      keeps the file after the probe.
+- [ ] Yawn's SKILL.md keeps "read-only" and states the clean-tree
+      precondition and the project contract it relies on.
 - [ ] The test-target injunction is in the rule set where project-facing
       rules live, one sentence, with its reason.
 - [ ] test-doctor carries the throwaway-worktree probe, with a test: a
