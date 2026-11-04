@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Zotero skill: allow shadow sources by default
+Created: 2026-11-04
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-04T16:17Z HDMX-coding-agent created
+2026-11-04T18:48Z author decision Allow shadow libraries by default; do not introduce per-project authorisation.
+
+--- body ---
+## Context
+
+In climate-finance-het, the author set a project rule on 2026-11-04 (`wiki/README.md` § Fetching full texts): open channels first (Unpaywall and repositories, ISTEX, BibCNRS), a shadow library only after every open channel has failed for that work, and the channel recorded per PDF.
+
+The zotero skill (`skills/zotero/references/backfill.md` lines 156-166) says: "Never pass `--source scihub` or `--source libgen`: a source outside the default list is the author's own manual, per-user choice, never the harness's." Agents follow the skill, so the project rule has no effect: on 2026-11-04 the agent writing the 6.5 stream page stopped at the shadow step for Banga 2018 and Jachnik et al. 2015 (it also found DOIfetch's `shadow` add-on not installed).
+
+The author decided on 2026-11-04 that shadow libraries should be allowed by default, without a per-project opt-in or other authorisation mechanism. Keep the open-source-first cascade: use shadow sources after the open channels fail for the work, and report the channel used.
+
+## Exit criteria
+
+- [ ] The zotero skill (or DOIfetch wrapper) allows shadow sources by default, after open channels have failed for the work, without requiring a per-project opt-in or other authorisation mechanism.
+- [ ] The default cascade and its instructions reflect this policy and handle an unavailable shadow-source add-on visibly.
+- [ ] The channel actually used is reported per PDF, so the project can record it.
