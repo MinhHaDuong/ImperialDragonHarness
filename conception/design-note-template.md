@@ -35,9 +35,10 @@ agent time, USD where it applies, and what it costs to undo.
 Phases, each one merge request or ticket sized to one sign-off unit, in
 order, with what each phase proves before the next starts.
 
-Consider whether a new feature needs a later review: when to assess it and
-what evidence would show whether it works. For a heuristic that can block work
-or trigger autonomous actions, an observe-only period is one option.
+Consider a later review when it can resolve a named uncertainty at proportionate
+cost: when to assess the feature and what evidence would inform the decision.
+For a heuristic that can block work or trigger autonomous actions, an
+observe-only period is one option.
 
 ## Review
 
