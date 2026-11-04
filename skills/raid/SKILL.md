@@ -120,6 +120,8 @@ For each ticket, launch an agent (background, no isolation needed — read-only;
 worker chosen per § Model policy):
 - Read ticket + STATE.md + surrounding code
 - Reimagine: why now, why this scope, what's the simplest path
+- If a new heuristic can block work or trigger autonomous actions, consider an
+  observe-only period to measure its decisions before enabling it.
 - **Antipattern scan (scope).** YAGNI (search the package registry —
   don't hand-roll what a library already does), premature abstraction.
   Annotate any hits with the proposed fix.

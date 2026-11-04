@@ -35,6 +35,9 @@ agent time, USD where it applies, and what it costs to undo.
 Phases, each one merge request or ticket sized to one sign-off unit, in
 order, with what each phase proves before the next starts.
 
+If a new heuristic can block work or trigger autonomous actions, consider an
+observe-only period to measure its decisions before enabling it.
+
 ## Review
 
 Two advisor-level reviews, decorrelated (`skills/route/references/decorrelation.md`),
