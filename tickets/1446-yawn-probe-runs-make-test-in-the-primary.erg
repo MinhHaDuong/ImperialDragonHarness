@@ -1,0 +1,54 @@
+%erg 0.1
+Title: yawn probe runs make test in the primary checkout and destroyed untracked files
+Created: 2026-11-04
+Author: Minh Ha-Duong
+
+--- log ---
+2026-11-04T15:49Z Minh Ha-Duong created
+
+--- body ---
+
+## Context
+
+Yawn is documented as read-only, but its probe (`scripts/project-state.py
+--tests`, `test_state()`) runs the project's `make check-fast|check|test`
+target in the project's primary checkout. That target is arbitrary project
+code with arbitrary prerequisites.
+
+Observed 2026-11-04 in VN-Power-Scenario (a 2018 research repo, not
+harness-shaped): its Makefile has `test: cleaner` and `cleaner: clean`, and
+`clean` does `rm -f` on every generated table and figure. A plain `/yawn`
+therefore deleted 19 untracked build outputs the author had in their primary
+checkout (plan_*.pdf/txt, figure_*, run_*.txt/pdf, table-*.fwf) plus
+`__pycache__`. They are regenerable with `make all`, but only once the
+environment works, and any copy differing from the current code's output was
+lost. The author's checkout was also dirty with uncommitted edits at the time;
+those survived only because `clean` does not touch tracked files.
+
+## Problem
+
+A health check that executes a project's test target in the author's
+checkout can mutate or destroy state. In this case it did. The probe's
+contract with yawn ("Read-only: yawn reports and plans") does not hold
+for any repo whose test target has side effects (clean prerequisites,
+`sed -i` on sources, generated fixtures, network).
+
+## Options (for Imagine)
+
+1. Run the test target in a throwaway detached worktree of HEAD
+   (`git worktree add --detach`), removed afterwards. Keeps the signal,
+   isolates the checkout; costs a checkout plus env setup per run.
+2. Run tests only for harness-shaped repos (a declared `check-fast` or a
+   `.merge-gate.json`), and report `skip: undeclared test target` elsewhere.
+3. Dry-run first (`make -n <target>`) and skip with a warning when the
+   recipe chain contains `rm`, `git clean`, `sed -i` or similar.
+
+Option 1 or 1+2 look most robust; 3 is a heuristic.
+
+## Exit criteria
+
+- [ ] `project-state.py --tests` never executes a project target in the
+      primary checkout (or yawn's SKILL.md no longer claims read-only and
+      states the risk explicitly).
+- [ ] A test reproduces the incident shape: a Makefile whose `test` target
+      deletes an untracked file; after the probe runs, the file still exists.
