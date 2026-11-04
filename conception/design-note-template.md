@@ -35,6 +35,11 @@ agent time, USD where it applies, and what it costs to undo.
 Phases, each one merge request or ticket sized to one sign-off unit, in
 order, with what each phase proves before the next starts.
 
+Consider a later review when it can resolve a named uncertainty at proportionate
+cost: when to assess the feature and what evidence would inform the decision.
+For a heuristic that can block work or trigger autonomous actions, an
+observe-only period is one option.
+
 ## Review
 
 Two advisor-level reviews, decorrelated (`skills/route/references/decorrelation.md`),
