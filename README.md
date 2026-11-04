@@ -34,14 +34,14 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 
 ## Principles
 
-The author's three values — **integrity, excellence, kindness** inspired the principles below.
+The author's three values — **integrity, excellence, kindness** — inspired the principles below.
 
-- **User's attention is the scarcest resource** Do use the advisor model, ask one question at a time, explain context and defaults. Ask all questions before starting work, do not make the user wait for the next question. Run to the end, do not stop if the next move is obvious. Do not speak in ticket or PR numbers without cleartext. See `rules/workflow.md` § Autonomous action; resident budget cap `tests/test_rules_resident_budget.py`.
-- **KISS**. Do review every design note with an eye to remove the nices to have, sticking to the must-haves. Do not goldplate, do not bulletproof unnecessarily, never optimize prematurely, do not fight windmills, only evidence justifies guardrails, no imagined risks. Example: `conception/design-note-template.md` § Review.
-- **Trust, Verify, Monitor**. Do delegate, trust the delegate, verify cheaply, and monitor after merge. Do not replicate passed tests, re-review. Example `rules/workflow.md`.
-- **Never write guards on guards**. A good barrier is no barrier. If a guard is a speedbump, blocks good work, or never bites in the field, consider removal not adding workarounds. See `rules/workflow.md` (sweeps); owner `skills/test-doctor/references/toolkit.md`.
+- **User's attention is the scarcest resource.** Do use the advisor model; ask one question at a time, explaining context and defaults. Ask in sequential turns, one after the other, without launching long tasks in between: do not make the user wait for the next question. Run to the end, do not stop if the next move is obvious. Do not speak in ticket or PR numbers without cleartext. See `rules/workflow.md` § Escalation protocol and § Autonomous action; resident budget cap `tests/test_rules_resident_budget.py`.
+- **KISS**. Do review every design note with an eye to remove the nice-to-haves, sticking to the must-haves. Do not goldplate, do not bulletproof unnecessarily, never optimize prematurely, do not fight windmills, only evidence justifies guardrails, no imagined risks. Example: `conception/design-note-template.md` § Review.
+- **Trust, Verify, Monitor**. Do delegate, trust the delegate, verify cheaply, and monitor after merge. Do not re-run tests that passed, do not re-review. See `rules/workflow.md` § Trust, Verify, Monitor.
+- **Never write guards on guards**. A good barrier is no barrier. If a guard is a speedbump, blocks good work, or never bites in the field, consider removal not adding workarounds. See `rules/workflow.md` § Autonomous action (Severity floor); owner `skills/test-doctor/references/toolkit.md`.
 - **Minimize external dependencies**. Helpers bundled with a skill MUST use the standard library, with NO third-party imports; a third-party helper is only ever an optional specialized tool. The harness's own `scripts/` take their tools from the lock (`rules/coding-python.md` § Environment). See `skills/harness-doctor/references/authoring-skills.md`.
-- **Things are unknown until measured True or False**. Use measured / derived / estimated / unavailable labels to qualify statements. Validate tests on passing and failing cases before trusting it. An unmeasured aspect is NA, not 0 or clean. See `rules/workflow.md` § Diagnosis discipline; `scripts/health_checkup.py` — a gap is never zero.
+- **Things are unknown until measured True or False**. Use measured / derived / estimated / unavailable labels to qualify statements. Validate tests on passing and failing cases before trusting them. An unmeasured aspect is NA, not 0 or clean. See `rules/workflow.md` § Diagnosis discipline; `scripts/health_checkup.py` — a gap is never zero.
 
 The harness doctor's job is to verify that the principles are followed everywhere they can, and violated only where they must.
 
