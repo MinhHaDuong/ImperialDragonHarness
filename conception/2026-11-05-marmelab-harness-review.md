@@ -81,6 +81,14 @@ benchmark settings, not this workflow; no change on this evidence alone.
 
 ## Disposition
 
-No ticket: none of N1–N3 blocks a merge, corrupts state, or bites the science.
-N2 and N3 together form a proposal for the author: open a design note if model
-upgrades are expected within the quarter. N1 joins the existing phase-5 A/B.
+Author's decision, 2026-11-05:
+
+- **N1 and N2 wait on the arena.** Ablating a rule and re-testing rules on a
+  new model are both frozen-task evaluations with one component changed; the
+  arena is where the harness will run those, so neither gets its own mechanism.
+- **N3 is premature.** A rule → incident index presumes an atomic "rule" unit,
+  and the harness has not formalised one: resident files hold paragraphs and
+  bullets that mix several prescriptions. Defining that unit comes first; the
+  index, and N2's per-rule replay, follow from it.
+
+No ticket: nothing here blocks a merge, corrupts state, or bites the science.
