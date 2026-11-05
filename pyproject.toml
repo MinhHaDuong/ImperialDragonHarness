@@ -16,6 +16,8 @@ package = false
 
 [dependency-groups]
 dev = [
+    # Keep in step with scripts/doifetch.sh v0.2.0, resolved commit.
+    "doifetch @ git+https://github.com/MinhHaDuong/DOIfetch@fc85d31b4c87e687c54accd918f6c1d5e541ff64",
     # Validates adapters/pilot-support.json against its own schema (ticket 0802);
     # hand-rolling that check would duplicate the schema it is meant to verify.
     "jsonschema>=4.10,<5",

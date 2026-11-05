@@ -146,30 +146,33 @@ look" is not a guard. `consulted` / `skipped` in every result exist for that.
 ## Fetching missing fulltexts
 
 For a work a staging or cited-works check reports without a stored file (verdict
-`work_present_no_file`), fetch it with DOIfetch. The helper runs it on demand at
-a pinned ref through `uvx`; nothing is installed, and uv caches it after the first run:
+`work_present_no_file`), fetch one DOI or ISBN at a time through the on-demand
+DOIfetch helper:
 
 ```bash
 "$IDH_ROOT/scripts/doifetch.sh" --doi <doi> --title <title>
+"$IDH_ROOT/scripts/doifetch.sh" --isbn <isbn> --title <title>
 ```
 
-Pass no `--source`. The default cascade (DOIfetch v0.2.0) is Crossref, Unpaywall,
-OpenAlex, HAL, ISTEX, EZproxy, then ISBN lookup: open and institutional sources only.
-An `--isbn` is fetched by looking up the book's DOI on Crossref and running the
-open sources on it; LibGen, PDF-only, is used only with `--source libgen`. File each
-downloaded PDF with `suggest-attachments --parent <itemKey> <file>`, and add `--edit`
-after reading the report. Never pass `--source scihub` or `--source libgen`: a
-source outside the default list is the author's own manual, per-user choice, never
-the harness's. DOIfetch's default install is standard library only. Check
-`"$IDH_ROOT/scripts/doifetch.sh" --version` to see the pinned release.
-The prerequisites are `uv` and the network. Exit 127 means no `uvx`; 69 means
-DOIfetch itself could not be downloaded. On either, say which and stop; do not
-fetch another way.
+The helper uses the pinned DOIfetch release. It tries
+Crossref, Unpaywall, OpenAlex, HAL, ISTEX, and EZproxy first. For a DOI, it
+then obtains the `shadow` extra and tries Sci-Hub; for an ISBN, it first resolves book-level DOIs via Crossref,
+tries the open cascade for each, and then obtains the extra and tries LibGen. If ISBN lookup fails,
+the helper reports that failure and stops: it cannot establish that the open
+route was exhausted. A `source` in the result names the channel that actually
+supplied a PDF. Record that source for each successful download. `skipped`
+means the target file already existed; its origin is unknown and must not be
+attributed to a source. Verify the file belongs to the work before attaching.
 
-DOIfetch's own exit codes: 0 success (or a batch that completed); 1 a single
-download failed or its identifier is invalid; 2 command-line usage error. Exit 1
-alone does not tell the two apart, so read the first output line. `Download failed:
-...` means not found in the open sources: report it and move on to the next work.
-`Error: Invalid ISBN ...` or `Error: Invalid DOI format ...` means a bad identifier,
-not a missing work: correct the identifier from the library record, and do not report
-the work as unavailable. Exit 2 is a malformed call: fix the call.
+On `success`, check the downloaded PDF, then file it with
+`suggest-attachments --parent <itemKey> <file>` and add `--edit` after reading
+the report. Exit 1 reports a failed fetch; exit 2 means invalid arguments; exit 3 means
+ISBN lookup, HAL query setup, or another internal step failed before the
+shadow phase. Exit 127 means `uvx` is absent, and 69 means the pinned DOIfetch or
+its `shadow` extra could not be obtained. The open cascade is still attempted
+before obtaining the extra. Name the failure; do not report an
+unattempted source as unavailable. No per-project opt-in is required.
+
+The helper's other modes forward their options to DOIfetch unchanged; its own
+upstream default remains open and institutional sources only. Check the pinned
+release with `"$IDH_ROOT/scripts/doifetch.sh" --version`.
