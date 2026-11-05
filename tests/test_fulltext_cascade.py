@@ -103,6 +103,7 @@ def test_cli_reports_the_actual_open_source(tmp_path, monkeypatch, capsys):
     import sys
 
     import doifetch.api
+    import doifetch.naming
     from doifetch.sources.contract import Result
 
     from scripts.fulltext_cascade import main
@@ -112,6 +113,8 @@ def test_cli_reports_the_actual_open_source(tmp_path, monkeypatch, capsys):
         "argv",
         [
             "fulltext_cascade.py",
+            "--phase",
+            "open",
             "--doi",
             "10.1234/example",
             "--title",
@@ -120,6 +123,7 @@ def test_cli_reports_the_actual_open_source(tmp_path, monkeypatch, capsys):
             str(tmp_path),
         ],
     )
+    monkeypatch.setattr(doifetch.naming, "resolve_name", lambda *args: "Example")
     monkeypatch.setattr(
         doifetch.api,
         "cascade",
@@ -144,6 +148,8 @@ def test_cli_reports_unknown_source_for_existing_file(tmp_path, monkeypatch, cap
         "argv",
         [
             "fulltext_cascade.py",
+            "--phase",
+            "open",
             "--isbn",
             "9780674009691",
             "--title",
@@ -155,3 +161,132 @@ def test_cli_reports_unknown_source_for_existing_file(tmp_path, monkeypatch, cap
     assert main() == 0
     assert json.loads(capsys.readouterr().out)["source"] is None
     assert target.read_bytes() == b"existing"
+
+
+def test_hal_receives_metadata_name_for_bare_title(tmp_path, monkeypatch, capsys):
+    import json
+    import sys
+    import doifetch.api
+    import doifetch.naming
+    from doifetch.sources.contract import Result
+    from doifetch.sources.hal import _parse_author_title
+    from scripts.fulltext_cascade import main
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "fulltext_cascade.py",
+            "--phase",
+            "open",
+            "--doi",
+            "10.1234/example",
+            "--title",
+            "A title",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+    monkeypatch.setattr(
+        doifetch.naming,
+        "resolve_name",
+        lambda doi, title, *a: title or "Author 2020 - A title",
+    )
+
+    def cascade(req, names):
+        assert _parse_author_title(Path(req.path).stem) == ("Author", "A title")
+        return Result("success", "hal", path=req.path)
+
+    from pathlib import Path
+
+    monkeypatch.setattr(doifetch.api, "cascade", cascade)
+    assert main() == 0
+    assert json.loads(capsys.readouterr().out)["source"] == "hal"
+
+
+def test_keep_title_preserves_filename_but_supplies_hal_metadata(
+    tmp_path, monkeypatch, capsys
+):
+    import json
+    import sys
+    from pathlib import Path
+    import doifetch.api
+    import doifetch.naming
+    from doifetch.sources.contract import Result
+    from doifetch.sources.hal import _parse_author_title
+    from scripts.fulltext_cascade import main
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "fulltext_cascade.py",
+            "--phase",
+            "open",
+            "--doi",
+            "10.1234/example",
+            "--title",
+            "A title",
+            "--keep-title",
+            "--no-check-zotero",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+    monkeypatch.setattr(
+        doifetch.naming,
+        "resolve_name",
+        lambda doi, title, *a: title or "Author 2020 - A title",
+    )
+
+    def cascade(req, names):
+        assert _parse_author_title(Path(req.path).stem) == ("Author", "A title")
+        Path(req.path).write_bytes(b"PDF content")
+        return Result("success", "hal", path=req.path)
+
+    monkeypatch.setattr(doifetch.api, "cascade", cascade)
+    assert main() == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["path"] == str(tmp_path / "A title.pdf")
+    assert (tmp_path / "A title.pdf").read_bytes() == b"PDF content"
+    assert report["source"] == "hal"
+
+
+def test_unavailable_hal_query_stops_before_shadow(tmp_path, monkeypatch, capsys):
+    import json
+    import sys
+    import doifetch.api
+    import doifetch.naming
+    from doifetch.sources.contract import Result
+    from scripts.fulltext_cascade import main
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "fulltext_cascade.py",
+            "--phase",
+            "open",
+            "--doi",
+            "10.1234/example",
+            "--title",
+            "Bare title",
+            "--keep-title",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+    monkeypatch.setattr(
+        doifetch.naming, "resolve_name", lambda doi, title, *args: title
+    )
+    monkeypatch.setattr(
+        doifetch.api,
+        "cascade",
+        lambda req, names: Result(
+            "failed",
+            "ezproxy",
+            error="hal: Cannot parse author/title for HAL search; ezproxy: unavailable",
+        ),
+    )
+    assert main() == 3
+    assert "Cannot parse author/title" in json.loads(capsys.readouterr().out)["error"]

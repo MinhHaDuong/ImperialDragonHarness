@@ -29,13 +29,31 @@ elif [[ "$explicit_source" == true ]]; then
     fulltext=false
 fi
 if [[ "$fulltext" == true ]]; then
-    spec="doifetch[shadow] @ ${spec}"
-    if ! uvx -q --from "$spec" python -c 'import doifetch, bs4' >/dev/null; then
-        echo "doifetch: could not get DOIfetch with its shadow extra; nothing was fetched" >&2
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+    if ! uvx -q --from "$spec" python -c 'import doifetch' >/dev/null; then
+        echo "doifetch: could not get DOIfetch; nothing was fetched" >&2
         exit 69
     fi
-    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-    exec uvx -q --from "$spec" python "$script_dir/fulltext_cascade.py" "$@"
+    open_rc=0
+    open_result=$(uvx -q --from "$spec" python "$script_dir/fulltext_cascade.py" --phase open "$@") || open_rc=$?
+    if [[ "$open_rc" -ne 1 ]]; then
+        printf '%s\n' "$open_result"
+        exit "$open_rc"
+    fi
+    # A valid open result carries the target for the shadow phase; keep the
+    # same name even when metadata services answer differently on retry.
+    if ! target=$(printf '%s\n' "$open_result" | python3 -c 'import json,sys; print(json.loads(sys.stdin.readlines()[-1])["path"])'); then
+        printf '%s\n' "$open_result" >&2
+        echo "doifetch: could not read open-phase result; shadow fetch skipped" >&2
+        exit 1
+    fi
+    shadow_spec="doifetch[shadow] @ ${spec}"
+    if ! uvx -q --from "$shadow_spec" python -c 'import doifetch, bs4' >/dev/null; then
+        printf '%s\n' "$open_result" >&2
+        echo "doifetch: open sources failed; could not get DOIfetch shadow extra" >&2
+        exit 69
+    fi
+    exec uvx -q --from "$shadow_spec" python "$script_dir/fulltext_cascade.py" --phase shadow --output-path "$target" "$@"
 fi
 # Get the tool first, so a failed download (uv exits 1, like a failed fetch)
 # gets its own code: 69, EX_UNAVAILABLE. Cached after the first run (~0.1 s).
