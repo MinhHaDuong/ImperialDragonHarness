@@ -26,8 +26,8 @@ v8 repository memory, rebuilt by department at each smelt (prompt
 
 ## Smelts
 
-- [Sixth smelt](smelts/2026-11-01-sixth-smelt.md) — this run; submitted, not yet
-  accepted.
+- [Sixth smelt](smelts/2026-11-01-sixth-smelt.md) — accepted by the author
+  2026-11-05 (PR #2197).
 - [Fifth smelt](smelts/2026-10-30-fifth-smelt.md) — first rebuild (1349);
   accepted by the author 2026-10-31 (PR #2049, merged 52f63b18), ticket closed.
 - [Fourth smelt](smelts/2026-10-15-fourth-hoard.md) — accepted.

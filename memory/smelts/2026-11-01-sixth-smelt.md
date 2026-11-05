@@ -5,7 +5,9 @@ its repository (`/smelt` run from the harness checkout, no argument).
 Prompt: `memory/SMELT.md`, v8-r5 (2026-10-30).
 Runtime: Mistral Vibe CLI agent session on padme; model id as served (not
 self-reported). Branch: `smelt-2026-11-01`. Base: `9b289f77` (main at run
-start). Status: submitted for review; not accepted processing until merged.
+start). Status: accepted by the author 2026-11-05 for merge as PR #2197.
+Acceptance covers the memory consolidation; the three question tickets
+remain separate and do not constitute new rules.
 
 Companion: [native-note annex](2026-11-01-sixth-smelt-native-notes.md).
 
