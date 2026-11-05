@@ -1,0 +1,41 @@
+%erg 0.1
+Title: No-forge backend cannot list open review requests
+Created: 2026-11-05
+Author: Minh Ha-Duong
+
+--- log ---
+2026-11-05T15:18Z Minh Ha-Duong created
+
+--- body ---
+
+## Context
+
+On a repository without a forge (`--forge none`, or no origin remote) there
+is no way to ask "which review requests are open?".
+`scripts/forge.py --forge none list --state open` exits 3 ("no forge;
+nothing was read"), because `NoneBackend.list_requests` returns NOOP
+(`scripts/forge.py`, around line 624). `resolve branch:<name>` answers for a
+branch you already know about. Otherwise you have to piece the list together
+by hand from unmerged branches and their latest request in `refs/notes/review`
+(`scripts/review_notes.py`).
+
+This matters more now that Dyne is closed (git-erg PR #380). Git notes are the
+review store, and remote-less repositories exist (arena on padme,
+matrice-hybride on doudou: survey of 2026-11-05). `/dashboard` and any
+open-request sweep see nothing there.
+
+Branch ancestry alone cannot tell an open request from a rejected or
+abandoned one (git-erg `docs/dyne-review-contract.md`), so a listing needs a
+rule for when a request counts as closed.
+
+## Exit criteria
+
+- [ ] `forge.py --forge none list --state open|merged|all` returns rows built
+      from `refs/notes/review` requests and branch state, in the same row
+      shape as the gh backend, or the ticket records why it should not.
+- [ ] The rule for open / merged / abandoned is written down and tested
+      (merged = head is an ancestor of the base; an abandoned request is a
+      recorded state, not inferred from the branch being missing).
+- [ ] Exit-code contract kept: 0 answer, 2 could not look, 3 only when no
+      notes ref exists at all; never an empty `[]` for "could not read".
+- [ ] Ticket 1445's limitations section mentions the capability or its absence.
