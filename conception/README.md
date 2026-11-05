@@ -27,6 +27,7 @@ drafts* below.
 |------|------|
 | `Forsythe-2026-10principles.md` | Forsythe's 10 Claude Code Principles (converted from ODT) |
 | `DevMoses-2026-5levels.md` | 5-level harness maturity framework |
+| `2026-11-05-marmelab-harness-review.md` | Marmelab's Reddit post and "State of AI Harness Engineering 2026" blog against the harness: claim table, misreported 4–16% figure, three gaps (rule ablation, prune on model upgrade, rule → incident link) |
 | `VISION-original.md` | Original harness vision document |
 | `2026-03-19-memo-harness-extraction.md` | Extraction memo: splitting generic from project-specific config |
 | `2026-04-03-harness-best-practices-research.md` | Evidence-based research report (8 papers, 3 official docs) |
