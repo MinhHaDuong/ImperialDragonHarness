@@ -2,10 +2,12 @@
 Title: Zotero skill: allow shadow sources by default
 Created: 2026-11-04
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #2217
 
 --- log ---
 2026-11-04T16:17Z HDMX-coding-agent created
 2026-11-04T18:48Z author decision Allow shadow libraries by default; do not introduce per-project authorisation.
+2026-11-05T14:21Z Minh Ha-Duong closed — autoclosed — PR #2217
 
 --- body ---
 ## Context
