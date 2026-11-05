@@ -2,10 +2,12 @@
 Title: After-merge red on main 072b08009fc9: pytest-guard
 Created: 2026-11-05
 Author: merge-gate
+Closed: autoclosed — PR #2222
 
 --- log ---
 2026-11-05T12:34Z merge-gate created
 2026-11-05T14:56Z Minh-Ha-Duong note Author requested closure after three later after-merge records passed pytest-guard, including current main 32acbe7f244cf6b6b65c4b639f6c40fc31ea0171. Original intermittent failure remains unexplained.
+2026-11-05T14:57Z Minh Ha-Duong closed — autoclosed — PR #2222
 
 --- body ---
 ## Context
