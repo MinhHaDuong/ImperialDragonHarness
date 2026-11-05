@@ -537,6 +537,13 @@ NOFORGE="$T/noforge"; mkdir -p "$NOFORGE"
 printf '#!/usr/bin/env bash\nexit 1\n' > "$NOFORGE/gh"; chmod +x "$NOFORGE/gh"
 
 exit_world "$T/ec-merged" task; merge_elsewhere task; cd "$WT"
+# The checkout's ignored setup copies must not block the exit check.
+printf '\n.env\n.worktreeinclude\n.dvc/\n.venv\n' >> "$W/.git/info/exclude"
+printf '.env\n.dvc/config.local\n' > "$W/.worktreeinclude"
+mkdir -p "$W/.dvc/cache" "$W/.venv" "$WT/.dvc"
+printf 'fake config\n' > "$W/.env"; cp "$W/.env" "$WT/.env"
+printf 'fake dvc config\n' > "$W/.dvc/config.local"; cp "$W/.dvc/config.local" "$WT/.dvc/config.local"
+ln -s "$W/.dvc/cache" "$WT/.dvc/cache"; ln -s "$W/.venv" "$WT/.venv"
 run "$SCRIPT" --phase exit-check
 _check_rc "exit-check merged: ready" 0 "$rc"
 _check_says "exit-check merged: verdict" "$out" "EXIT: READY"

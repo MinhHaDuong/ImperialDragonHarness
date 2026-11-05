@@ -96,6 +96,33 @@ def test_tree_holding_uv_run_build_output_is_removed(tmp_path):
     assert answer_text(primary, f).startswith("result: REVIEWED")
 
 
+def test_tree_holding_setup_copies_is_removed(tmp_path):
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir")) / "info" / "exclude"
+    with exclude.open("a") as stream:
+        stream.write("\n.env\n.dvc/\n.venv\n.worktreeinclude\n")
+    (primary / ".worktreeinclude").write_text(".env\n.dvc/config.local\n")
+    (primary / ".env").write_text("fake configuration\n")
+    (primary / ".dvc").mkdir()
+    (primary / ".dvc" / "config.local").write_text("fake dvc config\n")
+    (primary / ".dvc" / "cache").mkdir()
+    (primary / ".venv").mkdir()
+    (tree / ".env").write_text("fake configuration\n")
+    (tree / ".dvc").mkdir()
+    (tree / ".dvc" / "config.local").write_text("fake dvc config\n")
+    (tree / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
+    (tree / ".venv").symlink_to(primary / ".venv")
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    result = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"],
+                         *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not tree.exists()
+    assert answer_text(primary, f).startswith("result: REVIEWED")
+    assert (primary / ".dvc" / "cache").is_dir()
+
+
 def test_tree_holding_setuptools_build_is_removed(tmp_path):
     """Ticket 1357: an ignored setuptools build/ (git prints only `!! build/`)
     no longer blocks the close; the standard `build/` pattern is the shape git emits."""
