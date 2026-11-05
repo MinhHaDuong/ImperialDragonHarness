@@ -23,6 +23,9 @@ set -euo pipefail
 # Symlinks inside are never build output. Ignored files count: a repo may ignore
 # `*`, and `git worktree remove` deletes them. --no-optional-locks keeps the status
 # from rewriting the index, which would restart the tree's idle clock.
+# Ignored setup copies are disposable only when listed in the primary checkout's
+# .worktreeinclude and byte-identical; known cache links must resolve to the
+# corresponding primary path. Other generated files and empty directories stay.
 # Returns 1 when git cannot answer (an unreadable tree is never "clean").
 # _build_child_regenerable <name>: a setuptools output directory name.
 _build_child_regenerable() {
@@ -95,6 +98,9 @@ worktree_residue() {
                     /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
                 esac ;;
         esac
+        if [[ "$line" == '!! '* ]] && python3 "$(dirname "${BASH_SOURCE[0]}")/worktree_setup_copy.py" "$1" "$p"; then
+            continue
+        fi
         printf '%s\n' "$line"
     done <<<"$out"
     return 0

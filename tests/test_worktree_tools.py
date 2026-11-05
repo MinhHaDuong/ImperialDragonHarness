@@ -766,6 +766,86 @@ def _removal(path):
     )
 
 
+def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-setup-copies", dirty=False)
+    _exclude(primary, ".env\n.dvc/\n.venv\nnotes.txt")
+    (primary / ".worktreeinclude").write_text(".env\n.dvc/config.local\n")
+    (primary / ".env").write_text("fake configuration\n")
+    (primary / ".dvc").mkdir()
+    (primary / ".dvc" / "config.local").write_text("fake dvc config\n")
+    (primary / ".dvc" / "cache").mkdir()
+    (primary / ".venv").mkdir()
+    (wt / ".env").write_text("fake configuration\n")
+    (wt / ".dvc").mkdir()
+    (wt / ".dvc" / "config.local").write_text("fake dvc config\n")
+    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
+    (wt / ".venv").symlink_to(primary / ".venv")
+
+    result = _preflight(wt)
+    assert result.returncode == 0, result.stderr
+
+    (primary / ".env").unlink()
+    (primary / ".env").symlink_to(wt / ".env")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".env" in result.stderr
+    assert (wt / ".env").read_text() == "fake configuration\n"
+    (primary / ".env").unlink()
+    (primary / ".env").write_text("fake configuration\n")
+
+    (wt / "notes.txt").write_text("keep this\n")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert "notes.txt" in result.stderr
+    assert (wt / "notes.txt").exists()
+
+    (wt / "notes.txt").unlink()
+    (wt / ".env").write_text("local changes\n")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".env" in result.stderr
+    assert (wt / ".env").read_text() == "local changes\n"
+
+    (wt / ".env").unlink()
+    (wt / ".env").symlink_to(primary / ".env")
+    assert _preflight(wt).returncode == 0
+    (wt / ".dvc" / "draft.txt").write_text("keep this too\n")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".dvc/" in result.stderr
+    assert (wt / ".dvc" / "draft.txt").exists()
+
+    (wt / ".dvc" / "draft.txt").unlink()
+    (wt / ".dvc" / "cache").unlink()
+    (wt / ".dvc" / "cache").symlink_to(wt)
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".dvc/" in result.stderr
+    (wt / ".dvc" / "cache").unlink()
+    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
+    result = _removal(wt)
+    assert result.returncode == 0, result.stderr
+    git(primary, "worktree", "remove", str(wt))
+    assert not wt.exists()
+    assert (primary / ".dvc" / "cache").is_dir()
+
+
+def test_preflight_keeps_copy_when_primary_parent_links_into_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-linked-parent", dirty=False)
+    _exclude(primary, ".dvc/\n.worktreeinclude")
+    (primary / ".worktreeinclude").write_text(".dvc/config.local\n")
+    (wt / ".dvc").mkdir()
+    (wt / ".dvc" / "config.local").write_text("only copy\n")
+    (primary / ".dvc").symlink_to(wt / ".dvc")
+
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".dvc/" in result.stderr
+    assert (wt / ".dvc" / "config.local").read_text() == "only copy\n"
+
+
 def test_preflight_passes_on_ignored_setuptools_build(origin):
     """Ticket 1357: git prints the ignored directory as `!! build/`; only
     lib*, bdist.* and temp.* inside it are regenerable."""
