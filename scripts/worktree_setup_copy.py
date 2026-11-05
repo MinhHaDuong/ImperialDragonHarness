@@ -41,6 +41,10 @@ def disposable(tree: Path, relative: str) -> bool:
     def check(path: Path) -> bool:
         name = path.relative_to(tree).as_posix()
         counterpart = primary / name
+        # The apparent primary copy may itself point into the tree being
+        # deleted. In that case it is not an independent surviving copy.
+        if counterpart.exists() and counterpart.resolve().is_relative_to(tree.resolve()):
+            return False
         if path.is_symlink():
             return name in allowed and counterpart.exists() and path.resolve() == counterpart.resolve()
         if path.is_file():

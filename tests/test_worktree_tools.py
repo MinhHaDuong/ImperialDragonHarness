@@ -785,6 +785,15 @@ def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
     result = _preflight(wt)
     assert result.returncode == 0, result.stderr
 
+    (primary / ".env").unlink()
+    (primary / ".env").symlink_to(wt / ".env")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".env" in result.stderr
+    assert (wt / ".env").read_text() == "fake configuration\n"
+    (primary / ".env").unlink()
+    (primary / ".env").write_text("fake configuration\n")
+
     (wt / "notes.txt").write_text("keep this\n")
     result = _preflight(wt)
     assert result.returncode == 1
@@ -820,6 +829,21 @@ def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
     git(primary, "worktree", "remove", str(wt))
     assert not wt.exists()
     assert (primary / ".dvc" / "cache").is_dir()
+
+
+def test_preflight_keeps_copy_when_primary_parent_links_into_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-linked-parent", dirty=False)
+    _exclude(primary, ".dvc/\n.worktreeinclude")
+    (primary / ".worktreeinclude").write_text(".dvc/config.local\n")
+    (wt / ".dvc").mkdir()
+    (wt / ".dvc" / "config.local").write_text("only copy\n")
+    (primary / ".dvc").symlink_to(wt / ".dvc")
+
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert ".dvc/" in result.stderr
+    assert (wt / ".dvc" / "config.local").read_text() == "only copy\n"
 
 
 def test_preflight_passes_on_ignored_setuptools_build(origin):
