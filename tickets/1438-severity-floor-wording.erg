@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Contradiction: severity-floor wording in workflow.md vs harness-doctor
+Created: 2026-11-01
+Author: smelt
+
+--- log ---
+2026-11-01T21:30Z smelt created
+
+--- body ---
+## Context
+Exposed by the sixth smelt (2026-11-01), page
+`memory/topics/skills-docs-and-hooks.md` open questions. Flagged earlier by
+PR #1975 (closed unmerged) as one of three conflicts awaiting the author.
+
+Claim A: `rules/workflow.md` § Severity floor — file a ticket only when the
+defect "blocks a merge, corrupts state, or bites the science".
+
+Claim B: `skills/harness-doctor/SKILL.md` § Complaint or triage — triage
+orders work by "a contradiction that misleads a model into a wrong act
+first, then a skill presuming another's ownership, then mechanical lint, then
+runtime drift".
+
+Both word a severity floor differently ("bites the science" vs "misleads a
+model into a wrong act"); one governs ticket-filing, the other triage
+ordering. A memory cannot override a rule; smelt presents neither as settled.
+
+## Question for the author
+Which wording is the floor, or are the two scopes (ticket-filing vs triage
+ordering) meant to differ? Smelt picks no side and proposes no rule.
