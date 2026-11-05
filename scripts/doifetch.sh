@@ -12,8 +12,23 @@ if ! command -v uvx >/dev/null 2>&1; then
     exit 127
 fi
 spec="git+https://github.com/MinhHaDuong/DOIfetch@${DOIFETCH_REF}"
+# Single DOI and ISBN lookups use the Zotero cascade by default. Keep explicit
+# source selections and other DOIfetch modes as upstream pass-throughs.
+fulltext=false
+explicit_source=false
+for arg in "$@"; do
+    case "$arg" in
+        --doi|--doi=*|--isbn|--isbn=*) fulltext=true ;;
+        --source|--source=*|--help|--version) explicit_source=true ;;
+    esac
+done
 if [[ "${1:-}" == "--fulltext" ]]; then
     shift
+    fulltext=true
+elif [[ "$explicit_source" == true ]]; then
+    fulltext=false
+fi
+if [[ "$fulltext" == true ]]; then
     spec="doifetch[shadow] @ ${spec}"
     if ! uvx -q --from "$spec" python -c 'import doifetch, bs4' >/dev/null; then
         echo "doifetch: could not get DOIfetch with its shadow extra; nothing was fetched" >&2
