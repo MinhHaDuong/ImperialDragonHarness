@@ -154,10 +154,10 @@ DOIfetch helper:
 "$IDH_ROOT/scripts/doifetch.sh" --isbn <isbn> --title <title>
 ```
 
-The helper uses the pinned DOIfetch release with its `shadow` extra. It tries
+The helper uses the pinned DOIfetch release. It tries
 Crossref, Unpaywall, OpenAlex, HAL, ISTEX, and EZproxy first. For a DOI, it
-then tries Sci-Hub; for an ISBN, it first resolves book-level DOIs via Crossref,
-tries the open cascade for each, and then tries LibGen. If ISBN lookup fails,
+then obtains the `shadow` extra and tries Sci-Hub; for an ISBN, it first resolves book-level DOIs via Crossref,
+tries the open cascade for each, and then obtains the extra and tries LibGen. If ISBN lookup fails,
 the helper reports that failure and stops: it cannot establish that the open
 route was exhausted. A `source` in the result names the channel that actually
 supplied a PDF. Record that source for each successful download. `skipped`
@@ -166,9 +166,11 @@ attributed to a source. Verify the file belongs to the work before attaching.
 
 On `success`, check the downloaded PDF, then file it with
 `suggest-attachments --parent <itemKey> <file>` and add `--edit` after reading
-the report. Exit 1 reports a failed fetch or ISBN lookup; exit 2 means invalid
-arguments. Exit 127 means `uvx` is absent, and 69 means the pinned DOIfetch or
-its `shadow` extra could not be obtained. Name the failure; do not report an
+the report. Exit 1 reports a failed fetch; exit 2 means invalid arguments; exit 3 means
+ISBN lookup, HAL query setup, or another internal step failed before the
+shadow phase. Exit 127 means `uvx` is absent, and 69 means the pinned DOIfetch or
+its `shadow` extra could not be obtained. The open cascade is still attempted
+before obtaining the extra. Name the failure; do not report an
 unattempted source as unavailable. No per-project opt-in is required.
 
 The helper's other modes forward their options to DOIfetch unchanged; its own
