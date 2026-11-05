@@ -13,8 +13,8 @@ Staged copies (git-ignored): `docs/reddit-1xjc4rc.html`, `docs/reddit-1xjc4rc.tx
 
 ## Verdict
 
-Mostly a restatement of what the harness already does; three points are new
-here and none crosses the severity floor for a ticket. One cited number is
+Mostly a restatement of what the harness already does; the two points it
+adds belong to the arena. One cited number is
 misreported.
 
 ## Source check
@@ -48,30 +48,31 @@ misreported.
 | Rule first, explanation after (Sentient_Dawn) | rules lead with a bold imperative | covered |
 | Verify outcomes, not intent (BarathKanna, React-admin) | verify-gate, gaze, gate records | covered |
 | Always-on list vs per-task plan (CleanFix_Dev) | resident rules vs tickets and plans | covered |
-| **Ablate one rule at a time on frozen tasks** (CleanFix_Dev, blog) | A/B considered (metaskill panorama 2026-04-28 § F4; trace-counterfactuals phase-5 shortlist), never run for rules | gap, N1 |
-| **Prune on model upgrade** (gibonai, QuanTradin, blog citing Anthropic) | no trigger: a model change re-routes work but re-tests no rule | gap, N2 |
-| **Each control names its incident and an expiry condition** (blog) | git.md: "incidents live in memory and tickets"; link from rule to incident not systematic | gap, N3 |
+| **Ablate one rule at a time on frozen tasks** (CleanFix_Dev, blog) | A/B considered (metaskill panorama 2026-04-28 § F4; trace-counterfactuals phase-5 shortlist), never run for rules | arena, N1 |
+| **Prune on model upgrade** (gibonai, QuanTradin, blog citing Anthropic) | no trigger: a model change re-routes work but re-tests no rule | arena, N2 |
+| Each control names its incident and an expiry condition (blog) | provenance mined from git, tickets and transcripts on demand | covered, see N3 |
 
-## New to this harness
+## Beyond the post
 
-**N1. Evidence that a rule pays.** CleanFix_Dev's cheap form is to replay 2–3
-past tasks with and without the rule. With 2–3 tasks per arm only a large effect
-shows; most rules have small effects, so the test mostly cannot reject them.
-The honest cheap form is the blog's: 20–50 frozen tasks drawn from observed
-failures, model fixed, one component changed. That is the phase-5 A/B already
-shortlisted. Nothing to add except to note that rules join that queue.
+**N1, N2. One rule, one model, one ablation is too simple.** The post and the
+blog treat a harness as a fixed rule set tested against a fixed model. Here
+three things move at once: which models are available (releases, retirements,
+quota), the harness itself (several merges a day), and the route that assigns a
+model to each kind of task. A rule's worth depends on the route it runs under,
+and the route on the models on offer. Evaluating that joint system is the
+arena's question, not a pruning sweep in this repository; the discussion is
+parked on the arena ticket about what a CNRS GPU cluster would allow.
 
-**N2. Model upgrades as a pruning trigger.** The most actionable point. When the
-main model changes, many resident rules guard against failures the new model
-may no longer produce. Candidate mechanism: on a model change recorded by the
-route skill, smelt or harness-doctor lists the rules whose incident (N3) can be
-replayed and re-tests each one; a rule whose failure no longer reproduces is
-proposed for deletion. Cost: one sweep per model generation. It depends on N3.
-
-**N3. Rule → incident link.** Without it, N2 cannot tell which failure a rule
-prevents. The cheap form, one line per control naming its ticket or memory
-entry, conflicts with "Rules only" in resident files and their character budget.
-It could live outside the resident text (a sidecar index or a commit trailer).
+**N3. No index needed.** The blog's "each control names its incident" is
+already met by mining, which the harness does routinely: the commit message
+records why (`rules/git.md` § Branch and commit), tickets carry the incident,
+and session transcripts hold the session that wrote it. Probe on the stash rule
+in `rules/git.md`: `git blame -w -M -C -C` lands on the 2026-09-24 deduplication
+commit (5cacc063); `git log -S "round-trip through" -- rules/` reaches the
+origin, b92826a3, ticket 0193, 2026-06-04. So a reworded or moved line costs a
+second hop. Limits: a line reworded past recognition breaks `-S`, and
+transcripts expire after 180 days (`cleanupPeriodDays`), so an origin older than
+that keeps its commit and ticket but loses its session.
 
 **Challenge, not adopted.** The NLAH and Agyn results question how much the
 multi-seat review (gaze panels, verify-gate) earns. The harness already
@@ -81,14 +82,6 @@ benchmark settings, not this workflow; no change on this evidence alone.
 
 ## Disposition
 
-Author's decision, 2026-11-05:
-
-- **N1 and N2 wait on the arena.** Ablating a rule and re-testing rules on a
-  new model are both frozen-task evaluations with one component changed; the
-  arena is where the harness will run those, so neither gets its own mechanism.
-- **N3 is premature.** A rule → incident index presumes an atomic "rule" unit,
-  and the harness has not formalised one: resident files hold paragraphs and
-  bullets that mix several prescriptions. Defining that unit comes first; the
-  index, and N2's per-rule replay, follow from it.
-
-No ticket: nothing here blocks a merge, corrupts state, or bites the science.
+Author's decision, 2026-11-05: N1 and N2 go to the arena, N3 is already
+covered by git, ticket and transcript mining. No ticket: nothing here blocks
+a merge, corrupts state, or bites the science.
