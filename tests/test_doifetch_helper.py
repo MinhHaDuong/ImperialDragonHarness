@@ -4,6 +4,8 @@ import re
 import subprocess
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parent.parent
 HELPER = REPO / "scripts" / "doifetch.sh"
 
@@ -22,17 +24,31 @@ def _run(tmp_path, *args, uvx=True, fetch_rc=0, download_rc=0):
         )
         stub.chmod(0o755)
     env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
-    done = subprocess.run(["bash", str(HELPER), *args], env=env, capture_output=True, text=True)
+    done = subprocess.run(
+        ["bash", str(HELPER), *args], env=env, capture_output=True, text=True
+    )
     return done, log
 
 
 def test_helper_pins_a_commit_and_forwards_arguments(tmp_path):
-    done, log = _run(tmp_path, "--doi", "10.1000/a b", "--title", "T")
+    done, log = _run(
+        tmp_path, "--source", "crossref", "--doi", "10.1000/a b", "--title", "T"
+    )
     assert done.returncode == 0, done.stderr
     argv = log.read_text().splitlines()
     assert argv[:2] == ["-q", "--from"]
-    assert re.fullmatch(r"git\+https://\S+/DOIfetch@(v\d+\.\d+\.\d+|[0-9a-f]{40})", argv[2]), argv[2]
-    assert argv[3:] == ["doifetch", "--doi", "10.1000/a b", "--title", "T"]
+    assert re.fullmatch(
+        r"git\+https://\S+/DOIfetch@(v\d+\.\d+\.\d+|[0-9a-f]{40})", argv[2]
+    ), argv[2]
+    assert argv[3:] == [
+        "doifetch",
+        "--source",
+        "crossref",
+        "--doi",
+        "10.1000/a b",
+        "--title",
+        "T",
+    ]
 
 
 def test_helper_without_uvx_names_the_prerequisite(tmp_path):
@@ -42,13 +58,58 @@ def test_helper_without_uvx_names_the_prerequisite(tmp_path):
 
 
 def test_failed_download_is_69_not_a_fetch_failure(tmp_path):
-    done, log = _run(tmp_path, "--doi", "10.1000/a", download_rc=1)
+    done, log = _run(
+        tmp_path, "--source", "crossref", "--doi", "10.1000/a", download_rc=1
+    )
     assert done.returncode == 69
     assert "could not get DOIfetch" in done.stderr
     assert not log.exists()  # the fetch never ran
 
 
 def test_fetch_failure_passes_through(tmp_path):
-    done, log = _run(tmp_path, "--doi", "10.1000/a", fetch_rc=1)
+    done, log = _run(tmp_path, "--source", "crossref", "--doi", "10.1000/a", fetch_rc=1)
     assert done.returncode == 1
     assert log.exists()
+
+
+@pytest.mark.integration
+def test_default_lookup_loads_shadow_extra_and_runs_cascade(tmp_path):
+    path = tmp_path / "bin"
+    path.mkdir()
+    log = tmp_path / "args"
+    stub = path / "uvx"
+    stub.write_text(
+        f'#!/bin/sh\n[ "$5" = -c ] && exit 0\nprintf "%s\\n" "$@" > "{log}"\n'
+    )
+    stub.chmod(0o755)
+    env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
+    result = subprocess.run(
+        ["bash", str(HELPER), "--doi", "10.1000/example", "--title", "T"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    args = log.read_text().splitlines()
+    assert args[2].startswith("doifetch[shadow] @ git+")
+    assert args[3] == "python"
+    assert args[4].endswith("/scripts/fulltext_cascade.py")
+    assert args[5:] == ["--doi", "10.1000/example", "--title", "T"]
+
+
+@pytest.mark.integration
+def test_missing_shadow_extra_is_reported(tmp_path):
+    path = tmp_path / "bin"
+    path.mkdir()
+    stub = path / "uvx"
+    stub.write_text("#!/bin/sh\nexit 1\n")
+    stub.chmod(0o755)
+    env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
+    result = subprocess.run(
+        ["bash", str(HELPER), "--doi", "10.1000/example", "--title", "T"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 69
+    assert "shadow extra" in result.stderr
