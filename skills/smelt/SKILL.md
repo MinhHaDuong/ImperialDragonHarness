@@ -63,7 +63,8 @@ A project needs no consolidation prompt: the editorial detail is
 `references/consolidation.md`, and its revision
 is this skill's. The helper retires any per-project `memory/DREAM.md`,
 `HOARD.md` or `SMELT.md` and prints `Retired prompt:` for each and
-`Names a retired prompt:` for each active file still pointing at one. Before
+`Names a retired prompt:` for each active file still pointing at one; it
+refuses a prompt that HEAD does not hold unchanged. Before
 committing, read each retired prompt (`git show HEAD:<path>`), carry its local
 location facts (rules paths, native store, import annex) into
 `memory/MEMORY.md`, or a `SOURCES.md` it links, within the index cap, and edit

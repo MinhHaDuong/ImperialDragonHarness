@@ -18,7 +18,17 @@ SPEC.loader.exec_module(migrate)
 
 def tree(root):
     return {str(p.relative_to(root)): p.read_bytes()
-            for p in root.rglob("*") if p.is_file()}
+            for p in root.rglob("*") if p.is_file() and ".git" not in p.relative_to(root).parts}
+
+
+def commit(root):
+    """Commit the fixture: a prompt is retired only when HEAD holds it (ticket 1451)."""
+    env = {**child_env(), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    if not (root / ".git").exists():
+        subprocess.run(["git", "-C", str(root), "init", "-q", "-b", "main"], check=True, env=env)
+    for args in (["add", "-A"], ["commit", "-q", "--allow-empty", "-m", "fixture"]):
+        subprocess.run(["git", "-c", "gc.auto=0", "-C", str(root), *args], check=True, env=env)
 
 
 @pytest.fixture
@@ -35,6 +45,7 @@ def project(tmp_path):
         b"Prompt revision: v8-r1\n- memory/DREAM.md blob abc123\n\xff")
     (tmp_path / "memory/journal/old.md").write_bytes(b"memory/dreams/old.md\n")
     (tmp_path / "memory/journal/private.age").write_bytes(b"\x00\xffciphertext")
+    commit(tmp_path)
     return tmp_path
 
 
@@ -165,6 +176,7 @@ def test_project_smelt_prompt_is_retired_and_its_references_named(tmp_path):
     index = b"Prompt [SMELT.md](SMELT.md); skills/dream/ helpers retired\n"
     (tmp_path / "memory/MEMORY.md").write_bytes(index)
     (tmp_path / "memory/topics/a.md").write_text("no prompt named here\n")
+    commit(tmp_path)
     before = tree(tmp_path)
     plan = migrate.plan_migration(tmp_path)
     assert plan.retired == ("memory/SMELT.md",)
@@ -330,6 +342,7 @@ def test_replaced_project_root_or_ancestor_refuses_outside_writes(project, swap_
     selected = project / "scope/selected"
     selected.mkdir(parents=True)
     migrate.shutil.copytree(project / "memory", selected / "memory")
+    commit(project)
     plan = migrate.plan_migration(selected)
     source = selected.parent if swap_ancestor else selected
     outside = project / "outside"
@@ -354,6 +367,7 @@ def test_mixed_prompt_and_report_layout_migrates(project, new_prompt):
         (project / "memory/DREAM.md").rename(project / "memory/SMELT.md")
     else:
         (project / "memory/dreams").rename(project / "memory/smelts")
+    commit(project)
     reports = tree(project / ("memory/dreams" if new_prompt else "memory/smelts"))
     migrate.apply_migration(migrate.plan_migration(project))
     assert not (project / "memory/SMELT.md").exists()
@@ -364,6 +378,7 @@ def test_mixed_prompt_and_report_layout_migrates(project, new_prompt):
 
 def test_two_legacy_prompts_are_both_retired(project):
     (project / "memory/HOARD.md").write_text("Prompt revision: v8-r2\n")
+    commit(project)
     plan = migrate.plan_migration(project)
     assert plan.retired == ("memory/DREAM.md", "memory/HOARD.md")
     migrate.apply_migration(plan)
@@ -394,9 +409,24 @@ def test_legacy_hoard_layout_migrates_to_smelt(tmp_path):
         "# HOARD — prompt\nPrompt revision: v8-r2 (2026-10-15)\nReports: memory/hoards/\n")
     (tmp_path / "memory/hoards/old.md").write_bytes(b"report memory/HOARD.md\xff")
     (tmp_path / "memory/MEMORY.md").write_text("[report](hoards/old.md) /hoard\n")
+    commit(tmp_path)
     migrate.apply_migration(migrate.plan_migration(tmp_path))
     assert (tmp_path / "memory/hoards").exists() is False
     assert not (tmp_path / "memory/HOARD.md").exists()
     assert (tmp_path / "memory/smelts/old.md").read_bytes() == b"report memory/HOARD.md\xff"
     assert not (tmp_path / "memory/SMELT.md").exists()
     assert (tmp_path / "memory/MEMORY.md").read_text() == "[report](smelts/old.md) /smelt\n"
+
+
+@pytest.mark.parametrize("state", ["untracked", "modified"])
+def test_prompt_not_committed_unchanged_is_refused(project, state):
+    """Gaze rv-20261107-pr-2225: an untracked or edited prompt would lose its local facts."""
+    if state == "untracked":
+        (project / "memory/SMELT.md").write_text("local facts only here\n")
+        (project / "memory/DREAM.md").unlink()
+    else:
+        (project / "memory/DREAM.md").write_text("Prompt revision: v8-r1\nedited, uncommitted\n")
+    before = tree(project)
+    with pytest.raises(migrate.MigrationError, match="commit it unchanged"):
+        migrate.plan_migration(project)
+    assert tree(project) == before

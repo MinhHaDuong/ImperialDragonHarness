@@ -7,7 +7,8 @@ text lives in the smelt skill (ticket 1451), and no prompt is the default. The
 helper names each retired prompt and each active file still naming one; the
 agent carries the prompt's local location facts into memory/MEMORY.md and
 edits those mentions. The legacy names stay in this file because they are
-what it detects.
+what it detects. A prompt is retired only when HEAD holds its exact bytes, so
+its text stays recoverable with git show.
 
 The caller owns the Git branch. Plans are read-only; application refuses changed
 inputs and rolls back ordinary I/O failures. This is not crash-atomic. Symlinks
@@ -20,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import tempfile
 
 
@@ -91,6 +93,18 @@ def _snapshot(root, references):
     except OSError as error:
         raise MigrationError(f"Cannot read migration inputs: {error}") from error
     return result
+
+
+def _committed(root, name, data):
+    """True when HEAD of root's repository holds exactly these bytes at name."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "show", f"HEAD:./{name}"],
+            capture_output=True, check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0 and result.stdout == data
 
 
 def _target(text, match, reference, root):
@@ -178,6 +192,10 @@ def plan_migration(project, references=()):
     for name in retired:
         if before[name] is None:
             raise MigrationError(f"Wrong input type: {name}")
+        if not _committed(root, name, before[name]):
+            raise MigrationError(
+                f"Cannot retire {name}: commit it unchanged first, so its local "
+                "facts stay recoverable with git show HEAD:<path>")
     legacy_dirs = [name for name in LEGACY_DIRS if name in before]
     if len(legacy_dirs) > 1 or (legacy_dirs and NEW_DIR in before):
         raise MigrationError(f"Coexistence conflict: {', '.join(legacy_dirs + [NEW_DIR])}")
