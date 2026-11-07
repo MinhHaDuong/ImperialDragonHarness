@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Integrate dependency-light scripts, manual procedures, and honest measurement limits
+Created: 2026-11-02
+Author: codex
+Closed: integration reviewed — children1453/1454/1455 landed; optional doctor diagnostics only
+
+--- log ---
+2026-11-02T10:56Z codex created
+2026-11-02T19:59Z Minh-Ha-Duong principles documented: README.md § Principles (values + principle/instances table); authoring-skills guide + stub carry the three toolkit principles (stdlib default, manual route, measurement limits)
+2026-11-04T15:59Z Minh-Ha-Duong PR pending: principles documented (README § Principles, authoring guide); only part of criterion 2. Inventory, pilot, manual-route comparison and unavailable-measurement demo remain.
+2026-11-07T13:32Z reviewer split into children 1453, 1454, 1455; parent kept as tracker with the shared inventory step
+2026-11-07T18:49Z reviewer note author replaced common-pilot implementation with on-demand doctor diagnostics; shared inventory remains here
+2026-11-07T18:49Z reviewer note inventory: authoring-skills Toolkit principles and workflow diagnosis discipline already own policy; repo_sources and deps AST infrastructure exist; doctor diagnostic menu/reference is the remaining integration gap; no new policy or common pilot.
+2026-11-07T20:18Z reviewer integration review: children1453(PR2242),1454(PR2246),1455(PR2249) merged. Read combined doctor menu/reference on origin/main b72dae7d; existing policy owners remain authoring-skills Toolkit principles and diagnosis discipline. Explicit-files dependency instrument plus recovery/evidence reading controls compose as optional diagnostics; no yawn/runtime/Make/gate wiring found. Full after-merge suite PASS on b72dae7d (pytest55.0s,lint182). Source availability limits remain explicit, not clean audits.
+2026-11-07T20:18Z reviewer closed — integration reviewed — children1453/1454/1455 landed; optional doctor diagnostics only
+
+--- body ---
+## Context
+Author decisions, 2026-11-07: existing toolkit principles need diagnostic tools in harness-doctor, not more rules. The former common-pilot implementation requirement is superseded.
+
+## Children
+- 1453 dependency inspection under existing policy — closed, PR2242, 2026-11-07
+- 1454 diagnostic for helper recovery instructions — closed, PR2246, 2026-11-07
+- 1455 diagnostic for unavailable evidence becoming false — closed, PR2249, 2026-11-07
+
+## Exit criteria
+- [x] Record once where existing policy and diagnostic/source infrastructure live and what integration gaps remain.
+- [x] All three children closed, with reusable on-demand diagnostics and controls; no routine healthcheck or merge-gate wiring.
+- [x] Integration review per roar step 8 verifies the three diagnostics compose without introducing new general rules or treating unavailable evidence as a clean audit.
