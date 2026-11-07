@@ -2,6 +2,7 @@
 Title: Smelt 1451 follow-ups: attribution line and five minor review notes
 Created: 2026-11-07
 Author: smelt-run-project-consolidation
+Closed: Items 2-6 fixed, item 1 dismissed with reason (log); PR #2231
 
 --- log ---
 2026-11-07T00:00Z smelt-run-project-consolidation created (handoff from a sen-causal-reading session; no harness session was live)
@@ -10,6 +11,7 @@ Author: smelt-run-project-consolidation
 2026-11-07T13:39Z reviewer raid-1452 note Item 2: tests/test_smelt_migrate.py marked integration module-wide; restructuring would fake the HEAD read the retire check depends on
 2026-11-07T13:39Z reviewer raid-1452 note Items 3 and 5 fixed in scripts/smelt_migrate.py (HEAD:./<path> hint; stale citations listed against every retired-prompt path, so a re-run still names them); item 4: spaced-name test for _checkout_ref
 2026-11-07T13:39Z reviewer raid-1452 note Item 6: commission.md replaced byte for byte by the approved text; unchanged on origin/main since 5284fde, no merge needed; pins 37 -> 18; memory_sizes.py guide bytes 9441 -> 6987 (cap 4096, Commission exempt)
+2026-11-07T13:45Z reviewer closed — Items 2-6 fixed, item 1 dismissed with reason (log); PR #2231
 
 --- body ---
 ## Context
