@@ -8,6 +8,8 @@ Author: MinhHaDuong
 2026-11-07T13:39Z Minh-Ha-Duong landing note: raw seat-output retention landed in 2b5e2ce2 (keep_raw, scripts/gaze_seat.py, 256 KiB cap, tests/test_gaze_seat.py); line 37 'is not retained' is superseded. Criterion 4 narrows to what is still missing: provenance link from the record to the archived raw output, and the timeout and nonzero-exit cases. Criteria 1-3 and 5 (structured constraints) still open.
 2026-11-07T22:01Z reviewer note Author chose "Split it": ready child 1464 finishes remaining failure evidence; deferred child 1465 preserves structured constraints; parent remains open through both dispositions and integration.
 
+2026-11-07T22:25Z raid-d35fb4 note Child1464 merged by PR2256 at767eae19 after REVIEWED gaze and APPROVED round1 gate. Failure stdout/file retention and request-bound raw-output pointers are complete. Child1465 remains deferred; tracker1377 stays open pending its disposition and combined integration review.
+
 --- body ---
 ## Context
 
