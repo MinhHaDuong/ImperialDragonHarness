@@ -2,6 +2,7 @@
 Title: Dependency-light scripts: standard-library default in authoring guidance
 Created: 2026-11-02
 Author: reviewer
+Closed: autoclosed — PR #2242
 
 --- log ---
 2026-11-02T15:33Z reviewer created
@@ -12,6 +13,7 @@ Author: reviewer
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 2026-11-07T18:55Z codex note worker identity: runtime exposes Codex, described by its system instructions as an agent based on GPT-6; verbatim model ID and effort are unavailable/masked. Do not infer them from the requested launch pin.
 2026-11-07T18:55Z codex note controls: expected AssertionError before implementation; six focused tests and locked ruff pass. Bounded two-source AST demonstration identifies yaml in scripts/skill_frontmatter.py as a third-party candidate under the locked-harness policy; scripts/trace_events.py has direct stdlib imports, with transitive/runtime/dynamic limitations retained. Existing gate source traversal remains tests/repo_sources.py; explicit-file diagnostic avoids duplicating that inventory.
+2026-11-07T19:00Z reviewer closed — autoclosed — PR #2242
 
 --- body ---
 Parent: 1444
