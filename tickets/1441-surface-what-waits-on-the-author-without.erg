@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Surface what waits on the author without new ticket headers
+Created: 2026-11-01
+Author: claude
+
+--- log ---
+2026-11-01T22:54Z claude created
+
+--- body ---
+## Context
+
+From `conception/2026-11-01-dsh-superagent-ideas.md` § 2. dsh-superagent
+refuses to infer "waiting on a person" from free text: an agent that needs a
+decision fills one structured `human_action` field with one question, and
+the panel lists those first. Here, author questions are spread across
+ticket logs, PR comments and chat, which makes "one at a time, queue the
+rest" (`rules/workflow.md` § Autonomous action) hard to check.
+
+## Author remark (2026-11-01)
+
+Adding headers to erg is very expensive. Explore other implementation
+routes before proposing one.
+
+Routes to compare, cost and failure mode for each (not exhaustive):
+
+- the existing `needs-human` label (`tickets/.ergrc`) plus a log-line
+  convention carrying the one question (`<ts> <author> ask <question>`),
+  read by `/dashboard`;
+- a body section (`## Question for the author`) found by grep;
+- a GitHub PR label or review state, for questions raised on a PR;
+- a single queue file outside tickets (and why it would or would not drift);
+- dashboard-only: derive the list from what exists today, no new writes.
+
+## Exit criteria
+
+- [ ] Routes compared in a short note (cost to implement, cost per use, how it drifts, what reads it); no erg format change unless every other route fails, with that argued
+- [ ] The author picks a route
+- [ ] `/dashboard` lists what waits on the author first, each with its one question, and prints nothing for that section when nothing waits

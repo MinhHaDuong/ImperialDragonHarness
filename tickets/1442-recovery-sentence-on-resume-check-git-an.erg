@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Recovery sentence on resume: check git and forge before repeating outside acts
+Created: 2026-11-01
+Author: claude
+
+--- log ---
+2026-11-01T22:54Z claude created
+
+--- body ---
+## Context
+
+From `conception/2026-11-01-dsh-superagent-ideas.md` § 5. dsh-superagent
+restarts every interrupted assignment with a fixed note: check the
+directory, git history and the forge before repeating any outside action.
+It prevents double pushes, double PRs and double comments after a crash or
+a context reset.
+
+Raid already resumes from its sitrep (`skills/raid/SKILL.md`); hunt and the
+coder profile have no equivalent sentence. Complements `rules/git.md`
+"Verify a forge mutation by reading it back".
+
+## Exit criteria
+
+- [ ] One sentence on the resume path of raid, hunt and `profiles/coder/PROFILE.md` (or a single shared place they all load): before repeating a push, PR, comment, ticket write or merge, read back whether it already happened
+- [ ] No new rule file, no guard
