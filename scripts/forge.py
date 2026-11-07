@@ -17,8 +17,16 @@ tell this checkout's own request from a sibling, a fork checkout included (ticke
 `read-back` prints `STATE head queued|-` (the read_back verb, a landing read: no offline mark, no cache).
 All four share one exit contract, read off the repository like `get_forge(landing=True)`:
   0  the answer is on stdout
-  2  could not look: an origin remote exists but gh is missing, unauthed or unreachable (stdout empty)
-  3  no forge: no origin remote, or `--forge none` (typed NOOP "no forge" on stderr, stdout empty, never `[]`)
+  2  could not look: gh unavailable, or local notes/required ancestry unreadable (stdout empty)
+  3  no forge: none backend has no notes ref for list, or no implementation for another verb
+     (typed NOOP on stderr, stdout empty, never `[]`)
+The none backend's list is a strict LOCAL snapshot of refs/notes/review: no transport.
+Its `number` is an opaque review ID, not a numeric forge request; rows add state,
+review_id and request_id. The latest request per native review is OPEN, MERGED
+(pinned head ancestor of current recorded base tip), or explicitly ABANDONED;
+abandonment wins, a new request reopens, and deleted branches do not abandon.
+Any review ever adopted by pr:<n> is excluded. mergedAt stays null: ancestry does
+not establish a landing date. A readable store without requests answers [].
 A caller may treat exit 3 as "skipped: no forge" and exit 2 as fail-closed. `resolve` keeps exit 1 on refusal.
 
 A review unit is (branch, base ref, head OID). `resolve` takes a request number
@@ -621,8 +629,53 @@ class NoneForge:
                 raise ForgeRefusal(f"{bname} moved locally to {new[:12]} but the push failed: "
                                    f"{pushed.stderr.strip()}; push it by hand, never re-merge")
 
-    def list_requests(self, *args, **kwargs):
-        return NOOP
+    def list_requests(self, state: str = "open", head: str | None = None, limit: int = 100):
+        """Latest native request per review, from a strict local notes snapshot."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "review_notes", os.path.join(os.path.dirname(os.path.abspath(__file__)), "review_notes.py"))
+        rn = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(rn)
+        try:
+            es = rn.listing_entries(self.cwd or ".")
+        except rn.Refusal as exc:
+            raise ForgeRefusal(f"refs/notes/review unreadable: {exc}") from exc
+        if es is None:
+            return NOOP
+        if state not in ("open", "merged", "all") or limit < 0:
+            raise ForgeRefusal("listing needs open|merged|all and a nonnegative limit")
+        latest, adopted, abandoned = {}, set(), set()
+        for e in es:
+            if e["kind"] == "request":
+                latest[e["review_id"]] = e
+                if e.get("unit", "").startswith("pr:"):
+                    adopted.add(e["review_id"])
+            elif e["kind"] == "abandon":
+                abandoned.add((e["review_id"], e["request_id"]))
+        rows = []
+        for req in sorted(latest.values(), key=lambda e: (e["ts"], e["id"]), reverse=True):
+            rid = req["review_id"]
+            if rid in adopted:
+                continue
+            if (rid, req["request_id"]) in abandoned:
+                status = "ABANDONED"
+            else:
+                # A deleted/moved branch is irrelevant: the submitted head is
+                # pinned on its request. Resolve the recorded base's current tip.
+                base = self._rev(req["base_ref"])
+                pinned = self._rev(req["head"])
+                ancestry = self._git("merge-base", "--is-ancestor", pinned, base)
+                if ancestry.returncode not in (0, 1):
+                    raise ForgeRefusal("cannot determine request ancestry")
+                status = "MERGED" if ancestry.returncode == 0 else "OPEN"
+            # Classify before filtering: a partial answer must not hide unreadable evidence.
+            if (state != "all" and status != state.upper()) or (head and req["branch"] != head):
+                continue
+            rows.append({"number": rid, "branch": req["branch"], "title": req.get("why", ""),
+                         "body": req.get("intent", ""), "auto": False, "mergedAt": None,
+                         "cross_repository": False, "head_repository": None, "state": status,
+                         "review_id": rid, "request_id": req["request_id"]})
+        return rows[:limit]
 
     def files(self, ref: str):
         return NOOP
@@ -677,7 +730,7 @@ def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None, 
 def get_forge_listing(choice: str | None = None, cwd: str | None = None):
     """The backend for a ref-less verb (list, files, read-back), read off the repository (ticket 1318).
 
-    No origin remote, or `none`: NoneForge, whose verbs answer NOOP ("no forge"). An origin remote with
+    No origin remote, or `none`: NoneForge; list reads local notes, other ref-less verbs answer NOOP. An origin remote with
     gh on PATH: the gh backend on the landing footing (no offline mark, no cache). An origin remote
     without gh: a refusal, the forge could not be read. An empty ref is not numeric, so `get_forge`
     cannot serve these verbs."""
