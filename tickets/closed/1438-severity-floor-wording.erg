@@ -2,10 +2,12 @@
 Title: Contradiction: severity-floor wording in workflow.md vs harness-doctor
 Created: 2026-11-01
 Author: smelt
+Closed: autoclosed — PR #2235
 
 --- log ---
 2026-11-01T21:30Z smelt created
 2026-11-07T14:00Z Minh-Ha-Duong author ruled: workflow.md wording stands; the doctor stops paraphrasing it (a skill never paraphrases another). Bundled: the North star lives in ROADMAP.md where a project has one (rules/state.md)
+2026-11-07T14:09Z Minh Ha-Duong closed — autoclosed — PR #2235
 
 --- body ---
 ## Context

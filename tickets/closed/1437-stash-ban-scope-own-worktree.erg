@@ -2,10 +2,12 @@
 Title: Contradiction: does the git.md stash ban cover a session's own worktree
 Created: 2026-11-01
 Author: smelt
+Closed: autoclosed — PR #2235
 
 --- log ---
 2026-11-01T21:30Z smelt created
 2026-11-07T14:00Z Minh-Ha-Duong author ruled: the stash ban covers every checkout; 'in a shared checkout' dropped from rules/git.md
+2026-11-07T14:09Z Minh Ha-Duong closed — autoclosed — PR #2235
 
 --- body ---
 ## Context
