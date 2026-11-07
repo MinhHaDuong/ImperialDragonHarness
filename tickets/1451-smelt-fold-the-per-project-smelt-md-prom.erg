@@ -53,3 +53,43 @@ revision of the skill (not of a project prompt) in each smelt report.
 - [ ] One ticket filed in each of padme, JETP-observer, climate-finance-het to retire their copy on next smelt (cross-project: tickets only, no edits there)
 - [ ] Log on ticket 1443 linking this ticket
 - [ ] Harness gate passes
+
+## Raid annotations (Imagine + Plan, raid 34342e, 2026-11-07)
+
+Single-ticket raid; the orchestrator read the surfaces itself (cost: a
+per-ticket Imagine fan-out buys nothing on a ticket whose option the author
+has already chosen). Premise holds on origin/main 5971d810: SKILL.md cites
+`memory/SMELT.md § Job of a topic and caps` and `§ Rebuild`;
+`scripts/smelt_migrate.py:157` raises "Missing memory consolidation prompt".
+
+Plan:
+1. New `skills/smelt/references/` file(s) carrying the generic sections of
+   harness `memory/SMELT.md` v8-r5 (Read + blob ledger, Rebuild by department,
+   Job of a topic and caps, departments list, Consolidate, Coherence,
+   Encrypted entries with key scheme and three failure modes, Report, Bounds).
+   SKILL.md keeps the contract and points into the reference; no paragraph
+   stated in both. Encrypted entries: state padme's r3-padme1 rule
+   explicitly — re-encryption applies to consolidated pages under
+   `memory/topics/` only; an encrypted journal entry is read, never rewritten.
+2. Size helper invoked as `python3 "$IDH_ROOT/scripts/memory_sizes.py"`
+   against the selected project (check it accepts a project root; add the
+   argument if not, test first).
+3. Report names the skill revision (a revision line in the skill, or the
+   harness commit of `skills/smelt/`), not a project prompt revision.
+4. `smelt_migrate.py`: no prompt = defaults, no refusal. A legacy
+   DREAM.md/HOARD.md/SMELT.md is retired by the migration; its local location
+   facts (rules paths, native-store or import-annex locations) reach the
+   index. The helper cannot judge which lines are local: preferred shape is
+   that the helper retires the file and reports it, and the skill's
+   migration step tells the agent to carry the local location facts into
+   `memory/MEMORY.md` (≤40 lines) or a linked SOURCES.md before committing.
+   Optional thin `memory/SMELT.md` of overrides only if a genuine editorial
+   divergence is found (none known: padme's divergence is now generic).
+5. Templates (`conception/memory-v8/templates/`), `conception/memory-v8/*.md`
+   live docs, `skills/lair/SKILL.md`, tests (`test_smelt_migrate.py`,
+   `test_dream_v8.py`, `test_skill_seam.py`, `test_memory_v8_*`) updated.
+6. Harness `memory/SMELT.md` retired; harness-only facts (journal sizes
+   2026-10-29, departments provisional until ticket 1349) move to the index
+   or `memory/topics/memory-v8-governance.md`.
+7. Cross-project tickets (padme, JETP-observer, climate-finance-het) and the
+   1443 log line: filed by the orchestrator, not the executor.
