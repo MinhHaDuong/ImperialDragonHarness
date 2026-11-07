@@ -65,10 +65,11 @@ is this skill's. The helper retires any per-project `memory/DREAM.md`,
 `HOARD.md` or `SMELT.md` and prints `Retired prompt:` for each and
 `Names a retired prompt:` for each active file still pointing at one; it
 refuses a prompt that HEAD does not hold unchanged. Before
-committing, read each retired prompt (`git show HEAD:<path>`), carry its local
+committing, read each retired prompt (`git show HEAD:./<path>`), carry its local
 location facts (rules paths, native store, import annex) into
 `memory/MEMORY.md`, or a `SOURCES.md` it links, within the index cap, and edit
-the named mentions; its generic text is dropped. If the project memory
+the named mentions that still point at it; a line recording its retirement
+stays, and a re-run names it again. Its generic text is dropped. If the project memory
 convention is missing, report it and stop. Already migrated projects are a
 no-op. Report/journal bytes and provenance remain preserved; review all
 migration edits before committing. There is no old command alias, compatibility
