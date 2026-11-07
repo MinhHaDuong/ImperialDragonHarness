@@ -7,6 +7,7 @@ Author: codex
 2026-11-02T10:56Z codex created
 2026-11-02T19:59Z Minh-Ha-Duong principles documented: README.md § Principles (values + principle/instances table); authoring-skills guide + stub carry the three toolkit principles (stdlib default, manual route, measurement limits)
 2026-11-04T15:59Z Minh-Ha-Duong PR pending: principles documented (README § Principles, authoring guide); only part of criterion 2. Inventory, pilot, manual-route comparison and unavailable-measurement demo remain.
+2026-11-07T13:32Z reviewer split into children 1453, 1454, 1455; parent kept as tracker with the shared inventory step
 
 --- body ---
 ## Context
@@ -17,23 +18,21 @@ that an agent can follow without running the script; and accept an explicit
 failures, preserve useful procedures when automation is unavailable, and reduce
 pressure to invent results.
 
+## Children
+- 1453 dependency-light scripts: standard-library default in authoring guidance
+- 1454 manual route documented for every scripted workflow
+- 1455 honest measurement limits: measured, derived, estimated, unavailable
+
+The three principles are already stated in README.md § Principles and
+skills/harness-doctor/references/authoring-skills.md § Toolkit principles
+(310223ae, b5c1383a); the children carry the pilot and demonstrations.
+
 ## Scope
-Integrate the principles into toolkit authoring guidance and demonstrate them on
-one existing scripted workflow. Inventory existing guidance first, including
-dependency management and diagnosis discipline; reconcile overlaps rather than
-adding a parallel rule set. Prefer standard-library scripts, with justified
-exceptions where a dependency materially improves reliability or capability.
-State interpreter, system-tool, and service prerequisites honestly.
-
-The manual route describes inputs, decisions, checks, and outputs without
-requiring the helper script or newly written code. Keep one procedural
-specification that automation implements; explain any limits or extra cost of
-the manual route. Preserve authorization and verification requirements.
-
-Measurement outputs distinguish measured, derived, estimated, and unavailable
-results. An unavailable result states the missing evidence, what was attempted,
-and what would permit measurement. Missing access or failed execution must not
-be reported as zero, absence, or an all-clear.
+Shared first step for all children: inventory existing guidance -- dependency
+management, manual-procedure documentation, and diagnosis discipline -- and
+record where each principle already exists and the remaining integration gaps.
+Reconcile overlaps rather than adding a parallel rule set. Select one existing
+scripted workflow as the common pilot for the children.
 
 ## Relevant files
 - rules/coding-python.md
@@ -43,19 +42,10 @@ be reported as zero, absence, or an all-clear.
 - One existing scripted skill and its helper, selected after inventory
 
 ## Exit criteria
-- [ ] Record where each principle already exists and the remaining integration gaps.
-- [ ] Update the maintained authoring guidance with the dependency default,
-      justified exceptions, manual procedure, and explicit measurement limits;
-      reconcile conflicts with existing environment rules.
-- [ ] Apply the guidance to one existing scripted workflow and identify it in
-      the implementation report; defer a toolkit-wide migration to separately
-      scoped work if the inventory establishes a need.
-- [ ] Demonstrate the selected workflow's manual route without its helper and
-      compare its outcome with automation on the same known input.
-- [ ] Demonstrate an unavailable-measurement case and a positive control,
-      showing that missing evidence cannot produce a fabricated result or all-clear.
-- [ ] Run checks appropriate to changed files; regenerate generated guidance
-      or catalogs only when their sources change.
+- [ ] Inventory recorded: where each principle already exists and the remaining
+      integration gaps (done once here, shared by 1453, 1454, 1455).
+- [ ] All three children closed.
+- [ ] Integration review per roar step 8.
 
 ## Verification
 Use a bounded procedural walkthrough and reproducible examples for the pilot.
