@@ -241,3 +241,84 @@ unresolved cases. “No instances found” is valid only for the semantic spans
 actually examined after the controls fired; it does not establish absence
 in unread sources, missing runtimes, or a larger corpus. Report the named
 missing evidence and what would permit inspection when it cannot be done.
+
+## Historical implementation-language choices
+
+**Question and scope.** For a named implementation, where was its language
+or entry-point choice made, what concrete trouble followed, and what change
+would remove that mechanism? This is an on-demand reading diagnostic, not a
+Bash/Python/Rust prescription. Start with a bounded set of tickets, commits,
+and source paths. Reading takes minutes per case; inert controls take seconds
+with Bash and Python's standard library. No credentials, services, private
+archives, or original session transcripts are needed for the examples below.
+
+**Locate the decision.** Read the governing workflow, ticket, and relevant
+before/after source sequentially. `skills/raid/SKILL.md` § Imagine opens
+alternatives and § Plan requests actions and tests. `skills/hunt/SKILL.md`
+§ Plan chooses the implementation route; its Execute section permits
+replanning when evidence contradicts it. These are opportunities to make or
+revise a language choice, not proof that any historical choice happened in
+one particular phase. Existing project files and tool availability may also
+constrain an executor's choice. Find the actual ticket action, design note,
+commit rationale, or authorized session evidence that records it; otherwise
+mark the decision location or rationale unknown. Git records an implementation
+and stated rationale, not the executor's unrecorded reasoning.
+
+**Controls before diagnosis.** Keep the intended output and input contract
+fixed, then distinguish a representation mechanism from a domain-logic
+error. Run only inert constructed fixtures, with host startup hooks disabled.
+The following inputs derive from public source mechanisms, not recovered
+private session inputs.
+
+| Control | Reproduction and expected distinction |
+|---|---|
+| Empty middle field | Use the literal TSV record `17\t\tQk9EWQ==`. Bash `IFS=$'\t' read -r a b c` puts the encoded body in `b`, losing the empty title. Python `csv.reader` with tab delimiter preserves the empty middle field. Also try Bash `IFS='|' read -r a b c` on `17||Qk9EWQ==`: the smaller representation repair preserves it too. The alternative parser removes this mechanism; migration is not the only remedy. |
+| Domain predicate | With the literal state `activating`, compare Bash's `[ "$state" = active ]` and Python's `state == 'active'` against the intended running states `active` and `activating`. Both predicates wrongly reject a running state. A language change alone leaves that error intact; correct the state contract. No real service is queried. |
+| Shell/Python argument bridge | Give an outer Bash command the argument `fixture-root`, then invoke a Python stdin heredoc without forwarding that argument. Python's `sys.argv[1:]` is empty. Forward it explicitly with `python3 - "$1"` and the value arrives. A direct Python entry point also avoids the bridge, but explicit forwarding repairs the existing design. |
+
+The control succeeds when the reader observes both the removable parsing or
+transport mechanism and the logic error that survives translation, while
+retaining a smaller same-language repair as a candidate. It does not decide
+which language a real project should use. Record the constructed inputs,
+commands, environment, and observed results; do not label this a replay of
+the original incident.
+
+**Bounded committed cases.** Read the named commit and its parent with Git;
+use `git show`, never overwrite current source to reconstruct history.
+These cases supply actual implementation history even where session reasoning
+is unavailable.
+
+| Evidence | Recorded trouble, choice, and limit |
+|---|---|
+| `a8c14201`, ticket 0515, historical `gen-skills-catalog.sh` | The shell's directory argument was never passed to its Python heredoc, leaving the Python default path in use. The commit repairs the bridge through an environment variable and replaces guessed YAML values with parsed YAML. Those are distinct mechanisms; the bridge repair retained the wrapper. |
+| `cbc44c65`, ticket 0531 § Actions, item 3 | The ticket explicitly leaves the shell-wrapper versus Python-entry-point decision to implementation. The commit chooses the importable Python entry point so catalog consumers can share frontmatter extraction instead of maintaining divergent copies. The old wrapper already contained Python; the benefit is shared importability and removal of the wrapper boundary. The commit records a byte-identical catalog comparison; that is a historical record, not a newly measured render. |
+| `afd44bc7`, ticket 0903, `skills/roar/check-close-claims.sh` | An empty title in a tab-delimited record would shift the encoded body into the title field. The commit repairs the format in Bash using encoded title/body fields joined with a delimiter outside their alphabet. Current source retains that format. This supports the smaller repair and does not establish a need to translate the script. |
+| `3baf733d`, ticket 0951, historical `read-index.py` | A Python regex dropped index entries with bracketed titles. The recorded repair changes the grammar and rejects partial parsing within Python. Its surviving literal example, `- [A test [green] for a reason](x.md)`, permits checking the regex mechanism without reading anyone's memory. The existing language did not prevent the defect. |
+
+For the first case's current successor, inspect
+`$IDH_ROOT/scripts/gen_skills_catalog.py` and the shared frontmatter helper;
+for the record-format case, inspect `skills/roar/check-close-claims.sh`.
+The inert argument/empty-field controls reproduce their source-derived
+mechanisms; they do not rerun those historical workflows or prove original
+session intent. The original multilingual-JSON anecdote is not established by
+these cases and remains unverified. It does not make this committed history
+unavailable. The inspected cases already carry targeted repairs; no additional
+current rewrite is established by this walkthrough.
+
+**Judge the counterfactual.** For each real candidate, identify the failing
+input, intended result, observed failure, and the exact language/library or
+boundary feature that an alternative changes. Compare a local repair with
+migration, including available parsers, dependency and deployment costs,
+startup requirements, caller compatibility, and verification effort. A Rust
+or Python proposal needs a measured relevant cost or demonstrated mechanism;
+its reputation is not evidence. Preserve contrary cases and label missing
+inputs, unsupported rationale, and unexamined behavior explicitly.
+
+**Report and revisit.** Give the bounded sources, decision record and its
+location, controls and reproduction limits, current disposition, and the
+smallest supported proposal with its cost. A reasoned keep or no actionable
+correction is valid. Recommend or apply a change only when the named evidence
+supports it; keep it with its owning workflow and recheck the same failing
+input afterward. A pure refactor needs the existing artifact-comparison route
+in `diagnosis-discipline.md`. Do not infer an original language-choice mistake
+from a later bug, or turn this diagnostic into a new workflow gate.

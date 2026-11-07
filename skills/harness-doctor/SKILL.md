@@ -70,6 +70,7 @@ The health checkup is the exception: offer it at every visit, before triage.
 | Dependency contract, per `references/toolkit-diagnostics.md` § Dependency inspection | Whether named helper imports and launch prerequisites fit the existing bundled-helper or locked-harness perimeter; explicit files only | Seconds; Python 3.10+; read-only; no model usage or credentials; fixture controls first |
 | Helper recovery, per `references/toolkit-diagnostics.md` § Recovery when helpers are unavailable | Whether named script-calling instructions retain completion, optional omission, or safe stop/handoff when a helper cannot be used | Minutes per workflow; reading only; synthetic gap/completion/stop controls first; transcripts supplementary |
 | Evidence-to-claim reading, per `references/toolkit-diagnostics.md` § Unavailable evidence becoming false | Whether an actual assistant claim exceeds a failed/unavailable observation, with contiguous context and recovery retained | Minutes per authorized span; unsupported-absence/observed-zero/unknown controls first; content-free artifacts cannot establish an empty audit |
+| Language-choice history, per `references/toolkit-diagnostics.md` § Historical implementation-language choices | Where a named language/entry-point choice was recorded and whether a different choice removes a demonstrated failure mechanism | Minutes per bounded case; inert Bash/Python controls first; public ticket/commit/source history; original reasoning may be unknown |
 | Shadowing: `python3 "$IDH_ROOT/scripts/project_shadow.py" <project>` | Whether a project's skill or rule, named like the harness's, shadows it | Seconds; no model usage; only for a shadowing question |
 
 The lint prints JSON on stdout: read `.findings[]`, each
@@ -95,6 +96,8 @@ Before reading a probe's findings, fire it on its control (the rule:
 - Review trajectory: `tests/test_review_trajectory.py`, whose fixture repo holds one merged PR
   per class, the reviewer miss derived from a round-1 line a later blocker cites.
 - Runtime diagnostics: the control each runtime's section names.
+- Toolkit diagnostics: fire the controls in the selected section of
+  `references/toolkit-diagnostics.md` before judging its cases.
 - Reading probes: the known overlap of this skill with
   `skills/test-doctor/SKILL.md` (the shared visit stance the checklist
   records); a reader that misses it is blind.
