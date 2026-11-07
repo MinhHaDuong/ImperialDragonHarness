@@ -2,6 +2,7 @@
 Title: Doctor diagnostic: unavailable evidence becoming false
 Created: 2026-11-02
 Author: reviewer
+Closed: autoclosed — PR #2249
 
 --- log ---
 2026-11-02T15:33Z reviewer created
@@ -9,6 +10,9 @@ Author: reviewer
 2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
 2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
+2026-11-07T19:55Z codex note worker identity: runtime exposes Codex, described by its system instructions as an agent based on GPT-6; verbatim model ID and effort are unavailable/masked. Do not infer them from requested launch pins.
+2026-11-07T19:55Z codex note synthetic observation/claim controls fired: unsupported absence distinguished from observed zero and explicit unknown. Bounded source-suitability reading: named committed digest removes semantic text; public PR2246 review answer lacks contiguous tool observations/recovery context. Semantic transcript inspection unavailable for these artifacts, not an empty audit; no private/local-restricted raw transcripts accessed. Software unpriced-cost fixture is representation evidence, not a model-claim incident.
+2026-11-07T20:02Z reviewer closed — autoclosed — PR #2249
 
 --- body ---
 Parent: 1444
