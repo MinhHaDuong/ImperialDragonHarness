@@ -1,11 +1,12 @@
 %erg 0.1
-Title: Forward structured review constraints through gaze seats with evidence
+Title: Track gaze failure evidence and deferred structured constraints
 Created: 2026-10-30
 Author: MinhHaDuong
 
 --- log ---
 2026-10-30T15:13Z MinhHaDuong created
 2026-11-07T13:39Z Minh-Ha-Duong landing note: raw seat-output retention landed in 2b5e2ce2 (keep_raw, scripts/gaze_seat.py, 256 KiB cap, tests/test_gaze_seat.py); line 37 'is not retained' is superseded. Criterion 4 narrows to what is still missing: provenance link from the record to the archived raw output, and the timeout and nonzero-exit cases. Criteria 1-3 and 5 (structured constraints) still open.
+2026-11-07T22:01Z reviewer note Author chose "Split it": ready child 1464 finishes remaining failure evidence; deferred child 1465 preserves structured constraints; parent remains open through both dispositions and integration.
 
 --- body ---
 ## Context
@@ -62,7 +63,7 @@ Relevant files:
 - `skills/route/routes.json`: `launch_doors.*.headless`
 - `tests/test_gaze_seat.py`
 
-## Exit criteria
+## Original acceptance criteria (preserved)
 
 - [ ] The bridge accepts a versioned structured-report request independently
   of Arena/product scoring and carries it only through doors whose actual CLI
@@ -89,3 +90,36 @@ Relevant files:
   preserves the rest of the contract.
 - [ ] The gaze seat tests and applicable project checks pass; no live model/API
   calls or consent/author-hold changes are made.
+
+## Approved split (2026-11-07)
+
+The author chose to split the remaining work: finish raw failure evidence
+now, and defer generic structured constraints until consumer need and CLI
+capability evidence justify the complexity. The original context above is
+historical; its "is not retained" account is superseded by the landing note
+for `2b5e2ce2`, not a request to redo `keep_raw` or its 256 KiB cap.
+
+## Children and original-criterion coverage
+
+- 1464 — Finish gaze failure-output retention and provenance: ready.
+- 1465 — Evidence structured review constraints across CLI doors: deferred.
+
+| Original criterion | Responsible child |
+| --- | --- |
+| 1: versioned request and evidenced CLI passthrough | 1465 |
+| 2: distinct constraint modes and degraded behavior | 1465 |
+| 3: authoritative review judgment and reach evidence | Both |
+| 4: raw failure retention and provenance | 1464; acknowledge already-landed capture |
+| 5: offline stub coverage | 1464 failure evidence; 1465 structured/adversarial paths |
+| 6: project checks and authorization boundaries | Both |
+
+Both children preserve credential safety, consent/author holds,
+cross-family spend and scoring boundaries. Reach declarations are not proof
+of tool use. They are independent parts, with no blocking relationship.
+
+## Exit criteria
+
+- [ ] Both children are resolved and their combined outcomes receive an
+  integration review against all six preserved original criteria, including
+  any explicit author-approved deferral/disposition. Completing 1464 alone
+  does not close this tracker.

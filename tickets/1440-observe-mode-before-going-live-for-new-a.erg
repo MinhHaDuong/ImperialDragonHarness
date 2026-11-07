@@ -1,41 +1,37 @@
 %erg 0.1
-Title: Observe mode before going live for new autonomous behaviour
+Title: Remind MOE to consider proportionate trials for new autonomous behavior
 Created: 2026-11-01
 Author: claude
 
 --- log ---
 2026-11-01T22:54Z claude created
 2026-11-07T13:39Z Minh-Ha-Duong landing note: PR #2214 added 'an observe-only period is one option' to conception/design-note-template.md and skills/raid/SKILL.md; this ticket asks for more than that option. Closed ticket 1180 (main-update guard observe window) is a candidate test case.
+2026-11-07T22:02Z reviewer note Author clarified scope: a Workflow memo leaves MOE to consider and propose proportionate trials and their purpose/evaluation criteria; no blanket observe framework or mandatory trial. Ticket refinement only; implementation not launched.
 
 --- body ---
-## Context
+## Context and author ruling
 
-From `conception/2026-11-01-dsh-superagent-ideas.md` § 1. DeepSeek's
-dsh-superagent starts every proactive rule in `observe` mode: the model
-judges, a positive judgement is recorded as "would accept", nothing runs.
-The operator reads the records, then switches the rule to `auto`.
+The original idea came from `conception/2026-11-01-dsh-superagent-ideas.md`
+§ 1. PR #2214 already made an observe-only period one option in the design
+note template and raid. On 2026-11-07 the author clarified: "I ask 1440 to
+be a memo like in Workflow, so that it is up to the MOE to think and propose
+the trial period for new behaviors."
 
-In the harness a new guard is on or off, with no shadow period; misfires are
-found in use and the guard is then deleted.
+This settles the earlier scope question. The deliverable is a short reminder
+in `rules/workflow.md`, alongside the existing Imagine/Plan/Cycle guidance.
+When proposing new autonomous behavior, MOE considers whether a trial would
+be useful and, when appropriate, proposes its purpose and evaluation criteria.
+The trial is proportionate to the proposal and remains MOE's judgment.
 
-## Author remark (2026-11-01)
-
-"Just for guards, or who else?" Settling the scope is the first step, not a
-given. Candidates to weigh, each with its cost and the misfire it would catch:
-
-- guards and hooks that refuse or rewrite a tool call;
-- sweeps that file tickets (molt, yawn → molt): "would file" before filing;
-- raid's target selection and its auto-merge of APPROVED PRs;
-- a newly added skill step that writes outside its worktree (forge, memory,
-  other projects' tickets);
-- route changes that move work to another model.
-
-Some may already have a dry-run (`molt` cleanup has `--dry-run`); reuse
-before adding. Say which candidates are excluded and why.
+This replaces the original request for an author-picked global observe scope,
+a formal "would have done" record convention and a mandatory positive-control
+application. No blanket observe framework, fixed waiting period, automatic
+constraint, new mechanism or required trial for every behavior is requested.
 
 ## Exit criteria
 
-- [ ] Scope decided with the author: which kinds of behaviour must start in observe mode, which are exempt, with reasons
-- [ ] One convention for "would have done X" records: where they land, how long the observe period lasts, who reads them, what flips a behaviour live
-- [ ] The convention written where authors of guards/sweeps read it (e.g. `rules/authoring-skills.md` or test-doctor), not in a new rule file
-- [ ] Applied to at least one real case as positive control: an observe log shows a "would" entry for a known trigger
+- [ ] A concise reminder in `rules/workflow.md` says MOE considers a useful,
+  proportionate trial when proposing new autonomous behavior and proposes its
+  purpose and evaluation criteria when appropriate.
+- [ ] Wording leaves that judgment with MOE; it introduces no mandatory trial,
+  global observe convention, fixed waiting period or new mechanism.
