@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Evidence structured review constraints across CLI doors
+Created: 2026-11-07
+Author: reviewer
+
+Label: deferred
+
+--- log ---
+2026-11-07T22:01Z reviewer created
+
+--- body ---
+Parent: 1377
+
+## Context
+
+Author-approved split of 1377. Deferred until a concrete consumer need and
+actual CLI/version capability evidence justify structured constraints; this
+is not a scheduled implementation. Sibling 1464 independently finishes raw
+failure evidence. Provider API support alone does not establish CLI support.
+
+Relevant existing surfaces: `scripts/gaze_seat.py`, `scripts/seat_clock.py`,
+`skills/route/routes.json` and `tests/test_gaze_seat.py`.
+
+## Exit criteria
+
+- [ ] A versioned structured-report request is independent of Arena/product
+  scoring and carried only through doors with evidenced actual CLI syntax
+  and behavior. Provenance records requested mode, CLI/door version evidence,
+  and passed/unsupported/unverified status; unknown is not native support.
+- [ ] Native grammar/strict schema, JSON syntax mode and prompt-only request
+  remain distinguishable. Unsupported/degraded behavior is visible in the
+  plan or report; a parseable response alone is not constrained generation.
+- [ ] REVIEWED/FINDINGS/ESCALATE and review-note records remain authoritative:
+  validation cannot clear invalid, missing or contradictory review content.
+  Reach declarations remain declarations unless separately bound to verified
+  tool evidence. Existing raw-evidence retention/provenance and credential
+  protection remain intact.
+- [ ] Offline stub/fixture tests cover unsupported/degraded paths, ignored
+  requests, malformed/missing fields and a positive passthrough only if a
+  real door option has been established. The verified-supported set may be
+  empty: then report unsupported and make no native-support claim.
+- [ ] Applicable gaze seat tests/project checks pass. No live model/API
+  calls, consent/author-hold, cross-family spend or scoring-policy changes
+  are made.

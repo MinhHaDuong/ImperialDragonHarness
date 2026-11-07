@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Finish gaze failure-output retention and provenance
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T22:01Z reviewer created
+
+--- body ---
+Parent: 1377
+
+## Context
+
+Author-approved split of 1377: finish failure evidence without bundling a
+structured-constraints API. Raw retention already landed in `2b5e2ce2`:
+`keep_raw` in `scripts/gaze_seat.py`, its 256 KiB cap, and invalid-reach
+coverage in `tests/test_gaze_seat.py`. Reuse that work; do not redo it.
+
+The remaining gap is timeout/nonzero-exit output retention and a provenance
+link from the review record to the retained raw output. Preserve bytes before
+answer extraction and validation, within the existing bounded retention.
+Sibling 1465 is deferred and is not a dependency.
+
+## Exit criteria
+
+- [ ] Timeout and nonzero-exit stdout or CLI output-file evidence survives
+  cleanup, using existing `keep_raw`; the review record links the retained
+  output to the relevant door/model/request provenance without persisting
+  credentials or other sensitive CLI text.
+- [ ] Existing retention for invalid reach, malformed/truncated output and
+  refusal is preserved. Failure remains failure: REVIEWED/FINDINGS/ESCALATE
+  and review-note judgment stay authoritative; a reach declaration is not
+  verified tool-use evidence.
+- [ ] Controlled offline CLI stubs cover the missing timeout/nonzero cases
+  and record link; existing invalid-reach coverage and applicable gaze seat
+  tests/project checks pass. No live model/API calls, consent/author-hold,
+  cross-family spend or scoring-policy changes are made.
