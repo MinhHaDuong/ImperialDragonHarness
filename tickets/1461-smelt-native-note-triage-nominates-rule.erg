@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Smelt: native-note triage nominates rule candidates, brood proposes promotion
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T18:44Z reviewer created
+
+--- body ---
+## Context
+
+Author ruling, 2026-11-07, after reading the climate-finance-het smelt report
+(`memory/smelts/2026-11-07-retire-dream-consolidation.md`, PR #2022 there):
+"smelt offers to promote harness rules. It should only nominate. Promotion
+discussion is brood job later."
+
+`skills/smelt/SKILL.md` § Native-note triage lane asks for a disposition
+"**promote to rules**, naming the destination file and section". The run
+above did exactly that: 8 rows, five pointing into harness rules
+(`~/.agents/rules/workflow.md` § Autonomous action, § Delegation) or project
+rules, each with a chosen section. Choosing a destination and section is the
+start of a promotion argument, which belongs to brood (`skills/brood/SKILL.md`:
+"scoped harness nominations, on explicit request"), not to a memory
+consolidation pass. The author accepted the triage with "leave rules
+promotion to brood"; the eight notes stay in the native store for brood.
+
+## Change
+
+In smelt's native-note triage lane, replace the "promote to rules" disposition
+with a nomination for brood (say "nominate as a rule candidate"): a
+one-line reason the note reads as a working rule, no destination file or
+section, no wording. Brood takes the nominations as input and runs the
+promotion discussion. Wording is the harness's call; keep "the author decides"
+and "smelt writes no rule".
+
+## Exit criteria
+
+- [ ] Smelt's triage lane offers a rule *nomination*, without destination
+  file, section or proposed wording.
+- [ ] Brood's skill names smelt's nominations as an input to its promotion
+  work.
+- [ ] Smelt's statement that this lane is the single exception to "propose no
+  rules" is updated to match (a nomination is not a rule proposal).
