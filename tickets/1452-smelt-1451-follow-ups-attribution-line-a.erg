@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Smelt 1451 follow-ups: attribution line and five minor review notes
+Created: 2026-11-07
+Author: smelt-run-project-consolidation
+
+--- log ---
+2026-11-07T00:00Z smelt-run-project-consolidation created (handoff from a sen-causal-reading session; no harness session was live)
+2026-11-07T12:00Z smelt-run-project-consolidation note Author decision on the pinned-ruling review: retire A (15 pins carried by rules/skills), B (3 expired), C1 (escalation forks, superseded); fix C2 (native-note promotion amended per 1350 option b) and C3 (keep only the 1126 half); add scope context to D (9 pins, two merged); keep E. Cross-family gate pin (10-31) was outside the review: kept unchanged.
+
+--- body ---
+## Context
+
+Ticket 1451 (PR #2225, merged) folded the per-project SMELT.md into the
+smelt skill. Its raid reported leftovers, recorded in its journal entry and
+in the PR #2226 wrap-up, with no ticket. The author asked (2026-11-07) to pass
+them to the harness.
+
+## Work
+
+1. Review record of PR #2225 lacks the writer attribution line: add it.
+2. `tests/test_smelt_migrate.py`: fast-tier tests now spawn git without the
+   integration marker; mark or restructure them.
+3. `scripts/smelt_migrate.py:316`: recovery hint prints `HEAD:<name>`; it
+   must be `HEAD:./<name>` (wrong when the project is a repo subdirectory).
+4. `scripts/memory_sizes.py`: no test for a topic filename with a space.
+5. Re-running the migration after a prompt is retired no longer lists files
+   still citing the retired prompt; restore that listing or state why not.
+6. Apply the author's 2026-11-07 decision on Commission pinned rulings:
+   replace `memory/topics/commission.md` with the approved text at
+   `/home/haduong/.claude/jobs/9d9691f0/tmp/commission.approved.md`
+   (drafted from origin/main 5284fde; 37 pins -> 18; every kept pin's
+   original wording verified verbatim, context appended as "Scope:" sentences;
+   retired pins listed under Retired with their carrier). If commission.md
+   changed on origin/main since 5284fde, merge rather than overwrite and say
+   so. Do not reword the approved pins.
+
+Severity: below the ticket floor individually; bundled as one handoff at the
+author's request. Fix inline where trivial.
+
+## Exit criteria
+
+- [ ] Items 1–5 fixed or each dismissed with a one-line reason in the log
+- [ ] Item 6: commission.md matches the approved text (or a stated merge of it); guide bytes reported by scripts/memory_sizes.py
+- [ ] Harness gate passes
