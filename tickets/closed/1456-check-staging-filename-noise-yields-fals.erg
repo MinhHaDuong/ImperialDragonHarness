@@ -2,6 +2,7 @@
 Title: check-staging: filename noise yields false absent verdicts
 Created: 2026-11-07
 Author: claude
+Closed: autoclosed — PR #2244
 
 --- log ---
 2026-11-07T13:55Z claude created
@@ -9,6 +10,7 @@ Author: claude
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 2026-11-07T18:56Z reviewer Worker attribution: runtime identifies this worker only as GPT-6; deployed model ID and effort are unavailable, so no precise model identity is inferred. Author brief governs: uncertain filename searches remain unidentified; only observed suffix cleanup, no elaborate parser.
 2026-11-07T18:58Z reviewer Verification: four targeted regression AssertionErrors reproduced before the fix. Final relevant modules: 247 passed with real private Zotero; make lint:182 passed; make check-fast:1739 passed after uv sync --frozen. Live report-only sen-causal-reading rerun:141 files,77 identical,64 unidentified,no absent,no errors; all14 original ticket rows non-absent, positive storageHash control fired. Generated selected evidence: conception/2026-11-07-zotero-filename-live-evidence.json. Failed embedded-title lookup followed by filename retry now preserves uncertainty; bibliography/identifier-backed absence remains supported.
+2026-11-07T19:03Z reviewer closed — autoclosed — PR #2244
 
 --- body ---
 ## Context
