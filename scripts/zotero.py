@@ -2224,7 +2224,7 @@ def _filename_title(path: Path) -> str:
     # Observed staging annotations, removed only at the end. This is a
     # search hint, not a parser that claims to identify the document.
     stem = re.sub(r"\s+(?:(?:GTAP\s+)?WP\d+|R\d+|vol\d+|"
-                  r"chapter\s+\d+|ch\d+|scan|(?:libreoffice\s+)?render)$",
+                  r"chapter\s+\d+|ch\d+|scan|AJAE|(?:libreoffice\s+)?render)$",
                   "", stem, flags=re.IGNORECASE)
     return " ".join(stem.split())
 

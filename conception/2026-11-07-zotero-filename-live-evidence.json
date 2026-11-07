@@ -79,5 +79,16 @@
       "verdict": "unidentified",
       "storage_hash_match": false
     }
-  ]
+  ],
+  "full_batch_measured_before_ajae_fix": true,
+  "targeted_ajae_followup": {
+    "generated_at": "2026-11-07",
+    "scope": "Only the named AJAE row was rerun report-only after trailing AJAE cleanup; the full-batch summary above was not remeasured on this fix.",
+    "result": {
+      "file": "Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
+      "search_title": "Valenzuela Assessing Global CGE Model Validity",
+      "verdict": "candidates",
+      "storage_hash_match": false
+    }
+  }
 }

@@ -2683,6 +2683,8 @@ def test_a_second_client_on_a_taken_port_retries_and_both_write(
     ("Bareinboim-2022-On-Pearls-Hierarchy-R60.pdf", "Bareinboim On Pearls Hierarchy"),
     ("Kehoe-Polo-Sancho-1995-Evaluation-Performance-WP480.pdf", "Kehoe Polo Sancho Evaluation Performance"),
     ("Marglin-1984-Growth-Distribution-and-Prices-scan.pdf", "Marglin Growth Distribution and Prices"),
+    ("Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
+     "Valenzuela Assessing Global CGE Model Validity"),
 ])
 def test_filename_search_drops_observed_trailing_noise(filename, expected):
     assert zi._filename_title(Path(filename)) == expected
