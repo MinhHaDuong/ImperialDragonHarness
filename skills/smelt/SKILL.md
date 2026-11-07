@@ -144,15 +144,17 @@ resolved store path. A missing store is reported as unavailable, never
 created. Read each note, then put in the smelt report a table with one row per
 note: file, one-line substance, and a proposed disposition, exactly one of
 
-- **promote to rules**, naming the destination file and section;
+- **nominate as a rule candidate for Brood**, with a one-line reason the note
+  reads as a working rule, without a destination file, section, or proposed wording;
 - **promote to repo memory**, naming the topic (an experience or a project fact);
 - **delete** (stale, done, or already in force), saying where it is in force.
 
 The author decides. Smelt writes no rule, edits no native note and deletes none;
 the disposition column is a proposal, not an action. Notes already carried in a
 previous accepted report with an unchanged sha are listed as "unchanged" without
-a new proposal. This lane is the single exception to "propose no rules" in
-this skill, and it reaches the author only through the report.
+a new proposal. Rule nominations reach the author only through the report;
+Brood takes up any promotion discussion on a separate explicit request. A
+nomination proposes no rule and is no exception to this skill's boundary.
 
 ## Case-note curation lane
 
@@ -221,7 +223,7 @@ repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not
 modify AGENTS.md, rules, skills, runbooks or tests, open crystallisation issues,
 propose promotions, or write cross-project provenance into the harness. The native-note triage
-table is a report listing, not a promotion.
+table lists rule candidates for Brood, without proposing rules or promotions.
 Crystallisation requires a separate explicit user request naming its scope and
 destination. A useful pattern or a reviewed memory PR is not that request.
 

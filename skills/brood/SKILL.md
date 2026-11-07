@@ -21,6 +21,9 @@ repetition or general usefulness alone does not authorize crystallisation.
 
 Read accepted Smelt reports and their exact source revisions, relevant
 consolidated topics, preserved journal episodes and unresolved conflicts.
+Include rule-candidate nominations from Smelt's native-note triage as inputs
+to the promotion discussion; a nomination alone grants no authority to promote
+or implement a rule.
 Record the revisions examined and unavailable/encrypted sources without guessing
 contents. Acceptance means reviewed consolidation, not proven effectiveness.
 
