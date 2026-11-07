@@ -84,7 +84,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     processed. Count inline, on the journal blobs against the accepted
     reports' ledgers — no counting script, no library, no configuration
     knob, the threshold stays hardcoded at 5. Every report records its
-    examined sources as `<path> blob <40-hex>` lines (the project’s versioned SMELT.md):
+    examined sources as `<path> blob <40-hex>` lines (`skills/smelt/references/consolidation.md` § Read):
     - Current blob id of every `memory/journal/YYYY/*.md` entry at HEAD:
       `git ls-tree -r HEAD memory/journal/` (the 40-hex column). Skip
       `*review-attribution-*` files, as smelt's input does: they are

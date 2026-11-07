@@ -21,16 +21,17 @@ runtime's loading rather than claiming automatic injection.
 
 ```text
 memory/MEMORY.md
-memory/SMELT.md
 memory/topics/<theme>.md
 memory/journal/YYYY/YYYY-MM-DD-<slug>.md
 memory/smelts/YYYY-MM-DD-<slug>.md
 ```
 
-SMELT.md and the accepted-report convention are delivered under 0916: the
-versioned consolidation prompt is the pilot's live copy at
-[memory/SMELT.md](../../memory/SMELT.md); adopting projects copy and adapt it,
-keeping its revision line, and reports live in `memory/smelts/`. Journal files stay in their original year directory. Choose a
+A project keeps no consolidation prompt (ticket 1451): the editorial detail
+is the smelt skill's
+[skills/smelt/references/consolidation.md](../../skills/smelt/references/consolidation.md),
+versioned with the skill, and reports live in `memory/smelts/`. The project's
+local facts (where its rules, native store or import annex live) are lines in
+its index or a `SOURCES.md` the index links. Journal files stay in their original year directory. Choose a
 new descriptive slug or distinguishing suffix on collision; never overwrite.
 Corrections are new entries linking to the original, which remains unchanged.
 Concurrent captures preserve both files and resolve conflicting claims explicitly.
@@ -58,7 +59,7 @@ checks coherence between indexed memories and applicable harness rules, which
 it reads without changing. Resolve conflicts only where evidence and authority
 are clear; otherwise expose the contradiction. Preserve journal sources and
 trace withdrawals in a reviewed report. Neither roar nor SMELT proposes rules
-or crystallisation. The index is at most 100 lines, including blank lines and
+or crystallisation. The index is at most 40 lines, including blank lines and
 headings; move detail to themes. Check with `wc -l memory/MEMORY.md` before commit
 and ensure the file ends in a newline.
 

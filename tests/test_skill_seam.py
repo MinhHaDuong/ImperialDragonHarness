@@ -275,10 +275,12 @@ def test_smelt_real_migration_from_another_project_cwd(tmp_path):
     git(selected, "worktree", "add", "-b", "smelt-fixture", str(isolated), "main")
     result = run(apply, isolated)
     assert result.returncode == 0, result.stderr
-    assert (isolated / "memory/SMELT.md").is_file()
+    # Ticket 1451: the prompt is retired, its stale mention left for the agent and named.
+    assert not (isolated / "memory/SMELT.md").exists()
     assert not (isolated / "memory/DREAM.md").exists()
     assert (isolated / "memory/MEMORY.md").read_text() == "[report](smelts/old.md)\n"
-    assert (isolated / "AGENTS.md").read_text() == "Read memory/SMELT.md; invoke /smelt\n"
+    assert (isolated / "AGENTS.md").read_text() == "Read memory/DREAM.md; invoke /smelt\n"
+    assert "Names a retired prompt: AGENTS.md" in result.stdout + result.stderr
     assert (isolated / "memory/smelts/old.md").read_bytes() == primary_memory["dreams/old.md"]
     after = bytes_in(isolated)
     repeat = run(apply, isolated)

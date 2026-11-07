@@ -3,9 +3,10 @@
 The pilot dream runs on this repository's own memory. The deliverables this
 file pins mechanically, from the ticket's exit criteria:
 
-- ``memory/DREAM.md`` is a versioned consolidation prompt covering pruning,
-  merging, refreshing, coherence, the encrypted-entry policy and its three
-  failure modes (authentication, malformed ciphertext, re-encryption).
+- The consolidation detail, once ``memory/DREAM.md`` and since ticket 1451 the
+  smelt skill's ``references/consolidation.md``, covers pruning, merging,
+  refreshing, coherence, the encrypted-entry policy and its three failure
+  modes (authentication, malformed ciphertext, re-encryption).
 - A dream report under ``memory/dreams/`` cites the prompt revision, the
   runtime/model, and every examined source by git blob revision.
 - Two passes do not re-import the same revisions as new, and the pass-1
@@ -28,7 +29,8 @@ from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
-DREAM_PROMPT = MEMORY / "SMELT.md"
+# Ticket 1451: no per-project prompt; the generic text lives in the skill.
+DREAM_PROMPT = REPO / "skills" / "smelt" / "references" / "consolidation.md"
 DREAMS = MEMORY / "smelts"
 # The pilot dream's own report, pinned by name: a later dated report must not
 # hijack these pilot-specific expectations (they describe this dream's
@@ -87,10 +89,13 @@ def ledger(section: str) -> dict[str, str]:
     }
 
 
-def test_dream_prompt_is_versioned_and_complete():
-    text = DREAM_PROMPT.read_text(encoding="utf-8")
-    assert re.search(r"^Prompt revision: \S+", text, re.MULTILINE), (
-        "memory/DREAM.md carries no Prompt revision line"
+def test_consolidation_detail_lives_in_the_skill_and_is_complete():
+    assert not (MEMORY / "SMELT.md").exists(), "the per-project prompt is retired (1451)"
+    text = SKILL.read_text(encoding="utf-8") + DREAM_PROMPT.read_text(encoding="utf-8")
+    assert "Skill revision" in text, "reports must name the skill revision"
+    flat = " ".join(text.split())
+    assert "an encrypted journal entry is read, never rewritten" in flat, (
+        "re-encryption must be limited to consolidated topics (padme's rule)"
     )
     for function in ("Pruning", "Merging", "Refreshing"):
         assert function in text, f"prompt lacks {function}"
@@ -108,8 +113,8 @@ def test_convention_docs_point_at_the_live_prompt():
     text = (REPO / "conception" / "memory-v8" / "README.md").read_text(
         encoding="utf-8"
     )
-    assert "memory/SMELT.md" in text, (
-        "the adopting convention does not name the versioned prompt"
+    assert "skills/smelt/references/consolidation.md" in text, (
+        "the adopting convention does not name the consolidation detail"
     )
 
 
@@ -208,9 +213,10 @@ def test_smelt_is_a_rebuild_with_a_net_change_report():
     """Ticket 1349: both the prompt and the skill state rebuild and net change."""
     prompt = " ".join(DREAM_PROMPT.read_text(encoding="utf-8").split())
     skill = " ".join(SKILL.read_text(encoding="utf-8").split())
-    for name, text in (("SMELT.md", prompt), ("SKILL.md", skill)):
+    for name, text in (("consolidation.md", prompt), ("SKILL.md", skill)):
         assert "re-derive" in text.lower(), f"{name}: no rebuild statement"
         assert "net change" in text.lower(), f"{name}: no net-change report"
     assert "## Rebuild" in DREAM_PROMPT.read_text(encoding="utf-8")
-    assert "by department" in prompt and "memory_sizes.py --before" in prompt
+    assert "by department" in prompt and "memory_sizes.py" in prompt and "--before" in prompt
+    assert '"$IDH_ROOT/scripts/memory_sizes.py"' in prompt, "size helper must run from the harness"
     assert "none dropped without a Retired line" in prompt

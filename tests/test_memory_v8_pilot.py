@@ -122,15 +122,14 @@ def verified_archival_links(root):
         ).stdout
         assert blob_id(original) == oid, old
         # The 1106 record names the paths of its day; ticket 1352 then renamed them.
-        current_path = new.replace("memory/HOARD.md", "memory/SMELT.md").replace("memory/hoards/", "memory/smelts/")
-        current = (root / current_path).read_bytes()
         if old == "memory/DREAM.md":
+            # Ticket 1451 retired the prompt; its generic text lives in the smelt skill.
             assert new == "memory/HOARD.md"
             assert re.search(rb"(?m)^Prompt revision: v8-r1\b", original)
-            assert re.search(rb"(?m)^Prompt revision: v8-r[0-9]+\b", current)
         else:
+            current_path = new.replace("memory/hoards/", "memory/smelts/")
             assert new == old.replace("memory/dreams/", "memory/hoards/", 1)
-            assert blob_id(current) == oid, current_path
+            assert blob_id((root / current_path).read_bytes()) == oid, current_path
     assert len(old_paths) == 7
     assert archives
     for source, old in archives:
@@ -150,7 +149,7 @@ def verified_archival_links(root):
 
 
 def test_current_memory_uses_relocated_paths():
-    assert (MEMORY / "SMELT.md").is_file()
+    assert not (MEMORY / "SMELT.md").exists()  # retired by ticket 1451
     assert not (MEMORY / "DREAM.md").exists()
     assert (MEMORY / "smelts").is_dir()
     assert not (MEMORY / "dreams").exists()

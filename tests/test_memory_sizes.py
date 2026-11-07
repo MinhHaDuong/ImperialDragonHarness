@@ -1,5 +1,6 @@
-"""Topic byte budget (ticket 1348): the check and its definitions in SMELT.md."""
+"""Topic byte budget (ticket 1348): the check and its definitions in the smelt skill."""
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -62,7 +63,7 @@ def test_real_tree_is_measured():
     rows = list(ms.report(REPO / "memory" / "topics"))
     assert len(rows) >= 4, "glob found too few pages: a census that cannot look"
     for name, size, _cap, _status in rows:
-        # Pinned rulings are never cut: Commission may overflow (SMELT.md § caps).
+        # Pinned rulings are never cut: Commission may overflow (smelt references § caps).
         if name != ms.COMMISSION:
             assert size <= ms.CAP, f"{name} grew to {size}"
     assert ms.index_ok((REPO / "memory" / "MEMORY.md").read_text(encoding="utf-8"))
@@ -108,5 +109,26 @@ def test_net_change_cli_flags_store_growth(tmp_path, capsys):
 
 def test_bad_before_ref_exits_with_a_message(tmp_path):
     with pytest.raises(SystemExit) as exc:
-        ms._checkout_ref("no-such-ref", REPO, tmp_path)
+        ms._checkout_ref("no-such-ref", REPO / "memory" / "topics", tmp_path)
     assert "--before" in str(exc.value)
+
+
+@pytest.mark.integration
+def test_before_ref_resolves_in_the_measured_project(tmp_path, capsys):
+    """Ticket 1451: run from $IDH_ROOT against another project, --before reads that project's git."""
+    from child_env import child_env
+    topics = tmp_path / "memory" / "topics"
+    topics.mkdir(parents=True)
+    (topics / "only-here.md").write_text(_page(1000), encoding="utf-8")
+    env = {**child_env(), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    for args in (["init", "-q", "-b", "main"], ["add", "."], ["commit", "-qm", "fixture"]):
+        subprocess.run(["git", "-C", str(tmp_path), *args], check=True, env=env)
+    (topics / "only-here.md").write_text(_page(1500), encoding="utf-8")
+    script = REPO / "scripts" / "memory_sizes.py"
+    result = subprocess.run([sys.executable, str(script), str(topics), "--before", "HEAD"],
+                            capture_output=True, text=True, env=child_env())
+    assert result.returncode == 0, result.stderr
+    rows = [line for line in result.stdout.splitlines() if "->" in line]
+    assert len(rows) == 1 and rows[0].startswith("only-here.md"), result.stdout
+    assert "net +500" in rows[0], result.stdout

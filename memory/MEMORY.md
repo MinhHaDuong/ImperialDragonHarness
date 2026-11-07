@@ -1,7 +1,7 @@
 # Project memory
 
-v8 repository memory, rebuilt by department at each smelt (prompt
-[SMELT.md](SMELT.md)). Provenance: [inventory](../conception/memory-v8/source-inventory.md),
+v8 repository memory, rebuilt by department at each smelt (no local prompt:
+the smelt skill carries it). Provenance: [inventory](../conception/memory-v8/source-inventory.md),
 [revisions](../conception/memory-v8/source-revisions.tsv).
 
 ## Departments

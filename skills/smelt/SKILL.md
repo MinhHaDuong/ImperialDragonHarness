@@ -30,12 +30,12 @@ checkout. Never derive the helper root from the selected project's cwd.
 ## Migration preflight
 
 Run sequentially: preflight, isolate, migrate, then consolidate. Migration must
-finish successfully before the new-format prompt or reports are used.
+finish successfully before any consolidation is read or written.
 
 Set `PROJECT` to the selected repository's absolute path. Inventory additional
 active reference files explicitly as project-relative paths; start with
 `REFERENCES=(--reference AGENTS.md)` and add only inspected active references.
-The helper already includes the prompt, index and Markdown topics. Do not
+The helper already includes the index and Markdown topics. Do not
 inventory journal entries, accepted reports, historical ledgers or ciphertext;
 never sweep other projects or the installed harness.
 
@@ -59,9 +59,18 @@ Set `PROJECT` to that isolated checkout; retain the inspected relative
 python3 "$IDH_ROOT/scripts/smelt_migrate.py" "$PROJECT" "${REFERENCES[@]}"
 ```
 
-After success, read its versioned `memory/SMELT.md`. If that prompt or the
-project convention is missing, report it and stop. Already migrated projects
-are a no-op. Report/journal bytes and provenance remain preserved; review all
+A project needs no consolidation prompt: the editorial detail is
+`references/consolidation.md`, and its revision
+is this skill's. The helper retires any per-project `memory/DREAM.md`,
+`HOARD.md` or `SMELT.md` and prints `Retired prompt:` for each and
+`Names a retired prompt:` for each active file still pointing at one; it
+refuses a prompt that HEAD does not hold unchanged. Before
+committing, read each retired prompt (`git show HEAD:<path>`), carry its local
+location facts (rules paths, native store, import annex) into
+`memory/MEMORY.md`, or a `SOURCES.md` it links, within the index cap, and edit
+the named mentions; its generic text is dropped. If the project memory
+convention is missing, report it and stop. Already migrated projects are a
+no-op. Report/journal bytes and provenance remain preserved; review all
 migration edits before committing. There is no old command alias, compatibility
 symlink or old-format consolidation branch.
 
@@ -90,7 +99,8 @@ than expanding the index.
 
 A topic is the as-built guide to one department (current claims, each linked
 to its journal episode) and holds at most 4 KB outside its Retired and Sources
-sections. Details: `memory/SMELT.md` § Job of a topic and caps.
+sections. Details: `references/consolidation.md`
+§ Job of a topic and caps.
 
 ## Coherence across indexed memories and harness rules
 
@@ -161,29 +171,20 @@ of the smelt merge request is the review. This lane writes no rule.
 
 After the writing run's migration succeeds, continue sequentially:
 
-1. Read `memory/MEMORY.md`, relevant `topics/`, previous accepted reports in
-   `memory/smelts/` and new entries in `journal/YYYY/`. Skip
-   `*review-attribution-*` files, route-grid telemetry rather than experiences
-   (their home is `memory/evidence/attribution/`). Skip age-encrypted `.age`
-   entries when the project key is unavailable, recording the skipped count;
-   never treat a skipped or unavailable source as empty. Read native notes only
-   as attributed sources when available; report unavailable sources. Native
-   notes are not the canonical reference or a write destination; the
-   § Native-note triage lane lists them for the author.
+1. Read the sources and keep the blob ledger as
+   `references/consolidation.md` § Read states;
+   never treat a skipped or unavailable source as empty. Native notes are not
+   the canonical reference or a write destination; the § Native-note triage
+   lane lists them for the author.
 2. Re-derive each topic from its previous page and the journal, by
-   department (never the whole journal in one context), instead of appending;
-   apply pruning, merging and refreshing in the rewrite, carrying pinned
-   Commission lines verbatim. Link source
-   episodes; distinguish hypotheses from supported observations. Update the
+   department (references § Rebuild), instead of appending; apply pruning,
+   merging and refreshing in the rewrite. Link source episodes. Update the
    `memory/MEMORY.md` index within its 40-line maximum. Never rewrite, move or
    delete journal entries. Do not propose rules.
-3. Write a report in `memory/smelts/` listing sources and revisions, changes,
-   the net change in bytes per page and in total
-   (the size helper named in `memory/SMELT.md` § Rebuild; growth explained), unresolved
-   questions, the native-note triage table, runtime/model and prompt revision. The second pass checks that
-   no caveat of a previous page was dropped without a Retired line. Preserve the text of
-   native notes actually used in the report or a versioned appendix, adapted to
-   the project's audience. A fingerprint alone cannot preserve a mutable note.
+3. Write a report in `memory/smelts/` with the fields of references § Report:
+   skill revision, ledger, changes, net change in bytes measured by
+   `"$IDH_ROOT/scripts/memory_sizes.py"`, unresolved questions, the lanes'
+   tables, and the second pass.
 4. Check coherence across all indexed memories and applicable harness rules,
    links, provenance, the migration/consolidation diff and the index line count.
    Reduce the index if it exceeds 40 lines before committing. Ticket each
@@ -195,27 +196,20 @@ After the writing run's migration succeeds, continue sequentially:
 
 ## Encrypted entries
 
-Uncleared material lives in the project repository as `.age` ciphertext. Smelt
-uses the same pinned age commands and the same per-project key as capture —
-decrypt with `age -d -i <key>`, re-encrypt with
-`age -r <recipient> -o <entry>.age` — and never writes plaintext to the
-working tree. Re-encryption writes a sibling temporary ciphertext and
-atomically replaces the original only after success; `age -o` overwrites an
-existing destination silently, so writing in place could destroy the
-original mid-write. Without the key, skip `.age` entries and record the
-skipped count: they are existing but unreadable, not empty. The versioned
-`memory/SMELT.md` prompt defines the operational detail, including the three
-failure modes: an authentication failure (key missing, unreadable or wrong)
-skips and counts the entry; malformed ciphertext is left untouched and
-reported unreadable; a re-encryption failure removes the temporary
-ciphertext, keeps the original entry and reports that the consolidation is
-not done. Never leave plaintext or a partial ciphertext in the tree.
+Uncleared material lives in the project repository as `.age` ciphertext,
+read with capture's key and commands and never written as plaintext to the
+working tree. The key scheme, the scope of re-encryption (consolidated
+topics only, never a journal entry), the atomic re-encryption and the three
+failure modes (authentication, malformed ciphertext, re-encryption) are in
+`references/consolidation.md` § Encrypted entries.
 
 ## Authority and invocation
 
-The explicit invocation authorizes the migration helper's one-way path moves
-and mechanical path/command substitutions in the prompt, index, topics and
-inventoried active references, including the selected project's AGENTS.md.
+The explicit invocation authorizes the migration helper's one-way path moves,
+its retirement of a per-project prompt, and mechanical path/command
+substitutions in the index, topics and inventoried active references,
+including the selected project's AGENTS.md, where a mention of the retired
+prompt is repointed at the smelt skill or dropped.
 This exception is limited to migration in its isolated branch: no policy
 rewriting, rule promotion, historical-ledger edits or cross-project writes.
 
