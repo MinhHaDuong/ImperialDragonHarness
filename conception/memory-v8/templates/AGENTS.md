@@ -11,11 +11,11 @@ uncleared material enters only as age-encrypted `.age` ciphertext.
 Preserve journal entries; corrections link back from new entries. Bundle
 closure capture, tickets and docs into one PR when needed.
 Do not derive lessons, propose rules or write into the harness for another project.
-Hoard separately prunes, merges and refreshes consolidated memory, preserving
+Smelt separately prunes, merges and refreshes consolidated memory, preserving
 sources and checking coherence with applicable rules. MEMORY.md is at most
-100 lines including headings and blank lines. No automatic rule proposals or timer.
-Use the project prompt in `memory/HOARD.md`; accepted reports live in
-`memory/hoards/`.
+40 lines including headings and blank lines. No automatic rule proposals or timer.
+The smelt skill carries the consolidation detail; there is no project prompt.
+Accepted reports live in `memory/smelts/`.
 
 Explicit Brood may implement project improvements and nominate changes only
 to a named, authorized harness. Harness implementation is a separate task.

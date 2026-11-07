@@ -1,7 +1,9 @@
 # Project memory
 
 Template only: replace example links with this project's actual sources.
-Keep this index at most 100 lines, including headings and blank lines.
+Keep this index at most 40 lines, including headings and blank lines. Name
+here, in a line or two, where this project's rules, native store or import
+annex live (or link a SOURCES.md); there is no consolidation prompt.
 
 ## Topics
 
