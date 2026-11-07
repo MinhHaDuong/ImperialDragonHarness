@@ -1,0 +1,7 @@
+kind: review-attribution
+pr: 2258 · merged 2026-11-07 · project: harness
+writer: step=plan · runtime=codex · model-state=runtime-masked · model-evidence=tickets/closed/1440-observe-mode-before-going-live-for-new-a.erg:18 · effort=not-stated · route=native · independence=not-stated
+writer: step=execute · runtime=codex · model-state=runtime-masked · model-evidence=tickets/closed/1440-observe-mode-before-going-live-for-new-a.erg:18 · effort=not-stated · route=native · independence=not-stated
+reviewer: step=review · seat=correctness · runtime=codex · model-state=runtime-masked · model-evidence=memory/journal/2026/2026-11-07-raid-d35fb4.md:23 · effort=not-stated · route=native-subagent · independence=not-stated · status: ran
+
+Planning contributions came from the native planning worker and coordinator; the coordinator implemented the Cycle edit. The actual gaze reviewer was the fresh remaining_lead/gaze_2258 context, distinct from implementation. Gaze answer 20261107T222629198Z-padme-97978b4d examined merged head 17524eb96af73ba355df1d06e364d9cf02b8ef80, REVIEWED with plan check PASS and no findings. Gate round 1 APPROVED is entry 20261107T222855970Z-padme-8d5d00a7. The touched-test helper returned skipped/no source or test changed; it was not reported as a test pass. Native model/effort identity remained masked and requested pins are not observed identity evidence. No reviewer attempt is omitted; no external paid route was launched.
