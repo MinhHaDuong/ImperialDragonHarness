@@ -10,6 +10,8 @@ Author: Minh Ha-Duong
 
 2026-11-07T22:07Z raid-d35fb4 note Imagine: technical note and practical tutorial are author-review drafts with one reproducible local example; verify primary prior art, avoid unsupported novelty claims. Blind-spot follow-up: isolate all example Git configuration/remotes/notes and prove harness review refs remain untouched.
 
+2026-11-07T22:08Z raid-d35fb4 note Plan: primary-source comparison including git-appraise; two drafts plus executable hermetic bare-remote/two-clone synthetic evidence sample, publish/retrieve notes and retained heads, revised request, concurrency/rebase checks. Verify actual CLI and isolation, document prerequisites/limits; no deposit/publication.
+
 --- body ---
 
 ## Context
