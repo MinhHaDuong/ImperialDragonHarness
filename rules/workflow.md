@@ -89,10 +89,10 @@ it as a feedback memory at wrap-up. Stop when you repeat yourself; three
 failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
-right (scope, money, irreversible) are never branched or delegated; they wait,
-bar night mode's cap. A reversible call goes to an advisor model first: if it
-agrees with your pick, act and report; otherwise ask the author and keep working
-(`skills/route/SKILL.md` § Escalation).
+right (scope, money, irreversible) wait, never branched or delegated; at night
+route's cap frees scope/money. A reversible call goes to an advisor model
+first: if it agrees with your pick, act and report; otherwise ask the author and
+keep working (`skills/route/SKILL.md` § Escalation).
 
 # Diagnosis discipline
 
