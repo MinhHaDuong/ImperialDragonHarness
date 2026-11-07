@@ -107,6 +107,7 @@ def test_net_change_cli_flags_store_growth(tmp_path, capsys):
     assert "reason required" not in capsys.readouterr().out
 
 
+@pytest.mark.integration
 def test_bad_before_ref_exits_with_a_message(tmp_path):
     with pytest.raises(SystemExit) as exc:
         ms._checkout_ref("no-such-ref", REPO / "memory" / "topics", tmp_path)
