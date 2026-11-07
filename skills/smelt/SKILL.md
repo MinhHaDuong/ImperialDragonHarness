@@ -60,7 +60,7 @@ python3 "$IDH_ROOT/scripts/smelt_migrate.py" "$PROJECT" "${REFERENCES[@]}"
 ```
 
 A project needs no consolidation prompt: the editorial detail is
-[references/consolidation.md](references/consolidation.md), and its revision
+`references/consolidation.md`, and its revision
 is this skill's. The helper retires any per-project `memory/DREAM.md`,
 `HOARD.md` or `SMELT.md` and prints `Retired prompt:` for each and
 `Names a retired prompt:` for each active file still pointing at one. Before
@@ -98,7 +98,7 @@ than expanding the index.
 
 A topic is the as-built guide to one department (current claims, each linked
 to its journal episode) and holds at most 4 KB outside its Retired and Sources
-sections. Details: [references/consolidation.md](references/consolidation.md)
+sections. Details: `references/consolidation.md`
 § Job of a topic and caps.
 
 ## Coherence across indexed memories and harness rules
@@ -171,7 +171,7 @@ of the smelt merge request is the review. This lane writes no rule.
 After the writing run's migration succeeds, continue sequentially:
 
 1. Read the sources and keep the blob ledger as
-   [references/consolidation.md](references/consolidation.md) § Read states;
+   `references/consolidation.md` § Read states;
    never treat a skipped or unavailable source as empty. Native notes are not
    the canonical reference or a write destination; the § Native-note triage
    lane lists them for the author.
@@ -200,7 +200,7 @@ read with capture's key and commands and never written as plaintext to the
 working tree. The key scheme, the scope of re-encryption (consolidated
 topics only, never a journal entry), the atomic re-encryption and the three
 failure modes (authentication, malformed ciphertext, re-encryption) are in
-[references/consolidation.md](references/consolidation.md) § Encrypted entries.
+`references/consolidation.md` § Encrypted entries.
 
 ## Authority and invocation
 
