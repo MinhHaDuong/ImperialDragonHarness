@@ -2,12 +2,12 @@
 Title: One-time test-target mutation sweep using isolated probe
 Created: 2026-11-07
 Author: reviewer
-Blocked-by: 1462
 
 --- log ---
 2026-11-07T18:48Z reviewer created
 2026-11-07T18:49Z reviewer note Imagine/Plan: run only after1462; freeze registered inventory and named incident, inspect external-write risk, one finite serial probe per eligible project; project tickets only and explicit unprobed coverage.
 2026-11-07T18:51Z reviewer note Feasibility WARN: depends on1462 and per-project prerequisites/external-write review; unavailable inventory rows must remain explicitly unprobed, not pass.
+2026-11-07T19:06Z reviewer note blocker 1462 closed — Blocked-by removed.
 
 --- body ---
 Parent: 1446

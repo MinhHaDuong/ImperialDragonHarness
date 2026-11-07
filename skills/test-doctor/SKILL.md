@@ -48,3 +48,43 @@ The journal file is `memory/journal/YYYY/YYYY-MM-DD-test-doctor-<slug>.md`, with
 
 Syndromes (symptom, usual causes, confirming evidence): `references/syndromes.md`.
 Remedies (prerequisites, price, undo, verification): `references/toolkit.md`.
+
+## Test-target mutation diagnostic
+
+For a named concern, inspect the target and its prerequisites, then run one
+explicit target at pinned HEAD in a detached throwaway worktree:
+
+```bash
+python3 "$IDH_ROOT/scripts/test_target_probe.py" <project> --target <check-fast|check|test> --scratch-dir <project-local-scratch> --timeout 300
+```
+
+Use the patient project's own authorized session and scratch directory. Inspect
+recipe routes to external paths/services first: a worktree isolates checkout
+files, not arbitrary recipe side effects. Do not copy credentials, live data,
+or the author's environment into scratch. Missing prerequisites are unavailable
+evidence; do not infer compliance from a failed target.
+
+The standard-library helper snapshots status and tracked hashes before and after
+one target. JSON distinguishes `finding`, `unchanged`, and `unavailable`, with
+execution status and the pinned head. It retains a local report and target log;
+findings, failures, and timeouts also retain the worktree for inspection. Inspect
+logs locally and redact before quoting; never publish raw logs automatically.
+Remove retained worktrees only after preserving the useful evidence, following
+the patient's worktree cleanup rules.
+
+If the helper is unavailable, follow the same procedure manually: pin HEAD,
+create a detached worktree, save status and hashes of tracked regular files
+(link targets and special-file types separately), run the selected target with
+a finite timeout, and compare the endpoints. Preserve differences or unavailable
+prerequisites in a local report and retain useful residue. This costs an extra
+worktree setup and several shell calls; the same authorization and privacy
+limits apply.
+
+Endpoint snapshots miss write-then-restore and ignored-file changes. A clean
+checkout has no preexisting untracked output: the seeded untracked-deletion
+fixture tests that detection mechanism with an intentionally dirty baseline,
+not a claim about the production baseline. A passing target with unchanged
+snapshots establishes only those measured endpoints. Report differences and,
+where the project's ticket store exists, ticket contract violations there;
+report projects without stores to the author. This is an on-demand diagnostic,
+never a merge block, routine health check, recurring sweep, or scheduled job.

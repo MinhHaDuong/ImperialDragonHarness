@@ -290,6 +290,14 @@ def worktree_state(project):
 
 
 def test_state(project):
+    # Yawn relies on the project's clean-checkout test-target contract. Check
+    # here, immediately before runner selection, rather than reuse an older
+    # git_state snapshot collected by another thread.
+    status = run(["git", "status", "--porcelain"], project)
+    if status.returncode != 0:
+        return {"runner": "none", "status": "skip", "detail": "git status unreadable"}
+    if status.stdout.strip():
+        return {"runner": "none", "status": "skip", "detail": "dirty tree"}
     makefile = project / "Makefile"
     if makefile.exists():
         content = makefile.read_text(errors="replace")
