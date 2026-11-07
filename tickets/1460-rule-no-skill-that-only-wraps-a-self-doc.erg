@@ -8,6 +8,7 @@ Author: reviewer
 2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
 2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
+2026-11-07T20:29Z reviewer note Worker attribution: runtime exposes only GPT-6, not a deployed model ID or effort; precise model identity unavailable. Fresh-base source comparison: historical beat pure execution wrapper and dashboard adequate control; ticket-new migration counterexample; dashboard/zotero/reviewers bounded current candidates retain added behavior. No current deletion justified; no CLI execution or usefulness measurement claimed. Implementation limited to doctor toolkit reference and menu.
 
 --- body ---
 ## Context
