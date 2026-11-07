@@ -1,0 +1,44 @@
+%erg 0.1
+Title: zotero rule: allow a tracked .bib in every project
+Created: 2026-11-07
+Author: claude
+
+--- log ---
+2026-11-07T13:55Z claude created
+
+--- body ---
+## Context
+
+Decided by the author on 2026-11-07, in sen-causal-reading's design note
+`conception/2026-11-07-citation-index.md` § 5, decision 1 (PR
+MinhHaDuong/sen-causal-reading#137). The author chose to amend the rule now,
+for every project, over a project exception.
+
+`rules/zotero.md` says git holds neither the sources nor the `.bib`. Practice
+differs: five of five surveyed repositories with a bibliography track one
+(climate-finance-het `deliverables/_shared/bibliography/main.bib`, AEDIST
+`report/refs.bib`, fuzzy-corpus, cadens, livre-milliards-climat). A tracked
+`.bib` is what lets a fresh clone or a reader follow a citation: its DOI or
+open-access URL is the reader route.
+
+What the survey also showed, to carry into the rule:
+
+- Tracking a `.bib` does not keep `file=` links alive: in climate-finance-het
+  0 of 188 `file=` paths resolve on padme, and its test checks the field, not
+  the file. A `file=` field is a local hint; the DOI or URL is what travels.
+- A hand-kept `.bib` drifts (AEDIST header announces 65 entries, holds 108).
+  The design note generates the bibliographic fields from Zotero through the
+  local API and keeps project-owned fields (citekey, `ids`, `keywords`,
+  `annotation`) without writing to the shared library.
+
+## Exit criteria
+
+- [ ] `rules/zotero.md` allows a tracked `.bib`; sources (PDF, HTML, OCR
+      output) stay out of git as before.
+- [ ] The rule states that each cited entry carries a reader route (DOI or
+      open-access / archived URL) and that `file=` is a local hint, never
+      the reference.
+- [ ] The zotero skill text that repeats "`.bib` is git-ignored"
+      (`skills/zotero/SKILL.md`, `references/`) agrees with the rule.
+- [ ] Any test or guard that enforces an ignored `.bib` is updated or
+      removed.
