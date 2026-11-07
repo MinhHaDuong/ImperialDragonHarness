@@ -32,12 +32,13 @@ confirm-first for irreversible or outward acts, nor forge read-back (`git.md`).
 
 # Cycle
 
-**All work moves Imagine → Plan → Execute → Verify → Celebrate, and cycles
-nest**: a conversation, a ticket, a raid wave, a day, a project each run one.
-**Imagine** opens the problem before any plan: with the author, toward a design
-note (`conception/design-note-template.md`); unattended, as raid's Imagine
-phase. **Celebrate** is delivery and wrap-up: merge and roar for a task, lair
-for a day. Open each phase with its label.
+All work follows **Imagine → Plan → Execute → Verify → Celebrate**; cycles nest.
+Label each phase. Imagine opens the problem before Plan:
+with the author: `conception/design-note-template.md`; unattended, use
+raid's Imagine phase. Celebrate with merge and roar for tasks, lair for days.
+
+For new autonomous behavior, MOE considers whether a proportionate trial helps
+and, if useful, proposes its purpose and evaluation criteria.
 
 # Session start
 
