@@ -32,6 +32,13 @@ def disposable(tree: Path, relative: str) -> bool:
         if path.is_absolute() or ".." in path.parts or any(c in name for c in "*?[]"):
             return False
         paths.add(path.as_posix())
+    # Directory entries authorize descendants; each leaf still needs its own
+    # independent primary counterpart and content/target comparison below.
+    directories = {name for name in paths if (primary / name).is_dir()}
+
+    def included(name: str) -> bool:
+        return name in paths or any(Path(name).is_relative_to(item) for item in directories)
+
     links = {".venv", ".dvc/cache"}
     allowed = paths | links
     root = tree / relative.rstrip("/")
@@ -46,11 +53,11 @@ def disposable(tree: Path, relative: str) -> bool:
         if counterpart.exists() and counterpart.resolve().is_relative_to(tree.resolve()):
             return False
         if path.is_symlink():
-            return name in allowed and counterpart.exists() and path.resolve() == counterpart.resolve()
+            return (included(name) or name in links) and counterpart.exists() and path.resolve() == counterpart.resolve()
         if path.is_file():
-            return name in paths and counterpart.is_file() and filecmp.cmp(path, counterpart, shallow=False)
+            return included(name) and counterpart.is_file() and filecmp.cmp(path, counterpart, shallow=False)
         if path.is_dir():
-            if not any(item.startswith(name + "/") for item in allowed):
+            if not included(name) and not any(item.startswith(name + "/") for item in allowed):
                 return False
             children = list(path.iterdir())
             return bool(children) and all(check(child) for child in children)

@@ -831,6 +831,47 @@ def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
     assert (primary / ".dvc" / "cache").is_dir()
 
 
+@pytest.mark.parametrize("included", ["docs", "docs/"])
+def test_preflight_allows_included_directory_copies_and_keeps_residue(origin, included):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-included-directory", dirty=False)
+    _exclude(primary, "docs/\n.worktreeinclude")
+    (primary / ".worktreeinclude").write_text(included + "\n")
+    for tree in (primary, wt):
+        (tree / "docs" / "nested").mkdir(parents=True)
+        (tree / "docs" / "a").write_text("original a\n")
+        (tree / "docs" / "nested" / "b").write_text("original b\n")
+
+    result = _preflight(wt)
+    assert result.returncode == 0, result.stderr
+
+    (wt / "docs" / "nested" / "b").write_text("hand edit\n")
+    result = _preflight(wt)
+    assert result.returncode == 1
+    assert "docs/" in result.stderr
+    assert (wt / "docs" / "nested" / "b").read_text() == "hand edit\n"
+    (wt / "docs" / "nested" / "b").write_text("original b\n")
+
+    (wt / "docs" / "extra").write_text("worktree only\n")
+    assert _preflight(wt).returncode == 1
+    assert (wt / "docs" / "extra").exists()
+    (wt / "docs" / "extra").unlink()
+
+    (wt / "docs" / "nested" / "b").unlink()
+    (wt / "docs" / "nested" / "b").symlink_to(primary / "docs" / "nested" / "b")
+    result = _preflight(wt)
+    assert result.returncode == 0, result.stderr
+    (wt / "docs" / "nested" / "b").unlink()
+    (wt / "docs" / "nested" / "b").symlink_to(wt / "docs" / "a")
+    assert _preflight(wt).returncode == 1
+
+    (wt / "docs" / "nested" / "b").unlink()
+    (wt / "docs" / "nested" / "b").write_text("original b\n")
+    (primary / "docs" / "nested" / "b").unlink()
+    (primary / "docs" / "nested" / "b").symlink_to(wt / "docs" / "nested" / "b")
+    assert _preflight(wt).returncode == 1
+
+
 def test_preflight_keeps_copy_when_primary_parent_links_into_worktree(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-linked-parent", dirty=False)
