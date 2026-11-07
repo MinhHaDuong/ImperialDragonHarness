@@ -51,9 +51,10 @@ sweep); the parent remains open until both and their integration review.
 
 1. 1453, 1456, 1462: distinct source/test surfaces.
 2. 1454, 1457, 1450: doctor reference, Zotero prose, notes listing.
-3. 1455, 1442, 1463: doctor reference, uncertain-action recovery, project sweep.
+3. 1455, 1442: doctor reference and uncertain-action recovery.
 4. 1459: language-choice diagnostic.
 5. 1460: wrapper-skill diagnostic.
+6. 1463: one-time project sweep, after competing test suites finish.
 
 Doctor reference changes are serial. Any concrete recovery correction from
 1454 reserves its paths before implementation if it overlaps another unit.

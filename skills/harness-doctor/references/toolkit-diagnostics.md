@@ -80,3 +80,81 @@ contract separately. Compare prerequisites with the existing policy above,
 report inspected scope and unknowns, and propose only established fixes.
 This takes minutes per source rather than seconds for a batch; it preserves
 the same authorization and verification requirements.
+
+## Recovery when helpers are unavailable
+
+**Question and scope.** For the named workflow, what do its instructions let
+an agent do when a helper is missing, cannot be used in this environment, or
+runs and fails? Start from a bounded set of call sites and their referenced
+recovery instructions. Reading takes minutes per workflow; it needs readable
+instructions, not a working helper, transcripts, network access, or new code.
+Do not run a mutating helper merely to see how it fails.
+
+**Controls before the reading.** These synthetic instruction excerpts hold
+the task constant: produce a status table from an authoritative manifest.
+They test the reader's judgment, not a keyword detector.
+
+| Excerpt | Expected judgment and reason |
+|---|---|
+| A: “Run the status helper on the manifest; use its table to mark the task complete.” | Known helper-only recovery gap: if the helper is missing, inaccessible, or fails, neither a completion route nor a safe stop/report is specified. The table is unavailable, not empty. |
+| B: “Use the status helper. If unavailable or failing, read the manifest's item identifiers and recorded statuses, copy one row per item, preserve unknown statuses, and compare row identifiers with the manifest before reporting the table. Reading needs no further permission; mutations still require the original authorization.” | Adequate completion alternative for this synthetic task: inputs, decisions, output, coverage check, and authorization survive helper failure. It adds reading time, not invented statuses. |
+| C: “If the helper cannot be used or fails, report blocked with the input identifiers and observed failure; stop before marking completion or changing anything. Hand off to the caller to restore access, then recheck the input and required verification before resuming.” | Adequate containment and handoff, with completion still blocked. A safe stop does not establish that a manual completion alternative exists. |
+
+The reading control fires only if A is identified as a gap and B and C retain
+their different outcomes. If those distinctions cannot be made, report the
+diagnostic unavailable. Do not infer a live defect merely because an excerpt
+resembles A: the actual workflow may delegate recovery to an explicit owner.
+
+**Read the real contract.** Record the source locations for the call, its
+inputs and expected output, and the owning recovery text. Follow references
+before judging silence. Examine missing helper/interpreter, unavailable
+permissions or service, and failing execution separately; a documented
+unsupported-runtime answer does not cover every way the helper can fail.
+For each case, trace the decisions and checks through to one of these
+outcomes: verified completion by another route; continuation with an
+explicitly omitted optional result; safe stop/handoff with completion
+blocked; or an established recovery gap. State which failure modes remain
+unexamined instead of upgrading an adequate route for one case into general
+coverage.
+
+Assess the same inputs, decisions, checks, outputs, authorization, and
+verification as the normal path. A completion alternative must produce the
+required result and retain its checks. A stop/handoff must preserve the
+blocked status, identify the missing prerequisite and next owner/action,
+and avoid claiming success. An optional omission must be permitted by the
+workflow's own contract. If the helper might have changed state before
+failing, preserve uncertainty about its effects; do not recommend blind
+replay or bypass an authorization boundary.
+
+**Bounded source walkthrough.** The following examples illustrate the
+reading procedure; they establish text coverage, not executed recovery.
+Re-read the cited sources on the checkout under examination.
+
+| Source | Reading result | Evidence limit |
+|---|---|---|
+| `skills/raid/references/sitrep.md:50` and `:63` | The explicit `NOOP wake arm` branch replaces timed sitreps with reporting at wave boundaries and breaker events, and requires disclosure that the timed cadence is unavailable. This is a documented degraded cadence. | Does not establish recovery from a missing `runtime.py` file, or successful delivery of any wake. |
+| `skills/merge/SKILL.md:119` and `:127` | Failed or unreadable forge reads stop the landing; an offline cached answer also stops it for a later fresh read. This contains the failed read while completion remains blocked. | No manual merge bypass is warranted. Source reading does not demonstrate the running helper or every launch failure. |
+| `skills/hunt/references/session-start.md:31` | The disk-warning helper is explicitly optional: if unavailable, continue. The warning remains unobserved; continuing the session does not mean disk headroom was checked. | Does not make a required check elsewhere optional. |
+
+For historical context,
+`memory/journal/2026/2026-10-27-harness-doctor-idh-root-paragraph-1240.md`
+§ F1 records a skill-directory substitution that made the first helper call
+fail with “No such file”. Current `skills/hunt/SKILL.md:14` distinguishes a
+supplied directory from a file before deriving the helper root. The record
+establishes a past launch failure; the current text addresses that recorded
+input shape. Neither proves that every helper has a completion alternative.
+No concrete correction to those workflows is established by this bounded
+walkthrough; other helper-failure paths remain unexamined.
+
+**Report and follow-up.** Give the complaint, checkout and inspected call
+sites; confirm the control judgments; distinguish source reading, historical
+records, and executed behavior. For each inspected failure mode report the
+outcome, retained or missing checks, scope of authorization, and unknowns.
+Supplement with narrowly relevant transcript evidence when available, but
+missing or silent transcripts establish neither a working fallback nor its
+absence. Without helper execution, label execution coverage unexamined.
+Propose a manual route only for an established gap where completing the task
+without the helper is feasible; an explicit safe stop/handoff can be the
+appropriate correction. Keep any change with its owning workflow, preserve
+its authority and verification, and re-read the same failure branch after a
+correction. Do not turn this diagnostic into a blanket fallback rewrite.

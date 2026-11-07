@@ -8,6 +8,7 @@ Author: reviewer
 2026-11-07T18:49Z reviewer note Imagine/Plan: run only after1462; freeze registered inventory and named incident, inspect external-write risk, one finite serial probe per eligible project; project tickets only and explicit unprobed coverage.
 2026-11-07T18:51Z reviewer note Feasibility WARN: depends on1462 and per-project prerequisites/external-write review; unavailable inventory rows must remain explicitly unprobed, not pass.
 2026-11-07T19:06Z reviewer note blocker 1462 closed — Blocked-by removed.
+2026-11-07T19:23Z reviewer note schedule: run the one-time sweep last, serially without competing test suites, so timeouts are interpretable; author scope and finite inventory unchanged
 
 --- body ---
 Parent: 1446
