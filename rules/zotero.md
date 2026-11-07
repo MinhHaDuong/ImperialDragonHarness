@@ -3,7 +3,7 @@ paths:
   - "**/*.bib"
   - "**/*.ris"
   - "**/docs/**"
-last-reviewed: 2026-10-16
+last-reviewed: 2026-11-07
 ---
 # Zotero management
 
@@ -13,14 +13,14 @@ session doing Zotero management by hand
 should read it.
 
 Discipline for source documents and bibliography across writing and research
-projects. Zotero is the system of record; git holds neither the sources nor the
-`.bib`.
+projects. Zotero is the system of record. Project bibliographies may be tracked
+in git; source documents stay outside it.
 
 - **Zotero is the system of record** for source documents and bibliography.
   Every source — PDF, HTML snapshot, or the author's own research notes — lives
   there with the correct item type, real author/date/pagination, and the file
   attached.
-- **`docs/` is staging, not a home.** Source documents *and* the author's own
+- **`docs/` is staging, not a home.** Source documents (including PDFs, HTML snapshots, and OCR output) *and* the author's own
   `*.md` research notes are staged in a project-local `docs/`, then stored in
   Zotero. `docs/` is git-ignored in full (`*.pdf`, `*.html`, `*.md`) — never
   tracked. Neither binaries nor notes belong in the repo.
@@ -59,10 +59,14 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   equations is the failing case, and then you render the page
   (`pdftoppm -png -scale-to 1500`) and read it. A grep cannot find a formula
   that was never extracted, so a nil result is not a negative finding.
-- **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
-  `.bib` is provenance scaffolding, not the source of truth. A
-  cited-works-availability test guards it (`prose-adherence-tests.md`).
-- **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
+- **Project `.bib` files may be tracked.** Zotero remains authoritative for
+  bibliographic metadata; keep the project bibliography aligned with it.
+  Project-owned citekeys and annotations may stay in the `.bib`. Each cited
+  entry carries a reader route: a DOI or an open-access or archived URL.
+  A `file=` field is a local hint, not the reference or a portable reader
+  route. The cited-works-availability test still checks local fulltexts
+  (`prose-adherence-tests.md`).
+- **Periodic sync + purge.** Reconcile source-document staging to Zotero (correct item type,
   scraped metadata, file attachment) and **purge staging on archival after
   publication** — Zotero retains everything. The reconcile is run by the author
   on demand (`/zotero check-staging`) and is *proposed* by lair, never run
@@ -77,13 +81,14 @@ projects. Zotero is the system of record; git holds neither the sources nor the
 
 Why: git repos stay lean (no binary bloat, no report PDFs in history) and
 durable provenance is centralized in Zotero, where it persists and syncs.
-Staging is transient by design.
+Source-document staging is transient by design; a tracked bibliography remains
+with the project.
 
 One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
 intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
 its attachment, created through the local API) → record the citation.
 
-This rule governs *source documents and bibliography staging*. It does not
+This rule governs *source documents and project bibliographies*. It does not
 touch [prose/workpackages.md](./prose/workpackages.md)'s "Don't gitignore handoff artifacts" rule: generated files a
 downstream workpackage consumes (figures, tables, `\input`ed macros) are
 durable state and stay tracked. No contradiction — different object classes.
