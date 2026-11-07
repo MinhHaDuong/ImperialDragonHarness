@@ -16,5 +16,4 @@ Resident rules (ruleset review 2026-11-01): the budget counts loaded text, HTML 
 Model-service transmission authorization prints in every session's start context (PR #1783); whether Codex's managed approval reviewer reads it is untested.
 
 ## Next session (from 2026-11-01)
-1. Review the sixth smelt, PR #2197 (memory rebuild after the ruleset review; report in memory/smelts/2026-11-01-sixth-smelt.md).
-2. Rule the three conflicts the sixth smelt ticketed, on #2197's branch until it lands (rules are the author's): 1437 stash-ban scope, 1438 severity-floor wording (plus North star in state.md vs ROADMAP.md), 1439 night-mode escalation target.
+1. Rule the three conflicts the sixth smelt ticketed (PR #2197, merged 2026-11-05; rules are the author's): 1437 stash-ban scope, 1438 severity-floor wording (plus North star in state.md vs ROADMAP.md), 1439 night-mode escalation target.
