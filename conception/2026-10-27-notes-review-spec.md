@@ -242,3 +242,62 @@ Missing/failed seats: `report.status`, `answer.seats`. Gate budget: §5. Failed 
 3. Web legs: run them (script `conception/2026-10-27-notes-web-leg.sh`); outcome D is a store switch.
 4. Attestation: option (c) or not.
 5. rules/git.md wording once C5 lands (ruling point 4, unchanged).
+
+
+## Local request listing and abandonment (ticket 1450)
+
+`python3 scripts/forge.py --forge none list --state open|merged|all` reads
+one pinned local `refs/notes/review` snapshot without setup, fetch, or push.
+Call the existing refresh operation separately when a remote update is wanted.
+Each row is the latest request (chronological UTC timestamp, then entry ID) of one native review;
+reviews that ever acquired a `pr:<n>` request are excluded in their entirety,
+including their earlier native requests. Branch-name reuse preserves separate
+review IDs. Rows are newest request first, then filtered by state/head and limit.
+All native rows are classified before filtering so unreadable required evidence
+cannot disappear behind a filter.
+
+The gh row keys are preserved. For this backend `number` is the opaque review
+ID, never a fabricated numeric PR number; rows add `state`, `review_id`, and
+`request_id`. `title` comes from `why`, `body` from `intent`, `auto` is false,
+and repository fields are false/null. `mergedAt` is null because ancestry
+establishes inclusion, not a defensible landing date.
+
+An explicit `abandon` event for the selected request makes its listing state
+`ABANDONED`, taking precedence even if that head is subsequently included in
+the base. Otherwise the request is `MERGED` when its pinned head is an ancestor
+of the recorded `base_ref`'s current local tip, and `OPEN` otherwise. Deleted or
+moved branches never imply abandonment. Missing required head/base objects or
+an unsuccessful ancestry read are unavailable evidence. A negative ancestry
+result in shallow history is conservatively unavailable; a positive proof of
+inclusion remains usable. Abandonment preserves
+the original binding and can be read without resolving the deleted branch.
+A later request starts a new submission; an old abandonment event cannot close
+it. This is listing state, not an additional merge or gate veto.
+
+Use `python3 scripts/review_notes.py abandon --review <review-id> --request
+<request-id> --reason <text>` to append the event locally under the existing
+notes lock. The request is mandatory; generic `add` cannot write abandonment.
+No lifecycle framework, branch-deletion inference, or implicit transport is added.
+
+Exit 0 supplies rows (including `[]` for a readable store with no requests).
+Exit 3 means the notes ref is absent; a present dangling symbolic ref is
+unreadable evidence, not absence. Exit 2 with empty stdout means Git could
+not inspect the store, a note/required field is malformed or undecodable, an
+entry ID conflicts, a binding is invalid, or required ancestry is unavailable.
+The listing's strict reader does not change the existing lenient history readers.
+
+Manual route if the listing helper cannot run: read the local notes tree at a
+pinned commit, parse every nonblank JSON line, group requests by review, exclude
+all PR-adopted reviews, then apply the event and ancestry rules above before
+filters. Preserve missing/unreadable distinctions and record the selected request
+IDs and unavailable checks. This costs one note read per review and two commit
+resolutions plus an ancestry check per non-abandoned native review; no remote
+access is needed. To record abandonment without a working helper, preserve the
+intended review/request/reason for later helper replay; never infer that the write
+happened or silently edit notes around the helper's locking/binding requirements.
+
+`project-state.py` can consume the rows. The current dashboard script still
+fetches origin and reads origin/main before listing, so this capability does
+not make that complete dashboard work in a remote-less repository. Notes
+remain an evidence store, without a standalone forge interface, CI runner, or
+access-control guarantee. Ticket 1445's documentation must state these limits.

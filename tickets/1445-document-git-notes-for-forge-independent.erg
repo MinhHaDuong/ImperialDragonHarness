@@ -6,6 +6,8 @@ Author: Minh Ha-Duong
 --- log ---
 2026-11-04T15:05Z Minh Ha-Duong created
 
+2026-11-07T19:29Z coder note Ticket 1450 adds strict local notes-backed native request listing and explicit per-request abandonment; capability and dashboard/transport limits are recorded below for the eventual drafts.
+
 --- body ---
 
 ## Context
@@ -35,3 +37,16 @@ The reassessment is in git-erg `docs/dyne-review-contract.md` (PR #377).
       standalone forge interface, CI runner, or access-control guarantee.
 - [ ] Provide the drafts and reproducible example for author review before any
       deposit or publication; no outward deposit is authorized by this ticket alone.
+
+
+## Listing capability and limits (ticket 1450)
+
+The none backend can list the latest native request of each review from a strict
+local notes snapshot; state distinguishes open, merged by pinned-head ancestry,
+and explicit request abandonment. `number` is an opaque review ID. Listing does
+not fetch, numeric PR-adopted reviews are excluded, and unreadable evidence is
+never an empty answer. `mergedAt` remains null when ancestry alone is available.
+The full dashboard still requires origin and origin/main before reaching its
+listing step, so remote-less dashboard operation is not implemented by 1450.
+See `conception/2026-10-27-notes-review-spec.md` § Local request listing and
+abandonment for the commands, manual read route, state precedence, and exit codes.

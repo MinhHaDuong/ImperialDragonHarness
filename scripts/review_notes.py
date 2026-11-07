@@ -90,7 +90,13 @@ source); `--latest [--json] [--head <sha>]` the newest answer's result, seats an
 (`current` when --head names that commit), what raid polls. No review exits 1; a stale read
 with nothing local refuses, as `find`.
 
-Commands: setup, open, request, add, sync, refresh, publish, push-landing, show, history, find,
+Listing and abandonment (ticket 1450). `forge.py --forge none list` reads a pinned
+local notes snapshot strictly, never fetching or configuring transport. `abandon
+--review <id> --request <id> --reason <text>` appends a request-bound event with
+its original binding. This describes listing state only; it adds no merge/gate
+veto. Later requests do not inherit an earlier request's abandonment.
+
+Commands: setup, open, request, abandon, add, sync, refresh, publish, push-landing, show, history, find,
 answers, findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
 Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
@@ -117,7 +123,7 @@ HEADS = "refs/review-heads"
 FETCH_NOTES = f"+{REF}:{TRACK}"  # explicit fetches only, after ls-remote saw the ref
 FETCH_NOTES_GLOB = f"+{REF}*:{TRACK}*"  # the persistent spec: a glob tolerates a notes-less remote
 FETCH_HEADS = f"{HEADS}/*:{HEADS}/*"
-KINDS = ("request", "plan", "report", "answer", "verdict", "link", "writer")  # writer: ticket 1307
+KINDS = ("request", "plan", "report", "answer", "verdict", "link", "writer", "abandon")  # writer: ticket 1307
 REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publisher",
             "head", "base", "base_ref", "merge_base", "range_patch_id", "links")
 CLOSED = ("fixed", "rejected", "wontfix", "withdrawn", "resolved", "invalid")
@@ -286,6 +292,107 @@ def _all_lines(cwd, ref=REF):
 
 def all_entries(cwd, ref=REF):
     return sorted(_all_lines(cwd, ref)[1], key=lambda e: (e.get("ts", ""), e["id"]))
+
+
+def _listing_entries(cwd):
+    """Strict entries at one local notes tip; None means absent, [] readable-empty.
+
+    No setup, refresh, fetch, or push. Never use the historical lenient reader
+    to establish an empty listing: malformed entries are missing evidence.
+    """
+    _git(cwd, "rev-parse", "--git-dir")
+    exists = _git(cwd, "show-ref", "--verify", "--quiet", REF, check=False)
+    if exists.returncode == 1:
+        symbolic = _git(cwd, "symbolic-ref", "--quiet", REF, check=False)
+        if symbolic.returncode != 1:
+            raise Refusal("review notes symbolic ref is dangling or unreadable")
+        return None
+    if exists.returncode:
+        raise Refusal("cannot inspect the local review notes ref")
+    tip = _rev(cwd, REF)
+    found, every = {}, []
+    for item in _out(cwd, "ls-tree", "-r", "-z", tip).split("\0"):
+        if not item:
+            continue
+        meta, path = item.split("\t", 1)
+        mode, kind, blob = meta.split()
+        if mode != "100644" or kind != "blob" or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", path.replace("/", "")):
+            raise Refusal("invalid object in review notes tree")
+        for raw in _out(cwd, "cat-file", "blob", blob).splitlines():
+            if not raw.strip():
+                continue
+            try:
+                e = json.loads(raw)
+            except ValueError as exc:
+                raise Refusal("malformed JSON in review notes") from exc
+            if not isinstance(e, dict) or any(k not in e for k in REQUIRED):
+                raise Refusal("incomplete entry in review notes")
+            strings = ("ts", "id", "review_id", "request_id", "head", "base", "base_ref", "merge_base")
+            if (any(not isinstance(e[k], str) or not e[k] for k in strings)
+                    or type(e["v"]) is not int or e["v"] != 1 or e["kind"] not in KINDS
+                    or not isinstance(e["range_patch_id"], str)
+                    or not isinstance(e["author"], dict) or not isinstance(e["publisher"], dict)
+                    or not isinstance(e["links"], list) or any(not isinstance(x, str) for x in e["links"])):
+                raise Refusal("malformed entry fields in review notes")
+            try:
+                timestamp = datetime.fromisoformat(e["ts"].replace("Z", "+00:00"))
+                if timestamp.utcoffset() != timezone.utc.utcoffset(timestamp):
+                    raise ValueError("timestamp must be UTC")
+            except ValueError as exc:
+                raise Refusal("malformed timestamp in review notes") from exc
+            if (anchor(cwd, e["review_id"]) != path.replace("/", "")
+                    or any(not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", e[k])
+                           for k in ("head", "base", "merge_base"))):
+                raise Refusal("invalid review anchor or commit binding")
+            if e["kind"] == "request":
+                if (not isinstance(e.get("branch"), str) or not e["branch"]
+                        or any(not isinstance(e.get(k, ""), str) for k in ("why", "intent", "unit"))):
+                    raise Refusal("malformed request in review notes")
+            if e["kind"] == "abandon" and (not isinstance(e.get("reason"), str) or not e["reason"].strip()):
+                raise Refusal("abandonment lacks its reason")
+            digest = _digest(raw.strip())
+            if e["id"] in found:
+                if found[e["id"]] != digest:
+                    raise Tamper("review entry ID has conflicting contents")
+                continue
+            found[e["id"]] = digest
+            every.append(e)
+    every.sort(key=entry_order)
+    requests = {(e["review_id"], e["request_id"]): e for e in every if e["kind"] == "request"}
+    for e in every:
+        if e["kind"] == "abandon":
+            req = requests.get((e["review_id"], e["request_id"]))
+            if req is None or any(e[k] != req[k] for k in ("head", "base", "base_ref", "merge_base", "range_patch_id")):
+                raise Refusal("abandonment does not bind an existing request")
+    return every
+
+
+def entry_order(entry):
+    """Chronological UTC order across valid ISO timestamp precisions, then ID."""
+    return datetime.fromisoformat(entry["ts"].replace("Z", "+00:00")), entry["id"]
+
+
+def listing_entries(cwd):
+    """Read a strict local snapshot, mapping undecodable evidence to refusal."""
+    try:
+        return _listing_entries(cwd)
+    except UnicodeError as exc:
+        raise Refusal("undecodable review notes evidence") from exc
+
+
+def abandon(cwd, review_id, request_id, reason):
+    """Append abandonment of exactly one request; never infer it from branch state."""
+    if not reason.strip():
+        raise Refusal("abandonment requires a reason")
+    with _locked(cwd):
+        es = listing_entries(cwd) or []
+        req = next((e for e in es if e["kind"] == "request" and e["review_id"] == review_id
+                    and e["request_id"] == request_id), None)
+        if req is None:
+            raise Refusal("no such review request to abandon")
+        binding = {k: req[k] for k in ("head", "base", "base_ref", "merge_base", "range_patch_id")}
+        return _write(cwd, _entry(cwd, "abandon", review_id, request_id, binding, None, "hunt",
+                                  [req["id"]], {"reason": reason}))
 
 
 # --- configuration and transport -------------------------------------------------
@@ -736,6 +843,8 @@ def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", link
     launched on (frozen at gaze setup, ticket 1281), else to the latest request. Either way the
     request's head must be `head` when given: a result on another head is refused rather than
     bound to a request it did not review (and whose retained head is not the one examined)."""
+    if kind == "abandon":
+        raise Refusal("abandonment is written by `abandon` with an explicit request")
     if kind == "request":
         raise Refusal("a request is written by `request`, which keeps its head")
     if kind == "verdict":
@@ -1023,6 +1132,10 @@ def main(argv=None):
         s.add_argument("--tickets", nargs="*", default=[])
         s.add_argument("--responses", default="[]", help="JSON list of {finding_id, disposition}")
         s.add_argument("--skill", default="hunt")
+    s = sub.add_parser("abandon")
+    s.add_argument("--review", required=True)
+    s.add_argument("--request", required=True)
+    s.add_argument("--reason", required=True)
     s = sub.add_parser("add")
     s.add_argument("kind", choices=[k for k in KINDS if k not in ("request", "verdict")])
     s.add_argument("--review", required=True)
@@ -1087,6 +1200,8 @@ def main(argv=None):
             else:
                 print(request(cwd, a.review, a.branch, a.base_ref, responses=json.loads(a.responses),
                               **kw)["id"])
+        elif a.cmd == "abandon":
+            print(abandon(cwd, a.review, a.request, a.reason)["id"])
         elif a.cmd == "add":
             print(add(cwd, a.kind, a.review, json.loads(a.json), head=a.head,
                       author=json.loads(a.author) if a.author else None, skill=a.skill,

@@ -2,11 +2,15 @@
 Title: No-forge backend cannot list open review requests
 Created: 2026-11-05
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #2247
 
 --- log ---
 2026-11-05T15:18Z Minh Ha-Duong created
 2026-11-07T18:49Z reviewer note Imagine/Plan: strict notes snapshot listing, explicit per-request abandon event, pinned-head ancestry, no inferred abandonment; mixed native/adopted PR control, malformed vs empty exit contract. Full remote-less dashboard adaptation stays out of scope and limitation goes to1445.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
+
+2026-11-07T19:29Z coder note Identity limitation: system exposes GPT-6 only; exact served model ID and effort are unavailable and not inferred.
+2026-11-07T19:42Z reviewer closed — autoclosed — PR #2247
 
 --- body ---
 
