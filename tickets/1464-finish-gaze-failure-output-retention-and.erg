@@ -6,6 +6,12 @@ Author: reviewer
 --- log ---
 2026-11-07T22:01Z reviewer created
 
+2026-11-07T22:07Z raid-d35fb4 note Imagine: finish existing bounded keep_raw; stdout capture survives at staging.stdout before timeout/nonzero return. Preserve failure semantics and safe request/door/model provenance. Blind-spot pass found no additional scope.
+
+2026-11-07T22:08Z raid-d35fb4 note Plan: reproduce offline stdout/file timeout and nonzero retention; retain actual surviving source via keep_raw; link harness-owned retention id in durable record; verify failed status, cleanup survival, cap and credential canaries. Run gaze-seat/clock/close/notes tests.
+
+2026-11-07T22:08Z raid-d35fb4 note Feasibility PASS: source paths and helpers exist; no shared registry edited by three tickets. 1464 bridge lands before later gates.
+
 --- body ---
 Parent: 1377
 

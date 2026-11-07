@@ -8,6 +8,12 @@ Author: claude
 2026-11-07T13:39Z Minh-Ha-Duong landing note: PR #2214 added 'an observe-only period is one option' to conception/design-note-template.md and skills/raid/SKILL.md; this ticket asks for more than that option. Closed ticket 1180 (main-update guard observe window) is a candidate test case.
 2026-11-07T22:02Z reviewer note Author clarified scope: a Workflow memo leaves MOE to consider and propose proportionate trials and their purpose/evaluation criteria; no blanket observe framework or mandatory trial. Ticket refinement only; implementation not launched.
 
+2026-11-07T22:07Z raid-d35fb4 note Imagine: author ruling settles a concise MOE trial judgment reminder beside Cycle; no required trials, global observe framework or fixed wait. Blind-spot pass clean.
+
+2026-11-07T22:08Z raid-d35fb4 note Plan: edit workflow Cycle reminder only, inspect generated-rule conventions; verify both criteria semantically and existing rule/resident-budget checks. No wording-pin tests.
+
+2026-11-07T22:08Z raid-d35fb4 note Feasibility PASS: source paths and helpers exist; no shared registry edited by three tickets. 1464 bridge lands before later gates.
+
 --- body ---
 ## Context and author ruling
 
