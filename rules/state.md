@@ -10,7 +10,8 @@ Single orientation file, loaded at session start via hook. Hard cap: **40 lines 
 
 ## Structure
 
-`## North star` is the author's and rarely changes. The other `##` sections are
+`## North star` is the author's and rarely changes; a project with a
+`ROADMAP.md` keeps it there, not here. The other `##` sections are
 maintained by the agent, at wrap-up through lair step 10, and the author may edit
 them too. The line cap controls their growth. "Hand sections" below means these
 narrative sections: neither derived numbers nor the North star.
