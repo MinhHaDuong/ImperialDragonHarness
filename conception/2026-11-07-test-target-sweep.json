@@ -1,0 +1,260 @@
+{
+  "date": "2026-11-07",
+  "ticket": 1463,
+  "base": "d13840fbf5f537d0371b04221e1c4849893f923f",
+  "inventory_provenance": "scripts/projects.json at base: eight registered paths; named VN incident; two explicit active-project omissions. Finite list, not exhaustive discovery.",
+  "quiet_start_evidence": {
+    "source": "remote refs/notes/gate read at exact base",
+    "result": "pass",
+    "time": "2026-11-07T20:37:27Z",
+    "revision": "tip=d13840fbf5f537d0371b04221e1c4849893f923f",
+    "pytest": "pass 51.3s",
+    "lint": "pass 11.2s"
+  },
+  "budget": {
+    "target_seconds": 60,
+    "prerequisite_tool_seconds": 30,
+    "batch_tool_seconds_derived": 600,
+    "arithmetic": "6*(30+60)+60 collection; excludes model overhead; no automatic retries/increases"
+  },
+  "rows": [
+    {
+      "project": "harness",
+      "path": "~/.agents",
+      "inventory_origin": "registry",
+      "revision": "d13840fbf5f537d0371b04221e1c4849893f923f",
+      "target": "check-fast",
+      "status": "unchanged",
+      "execution": "pass",
+      "returncode": 0,
+      "changed_paths": [],
+      "limits": [
+        "Probe process used UV_OFFLINE=1 and UV_PYTHON_DOWNLOADS=never; cached-only target prerequisites allowed inside 60 s target budget. Diagnostic command UTC 20:47:45Z\u201320:48:29Z; elapsed 44 s derived by subtraction, not target-only runtime. Endpoint snapshots miss ignored files and write-then-restore. Exact lead served model ID/effort unavailable; system exposes GPT-6 only."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/report.json",
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/target.log",
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/helper.stdout.json",
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/helper.stderr",
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/attempt-start.txt",
+        ".git/idh/diagnostics/1463/harness-test-target-j_e741k6/attempt-end.txt"
+      ],
+      "endpoint_status": "unchanged"
+    },
+    {
+      "project": "git-erg",
+      "path": "~/CNRS/code/git-erg",
+      "inventory_origin": "registry",
+      "revision": "b8d800831d6fe30047614a5220f644f587359399",
+      "target": "check",
+      "status": "unchanged",
+      "execution": "pass",
+      "returncode": 0,
+      "changed_paths": [],
+      "limits": [
+        "Installed Go 1.22.2 satisfies the module minimum/toolchain suggestion; local Go used with GOPROXY=off and GOTOOLCHAIN=local. Patient estimated prerequisite/setup under 30 tool seconds and approximately 19 diagnostic seconds from poll intervals, not a direct target-only measurement. Exact served runtime/model identity unavailable. Endpoint snapshots miss ignored changes and write-then-restore.",
+        "Durable raw copies byte-verified outside executor. Owner removed only verified duplicate diagnostics, successful outer worktree and empty task branch; primary pre-existing untracked author ticket preserved."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/git-erg-check-b8d8008-pass-01/helper.stdout",
+        ".git/idh/diagnostics/1463/git-erg-check-b8d8008-pass-01/report.json",
+        ".git/idh/diagnostics/1463/git-erg-check-b8d8008-pass-01/target.log"
+      ],
+      "endpoint_status": "unchanged"
+    },
+    {
+      "project": "chemin-de-voix",
+      "path": "~/CNRS/projets/actifs/chemin-de-voix",
+      "inventory_origin": "registry",
+      "revision": "7087e03852475a39124f5755e68d70546e7dbea4",
+      "target": "check-fast",
+      "status": "unavailable",
+      "execution": "failed",
+      "returncode": 2,
+      "changed_paths": [],
+      "limits": [
+        "Offline uv reported torch==2.10.0 unavailable in cache before tests ran. No retry, setup or download. Endpoint snapshots unchanged do NOT establish test PASS. Artifact case began 20:58:05Z and summary was captured20:58:56Z; exact target duration was not measured. Codex runtime exposed, served model pin not observable. DO NOT CLEAN UP outer executor while inconclusive inner probe remains nested. Mistaken project-root raw duplicates were removed by patient only after byte-verified Git-metadata retention."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/report.json",
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/target.log",
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/helper-output.json",
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/helper-stderr.txt",
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/wrapper-returncode.txt",
+        ".git/idh/diagnostics/1463/chemin-de-voix-20261107T205805Z/coordinates.txt",
+        ".claude/worktrees/1463-check-fast-28494",
+        ".claude/worktrees/1463-check-fast-28494/diagnostics/1463/test-target-qmi01dr3/worktree"
+      ],
+      "endpoint_status": "unchanged"
+    },
+    {
+      "project": "padme",
+      "path": "~/CNRS/projets/actifs/padme",
+      "inventory_origin": "registry",
+      "revision": "e6351709fb3e511cbc707b42ea1d4105e4b5cf35",
+      "target": "check",
+      "status": "unchanged",
+      "execution": "pass",
+      "returncode": 0,
+      "changed_paths": [],
+      "limits": [
+        "Endpoint snapshots do not detect ignored-file changes or write-then-restore. Patient reported diagnostic UTC 20:41:35Z\u201320:42:15Z (40 seconds elapsed); this is not a separately measured target-only time. Exact served runtime/model identity unavailable.",
+        "Durable raw copies byte-verified outside executor. Owning patient removed only verified duplicates, its successful outer worktree and empty task branch; primary pre-existing service-file changes were preserved."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/report.json",
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/target.log",
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/helper.stdout.json",
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/helper.stderr.log",
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/start.utc",
+        ".git/idh/diagnostics/1463/padme-check-e6351709-20261107T204135Z/end.utc"
+      ],
+      "endpoint_status": "unchanged"
+    },
+    {
+      "project": "climate-finance-het",
+      "path": "~/CNRS/projets/actifs/climate-finance-het",
+      "inventory_origin": "registry",
+      "revision": null,
+      "target": "check-fast",
+      "status": "unprobed",
+      "execution": "not-run",
+      "returncode": null,
+      "changed_paths": null,
+      "limits": [
+        "Default checkout hook copies machine configuration and connects shared environment/data; no hook bypass or copying authorized."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [],
+      "endpoint_status": "not-observed"
+    },
+    {
+      "project": "aedist-technical-report",
+      "path": "~/CNRS/papiers/actif/AEDIST-technical-report",
+      "inventory_origin": "registry",
+      "revision": "aa41c3263d8c130ebbac4917dd02fe6190e93480",
+      "target": "check-fast",
+      "status": "unavailable",
+      "execution": "failed",
+      "returncode": 2,
+      "changed_paths": [],
+      "limits": [
+        "Endpoint status and tracked hashes were unchanged, but failed target execution is NOT test PASS. Failure cause not isolated; prerequisite/completion evidence unavailable. Cached-only frozen/offline target attempt UTC 20:54:49.318732348Z\u201320:54:51.397665430Z; about 2.08 s diagnostic elapsed reported. Exact served runtime/model identity unavailable. DO NOT CLEAN UP outer executor while retained inconclusive probe remains nested."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/case-01/report.json",
+        ".git/idh/diagnostics/1463/case-01/target.log",
+        ".git/idh/diagnostics/1463/case-01/helper.stdout",
+        ".claude/worktrees/patient-aedist-1463",
+        ".claude/worktrees/patient-aedist-1463/diagnostics/1463/test-target-j7boxg_x/worktree"
+      ],
+      "endpoint_status": "unchanged"
+    },
+    {
+      "project": "fuzzy-corpus",
+      "path": "~/CNRS/papiers/actif/Fuzzy Corpus",
+      "inventory_origin": "registry",
+      "revision": null,
+      "target": null,
+      "status": "unprobed",
+      "execution": "not-run",
+      "returncode": null,
+      "changed_paths": null,
+      "limits": [
+        "Named local path absent during read-only preparation; no other-host access or home-directory discovery."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [],
+      "endpoint_status": "not-observed"
+    },
+    {
+      "project": "cadens",
+      "path": "~/CNRS/papiers/actif/Cadens",
+      "inventory_origin": "registry",
+      "revision": null,
+      "target": null,
+      "status": "unprobed",
+      "execution": "not-run",
+      "returncode": null,
+      "changed_paths": null,
+      "limits": [
+        "Named local path absent during read-only preparation; no other-host access or home-directory discovery."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [],
+      "endpoint_status": "not-observed"
+    },
+    {
+      "project": "VN-Power-Scenario",
+      "path": "<project-root; exact root in local index>",
+      "inventory_origin": "named incident, historical path in closed ticket1208",
+      "revision": null,
+      "target": null,
+      "status": "unprobed",
+      "execution": "not-run",
+      "returncode": null,
+      "changed_paths": null,
+      "limits": [
+        "Named local path absent during read-only preparation; no other-host access or home-directory discovery.",
+        "Historical parent incident names make test; current target and ticket store cannot be verified at absent path."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [],
+      "endpoint_status": "not-observed"
+    },
+    {
+      "project": "JETP-observer",
+      "path": "<project-root; exact root in local index>",
+      "inventory_origin": "explicit known registry omission",
+      "revision": null,
+      "target": "check-fast",
+      "status": "unprobed",
+      "execution": "not-run",
+      "returncode": null,
+      "changed_paths": null,
+      "limits": [
+        "Default checkout hook copies machine configuration and connects shared environment/data; no hook bypass or copying authorized."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [],
+      "endpoint_status": "not-observed"
+    },
+    {
+      "project": "sen-causal-reading",
+      "path": "<project-root; exact root in local index>",
+      "inventory_origin": "explicit known registry omission",
+      "revision": "3cdc7e5e16294e3e8986dfdcafc7ef6ee18af608",
+      "target": "check",
+      "status": "unchanged",
+      "execution": "pass",
+      "returncode": 0,
+      "changed_paths": [],
+      "limits": [
+        "One offline/no-Python-download attempt; no PDF/PWT/download target selected. Patient measured wrapper elapsed 27.58 s, UTC 20:51:01Z\u201320:51:29Z; not a target-only measurement. Endpoint snapshots miss ignored changes and write-then-restore. Exact served runtime/model identity unavailable. Patient requested executor retained pending cleanup review despite byte-verified durable raw copies.",
+        "Durable raw files byte-verified outside executor. Owner removed only verified duplicate scratch, successful outer worktree and empty task branch; primary checkout clean."
+      ],
+      "ticket_refs": [],
+      "retained_paths": [
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/report.json",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/target.log",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/stdout.log",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/stderr.log",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/start.utc",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/end.utc",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/elapsed.seconds",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/returncode",
+        ".git/idh/diagnostics/1463/patient-20261107T205101Z-1211682/status.porcelain"
+      ],
+      "endpoint_status": "unchanged"
+    }
+  ],
+  "retention_policy": "Published retention/probe coordinates are relative to each named project root. Only existing committed-registry tilde paths identify public roots; other roots are placeholders resolved by the local exact-coordinate manifest. Raw files and exact path-rich captures stay local in project Git metadata, byte-verified by owners; they are not committed or published. Failed AEDIST/chemin inner probes remain nested; preserve their outer executors.",
+  "identity_limits": "Lead system exposes GPT-6 only, not exact served model ID/effort. Patient sessions were requested as gpt-6-luna/medium, but their actual served model identities were unavailable; requested pins are not observed identities.",
+  "local_exact_coordinate_index": ".git/idh/diagnostics/1463/exact-coordinate-manifest.json (harness-local; not committed)",
+  "status_convention": "status preserves the original helper/result classification; endpoint_status separately records observed endpoints, so a failed execution with unchanged endpoints remains unavailable, not test PASS."
+}
