@@ -8,6 +8,8 @@ Author: Minh Ha-Duong
 
 2026-11-07T19:29Z coder note Ticket 1450 adds strict local notes-backed native request listing and explicit per-request abandonment; capability and dashboard/transport limits are recorded below for the eventual drafts.
 
+2026-11-07T22:07Z raid-d35fb4 note Imagine: technical note and practical tutorial are author-review drafts with one reproducible local example; verify primary prior art, avoid unsupported novelty claims. Blind-spot follow-up: isolate all example Git configuration/remotes/notes and prove harness review refs remain untouched.
+
 --- body ---
 
 ## Context

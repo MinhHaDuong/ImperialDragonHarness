@@ -6,6 +6,8 @@ Author: reviewer
 --- log ---
 2026-11-07T22:01Z reviewer created
 
+2026-11-07T22:07Z raid-d35fb4 note Imagine: finish existing bounded keep_raw; stdout capture survives at staging.stdout before timeout/nonzero return. Preserve failure semantics and safe request/door/model provenance. Blind-spot pass found no additional scope.
+
 --- body ---
 Parent: 1377
 
