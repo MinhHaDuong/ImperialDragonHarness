@@ -338,7 +338,7 @@ historical label attached to a deletion:
 
 - At `5f46eab6`, `skills/beat/SKILL.md:8–14` binds the current repository to
   `BEAT_PROJECT`, invokes `beat.py`, and relays its existing summary. The same
-  revision's `scripts/beat.py:615–633` owns project selection, `:1024–1070`
+  revision's `./scripts/beat.py:615–633` owns project selection, `:1024–1070`
   owns locking and recovery, and `:1097–1102` produces that summary. This is
   a pure execution-wrapper control: no additional decision, check, recovery,
   or output transformation appears in the skill. Its named invocation still
@@ -376,8 +376,8 @@ deletion candidate and makes no claim about the rest of the catalog.
 | Candidate and compared owners | Added or delegated behavior; disposition |
 |---|---|
 | `dashboard`: its SKILL.md §§ Report/Inspect versus `dashboard.sh`, `tickets/AGENTS.md`, and `skills/merge/SKILL.md` § Gating tiers | The script gathers snapshots; the skill adds contextual delta reporting and request-claim inspection. Generic ticket and gate instructions do not supply that dashboard report. Retain. |
-| `zotero`: its SKILL.md §§ A scraped identifier is a hypothesis / Output to the user versus `scripts/zotero.py` lookup/creation code and `rules/zotero.md` | The helper searches identifiers/titles and compares files; the skill adds document-own-title/author verification, rejection of cited-work identifiers, metadata rebuilding, reprint-year judgment, and per-item/rerun reporting. The rule owns library authority. Retain. |
-| `reviewers`: its SKILL.md and `references/live-route.md` versus `scripts/runtime.py`, `skills/route/`, `AGENTS.md` / `rules/workflow.md` review instructions, and `scripts/coaching/references/replay.md` | Runtime dispatch and model choice are delegated; the skill defines bounded review requests, revision/identity provenance, discovery, and unavailable/integrity reporting. Frozen-board replay is a different task, not a substitute live-review CLI. No single equivalent command is established. Retain. |
+| `zotero`: its SKILL.md §§ A scraped identifier is a hypothesis / Output to the user versus `$IDH_ROOT/scripts/zotero.py` lookup/creation code and `rules/zotero.md` | The helper searches identifiers/titles and compares files; the skill adds document-own-title/author verification, rejection of cited-work identifiers, metadata rebuilding, reprint-year judgment, and per-item/rerun reporting. The rule owns library authority. Retain. |
+| `reviewers`: its SKILL.md and `skills/reviewers/references/live-route.md` versus `$IDH_ROOT/scripts/runtime.py`, `skills/route/`, `AGENTS.md` / `rules/workflow.md` review instructions, and `scripts/coaching/references/replay.md` | Runtime dispatch and model choice are delegated; the skill defines bounded review requests, revision/identity provenance, discovery, and unavailable/integrity reporting. Frozen-board replay is a different task, not a substitute live-review CLI. No single equivalent command is established. Retain. |
 
 **Report and disposition.** Preserve the complaint, inspected revisions and
 sources, control judgments, comparison by dimension, evidence limits, and
