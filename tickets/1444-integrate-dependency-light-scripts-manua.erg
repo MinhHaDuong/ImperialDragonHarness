@@ -9,6 +9,7 @@ Author: codex
 2026-11-04T15:59Z Minh-Ha-Duong PR pending: principles documented (README § Principles, authoring guide); only part of criterion 2. Inventory, pilot, manual-route comparison and unavailable-measurement demo remain.
 2026-11-07T13:32Z reviewer split into children 1453, 1454, 1455; parent kept as tracker with the shared inventory step
 2026-11-07T18:49Z reviewer note author replaced common-pilot implementation with on-demand doctor diagnostics; shared inventory remains here
+2026-11-07T18:49Z reviewer note inventory: authoring-skills Toolkit principles and workflow diagnosis discipline already own policy; repo_sources and deps AST infrastructure exist; doctor diagnostic menu/reference is the remaining integration gap; no new policy or common pilot.
 
 --- body ---
 ## Context
