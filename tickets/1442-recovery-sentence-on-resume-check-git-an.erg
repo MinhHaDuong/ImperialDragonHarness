@@ -5,21 +5,12 @@ Author: claude
 
 --- log ---
 2026-11-01T22:54Z claude created
+2026-11-07T18:49Z reviewer note author scope reconciled in raid 9d45ba: uncertain interrupted action only before retry
 
 --- body ---
 ## Context
-
-From `conception/2026-11-01-dsh-superagent-ideas.md` § 5. dsh-superagent
-restarts every interrupted assignment with a fixed note: check the
-directory, git history and the forge before repeating any outside action.
-It prevents double pushes, double PRs and double comments after a crash or
-a context reset.
-
-Raid already resumes from its sitrep (`skills/raid/SKILL.md`); hunt and the
-coder profile have no equivalent sentence. Complements `rules/git.md`
-"Verify a forge mutation by reading it back".
+Author clarification, 2026-11-07: interruption means execution stopped with an uncertain outcome for the last outside action. Ordinary pauses, messages, command boundaries, and known-complete actions do not trigger a check.
 
 ## Exit criteria
-
-- [ ] One sentence on the resume path of raid, hunt and `profiles/coder/PROFILE.md` (or a single shared place they all load): before repeating a push, PR, comment, ticket write or merge, read back whether it already happened
-- [ ] No new rule file, no guard
+- [ ] Raid and hunt's resume paths (also loaded by the coder profile) require reading back an uncertain outside action immediately before retrying that action.
+- [ ] No per-command check, new guard, or new rule file is introduced; ordinary pauses and known-complete actions require no extra check.

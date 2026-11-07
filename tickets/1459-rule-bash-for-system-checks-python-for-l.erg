@@ -5,25 +5,14 @@ Author: reviewer
 
 --- log ---
 2026-11-07T16:50Z reviewer created
+2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
 
 --- body ---
 ## Context
-
-Promotion requested by the author (padme native-note triage, 2026-11-07; padme
-smelt report `memory/smelts/2026-11-07-first-skill-smelt.md`). The Claude Code
-native note `feedback_languages.md` in padme's project store says: bash for
-mechanistic system scripts (monitoring, backups); Python for anything calling
-an LLM API or handling complex data, because bash JSON encoding broke on
-multilingual text; Rust reserved for high-frequency infrastructure loops
-(startup time). No harness rule says when to leave bash.
-
-## Destination
-
-`rules/coding-bash.md`, a new short section on when a script should not be
-bash. Wording is the harness's call.
+Author clarification, 2026-11-07: locate where implementation-language choices happen (Imagine, Plan, or elsewhere), and inspect history for concrete poor choices IDH could redress. Do not impose a predetermined Bash/Python/Rust rule.
 
 ## Exit criteria
-
-- [ ] `rules/coding-bash.md` states the language split (bash / Python for LLM
-  calls and structured data / Rust for high-frequency loops), with the JSON
-  encoding failure as its reason.
+- [ ] Harness-doctor retains an on-demand diagnostic locating actual language-choice decision points and reconstructing bounded historical cases with source evidence.
+- [ ] Controls distinguish a failure mechanism a different language can remove from a logic error that survives translation; reproduce a specific mechanism when surviving inputs permit it.
+- [ ] Recommend or apply a targeted correction only when evidence supports it; unverified incidents and no actionable correction remain explicit valid outcomes.
+- [ ] No blanket language rule, speculative rewrite, routine healthcheck, scheduled sweep, or merge-gate integration.

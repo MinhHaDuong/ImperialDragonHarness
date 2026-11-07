@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Clean yawn precondition and isolated test-target diagnostic
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T18:48Z reviewer created
+
+--- body ---
+Parent: 1446
+
+## Context
+Implementation child of 1446; author approved clean-tree yawn precondition and an isolated diagnostic, never a new blocking guard. See parent for incident and accepted residual risk.
+
+## Exit criteria
+- [ ] project-state.py --tests checks git status --porcelain immediately before every runner (Make, pytest, npm): dirty means skip: dirty tree; unreadable status is not clean. A dirty fixture's deleting target never starts and its untracked file survives.
+- [ ] Yawn remains read-only and documents the clean-tree precondition and relied-on project contract. The one-sentence test-target read-only contract/reason lives in existing project-facing rules.
+- [ ] Test-doctor retains an on-demand stdlib detached-worktree probe: pin HEAD, snapshot status/tracked hashes, run one selected target under a finite timeout, compare, report findings or unavailable prerequisites; primary checkout is untouched.
+- [ ] Controls cover clean target, tracked rewrite, untracked creation/deletion, timeout/unavailable prerequisites, and unchanged primary. State seeded deletion-control and endpoint-snapshot limits honestly; preserve useful residue/evidence.
+- [ ] Probe is diagnostic only: no merge blocking, routine healthcheck, scheduled sweep, or recurring invocation.

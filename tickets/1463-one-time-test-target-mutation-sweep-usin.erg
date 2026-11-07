@@ -1,0 +1,20 @@
+%erg 0.1
+Title: One-time test-target mutation sweep using isolated probe
+Created: 2026-11-07
+Author: reviewer
+Blocked-by: 1462
+
+--- log ---
+2026-11-07T18:48Z reviewer created
+
+--- body ---
+Parent: 1446
+
+## Context
+One-time sweep child of 1446; consumes the isolated probe after 1462 lands. This is the separately commissioned one-time sweep, not routine healthchecking.
+
+## Exit criteria
+- [ ] Freeze an explicit project inventory using scripts/projects.json and known named VN-Power-Scenario; record inventory provenance, known omissions, and unavailable other-host projects without claiming exhaustive discovery.
+- [ ] Inspect prerequisites and external-write/service risk before executing; run the isolated probe serially once per eligible project with a stated finite budget. Unsafe, missing-data, inaccessible, or timed-out cases are explicitly unprobed/inconclusive, never pass.
+- [ ] Record revision/target/outcome/limitations for each inventory row. Confirmed offenders get tickets only in their own stores through that project's rules; no-store projects are reported to the author. Include the VN-Power-Scenario result.
+- [ ] No credential copying, live-data mutation, routine healthcheck, scheduled sweep, or gate integration. Parent closes only after integration review of both children and the explicit coverage limits.

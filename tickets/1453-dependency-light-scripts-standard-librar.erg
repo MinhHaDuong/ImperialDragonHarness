@@ -7,54 +7,16 @@ Author: reviewer
 2026-11-02T15:33Z reviewer created
 2026-11-02T15:47Z reviewer added exit criterion: harness-doctor import probe (AST vs sys.stdlib_module_names), instrument not gate, positive control + justified-exception list, importlib blind spot reported unavailable
 2026-11-07T13:32Z reviewer refiled from the 2026-11-02 uncommitted split (drafted as 1445; that number went to another ticket on main); guidance criterion ticked: landed in skills/harness-doctor/references/authoring-skills.md § Toolkit principles (310223ae, b5c1383a)
+2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
 
 --- body ---
 Parent: 1444
 
 ## Context
-Author request (2026-11-02), first of the three principles split out of 1444:
-keep scripts dependency-free using standard Python where practical, to reduce
-installation failures. Prefer standard-library scripts, with justified
-exceptions where a dependency materially improves reliability or capability.
-State interpreter, system-tool, and service prerequisites honestly.
-
-## Scope
-Integrate the dependency default into the maintained toolkit authoring
-guidance and demonstrate it on one existing scripted workflow (selected by the 1444 inventory). Inventory existing guidance first -- including dependency
-management and diagnosis discipline -- and reconcile overlaps rather than
-adding a parallel rule set.
-
-## Relevant files
-- rules/coding-python.md
-- skills/harness-doctor/references/authoring-skills.md
-- skills/harness-doctor/SKILL.md (probe menu) and references/doctor-practice.md (positive control)
-- tests/fixtures/harness-doctor/ (probe control fixtures)
-- skills/skill-creator/SKILL.md, if present; otherwise locate its maintained source
-- rules/workflow.md (diagnosis discipline)
-- One existing scripted skill and its helper, selected after inventory
+Author clarification, 2026-11-07: use the existing stdlib policy; dependency inspection belongs to harness-doctor. No new rules. Existing policy distinguishes bundled helpers from harness tools whose dependencies come from the lock.
 
 ## Exit criteria
-- [x] The maintained authoring guidance states the standard-library default,
-      the justified-exception bar, and honest prerequisite statements; conflicts
-      with existing environment rules are reconciled.
-      Done: authoring-skills.md § Toolkit principles (310223ae, b5c1383a).
-- [ ] The guidance is applied to one existing scripted workflow, identified in
-      the implementation report; a toolkit-wide migration is deferred to
-      separately scoped work if the inventory establishes a need.
-- [ ] A harness-doctor probe (scripts/check_imports.py) verifies script imports
-      by AST against sys.stdlib_module_names: JSON findings on stdout, exit 0
-      (instrument, not a gate; not wired into make check), positive control
-      required -- a fixture third-party import must be flagged. Third-party
-      imports are allowed only through an exception list naming the script and
-      its standard-library or manual route, matching the landed guidance (an
-      optional specialized tool only). Dynamic imports (importlib/__import__) are a
-      documented blind spot, reported unavailable, never clean.
-- [ ] Run checks appropriate to changed files; regenerate generated guidance
-      or catalogs only when their sources change.
-
-## Verification
-Bounded procedural walkthrough and reproducible examples for the pilot. Add
-behavioral tests only where script behavior changes; do not pin prose with
-wording tests or introduce a new enforcement guard merely to police the
-principle. Integration work only -- not an immediate replacement of every
-existing dependency.
+- [ ] A reusable on-demand harness-doctor dependency diagnostic identifies the applicable policy/perimeter and reports direct stdlib, local, and third-party import candidates with prerequisites and evidence limits.
+- [ ] A positive control detects a third-party import; stdlib/local controls avoid false findings. Dynamic imports and unexamined transitive/runtime requirements are reported as limitations or unavailable, never a clean dependency bill.
+- [ ] Reuse existing import/source infrastructure where practical; any helper is stdlib and an instrument, not a gate. Demonstrate bounded use without a forced workflow migration or new exception registry.
+- [ ] No new general rule, routine healthcheck, scheduled sweep, or merge-gate integration. Run checks appropriate to changed behavior.
