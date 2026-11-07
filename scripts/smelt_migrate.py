@@ -195,7 +195,7 @@ def plan_migration(project, references=()):
         if not _committed(root, name, before[name]):
             raise MigrationError(
                 f"Cannot retire {name}: commit it unchanged first, so its local "
-                "facts stay recoverable with git show HEAD:<path>")
+                "facts stay recoverable with git show HEAD:./<path>")
     legacy_dirs = [name for name in LEGACY_DIRS if name in before]
     if len(legacy_dirs) > 1 or (legacy_dirs and NEW_DIR in before):
         raise MigrationError(f"Coexistence conflict: {', '.join(legacy_dirs + [NEW_DIR])}")
@@ -226,7 +226,9 @@ def plan_migration(project, references=()):
                       if targets or legacy_prompts else data)
             if edited != data:
                 edits[name] = edited
-            if retired and _names_retired(edited, name, retired, root):
+            # Every retired-prompt path counts, present or already retired,
+            # so a re-run still names files citing a prompt now gone.
+            if _names_retired(edited, name, RETIRED_PROMPTS, root):
                 stale.append(name)
     except UnicodeError as error:
         raise MigrationError(f"Active reference is not UTF-8: {error}") from error
@@ -313,7 +315,7 @@ def main():
                      len(plan.moves), len(plan.edits), len(plan.retired))
         for name in plan.retired:
             logging.info("Retired prompt: %s (carry its local location facts "
-                         "into memory/MEMORY.md; read it with git show HEAD:%s)", name, name)
+                         "into memory/MEMORY.md; read it with git show HEAD:./%s)", name, name)
         for name in plan.stale:
             logging.info("Names a retired prompt: %s", name)
     except MigrationError as error:
