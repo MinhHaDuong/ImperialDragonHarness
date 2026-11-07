@@ -107,8 +107,7 @@ Each finding names **both files and the conflicting lines**
 proposes the smallest fix. A finding inside one file names that file twice.
 
 Sort findings by the severity floor (`rules/workflow.md` § Autonomous action,
-"Severity floor"): one that blocks a merge, corrupts state or misleads a
-model into a wrong act becomes a ticket, filed on a branch through the
+"Severity floor"): one above the floor becomes a ticket, filed on a branch through the
 harness's own route; the rest are reported in the visit, not ticketed.
 
 Every proposal carries a price and odds, as the ethic requires.

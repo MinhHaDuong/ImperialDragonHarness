@@ -18,7 +18,7 @@ Resident. Rules only; incidents live in memory and tickets.
 ## Commands that destroy silently
 
 - **A git command that printed nothing may still have written.** Before running one, check what it changes beyond the paths you gave it.
-- **Never round-trip through `git stash` in a shared checkout.** The stack is repo-global: on a clean tree `stash` saves nothing and the `pop` grabs someone else's. Use a throwaway `git worktree add` or a WIP commit.
+- **Never round-trip through `git stash`.** The stack is repo-global: on a clean tree `stash` saves nothing and the `pop` grabs someone else's. Use a throwaway `git worktree add` or a WIP commit.
 - **`git checkout <ref> -- <path>` is a write, not a read.** It overwrites index and tree at that path with no reflog, and arrives disguised as measurement ("restore it just to compare"). To read another version: `git show <ref>:<path>`; to build one: a throwaway worktree.
 
 ## Merging

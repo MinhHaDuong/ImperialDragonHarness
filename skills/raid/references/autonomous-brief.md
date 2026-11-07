@@ -17,9 +17,12 @@ verbatim-retry ban (`merge-permission-denial.md`), the advisor model
    `raid_log.py append LEDGER raid=<id> spent=<usd> inflight=<usd> projected=<usd> cap=<usd>`.
    A projected figure above the cap launches nothing new: finish or park
    what is in flight and report. Estimates are labelled as estimates.
-2. **The author's by-right decisions are queued, never forked.** Scope,
-   money and irreversible acts wait for the author. Each one becomes one
-   line in a queue, `decision · default · price (author-hours, USD)`, the
+2. **The author's by-right decisions are queued, never forked**, bar the
+   night-mode cap (`skills/route/SKILL.md` § Escalation). Within it the
+   advisor may take a scope or money call; its $10 sits on top of item 1's
+   cap, as the task agreed that cap, and each grant gets its own ledger
+   line. Calls beyond the cap and every irreversible act wait for the
+   author. Each one becomes one line in a queue, `decision · default · price (author-hours, USD)`, the
    run continues on everything else, and the queue is delivered in the
    final report, not as a mid-run question.
 3. **Context rule.** At about 75% of the 230K context limit

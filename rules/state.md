@@ -10,14 +10,15 @@ Single orientation file, loaded at session start via hook. Hard cap: **40 lines 
 
 ## Structure
 
-`## North star` is the author's and rarely changes. The other `##` sections are
+`## North star` is the author's and rarely changes; a project with a
+`ROADMAP.md` keeps it there, not here. The other `##` sections are
 maintained by the agent, at wrap-up through lair step 10, and the author may edit
 them too. The line cap controls their growth. "Hand sections" below means these
 narrative sections: neither derived numbers nor the North star.
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
-| `## North star` | One paragraph — the core argument, rarely changes | Author |
+| `## North star` | One paragraph — the core argument, rarely changes; in `ROADMAP.md` where one exists | Author |
 | Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose | lair (agent); the author may edit |
 
 **No derived numbers (ticket 1121).** STATE.md stores no ticket counts, next

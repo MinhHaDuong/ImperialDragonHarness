@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-11-05T14:25Z
+Last updated: 2026-11-07T14:30Z
 
 Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 
@@ -15,5 +15,3 @@ Agent credential (1196): Claude Code shells use a fine-grained PAT through `~/.c
 Resident rules (ruleset review 2026-11-01): the budget counts loaded text, HTML comments stripped (cap 15100); they reach Codex and Pi via generated `~/.codex/AGENTS.md` / `~/.pi/agent/AGENTS.md` (1424); `pi --print` needs stdin closed.
 Model-service transmission authorization prints in every session's start context (PR #1783); whether Codex's managed approval reviewer reads it is untested.
 
-## Next session (from 2026-11-01)
-1. Rule the three conflicts the sixth smelt ticketed (PR #2197, merged 2026-11-05; rules are the author's): 1437 stash-ban scope, 1438 severity-floor wording (plus North star in state.md vs ROADMAP.md), 1439 night-mode escalation target.

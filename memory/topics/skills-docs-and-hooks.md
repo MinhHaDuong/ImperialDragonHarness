@@ -15,7 +15,6 @@
 - None current beyond the open questions.
 
 ## Open questions
-- Severity floor: workflow.md files tickets when a defect "blocks a merge, corrupts state, or bites the science"; harness-doctor triages "misleads a model into a wrong act" first. Ticket 1438.
 - `conception/` to `design/` rename floated, undecided. Stop-hook ship state unverified (1164 closed).
 ## Retired
 
