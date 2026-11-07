@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import shutil
 import signal
+import stat
 import subprocess
 import tempfile
 
@@ -37,7 +38,15 @@ def snapshot(project):
         path = project / name
         try:
             mode = path.lstat().st_mode
-            content = os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes()
+            if stat.S_ISREG(mode):
+                content = path.read_bytes()
+            elif stat.S_ISLNK(mode):
+                content = os.fsencode(os.readlink(path))
+            else:
+                # A target can replace a tracked file with a FIFO/socket or
+                # directory. Its type already proves a change; never open it.
+                hashes[name] = [mode, None]
+                continue
             hashes[name] = [mode, hashlib.sha256(content).hexdigest()]
         except FileNotFoundError:
             hashes[name] = None

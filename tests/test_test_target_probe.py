@@ -111,3 +111,22 @@ def test_endpoint_limit_does_not_claim_to_detect_restored_write(tmp_path):
     project = repo(tmp_path, "cp tracked saved; printf changed > tracked; mv saved tracked")
     out = module.probe(project, "test", tmp_path / "scratch", timeout=10)
     assert out["status"] == "unchanged"
+
+
+def test_tracked_fifo_mutation_does_not_hang_snapshot(tmp_path):
+    """A selected target's timeout must not be defeated by reading its FIFO."""
+    project = repo(tmp_path, "rm tracked; mkfifo tracked")
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPTS / "test_target_probe.py"), str(project),
+             "--target", "test", "--scratch-dir", str(tmp_path / "scratch"), "--timeout", "0.2"],
+            capture_output=True, text=True, timeout=3, check=True,
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail("after-snapshot blocked on tracked FIFO beyond target timeout")
+    import json
+
+    report = json.loads(result.stdout)
+    assert report["status"] == "finding"
+    assert report["changes"]["tracked_changed"] == ["tracked"]
+    assert (project / "tracked").read_text() == "original\n"

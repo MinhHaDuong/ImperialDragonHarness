@@ -72,6 +72,14 @@ logs locally and redact before quoting; never publish raw logs automatically.
 Remove retained worktrees only after preserving the useful evidence, following
 the patient's worktree cleanup rules.
 
+If the helper is unavailable, follow the same procedure manually: pin HEAD,
+create a detached worktree, save status and hashes of tracked regular files
+(link targets and special-file types separately), run the selected target with
+a finite timeout, and compare the endpoints. Preserve differences or unavailable
+prerequisites in a local report and retain useful residue. This costs an extra
+worktree setup and several shell calls; the same authorization and privacy
+limits apply.
+
 Endpoint snapshots miss write-then-restore and ignored-file changes. A clean
 checkout has no preexisting untracked output: the seeded untracked-deletion
 fixture tests that detection mechanism with an intentionally dirty baseline,
