@@ -16,8 +16,8 @@ primary checkout as the author's workspace. Authority: `rules/git.md`,
 - `git worktree remove` deletes ignored files; `.gitignore` is `*`, so porcelain status misses them (1095, 1640).
 - Shared checkout: local main carried commits into a peer's PR (#1145); `git add tickets/` swept a peer's file; a read-only reviewer switched the primary's branch (#1183); one VS Code window's sessions share a worktree (native). Untracked private skill links change the primary's test results (1091); an uncommitted edit in the installed-harness primary reaches live sessions (0887); a restart resets cwd to the primary (1077). Residual (1077): restore/checkout aimed at another tree has no guard.
 - A forced notes fetch by a process sharing refs rewinds a local append. `idh.mainGuard` enforces on padme/doudou since 2026-10-27; until 2026-11-03 check `<git-common-dir>/idh/main-journal.jsonl`. A forked `/gaze` resolves PRs in the session's base repo.
+- `worktree-tmp-guard.py` keeps trees whose commits cite `.tmp/`.
 ## Open questions
-- (`worktree-tmp-guard.py` keeps trees whose commits cite `.tmp/`.)
 ## Fallback
 ## Retired
 

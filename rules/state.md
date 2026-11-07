@@ -18,7 +18,7 @@ narrative sections: neither derived numbers nor the North star.
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
-| `## North star` | One paragraph — the core argument, rarely changes | Author |
+| `## North star` | One paragraph — the core argument, rarely changes; in `ROADMAP.md` where one exists | Author |
 | Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose | lair (agent); the author may edit |
 
 **No derived numbers (ticket 1121).** STATE.md stores no ticket counts, next
