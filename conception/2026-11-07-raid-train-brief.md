@@ -43,3 +43,24 @@ Do not create a new orchestration framework. Tracker 1444's inventory and
 children must be reconciled with these decisions, without counting the
 tracker as an extra implementation unit. Preserve user decisions rather
 than forcing obsolete pilot/extra-rule criteria through the gate.
+
+## Execution sequence
+
+1446 is decomposed into 1462 (harness fix/probe) and 1463 (dependent one-time
+sweep); the parent remains open until both and their integration review.
+
+1. 1453, 1456, 1462: distinct source/test surfaces.
+2. 1454, 1457, 1450: doctor reference, Zotero prose, notes listing.
+3. 1455, 1442, 1463: doctor reference, uncertain-action recovery, project sweep.
+4. 1459: language-choice diagnostic.
+5. 1460: wrapper-skill diagnostic.
+
+Doctor reference changes are serial. Any concrete recovery correction from
+1454 reserves its paths before implementation if it overlaps another unit.
+No identified registry receives three concurrent PR edits in these waves.
+1444 closes only after 1453/1454/1455 and integration review.
+
+Blind-spot controls: listing excludes adopted forge review units; dirty-tree
+nonexecution applies to all test runners, not just Make. The Zotero endpoint
+initially failed under sandbox permission denial; this is not evidence that
+the user's service is down. Existing private Zotero/Xvfb fixtures are reused.
