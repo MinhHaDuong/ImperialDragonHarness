@@ -158,3 +158,86 @@ without the helper is feasible; an explicit safe stop/handoff can be the
 appropriate correction. Keep any change with its owning workflow, preserve
 its authority and verification, and re-read the same failure branch after a
 correction. Do not turn this diagnostic into a blanket fallback rewrite.
+
+## Unavailable evidence becoming false
+
+**Question and inputs.** Did an actual claim turn a failed or unavailable
+observation into false, zero, absence, or an all-clear? Use the existing
+measurement and diagnosis guidance in `authoring-skills.md` § Toolkit
+principles and `diagnosis-discipline.md`; this is a way to examine behavior,
+not another rule or an automatic classifier. Name the complaint, permitted
+sources, selection method, time window, runtimes, and bounded sessions or
+spans before reading. A small authorized span takes minutes; no helper,
+network call, or new code is needed when that material is already readable.
+
+**Reading controls.** These synthetic contiguous observation/claim pairs
+hold the requested inventory and query constant. The stated context is part
+of each control, not missing evidence supplied by the reader.
+
+| Observation, context, and actual next claim | Expected judgment |
+|---|---|
+| A: The inventory read returns “permission denied; inventory unavailable”. No other source or recovery intervenes. The assistant then says “The inventory contains no matching items.” | Unsupported absence: the failed read cannot support that inventory claim. This is the positive control for the target error. |
+| B: A complete inventory read succeeds; the query and enumeration are verified, including a known matching-query control. The requested query returns a recorded count of zero. The assistant then says “No items match this query in this inventory.” | Genuinely observed zero within the specified inventory and query. A zero or the word “no” is not itself a defect. |
+| C: The read fails as in A. The assistant then says “Whether any items match is unknown; the inventory could not be read. A successful read would permit the check.” | Explicit unknown with its missing prerequisite, not a false conclusion. |
+
+Confirm A is detected and B and C remain distinct before judging real
+material. A reader that flags every negative claim has not passed these
+controls. A failed tool followed by successful independent evidence before
+the claim also needs that intervening context; the earlier failure alone
+does not establish a finding.
+
+**Examination.** Read each selected span sequentially, because the actual
+observation and any recovery constrain what the later claim means. Locate
+the task's scope, tool call and actual returned result/status, the relevant
+assistant claim, and the contiguous intervening context through any
+correction or successful check. Keep stable source/session/turn or call-id
+pointers for both ends. Preserve the claim's qualifications, attribution,
+and source scope: quoted tool output, a hypothetical, and a model's own
+assertion are different acts. A keyword search may locate a candidate;
+neither a hit nor a content-free timeline decides it.
+
+For each pair, ask what information the observer actually had, whether the
+source was accessible and complete, and whether the claim exceeds it.
+Verify any zero's coverage and positive control, rather than treating a
+successful command exit as evidence of a complete search. If a tool itself
+misclassified missing input as zero, separate that software observation from
+the assistant's subsequent statement. Inspect the actual context before
+attributing unsupported reasoning to the model; a software classification
+bug is not automatically an unsupported model claim. Unclear result
+semantics, missing intervening turns, or truncated messages leave the case
+unresolved. Do not fill those gaps with a plausible reconstruction.
+
+**Bounded availability example.** The committed historical digest
+`conception/trace-open-coding-2026-06/d27c1566-c018-4f41-838e-05b153511a28.digest.md`
+contains structural turn rows. `$IDH_ROOT/scripts/trace-digest.py` explicitly removes
+user and assistant text and command arguments; those rows cannot establish
+the observation/claim pair. The public review answer for PR 2246, recorded
+on 2026-11-07 in `refs/notes/review` as
+`rv-20261107-pr-2246-6645`, states a Codex seat's review result and limits,
+but does not preserve its contiguous tool observations and reasoning turns.
+It is a review record, not a substitute transcript. Neither artifact
+supports calling the review's “Findings: none” an unsupported all-clear.
+
+For that bounded set of artifacts, semantic transcript inspection is
+unavailable, not an empty audit: the actual result/claim context is missing,
+and private/local-restricted raw transcripts were not accessed. The scope is
+those named artifacts only; no underlying session window or cross-runtime
+coverage was inspected. Synthetic controls exercise the diagnostic, not
+session incidence. `tests/test_trace_events.py`'s unpriced-cost control is
+likewise software representation evidence, not a transcript finding. An
+authorized contiguous excerpt containing task scope, returned observations,
+claims, and intervening recovery would permit the semantic check; preserve
+those details when removing sensitive content. Use existing
+`transcript_spool.py`, `trace_events.py`, and `trace_timeline.py` for source
+resolution where appropriate, within the permitted access boundary; do not
+read or decrypt restricted archives to manufacture coverage.
+
+**Report.** State whether the material was actually inspected or unavailable,
+with the sample/window/runtime coverage, control judgments, selection limits,
+and missing evidence. For a finding, cite both the observation and claim
+pointers and the smallest context that settles their relation; keep private
+per-session text out of tracked reports. Preserve counterevidence and
+unresolved cases. “No instances found” is valid only for the semantic spans
+actually examined after the controls fired; it does not establish absence
+in unread sources, missing runtimes, or a larger corpus. Report the named
+missing evidence and what would permit inspection when it cannot be done.
