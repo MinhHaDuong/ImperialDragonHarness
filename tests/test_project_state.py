@@ -405,3 +405,56 @@ def test_housekeeping_state_stale_marker_still_needed(tmp_path):
     old = time.time() - 48 * 3600
     os.utime(marker, (old, old))
     assert ps.housekeeping_state(repo)["state"] == "needed"
+
+
+@pytest.mark.integration
+def test_dirty_tree_never_runs_deleting_target(tmp_path):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / "Makefile").write_text("test:\n\trm sentinel\n")
+    (tmp_path / "sentinel").write_text("keep")
+    out = ps.test_state(tmp_path)
+    assert out["status"] == "skip"
+    assert out["detail"] == "dirty tree"
+    assert (tmp_path / "sentinel").read_text() == "keep"
+
+
+@pytest.mark.parametrize("configuration", ["Makefile", "pyproject.toml", "package.json"])
+def test_dirty_precondition_covers_every_runner(tmp_path, monkeypatch, configuration):
+    (tmp_path / configuration).write_text("test:\n\ttrue\n")
+    calls = []
+
+    def respond(args):
+        calls.append(args)
+        return _cp("?? sentinel\n")
+
+    _patch_run(monkeypatch, respond)
+    out = ps.test_state(tmp_path)
+    assert out["status"] == "skip"
+    assert out["detail"] == "dirty tree"
+    assert calls == [["git", "status", "--porcelain"]]
+
+
+def test_unreadable_status_never_runs_tests(tmp_path, monkeypatch):
+    (tmp_path / "Makefile").write_text("test:\n\ttrue\n")
+    _patch_run(monkeypatch, lambda args: _cp(returncode=128, stderr="unreadable"))
+    out = ps.test_state(tmp_path)
+    assert out["status"] == "skip"
+    assert "unreadable" in out["detail"]
+
+
+@pytest.mark.parametrize("configuration, command", [
+    ("Makefile", ["make", "test"]),
+    ("pyproject.toml", ["pytest", "--tb=no", "-q"]),
+    ("package.json", ["npm", "test"]),
+])
+def test_clean_precondition_allows_every_runner(tmp_path, monkeypatch, configuration, command):
+    (tmp_path / configuration).write_text("test:\n\ttrue\n")
+    calls = []
+
+    def respond(args):
+        calls.append(args)
+        return _cp("")
+
+    _patch_run(monkeypatch, respond)
+    assert ps.test_state(tmp_path)["status"] == "pass"
+    assert calls == [["git", "status", "--porcelain"], command]
