@@ -322,3 +322,71 @@ supports it; keep it with its owning workflow and recheck the same failing
 input afterward. A pure refactor needs the existing artifact-comparison route
 in `diagnosis-discipline.md`. Do not infer an original language-choice mistake
 from a later bug, or turn this diagnostic into a new workflow gate.
+
+## CLI-wrapper comparison
+
+**Question and scope.** For a named candidate, does its skill body add useful
+behavior beyond the CLI and the project instructions, or merely relay them?
+This is an on-demand reading comparison, not a skill-builder rule or a
+removal sweep. Name the complaint, checkout, candidate set, underlying
+command/source, and governing instructions before reading. A few candidates
+take minutes; no CLI execution, usage measurement, credentials, or new code
+is required. Titles, length, and command counts select no verdict.
+
+**Reading controls.** Read actual bodies and their delegated owners, not the
+historical label attached to a deletion:
+
+- At `5f46eab6`, `skills/beat/SKILL.md:8–14` binds the current repository to
+  `BEAT_PROJECT`, invokes `beat.py`, and relays its existing summary. The same
+  revision's `./scripts/beat.py:615–633` owns project selection, `:1024–1070`
+  owns locking and recovery, and `:1097–1102` produces that summary. This is
+  a pure execution-wrapper control: no additional decision, check, recovery,
+  or output transformation appears in the skill. Its named invocation still
+  adds discoverability; thin behavior alone does not settle removal.
+- `skills/dashboard/SKILL.md` §§ Report and Inspect is the adequate-skill
+  control. `skills/dashboard/dashboard.sh` produces raw snapshots; the skill
+  additionally requires full-state and delta tables, count-trend
+  interpretation, closed-blocker handling, and changed-request inspection.
+- As a counterexample to label-based deletion, read
+  `5296365f^:skills/ticket-new/SKILL.md`: title normalization, validation,
+  handoff sections, and tracker conventions occur in its body. Commit
+  `9741b716` migrated the handoff template to `tickets/AGENTS.md` and tracker
+  convention to `rules/workflow.md` before deletion. The deletion's “thin”
+  label cannot substitute for comparing those surviving owners.
+
+The controls fire when the reader distinguishes delegated execution from
+additional judgment and preserves unique conventions and discoverability.
+If a historical object or delegated source is unreadable, identify that
+control as unavailable; do not substitute a title-based classification.
+
+**Comparison.** Follow each skill's references and the CLI's documented or
+source-defined contract. Compare decisions, checks, recovery, output
+contract, and discoverability separately. For each, cite its owner and mark
+what is unique to the skill, duplicated in project instructions, delegated
+to the CLI, or unexamined. A one-command skill may add needed judgment; a
+long body may duplicate existing instructions. A delegated responsibility
+is not missing merely because the skill does not repeat it. Include input
+selection, authorization, failure outcomes, and output interpretation in
+the comparison; do not infer equivalence from the happy path alone.
+
+**Bounded current reading.** Re-read these three candidates on the checkout
+under examination. The following source comparison establishes no current
+deletion candidate and makes no claim about the rest of the catalog.
+
+| Candidate and compared owners | Added or delegated behavior; disposition |
+|---|---|
+| `dashboard`: its SKILL.md §§ Report/Inspect versus `dashboard.sh`, `tickets/AGENTS.md`, and `skills/merge/SKILL.md` § Gating tiers | The script gathers snapshots; the skill adds contextual delta reporting and request-claim inspection. Generic ticket and gate instructions do not supply that dashboard report. Retain. |
+| `zotero`: its SKILL.md §§ A scraped identifier is a hypothesis / Output to the user versus `$IDH_ROOT/scripts/zotero.py` lookup/creation code and `rules/zotero.md` | The helper searches identifiers/titles and compares files; the skill adds document-own-title/author verification, rejection of cited-work identifiers, metadata rebuilding, reprint-year judgment, and per-item/rerun reporting. The rule owns library authority. Retain. |
+| `reviewers`: its SKILL.md and `skills/reviewers/references/live-route.md` versus `$IDH_ROOT/scripts/runtime.py`, `skills/route/`, `AGENTS.md` / `rules/workflow.md` review instructions, and `scripts/coaching/references/replay.md` | Runtime dispatch and model choice are delegated; the skill defines bounded review requests, revision/identity provenance, discovery, and unavailable/integrity reporting. Frozen-board replay is a different task, not a substitute live-review CLI. No single equivalent command is established. Retain. |
+
+**Report and disposition.** Preserve the complaint, inspected revisions and
+sources, control judgments, comparison by dimension, evidence limits, and
+unexamined references. Source reading does not measure invocation frequency,
+user benefit, runtime execution, or all current skills; missing evidence
+cannot establish redundancy. No such measurements are prerequisites for this
+bounded diagnostic. Propose deletion only when the comparison establishes
+redundancy and identifies where every required behavior and discoverable
+entry point survives. Move a unique fact to its owner before proposing
+removal, and retain an unresolved candidate when that preservation cannot
+be shown. Preserve counterevidence and give the smallest supported proposal;
+no automatic deletion, title-based purge, or new general rule follows.
