@@ -363,25 +363,29 @@ def answer_of(door: dict, text: str) -> str:
 RAW_KEEP_BYTES = 256 * 1024  # one seat's kept output; a bound, not a quota
 
 
-def keep_raw(name: str, source: Path, sid: str | None = None) -> None:
+def keep_raw(name: str, source: Path, sid: str | None = None) -> str | None:
     """Copy a seat's output as received to `<archive>/raw/<host>/seat-raw/<seat id>-<name>.raw`.
 
     The panel dies with the review tree, so a refused seat's bytes would be gone before anyone
     could diagnose it (monitoring memo, section 4.2). The archive's raw store is durable and never
     pruned; nothing here can refuse a seat. `sid` is the launch's seat id (the launch line and the
-    spool dir carry it), so the file joins its launch exactly; a failed copy warns on stderr.
+    spool dir carry it), so the file joins its launch exactly. Return that id only after a
+    successful copy; a failed copy warns on stderr.
     """
     if not source.exists():
         return  # the seat wrote nothing
     try:
-        data = source.read_bytes()[:RAW_KEEP_BYTES]
+        with source.open('rb') as stream:
+            data = stream.read(RAW_KEEP_BYTES)
         if not data:
             return
         directory = transcript_spool.raw_dir() / 'seat-raw'
         transcript_spool.mkdir_private(directory)
-        target = directory / f'{sid or transcript_spool.seat_id()}-{name}.raw'
+        sid = sid or transcript_spool.seat_id()
+        target = directory / f'{sid}-{name}.raw'
         target.write_bytes(data)
         target.chmod(0o600)
+        return sid
     except Exception as error:  # as launch_line.record: bookkeeping, so no failure kind may refuse a seat
         print(f'gaze_seat: raw output of {name} not kept: {getattr(error, "strerror", None) or error}', file=sys.stderr)
 
@@ -653,13 +657,16 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             leftover.unlink(missing_ok=True)
         return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
-    keep_raw(args.name, last if wrote_last else staging, sid)
+    captured = staging.with_name(staging.name + '.stdout')
+    source = last if wrote_last else staging if staging.exists() else captured
+    raw_id = keep_raw(args.name, source, sid)
+    raw_link = f'; raw_id={raw_id}' if raw_id else ''
 
     def failed(reason: str) -> tuple[bool, str]:
         # The panel dies with the review tree; the status line is the durable record and reaches
         # permanent notes, so it carries only fields the harness owns: never CLI stderr or report text
         # (both stay in the local `.log` and report file; ticket 1378).
-        return False, f'{reason[:-1]}; door={args.runtime}, model={args.model})'
+        return False, f'{reason[:-1]}; door={args.runtime}, model={args.model}{raw_link})'
 
     if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
         return failed(outcome)  # a nonzero exit stays a failure even when the door wrote its file
@@ -680,7 +687,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     part = out.with_name(out.name + '.part')
     part.write_text(report, encoding='utf-8')
     part.rename(out)
-    return True, outcome
+    return True, outcome + f'; door={args.runtime}, model={args.model}{raw_link}'
 
 
 # Prefix- or context-anchored on purpose: no entropy or length rule, so UUID session ids and model ids survive.

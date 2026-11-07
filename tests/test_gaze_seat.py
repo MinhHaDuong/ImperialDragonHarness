@@ -36,6 +36,8 @@ fi
 case "$STUB_MODE" in
   aider-clear)
     printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
+  big-fail) head -c 300000 /dev/zero | tr '\000' x; exit 1 ;;
+  timeout) echo "partial"; sleep 5 ;;
   fail) echo "partial"; echo "stub: provider rejected the request" >&2; exit 1 ;;
   pi-unknown)
     # Pi on a provider that does not list the id: warns on stderr, answers anyway, exits 0
@@ -87,10 +89,11 @@ case "$STUB_MODE" in
     printf 'Aider v0.86.2\nModel: openai/x with ask edit format\nGit repo: none\nRepo-map: disabled\nAdded d.diff to the chat (read-only).\n\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n\nTokens: 1 sent, 2 received.\n' ;;
   aider-plain-notrun)
     printf 'Aider v0.86.2\nRepo-map: disabled\n\nNOT-RUN: tree unreachable\nTokens: 1\n' ;;
-  outfile|outfile-fail)
+  outfile|outfile-fail|outfile-timeout)
     # codex writes its last message to the -o file
     prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'reach: read=yes shell=no tests=not-run\nverdict: clear\n' > "$a"; prev="$a"; done
-    if [ "$STUB_MODE" = outfile-fail ]; then exit 2; fi ;;
+    if [ "$STUB_MODE" = outfile-fail ]; then exit 2; fi
+    if [ "$STUB_MODE" = outfile-timeout ]; then sleep 5; fi ;;
   *) printf 'reach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
 esac
 '''
@@ -1170,3 +1173,36 @@ def test_seat_completes_with_a_warning_when_no_archive_root_is_configured(rig):
     assert result.returncode == 0, result.stdout + result.stderr
     assert (rig['panel'] / 'correctness.md').exists()
     assert result.stderr.count('raw output of correctness not kept') == 1
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('mode', ['fail', 'timeout', 'outfile-fail', 'outfile-timeout'])
+def test_failed_output_retention_links_status_to_launch_after_cleanup(rig, mode):
+    result = launch(rig, '--cap', '1', runtime='codex', model='gpt-6-luna',
+                    family='OpenAI', home='OpenAI', mode=mode)
+    assert result.returncode == 1 and 'no report (' in result.stdout
+    assert ('timed out' if 'timeout' in mode else 'failed, exit') in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+    status = (rig['panel'] / 'correctness.md.status').read_text()
+    archive = Path(rig['env']['IDH_ARCHIVE_ROOT'])
+    (row,) = [json.loads(line) for line in next((archive / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
+    shutil.rmtree(rig['tree'])
+    copies = list((archive / 'raw').glob('*/seat-raw/*.raw'))
+    assert len(copies) == 1
+    (kept,) = copies
+    assert kept.read_text().startswith('reach:' if 'outfile' in mode else 'partial')
+    assert kept.name == f"{row['seat_id']}-correctness.raw"
+    assert f"raw_id={row['seat_id']}" in status
+    assert 'door=codex, model=gpt-6-luna' in status
+    assert row['exit'] == ('timeout' if 'timeout' in mode else (2 if 'outfile' in mode else 1))
+    assert kept.stat().st_size <= 256 * 1024
+    assert kept.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.integration
+def test_nonzero_stdout_retention_keeps_existing_cap(rig):
+    result = launch(rig, mode='big-fail')
+    assert result.returncode == 1 and 'failed, exit 1' in result.stdout
+    copies = list((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'raw').glob('*/seat-raw/*.raw'))
+    assert len(copies) == 1
+    assert copies[0].read_bytes() == b'x' * (256 * 1024)
