@@ -2,6 +2,7 @@
 Title: Recovery sentence on resume: check git and forge before repeating outside acts
 Created: 2026-11-01
 Author: claude
+Closed: autoclosed — PR #2248
 
 --- log ---
 2026-11-01T22:54Z claude created
@@ -9,6 +10,7 @@ Author: claude
 2026-11-07T18:49Z reviewer note Imagine/Plan: shared hunt entry plus raid recovery sentence covers coder; review interrupted-uncertain retry vs pause/known-complete counterexamples; prose checks only.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 2026-11-07T19:54Z reviewer note Worker attribution: runtime exposes only GPT-6, not a deployed model ID or effort; precise identity unavailable. Scope: two recovery paragraphs in hunt entry and raid checkpoint, no duplicate coder instruction or new rule/guard/test. Source-reading controls: uncertain interrupted retry requires immediate readback; ordinary pause/message and known-complete action require no extra check; coder already loads live hunt.
+2026-11-07T20:01Z reviewer closed — autoclosed — PR #2248
 
 --- body ---
 ## Context
