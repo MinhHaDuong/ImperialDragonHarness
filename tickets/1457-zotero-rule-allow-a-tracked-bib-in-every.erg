@@ -5,6 +5,8 @@ Author: claude
 
 --- log ---
 2026-11-07T13:55Z claude created
+2026-11-07T18:49Z reviewer note Imagine/Plan: tracked-bib permission and DOI/URL reader route; reconcile repeated rule/skill descriptions, retain Zotero authority and source-document boundary; no exporter or guard.
+2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 
 --- body ---
 ## Context

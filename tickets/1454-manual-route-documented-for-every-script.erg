@@ -6,41 +6,18 @@ Author: reviewer
 --- log ---
 2026-11-02T15:33Z reviewer created
 2026-11-07T13:32Z reviewer refiled from the 2026-11-02 uncommitted split (drafted as 1446; that number went to another ticket on main); guidance criterion ticked: landed in skills/harness-doctor/references/authoring-skills.md § Toolkit principles (310223ae, b5c1383a)
+2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
+2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
+2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 
 --- body ---
 Parent: 1444
 
 ## Context
-Author request (2026-11-02), second of the three principles split out of 1444:
-document a manual route that an agent can follow without running the helper
-script, to preserve useful procedures when automation is unavailable.
-
-## Scope
-The manual route describes inputs, decisions, checks, and outputs without
-requiring the helper script or newly written code. Keep one procedural
-specification that automation implements; explain any limits or extra cost of
-the manual route. Preserve authorization and verification requirements.
-Demonstrate on one existing scripted workflow (selected by the 1444 inventory).
-
-## Relevant files
-- rules/coding-python.md
-- skills/harness-doctor/references/authoring-skills.md
-- skills/skill-creator/SKILL.md, if present; otherwise locate its maintained source
-- rules/workflow.md (diagnosis discipline)
-- One existing scripted skill and its helper, selected after inventory
+Author clarification, 2026-11-07: first diagnose whether script-calling instructions recover from unavailable helpers. Transcript absence may reflect unavailable environments and cannot establish that a fallback works. No universal manual-route rewrite is commissioned.
 
 ## Exit criteria
-- [x] The maintained authoring guidance requires a documented manual route for
-      scripted workflows, derived from the same procedural specification the
-      automation implements.
-      Done: authoring-skills.md § Toolkit principles (310223ae, b5c1383a).
-- [ ] The selected workflow's manual route is demonstrated without its helper
-      and its outcome compared with automation on the same known input.
-- [ ] Run checks appropriate to changed files; regenerate generated guidance
-      or catalogs only when their sources change.
-
-## Verification
-Bounded procedural walkthrough and reproducible examples for the pilot. Add
-behavioral tests only where script behavior changes; do not pin prose with
-wording tests or introduce a new enforcement guard merely to police the
-principle.
+- [ ] Harness-doctor retains an on-demand reading diagnostic for missing, unavailable, and failing helper paths in a bounded set of script-calling instructions; inputs, decisions, checks, outputs, authorization, and verification are assessed.
+- [ ] A known recovery gap and an adequate route serve as controls; source locations and unexamined behavior are explicit. Transcript evidence is supplementary, not required to infer availability from silence.
+- [ ] A manual route is added only where the diagnostic establishes a concrete gap; otherwise report the bounded result and evidence limits. No blanket workflow rewrite.
+- [ ] No new general rule, routine healthcheck, scheduled sweep, merge gate, or prose-wording test.

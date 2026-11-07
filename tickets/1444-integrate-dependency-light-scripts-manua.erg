@@ -8,48 +8,19 @@ Author: codex
 2026-11-02T19:59Z Minh-Ha-Duong principles documented: README.md § Principles (values + principle/instances table); authoring-skills guide + stub carry the three toolkit principles (stdlib default, manual route, measurement limits)
 2026-11-04T15:59Z Minh-Ha-Duong PR pending: principles documented (README § Principles, authoring guide); only part of criterion 2. Inventory, pilot, manual-route comparison and unavailable-measurement demo remain.
 2026-11-07T13:32Z reviewer split into children 1453, 1454, 1455; parent kept as tracker with the shared inventory step
+2026-11-07T18:49Z reviewer note author replaced common-pilot implementation with on-demand doctor diagnostics; shared inventory remains here
+2026-11-07T18:49Z reviewer note inventory: authoring-skills Toolkit principles and workflow diagnosis discipline already own policy; repo_sources and deps AST infrastructure exist; doctor diagnostic menu/reference is the remaining integration gap; no new policy or common pilot.
 
 --- body ---
 ## Context
-The author requests integration of three harnessing principles: keep scripts
-dependency-free using standard Python where practical; document a manual route
-that an agent can follow without running the script; and accept an explicit
-"I cannot measure this" when evidence is insufficient. These reduce installation
-failures, preserve useful procedures when automation is unavailable, and reduce
-pressure to invent results.
+Author decisions, 2026-11-07: existing toolkit principles need diagnostic tools in harness-doctor, not more rules. The former common-pilot implementation requirement is superseded.
 
 ## Children
-- 1453 dependency-light scripts: standard-library default in authoring guidance
-- 1454 manual route documented for every scripted workflow
-- 1455 honest measurement limits: measured, derived, estimated, unavailable
-
-The three principles are already stated in README.md § Principles and
-skills/harness-doctor/references/authoring-skills.md § Toolkit principles
-(310223ae, b5c1383a); the children carry the pilot and demonstrations.
-
-## Scope
-Shared first step for all children: inventory existing guidance -- dependency
-management, manual-procedure documentation, and diagnosis discipline -- and
-record where each principle already exists and the remaining integration gaps.
-Reconcile overlaps rather than adding a parallel rule set. Select one existing
-scripted workflow as the common pilot for the children.
-
-## Relevant files
-- rules/coding-python.md
-- skills/harness-doctor/references/authoring-skills.md
-- skills/skill-creator/SKILL.md, if present; otherwise locate its maintained source
-- rules/workflow.md (diagnosis discipline)
-- One existing scripted skill and its helper, selected after inventory
+- 1453 dependency inspection under existing policy
+- 1454 diagnostic for helper recovery instructions
+- 1455 diagnostic for unavailable evidence becoming false
 
 ## Exit criteria
-- [ ] Inventory recorded: where each principle already exists and the remaining
-      integration gaps (done once here, shared by 1453, 1454, 1455).
-- [ ] All three children closed.
-- [ ] Integration review per roar step 8.
-
-## Verification
-Use a bounded procedural walkthrough and reproducible examples for the pilot.
-Add behavioral tests only where script behavior changes; do not pin prose with
-wording tests or introduce a new enforcement guard merely to police the principles.
-This ticket authorizes integration work, not immediate replacement of every
-existing dependency or a repository-wide rewrite.
+- [ ] Record once where existing policy and diagnostic/source infrastructure live and what integration gaps remain.
+- [ ] All three children closed, with reusable on-demand diagnostics and controls; no routine healthcheck or merge-gate wiring.
+- [ ] Integration review per roar step 8 verifies the three diagnostics compose without introducing new general rules or treating unavailable evidence as a clean audit.

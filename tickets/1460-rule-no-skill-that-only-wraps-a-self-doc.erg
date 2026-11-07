@@ -5,27 +5,16 @@ Author: reviewer
 
 --- log ---
 2026-11-07T16:50Z reviewer created
+2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
+2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
+2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 
 --- body ---
 ## Context
-
-Promotion requested by the author (padme native-note triage, 2026-11-07; padme
-smelt report `memory/smelts/2026-11-07-first-skill-smelt.md`). The Claude Code
-native note `feedback_no_wrapper_skills.md` records the author's ruling of
-2026-06-06 (padme PR #7 deleted three ticket wrapper skills): "/ticket-new,
-/ticket-ready, /ticket-close should not exist at all. Our instructions should
-be sufficient so that the smart model do erg new, erg ready and erg close."
-A skill that adds no logic beyond invoking one self-documenting CLI is not
-written; the direct invocation goes in the project instructions. Reason: KISS,
-and wrappers drift (v1-era skills survived two format generations).
-`rules/authoring-skills.md` does not cover it.
-
-## Destination
-
-`rules/authoring-skills.md`. Wording is the harness's call.
+Author clarification, 2026-11-07: CLI-wrapper redundancy belongs in harness-doctor's diagnostics, not a new skill-builder rule. Compare actual added behavior before proposing deletion.
 
 ## Exit criteria
-
-- [ ] `rules/authoring-skills.md` says a skill that only wraps one
-  self-documenting CLI is not created, and an existing one is proposed for
-  deletion.
+- [ ] Harness-doctor retains an on-demand comparison of a candidate skill's decisions, checks, recovery, output contract, and discoverability with the CLI and project instructions.
+- [ ] A known pure wrapper and an adequate skill are controls, supported by their actual bodies rather than title/command-count inference; inspect a bounded current candidate set.
+- [ ] Propose deletion only for an established redundant wrapper, preserving findings and evidence limits. No title-based purge or automatic deletion.
+- [ ] No new skill-builder rule, routine healthcheck, scheduled sweep, or merge-gate integration.

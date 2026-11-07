@@ -6,43 +6,18 @@ Author: reviewer
 --- log ---
 2026-11-02T15:33Z reviewer created
 2026-11-07T13:32Z reviewer refiled from the 2026-11-02 uncommitted split (drafted as 1447; that number went to another ticket on main); guidance criterion ticked: landed in skills/harness-doctor/references/authoring-skills.md § Toolkit principles (310223ae, b5c1383a)
+2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
+2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
+2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
 
 --- body ---
 Parent: 1444
 
 ## Context
-Author request (2026-11-02), third of the three principles split out of 1444:
-accept an explicit "I cannot measure this" when evidence is insufficient, to
-reduce pressure to invent results.
-
-## Scope
-Measurement outputs distinguish measured, derived, estimated, and unavailable
-results. An unavailable result states the missing evidence, what was attempted,
-and what would permit measurement. Missing access or failed execution must not
-be reported as zero, absence, or an all-clear. Integrate into the maintained
-authoring guidance (diagnosis discipline in rules/workflow.md) and demonstrate
-on one existing scripted workflow (selected by the 1444 inventory).
-
-## Relevant files
-- rules/coding-python.md
-- skills/harness-doctor/references/authoring-skills.md
-- skills/skill-creator/SKILL.md, if present; otherwise locate its maintained source
-- rules/workflow.md (diagnosis discipline)
-- One existing scripted skill and its helper, selected after inventory
+Author clarification, 2026-11-07: the harness already repeats that not observed does not mean false. Diagnose failures in transcript evidence rather than adding another rule.
 
 ## Exit criteria
-- [x] The maintained authoring guidance states the measured / derived /
-      estimated / unavailable taxonomy and the rule that missing access or
-      failed execution is never reported as zero, absence, or an all-clear.
-      Done: authoring-skills.md § Toolkit principles (310223ae, b5c1383a).
-- [ ] An unavailable-measurement case and a positive control are demonstrated,
-      showing that missing evidence cannot produce a fabricated result or
-      all-clear.
-- [ ] Run checks appropriate to changed files; regenerate generated guidance
-      or catalogs only when their sources change.
-
-## Verification
-Bounded procedural walkthrough and reproducible examples for the pilot. Add
-behavioral tests only where script behavior changes; do not pin prose with
-wording tests or introduce a new enforcement guard merely to police the
-principle.
+- [ ] Harness-doctor retains an on-demand semantic diagnostic pairing a failed/unavailable observation with a subsequent claim of false, zero, absence, or all-clear; specify sample/window/runtime coverage and evidence limits.
+- [ ] Controls distinguish an unsupported absence claim, a genuinely observed zero, and explicit unknown. A keyword hit or content-free digest alone is not a semantic verdict.
+- [ ] Demonstrate a bounded authorized sample or report precisely why semantic inspection is unavailable. An empty audit is valid only for material actually inspected; never turn unavailable evidence into no finding.
+- [ ] No new taxonomy rule, routine healthcheck, scheduled sweep, automatic classifier verdict, or merge-gate integration.
