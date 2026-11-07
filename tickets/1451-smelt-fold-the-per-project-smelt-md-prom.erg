@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Smelt: fold the per-project SMELT.md prompt into the skill
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T11:53Z reviewer created
+
+--- body ---
+## Context
+
+Found by a /smelt run on sen-causal-reading (2026-11-07): the project has no
+`memory/SMELT.md`, so `scripts/smelt_migrate.py` refuses with "Missing memory
+consolidation prompt", and the harness ships no starter prompt
+(`conception/memory-v8/templates/` has none).
+
+An audit of every copy shows the per-project prompt is generic text copied,
+not a real editorial layer:
+
+| Project | File | Base | Local content |
+|---|---|---|---|
+| harness | memory/SMELT.md 10.1 KB | v8-r5 | journal sizes, size-script path, ticket 1349 |
+| padme | memory/SMELT.md 6.3 KB | v8-r2 (as r3-padme1) | rules + native-store paths; re-encryption limited to topics so encrypted journal entries stay append-only |
+| climate-finance-het | memory/DREAM.md 6.4 KB | v8-r1 | rules paths; 2026-10-14 native-notes import annex location |
+| JETP-observer (+ arena/repos and .codex clones) | memory/DREAM.md 5.7 KB | v8-r1 | none (carries the temp-ciphertext fix later adopted upstream) |
+
+Findings: (1) all project copies are 1–4 revisions stale: no topic job, no
+4 KB cap, no attribution skip, while SKILL.md points into
+"memory/SMELT.md § Job of a topic and caps" and "§ Rebuild" (dependency runs
+the wrong way); (2) generic fixes made in one copy do not propagate (padme's
+append-only clarification for encrypted journal entries is still implicit in
+r5); (3) the only truly local facts are locations (rules, native store,
+import annex). Overlaps ticket 1443 (memory redesign): this is a bounded
+step inside it, not a competing redesign.
+
+## Decision
+
+Author authorised this work on 2026-11-07 on the recommended option:
+**no per-project prompt**. All generic consolidation text lives in the smelt
+skill (SKILL.md + references/); local facts become one or two lines in the
+project's `memory/MEMORY.md` (or a SOURCES.md it links). Fallback if the
+implementer finds a genuine editorial divergence: a thin optional
+`memory/SMELT.md` holding only overrides, absent = defaults. Report the
+revision of the skill (not of a project prompt) in each smelt report.
+
+## Exit criteria
+
+- [ ] Generic content of `memory/SMELT.md` (Read, Rebuild, Job of a topic and caps, Consolidate, Coherence, Encrypted entries, Report, Bounds) lives in `skills/smelt/` with no duplication against SKILL.md; padme's append-only rule for encrypted journal entries is stated explicitly
+- [ ] SKILL.md no longer depends on a project file for caps or the size helper; the size helper is invoked from `$IDH_ROOT`
+- [ ] `scripts/smelt_migrate.py` treats a missing prompt as the default (no refusal); legacy DREAM.md/HOARD.md/SMELT.md copies are retired by the migration with their local location facts carried into the index; tests updated
+- [ ] `conception/memory-v8/templates/` and live memory docs updated to match
+- [ ] The harness's own `memory/SMELT.md` is retired (harness-only facts moved to its index/topics)
+- [ ] One ticket filed in each of padme, JETP-observer, climate-finance-het to retire their copy on next smelt (cross-project: tickets only, no edits there)
+- [ ] Log on ticket 1443 linking this ticket
+- [ ] Harness gate passes
