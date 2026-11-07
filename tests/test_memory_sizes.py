@@ -113,6 +113,7 @@ def test_bad_before_ref_exits_with_a_message(tmp_path):
     assert "--before" in str(exc.value)
 
 
+@pytest.mark.integration
 def test_before_ref_resolves_in_the_measured_project(tmp_path, capsys):
     """Ticket 1451: run from $IDH_ROOT against another project, --before reads that project's git."""
     from child_env import child_env
