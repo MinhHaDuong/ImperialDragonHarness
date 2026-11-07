@@ -1,0 +1,54 @@
+%erg 0.1
+Title: check-staging: filename noise yields false absent verdicts
+Created: 2026-11-07
+Author: claude
+
+--- log ---
+2026-11-07T13:55Z claude created
+
+--- body ---
+## Context
+
+Reported from sen-causal-reading (design note
+`conception/2026-11-07-citation-index.md`, PR MinhHaDuong/sen-causal-reading#137).
+
+`zotero.py check-staging .` over that repository's `docs/` (141 files, no
+`.bib`) returned 70 `identical`, 57 `unidentified`, 14 `absent` on
+2026-11-07. All 14 `absent` are false negatives: each work is in the library,
+11 with a byte-identical stored file (md5 equal). Every row consulted
+`title` only; the title was built from the filename, and suffixes made
+Zotero's search miss:
+
+| Staged file | Item | Stored md5 equal |
+|---|---|---|
+| `Bareinboim-2022-On-Pearls-Hierarchy-R60.pdf` | BWY4IER7 | yes |
+| `Beckman-Hertel-2009-Validating-Energy-Oriented-CGE-Models-GTAP-WP54.pdf` | LB8QDSEH | yes |
+| `Ghersi-2026-Closing-Models-Opening-Debates-libreoffice-render.pdf` | NPNVTNBE | yes |
+| `Hoover-2012-Economic-Theory-and-Causal-Inference.pdf` | 6V4A3PTA | yes |
+| `Kehoe-Polo-Sancho-1995-Evaluation-Performance-Applied-General-Equilibrium-Spain-WP480.pdf` | VY7MGKM3 | yes |
+| `Lewis-1954-Economic-Development-Unlimited-Supplies-Labour-Manchester-School-vol22.pdf` | KVSD2GPM | yes |
+| `Simon-1953-Causal-Ordering-and-Identifiability-chapter-3.pdf` | 6XEHKDZV | yes |
+| `Simon-1953-Causal-Ordering-and-Identifiability-Cowles-Monograph-14.pdf` | KQW8I25L | yes |
+| `Valenzuela-2005-Assessing-Global-CGE-Model-Validity-GTAP-WP32.pdf` | RXBF4WWN | yes |
+| `Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf` | DW7FSIVM | yes |
+| `Yuan-Burfisher-2021-Alternative-Macroeconomic-Closures-Bangladesh.pdf` | 8EAF4MNQ | yes |
+| `Marglin-1984-Growth-Distribution-and-Prices-scan.pdf` | SKUH3V4V | no (other copy) |
+| `dewatripont-michel-1987-source.html` | 5B85I75T | no (HTML beside PDF) |
+| `ssrn-5045204-wayback-20250429.html` | NPNVTNBE | no (landing page) |
+
+Ticket 1269 (filename-title retry, PR #1775) was already merged in the
+helper that produced these rows: a retry with the filename does not help when
+the filename is the noise. The `absent` action column says `create-items`,
+so following the report mints duplicates.
+
+## Exit criteria
+
+- [ ] Before a title search built from a filename, the helper drops
+      non-title tokens (report numbers such as `R60`, `WP480`, `GTAP-WP54`;
+      `scan`, `render`, `chapter-N`, `vol22`, venue suffixes), or falls back
+      to author + year + first title words.
+- [ ] A row whose only key was a filename-derived title and that finds
+      nothing is reported as `unidentified` or `candidates`, never `absent`.
+- [ ] A test reproduces at least three rows of the table above (fixture
+      titles, no live Zotero) and passes.
+- [ ] Rerun on sen-causal-reading `docs/`: no row of the table is `absent`.
