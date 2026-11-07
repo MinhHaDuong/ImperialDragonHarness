@@ -1,5 +1,5 @@
 %erg 0.1
-Title: Rule: bash for system checks, Python for LLM calls, Rust for high-frequency loops
+Title: Doctor diagnostic: historical implementation-language choices
 Created: 2026-11-07
 Author: reviewer
 
