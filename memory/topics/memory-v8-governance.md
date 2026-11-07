@@ -1,6 +1,6 @@
 # Architecture: the memory system
 
-Scope: this repository's project memory (prompt `memory/SMELT.md` v8-r5) and
+Scope: this repository's project memory (no local prompt since 1451) and
 how runtimes reach it. Checked against the tree 2026-11-01.
 
 ## Current guidance
@@ -25,12 +25,13 @@ how runtimes reach it. Checked against the tree 2026-11-01.
 - Delivery PR list (#1093-#1102, #1137, #1147, #1150), 0909/0913/0912/0919 closures, 1106 path migration, third-consolidation test-pin removal: completed history, kept in journal and git.
 - Attribution backfill counts (34/65/69) and producer-versus-recorder notes #1423-#1430: history; records in `memory/evidence/attribution/`.
 - Trial details (link catch, detached flags, no cwd, concurrent sessions, Pi credit depletion, retired-helper and slug-collision probes): single-sample history; runtime launch facts belong to the runtimes page.
-- AGENTS.md append-only wording versus the attribution move: resolved by f78334e6 and the SMELT.md Bounds carve-out.
+- AGENTS.md append-only wording versus the attribution move: resolved by f78334e6 and the smelt Bounds carve-out (now in the smelt skill).
 - Legacy advice to derive rules from consolidation: retired by v8 and the author's 2026-10-01 RETIRE LEGACY direction.
 - `memory/pending-capture-pr1211.md.txt`: resolved by 1038.
 - Merged page `memory-v8-acceptance-trial.md`: folded into this page.
 - "Departments provisional until 1349 closes" / "1349 closes on author acceptance": 1349 closed 2026-10-31 (PR #2049, 52f63b18).
 - Prompt revision v8-r4: superseded by v8-r5 (2026-10-30).
+- Per-project prompt `memory/SMELT.md` v8-r5: retired by ticket 1451; its generic text is `skills/smelt/references/consolidation.md`, its local facts (journal size, 1349) already on this page.
 
 ## Sources
 
