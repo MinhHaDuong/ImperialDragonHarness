@@ -70,9 +70,10 @@ def _checkout_ref(ref: str, topics_dir: Path, dest: Path) -> Path:
     into dest (read-only plumbing)."""
     try:
         names = subprocess.run(
-            ["git", "-C", str(topics_dir), "ls-tree", "--full-tree", "--name-only", f"{ref}:./"],
+            ["git", "-C", str(topics_dir), "ls-tree", "-z", "--full-tree", "--name-only", f"{ref}:./"],
             check=True, capture_output=True, text=True,
-        ).stdout.split()
+        ).stdout.split("\0")
+        names = [name for name in names if name]
     except subprocess.CalledProcessError as exc:
         sys.exit(f"memory_sizes: --before {ref!r} is neither a directory nor a git ref holding {topics_dir}: {exc.stderr.strip()}")
     for name in names:
