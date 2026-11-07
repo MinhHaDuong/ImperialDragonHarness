@@ -1,0 +1,636 @@
+{
+  "raid": "d35fb4",
+  "snapshot_at": "2026-11-07T22:47:33.470297+00:00",
+  "snapshot_scope": "commissioned deliveries; shared roar bundle has its own subsequent landing",
+  "targets": [
+    1464,
+    1440,
+    1461,
+    1445
+  ],
+  "latest_pr_states": {
+    "2256": {
+      "epoch": 1794090264,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2256",
+      "ticket": "1464",
+      "step": "merged"
+    },
+    "2258": {
+      "epoch": 1794090639,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2258",
+      "ticket": "1440",
+      "step": "merged"
+    },
+    "2259": {
+      "epoch": 1794090965,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2259",
+      "ticket": "1461",
+      "step": "merged"
+    },
+    "2257": {
+      "epoch": 1794091580,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2257",
+      "ticket": "1445",
+      "step": "merged"
+    }
+  },
+  "timing_rows": [
+    {
+      "pr": "2256",
+      "step": "gaze",
+      "start": 1794089703,
+      "end": 1794089801,
+      "duration_seconds_derived": 98.0
+    },
+    {
+      "pr": "2256",
+      "step": "gate",
+      "start": 1794089936,
+      "end": 1794090164,
+      "duration_seconds_derived": 228.0
+    },
+    {
+      "pr": "2256",
+      "step": "merge",
+      "start": 1794090178,
+      "end": 1794090235,
+      "duration_seconds_derived": 57.0
+    },
+    {
+      "pr": "2258",
+      "step": "gaze",
+      "start": 1794090272,
+      "end": 1794090389,
+      "duration_seconds_derived": 117.0
+    },
+    {
+      "pr": "2258",
+      "step": "gate",
+      "start": 1794090391,
+      "end": 1794090571,
+      "duration_seconds_derived": 180.0
+    },
+    {
+      "pr": "2258",
+      "step": "merge",
+      "start": 1794090578,
+      "end": 1794090613,
+      "duration_seconds_derived": 35.0
+    },
+    {
+      "pr": "2259",
+      "step": "gaze",
+      "start": 1794090648,
+      "end": 1794090764,
+      "duration_seconds_derived": 116.0
+    },
+    {
+      "pr": "2259",
+      "step": "gate",
+      "start": 1794090791,
+      "end": 1794090912,
+      "duration_seconds_derived": 121.0
+    },
+    {
+      "pr": "2259",
+      "step": "merge",
+      "start": 1794090912,
+      "end": 1794090946,
+      "duration_seconds_derived": 34.0
+    },
+    {
+      "pr": "2257",
+      "step": "gaze",
+      "start": 1794090989,
+      "end": 1794091150,
+      "duration_seconds_derived": 161.0
+    },
+    {
+      "pr": "2257",
+      "step": "gaze",
+      "start": 1794091223,
+      "end": 1794091324,
+      "duration_seconds_derived": 101.0
+    },
+    {
+      "pr": "2257",
+      "step": "gate",
+      "start": 1794091360,
+      "end": 1794091520,
+      "duration_seconds_derived": 160.0
+    },
+    {
+      "pr": "2257",
+      "step": "merge",
+      "start": 1794091520,
+      "end": 1794091565,
+      "duration_seconds_derived": 45.0
+    },
+    {
+      "pr": "2255",
+      "step": "merge",
+      "start": 1794089322,
+      "end": 1794089365,
+      "duration_seconds_derived": 43.0
+    }
+  ],
+  "timing_limits": "Durations are arithmetic end minus start from coordinator clock rows; 2256 gate end is its notes-entry timestamp.",
+  "additional_provider_purchases_usd": 0,
+  "native_account_usage_usd": null,
+  "native_usage_status": "unpriced and unavailable; never treated as zero",
+  "additional_paid_provider_calls": "none launched",
+  "advisor_grants": [],
+  "model_identity": "native served identities and verified effort masked; requested pins are not observed identities",
+  "historical_attribution_backfill": {
+    "appended": 0,
+    "no_match": 0,
+    "unresolved": 271
+  },
+  "historical_backfill_limit": "No exact past reviewed-coordinate evidence was supplied; unresolved is not a finding of defects or a claim of coverage.",
+  "publication": "author-review drafts only; no HAL deposit or blog publication",
+  "tracker": "1377 remains open; 1465 deferred",
+  "events": [
+    {
+      "epoch": 1794089108,
+      "event": "RAID_START",
+      "targets": "1464,1440,1461,1445",
+      "lead": "night_raid",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089117,
+      "event": "LEDGER",
+      "raid": "d35fb4",
+      "cash_spent_measured": "0",
+      "cash_inflight": "0",
+      "cash_default_cap": "0",
+      "hard_cash_ceiling": "10",
+      "native_usage": "unpriced_native_unknown",
+      "no_paid_calls": "true"
+    },
+    {
+      "epoch": 1794089132,
+      "event": "QUEUE",
+      "raid": "d35fb4",
+      "n": "4"
+    },
+    {
+      "epoch": 1794089132,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089213,
+      "event": "WAVE",
+      "raid": "d35fb4",
+      "n": "0",
+      "tickets": "1464,1440,1461,1445"
+    },
+    {
+      "epoch": 1794089240,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089381,
+      "event": "WAVE_BASE",
+      "raid": "d35fb4",
+      "sha": "057e5dd81b2a03543cde054b07cb7f74e42d8212"
+    },
+    {
+      "epoch": 1794089381,
+      "event": "WAVE",
+      "raid": "d35fb4",
+      "n": "1",
+      "tickets": "1464,1440,1461,1445"
+    },
+    {
+      "epoch": 1794089381,
+      "event": "LEDGER",
+      "raid": "d35fb4",
+      "spent": "0",
+      "inflight": "0",
+      "projected": "0",
+      "cap": "0",
+      "measurement": "additional_provider_purchases",
+      "native_usage": "unpriced_unknown",
+      "hard_ceiling": "10"
+    },
+    {
+      "epoch": 1794089381,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089674,
+      "event": "PROGRESS",
+      "raid": "d35fb4",
+      "ticket": "1464",
+      "observation": "worker_reports_offline_regressions_green"
+    },
+    {
+      "epoch": 1794089674,
+      "event": "PROGRESS",
+      "raid": "d35fb4",
+      "ticket": "1445",
+      "observation": "worker_reports_hermetic_local_example_pass"
+    },
+    {
+      "epoch": 1794089685,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089777,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2256",
+      "ticket": "1464",
+      "step": "gaze"
+    },
+    {
+      "epoch": 1794089777,
+      "event": "QUEUE",
+      "raid": "d35fb4",
+      "n": "3"
+    },
+    {
+      "epoch": 1794089777,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794089936,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2256",
+      "ticket": "1464",
+      "step": "gate_round_1"
+    },
+    {
+      "epoch": 1794090017,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090095,
+      "event": "QUEUE",
+      "raid": "d35fb4",
+      "n": "3",
+      "tickets": "1440,1461,1445",
+      "state": "awaiting-1464-bridge",
+      "owner": "remaining-lead"
+    },
+    {
+      "epoch": 1794090221,
+      "event": "LEDGER",
+      "raid": "d35fb4",
+      "spent": "0",
+      "inflight": "0",
+      "projected": "0",
+      "cap": "0",
+      "measurement": "additional_provider_purchases",
+      "native_usage": "unpriced_unknown",
+      "hard_ceiling": "10"
+    },
+    {
+      "epoch": 1794090221,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090264,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2256",
+      "ticket": "1464",
+      "step": "merged"
+    },
+    {
+      "epoch": 1794090264,
+      "event": "WAVE_BASE",
+      "raid": "d35fb4",
+      "sha": "767eae19898a368d134a83037d13f83cf350549b"
+    },
+    {
+      "epoch": 1794090265,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2256",
+      "step": "gaze",
+      "start": "1794089703",
+      "end": "1794089801"
+    },
+    {
+      "epoch": 1794090265,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2256",
+      "step": "gate",
+      "start": "1794089936",
+      "end": "1794090164"
+    },
+    {
+      "epoch": 1794090265,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2256",
+      "step": "merge",
+      "start": "1794090178",
+      "end": "1794090235"
+    },
+    {
+      "epoch": 1794090272,
+      "event": "WAVE_BASE",
+      "raid": "d35fb4",
+      "sha": "767eae19898a368d134a83037d13f83cf350549b"
+    },
+    {
+      "epoch": 1794090272,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2258",
+      "ticket": "1440",
+      "step": "gaze"
+    },
+    {
+      "epoch": 1794090291,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090375,
+      "event": "PROGRESS",
+      "raid": "d35fb4",
+      "ticket": "1464",
+      "observation": "roar_claims_clean_tracker_open_capture_validated"
+    },
+    {
+      "epoch": 1794090375,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090390,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2258",
+      "ticket": "1440",
+      "step": "gate_round_1"
+    },
+    {
+      "epoch": 1794090460,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090522,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090571,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2258",
+      "step": "gaze",
+      "start": "1794090272",
+      "end": "1794090389"
+    },
+    {
+      "epoch": 1794090571,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2258",
+      "step": "gate",
+      "start": "1794090391",
+      "end": "1794090571"
+    },
+    {
+      "epoch": 1794090616,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090619,
+      "event": "LEDGER",
+      "raid": "d35fb4",
+      "spent": "0",
+      "inflight": "0",
+      "projected": "0",
+      "cap": "0",
+      "measurement": "additional_provider_purchases",
+      "native_usage": "unpriced_unknown",
+      "hard_ceiling": "10"
+    },
+    {
+      "epoch": 1794090639,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2258",
+      "ticket": "1440",
+      "step": "merged"
+    },
+    {
+      "epoch": 1794090639,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2258",
+      "step": "merge",
+      "start": "1794090578",
+      "end": "1794090613"
+    },
+    {
+      "epoch": 1794090648,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2259",
+      "ticket": "1461",
+      "step": "gaze"
+    },
+    {
+      "epoch": 1794090758,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090802,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2259",
+      "step": "gaze",
+      "start": "1794090648",
+      "end": "1794090764"
+    },
+    {
+      "epoch": 1794090802,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2259",
+      "ticket": "1461",
+      "step": "gate_round_1"
+    },
+    {
+      "epoch": 1794090824,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090912,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2259",
+      "step": "gate",
+      "start": "1794090791",
+      "end": "1794090912"
+    },
+    {
+      "epoch": 1794090932,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794090965,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2259",
+      "ticket": "1461",
+      "step": "merged"
+    },
+    {
+      "epoch": 1794090965,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2259",
+      "step": "merge",
+      "start": "1794090912",
+      "end": "1794090946"
+    },
+    {
+      "epoch": 1794090989,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2257",
+      "ticket": "1445",
+      "step": "gaze"
+    },
+    {
+      "epoch": 1794091122,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794091138,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794091283,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2257",
+      "step": "gaze",
+      "start": "1794090989",
+      "end": "1794091150"
+    },
+    {
+      "epoch": 1794091283,
+      "event": "PROGRESS",
+      "raid": "d35fb4",
+      "ticket": "1445",
+      "observation": "actual-gaze-finding-fixed-isolated-fixture",
+      "newhead": "1609a9a05e4a80d0863b6fffc5fa02707f6a127f"
+    },
+    {
+      "epoch": 1794091303,
+      "event": "CHECK_FAILURE",
+      "raid": "d35fb4",
+      "ticket": "1445",
+      "pr": "2257",
+      "kind": "live_notes_concurrency",
+      "old_head": "80ce2d80",
+      "result": "FINDINGS",
+      "fix": "1609a9a0"
+    },
+    {
+      "epoch": 1794091303,
+      "event": "SITREP",
+      "raid": "d35fb4"
+    },
+    {
+      "epoch": 1794091370,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2257",
+      "step": "gaze",
+      "start": "1794091223",
+      "end": "1794091324"
+    },
+    {
+      "epoch": 1794091370,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2257",
+      "ticket": "1445",
+      "step": "gate_round_1"
+    },
+    {
+      "epoch": 1794091520,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2257",
+      "step": "gate",
+      "start": "1794091360",
+      "end": "1794091520"
+    },
+    {
+      "epoch": 1794091580,
+      "event": "PR",
+      "raid": "d35fb4",
+      "n": "2257",
+      "ticket": "1445",
+      "step": "merged"
+    },
+    {
+      "epoch": 1794091580,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2257",
+      "step": "merge",
+      "start": "1794091520",
+      "end": "1794091565"
+    },
+    {
+      "epoch": 1794091653,
+      "event": "QUEUE",
+      "raid": "d35fb4",
+      "n": "0"
+    },
+    {
+      "epoch": 1794091653,
+      "event": "TIMING",
+      "raid": "d35fb4",
+      "pr": "2255",
+      "step": "merge",
+      "start": "1794089322",
+      "end": "1794089365"
+    }
+  ],
+  "ticket_bump_tally_rows": [],
+  "ticket_bump_tally_warnings": [],
+  "target_bump_counts_derived": {
+    "1464": 0,
+    "1440": 0,
+    "1461": 0,
+    "1445": 0
+  },
+  "bump_count_basis": "Complete successful tally, no warning, positive rows for other tickets; no counted bump row for these four targets. The pre-gate FINDINGS is separately preserved, not a verify-gate reroll."
+}
