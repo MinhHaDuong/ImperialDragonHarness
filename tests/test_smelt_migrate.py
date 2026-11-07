@@ -8,6 +8,11 @@ import pytest
 
 from child_env import child_env
 
+# Nearly every fixture commits with git: the retire check reads HEAD for real
+# (ticket 1451), so faking it would test less. The module is integration tier
+# (ticket 1452).
+pytestmark = pytest.mark.integration
+
 SPEC = importlib.util.spec_from_file_location(
     "smelt_migrate", Path(__file__).resolve().parents[1] / "scripts/smelt_migrate.py"
 )
@@ -66,7 +71,6 @@ def test_migrate_preserves_evidence_and_is_repeatable(project):
     assert tree(project) == after
 
 
-@pytest.mark.integration
 def test_dry_run_and_explicit_reference(project):
     (project / "AGENTS.md").write_text("Read memory/DREAM.md and memory/dreams/\n")
     before = tree(project)
@@ -190,6 +194,7 @@ def test_project_smelt_prompt_is_retired_and_its_references_named(tmp_path):
     assert after["memory/smelts/new.md"] == before["memory/smelts/new.md"]
     repeat = migrate.plan_migration(tmp_path)
     assert not repeat.retired and not repeat.moves and not repeat.edits
+    assert repeat.stale == ("memory/MEMORY.md",)  # ticket 1452: still named after retirement
 
 
 def test_failed_rollback_retains_recovery_files(project, monkeypatch):
@@ -277,7 +282,6 @@ def test_unrelated_paths_and_urls_are_preserved(project):
         assert (project / name).read_bytes() == before[name]
 
 
-@pytest.mark.integration
 def test_retired_helpers_preserve_their_historical_identity(project):
     # A real topic naming the retired helpers, as it stood before the fifth smelt merged it.
     actual_topic = subprocess.run(
