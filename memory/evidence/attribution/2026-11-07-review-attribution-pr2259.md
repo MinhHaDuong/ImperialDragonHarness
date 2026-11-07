@@ -1,0 +1,7 @@
+kind: review-attribution
+pr: 2259 · merged 2026-11-07 · project: harness
+writer: step=plan · runtime=codex · model-state=runtime-masked · model-evidence=tickets/closed/1461-smelt-native-note-triage-nominates-rule.erg:16 · effort=not-stated · route=native · independence=not-stated
+writer: step=execute · runtime=codex · model-state=runtime-masked · model-evidence=tickets/closed/1461-smelt-native-note-triage-nominates-rule.erg:16 · effort=not-stated · route=native · independence=not-stated
+reviewer: step=review · seat=correctness · runtime=codex · model-state=runtime-masked · model-evidence=memory/journal/2026/2026-11-07-raid-d35fb4.md:35 · effort=not-stated · route=native-subagent · independence=not-stated · status: ran
+
+Planning contributions came from the native planning context and coordinator; the coordinator implemented both skill-body changes. The actual gaze reviewer was the fresh remaining_lead/gaze_2259 context, distinct from implementation. Gaze answer 20261107T223244107Z-padme-af271494 on rv-20261107-pr-2259-8f6d examined merged head e323b5dd7a219fd73d98cce07f07d6c6f26beb01, REVIEWED with plan check PASS and no findings. Gate round 1 APPROVED is entry 20261107T223455879Z-padme-9e8a49ed. Touched tests were skipped for the body-only change; they were not reported as passed. Served identity and effort were unavailable, and requested pins were not substituted. No reviewer attempt is omitted.
