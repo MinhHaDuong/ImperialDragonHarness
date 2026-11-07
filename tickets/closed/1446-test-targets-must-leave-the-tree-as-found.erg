@@ -2,12 +2,15 @@
 Title: Tracker: test targets leave the tree as found
 Created: 2026-11-04
 Author: Minh Ha-Duong
+Closed: integrated children1462 and1463 with explicit coverage and retained-evidence limits
 
 --- log ---
 2026-11-04T15:49Z Minh Ha-Duong created
 2026-11-04T16:28Z Minh-Ha-Duong redesigned with the author: doc + injunction + no guard + test-doctor throwaway-worktree probe + sweep (was: harden yawn's probe)
 2026-11-04T16:30Z Minh-Ha-Duong author: yawn stays read-only; contract is make test read-only on a clean repo; yawn runs tests only on a clean tree
 2026-11-07T18:49Z reviewer note decomposed into 1462 harness implementation and 1463 dependent one-time sweep; parent requires integration review
+2026-11-07T21:30Z reviewer note integration complete: children1462/1463 diffs and union read; physical full after-merge PASS2fed6f71 includes pytest-guard/lint; finite sweep4pass/2inconclusive/5unprobed, VN unavailable not pass; diagnostic-only/no autowiring retained.
+2026-11-07T21:30Z reviewer closed — integrated children1462 and1463 with explicit coverage and retained-evidence limits
 
 --- body ---
 
@@ -71,19 +74,19 @@ store there).
 
 ## Exit criteria
 
-- [ ] `project-state.py --tests` runs the test target only when
+- [x] `project-state.py --tests` runs the test target only when
       `git status --porcelain` is empty, else reports `skip: dirty tree`;
       test: a fixture with an untracked file and a deleting `test` target
       keeps the file after the probe.
-- [ ] Yawn's SKILL.md keeps "read-only" and states the clean-tree
+- [x] Yawn's SKILL.md keeps "read-only" and states the clean-tree
       precondition and the project contract it relies on.
-- [ ] The test-target injunction is in the rule set where project-facing
+- [x] The test-target injunction is in the rule set where project-facing
       rules live, one sentence, with its reason.
-- [ ] test-doctor carries the throwaway-worktree probe, with a test: a
+- [x] test-doctor carries the throwaway-worktree probe, with a test: a
       fixture repo whose `test` target deletes an untracked file is flagged;
       a clean target is not; the primary checkout is untouched by the probe.
-- [ ] The probe never blocks a merge or a yawn (diagnostic only).
-- [ ] Sweep run across the author's projects; offenders ticketed in their
+- [x] The probe never blocks a merge or a yawn (diagnostic only).
+- [x] Sweep run across the author's projects; offenders ticketed in their
       own stores or listed for the author; VN-Power-Scenario reported.
 
 ## Decomposition (author-approved raid, 2026-11-07)
@@ -91,3 +94,16 @@ store there).
 - 1462 implements the clean-yawn precondition, test-target contract, isolated doctor probe, and controls.
 - 1463 performs the one-time project sweep after 1462 lands, with explicit inventory and environment limits.
 - Parent closes after both children and integration review; old exit criteria are allocated between the children, not discarded.
+
+## Integration review (2026-11-07)
+
+Children 1462 (PR 2243, merge b61b537fce309c11e50d132782d7e4c71e767b42) and 1463 (PR 2252, merge 2fed6f71c6a0aa1d4bd3fe2dc4f9bb6329528811) were re-read together. The full declared after-merge set physically passed on 2fed6f71c6a0aa1d4bd3fe2dc4f9bb6329528811 (record time 2026-11-07T21:27:36Z), including pytest-guard and lint; no duplicate full run was commissioned.
+
+- The common `test_state` precondition checks fresh porcelain before Make, pytest, or npm selection. `test_dirty_tree_never_runs_deleting_target`, the runner parametrizations, and unreadable-status controls preserve the untracked sentinel and skip execution.
+- Yawn remains read-only. Its documentation and the single project-facing sentence in `rules/make.md` state the clean-tree contract and reason.
+- The on-demand stdlib probe pins HEAD, separates execution from endpoint evidence, and retains unavailable/finding residue. Its seeded-deletion control is explicitly not a production clean-baseline claim; FIFO, timeout, missing-prerequisite, and primary-independence controls remain covered.
+- The repo-wide ref union search found the probe invocation only in the named test-doctor section, with no healthcheck/schedule/gate wiring. The child report adds data and coverage only.
+- The finite manifest contains eleven rows: four passing executions, two failed/inconclusive executions with unchanged endpoints, and five unprobed rows. No confirmed endpoint mutation required an offender ticket. VN-Power-Scenario is explicitly unavailable/unprobed at its known local path; it is not marked PASS, and its present target/store remain unverified.
+- Unsafe setup paths and missing projects remain exclusions, not findings against their normal workflows. Exact coordinates and raw evidence remain local; public metadata is relative. Successful patient owners cleaned their outer trees; the two inconclusive nested probes and their containing patient executors remain protected.
+
+These limits satisfy the author-approved bounded sweep allocation; no source fixes, recurring sweep, or broader discovery is inferred.
