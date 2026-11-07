@@ -132,3 +132,21 @@ def test_before_ref_resolves_in_the_measured_project(tmp_path, capsys):
     rows = [line for line in result.stdout.splitlines() if "->" in line]
     assert len(rows) == 1 and rows[0].startswith("only-here.md"), result.stdout
     assert "net +500" in rows[0], result.stdout
+
+
+@pytest.mark.integration
+def test_before_ref_keeps_a_topic_name_with_a_space(tmp_path):
+    """Ticket 1452: ls-tree -z and HEAD:./<name> carry a spaced filename intact."""
+    from child_env import child_env
+    topics = tmp_path / "memory" / "topics"
+    topics.mkdir(parents=True)
+    (topics / "two words.md").write_text(_page(1000), encoding="utf-8")
+    env = {**child_env(), "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    for args in (["init", "-q", "-b", "main"], ["add", "."], ["commit", "-qm", "fixture"]):
+        subprocess.run(["git", "-C", str(tmp_path), *args], check=True, env=env)
+    dest = tmp_path / "before"
+    dest.mkdir()
+    ms._checkout_ref("HEAD", topics, dest)
+    assert [p.name for p in dest.iterdir()] == ["two words.md"]
+    assert (dest / "two words.md").read_bytes() == (topics / "two words.md").read_bytes()
