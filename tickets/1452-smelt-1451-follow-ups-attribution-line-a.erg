@@ -6,6 +6,10 @@ Author: smelt-run-project-consolidation
 --- log ---
 2026-11-07T00:00Z smelt-run-project-consolidation created (handoff from a sen-causal-reading session; no harness session was live)
 2026-11-07T12:00Z smelt-run-project-consolidation note Author decision on the pinned-ruling review: retire A (15 pins carried by rules/skills), B (3 expired), C1 (escalation forks, superseded); fix C2 (native-note promotion amended per 1350 option b) and C3 (keep only the 1126 half); add scope context to D (9 pins, two merged); keep E. Cross-family gate pin (10-31) was outside the review: kept unchanged.
+2026-11-07T13:39Z reviewer raid-1452 note Item 1 dismissed: the writer line (step=execute) is already on PR #2225's review notes and in memory/evidence/attribution/2026-11-07-review-attribution-pr2225.md (roar 05ba9bed); no plan-step identity was recorded anywhere, so none is invented
+2026-11-07T13:39Z reviewer raid-1452 note Item 2: tests/test_smelt_migrate.py marked integration module-wide; restructuring would fake the HEAD read the retire check depends on
+2026-11-07T13:39Z reviewer raid-1452 note Items 3 and 5 fixed in scripts/smelt_migrate.py (HEAD:./<path> hint; stale citations listed against every retired-prompt path, so a re-run still names them); item 4: spaced-name test for _checkout_ref
+2026-11-07T13:39Z reviewer raid-1452 note Item 6: commission.md replaced byte for byte by the approved text; unchanged on origin/main since 5284fde, no merge needed; pins 37 -> 18; memory_sizes.py guide bytes 9441 -> 6987 (cap 4096, Commission exempt)
 
 --- body ---
 ## Context
