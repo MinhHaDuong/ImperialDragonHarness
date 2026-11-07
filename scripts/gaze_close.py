@@ -196,6 +196,26 @@ def seat_block(primary, pr, runtime, model):
     return [ln for ln in r.stdout.splitlines() if ln.strip()] if r.returncode == 0 else []
 
 
+def raw_output_links(primary, pr):
+    """Copy only the launcher's retention pointer, never CLI output, into the request answer.
+
+    The id joins raw/<host>/seat-raw/<id>-<seat>.raw and launches.jsonl locally;
+    private archive paths and raw bytes stay off the durable/public review text.
+    """
+    panel = primary / '.claude/worktrees' / f'review-{unit_key(pr)}' / '.panel' / unit_key(pr)
+    links = []
+    for status in sorted(panel.glob('*.md.status')):
+        seat = status.name.removesuffix('.md.status')
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', seat):
+            continue
+        text = status.read_text(encoding='utf-8', errors='replace')
+        match = re.search(r'; door=([\w-]+), model=([\w./:+-]+); raw_id=(\d{8}T\d{6}Z-\d+)\)?\n?$', text)
+        if match:
+            door, model, sid = match.groups()
+            links.append(scrub(f'raw-output: seat={seat} · door={door} · model={model} · raw_id={sid}'))
+    return links
+
+
 def attribution_lines(file_text, seats):
     """(lines, failures): the answer's attribution lines from the generated seats and the finding lines of the
     attribution file. Each seat's `reviewer:` line is derived (attribution_record.seat_lines);
@@ -379,6 +399,7 @@ def main():
     except ValueError as exc:
         print(f"gaze_close: {exc}", file=sys.stderr)
         return 2
+    raw_links = raw_output_links(primary, a.pr)
     entry = read_entry(primary, a.pr)
     entry_branch = a.entry_branch or entry["branch"]
     status = 2 if failures else 0
@@ -391,7 +412,7 @@ def main():
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
     if not ok:
-        answered = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}\n" + "\n".join(seats),
+        answered = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}\n" + "\n".join([*seats, *raw_links]),
                                  lines, entry)
         if answered == 0 and not local:
             pointer(primary, a.pr, "ESCALATE", entry)
@@ -408,6 +429,8 @@ def main():
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{seats}}", "\n".join(seats)).replace("{{duration}}", duration).replace("{{containment}}", report))
+        if raw_links:
+            text = text.rstrip() + "\n" + "\n".join(raw_links) + "\n"
         answered = record_answer(primary, a.pr, text, lines, entry)  # the evidence, every unit
         status = answered or status
         if local or answered:

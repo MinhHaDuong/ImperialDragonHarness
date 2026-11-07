@@ -910,3 +910,25 @@ def test_scrub_of_secret_labels_at_line_end_keeps_every_parsed_field_line(tmp_pa
                  "seats: self-only", "ran: pytest -q"):
         assert line + "\n" in text, line
     assert "plan check:" in text
+
+
+def test_raw_output_link_survives_cleanup_in_request_answer(tmp_path):
+    primary, env, f = opened(tmp_path)
+    panel = primary / '.claude/worktrees/review-7/.panel/7'
+    sid = '20261107T000000Z-42'
+    (panel / 'failed.md.status').write_text(
+        f'failed: no report (failed, exit 2, 0s; door=codex, model=gpt-6-luna; raw_id={sid})\n')
+    (panel / 'hostile.md.status').write_text(
+        'hostile: no report (Bearer FAKECANARY0123456 /home/jane; '
+        'door=codex, model=bad token; raw_id=20261107T000000Z-43)\n')
+    comment = tmp_path / 'c.md'
+    comment.write_text('result: ESCALATE\n{{plan_check}}\n{{seats}}\n')
+    r = run(CLOSE, ['7', '--branch', 'feature', '--token', f['clock'], *ATTR(tmp_path),
+                    '--comment-file', str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not panel.exists()
+    text = answer_text(primary, f)
+    assert f'raw-output: seat=failed · door=codex · model=gpt-6-luna · raw_id={sid}' in text
+    assert 'result: ESCALATE' in text
+    assert 'FAKECANARY' not in text and '/home/jane' not in text
+    assert 'raw_id=20261107T000000Z-43' not in text

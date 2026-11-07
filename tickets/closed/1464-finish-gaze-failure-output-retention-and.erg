@@ -2,6 +2,7 @@
 Title: Finish gaze failure-output retention and provenance
 Created: 2026-11-07
 Author: reviewer
+Closed: autoclosed — PR #2256
 
 --- log ---
 2026-11-07T22:01Z reviewer created
@@ -11,6 +12,9 @@ Author: reviewer
 2026-11-07T22:08Z raid-d35fb4 note Plan: reproduce offline stdout/file timeout and nonzero retention; retain actual surviving source via keep_raw; link harness-owned retention id in durable record; verify failed status, cleanup survival, cap and credential canaries. Run gaze-seat/clock/close/notes tests.
 
 2026-11-07T22:08Z raid-d35fb4 note Feasibility PASS: source paths and helpers exist; no shared registry edited by three tickets. 1464 bridge lands before later gates.
+
+2026-11-07T22:17Z raid-d35fb4 note Verified: targeted275, adherence182, fast1752 passed; actual gaze REVIEWED answer20261107T221640633Z-padme-ff8c9f42. Native writer and parent reviewer served model/effort are runtime-masked; openai/unavailable in generated gaze attribution is an unavailable marker, not an observed model identity.
+2026-11-07T22:17Z reviewer closed — autoclosed — PR #2256
 
 --- body ---
 Parent: 1377
