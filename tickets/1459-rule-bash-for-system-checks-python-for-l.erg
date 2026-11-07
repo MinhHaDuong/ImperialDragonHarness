@@ -8,6 +8,9 @@ Author: reviewer
 2026-11-07T18:49Z reviewer note author-approved scope: reusable named-concern doctor diagnostic; no new general rules, routine checks, scheduled sweeps, or merge gates
 2026-11-07T18:49Z reviewer note Imagine/Plan: use shared toolkit-diagnostics.md, seeded by1453; serialize doctor edits. Reading controls for semantic diagnostics, behavioral tests only for new AST instrument. Bound evidence and do not infer success from unavailable traces.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
+2026-11-07T20:17Z codex note worker identity: runtime exposes Codex, described by its system instructions as an agent based on GPT-6; verbatim model ID and effort are unavailable/masked. Do not infer them from a requested launch pin.
+2026-11-07T20:17Z codex note bounded public history examined: a8c14201/0515 argument bridge and YAML parsing; cbc44c65/0531 explicit wrapper/entry-point choice for shared imports; afd44bc7/0903 same-Bash empty-field repair; 3baf733d/0951 Python regex repair. Inert hermetic argv, empty-field, and domain-predicate controls passed with constructed source-derived inputs; no services or private transcripts. Existing targeted repairs retained; no new workflow rewrite established.
+2026-11-07T20:20Z codex note semantic review nit adopted: positive-control list now points to each selected toolkit section controls, including language-choice controls; this reuses the existing control requirement and adds no wording test.
 
 --- body ---
 ## Context
