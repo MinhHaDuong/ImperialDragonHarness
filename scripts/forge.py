@@ -653,7 +653,7 @@ class NoneForge:
             elif e["kind"] == "abandon":
                 abandoned.add((e["review_id"], e["request_id"]))
         rows = []
-        for req in sorted(latest.values(), key=lambda e: (e["ts"], e["id"]), reverse=True):
+        for req in sorted(latest.values(), key=rn.entry_order, reverse=True):
             rid = req["review_id"]
             if rid in adopted:
                 continue
@@ -667,6 +667,10 @@ class NoneForge:
                 ancestry = self._git("merge-base", "--is-ancestor", pinned, base)
                 if ancestry.returncode not in (0, 1):
                     raise ForgeRefusal("cannot determine request ancestry")
+                if ancestry.returncode == 1:
+                    shallow = self._git("rev-parse", "--is-shallow-repository")
+                    if shallow.returncode or shallow.stdout.strip() != "false":
+                        raise ForgeRefusal("negative ancestry is unavailable in shallow or unreadable history")
                 status = "MERGED" if ancestry.returncode == 0 else "OPEN"
             # Classify before filtering: a partial answer must not hide unreadable evidence.
             if (state != "all" and status != state.upper()) or (head and req["branch"] != head):

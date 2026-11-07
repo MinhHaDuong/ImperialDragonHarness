@@ -249,7 +249,7 @@ Missing/failed seats: `report.status`, `answer.seats`. Gate budget: §5. Failed 
 `python3 scripts/forge.py --forge none list --state open|merged|all` reads
 one pinned local `refs/notes/review` snapshot without setup, fetch, or push.
 Call the existing refresh operation separately when a remote update is wanted.
-Each row is the latest request (timestamp, then entry ID) of one native review;
+Each row is the latest request (chronological UTC timestamp, then entry ID) of one native review;
 reviews that ever acquired a `pr:<n>` request are excluded in their entirety,
 including their earlier native requests. Branch-name reuse preserves separate
 review IDs. Rows are newest request first, then filtered by state/head and limit.
@@ -267,7 +267,9 @@ An explicit `abandon` event for the selected request makes its listing state
 the base. Otherwise the request is `MERGED` when its pinned head is an ancestor
 of the recorded `base_ref`'s current local tip, and `OPEN` otherwise. Deleted or
 moved branches never imply abandonment. Missing required head/base objects or
-an unsuccessful ancestry read are unavailable evidence. Abandonment preserves
+an unsuccessful ancestry read are unavailable evidence. A negative ancestry
+result in shallow history is conservatively unavailable; a positive proof of
+inclusion remains usable. Abandonment preserves
 the original binding and can be read without resolving the deleted branch.
 A later request starts a new submission; an old abandonment event cannot close
 it. This is listing state, not an additional merge or gate veto.
@@ -278,7 +280,8 @@ notes lock. The request is mandatory; generic `add` cannot write abandonment.
 No lifecycle framework, branch-deletion inference, or implicit transport is added.
 
 Exit 0 supplies rows (including `[]` for a readable store with no requests).
-Exit 3 means the notes ref is absent. Exit 2 with empty stdout means Git could
+Exit 3 means the notes ref is absent; a present dangling symbolic ref is
+unreadable evidence, not absence. Exit 2 with empty stdout means Git could
 not inspect the store, a note/required field is malformed or undecodable, an
 entry ID conflicts, a binding is invalid, or required ancestry is unavailable.
 The listing's strict reader does not change the existing lenient history readers.

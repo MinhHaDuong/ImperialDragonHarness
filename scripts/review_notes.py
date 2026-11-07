@@ -303,6 +303,9 @@ def _listing_entries(cwd):
     _git(cwd, "rev-parse", "--git-dir")
     exists = _git(cwd, "show-ref", "--verify", "--quiet", REF, check=False)
     if exists.returncode == 1:
+        symbolic = _git(cwd, "symbolic-ref", "--quiet", REF, check=False)
+        if symbolic.returncode != 1:
+            raise Refusal("review notes symbolic ref is dangling or unreadable")
         return None
     if exists.returncode:
         raise Refusal("cannot inspect the local review notes ref")
@@ -354,7 +357,7 @@ def _listing_entries(cwd):
                 continue
             found[e["id"]] = digest
             every.append(e)
-    every.sort(key=lambda e: (e["ts"], e["id"]))
+    every.sort(key=entry_order)
     requests = {(e["review_id"], e["request_id"]): e for e in every if e["kind"] == "request"}
     for e in every:
         if e["kind"] == "abandon":
@@ -362,6 +365,11 @@ def _listing_entries(cwd):
             if req is None or any(e[k] != req[k] for k in ("head", "base", "base_ref", "merge_base", "range_patch_id")):
                 raise Refusal("abandonment does not bind an existing request")
     return every
+
+
+def entry_order(entry):
+    """Chronological UTC order across valid ISO timestamp precisions, then ID."""
+    return datetime.fromisoformat(entry["ts"].replace("Z", "+00:00")), entry["id"]
 
 
 def listing_entries(cwd):

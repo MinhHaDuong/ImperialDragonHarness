@@ -196,3 +196,43 @@ def test_limit_orders_by_latest_request_not_review_creation(project):
     result = listing(project, "all", "--limit", "1")
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)[0]["number"] == first
+
+
+def test_dangling_symbolic_notes_ref_is_unreadable(project):
+    git(project, "symbolic-ref", rn.REF, "refs/notes/missing")
+    result = listing(project)
+    assert result.returncode == 2 and result.stdout == ""
+
+
+def test_latest_request_uses_chronology_across_valid_timestamp_precision(project):
+    rid, first = opened(project)
+    second = rn.request(project, rid, "feature", "main")
+    # import_file accepts these version1 ISO UTC timestamps; strict listing
+    # also accepts both. Lexical order places whole-second Z after .001Z.
+    first["ts"] = "2026-11-07T19:00:00Z"
+    second["ts"] = "2026-11-07T19:00:00.001Z"
+    payload = json.dumps(first) + "\n" + json.dumps(second)
+    git(project, "notes", f"--ref={rn.REF}", "add", "-f", "-m", payload, rn.anchor(project, rid))
+    result = listing(project)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)[0]["request_id"] == second["request_id"]
+
+
+@pytest.mark.parametrize("extra_base_commit", [False, True])
+def test_shallow_negative_ancestry_is_unknown_but_positive_proof_survives(project, extra_base_commit):
+    opened(project)
+    git(project, "switch", "main")
+    git(project, "merge", "--ff-only", "feature")
+    if extra_base_commit:
+        (project / "base-later").write_text("later\n")
+        git(project, "add", ".")
+        git(project, "commit", "-qm", "later base")
+    # Positive control: full history proves inclusion before adding boundary.
+    assert json.loads(listing(project, "merged").stdout)[0]["state"] == "MERGED"
+    (project / ".git" / "shallow").write_text(git(project, "rev-parse", "main") + "\n")
+    result = listing(project)
+    if extra_base_commit:
+        assert result.returncode == 2 and result.stdout == ""
+    else:
+        assert result.returncode == 0
+        assert json.loads(result.stdout)[0]["state"] == "MERGED"
