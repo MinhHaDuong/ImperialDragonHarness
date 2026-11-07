@@ -2,6 +2,7 @@
 Title: Smelt: native-note triage nominates rule candidates, brood proposes promotion
 Created: 2026-11-07
 Author: reviewer
+Closed: autoclosed — PR #2259
 
 --- log ---
 2026-11-07T18:44Z reviewer created
@@ -11,6 +12,9 @@ Author: reviewer
 2026-11-07T22:08Z raid-d35fb4 note Plan: change smelt disposition and no-rule-proposal boundary; name nominations as brood inputs; sweep both complete skill bodies for contradictions. Body-only edits need no catalog regeneration.
 
 2026-11-07T22:08Z raid-d35fb4 note Feasibility PASS: source paths and helpers exist; no shared registry edited by three tickets. 1464 bridge lands before later gates.
+
+2026-11-07T22:13Z raid-d35fb4 note Execute: Smelt nominates candidates without destinations, sections, or wording; Brood receives nominations without automatic promotion authority. Native coordinator runtime masks the served model and effort; requested model is not observed identity evidence.
+2026-11-07T22:22Z reviewer closed — autoclosed — PR #2259
 
 --- body ---
 ## Context
