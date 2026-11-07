@@ -6,6 +6,7 @@ Label: deferred
 
 --- log ---
 2026-11-02T10:03Z codex created
+2026-11-07T12:15Z reviewer ticket 1451 (fold the per-project SMELT.md prompt into the smelt skill, PR #2225) is a bounded step inside this redesign: generic consolidation text now lives in skills/smelt/references/consolidation.md; no per-project prompt
 
 --- body ---
 ## Demande de l’auteur
