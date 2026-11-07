@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-11-07",
+  "command": "ZOTERO_NO_LAUNCH=1 python3 scripts/zotero.py check-staging <sen-causal-reading> --dir docs --out <temporary-report>",
+  "scope": "Report-only; live user library; no apply/edit or source-project writes. Rows selected by the fourteen original ticket filenames.",
+  "files": 141,
+  "summary": {
+    "identical": 77,
+    "unidentified": 64
+  },
+  "errors": [],
+  "ticket_rows": [
+    {
+      "file": "Bareinboim-2022-On-Pearls-Hierarchy-R60.pdf",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Beckman-Hertel-2009-Validating-Energy-Oriented-CGE-Models-GTAP-WP54.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "dewatripont-michel-1987-source.html",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Ghersi-2026-Closing-Models-Opening-Debates-libreoffice-render.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "ssrn-5045204-wayback-20250429.html",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Hoover-2012-Economic-Theory-and-Causal-Inference.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "Kehoe-Polo-Sancho-1995-Evaluation-Performance-Applied-General-Equilibrium-Spain-WP480.pdf",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Lewis-1954-Economic-Development-Unlimited-Supplies-Labour-Manchester-School-vol22.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "Marglin-1984-Growth-Distribution-and-Prices-scan.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "Simon-1953-Causal-Ordering-and-Identifiability-Cowles-Monograph-14.pdf",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Simon-1953-Causal-Ordering-and-Identifiability-chapter-3.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "Valenzuela-2005-Assessing-Global-CGE-Model-Validity-GTAP-WP32.pdf",
+      "verdict": "identical",
+      "storage_hash_match": true
+    },
+    {
+      "file": "Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    },
+    {
+      "file": "Yuan-Burfisher-2021-Alternative-Macroeconomic-Closures-Bangladesh.pdf",
+      "verdict": "unidentified",
+      "storage_hash_match": false
+    }
+  ],
+  "full_batch_measured_before_ajae_fix": true,
+  "targeted_ajae_followup": {
+    "generated_at": "2026-11-07",
+    "scope": "Only the named AJAE row was rerun report-only after trailing AJAE cleanup; the full-batch summary above was not remeasured on this fix.",
+    "result": {
+      "file": "Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
+      "search_title": "Valenzuela Assessing Global CGE Model Validity",
+      "verdict": "candidates",
+      "storage_hash_match": false
+    }
+  }
+}

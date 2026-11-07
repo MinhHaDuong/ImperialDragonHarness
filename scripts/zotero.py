@@ -2218,11 +2218,15 @@ def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
 def _filename_title(path: Path) -> str:
     """The words a staging filename like 'Afriat1967-MethodOfLimits.pdf'
     gives to search by: its surnames and its slug, camelCase split."""
-    prefix, _, slug = path.stem.partition("-")
-    head = re.split(r"(?:1[6-9]|20)\d\d", prefix, maxsplit=1)[0]
-    names = re.findall(r"[A-Z][a-z]+|[A-Z]{2,}", head)
-    return " ".join(names + [re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
-                                    slug or path.stem)])
+    stem = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", path.stem)
+    stem = re.sub(r"[-_]+", " ", stem)
+    stem = re.sub(r"(?:1[6-9]|20)\d\d\b", " ", stem)
+    # Observed staging annotations, removed only at the end. This is a
+    # search hint, not a parser that claims to identify the document.
+    stem = re.sub(r"\s+(?:(?:GTAP\s+)?WP\d+|R\d+|vol\d+|"
+                  r"chapter\s+\d+|ch\d+|scan|AJAE|(?:libreoffice\s+)?render)$",
+                  "", stem, flags=re.IGNORECASE)
+    return " ".join(stem.split())
 
 
 def _pdf_info(pdf: Path) -> dict[str, str]:
@@ -2242,6 +2246,23 @@ def _pdf_info(pdf: Path) -> dict[str, str]:
             "Author": info.get("Author", "") or ""}
 
 
+def _staging_verdict(res: dict[str, Any], filename_only: bool) -> str:
+    """Classify lookup evidence for a staged file."""
+    top = res["matches"][0] if res["matches"] else None
+    if res["verdict"] == "unchecked":
+        verdict = "unidentified"
+    elif top and "storageHash" in top["why"]:
+        verdict = "identical"
+    elif top:
+        verdict = ("work_present_with_file" if top.get("has_file")
+                   else "work_present_no_file")
+    elif res["candidates"]:
+        verdict = "candidates"
+    else:
+        verdict = "unidentified" if filename_only else "absent"
+    return verdict
+
+
 def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
               bib_entry: dict[str, Any] | None = None) -> dict[str, Any]:
     """Look one staged file up in the libraries."""
@@ -2249,9 +2270,11 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     info = (_pdf_info(path) if path.suffix.lower() == ".pdf"
             else {"Title": "", "Author": ""})
     title = str(bib_entry.get("title") or info["Title"])
+    filename_title = False
     if len(re.findall(r"[^\W_]{3,}", title)) < TITLE_MIN_WORDS:
         # The filename carries the author's own naming intent.
         title = _filename_title(path)
+        filename_title = True
     bib_type = str(bib_entry.get("_type", "")).lower()
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
 
@@ -2276,9 +2299,10 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         if (fallback != title and not bib_entry.get("title")
                 and len(re.findall(r"[^\W_]{3,}", fallback))
                 >= TITLE_MIN_WORDS):
-            retry = look(fallback)
-            if retry["matches"] or retry["candidates"]:
-                res = retry
+            # Failed container metadata plus a filename guess does not
+            # establish absence either. Preserve the retry's uncertainty.
+            res = look(fallback)
+            filename_title = True
     top = res["matches"][0] if res["matches"] else None
     # Six answers, not four. Collapsing title candidates into "absent" is
     # the expensive mistake in both directions: called present, a document
@@ -2286,17 +2310,9 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     # item is minted. Candidates are a document to look at. And a file with
     # no key to look it up by is "unidentified", never "absent": an
     # all-clear indistinguishable from "could not look" is no check.
-    if res["verdict"] == "unchecked":
-        verdict = "unidentified"
-    elif top and "storageHash" in top["why"]:
-        verdict = "identical"
-    elif top:
-        verdict = ("work_present_with_file" if top.get("has_file")
-                   else "work_present_no_file")
-    elif res["candidates"]:
-        verdict = "candidates"
-    else:
-        verdict = "absent"
+    filename_only = filename_title and not any(
+        key in res["consulted"] for key in ("doi", "isbn", "arxiv", "handle"))
+    verdict = _staging_verdict(res, filename_only)
     row = {"file": path.name, "verdict": verdict,
            "zotero_key": top.get("key") if top else None,
            "zotero_title": top.get("title") if top else None,
@@ -2341,7 +2357,7 @@ RECONCILE_ACTIONS = {
     "work_present_no_file": "suggest-attachments: see suggested_edits, or "
                             "--apply --edit (never create-items)",
     "candidates": "judge the title candidates; neither create nor skip",
-    "unidentified": "nothing to look it up by: give it a .bib entry, or name "
+    "unidentified": "no reliable identification: give it a .bib entry, or name "
                     "it Author1999-title",
     "absent": "create-items, or --apply with the project opt-in",
     "error": "inspect unreadable file",

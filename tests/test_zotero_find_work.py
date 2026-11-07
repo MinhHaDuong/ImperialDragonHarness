@@ -476,8 +476,8 @@ def test_check_staging_verdicts_cover_every_answer(lib, tmp_path):
     absent = make_pdf(tmp_path / "Nobody1999-UnrelatedTurbineDocument.pdf",
                       ["An Unrelated Document About Turbines"])
     nothing = row(absent)
-    assert nothing["verdict"] == "absent"
-    assert nothing["consulted"], "absent must mean 'looked and found nothing'"
+    assert nothing["verdict"] == "unidentified"
+    assert nothing["consulted"], "the filename was searched, but cannot establish absence"
 
     thin = make_pdf(tmp_path / "scan0001.pdf", ["page 1"])
     unknown = row(thin)
@@ -504,7 +504,7 @@ def test_check_staging_retries_with_the_filename_when_the_embedded_title_is_junk
 def test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone(
         lib, tmp_path):
     """Negative controls for #1654: a .bib title is never overridden by the
-    filename, and a retry that finds nothing keeps the first answer."""
+    filename, and a retry that finds nothing preserves uncertainty."""
     keys, files = lib
     probe = tmp_path / "Valiant1979-QuasarGimbalLemma.pdf"
     shutil.copyfile(files["junk"], probe)
@@ -512,7 +512,10 @@ def test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone(
     assert biblio["verdict"] == "absent"
     nothing = tmp_path / "Nobody1999-UnrelatedTurbineDocument.pdf"
     shutil.copyfile(files["shared"], nothing)
-    assert row(nothing)["verdict"] == "absent"
+    assert row(nothing)["verdict"] == "unidentified"
+    shutil.copyfile(files["junk"], nothing)
+    assert zi._pdf_info(nothing)["Title"].startswith("Microsoft Word")
+    assert row(nothing)["verdict"] == "unidentified"
 
 
 @pytest.mark.integration
@@ -655,7 +658,7 @@ def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
                               apply=False, edit=False, library="user")
     assert zi.cmd_check_staging(args) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["summary"] == {"candidates": 1, "absent": 1}
+    assert report["summary"] == {"candidates": 1, "unidentified": 1}
     find_args = argparse.Namespace(doi="10.5555/Deep.X", isbn=None, arxiv=None,
                                    handle=None, title=HOFFMAN, pdf=None,
                                    library="user", metadata=None)

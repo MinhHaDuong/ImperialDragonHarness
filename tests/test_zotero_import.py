@@ -297,7 +297,7 @@ def test_check_staging_dir_apply_needs_the_root_opt_in(use_live, tmp_path,
     report = json.loads(capsys.readouterr().out)
     assert report["apply_status"] == "failed"
     assert ".zotero-reconcile.json" in report["apply_error"]
-    assert report["summary"]["absent"] == 1
+    assert report["summary"]["unidentified"] == 1
     title = zi.pdftotext_range(pdf, 1, 1).splitlines()[0].strip()
     assert use_live.titled(title) == []
 
@@ -1448,7 +1448,7 @@ def test_filename_title_gives_surnames_and_slug_words():
     assert zi._filename_title(Path("Afriat1967-MethodOfLimits.pdf")) == \
         "Afriat Method Of Limits"
     assert zi._filename_title(Path("BeraudNuma2024-Cournot-ch4.pdf")) == \
-        "Beraud Numa Cournot-ch4"
+        "Beraud Numa Cournot"
     assert zi._filename_title(Path("scan0001.pdf")) == "scan0001"
 
 
@@ -1518,7 +1518,7 @@ def test_check_staging_one_unreadable_file_does_not_abort_the_batch(
     assert len(report["rows"]) == 2
     assert any(names[1] in e and "Permission denied" in e
                for e in report["errors"])
-    assert report["summary"]["absent"] == 2
+    assert report["summary"]["unidentified"] == 2
     assert report["verdict"] == "unchecked"
     assert report["library"]["zotero"] == use_live.url
 
@@ -1983,7 +1983,7 @@ def test_check_staging_staged_file_reads_the_library(use_live, tmp_path, capsys)
     report = json.loads(capsys.readouterr().out)
     assert report["verdict"] == "checked" and report["files"] == 1
     assert report["library"]["zotero"] == use_live.url
-    assert report["rows"][0]["verdict"] == "absent"
+    assert report["rows"][0]["verdict"] == "unidentified"
 
 
 @pytest.mark.parametrize("apply", [False, True])
@@ -2257,9 +2257,10 @@ def test_check_staging_report_is_read_only_and_counts_both_directions(
     identifiable_pdf(tmp_path / "docs")
     assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["summary"] == {"absent": 2}
+    assert report["summary"] == {"absent": 1, "unidentified": 1}
     assert {r["source"] for r in report["rows"]} == {"bib", "orphan"}
-    assert report["actions"] == {"absent": zi.RECONCILE_ACTIONS["absent"]}
+    assert report["actions"] == {key: zi.RECONCILE_ACTIONS[key]
+                                 for key in ("absent", "unidentified")}
     assert use_live.titled(title) == [], f"{pdf.name} was not imported"
 
 
@@ -2676,3 +2677,24 @@ def test_a_second_client_on_a_taken_port_retries_and_both_write(
             second.stop()
     finally:
         first.stop()
+
+
+@pytest.mark.parametrize("filename, expected", [
+    ("Bareinboim-2022-On-Pearls-Hierarchy-R60.pdf", "Bareinboim On Pearls Hierarchy"),
+    ("Kehoe-Polo-Sancho-1995-Evaluation-Performance-WP480.pdf", "Kehoe Polo Sancho Evaluation Performance"),
+    ("Marglin-1984-Growth-Distribution-and-Prices-scan.pdf", "Marglin Growth Distribution and Prices"),
+    ("Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
+     "Valenzuela Assessing Global CGE Model Validity"),
+])
+def test_filename_search_drops_observed_trailing_noise(filename, expected):
+    assert zi._filename_title(Path(filename)) == expected
+
+
+def test_filename_only_no_match_is_unidentified():
+    result = {"verdict": "none", "matches": [], "candidates": []}
+    assert zi._staging_verdict(result, filename_only=True) == "unidentified"
+    assert zi._staging_verdict(result, filename_only=False) == "absent"
+    result["candidates"] = [{"key": "CANDIDATE"}]
+    assert zi._staging_verdict(result, filename_only=True) == "candidates"
+    result["matches"] = [{"why": ["storageHash"]}]
+    assert zi._staging_verdict(result, filename_only=True) == "identical"
