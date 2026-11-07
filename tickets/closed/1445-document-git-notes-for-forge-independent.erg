@@ -2,6 +2,7 @@
 Title: Document Git notes for forge-independent pull request review
 Created: 2026-11-04
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #2257
 
 --- log ---
 2026-11-04T15:05Z Minh Ha-Duong created
@@ -14,6 +15,7 @@ Author: Minh Ha-Duong
 
 2026-11-07T22:08Z raid-d35fb4 note Feasibility PASS: source paths and helpers exist; no shared registry edited by three tickets. 1464 bridge lands before later gates. Primary-source research and example execution remain completion requirements; one coherent draft/example MR preserves commissioned scope.
 2026-11-07T22:21Z reviewer Execute attribution: native Codex subagent /root/train_doctor/night_raid/imagine_plan planned and implemented this draft/example change. The runtime did not expose its served full model identity or effort. Requested gpt-6.1-sol medium is a routing request, not observed identity evidence; writer model-state=runtime-masked. Actual gaze and gate remain separate.
+2026-11-07T22:22Z reviewer closed — autoclosed — PR #2257
 
 --- body ---
 
