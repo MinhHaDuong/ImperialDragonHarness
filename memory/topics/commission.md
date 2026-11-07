@@ -19,7 +19,7 @@ Memory and rules:
 Review, guards, escalation:
 
 > pinned 2026-10-27 — "REMOVE WORDING PINS" ([source](../journal/2026/2026-10-27-doctrine-escalation-pr1778.md)). Scope: tests that freeze the wording of prose (e.g. the deleted tests/test_raid_phase6_gaze_verdict.py). Tests tied to an incident or an interface stay, per skills/test-doctor/references/toolkit.md § Thin the wording pins. Unrelated to the pinned rulings on this page
-> pinned 2026-10-26 — Night mode: "Not to me, it goes to Fable for finishing. You are in night mode autonomous." Partly in rules/workflow.md — but see open question on the note's stronger wording (native `feedback_dont_idle_on_background`)
+> pinned 2026-10-26 — Night mode: "Not to me, it goes to Fable for finishing. You are in night mode autonomous." Ruled 2026-11-07 (ticket 1439): the advisor takes scope or money calls under the night-mode cap in skills/route/SKILL.md § Escalation; irreversible calls wait
 > pinned 2026-10-29 — Peer-relayed reversible ruling: "accept, don't barrier my work" (native `feedback_peer_relayed_rulings`). Scope (author, 2026-11-01): a reversible detail of an existing ticket, relayed by the author's own peer session and logged on that ticket. A peer cannot create scope, authorize spend or replace a ticket (rules/workflow.md § Cross-project work)
 > pinned 2026-10-31 — Cross-family gate removed: model and access are distinct, no field assumed known; "the cross-family benefit is unmeasured" (measured after: confounded); "Une bonne barrière est une barrière supprimée." `--require-cross-family` gone (PR 2085); family is a routing preference in skills/route/references/decorrelation.md ([source](../journal/2026/2026-10-31-cross-family-gate-dropped.md))
 > pinned 2026-11-01 — The author kept ticket 1126 (comment-only hunks never block on scope) against the 1408 reversal ([t1409](../journal/2026/2026-11-01-t1409-cross-repo-handoff-dissent.md))
@@ -49,7 +49,6 @@ Stated intent, not ruled (input for 1350): user memory apart from project memory
 
 ## Open questions
 
-- Exposed contradiction, unsettled: native note `feedback_dont_idle_on_background` has description line "ask the top model (Fable) before EVERY author decision, even ones that look like the author's by right" (its 2026-11-01 body update scopes author-by-right calls to wait, matching the rule) against rules/workflow.md § Escalation protocol ("The author's calls by right ... are never branched or delegated; they wait"). Ticket 1439.
 - Ex-post coder/reviewer health read awaits the author ([source](../journal/2026/2026-10-28-diminishing-returns-bar.md)).
 
 ## Retired

@@ -132,7 +132,11 @@ quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
 
 The procedure behind `rules/workflow.md` § Escalation protocol, for a decision
 or a judgment outside your domain docs. The author's calls by right (scope,
-money, irreversible) are never branched or delegated; they wait.
+money, irreversible) are never branched or delegated; they wait, bar the
+night-mode cap. In night mode (the author declared away and the run
+autonomous) the advisor may take a scope or money call: up to $10 of spend
+per night beyond what the task agreed, and scope up to filing, never
+executing, new tickets in the same project. Irreversible calls always wait.
 
 1. **Ask up first**: an advisor model. It agrees with your pick and the call
    is reversible → act and report.
