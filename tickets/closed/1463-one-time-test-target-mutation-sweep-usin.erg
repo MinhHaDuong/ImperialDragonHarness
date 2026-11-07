@@ -2,6 +2,7 @@
 Title: One-time test-target mutation sweep using isolated probe
 Created: 2026-11-07
 Author: reviewer
+Closed: autoclosed — PR #2252
 
 --- log ---
 2026-11-07T18:48Z reviewer created
@@ -13,6 +14,7 @@ Author: reviewer
 2026-11-07T20:58Z coder note Identity limitation: lead system exposes GPT-6 only; exact served model ID and effort are unavailable and not inferred. Patient requested pins are routing intent, not observed identity; masked fields stay unavailable.
 
 2026-11-07T21:03Z coder note Sweep complete: frozen11 rows,6 single attempts,4 passing executions,2 failed/inconclusive,5 unprobed. No endpoint mutation confirmed; no offender ticket. Sanitized report/manifest: conception/2026-11-07-test-target-sweep.md and .json; raw copies retained locally in patient Git metadata, two nested inconclusive probes protected.
+2026-11-07T21:21Z reviewer closed — autoclosed — PR #2252
 
 --- body ---
 Parent: 1446
