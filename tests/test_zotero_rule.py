@@ -1,7 +1,8 @@
 """Fast-tier rule guards for the global Zotero-management rule (ticket 0257).
 
 The Zotero-management discipline (formerly "EDM", ticket 0257) — Zotero is the
-system of record; `docs/` and `.bib` are git-ignored staging — lives in
+system of record; `docs/` is ignored staging, and project bibliographies may be
+tracked — lives in
 `rules/zotero.md`. These fast-tier ratchets catch index drift and a missing
 cross-reference from `git.md`, mirroring `tests/test_rules_axis_bodies.py`.
 """

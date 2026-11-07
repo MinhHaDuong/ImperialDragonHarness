@@ -2,11 +2,14 @@
 Title: zotero rule: allow a tracked .bib in every project
 Created: 2026-11-07
 Author: claude
+Closed: autoclosed — PR #2245
 
 --- log ---
 2026-11-07T13:55Z claude created
 2026-11-07T18:49Z reviewer note Imagine/Plan: tracked-bib permission and DOI/URL reader route; reconcile repeated rule/skill descriptions, retain Zotero authority and source-document boundary; no exporter or guard.
 2026-11-07T18:51Z reviewer note Feasibility PASS: planned source/fixtures exist or explicit new artifacts; cross-ticket wave scan PASS, shared doctor edits serialized. Blind-spot controls retained; author scope is authoritative.
+2026-11-07T19:24Z reviewer note Worker attribution: runtime identifies this worker only as GPT-6; deployed model ID and effort are unavailable, so no precise model identity is inferred. Documentation-only author-approved tracked bibliography policy; no exporter, new guard, or project edits.
+2026-11-07T19:30Z reviewer closed — autoclosed — PR #2245
 
 --- body ---
 ## Context

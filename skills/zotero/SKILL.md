@@ -8,7 +8,7 @@ user-invocable: true
 argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] [--bib <file>] [--skip-underscore-dirs] | report-duplicates | suggest-attachments"
 ---
 
-Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. Read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
+Discipline: `rules/zotero.md` — Zotero is the system of record; `docs/` is git-ignored staging, while project `.bib` files may be tracked with DOI or open-access/archived URL reader routes. `file=` remains a local hint. Read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
 
 # Zotero
 
