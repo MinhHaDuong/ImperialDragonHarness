@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Setup-copy check refuses a directory listed in .worktreeinclude
+Created: 2026-11-07
+Author: claude
+
+--- log ---
+2026-11-07T14:10Z claude created
+
+--- body ---
+## Context
+
+Follow-up to closed 1406 (PR #2216). Observed 2026-11-07 in JETP-observer, PR #246
+(ticket 2102): both gaze rounds recorded ESCALATE "cleanup blocked" although the
+content review had no blocking finding, so verify-gate cannot run there.
+The project's post-checkout hook (`.githooks/post-checkout`) seeds every worktree
+with a reflinked copy of `data/jetp/documents/` (278 files, DVC-managed, ignored),
+`.dvc/config.local`, `.env`, a `.dvc/cache` symlink and
+`data/jetp/releases/vnm-migration-0764.json`.
+
+`scripts/worktree_setup_copy.py` accepts a listed path only file by file: for a
+directory it requires an allowed entry *under* it (`item.startswith(name + "/")`),
+so a `.worktreeinclude` naming `data/jetp/documents` (or `data/jetp/documents/`)
+never makes that directory disposable. Reproduced in a scratch repo:
+include `docs` → exit 1; include `docs/a` + `docs/b` → exit 0. Listing 278 files
+by hand (globs are refused) is not a workable answer, and Claude Code itself reads
+`.worktreeinclude` to copy files into worktrees it creates.
+
+Impact: in any project that seeds a data directory into worktrees, every gaze
+that sets up its tree ends ESCALATE; merges stall on a cleanup artifact.
+
+## Exit criteria
+
+- [ ] A directory listed in the primary's `.worktreeinclude` is disposable when every
+      file under it is byte-identical to the primary's counterpart (symlinks under it
+      still need to resolve to the primary path); one differing or extra file keeps it residue
+- [ ] Red test replays the scratch case above (listed directory, identical copies → disposable;
+      one hand-edited file → residue)
+- [ ] JETP-observer is told by a log line on its ticket once fixed, so it adds its
+      `.worktreeinclude` (project-side; not edited from the harness)
