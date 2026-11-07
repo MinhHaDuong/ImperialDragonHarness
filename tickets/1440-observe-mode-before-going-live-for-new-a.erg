@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-11-01T22:54Z claude created
+2026-11-07T13:39Z Minh-Ha-Duong landing note: PR #2214 added 'an observe-only period is one option' to conception/design-note-template.md and skills/raid/SKILL.md; this ticket asks for more than that option. Closed ticket 1180 (main-update guard observe window) is a candidate test case.
 
 --- body ---
 ## Context

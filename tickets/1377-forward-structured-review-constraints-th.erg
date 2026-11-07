@@ -5,6 +5,7 @@ Author: MinhHaDuong
 
 --- log ---
 2026-10-30T15:13Z MinhHaDuong created
+2026-11-07T13:39Z Minh-Ha-Duong landing note: raw seat-output retention landed in 2b5e2ce2 (keep_raw, scripts/gaze_seat.py, 256 KiB cap, tests/test_gaze_seat.py); line 37 'is not retained' is superseded. Criterion 4 narrows to what is still missing: provenance link from the record to the archived raw output, and the timeout and nonzero-exit cases. Criteria 1-3 and 5 (structured constraints) still open.
 
 --- body ---
 ## Context
