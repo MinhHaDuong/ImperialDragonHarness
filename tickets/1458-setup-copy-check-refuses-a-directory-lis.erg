@@ -7,6 +7,7 @@ Author: claude
 2026-11-07T14:10Z claude created
 2026-11-07T16:53Z reviewer Imagine: retain all exit criteria; recognize included primary directory roots while retaining per-file byte and symlink checks. Blind-spot pass repeated the known leaf-authorization mismatch; no additional scope change identified.
 2026-11-07T16:53Z reviewer Plan: first reproduce listed docs/docs/ with identical nested copies through preflight; then changed and extra files must remain residue. Implement inherited directory inclusion without weakening symlink or primary-independence checks; notify JETP ticket after fix.
+2026-11-07T16:54Z reviewer Feasibility PASS: helper and origin/_exclude/_preflight integration fixtures exist; no new dependency, shared registry, or open overlapping PR. Preserve all criteria.
 
 --- body ---
 ## Context
