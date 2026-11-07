@@ -56,6 +56,11 @@ Every phase ends with a git commit. If the session dies, resume by
 reading the ticket logs and git history to determine which phase
 completed last. The checkpoint is the repo, not session state.
 
+If execution stopped with the last outside action's outcome uncertain, read
+its outcome back from the relevant system immediately before retrying that
+action. Ordinary pauses, messages, command boundaries, and known-complete
+actions require no extra check.
+
 ## Phase 1: Select
 
 At raid start, before selecting, write `RAID_START` and arm the sitrep cadence

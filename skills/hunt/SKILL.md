@@ -18,6 +18,11 @@ Announce each on entry: `[→ Plan]`, `[Plan → Execute]`, `[Execute → Verify
 `[Verify → Celebrate]`. The phases are fixed; what runs inside Execute is
 not. The plan chooses it, within the ticket's scope and exit criteria.
 
+If execution stopped with the last outside action's outcome uncertain, read
+its outcome back from the relevant system immediately before retrying that
+action. Ordinary pauses, messages, command boundaries, and known-complete
+actions require no extra check.
+
 ## Detach
 
 <!-- Fresh subagent to conserve the live session context. -->
