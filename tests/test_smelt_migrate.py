@@ -47,7 +47,8 @@ def test_migrate_preserves_evidence_and_is_repeatable(project):
         assert after[name] == before[name]
     assert after["memory/MEMORY.md"] == b"[report](smelts/old.md)\n"
     assert after["memory/topics/a.md"] == b"[report](../smelts/old.md)\n"
-    assert b"Prompt revision: v8-r2" in after["memory/SMELT.md"]
+    # Ticket 1451: the per-project prompt is retired, not renamed.
+    assert "memory/SMELT.md" not in after
     assert not (project / "memory/DREAM.md").exists()
     assert not (project / "memory/dreams").exists()
     migrate.apply_migration(migrate.plan_migration(project))
@@ -64,13 +65,14 @@ def test_dry_run_and_explicit_reference(project):
     assert result.returncode == 0, result.stderr
     assert tree(project) == before
     migrate.apply_migration(migrate.plan_migration(project, ["AGENTS.md"]))
-    assert (project / "AGENTS.md").read_text() == "Read memory/SMELT.md and memory/smelts/\n"
+    # The retired prompt's name stays for the agent to edit; the helper names the file.
+    assert (project / "AGENTS.md").read_text() == "Read memory/DREAM.md and memory/smelts/\n"
+    assert "Retired prompt: memory/DREAM.md" in result.stdout + result.stderr
+    assert "Names a retired prompt: AGENTS.md" in result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("conflict", ["SMELT.md", "smelts"])
-def test_coexistence_refused(project, conflict):
-    path = project / "memory" / conflict
-    path.mkdir() if conflict == "smelts" else path.write_text("existing")
+def test_coexistence_refused(project):
+    (project / "memory/smelts").mkdir()
     before = tree(project)
     with pytest.raises(migrate.MigrationError):
         migrate.plan_migration(project)
@@ -145,13 +147,37 @@ def test_immutable_or_escaping_reference_refused(project, reference):
 
 def test_fresh_new_format_is_untouched(tmp_path):
     (tmp_path / "memory/smelts").mkdir(parents=True)
-    (tmp_path / "memory/SMELT.md").write_bytes(b"Prompt revision: v8-r2\n")
     (tmp_path / "memory/smelts/new.md").write_bytes(b"provenance\x00\xff")
+    (tmp_path / "memory/MEMORY.md").write_text("[report](smelts/new.md)\n")
     before = tree(tmp_path)
     plan = migrate.plan_migration(tmp_path)
-    assert not plan.moves and not plan.edits
+    assert not plan.moves and not plan.edits and not plan.retired
     migrate.apply_migration(plan)
     assert tree(tmp_path) == before
+
+
+def test_project_smelt_prompt_is_retired_and_its_references_named(tmp_path):
+    """Ticket 1451: a SMELT.md copy is retired; nothing else is rewritten."""
+    (tmp_path / "memory/smelts").mkdir(parents=True)
+    (tmp_path / "memory/topics").mkdir()
+    (tmp_path / "memory/SMELT.md").write_bytes(b"Prompt revision: v8-r2\n")
+    (tmp_path / "memory/smelts/new.md").write_bytes(b"cites memory/SMELT.md\x00\xff")
+    index = b"Prompt [SMELT.md](SMELT.md); skills/dream/ helpers retired\n"
+    (tmp_path / "memory/MEMORY.md").write_bytes(index)
+    (tmp_path / "memory/topics/a.md").write_text("no prompt named here\n")
+    before = tree(tmp_path)
+    plan = migrate.plan_migration(tmp_path)
+    assert plan.retired == ("memory/SMELT.md",)
+    assert plan.stale == ("memory/MEMORY.md",)
+    assert not plan.moves and not plan.edits
+    assert tree(tmp_path) == before
+    migrate.apply_migration(plan)
+    after = tree(tmp_path)
+    assert "memory/SMELT.md" not in after
+    assert after["memory/MEMORY.md"] == index
+    assert after["memory/smelts/new.md"] == before["memory/smelts/new.md"]
+    repeat = migrate.plan_migration(tmp_path)
+    assert not repeat.retired and not repeat.moves and not repeat.edits
 
 
 def test_failed_rollback_retains_recovery_files(project, monkeypatch):
@@ -174,13 +200,13 @@ def test_failed_rollback_retains_recovery_files(project, monkeypatch):
     assert (recovery[0] / "backup-0").read_bytes() == plan.snapshot["memory/MEMORY.md"]
 
 
-def test_missing_prompt_is_an_error_before_any_moves(tmp_path):
+def test_missing_prompt_is_the_default(tmp_path):
+    """Ticket 1451: no prompt is the normal state; legacy reports still move."""
     (tmp_path / "memory/dreams").mkdir(parents=True)
     (tmp_path / "memory/dreams/report.md").write_bytes(b"retained provenance")
-    before = tree(tmp_path)
-    with pytest.raises(migrate.MigrationError, match="prompt"):
-        migrate.plan_migration(tmp_path)
-    assert tree(tmp_path) == before
+    migrate.apply_migration(migrate.plan_migration(tmp_path))
+    assert (tmp_path / "memory/smelts/report.md").read_bytes() == b"retained provenance"
+    assert not (tmp_path / "memory/dreams").exists()
 
 
 def test_active_reference_tokens_have_path_boundaries(project):
@@ -193,14 +219,16 @@ def test_active_reference_tokens_have_path_boundaries(project):
     )
     expected = (
         "Run /smelt, then read skills/smelt/SKILL.md.\n"
-        "[prompt](SMELT.md) [nested](../DREAM.md)\n"
+        "[prompt](DREAM.md) [nested](../DREAM.md)\n"
         "[report](smelts/old.md) [nested](../dreams/old.md)\n"
         "Keep /dreamlike /dream-extra skills/dream-extra/SKILL.md "
         "daydreams/story.md OTHERDREAM.md DREAM.md.backup dreams-extra/file.md\n"
     )
     (project / "memory/MEMORY.md").write_text(old)
     evidence = tree(project)
-    migrate.apply_migration(migrate.plan_migration(project))
+    plan = migrate.plan_migration(project)
+    assert plan.stale == ("memory/MEMORY.md",)  # [prompt](DREAM.md), not ../DREAM.md
+    migrate.apply_migration(plan)
     assert (project / "memory/MEMORY.md").read_text() == expected
     assert (project / "memory/smelts/old.md").read_bytes() == evidence["memory/dreams/old.md"]
     assert (project / "memory/journal/old.md").read_bytes() == evidence["memory/journal/old.md"]
@@ -232,7 +260,7 @@ def test_unrelated_paths_and_urls_are_preserved(project):
     assert (project / "memory/MEMORY.md").read_text() == references.replace(
         "(dreams/old.md)", "(smelts/old.md)")
     assert (project / "memory/topics/a.md").read_text() == (
-        "[prompt](../SMELT.md) [report](../smelts/old.md)\n")
+        "[prompt](../DREAM.md) [report](../smelts/old.md)\n")
     for name in ("docs/DREAM.md", "docs/dreams/retained.md"):
         assert (project / name).read_bytes() == before[name]
 
@@ -320,23 +348,37 @@ def test_replaced_project_root_or_ancestor_refuses_outside_writes(project, swap_
 
 
 @pytest.mark.parametrize("new_prompt", [True, False])
-def test_mixed_prompt_and_report_layout_is_refused_without_writes(project, new_prompt):
+def test_mixed_prompt_and_report_layout_migrates(project, new_prompt):
+    """Prompts are all retired (ticket 1451), so a prompt/report mismatch no longer conflicts."""
     if new_prompt:
         (project / "memory/DREAM.md").rename(project / "memory/SMELT.md")
     else:
         (project / "memory/dreams").rename(project / "memory/smelts")
-    before = tree(project)
-    with pytest.raises(migrate.MigrationError, match="Mixed old/new"):
-        migrate.plan_migration(project)
-    assert tree(project) == before
+    reports = tree(project / ("memory/dreams" if new_prompt else "memory/smelts"))
+    migrate.apply_migration(migrate.plan_migration(project))
+    assert not (project / "memory/SMELT.md").exists()
+    assert not (project / "memory/DREAM.md").exists()
+    assert tree(project / "memory/smelts") == reports
     assert not list(project.glob(".smelt-migrate-*"))
+
+
+def test_two_legacy_prompts_are_both_retired(project):
+    (project / "memory/HOARD.md").write_text("Prompt revision: v8-r2\n")
+    plan = migrate.plan_migration(project)
+    assert plan.retired == ("memory/DREAM.md", "memory/HOARD.md")
+    migrate.apply_migration(plan)
+    assert not (project / "memory/DREAM.md").exists()
+    assert not (project / "memory/HOARD.md").exists()
 
 
 def test_old_prompt_without_reports_can_migrate(project):
     migrate.shutil.rmtree(project / "memory/dreams")
     before = tree(project)
+    (project / "memory/topics/a.md").write_text("reports go to memory/dreams/\n")
+    before = tree(project)
     migrate.apply_migration(migrate.plan_migration(project))
-    assert b"memory/smelts/" in (project / "memory/SMELT.md").read_bytes()
+    assert (project / "memory/topics/a.md").read_text() == "reports go to memory/smelts/\n"
+    assert not (project / "memory/SMELT.md").exists()
     assert not (project / "memory/DREAM.md").exists()
     assert not (project / "memory/smelts").exists()
     for name in ("memory/journal/old.md", "memory/journal/private.age"):
@@ -356,7 +398,5 @@ def test_legacy_hoard_layout_migrates_to_smelt(tmp_path):
     assert (tmp_path / "memory/hoards").exists() is False
     assert not (tmp_path / "memory/HOARD.md").exists()
     assert (tmp_path / "memory/smelts/old.md").read_bytes() == b"report memory/HOARD.md\xff"
-    prompt = (tmp_path / "memory/SMELT.md").read_text()
-    assert prompt.startswith("# SMELT") and "Prompt revision: v8-r3" in prompt
-    assert "memory/smelts/" in prompt
+    assert not (tmp_path / "memory/SMELT.md").exists()
     assert (tmp_path / "memory/MEMORY.md").read_text() == "[report](smelts/old.md) /smelt\n"
