@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Rule: no skill that only wraps a self-documenting CLI
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T16:50Z reviewer created
+
+--- body ---
+## Context
+
+Promotion requested by the author (padme native-note triage, 2026-11-07; padme
+smelt report `memory/smelts/2026-11-07-first-skill-smelt.md`). The Claude Code
+native note `feedback_no_wrapper_skills.md` records the author's ruling of
+2026-06-06 (padme PR #7 deleted three ticket wrapper skills): "/ticket-new,
+/ticket-ready, /ticket-close should not exist at all. Our instructions should
+be sufficient so that the smart model do erg new, erg ready and erg close."
+A skill that adds no logic beyond invoking one self-documenting CLI is not
+written; the direct invocation goes in the project instructions. Reason: KISS,
+and wrappers drift (v1-era skills survived two format generations).
+`rules/authoring-skills.md` does not cover it.
+
+## Destination
+
+`rules/authoring-skills.md`. Wording is the harness's call.
+
+## Exit criteria
+
+- [ ] `rules/authoring-skills.md` says a skill that only wraps one
+  self-documenting CLI is not created, and an existing one is proposed for
+  deletion.

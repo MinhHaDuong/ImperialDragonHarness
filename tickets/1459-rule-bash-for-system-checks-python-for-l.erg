@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Rule: bash for system checks, Python for LLM calls, Rust for high-frequency loops
+Created: 2026-11-07
+Author: reviewer
+
+--- log ---
+2026-11-07T16:50Z reviewer created
+
+--- body ---
+## Context
+
+Promotion requested by the author (padme native-note triage, 2026-11-07; padme
+smelt report `memory/smelts/2026-11-07-first-skill-smelt.md`). The Claude Code
+native note `feedback_languages.md` in padme's project store says: bash for
+mechanistic system scripts (monitoring, backups); Python for anything calling
+an LLM API or handling complex data, because bash JSON encoding broke on
+multilingual text; Rust reserved for high-frequency infrastructure loops
+(startup time). No harness rule says when to leave bash.
+
+## Destination
+
+`rules/coding-bash.md`, a new short section on when a script should not be
+bash. Wording is the harness's call.
+
+## Exit criteria
+
+- [ ] `rules/coding-bash.md` states the language split (bash / Python for LLM
+  calls and structured data / Rust for high-frequency loops), with the JSON
+  encoding failure as its reason.
