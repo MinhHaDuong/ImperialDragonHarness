@@ -1,10 +1,11 @@
 %erg 0.1
-Title: Smelt: keep retirement history in the journal across all repositories
+Title: Smelt: adopt the author-rulings registry format across all projects
 Created: 2026-11-08
 Author: codex
 
 --- log ---
 2026-11-08T09:55Z codex created
+2026-11-08T10:07Z reviewer Author extended scope: adopt the compact project-specific active-rulings registry format in all projects; remove topic-template sections, policy intro, shared provenance and pending intentions.
 
 --- body ---
 ## Author decision
@@ -15,10 +16,29 @@ record retired rulings, grouped by retirement cause. This supersedes the
 intermediate suggestion to retain retirements on topic pages for one round;
 there is no Newly retired section either.
 
+The author-rulings register is project-specific and does not follow the
+ordinary topic-page template. Its format is a project-identifying title,
+then active rulings grouped under useful subject headings. Each entry keeps
+the author's wording, date, scope and source. Qualifications sit beside the
+ruling they qualify. Native-note citations link directly to their retained
+source text or annex.
+
+No introductory policy paragraph, generic Hazards/Open questions/Fallback
+sections, Shared provenance inventory, or Stated intent and pending decisions
+section is added to this register. Proposals and intentions remain in their
+journal sources until the author makes a ruling. This is the format now
+edited with the author in `memory/topics/commission.md` on PR #2263; preserve
+its rulings rather than copying harness-specific decisions to other projects.
+
+Integration and retirement of integrated rulings are primarily Brood's job.
+Do not introduce an author-approval requirement for retiring a fully integrated
+ruling, or use this format change to add authority boilerplate.
+
 ## Scope
 
 Update the shared Smelt skill and its consolidation reference so subsequent
-runs apply this behavior to their selected project, including projects other
+runs adopt this registry format and retirement behavior in their selected
+project, including projects other
 than the harness. Update affected size-accounting and editorial guidance as
 needed, without rewriting existing journal entries or accepted reports.
 Append retirement records to the selected project's journal, retaining the
@@ -42,6 +62,21 @@ skill, not other repositories' files from a harness session.
 - Other active Smelt guidance found by a targeted reference audit.
 
 ## Exit criteria
+
+- [ ] Every selected project's author-rulings register uses the agreed compact
+  format: project title, active rulings under useful subject headings, and
+  entry-local date, scope and source. It is exempt from the ordinary topic
+  section template.
+- [ ] The register contains no introductory policy boilerplate, generic
+  Hazards/Open questions/Fallback sections, Shared provenance inventory,
+  pending proposals or unruled intentions. Useful qualifications and source
+  links stay beside their rulings; historical sources remain intact.
+- [ ] Adoption preserves each project's own rulings and author edits; it
+  neither imports IDH rulings nor performs a cross-project write from the
+  harness. A representative non-harness fixture demonstrates the format.
+- [ ] Shared guidance identifies Brood as the primary owner of integration
+  and retirement of integrated rulings, without adding an author approval
+  gate or replacement boilerplate to the register.
 
 - [ ] Shared Smelt instructions require no Retired or Newly retired topic
   section, for every selected project repository.
