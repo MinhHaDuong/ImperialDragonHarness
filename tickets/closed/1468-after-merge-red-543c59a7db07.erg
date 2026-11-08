@@ -2,6 +2,7 @@
 Title: After-merge red on main 543c59a7db07: pytest-guard
 Created: 2026-11-08
 Author: merge-gate
+Closed: Actual full after-merge record passed on main5c3565a4 after child1469 integration review
 
 --- log ---
 2026-11-08T10:49Z merge-gate created
@@ -13,6 +14,8 @@ Author: merge-gate
 2026-11-08T11:11Z reviewer closed — autoclosed — PR #2267
 2026-11-08T11:15Z reviewer Advisor-backed sequencing correction: reopened as tracker with original after-merge-green criterion unchanged; implementation child1469 inherits PR2267 test repair. Round1 gate correctly cannot observe future main record. Parent closes only after actual green record and integration review.
 2026-11-08T11:15Z reviewer note verify-reroll — round 1: after-merge main record remains pending; separate implementation repair from monitor criterion without changing the latter
+2026-11-08T11:21Z reviewer Integration review: child1469 closed by PR2267 at merge5c3565a40f6780db814ba573333d82c167497607. Re-read three test diffs: obsolete prose pins removed, outside-topic source integrity retained, dynamic index noninjection checked for successful/nonempty hook output and mutation rejected. Actual after-merge record on that main tip PASS: pytest-guard46.3s (3560passed,4skipped); all six checks pass. Original criterion now observed, not inferred.
+2026-11-08T11:21Z reviewer closed — Actual full after-merge record passed on main5c3565a4 after child1469 integration review
 
 --- body ---
 ## Context
