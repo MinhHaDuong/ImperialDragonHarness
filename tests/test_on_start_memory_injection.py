@@ -17,7 +17,7 @@ pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "scripts" / "on-start-context.sh"
-SENTINEL = "Search the journal for older or unprocessed experiences."
+INDEX = REPO / "memory" / "MEMORY.md"
 
 
 def hook_stdout(project_dir):
@@ -28,14 +28,15 @@ def hook_stdout(project_dir):
         env["CLAUDE_PROJECT_DIR"] = str(project_dir)
     result = subprocess.run(
         ["bash", str(SCRIPT)], cwd=REPO, env=env, capture_output=True, text=True,
+        check=True,
     )
     return result.stdout
 
 
-def test_index_exists_for_the_check_to_mean_something():
-    assert SENTINEL in (REPO / "memory" / "MEMORY.md").read_text()
-
-
 @pytest.mark.parametrize("project", ["repo", "none"])
 def test_index_not_injected(project):
-    assert SENTINEL not in hook_stdout(REPO if project == "repo" else None)
+    index = INDEX.read_text(encoding="utf-8").strip()
+    assert index, "the index must contain text for the absence check to be meaningful"
+    output = hook_stdout(REPO if project == "repo" else None)
+    assert output.strip(), "the hook must emit context for the absence check"
+    assert index not in output
