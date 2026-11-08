@@ -2,7 +2,6 @@
 Title: After-merge red on main 543c59a7db07: pytest-guard
 Created: 2026-11-08
 Author: merge-gate
-Closed: autoclosed — PR #2267
 
 --- log ---
 2026-11-08T10:49Z merge-gate created
@@ -12,6 +11,8 @@ Closed: autoclosed — PR #2267
 2026-11-08T11:02Z reviewer raid89553f plan/execution on pinned wave base 3c6fda40: reproduced all three named AssertionErrors (superseded token, mandatory inventory filename, removed hook SENTINEL); no implementation/prose defect established. Removed obsolete governance wording test, retained topic source-outside-topics reachability, and derived hook absence control from current nonempty MEMORY.md with checked process and nonempty context. Targeted modules: 20 passed. Injected-index positive control rejected for repo and no-project cases. After-merge main record remains orchestrator monitor criterion; no claim of completion before that record.
 2026-11-08T11:03Z reviewer Verify: declared adherence runner make lint passed (182 selected); make check-fast passed (1751 selected). Target ruff and git diff --check passed. verify-adherence: PASS; reference-resolution inapplicable (no manuscript diff); semantic review inapplicable (tests plus ticket log only, no rule/architecture changes); no trace supplied. All checks against raid wave base 3c6fda40, intentionally no origin/main rebase per raid contract. Worker actual model/effort unavailable in runtime context; system identifies only Codex based on GPT-6, no exact served id asserted.
 2026-11-08T11:11Z reviewer closed — autoclosed — PR #2267
+2026-11-08T11:15Z reviewer Advisor-backed sequencing correction: reopened as tracker with original after-merge-green criterion unchanged; implementation child1469 inherits PR2267 test repair. Round1 gate correctly cannot observe future main record. Parent closes only after actual green record and integration review.
+2026-11-08T11:15Z reviewer note verify-reroll — round 1: after-merge main record remains pending; separate implementation repair from monitor criterion without changing the latter
 
 --- body ---
 ## Context
@@ -33,3 +34,13 @@ Failed tests (check, test id):
 ## Exit criteria
 
 - [ ] An after-merge record on main passes the checks named above.
+
+## Children
+
+- 1469 — repair the three stale assertions and preserve meaningful source and
+  injection regression checks; implementation PR #2267.
+
+This ticket remains the delivery tracker for the original after-merge result.
+Its exit criterion above is unchanged. Once the child merges, inspect the real
+main after-merge record and perform integration review before closing this
+tracker. The pre-gate close commit was provisional and is explicitly reversed.

@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Repair stale memory assertions while preserving source and injection checks
+Created: 2026-11-08
+Author: codex
+Closed: autoclosed — PR #2267
+
+--- log ---
+2026-11-08T11:14Z codex created
+2026-11-08T11:15Z reviewer Created during gate diagnosis to inherit existing 3e7a80b0 implementation and23b2af8c test evidence; scope unchanged. PR2267 will close this implementation child, parent1468 remains open for real after-merge verification.
+2026-11-08T11:15Z reviewer closed — autoclosed — PR #2267
+
+--- body ---
+Parent: 1468
+
+## Context and scope
+
+Implementation child of red-main tracker 1468. Its sole criterion is an
+actual after-merge record, which cannot exist before the merge producing it.
+The advisor recommended this decomposition rather than weakening that
+criterion. Existing implementation commit 3e7a80b0 and evidence commit
+23b2af8c are inherited on PR #2267; no new implementation scope is added.
+
+Repair only the three stale memory assertions identified by 1468. Preserve
+the author-reviewed memory prose and useful behavioral checks. The original
+three assertion failures were reproduced; affected modules have 20 passing
+checks, with an injected-index sensitivity control in both runtime contexts.
+
+## Relevant files
+
+- tests/test_dream_v8.py
+- tests/test_memory_v8_pilot.py
+- tests/test_on_start_memory_injection.py
+
+## Exit criteria
+
+- [ ] Remove obsolete supersession wording and universal inventory-filename
+  assertions without restoring prose the author removed.
+- [ ] Retain structural checks that each topic cites an existing source
+  outside the topic directory.
+- [ ] Non-injection coverage derives from the current nonempty index, checks
+  successful hook execution and nonempty output, and rejects injected index
+  text in both repository and no-project contexts.
+- [ ] Affected test modules and required before-merge checks pass on the
+  candidate; review shows no production or memory-prose change.
+
+The real full after-merge record remains required by parent 1468. This child
+neither asserts that future record already exists nor closes the parent.
