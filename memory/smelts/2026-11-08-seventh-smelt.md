@@ -673,3 +673,11 @@ Ticket 1467 carries the shared maintenance change for Smelt and Brood in all
 projects, including preserving this reviewed format and author edits. Ticket
 1466 retains the separate naming migration. Neither shared skill is changed
 by this memory-only proposal.
+
+## Acceptance
+
+The author completed review and explicitly requested the merge on 2026-11-08.
+This accepts the final reviewed report and register; earlier submission-status
+paragraphs describe the initial proposal and its publication history. Final
+diff: 13 memory paths, bookkeeping tier. Shared writer maintenance remains
+ticket 1467, independently published on its ticket branch.

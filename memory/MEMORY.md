@@ -25,8 +25,8 @@ in the Smelt skill. Provenance: [inventory](../conception/memory-v8/source-inven
 
 ## Smelts
 
-- [Seventh proposal](smelts/2026-11-08-seventh-smelt.md) — author review pending;
-  this proposal does not count as accepted processing.
+- [Seventh](smelts/2026-11-08-seventh-smelt.md) — accepted by the author
+  2026-11-08; PR #2263.
 - [Sixth](smelts/2026-11-01-sixth-smelt.md) — accepted 2026-11-05 (PR #2197).
 - [Fifth](smelts/2026-10-30-fifth-smelt.md) — accepted (PR #2049).
 - [Fourth](smelts/2026-10-15-fourth-hoard.md) — accepted.
