@@ -1,0 +1,58 @@
+%erg 0.1
+Title: Smelt: keep retirement history in the journal across all repositories
+Created: 2026-11-08
+Author: codex
+
+--- log ---
+2026-11-08T09:55Z codex created
+
+--- body ---
+## Author decision
+
+Smelt must leave no Retired section in consolidated topic pages, in any
+repository where the skill runs. The append-only journal is the place to
+record retired rulings, grouped by retirement cause. This supersedes the
+intermediate suggestion to retain retirements on topic pages for one round;
+there is no Newly retired section either.
+
+## Scope
+
+Update the shared Smelt skill and its consolidation reference so subsequent
+runs apply this behavior to their selected project, including projects other
+than the harness. Update affected size-accounting and editorial guidance as
+needed, without rewriting existing journal entries or accepted reports.
+Append retirement records to the selected project's journal, retaining the
+ruling, its sources, reason and any verified integration destination.
+Distinguish integration into rules/skills/documentation from retraction or
+supersession; completed work and dated observations are history, not proof
+that a ruling became a rule. Reuse existing source records rather than
+re-appending the same retirement on every run.
+
+Current application is in the unmerged seventh-smelt proposal PR #2263:
+`memory/journal/2026/2026-11-08-smelt-retirement-causes.md`. Coordinate with
+that proposal and the author's manual edits. This ticket changes the shared
+skill, not other repositories' files from a harness session.
+
+## Relevant files
+
+- `skills/smelt/SKILL.md`
+- `skills/smelt/references/consolidation.md` (page shape, caps and second pass)
+- `scripts/memory_sizes.py` and affected checks, if their Retired exemption
+  needs removal or adjustment to match the new page shape.
+- Other active Smelt guidance found by a targeted reference audit.
+
+## Exit criteria
+
+- [ ] Shared Smelt instructions require no Retired or Newly retired topic
+  section, for every selected project repository.
+- [ ] Retired rulings are recorded in that project's append-only journal,
+  grouped by cause, with sources and reasons; integration does not imply
+  every ruling became a rule.
+- [ ] Journal appends are explicitly authorized by the skill's write scope;
+  existing journal entries and accepted reports remain unchanged.
+- [ ] Page-shape, cap and second-pass guidance consistently reflects this
+  behavior, with no remaining requirement for a Retired line or one-round
+  Retired section.
+- [ ] A representative consolidation check demonstrates topic removal and
+  grouped journal retention without losing active rulings, overwriting author
+  edits, or duplicating retirement records on a later run.
