@@ -1,7 +1,7 @@
 # Site practice: raids, review and merging
 
 Authority: merge, gaze, raid, verify-gate and `rules/workflow.md`.
-Rulings: [Commission][source1]. Tags refer to source episodes.
+Rulings: [User rulings][source1]. Tags refer to source episodes.
 
 ## Current guidance
 
@@ -64,6 +64,6 @@ Previous page's 2026-10-02 to 10-15 episodes are in git: `git show HEAD:memory/t
 [train]: ../journal/2026/2026-11-07-raid-train-controls.md
 [identity]: ../journal/2026/2026-11-05-pr2217-attribution-capture.md
 
-[source1]: commission.md
+[source1]: user-rulings.md
 
 ## Fallback

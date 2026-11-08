@@ -16,7 +16,7 @@ Le 2 novembre 2026 : « Formaliser que les mémoires demandées par l’utilisat
 
 ## Travail attendu
 
-Intégrer cette distinction dans la remise à plat du système mémoire, en partant des usages et du cycle complet de capture, consultation, consolidation et retrait. Examiner l’existant, notamment la Commission (`memory/topics/commission.md`), les arbitrages de l’auteur et `memory/topics/memory-v8-governance.md`, avant de proposer un mécanisme supplémentaire.
+Intégrer cette distinction dans la remise à plat du système mémoire, en partant des usages et du cycle complet de capture, consultation, consolidation et retrait. Examiner l’existant, notamment les arbitrages de l’auteur (`memory/topics/user-rulings.md`) et `memory/topics/memory-v8-governance.md`, avant de proposer un mécanisme supplémentaire.
 
 Questions à instruire avec l’auteur :
 - Comment conserver une provenance explicite et la distinguer d’une inférence automatique ?
@@ -28,7 +28,7 @@ Les emplacements évoqués dans la conversation (`rules/guards.md`, `rules/workf
 
 ## Critères de sortie
 
-- [ ] Le design mémoire révisé traite explicitement la demande de l’auteur et explique son articulation avec les mémoires automatiques et la Commission.
+- [ ] Le design mémoire révisé traite explicitement la demande de l’auteur et explique son articulation avec les mémoires automatiques et les arbitrages de l’auteur.
 - [ ] Les garanties retenues, les contradictions et le retrait sont arbitrés avec l’auteur et documentés.
 - [ ] Les emplacements et changements nécessaires sont identifiés dans ce design, sans disperser prématurément une règle entre plusieurs documents.
 

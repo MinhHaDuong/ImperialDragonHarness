@@ -36,8 +36,9 @@ rather than suggesting a link into a runtime's private store.
 No introductory policy paragraph, generic Hazards/Open questions/Fallback
 sections, Shared provenance inventory, or Stated intent and pending decisions
 section is added to this register. Proposals and intentions remain in their
-journal sources until the author makes a ruling. This is the format now
-edited with the author in `memory/topics/commission.md` on PR #2263; preserve
+journal sources until the author makes a ruling. This is the format the author
+edited in `memory/topics/user-rulings.md` (then `commission.md` in PR #2263);
+preserve
 its rulings rather than copying harness-specific decisions to other projects.
 
 Integration and retirement of integrated rulings are primarily Brood's job.
@@ -46,9 +47,9 @@ ruling, or use this format change to add authority boilerplate.
 
 ## Maintenance contract
 
-The final author-reviewed `memory/topics/commission.md` in PR #2263 is the
-format example. Subsequent Smelt rebuilds and Brood integration/retirement
-edits must keep that format; neither may regenerate removed template sections,
+The final author-reviewed `memory/topics/user-rulings.md` (then `commission.md`
+in PR #2263) is the format example. Subsequent Smelt rebuilds and Brood
+integration/retirement edits must keep that format; neither may regenerate removed template sections,
 introductory policy, pinned-date prefixes or summary blockquotes. Preserve
 subsequent author edits rather than restoring earlier literal pinned text.
 Apply this through shared writer instructions, without prose-wording tests.

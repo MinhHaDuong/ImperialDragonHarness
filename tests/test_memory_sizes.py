@@ -47,8 +47,8 @@ def test_exact_cap_passes_and_cap_plus_one_fails(tmp_path):
     assert ms.main(tmp_path) == 1
 
 
-def test_commission_over_cap_warns_not_fails(tmp_path, capsys):
-    (tmp_path / ms.COMMISSION).write_text(_page(5000), encoding="utf-8")
+def test_user_rulings_over_cap_warns_not_fails(tmp_path, capsys):
+    (tmp_path / ms.USER_RULINGS).write_text(_page(5000), encoding="utf-8")
     assert ms.main(tmp_path) == 0
     assert "OVER (promote to rules, brood 1351)" in capsys.readouterr().out
 
@@ -63,8 +63,8 @@ def test_real_tree_is_measured():
     rows = list(ms.report(REPO / "memory" / "topics"))
     assert len(rows) >= 4, "glob found too few pages: a census that cannot look"
     for name, size, _cap, _status in rows:
-        # Pinned rulings are never cut: Commission may overflow (smelt references § caps).
-        if name != ms.COMMISSION:
+        # Pinned rulings are never cut: User rulings may overflow (smelt references § caps).
+        if name != ms.USER_RULINGS:
             assert size <= ms.CAP, f"{name} grew to {size}"
     assert ms.index_ok((REPO / "memory" / "MEMORY.md").read_text(encoding="utf-8"))
 

@@ -6,7 +6,7 @@ Context: a new-ticket PR body used `**Ticket:** … (new; filed, not closed)`. W
 Use: filing-only PRs name the ticket in a Refs line; check the parsed claims before landing.
 
 ## Stale gate records, PR 1725 — 2026-10-27
-Context: ticket-only PR 1725, gate record on a busy main. What happened: two records went stale as PRs 1726 and 1722 merged meanwhile. Reaction: stopped after one re-record and reported, as the recipe says; the author answered "Just merge, dont rerun the tests", and the merge used `--match-head-commit`. Outcome: MERGED, bypass noted on the PR. Source: memory/journal/2026/2026-10-27-raid-sitrep-ticket-1246.md; memory/topics/commission.md.
+Context: ticket-only PR 1725, gate record on a busy main. What happened: two records went stale as PRs 1726 and 1722 merged meanwhile. Reaction: stopped after one re-record and reported, as the recipe says; the author answered "Just merge, dont rerun the tests", and the merge used `--match-head-commit`. Outcome: MERGED, bypass noted on the PR. Source: memory/journal/2026/2026-10-27-raid-sitrep-ticket-1246.md; memory/topics/user-rulings.md.
 Use: record, merge, retry once, then report; an author waiver covers that PR only.
 
 ## Hand close dropped a ticket, PR 1924 — 2026-10-28

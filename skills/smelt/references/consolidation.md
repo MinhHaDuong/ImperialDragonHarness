@@ -35,7 +35,7 @@ one line each:
 A smelt re-derives every topic; it does not append to it. Each page is written
 fresh from the previous page plus the journal episodes that page links and any
 new ones, under the caps below. A claim survives only if current evidence
-supports it. Pinned Commission lines (`> pinned`) are carried verbatim.
+supports it. Pinned user-rulings lines (`> pinned`) are carried verbatim.
 
 Work by department: one topic at a time, loading only the journal episodes
 that topic links plus entries not yet linked anywhere, and never the whole
@@ -72,15 +72,15 @@ Caps, in UTF-8 bytes (`memory_sizes.py` reports them):
   `Sources`. Inline source links inside a claim count. Retired moves to history
   at the next smelt.
 - The cap binds on history, never on conditions and exceptions.
-- Pinned rulings in the Commission page (lines starting `> pinned`) count
+- Pinned rulings in the user-rulings page (lines starting `> pinned`) count
   against the cap and are never cut to fit: smelt files, dates and links them,
   never paraphrases or retires them; only the author retires a ruling. An
-  overflowing Commission page is reported as a sign that rules wait for the
+  overflowing user-rulings page is reported as a sign that rules wait for the
   author to promote them.
 - `memory/MEMORY.md`: one line per department with its most-used fact, plus
   the project's local location facts, within the 40-line cap SKILL.md states.
 
-Departments: a fixed core (Commission: the author's intent and rulings; Site
+Departments: a fixed core (User rulings: the author's intent and rulings; Site
 practice: how work lands here; Environment: hosts, services, external tools;
 History: the journal, reports and git, never a page) plus the project's
 ouvrage departments (tool or code: architecture and contracts, interfaces and

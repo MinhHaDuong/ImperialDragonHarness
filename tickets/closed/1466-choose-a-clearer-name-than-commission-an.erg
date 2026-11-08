@@ -2,12 +2,14 @@
 Title: Choose a clearer name than Commission and migrate active references
 Created: 2026-11-08
 Author: reviewer
+Closed: autoclosed — PR #2268
 
 --- log ---
 2026-11-08T09:40Z reviewer created
 2026-11-08T10:59Z reviewer Imagine raid89553f: choose user-rulings.md using author vocabulary; migrate active names/links and size-helper exemption, preserve reviewed content/history and existing overflow. Wave after1468, before1467.
 2026-11-08T10:59Z reviewer Plan raid89553f: rename reviewed registry to user-rulings.md, update active topic/index/case-note/open-ticket links and shared Smelt naming plus size-helper constant/tests; byte-compare registry, resolve links, classify historical residuals. Do not change format semantics owned by1467.
 2026-11-08T11:00Z reviewer Feasibility raid89553f PASS: paths and rename surfaces exist; serialize before1467 to avoid size-helper and writer-reference contention. Preserve measured overflow and report historical references.
+2026-11-08T11:40Z reviewer closed — autoclosed — PR #2268
 
 --- body ---
 ## Author request
@@ -26,7 +28,7 @@ as one coherent change. Search the full logical unit rather than applying a
 blind replacement to unrelated uses of "commission".
 
 Relevant starting points:
-- `memory/topics/commission.md`
+- `memory/topics/user-rulings.md` (renamed from `commission.md`)
 - `memory/MEMORY.md`
 - `skills/smelt/references/consolidation.md`
 - Other active references found by the migration audit.

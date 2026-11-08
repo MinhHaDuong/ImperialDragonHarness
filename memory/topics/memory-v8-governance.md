@@ -9,7 +9,7 @@ Authority: the Smelt skill and `rules/guards.md`.
 - Roar captures facts, then gives its `/clear` verdict [survey]. Smelt rebuilds by department from previous pages and source revisions; only accepted reports count as processing. Fifth accepted PR #2049 closed 1349 [accepted]; sixth accepted PR #2197 is this pass's size baseline. Interrupted trial pass 3 and unmerged hoard PR #1975 remain unaccepted.
 - There is no project prompt. Ticket 1451 moved the generic text into `skills/smelt/references/consolidation.md`; its revision is the skill's. Migration refuses an untracked or edited prompt; size comparison resolves refs in the selected repo [prompt]. A retirement citation is intentionally still listed on rerun [followup].
 - Case notes (`memory/skills/<skill>.md`) have 1–4 dated, sourced cases with `Use:` lines, around 400 words. Smelt re-selects them. Claude's Skill PostToolUse plus UserPromptSubmit cover both tool and typed-slash loads; Pi wiring landed in PR 2150 [cases].
-- Native auto-memory stays by author choice (1350 option b); Smelt lists it read-only. Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [Commission][source1] pin remains verbatim; the later ruling clarifies the sequence.
+- Native auto-memory stays by author choice (1350 option b); Smelt lists it read-only. Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [User rulings][source1] pin remains verbatim; the later ruling clarifies the sequence.
 - Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention/provenance landed as 1464; 1377 closed by author disposition in favor of deferred 1465, without claiming structured constraints implemented [brood].
 
 ## Hazards
@@ -43,6 +43,6 @@ Authority: the Smelt skill and `rules/guards.md`.
 [identity]: ../journal/2026/2026-11-05-pr2217-attribution-capture.md
 - Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/1465-evidence-structured-review-constraints-a.erg).
 
-[source1]: commission.md#current-guidance
+[source1]: user-rulings.md#on-memory-and-rules
 
 ## Fallback
