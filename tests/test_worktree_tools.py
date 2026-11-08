@@ -303,6 +303,52 @@ def test_gc_keeps_tmp_cited_by_topic_commit(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+LOCAL_FORGE_ID = "rv-20261101-t1211-retained-accounting-9284"  # forge.py: none backend ids are opaque strings
+
+
+def _gc_with_string_id_record(origin, name, record):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, name)
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "audit.json").write_text("evidence\n")
+    make_branch_gone(remote, primary, name)
+    res = _gc(primary, gh_response=__import__("json").dumps([record]))
+    return primary, wt, res
+
+
+def test_gc_accepts_local_forge_string_id_without_citation(origin):
+    record = {"number": LOCAL_FORGE_ID, "title": "work", "body": "No scratch citation."}
+    primary, wt, res = _gc_with_string_id_record(origin, "agent-string-id-clear", record)
+    assert "malformed" not in res.stderr.lower()
+    assert res.returncode == 0
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_cited_by_local_forge_string_id_record(origin):
+    record = {"number": LOCAL_FORGE_ID, "title": "work", "body": "Evidence: `.tmp/audit.json`"}
+    primary, wt, res = _gc_with_string_id_record(origin, "agent-string-id-cited", record)
+    assert "citation" in res.stdout.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("record", [
+    {"number": LOCAL_FORGE_ID, "title": "work", "body": 5},  # the adapter fills a missing body with ""
+    {"number": LOCAL_FORGE_ID, "title": 5, "body": "x"},
+    {"number": "a/b", "title": "work", "body": "x"},
+    {"number": "..", "title": "work", "body": "x"},
+    {"number": "../x", "title": "work", "body": "x"},
+    {"number": "", "title": "work", "body": "x"},
+    {"number": 1.5, "title": "work", "body": "x"},
+])
+def test_gc_blocks_malformed_request_record(origin, record):
+    primary, wt, res = _gc_with_string_id_record(origin, "agent-malformed-record", record)
+    assert "malformed" in res.stderr.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_gc_keeps_tmp_if_citation_source_is_unavailable(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-tmp-source-unavailable")

@@ -194,6 +194,9 @@ def verdict_contents(paths: list[Path]) -> list[tuple[Path, str]]:
     return found
 
 
+SAFE_REQUEST_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
 def citation_sources(repo: Path, worktree: Path, branch: str) -> list[tuple[str, str]]:
     anchor = branch_anchor(repo, branch)
     branch_ref = f"refs/heads/{branch}"
@@ -211,12 +214,16 @@ def citation_sources(repo: Path, worktree: Path, branch: str) -> list[tuple[str,
         raise Blocked("could not inspect citation sources (PR listing incomplete)")
     numbers: list[str] = []
     for pr in documents:
-        if (not isinstance(pr, dict) or not isinstance(pr.get("number"), int)
-                or not isinstance(pr.get("title"), str) or not isinstance(pr.get("body"), str)):
+        # forge.py owns the id type: an int (gh) or an opaque string (local backend); the
+        # string joins under .panel/ and .review/, so it must be one safe path component.
+        number = pr.get("number") if isinstance(pr, dict) else None
+        valid_id = (isinstance(number, int) and not isinstance(number, bool)) or (
+            isinstance(number, str) and SAFE_REQUEST_ID.fullmatch(number) is not None)
+        if (not valid_id or not isinstance(pr.get("title"), str) or not isinstance(pr.get("body"), str)):
             raise Blocked("could not inspect citation sources (malformed PR record)")
-        number = str(pr["number"])
+        number = str(number)
         numbers.append(number)
-        sources.append((f"PR #{number} body", pr["title"] + "\n" + pr["body"]))
+        sources.append((f"request {number} body", pr["title"] + "\n" + pr["body"]))
 
     roots: list[Path] = candidate_verdict_roots(worktree)
     trees = worktrees(repo)
