@@ -6,6 +6,7 @@ Author: merge-gate
 --- log ---
 2026-11-08T10:49Z merge-gate created
 2026-11-08T10:59Z reviewer Imagine raid89553f: three failures reproduced; stale wording/provenance/sentinel assertions, no observed runtime defect. Fix tests without restoring rejected prose; preserve source reachability and meaningful noninjection coverage. First wave.
+2026-11-08T10:59Z reviewer Plan raid89553f: remove obsolete supersession wording test; retain structural outside-topic source checks without mandatory inventory strings; derive noninjection marker from current index with positive control. Targeted regression tests then normal lint/fast gate and full after-merge record.
 
 --- body ---
 ## Context
