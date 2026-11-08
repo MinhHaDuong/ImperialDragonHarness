@@ -5,6 +5,7 @@ Author: MinhHaDuong
 
 --- log ---
 2026-11-08T18:49Z MinhHaDuong created
+2026-11-08T20:10Z raid-f1c4d5 imagined, planned, feasibility PASS (orchestrator inline: one small ticket)
 
 --- body ---
 ## Context
@@ -36,3 +37,40 @@ or the adapter should normalise ids. Either side may be the fix.
   owns the id type, documented.
 - [ ] Test: a local-forge record with a string id that does not cite `.tmp/`
   lets removal proceed; one that cites a `.tmp/` path still blocks.
+
+## Imagine (raid f1c4d5)
+
+Premise holds on origin/main c65a9e32. The id type is already documented on
+the adapter side: `scripts/forge.py` module doc says the none backend's
+`number` "is an opaque review ID, not a numeric forge request" (review_notes
+mints `rv-YYYYMMDD-<slug>-<hex>`). So the adapter owns the id type and the
+guard is the stale side: fix the guard, not the adapter.
+
+Simplest path: accept `number` as an `int` (gh) or as a `str` that is a single
+safe path component (`^[A-Za-z0-9][A-Za-z0-9._-]*$`), since
+`registered_verdict_roots` joins it under `.panel/` and `.review/`. Anything
+else, including a missing or non-string title or body, an empty id, or an id
+holding `/` or `..`, stays fail-closed as a malformed record. No new
+abstraction.
+
+## Plan
+
+Actions:
+1. `tests/test_worktree_tools.py`: next to the existing int-number fake listing
+   (around line 267), add two removal-mode tests with a local-forge style
+   record `{"number": "rv-20261101-t1211-x-9284", ...}`: (a) the body does not
+   cite `.tmp/`, so removal proceeds; (b) the body cites the worktree's
+   `.tmp/` path, so removal blocks with a citation. Add a third check: a record
+   with a string id but no `body` still blocks as malformed, and so does an id
+   containing `/`.
+2. `scripts/worktree-tmp-guard.py` `citation_sources()`: widen the id check as
+   above, and write a one-line comment citing forge.py as the owner of the id
+   type. Label the source `request <id> body` (or keep `PR #`) for both shapes.
+3. Run the new tests by name and see them fail first, then pass; then run the
+   whole `tests/test_worktree_tools.py`.
+
+First test: (a), a string id without a citation must let removal proceed. Today
+it raises "malformed PR record", which is the targeted failure.
+
+Feasibility: PASS. Paths and lines checked: guard lines 212-219, forge.py
+doc line 24, test fixture line 267. No cross-ticket conflict (single ticket).
