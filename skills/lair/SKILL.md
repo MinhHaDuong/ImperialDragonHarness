@@ -49,7 +49,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
 6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
 7. **Exit worktree** — if in a worktree:
-    a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
+    a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (refuses on any uncommitted/untracked state other than `.panel/` and `build/panel-head/` review scratch, and purges that scratch only once nothing else blocks; a refusal deletes nothing). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
     b. `cd` to the primary checkout (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`). All remaining steps run on main.
 8. **Hygiene sweep**:
    - Stale worktrees were GC'd by molt at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
