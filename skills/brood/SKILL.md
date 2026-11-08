@@ -77,6 +77,10 @@ Within the assigned project and scope, Brood implementors may annotate,
 simplify or decay consolidated topics and the index when replacement evidence
 warrants it. Keep source references, counterexamples and the reason for each
 change in the ticket/merge request. Age or rule authority alone cannot justify decay.
+Maintain the selected project’s ruling register and append-only retirement
+records using `../smelt/references/consolidation.md` § Ruling register and
+retirement. Brood primarily owns integration and retirement of integrated
+rulings; fully verified integration needs no additional author-approval gate.
 Preserve the journal append-only; corrections are new linked entries.
 
 Immediately before writing, compare source revisions with those examined.

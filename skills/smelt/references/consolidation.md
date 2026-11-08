@@ -35,7 +35,8 @@ one line each:
 A smelt re-derives every topic; it does not append to it. Each page is written
 fresh from the previous page plus the journal episodes that page links and any
 new ones, under the caps below. A claim survives only if current evidence
-supports it. Pinned user-rulings lines (`> pinned`) are carried verbatim.
+supports it. Preserve rulings’ substance and context, including later author
+edits, using § Ruling register and retirement.
 
 Work by department: one topic at a time, loading only the journal episodes
 that topic links plus entries not yet linked anywhere, and never the whole
@@ -49,7 +50,7 @@ python3 "$IDH_ROOT/scripts/memory_sizes.py" "$PROJECT/memory/topics" --before <g
 ```
 
 It prints bytes before and after per page and the total; the ref resolves in
-the project's own repository. Pinned lines count. A page or a store that grows
+the project's own repository. Rulings count. A page or a store that grows
 is explained in the report; shrinking needs no reason.
 
 ## Job of a topic and caps
@@ -62,25 +63,50 @@ claim is corrected or retired. A superseded claim leaves the page: the journal
 and git keep the history; never annotate it in place, and never split a page
 by date.
 
-Page shape: current guidance, hazards, open questions, Retired (one line per
-retired claim, naming the change that retired it), Sources (journal links), and
-a fallback box for material that fits no department, emptied at each smelt.
+Ordinary topic shape: current guidance, hazards, open questions, Sources
+(journal links), and a fallback box emptied at each smelt. No topic retains a
+Retired or Newly retired section; retirement records belong in the journal.
+The ruling register uses the separate format below.
 
 Caps, in UTF-8 bytes (`memory_sizes.py` reports them):
 
-- A page holds at most 4096 bytes, counting every section except `Retired` and
-  `Sources`. Inline source links inside a claim count. Retired moves to history
-  at the next smelt.
-- The cap binds on history, never on conditions and exceptions.
-- Pinned rulings in the user-rulings page (lines starting `> pinned`) count
-  against the cap and are never cut to fit: smelt files, dates and links them,
-  never paraphrases or retires them; only the author retires a ruling. An
-  overflowing user-rulings page is reported as a sign that rules wait for the
-  author to promote them.
+- A page holds at most 4096 bytes, counting every section except `Sources`.
+  Inline source links inside a claim count.
+- Keep conditions and exceptions; move historical detail to the journal.
+- An overflowing `user-rulings.md` is reported without failing the size check
+  or directing promotion. Preserve reviewed rulings rather than cutting them
+  merely to fit the budget.
 - `memory/MEMORY.md`: one line per department with its most-used fact, plus
   the project's local location facts, within the 40-line cap SKILL.md states.
 
-Departments: a fixed core (User rulings: the author's intent and rulings; Site
+## Ruling register and retirement
+
+Each selected project's `memory/topics/user-rulings.md` has a project-identifying
+title and useful subject headings containing active rulings in ordinary,
+blank-separated paragraphs. Keep each ruling's context, scope, qualifications,
+and sources beside it. Rulings are contextual jurisprudence: preserve substance
+and author edits, not immutable wording. Dates stay in sources unless chronology
+matters. Journal narratives use `[context]`; preserved note text uses
+`[smelt annex: note identifier]` linked to its actual repository annex.
+
+This register is exempt from the ordinary topic template. Add no introductory
+policy, generic Hazards/Open questions/Fallback sections, pinned-date prefixes,
+summary blockquotes, Shared provenance inventory, or pending intentions.
+Proposals stay in their journal sources until ruled on. Use the selected
+project's decisions; the harness register illustrates format, not content to copy.
+
+Brood primarily integrates rulings and retires those fully integrated, without
+an additional author-approval gate. Preserve active rulings through Smelt
+rebuilds and Brood edits. For a retirement, remove the ruling from the topic and
+retain it in the selected project's append-only journal, grouped by cause:
+verified integration into rules/skills/documentation (name the destination),
+supersession, retraction, or historical completion/observation. Keep the ruling,
+sources, and reason. Completed work or dated observations do not establish
+integration. Reuse an existing source record when it already records the
+retirement; otherwise append a new linked record. Never rewrite old journal
+entries or accepted reports, or duplicate retirements on later passes.
+
+Memory pages: the ruling register plus department topics with a fixed core (Site
 practice: how work lands here; Environment: hosts, services, external tools;
 History: the journal, reports and git, never a page) plus the project's
 ouvrage departments (tool or code: architecture and contracts, interfaces and
@@ -157,4 +183,5 @@ Write `memory/smelts/YYYY-MM-DD-<slug>.md` recording:
   imports nothing as new and re-examines each correction against its sources.
   It also compares each previous page with its rebuild: every caveat,
   condition or exception of the previous page is still present or has a
-  Retired line naming why, none dropped without a Retired line.
+  sourced retirement record (§ Ruling register and retirement). Confirm that
+  the second pass appends no duplicate retirement records.

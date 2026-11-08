@@ -203,4 +203,3 @@ def test_smelt_is_a_rebuild_with_a_net_change_report():
     assert "## Rebuild" in DREAM_PROMPT.read_text(encoding="utf-8")
     assert "by department" in prompt and "memory_sizes.py" in prompt and "--before" in prompt
     assert '"$IDH_ROOT/scripts/memory_sizes.py"' in prompt, "size helper must run from the harness"
-    assert "none dropped without a Retired line" in prompt
