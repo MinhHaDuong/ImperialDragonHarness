@@ -8,6 +8,7 @@ Author: codex
 2026-11-08T10:07Z reviewer Author extended scope: adopt the compact project-specific active-rulings registry format in all projects; remove topic-template sections, policy intro, shared provenance and pending intentions.
 2026-11-08T10:22Z reviewer Author clarification: rulings are contextual jurisprudence, not sacred wording; remove pinned-date prefixes and rely on source dates unless chronology matters.
 2026-11-08T10:46Z reviewer Final author-reviewed format: plain separated paragraphs, context journal links, smelt annex labels, no template restoration; cover both Smelt and Brood maintenance.
+2026-11-08T10:59Z reviewer Imagine raid89553f: concise shared Smelt/Brood maintenance, append-only retirement journal grouped by cause, no duplication or prose pins. Blind-spot: remove obsolete Retired-line test and reconcile active governance cap/verbatim guidance.
 
 --- body ---
 ## Author decision
