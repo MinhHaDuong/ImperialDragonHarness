@@ -7,6 +7,7 @@ Label: deferred
 --- log ---
 2026-11-02T10:03Z codex created
 2026-11-07T12:15Z reviewer ticket 1451 (fold the per-project SMELT.md prompt into the smelt skill, PR #2225) is a bounded step inside this redesign: generic consolidation text now lives in skills/smelt/references/consolidation.md; no per-project prompt
+2026-11-08T10:50Z reviewer Author: rulings are a separate memory class; explicit/implicit provenance is independent of topic classification. Injection remains open: merge both in pre-skill injectors? Mimic Claude Code pre-skill/file-type hook patterns? Deferred design input, no implementation.
 
 --- body ---
 ## Demande de l’auteur
@@ -32,3 +33,22 @@ Les emplacements évoqués dans la conversation (`rules/guards.md`, `rules/workf
 - [ ] Les emplacements et changements nécessaires sont identifiés dans ce design, sans disperser prématurément une règle entre plusieurs documents.
 
 Ce ticket reste différé jusqu’à la reprise du design mémoire ; il ne commande pas de refonte immédiate.
+
+## Author design input — 2026-11-08
+
+User rulings are a separate class of memories. Their injection modalities
+remain unclear. Consider explicit user rulings versus discovered implicit
+memories as an axis independent of topic classification: the same topic can
+contain either kind, rather than forcing rulings into a topic-page template.
+
+Open questions for the memory-system revision:
+- Should pre-skill injectors merge explicit and implicit memories?
+- Should memory injectors mimic Claude Code's hook patterns, such as
+  pre-skill injection and injection when reading a particular file type?
+- How should this independent explicit/implicit axis affect selection and
+  presentation without erasing provenance or contextual scope?
+
+These are design inputs and questions, not authorization to implement an
+injection mechanism. Deferred status is unchanged. The author-reviewed IDH
+rulings register in PR #2263 and the shared maintenance ticket 1467 provide
+concrete format context; they do not settle injection behavior.
