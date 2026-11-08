@@ -22,12 +22,6 @@ Rulings: [Commission][source1]. Tags refer to source episodes.
 
 Attribution still has unavailable writer identities, fact-order failures and script-only gaps [t1396][identity]. Gaze setup/closing consumed ~42%; faster orchestration awaits arena data. Auto-merge once waited ~7 min after green; cause unknown [cat].
 
-## Retired
-
-- Self-only refusal as current gating advice: superseded by the author's 2026-11-01 ruling in merge § Gating tiers. Historical catches remain evidence, not an eligibility rule.
-- Older gate-less exceptions and override lists: historical, no fresh waiver; Commission scopes each decision to its PR.
-- Earlier Retired history remains in git; no source episode was deleted.
-
 ## Sources
 
 - Provenance: [source inventory](../../conception/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

@@ -109,11 +109,12 @@ No decryption, native edit, journal rewrite, or cross-project operation occurred
   Government memo 1369 remains in cooldown; no design was implemented.
 
 Reference-style source links reduce repeated path bytes without changing
-claims or locators. Earlier Retired history remains in Git and source episodes;
-new Retired lines identify each substantive withdrawal. No manuscript source
+claims or locators. Topic pages have no Retired sections, as requested by the author. Retirement
+causes and withdrawn guidance are recorded in the [journal entry](../journal/2026/2026-11-08-smelt-retirement-causes.md);
+earlier journal entries remain unchanged. No manuscript source
 quotation or page/folio locator was paraphrased or deleted.
 
-## Measured sizes
+## Initial proposal measurements (before author review)
 
 Generated with `python3 scripts/memory_sizes.py memory/topics --before <ref>`
 for both refs above; bytes exclude only Retired and Sources. The accepted-state
@@ -246,7 +247,7 @@ page with each rebuild:
 | Department | Conditions/caveats preserved or retired explicitly |
 |---|---|
 | Commission | 18 pinned lines compare byte-for-byte; one-PR waivers, peer scope, no-spend scope, cooldown, review/test exceptions and stated-intent status retained. |
-| Git | Pen/autosave, restart/unguarded restore, SHA-read authority, commit-ID exception, patch-equivalent deletion authority, GC idle-live dissent, ignored/private-file and shared-ref hazards retained. Expired watch, obsolete refusal advice, dated GC timing and episode-only ignore example have Retired reasons. |
+| Git | Pen/autosave, restart/unguarded restore, SHA-read authority, commit-ID exception, patch-equivalent deletion authority, GC idle-live dissent, ignored/private-file and shared-ref hazards retained. Expired watch, obsolete refusal advice, dated GC timing and episode-only ignore example have reasons in the retirement journal entry. |
 | Raids | Tier/after-merge scope, ticket staging, exact claims, retry once, ancestry/delta review, fixed round bar, masked identity, no causal family-benefit inference, foreign cwd and unknown flaky cause retained. Self-only refusal explicitly retired against current authority. |
 | CI | Dated host-load timings, author-called single probes, full-red-rerun definition, revisit thresholds, SKIP/act limitations, 127 race, inherited-env fixture, unknown rule/check state and unisolated cause retained. Old suite count retired. |
 | Hosts | Dated btrfs/tmp/Nextcloud facts, archive lifecycle, narrow credentials, local-only Zotero/API/write/test/matching conditions, DOIfetch failure/batch scope and fallback uncertainty retained. Closed plan and dated run totals retired; no raw native refresh inferred. |
@@ -255,7 +256,7 @@ page with each rebuild:
 | Skills | Catalog triggers/routing hints, naming exception, budgets/composition, runtime sentinels, docs duties, measured-vs-hypothetical instruction sweep, deferred stop-hook/rename questions and government cooldown retained. Severity dispute resolved by its source. |
 
 These comparisons concern current guidance and its qualifications; the prior
-Retired history is retained in Git rather than imported as current advice.
+Retirement history is recorded in the journal rather than imported as current advice.
 Source links, defined reference links, protected-pin equality, index lines,
 case counts/words, migration diff, and authorized-output paths were checked.
 Repository mechanical checks are recorded below; submission evidence follows
@@ -631,3 +632,44 @@ Native fingerprints are in their dedicated table, outside this Git-source set.
 - memory/journal/2026/2026-11-01-ruleset-review-and-diet.md blob d323fa835316102c6969967371435055018b61f5
 - memory/journal/2026/2026-11-01-t1409-cross-repo-handoff-dissent.md blob a4ce4cb1c926d109a8ffeb980ac20cdcba063cb7
 
+
+## Author retirement-format revision
+
+The author removed Commission’s Retired section manually; that edit is
+preserved. The remaining department Retired sections were removed. A new
+[journal entry](../journal/2026/2026-11-08-smelt-retirement-causes.md) groups
+retired rulings by cause and records the other editorial withdrawals. This
+explicit journal append supersedes the earlier one-round topic retention
+suggestion. Existing journal entries and active pinned rulings were unchanged.
+The measured guide-byte table above is unchanged: those sections were already
+excluded from its calculation.
+
+## Final author review and register format
+
+The author reviewed and edited the register, then authorized the Smelt merge.
+The reviewed register is contextual jurisprudence, not immutable quoted policy.
+The final file retains the author's saved substantive edits, including removed
+entries and revised scope, rather than restoring the initial 18 verbatim pins.
+It has a project-specific title, subject headings and ordinary separated
+paragraphs. There is no introductory policy, pinned-date prefix, summary
+blockquote, generic topic template, pending-intention section or provenance
+inventory. Journal narratives are labeled context; preserved note citations
+name their actual smelt annex destination. A redundant closing parenthesis
+was removed. All 16 remaining local Markdown links resolve.
+
+Retirement causes are recorded in the new journal entry; existing journal
+entries and accepted reports remain unchanged. The earlier proposal's pin and
+size claims describe its pre-review state, not this final reviewed register.
+
+Final guide sizes, measured with scripts/memory_sizes.py: Commission 4725
+bytes; other seven pages retain the sizes in the initial table. Total 29106
+bytes: 37873 - 29106 = 8767 fewer than the accepted sixth state, and
+34647 - 29106 = 5541 fewer than the actual pre-run state. The register remains
+629 bytes over the inherited 4096-byte cap; the author reviewed this content.
+The index remains 37 lines and there are eight departments. The helper's
+inherited promotion annotation grants no authority to promote a rule.
+
+Ticket 1467 carries the shared maintenance change for Smelt and Brood in all
+projects, including preserving this reviewed format and author edits. Ticket
+1466 retains the separate naming migration. Neither shared skill is changed
+by this memory-only proposal.

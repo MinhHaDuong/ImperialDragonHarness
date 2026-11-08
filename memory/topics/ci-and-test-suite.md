@@ -20,13 +20,6 @@ All timings are padme (32 cores, shared with parallel sessions and arena coders)
 ## Open questions
 - Is the forge ruleset still seven required checks, no bypass? Unverified; 1045 closed. Gaze wall time is model turns (~67 s orchestrator, derived); route lever untested. On a project with no declared check set, verify-gate ran pytest twice (head, then trial merge) — cadens PR 63; cadens ticket 0052. [monitoring][source17]
 
-## Retired
-
-- The old suite count (3041) is a dated 2026-10-29 state, not a current count; timing conditions remain dated above.
-- The duplicate timing scope and malformed duplicate triage link carried no distinct condition and were merged.
-- The 1419 red is historical: PR #2164 closed it. Its caller-reported cause was never re-isolated; the general after-merge policy remains above.
-- Previous Retired history stays in git and the linked sources.
-
 ## Sources
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).

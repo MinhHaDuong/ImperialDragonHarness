@@ -24,12 +24,6 @@ The 2026-11-07 Zotero filename batch is report-only and labelled pre-correction.
 ## Open questions
 - Silent fallback to `~/data` if `/data/datasets/ours` vanished on padme (gaze note, PR 2086); `gaze_seat.py:482` calls `spool_dir()` outside its try (below the ticket floor).
 
-## Retired
-
-- Monitoring “1382 open”, four-step plan and USD 40–85 budget: superseded by completed integration and the author's interactive confirmation in closed 1382; this old plan is no current spend authority.
-- First-run archive count and August-hole count: historical monitoring evidence, retained in the 2026-10-31 episodes rather than current host state.
-- Previous Retired items stay in git; their source episodes remain below.
-
 ## Sources
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).

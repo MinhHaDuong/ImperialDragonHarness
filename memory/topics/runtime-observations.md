@@ -20,12 +20,6 @@ no grid here. Rules loading per runtime: `rules/README.md` § Loading per runtim
 ## Open questions
 - Pi's 195-minute gaze on a local 27B (2026-10-03, one run): recur on the current model? Untested. Faster gaze orchestrator saving 20-30 s of ~3 min (40% odds): hypothesis. Padme's default model: the lineup changes within days; treat any named model as dated.
 
-## Retired
-
-- The named 2026-10-31 padme default: dated history; the service changes within days and current lineup was not probed here.
-- “Codex runs the other-family seat” as an unconditional family claim: family depends on the actual producer and reviewer, not the runtime name.
-- Previous Retired history stays in git; no old version observation was promoted into a current measurement.
-
 ## Sources
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).

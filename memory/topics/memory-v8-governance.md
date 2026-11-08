@@ -22,16 +22,6 @@ Authority: the Smelt skill and `rules/guards.md`.
 
 - Memory redesign 1443 is deferred, with no implementation authority. The verbatim-journal comparison (DreamBench-SWE 95/180 vs 89/180, p=.52) remains inconclusive; 1354 was closed by the author, monitor instead. Append-in-place remains unresolved.
 
-## Retired
-
-- Native-store choice and trial-spend approval as open questions: superseded by author decisions on 1350 and 1354; sources are the closed tickets.
-- Native “inbox smelt drains”: no drain was built or authorized; current skill lists proposals and edits no native note.
-- Per-project prompt `memory/SMELT.md` v8-r5: retired by 1451; generic instructions live in the skill reference. This historical citation stays under the migration contract.
-- “No stage promotes rules” as an unqualified pipeline claim: replaced by explicit Smelt nomination / separately authorized Brood discussion (1461); the author still decides.
-- 770 KB journal size and 39-note inventory dated 2026-11-01: old measurements; current report measures inventory, without treating bytes as context tokens.
-- Removed `skills/dream/` helpers: settled retirement history, source remains below. Brood's first run (1351/PR 2152) is history, not authority for another run.
-- Prior Retired history remains in git and its linked episodes.
-
 ## Sources
 
 - [Design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md), [helper retirement](../journal/2026/2026-10-01-memory-helper-retirement.md), [registration review](../journal/2026/2026-10-01-portable-registration-review.md), [PR 1102 merge](../journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md), [pilot](../journal/2026/2026-10-02-memory-v8-pilot-established.md), [0909 close](../journal/2026/2026-10-02-orchestrated-raid-closes-memory-v8-tracker.md)

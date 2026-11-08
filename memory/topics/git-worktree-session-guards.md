@@ -22,14 +22,6 @@ Scope: checkouts, cleanup and shared refs. Authority: `rules/git.md`,
 
 None exposed in this pass.
 
-## Retired
-
-- Classifier advice “never retry, hand the author a ! command”: superseded by the narrow-allow fix already recorded in the accepted sixth report and current `rules/claude-code.md` (literal rewrite or log/skip).
-- The blanket `.gitignore` example is episode-specific; the general ignored-file deletion caveat remains.
-- Main-guard watch through 2026-11-03: ended; author-reviewed Commission records its outcome (1452), not a continuing watch.
-- GC's 353 s → 76 s measurement: dated optimization history; expiry, ignored-file and liveness caveats remain above.
-- Earlier Retired entries move to history in the previous page; their original source links remain below.
-
 ## Sources
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).

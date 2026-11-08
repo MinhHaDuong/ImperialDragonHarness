@@ -19,11 +19,6 @@
 ## Open questions
 - `conception/` to `design/` rename floated, undecided. Stop-hook ship state unverified (1164 closed).
 
-## Retired
-
-- Severity-floor disagreement (1438): resolved by author choice; workflow wording stands and the doctor cites it.
-- Older Retired entries move to history; current catalog, rules-loading and naming conditions remain above.
-
 ## Sources
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).
