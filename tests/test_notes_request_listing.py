@@ -121,6 +121,22 @@ def test_deleted_branch_remains_open(project):
     assert json.loads(result.stdout)[0]["state"] == "OPEN"
 
 
+def test_deleted_base_lists_unresolved_for_all_and_refuses_a_state_filter(project):
+    git(project, "switch", "-qc", "stack-base", "main")
+    git(project, "switch", "-q", "feature")
+    rid = rn.open_review(project, "feature", "stack-base", why="Stacked", intent="Body cites nothing")
+    git(project, "switch", "-q", "main")
+    git(project, "branch", "-D", "stack-base")
+    result = listing(project, "all")
+    assert result.returncode == 0, result.stderr
+    rows = json.loads(result.stdout)
+    assert [(r["number"], r["state"], r["body"]) for r in rows] == [(rid, "UNRESOLVED", "Body cites nothing")]
+    for state in ("open", "merged"):
+        refused = listing(project, state)
+        assert refused.returncode == 2 and refused.stdout == ""
+        assert "cannot resolve stack-base" in refused.stderr
+
+
 def test_abandon_is_explicit_request_bound_append_and_new_request_reopens(project):
     rid, req = opened(project)
     before = rn.entries(project, rid)
@@ -166,9 +182,10 @@ def test_branch_reuse_and_latest_request_per_review(project):
 
 
 def test_missing_base_is_unknown_not_empty_even_with_filter(project):
+    # A state filter needs the state the missing base hides; --state all lists it UNRESOLVED.
     opened(project)
     git(project, "branch", "-D", "main")
-    result = listing(project, "all", "--head", "other")
+    result = listing(project, "open", "--head", "other")
     assert result.returncode == 2 and result.stdout == ""
 
 

@@ -23,7 +23,9 @@ All four share one exit contract, read off the repository like `get_forge(landin
 The none backend's list is a strict LOCAL snapshot of refs/notes/review: no transport.
 Its `number` is an opaque review ID, not a numeric forge request; rows add state,
 review_id and request_id. The latest request per native review is OPEN, MERGED
-(pinned head ancestor of current recorded base tip), or explicitly ABANDONED;
+(pinned head ancestor of current recorded base tip), or explicitly ABANDONED; a
+request whose recorded base no longer resolves is UNRESOLVED under --state all and
+refuses (exit 2) under open or merged;
 abandonment wins, a new request reopens, and deleted branches do not abandon.
 Any review ever adopted by pr:<n> is excluded. mergedAt stays null: ancestry does
 not establish a landing date. A readable store without requests answers [].
@@ -662,6 +664,15 @@ class NoneForge:
             else:
                 # A deleted/moved branch is irrelevant: the submitted head is
                 # pinned on its request. Resolve the recorded base's current tip.
+                if not self._git("rev-parse", "--verify", "-q", req["base_ref"] + "^{commit}").stdout.strip():
+                    # The base was deleted (a stacked branch after its base merged): the state is
+                    # unknowable, but an unfiltered listing still owes the row and its body.
+                    if state != "all":
+                        raise ForgeRefusal(f"cannot resolve {req['base_ref']}")
+                    status = "UNRESOLVED"
+                    if not head or req["branch"] == head:
+                        rows.append(self._row(rid, req, status))
+                    continue
                 base = self._rev(req["base_ref"])
                 pinned = self._rev(req["head"])
                 ancestry = self._git("merge-base", "--is-ancestor", pinned, base)
@@ -675,11 +686,15 @@ class NoneForge:
             # Classify before filtering: a partial answer must not hide unreadable evidence.
             if (state != "all" and status != state.upper()) or (head and req["branch"] != head):
                 continue
-            rows.append({"number": rid, "branch": req["branch"], "title": req.get("why", ""),
-                         "body": req.get("intent", ""), "auto": False, "mergedAt": None,
-                         "cross_repository": False, "head_repository": None, "state": status,
-                         "review_id": rid, "request_id": req["request_id"]})
+            rows.append(self._row(rid, req, status))
         return rows[:limit]
+
+    @staticmethod
+    def _row(rid, req, status):
+        return {"number": rid, "branch": req["branch"], "title": req.get("why", ""),
+                "body": req.get("intent", ""), "auto": False, "mergedAt": None,
+                "cross_repository": False, "head_repository": None, "state": status,
+                "review_id": rid, "request_id": req["request_id"]}
 
     def files(self, ref: str):
         return NOOP

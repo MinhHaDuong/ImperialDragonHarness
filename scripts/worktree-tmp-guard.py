@@ -184,8 +184,10 @@ def verdict_contents(paths: list[Path]) -> list[tuple[Path, str]]:
                     if entry.is_symlink():
                         raise Blocked(f"could not inspect symlinked verdict file: {entry}")
                     try:
-                        found.append((entry, entry.read_text(encoding="utf-8")))
-                    except (OSError, UnicodeError) as exc:
+                        # A review may leave a figure beside its verdict: decode leniently so a
+                        # binary file neither crashes the gate nor hides an ASCII .tmp/ citation.
+                        found.append((entry, entry.read_bytes().decode("utf-8", errors="replace")))
+                    except OSError as exc:
                         raise Blocked(f"could not read verdict file {entry}: {exc}") from exc
         except Blocked:
             raise

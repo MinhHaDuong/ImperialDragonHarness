@@ -255,6 +255,36 @@ def test_gc_keeps_tmp_cited_by_candidate_verdict(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+PNG_HEAD = b"\x89PNG\r\n\x1a\n"  # not UTF-8: a figure a review left beside its verdict
+
+
+def _gc_with_binary_verdict(origin, name, payload):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, name)
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "audit.json").write_text("evidence\n")
+    (wt / ".panel" / "42").mkdir(parents=True)
+    (wt / ".panel" / "42" / "figure.png").write_bytes(payload)
+    make_branch_gone(remote, primary, name)
+    return primary, wt, _gc(primary, gh_response="[]")
+
+
+def test_gc_reads_past_a_binary_verdict_file(origin):
+    primary, wt, res = _gc_with_binary_verdict(origin, "agent-binary-verdict", PNG_HEAD + b"\xff\xfe pixels")
+    assert "could not read verdict file" not in res.stderr.lower()
+    assert res.returncode == 0
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_cited_inside_a_binary_verdict_file(origin):
+    primary, wt, res = _gc_with_binary_verdict(origin, "agent-binary-verdict-cited",
+                                               PNG_HEAD + b"\xff source: .tmp/audit.json \xfe")
+    assert "citation" in res.stdout.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_gc_blocks_unreadable_registered_verdict_parent(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-tmp-cross-verdict")
