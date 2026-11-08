@@ -7,6 +7,7 @@ Label: deferred
 
 --- log ---
 2026-11-07T22:01Z reviewer created
+2026-11-08T07:36Z reviewer Author closed parent1377 in favor of this ticket; this is the sole remaining structured-constraints request. Deferred status and scope unchanged.
 
 --- body ---
 Parent: 1377

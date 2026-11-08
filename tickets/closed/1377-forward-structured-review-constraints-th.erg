@@ -2,6 +2,7 @@
 Title: Track gaze failure evidence and deferred structured constraints
 Created: 2026-10-30
 Author: MinhHaDuong
+Closed: author decision — superseded by 1465; failure evidence completed in 1464
 
 --- log ---
 2026-10-30T15:13Z MinhHaDuong created
@@ -9,6 +10,8 @@ Author: MinhHaDuong
 2026-11-07T22:01Z reviewer note Author chose "Split it": ready child 1464 finishes remaining failure evidence; deferred child 1465 preserves structured constraints; parent remains open through both dispositions and integration.
 
 2026-11-07T22:25Z raid-d35fb4 note Child1464 merged by PR2256 at767eae19 after REVIEWED gaze and APPROVED round1 gate. Failure stdout/file retention and request-bound raw-output pointers are complete. Child1465 remains deferred; tracker1377 stays open pending its disposition and combined integration review.
+2026-11-08T07:36Z reviewer Author decision: close 1377 in favor of 1465. Child 1464 is implemented by PR2256; remaining structured constraints stay only on deferred ticket1465. This supersedes the parent completion requirement without claiming the structured criteria implemented.
+2026-11-08T07:36Z reviewer closed — author decision — superseded by 1465; failure evidence completed in 1464
 
 --- body ---
 ## Context
@@ -125,3 +128,11 @@ of tool use. They are independent parts, with no blocking relationship.
   integration review against all six preserved original criteria, including
   any explicit author-approved deferral/disposition. Completing 1464 alone
   does not close this tracker.
+
+## Author disposition
+
+The author closes this tracker in favor of 1465. Failure-output retention
+and provenance landed through child 1464 (PR2256); the remaining structured
+constraints are tracked solely by 1465, which stays deferred. This explicit
+disposition supersedes the combined-completion requirement above; it does
+not claim the structured constraints were implemented.
