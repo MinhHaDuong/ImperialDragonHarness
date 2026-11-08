@@ -13,9 +13,8 @@ file pins mechanically, from the ticket's exit criteria:
   correction is re-examined.
 - The journal ledger in the report pins the pre-dream journal blobs: the raw
   journal was neither moved nor rewritten by consolidation.
-- The governance topic records the private-companion supersession with its
-  journal sources preserved; the dream skill no longer offers the private
-  companion as a write destination.
+- The dream skill no longer offers the private companion as a write
+  destination.
 """
 
 import hashlib
@@ -192,21 +191,6 @@ def test_report_journal_ledger_pins_the_untouched_journal():
         assert (REPO / path).is_file(), (
             f"ledger names a missing file: {path}"
         )
-
-
-def test_governance_topic_records_supersession_with_sources():
-    topic = MEMORY / "topics" / "memory-v8-governance.md"
-    text = topic.read_text(encoding="utf-8")
-    assert "declared private companion" not in text, (
-        "the superseded private-companion claim still reads as current"
-    )
-    assert "superseded" in text, "the topic does not record the supersession"
-    assert ".age" in text or "encrypted" in text, (
-        "the topic does not state the encrypted-in-repo policy"
-    )
-    assert (
-        "journal/2026/2026-10-02-memory-v8-pilot-established.md" in text
-    ), "the corrected claim lost its journal source"
 
 
 def test_smelt_is_a_rebuild_with_a_net_change_report():

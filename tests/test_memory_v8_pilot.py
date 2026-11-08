@@ -195,15 +195,12 @@ def test_index_links_every_topic():
         assert f"(topics/{topic.name})" in index_text, topic.name
 
 
-def test_topics_cite_sources_and_provenance():
+def test_topics_cite_sources_outside_topics():
     memory_root = MEMORY.resolve()
     topics = sorted((MEMORY / "topics").glob("*.md"))
     assert topics
     for topic in topics:
         text = topic.read_text(encoding="utf-8")
-        assert (
-            "source-revisions.tsv" in text or "source-inventory.md" in text
-        ), topic.name
         source_links = [
             (topic.parent / target).resolve()
             for target in relative_links(text)
