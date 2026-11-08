@@ -22,8 +22,10 @@ def _page(guidance: int, retired: int = 0, sources: int = 0) -> str:
     return text
 
 
-def test_retired_section_is_outside_the_cap():
-    assert ms.guide_bytes(_page(3000, retired=6000)) <= ms.CAP
+def test_retired_section_counts_toward_the_cap():
+    text = _page(3000, retired=6000)
+    assert ms.guide_bytes(text) == len(text.encode("utf-8"))
+    assert ms.guide_bytes(text) > ms.CAP
     assert ms.guide_bytes(_page(4200)) > ms.CAP
 
 
@@ -50,7 +52,9 @@ def test_exact_cap_passes_and_cap_plus_one_fails(tmp_path):
 def test_user_rulings_over_cap_warns_not_fails(tmp_path, capsys):
     (tmp_path / ms.USER_RULINGS).write_text(_page(5000), encoding="utf-8")
     assert ms.main(tmp_path) == 0
-    assert "OVER (promote to rules, brood 1351)" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "OVER" in out
+    assert "promote" not in out.lower() and "brood" not in out.lower()
 
 
 def test_index_line_cap():
@@ -63,7 +67,7 @@ def test_real_tree_is_measured():
     rows = list(ms.report(REPO / "memory" / "topics"))
     assert len(rows) >= 4, "glob found too few pages: a census that cannot look"
     for name, size, _cap, _status in rows:
-        # Pinned rulings are never cut: User rulings may overflow (smelt references § caps).
+        # User rulings may overflow with a warning (smelt references § caps).
         if name != ms.USER_RULINGS:
             assert size <= ms.CAP, f"{name} grew to {size}"
     assert ms.index_ok((REPO / "memory" / "MEMORY.md").read_text(encoding="utf-8"))

@@ -2,6 +2,7 @@
 Title: Smelt: adopt the author-rulings registry format across all projects
 Created: 2026-11-08
 Author: codex
+Closed: autoclosed — PR #2269
 
 --- log ---
 2026-11-08T09:55Z codex created
@@ -11,6 +12,8 @@ Author: codex
 2026-11-08T10:59Z reviewer Imagine raid89553f: concise shared Smelt/Brood maintenance, append-only retirement journal grouped by cause, no duplication or prose pins. Blind-spot: remove obsolete Retired-line test and reconcile active governance cap/verbatim guidance.
 2026-11-08T10:59Z reviewer Plan raid89553f: update Smelt/Brood/consolidation plus active governance/index descriptions; authorize grouped append-only retirement records without duplication; only Sources excluded from byte cap, neutral overflow warning. Behavioral size checks and manual non-harness repeated-consolidation fixture; no wording tests or injector.
 2026-11-08T11:00Z reviewer Feasibility raid89553f PASS: no shared three-PR registry; update promotion-diagnostic assertion with the neutral warning, and remove Retired-line wording pin. Prior wave settles user-rulings.md name.
+2026-11-08T11:49Z reviewer Identity evidence: delegated Codex worker actual served model id is unavailable in this runtime system metadata. Requested launch labels are not observed model identity; no independent reviewer identity is claimed. Skill-creator quick_validate rejects pre-existing project extension frontmatter keys; project frontmatter/reference tests pass without unrelated metadata changes.
+2026-11-08T11:51Z reviewer closed — autoclosed — PR #2269
 
 --- body ---
 ## Author decision

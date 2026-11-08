@@ -3,7 +3,7 @@
 
 The definitions live in skills/smelt/references/consolidation.md § Job of a
 topic and caps. A page is
-measured in UTF-8 bytes over every H2 section except `Retired` and `Sources`
+measured in UTF-8 bytes over every H2 section except `Sources`
 (the title and any text before the first H2 count). The user-rulings page is
 never cut to fit: over the cap it is reported and does not fail the check.
 
@@ -24,11 +24,11 @@ from pathlib import Path
 CAP = 4096  # bytes per topic page
 INDEX_LINES = 40  # lines in memory/MEMORY.md, blanks counted
 USER_RULINGS = "user-rulings.md"
-OUTSIDE = {"retired", "sources"}
+OUTSIDE = {"sources"}
 
 
 def guide_bytes(text: str) -> int:
-    """UTF-8 bytes of the page minus its Retired and Sources sections."""
+    """UTF-8 bytes of the page minus its Sources section."""
     kept, skipping = [], False
     for line in text.splitlines(keepends=True):
         if line.startswith("## "):
@@ -101,7 +101,7 @@ def main(topics_dir: Path | None = None, before: Path | None = None) -> int:
     for name, size, cap, status in report(topics_dir):
         note = ""
         if status == "OVER" and name == USER_RULINGS:
-            note = " (promote to rules, brood 1351)"
+            note = " (register exceeds byte budget)"
         elif status == "OVER":
             failed = True
         print(f"{name:42} {size:6} / {cap}  {status}{note}")

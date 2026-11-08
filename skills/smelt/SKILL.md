@@ -98,9 +98,14 @@ once, by `git mv` with their bytes intact, to `memory/evidence/attribution/`.
 lines. Keep details in the journal, linked from the department page, rather
 than expanding the index.
 
+Maintain each selected project’s ruling register and retirement records by
+`references/consolidation.md` § Ruling register and retirement, preserving that
+project’s rulings and author edits. Brood primarily handles integration and
+retirement of integrated rulings.
+
 A topic is the as-built guide to one department (current claims, each linked
-to its journal episode) and holds at most 4 KB outside its Retired and Sources
-sections. Details: `references/consolidation.md`
+to its journal episode) and holds at most 4 KB outside its Sources
+section. Details: `references/consolidation.md`
 § Job of a topic and caps.
 
 ## Coherence across indexed memories and harness rules
@@ -183,7 +188,8 @@ After the writing run's migration succeeds, continue sequentially:
    department (references § Rebuild), instead of appending; apply pruning,
    merging and refreshing in the rewrite. Link source episodes. Update the
    `memory/MEMORY.md` index within its 40-line maximum. Never rewrite, move or
-   delete journal entries. Do not propose rules.
+   delete existing journal entries. Append retirement records as specified in
+   references § Ruling register and retirement. Do not propose rules.
 3. Write a report in `memory/smelts/` with the fields of references § Report:
    skill revision, ledger, changes, net change in bytes measured by
    `"$IDH_ROOT/scripts/memory_sizes.py"`, unresolved questions, the lanes'
@@ -217,7 +223,8 @@ This exception is limited to migration in its isolated branch: no policy
 rewriting, rule promotion, historical-ledger edits or cross-project writes.
 
 Consolidation writes only `memory/MEMORY.md`, `memory/topics/`,
-`memory/skills/`, `memory/smelts/` and, for exposed contradictions only, new tickets within the
+`memory/skills/`, `memory/smelts/`, new append-only retirement records in
+`memory/journal/YYYY/`, and, for exposed contradictions only, new tickets within the
 selected project repository. Uncleared material stays in that same
 repository as age-encrypted `.age` ciphertext — there is no separate
 companion store. It does not

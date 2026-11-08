@@ -6,8 +6,8 @@ in the Smelt skill. Provenance: [inventory](../conception/memory-v8/source-inven
 
 ## Departments
 
-- [User rulings](topics/user-rulings.md) — author pins stay verbatim; Smelt
-  nominates and Brood discusses promotion on explicit request.
+- [User rulings](topics/user-rulings.md) — contextual decisions and author edits persist;
+  Brood integrates and retires integrated rulings.
 - [Git, worktrees, sessions](topics/git-worktree-session-guards.md) — primary
   is the author's workspace; setup links must not point to a tree's sole copy.
 - [Raids, review, merging](topics/raid-review-and-merge.md) — records bind
