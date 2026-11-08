@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Retire the cross-PR ticket-collision gate once erg claims land
+Created: 2026-11-08
+Author: MinhHaDuong
+
+--- log ---
+2026-11-08T21:46Z MinhHaDuong created
+
+--- body ---
+## Context
+Filed from git-erg (ticket 0306, PR MinhHaDuong/git-erg#386, raid 797d07), where the author made building
+ID claims conditional on retiring more complicated or less reliable mechanisms. git-erg 0306 adds
+`tickets/.claims/NNNN` (one line: slug and a random nonce): two branches that allocate the same ticket
+number now get a git add/add conflict on merge or rebase, offline and on any forge, and `erg check` rejects
+the ways that conflict can be silenced (`-X ours`, `merge=union`, a missing claim). Claims are on in a store
+exactly when its `.claims/` directory exists, created by `erg migrate --claims`.
+
+That covers both surfaces this repo's gate checks: the base tip (rebase/merge conflict) and a sibling open
+PR (conflict at the second merge, before any duplicate lands; later than the CI job, which warned while
+both were open).
+
+## What retires here
+- `scripts/check-cross-pr-ticket-collision.sh` (173 lines) and `tests/test_check_cross_pr_ticket_collision.sh`
+  (450 lines): forge-dependent (gh auth, network, self-PR ambiguity, ticket 1325), switched off 2026-10-21
+  with GitHub Actions.
+- `.github/workflows/ticket-collision.yml`, the `scripts/local-ci.sh` wiring, the `CI.yml` comment and the
+  `tickets/LOCAL.md` CI line.
+- Any skill step that scans open PRs for a colliding ID (sweep `skills/` for `gh pr view` loops on ticket
+  paths).
+
+## Preconditions (do not start before)
+- A git-erg release carries the claims (git-erg#386 merged and the bootstrap binary rebuilt), and this
+  repo's `tickets/erg` is updated to it by `erg sync`.
+- This store is migrated: `tickets/erg migrate --claims tickets/` committed, `tickets/.claims/` is not
+  ignored (this repo ignores everything and allowlists paths: add `!tickets/.claims/` and
+  `!tickets/.claims/*` to the allowlist; `erg migrate --claims` refuses an ignored claim path).
+
+## Exit criteria
+- [ ] The preconditions hold.
+- [ ] The script, its test, the workflow, the local-ci wiring and the LOCAL.md line are removed.
+- [ ] A scratch test: two branches adding the same ticket number conflict on `tickets/.claims/NNNN`.
+- [ ] `make check` passes.
