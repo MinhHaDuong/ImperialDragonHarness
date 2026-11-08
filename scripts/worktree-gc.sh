@@ -96,11 +96,16 @@ lock_reason=""
 reset() { path=""; branch=""; locked_flag=0; lock_reason=""; }
 
 report_wip() {
-    local tree="$1" base="$2" status
+    # $3, optional: an ERE of command-owned scratch paths whose untracked (??) records the
+    # WIP check ignores; staged moves or deletions there stay WIP.
+    local tree="$1" base="$2" scratch="${3:-}" status
     if ! status=$(git -C "$tree" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null); then
         echo "worktree-gc: skip $base (could not inspect worktree status)" >&2
         skipped_wip=$((skipped_wip + 1))
         return 0
+    fi
+    if [ -n "$scratch" ] && [ -n "$status" ]; then
+        status=$(printf '%s\n' "$status" | grep -Ev "^\\?\\? ($scratch)(/|\$)" || true)
     fi
     [ -z "$status" ] && return 1
     echo "worktree-gc: skip $base (uncommitted WIP)"
@@ -241,8 +246,9 @@ flush() {
     fi
     # Only a gone, inactive tree reaches this point, unlocked or holding an
     # owner-less lock that passed its idle and clean checks. The review
-    # commands own these two scratch paths; clear them before the WIP check,
-    # while retaining every other uncommitted file as a removal blocker.
+    # commands own these two scratch paths: the WIP check ignores them and
+    # they are cleared only once it passes, so a retained tree keeps them;
+    # every other uncommitted file stays a removal blocker.
     # A tracked file under either path may contain real edits; never erase it.
     # Also do not follow a symlinked build/ parent outside the worktree.
     local tracked_panel tracked_base
@@ -252,14 +258,19 @@ flush() {
         skipped_wip=$((skipped_wip + 1))
         reset; return
     fi
+    local scratch=""
+    if [ -z "$tracked_panel" ]; then scratch='\.panel'; fi
+    if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
+        scratch="${scratch:+$scratch|}build/panel-head"
+    fi
+    if report_wip "$path" "$base" "$scratch"; then
+        reset; return
+    fi
     if [ -z "$tracked_panel" ]; then
         rm -rf -- "$path/.panel"
     fi
     if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
         rm -rf -- "$path/build/panel-head"
-    fi
-    if report_wip "$path" "$base"; then
-        reset; return
     fi
     # An owner-less lock is lifted only now, after every rail passed, and put
     # back if the removal fails. Concurrent re-locking within this window is
