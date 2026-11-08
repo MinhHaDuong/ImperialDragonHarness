@@ -35,9 +35,10 @@ open with auto-merge armed or, on a gated base (`.merge-gate.json`), it
 reads OPEN with a passing gate record on its candidate merge commit, or
 MERGED; a gated bundle not yet MERGED stays pending in step 11. It then syncs local `main`, best effort.
 `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
-and re-run; the preflight removes only `.panel/` and `build/panel-head/`
-review scratch when no `.tmp/` exists, and refuses every other
-uncommitted file, including an uncommitted ticket draft. If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
+and re-run; the preflight refuses every uncommitted file, including an
+uncommitted ticket draft, other than untracked `.panel/` and
+`build/panel-head/` review scratch, and removes that scratch only when no
+`.tmp/` exists and nothing else blocks: a refused run deletes nothing. If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
 until the citation-aware removal check has run.
 
 ## Step 9b
