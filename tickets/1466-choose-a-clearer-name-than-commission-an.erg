@@ -26,7 +26,7 @@ as one coherent change. Search the full logical unit rather than applying a
 blind replacement to unrelated uses of "commission".
 
 Relevant starting points:
-- `memory/topics/commission.md`
+- `memory/topics/user-rulings.md` (renamed from `commission.md`)
 - `memory/MEMORY.md`
 - `skills/smelt/references/consolidation.md`
 - Other active references found by the migration audit.

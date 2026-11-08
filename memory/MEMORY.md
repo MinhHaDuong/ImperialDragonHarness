@@ -6,7 +6,7 @@ in the Smelt skill. Provenance: [inventory](../conception/memory-v8/source-inven
 
 ## Departments
 
-- [Commission](topics/commission.md) — author pins stay verbatim; Smelt
+- [User rulings](topics/user-rulings.md) — author pins stay verbatim; Smelt
   nominates and Brood discusses promotion on explicit request.
 - [Git, worktrees, sessions](topics/git-worktree-session-guards.md) — primary
   is the author's workspace; setup links must not point to a tree's sole copy.

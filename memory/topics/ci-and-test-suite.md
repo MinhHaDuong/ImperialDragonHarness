@@ -6,7 +6,7 @@ All timings are padme (32 cores, shared with parallel sessions and arena coders)
 
 - **Gate speed.** `make check` takes `-n N` from `scripts/pytest_workers.py` (CPUs available, clamped 2..24). 2026-10-29 measurement: quiet 30-37 s, field median ~75 s; CPU sharing is a hypothesis, not an isolated cause; `-n 32` no gain over 24. [gate contention][source1]
 - **Smart-testing helper retired** (held 38% of the gate); testmon only when the author says. [wall time][source2]
-- **Testing doctor** (`/test-doctor`, kit `gate_traces.py`, `gate_profile.py`): author-called, never self-started; probes one at a time (contention corrupts timing); `--project` takes a path. Reruns probe counts only full reruns that came back red: 17 reruns, 24.6 min in 28 days [reruns][source3]; [1541][source4]. Author rulings on guards, kit, wait tickets: [Commission][source5]. Revisit: `gate_traces.py collect` after ~30 sessions; profile if quiet `make check` > 45 s [triage][source6]
+- **Testing doctor** (`/test-doctor`, kit `gate_traces.py`, `gate_profile.py`): author-called, never self-started; probes one at a time (contention corrupts timing); `--project` takes a path. Reruns probe counts only full reruns that came back red: 17 reruns, 24.6 min in 28 days [reruns][source3]; [1541][source4]. Author rulings on guards, kit, wait tickets: [User rulings][source5]. Revisit: `gate_traces.py collect` after ~30 sessions; profile if quiet `make check` > 45 s [triage][source6]
 - **CI install.** Forge: `astral-sh/setup-uv` then `uv sync --locked`; `ubuntu-latest` ships no uv/ruff/pytest (2026-10-22; recheck at the 26.04 move). [baseline][source7]
 - **Local CI.** `scripts/local-ci.sh` is not `make check` (exits 3 SKIP); `act -j` honours only the last `-j`, drops `.git`, long podman socket paths fake catches. [act][source8]; [1088][source9]
 - **run_pool throttle** is `wait -n "${pids[@]}"` (PR 2105): a caller's background job ending during the pool no longer counts as a pool slot. The bare-`wait -n` hypothesis was not reproduced (0/400 idle, 0/3600 loaded); an over-limit race on a 127 return remains. [t1396][source10]
@@ -34,7 +34,7 @@ All timings are padme (32 cores, shared with parallel sessions and arena coders)
 [source2]: ../journal/2026/2026-10-21-pulse-gate-wall-time.md
 [source3]: ../journal/2026/2026-10-30-test-doctor-reruns-probe-1367.md
 [source4]: ../journal/2026/2026-10-21-pulse-testing-expert-1541.md
-[source5]: commission.md
+[source5]: user-rulings.md
 [source6]: ../journal/2026/2026-10-29-harness-doctor-triage.md
 [source7]: ../journal/2026/2026-10-30-python-tool-baseline-github-runner.md
 [source8]: ../journal/2026/2026-10-06-local-ci-act-equivalence.md

@@ -4,7 +4,7 @@
 The definitions live in skills/smelt/references/consolidation.md § Job of a
 topic and caps. A page is
 measured in UTF-8 bytes over every H2 section except `Retired` and `Sources`
-(the title and any text before the first H2 count). The Commission page is
+(the title and any text before the first H2 count). The user-rulings page is
 never cut to fit: over the cap it is reported and does not fail the check.
 
 Usage: memory_sizes.py [topics_dir] [--before DIR_OR_GIT_REF]
@@ -13,7 +13,7 @@ change per page against that directory or git ref (ticket 1349: a smelt is a
 rebuild and reports it); a page that grew needs a reason in the report. A git
 ref resolves in the repository holding topics_dir, so the helper runs from the
 harness against any project (ticket 1451).
-Exit 1 when a non-Commission page is over the cap.
+Exit 1 when a non-user-rulings page is over the cap.
 """
 
 import subprocess
@@ -23,7 +23,7 @@ from pathlib import Path
 
 CAP = 4096  # bytes per topic page
 INDEX_LINES = 40  # lines in memory/MEMORY.md, blanks counted
-COMMISSION = "commission.md"  # provisional name, ticket 1349 may rename it
+USER_RULINGS = "user-rulings.md"
 OUTSIDE = {"retired", "sources"}
 
 
@@ -100,7 +100,7 @@ def main(topics_dir: Path | None = None, before: Path | None = None) -> int:
     failed = False
     for name, size, cap, status in report(topics_dir):
         note = ""
-        if status == "OVER" and name == COMMISSION:
+        if status == "OVER" and name == USER_RULINGS:
             note = " (promote to rules, brood 1351)"
         elif status == "OVER":
             failed = True
