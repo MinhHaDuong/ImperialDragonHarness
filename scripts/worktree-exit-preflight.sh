@@ -63,7 +63,8 @@ tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
 }
 
 # Review reports and the temporary base checkout are command-owned scratch:
-# the status gate below ignores them, and they are deleted only once it passes.
+# the status gate below ignores their untracked (??) and ignored (!!) records, never a
+# staged move or deletion, and they are deleted only once it passes.
 # A refused exit keeps them, since a review may have left its only evidence there.
 purge_panel=0
 if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then purge_panel=1; fi
@@ -92,10 +93,10 @@ if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
     status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
 fi
 if [ "$purge_panel" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -Ev '^.. \.panel(/|$)' || true)
+    status=$(printf '%s\n' "$status" | grep -Ev '^(\?\?|!!) \.panel(/|$)' || true)
 fi
 if [ "$purge_base" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -Ev '^.. build/panel-head(/|$)' || true)
+    status=$(printf '%s\n' "$status" | grep -Ev '^(\?\?|!!) build/panel-head(/|$)' || true)
 fi
 if [ -z "$status" ]; then
     if [ "$purge_panel" -eq 1 ]; then rm -rf -- "$path/.panel"; fi

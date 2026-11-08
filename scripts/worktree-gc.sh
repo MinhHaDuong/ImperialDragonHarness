@@ -96,7 +96,8 @@ lock_reason=""
 reset() { path=""; branch=""; locked_flag=0; lock_reason=""; }
 
 report_wip() {
-    # $3, optional: an ERE of command-owned scratch paths the WIP check ignores.
+    # $3, optional: an ERE of command-owned scratch paths whose untracked (??) records the
+    # WIP check ignores; staged moves or deletions there stay WIP.
     local tree="$1" base="$2" scratch="${3:-}" status
     if ! status=$(git -C "$tree" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null); then
         echo "worktree-gc: skip $base (could not inspect worktree status)" >&2
@@ -104,7 +105,7 @@ report_wip() {
         return 0
     fi
     if [ -n "$scratch" ] && [ -n "$status" ]; then
-        status=$(printf '%s\n' "$status" | grep -Ev "^.. ($scratch)(/|\$)" || true)
+        status=$(printf '%s\n' "$status" | grep -Ev "^\\?\\? ($scratch)(/|\$)" || true)
     fi
     [ -z "$status" ] && return 1
     echo "worktree-gc: skip $base (uncommitted WIP)"

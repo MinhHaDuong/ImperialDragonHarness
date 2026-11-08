@@ -1245,6 +1245,44 @@ def test_preflight_preserves_dropped_deliverable_with_scratch(origin):
     assert (wt / "tests" / "test_dropped.sh").exists()
 
 
+def _move_tracked_scratch_out(wt, scratch, how):
+    """Track a file under a scratch path, then empty the index there by a staged
+    move or deletion: ls-files finds nothing, but the status records are work."""
+    report = wt / scratch / "x.md"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text("committed\n")
+    git(wt, "add", "-f", scratch)
+    git(wt, "commit", "-m", "track scratch file")
+    if how == "rename-edit":
+        git(wt, "mv", f"{scratch}/x.md", "notes.txt")
+        (wt / "notes.txt").write_text("unsaved edit\n")
+    else:
+        git(wt, "rm", "-q", f"{scratch}/x.md")
+
+
+@pytest.mark.parametrize("scratch", [".panel", "build/panel-head"])
+@pytest.mark.parametrize("how", ["rename-edit", "staged-delete"])
+def test_preflight_scratch_filter_keeps_staged_moves_as_residue(origin, scratch, how):
+    _, primary = origin
+    wt = make_agent_worktree(primary, f"agent-scratch-{how}-{scratch.replace('/', '-')}")
+    _move_tracked_scratch_out(wt, scratch, how)
+    res = _preflight(wt)
+    assert res.returncode == 1, res.stderr
+    assert scratch in res.stderr
+
+
+@pytest.mark.parametrize("scratch", [".panel", "build/panel-head"])
+def test_gc_scratch_filter_keeps_staged_moves_as_residue(origin, scratch):
+    remote, primary = origin
+    name = f"agent-gc-scratch-{scratch.replace('/', '-')}"
+    wt = make_agent_worktree(primary, name)
+    _move_tracked_scratch_out(wt, scratch, "rename-edit")
+    make_branch_gone(remote, primary, name)
+    res = _gc(primary)
+    assert f"skip {name} (uncommitted WIP" in res.stdout
+    assert (wt / "notes.txt").read_text() == "unsaved edit\n"
+
+
 def test_removal_preflight_refused_by_residue_keeps_panel(origin):
     """The .tmp guard passing is not the removal passing: a residue refusal later
     in the same run must leave .panel/ in place (arena t1210, 2026-11-08)."""
