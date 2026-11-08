@@ -1,0 +1,48 @@
+%erg 0.1
+Title: Choose a clearer name than Commission and migrate active references
+Created: 2026-11-08
+Author: reviewer
+
+--- log ---
+2026-11-08T09:40Z reviewer created
+
+--- body ---
+## Author request
+
+Find a clearer word than "Commission" for the harness memory department
+holding the author's intent and pinned rulings, then migrate the name.
+The current label is ambiguous; this is a naming and reference migration,
+not a redesign of memory or the authority/promotion workflow.
+
+## Scope
+
+Compare plain-language names against the page's actual purpose, choose one,
+and explain the choice briefly. Migrate the current topic filename/heading,
+index entry, and active harness instructions and links naming this department
+as one coherent change. Search the full logical unit rather than applying a
+blind replacement to unrelated uses of "commission".
+
+Relevant starting points:
+- `memory/topics/commission.md`
+- `memory/MEMORY.md`
+- `skills/smelt/references/consolidation.md`
+- Other active references found by the migration audit.
+
+The seventh-smelt proposal is currently PR2263; coordinate with its outcome
+and the author's manual edits before migrating. Do not overwrite those edits.
+Other projects' memory files are outside this ticket's write scope.
+
+## Exit criteria
+
+- [ ] A clearer name is selected and justified by the page's role: author
+  intent and rulings, rather than an institutional metaphor.
+- [ ] The topic filename, heading, index, and all active harness references
+  are migrated consistently; active links resolve.
+- [ ] Pinned quotations and their meaning remain intact. Journal entries,
+  accepted reports and historical ledgers are not rewritten; retained legacy
+  references are identified and their handling explained.
+- [ ] The migration changes no authority, rule-promotion process, or memory
+  guarantees. Applicable memory caps remain respected, with any existing
+  pinned-content overflow explicitly preserved and reported.
+- [ ] The final diff and reference/link checks demonstrate a complete active
+  migration without renaming unrelated uses of the word.
