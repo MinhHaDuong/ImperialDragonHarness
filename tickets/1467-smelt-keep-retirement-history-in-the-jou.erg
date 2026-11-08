@@ -6,6 +6,7 @@ Author: codex
 --- log ---
 2026-11-08T09:55Z codex created
 2026-11-08T10:07Z reviewer Author extended scope: adopt the compact project-specific active-rulings registry format in all projects; remove topic-template sections, policy intro, shared provenance and pending intentions.
+2026-11-08T10:22Z reviewer Author clarification: rulings are contextual jurisprudence, not sacred wording; remove pinned-date prefixes and rely on source dates unless chronology matters.
 
 --- body ---
 ## Author decision
@@ -18,8 +19,10 @@ there is no Newly retired section either.
 
 The author-rulings register is project-specific and does not follow the
 ordinary topic-page template. Its format is a project-identifying title,
-then active rulings grouped under useful subject headings. Each entry keeps
-the author's wording, date, scope and source. Qualifications sit beside the
+then active rulings grouped under useful subject headings. Entries are contextual jurisprudence: preserve the decision's substance,
+relevant context and source; a later decision in a different context may differ.
+Do not sacralize their wording or prefix entries with `pinned DATE`; dates
+belong in the sources unless needed to understand a change. Qualifications sit beside the
 ruling they qualify. Native-note citations link directly to their retained
 source text or annex.
 
@@ -65,7 +68,7 @@ skill, not other repositories' files from a harness session.
 
 - [ ] Every selected project's author-rulings register uses the agreed compact
   format: project title, active rulings under useful subject headings, and
-  entry-local date, scope and source. It is exempt from the ordinary topic
+  entry-local context, scope and source, without `pinned DATE` prefixes. It is exempt from the ordinary topic
   section template.
 - [ ] The register contains no introductory policy boilerplate, generic
   Hazards/Open questions/Fallback sections, Shared provenance inventory,
