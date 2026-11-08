@@ -62,14 +62,13 @@ tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
     exit 2
 }
 
-# Review reports and the temporary base checkout are command-owned scratch.
-# Remove only these named paths, then apply the original complete status gate.
-if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then
-    rm -rf -- "$path/.panel"
-fi
-if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
-    rm -rf -- "$path/build/panel-head"
-fi
+# Review reports and the temporary base checkout are command-owned scratch:
+# the status gate below ignores them, and they are deleted only once it passes.
+# A refused exit keeps them, since a review may have left its only evidence there.
+purge_panel=0
+if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then purge_panel=1; fi
+purge_base=0
+if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then purge_base=1; fi
 
 # The removal also scrubs regenerable state git would refuse to remove (the
 # unignored root .venv a touched-tests step leaves, setuptools build output),
@@ -92,7 +91,15 @@ status=$(worktree_residue "$path") || {
 if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
     status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
 fi
+if [ "$purge_panel" -eq 1 ] && [ -n "$status" ]; then
+    status=$(printf '%s\n' "$status" | grep -Ev '^.. \.panel(/|$)' || true)
+fi
+if [ "$purge_base" -eq 1 ] && [ -n "$status" ]; then
+    status=$(printf '%s\n' "$status" | grep -Ev '^.. build/panel-head(/|$)' || true)
+fi
 if [ -z "$status" ]; then
+    if [ "$purge_panel" -eq 1 ]; then rm -rf -- "$path/.panel"; fi
+    if [ "$purge_base" -eq 1 ]; then rm -rf -- "$path/build/panel-head"; fi
     if [ "$removal" -eq 1 ]; then
         worktree_scrub "$path"
     fi

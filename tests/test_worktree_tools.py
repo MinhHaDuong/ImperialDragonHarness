@@ -452,7 +452,7 @@ def test_gc_preserves_dropped_deliverable_after_purging_scratch(origin):
     assert "skip agent-dropped (uncommitted WIP" in res.stdout
     assert "tests/test_dropped.sh" in res.stdout
     assert str(wt) in _worktree_paths(primary)
-    assert not (wt / ".panel").exists()
+    assert (wt / ".panel" / "999" / "report.md").exists()  # a retained tree keeps its review scratch
     assert (wt / "tests" / "test_dropped.sh").exists()
 
 
@@ -1241,8 +1241,39 @@ def test_preflight_preserves_dropped_deliverable_with_scratch(origin):
     assert res.returncode == 1
     assert "tests/test_dropped.sh" in res.stderr
     assert ".panel" not in res.stderr
-    assert not (wt / ".panel").exists()
+    assert (wt / ".panel" / "999" / "report.md").exists()  # a refused exit deletes nothing
     assert (wt / "tests" / "test_dropped.sh").exists()
+
+
+def test_removal_preflight_refused_by_residue_keeps_panel(origin):
+    """The .tmp guard passing is not the removal passing: a residue refusal later
+    in the same run must leave .panel/ in place (arena t1210, 2026-11-08)."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-removal-residue-panel")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (wt / ".panel" / "7").mkdir(parents=True)
+    (wt / ".panel" / "7" / "evidence.md").write_text("sole copy of the review evidence\n")
+    (wt / "draft.txt").write_text("not committed\n")
+    make_branch_gone(remote, primary, "agent-removal-residue-panel")
+
+    fake_bin = primary.parent / "fake-gh-bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text("#!/bin/sh\nprintf '%s\\n' '[]'\n")
+    gh.chmod(0o755)
+    env = child_env()
+    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal",
+         "--branch", "agent-removal-residue-panel", str(wt)],
+        capture_output=True, text=True, env=env,
+    )
+    assert "citation coverage clear" in res.stdout.lower(), res.stderr
+    assert res.returncode == 1
+    assert "draft.txt" in res.stderr and ".panel" not in res.stderr
+    assert (wt / ".panel" / "7" / "evidence.md").exists()
 
 
 def test_preflight_does_not_follow_build_symlink_outside_worktree(origin, tmp_path):
