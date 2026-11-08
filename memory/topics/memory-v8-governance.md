@@ -1,37 +1,36 @@
 # Architecture: the memory system
 
-Scope: this repository's project memory (no local prompt since 1451) and
-how runtimes reach it. Checked against the tree 2026-11-01.
+Scope: repository memory and runtime access, checked 2026-11-08.
+Authority: the Smelt skill and `rules/guards.md`.
 
 ## Current guidance
 
-- **Stores.** `memory/journal/YYYY/` is the intact, append-only source (770 KB, 2026-11-01); corrections are new entries linking the original. Department pages under `memory/topics/` are as-built guides, 4 KB each, index 40 lines (1348; departments fixed when 1349 closed 2026-10-31, [redesign day](../journal/2026/2026-10-29-memory-redesign-day.md)). Attribution records live in `memory/evidence/attribution/`, outside smelt input (PR #2002, [raid 0a53b8](../journal/2026/2026-10-29-raid-0a53b8-smelt-census-attribution.md)). Uncleared material is age ciphertext in the repo, key never tracked ([pilot](../journal/2026/2026-10-02-memory-v8-pilot-established.md)); none exist today.
-- **Pipeline.** Roar captures facts (`skills/roar/runbooks/capture.md`), ends with a `/clear` verdict ([survey](../journal/2026/2026-10-11-roar-clear-verdict-survey.md)); smelt rebuilds every page per department, measuring net bytes with `scripts/memory_sizes.py --before`. 1349 closed 2026-10-31: the fifth smelt was accepted (PR #2049, merged 52f63b18), so rebuilds count from the accepted report ([1349 closed](../journal/2026/2026-10-31-1349-closed-heading-renamed.md)). Brood has run once on the harness (1351, PR 2152); crystallisation stays explicit-only; no stage promotes rules.
-- **Skill case notes** (`memory/skills/<skill>.md`, 1-4 dated cases with a `Use:` line, ~400-word cap) are pushed at skill load by `scripts/skill-case-notes.sh` (hooks `PostToolUse` Skill + `UserPromptSubmit`; a typed slash produces no `PostToolUse` on `Skill`, the second trigger catches it; 19 tests — 1394 closed, PR 2114; Pi wiring PR 2150). Smelt re-selects the cases each run (1431, 1432; [design](../journal/2026/2026-10-31-skill-case-notes-design.md), [raid 3d5ae7](../journal/2026/2026-10-31-raid-3d5ae7-skill-case-notes.md)).
-- **Native-note triage.** Smelt lists the runtime's native store each writing run (39 notes on padme 2026-11-01) with a proposed disposition per note in the report; the author decides; the drain is not built (1349's accepted input design).
-- `skills/dream/` helpers are removed ([retirement](../journal/2026/2026-10-01-memory-helper-retirement.md)). **Attribution capture** is one call, `attribution_record.py --capture-pr N` (PR #1719; merge-commit storage closed by the author, [entry](../journal/2026/2026-10-27-capture-pr-and-merge-commit-attribution.md)).
+- The append-only source is `memory/journal/YYYY/`; corrections link the original. Topics are department guides (4 KB excluding Retired/Sources, at most eight); index cap 40 lines. Attribution telemetry lives in `memory/evidence/attribution/`, outside consolidation [census]. Uncleared material is repository age ciphertext, key untracked [pilot]; this pass found none.
+- Roar captures facts, then gives its `/clear` verdict [survey]. Smelt rebuilds by department from previous pages and source revisions; only accepted reports count as processing. Fifth accepted PR #2049 closed 1349 [accepted]; sixth accepted PR #2197 is this pass's size baseline. Interrupted trial pass 3 and unmerged hoard PR #1975 remain unaccepted.
+- There is no project prompt. Ticket 1451 moved the generic text into `skills/smelt/references/consolidation.md`; its revision is the skill's. Migration refuses an untracked or edited prompt; size comparison resolves refs in the selected repo [prompt]. A retirement citation is intentionally still listed on rerun [followup].
+- Case notes (`memory/skills/<skill>.md`) have 1–4 dated, sourced cases with `Use:` lines, around 400 words. Smelt re-selects them. Claude's Skill PostToolUse plus UserPromptSubmit cover both tool and typed-slash loads; Pi wiring landed in PR 2150 [cases].
+- Native auto-memory stays by author choice (1350 option b); Smelt lists it read-only. Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [Commission][source1] pin remains verbatim; the later ruling clarifies the sequence.
+- Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention/provenance landed as 1464; 1377 closed by author disposition in favor of deferred 1465, without claiming structured constraints implemented [brood].
 
 ## Hazards
-- **Claude Code does not read repository memory.** Census (with control): Claude 1/148 padme, 0/5 doudou; Codex 142/570 (1346). The index is not injected at session start; counting tool calls that merely name a path overcounts (the audit's 77 % was 25 %).
-- **Native notes can override silently**: a planted contradicting note was delivered natively on every runtime probed in the 0918 trial; Claude flagged it, Codex adopted it ([Claude](../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md)); Pi loads only the first AGENTS file per directory plus a home-level one ([rerun](../journal/2026/2026-10-02-memory-v8-0918-pi-native-load-delivered-contradictory-note.md)).
-- **The harness native store** holds rules in disguise (41 %) and knowledge the repo never captured (52 %) (1349). **The journal exceeds one context** (770 KB): work per department. **Attribution capture refuses** two findings at one anchor, wrong fact order, ticket-only PRs; script-only seats write no record.
-- Interrupted trial pass 3 and the fifth hoard (PR #1975, unmerged) are not accepted processing; the fifth smelt (PR #2049) is.
+
+- The controlled 1346 census observed Claude reading repo memory in 1/148 padme and 0/5 doudou sessions; Codex 142/570. Index injection is absent; naming a path is not reading it (77% became 25%) [census].
+- A planted contradicting native note reached every probed runtime: Claude flagged it, Codex adopted it. Pi loads only the first AGENTS variant per directory plus home [trial]. Native-store figures (41% working rules, 52% uncaptured knowledge) are dated audit results, not current measurements. Journal size exceeds one context: read by department.
+- Capture has refused duplicate findings at one anchor, fact order and ticket-only PRs; script-only seats yield no record. PR 2217 could not recover a writer identity [identity]. Missing evidence stays unknown.
+
 ## Open questions
-- Which store Claude Code uses (1350: off, list per smelt, or restore an index; blocked by 1346). Native stores are inboxes smelt drains; the drain is not built (1349). Consolidation vs verbatim journal: hypothesis from DreamBench-SWE (95/180 vs 89/180, p = .52); trial 1354 needs spend approval. The append-in-place question stays unresolved.
+
+- Memory redesign 1443 is deferred, with no implementation authority. The verbatim-journal comparison (DreamBench-SWE 95/180 vs 89/180, p=.52) remains inconclusive; 1354 was closed by the author, monitor instead. Append-in-place remains unresolved.
+
 ## Retired
 
-- Index hook budget refusal (2100 chars): the index is no longer injected.
-- Separate private companion for uncleared material: superseded by encrypted-in-repo (PR #1112).
-- Delivery PR list (#1093-#1102, #1137, #1147, #1150), 0909/0913/0912/0919 closures, 1106 path migration, third-consolidation test-pin removal: completed history, kept in journal and git.
-- Attribution backfill counts (34/65/69) and producer-versus-recorder notes #1423-#1430: history; records in `memory/evidence/attribution/`.
-- Trial details (link catch, detached flags, no cwd, concurrent sessions, Pi credit depletion, retired-helper and slug-collision probes): single-sample history; runtime launch facts belong to the runtimes page.
-- AGENTS.md append-only wording versus the attribution move: resolved by f78334e6 and the smelt Bounds carve-out (now in the smelt skill).
-- Legacy advice to derive rules from consolidation: retired by v8 and the author's 2026-10-01 RETIRE LEGACY direction.
-- `memory/pending-capture-pr1211.md.txt`: resolved by 1038.
-- Merged page `memory-v8-acceptance-trial.md`: folded into this page.
-- "Departments provisional until 1349 closes" / "1349 closes on author acceptance": 1349 closed 2026-10-31 (PR #2049, 52f63b18).
-- Prompt revision v8-r4: superseded by v8-r5 (2026-10-30).
-- Per-project prompt `memory/SMELT.md` v8-r5: retired by ticket 1451; its generic text is `skills/smelt/references/consolidation.md`, its local facts (journal size, 1349) already on this page.
+- Native-store choice and trial-spend approval as open questions: superseded by author decisions on 1350 and 1354; sources are the closed tickets.
+- Native “inbox smelt drains”: no drain was built or authorized; current skill lists proposals and edits no native note.
+- Per-project prompt `memory/SMELT.md` v8-r5: retired by 1451; generic instructions live in the skill reference. This historical citation stays under the migration contract.
+- “No stage promotes rules” as an unqualified pipeline claim: replaced by explicit Smelt nomination / separately authorized Brood discussion (1461); the author still decides.
+- 770 KB journal size and 39-note inventory dated 2026-11-01: old measurements; current report measures inventory, without treating bytes as context tokens.
+- Removed `skills/dream/` helpers: settled retirement history, source remains below. Brood's first run (1351/PR 2152) is history, not authority for another run.
+- Prior Retired history remains in git and its linked episodes.
 
 ## Sources
 
@@ -42,5 +41,18 @@ how runtimes reach it. Checked against the tree 2026-11-01.
 - [Capture one call](../journal/2026/2026-10-27-capture-pr-and-merge-commit-attribution.md), [redesign day](../journal/2026/2026-10-29-memory-redesign-day.md), [raid 0a53b8](../journal/2026/2026-10-29-raid-0a53b8-smelt-census-attribution.md), [2026-10-30 input](../journal/2026/2026-10-30-rulings-and-memory-design-input.md)
 - [1349 closed](../journal/2026/2026-10-31-1349-closed-heading-renamed.md), [case-notes design](../journal/2026/2026-10-31-skill-case-notes-design.md), [raid 3d5ae7](../journal/2026/2026-10-31-raid-3d5ae7-skill-case-notes.md), [raid 1f0534 late merges](../journal/2026/2026-11-01-raid-1f0534-late-merges.md)
 - Conception: [audit](../../conception/2026-10-29-memory-system-audit.md), [pilot](../../conception/memory-v8/pilot.md), [protocol](../../conception/memory-v8/evaluation-protocol.md), [results](../../conception/memory-v8/evaluation-results.md), [legacy retirement](../../conception/memory-v8/legacy-retirement.md), [brood evaluation](../../conception/memory-v8/brood-evaluation.md), [inventory](../../conception/memory-v8/source-inventory.md), [case notes](../../conception/2026-10-31-skill-case-notes.md)
+[census]: ../journal/2026/2026-10-29-raid-0a53b8-smelt-census-attribution.md
+[pilot]: ../journal/2026/2026-10-02-memory-v8-pilot-established.md
+[survey]: ../journal/2026/2026-10-11-roar-clear-verdict-survey.md
+[accepted]: ../journal/2026/2026-10-31-1349-closed-heading-renamed.md
+[prompt]: ../journal/2026/2026-11-07-smelt-prompt-folded-into-skill.md
+[followup]: ../journal/2026/2026-11-07-smelt-1451-follow-ups-1452.md
+[cases]: ../journal/2026/2026-10-31-raid-3d5ae7-skill-case-notes.md
+[brood]: ../journal/2026/2026-11-07-raid-d35fb4.md
+[trial]: ../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md
+[identity]: ../journal/2026/2026-11-05-pr2217-attribution-capture.md
+- Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/1465-evidence-structured-review-constraints-a.erg).
+
+[source1]: commission.md#current-guidance
 
 ## Fallback

@@ -16,6 +16,8 @@ Memory and rules:
 > pinned 2026-10-30 — Government memo accepted as doctrine, under cooldown: "It is easy to be overenthusiastic about a metaphor." Nothing is implemented from it before ticket 1369 closes ([source](../journal/2026/2026-10-30-rulings-and-memory-design-input.md))
 > pinned 2026-10-29 — Native-note rulings are filed in Commission, "never promoted to rules" (tickets 1349, 1351). Amended 2026-11-01 (ticket 1350, option b): smelt never promotes; only the author promotes, through smelt's native-note triage table
 
+The native-note table presents nominations; separately requested Brood handles promotion discussion; the author decides. This is the later 1461 clarification of the preserved native-note pin ([episode](../journal/2026/2026-11-07-raid-d35fb4.md)), not authority for Smelt to promote.
+
 Review, guards, escalation:
 
 > pinned 2026-10-27 — "REMOVE WORDING PINS" ([source](../journal/2026/2026-10-27-doctrine-escalation-pr1778.md)). Scope: tests that freeze the wording of prose (e.g. the deleted tests/test_raid_phase6_gaze_verdict.py). Tests tied to an incident or an interface stay, per skills/test-doctor/references/toolkit.md § Thin the wording pins. Unrelated to the pinned rulings on this page
@@ -48,6 +50,7 @@ Stated intent, not ruled (input for 1350): user memory apart from project memory
 - A waiver or merge instruction scopes one PR; it grants no future authority.
 
 ## Open questions
+
 
 - Ex-post coder/reviewer health read awaits the author ([source](../journal/2026/2026-10-28-diminishing-returns-bar.md)).
 
@@ -83,5 +86,6 @@ Stated intent, not ruled (input for 1350): user memory apart from project memory
 - Journal: all `../journal/2026/` links above.
 - Native notes (Claude Code, harness store, read 2026-11-01), base path `~/.claude/projects/-home-haduong--agents/memory/`: feedback_rules_are_law_memory_is_decree, feedback_review_trust_verify_monitor, feedback_no_second_order_guards, feedback_dont_idle_on_background, feedback_peer_relayed_rulings, feedback_ticketwork_automerge, feedback_no_wait_tickets, feedback_doctor_kit_tools, feedback_no_blocking_waits, feedback_delta_format, feedback_pi_is_first_class, feedback_dragon_skill_names, project_faster_gaze_orchestrator, feedback_gh_admin_delegated, project_main_guard_enforce, feedback_prose_edits_are_on_main, project_government_memo_cooldown. Text of notes used this run: [sixth-smelt annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).
 - Tickets: tickets/1349, 1351, 1369, 1372, 1373, 1374, 1439, 1452.
+- Current authority: [1461 ruling](../../tickets/closed/1461-smelt-native-note-triage-nominates-rule.erg); [1437–1439 rulings](../journal/2026/2026-11-07-rulings-1437-1439-batched-questions.md).
 
 ## Fallback
