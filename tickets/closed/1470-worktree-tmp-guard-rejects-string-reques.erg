@@ -2,10 +2,12 @@
 Title: worktree-tmp-guard rejects string request ids from the local forge
 Created: 2026-11-08
 Author: MinhHaDuong
+Closed: guard accepts the local forge's opaque string ids; PR #2272
 
 --- log ---
 2026-11-08T18:49Z MinhHaDuong created
 2026-11-08T20:10Z raid-f1c4d5 imagined, planned, feasibility PASS (orchestrator inline: one small ticket)
+2026-11-08T19:13Z reviewer closed — guard accepts the local forge's opaque string ids; PR #2272
 
 --- body ---
 ## Context
