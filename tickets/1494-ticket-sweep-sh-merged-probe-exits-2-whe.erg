@@ -6,6 +6,7 @@ Author: haduong
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
+2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
 
 --- body ---
 ## Context
@@ -38,8 +39,7 @@ lookup; whether (c) should be settled by the probe or left to molt.
 
 - [ ] The probe detects the default branch (origin/HEAD, else main/master) instead of assuming `main`
 - [ ] Patch-id evidence (`git cherry` all `-`, or equivalent) is accepted as a second landed signal
-- [ ] A forge closed-unmerged state yields exit 1 (not merged), not 2
-- [ ] Tests cover (a), (b) and (c)
+- [ ] Tests cover (a) and (b), with negative controls asserting exact exit codes
 
 ## Verify and Imagine (raid 4afdb3, 2026-11-09)
 - Verified: (a) chemin-de-voix (master, origin/HEAD → origin/master): `merged-probe master~3`
@@ -60,3 +60,6 @@ lookup; whether (c) should be settled by the probe or left to molt.
   different push identities (cired.digital); moving the tickets/ guard serves only that criterion.
   Stale branches are clutter: none of the three classes meets the severity floor.
 - Author decisions: (1) drop criterion 3 and keep criteria 1, 2, 4; (2) ticket or inline fix.
+
+## Author decisions (raid 5c2a37, 2026-11-09)
+- Criterion 3 dropped (author, 2026-11-09): molt deletes on neither exit 1 nor exit 2, so a forge closed-unmerged lookup buys a log line for a forge dependency in adopter repos. Class (c) stays exit 2.

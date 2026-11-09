@@ -6,6 +6,7 @@ Author: haduong
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
+2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
 
 --- body ---
 ## Context
@@ -22,12 +23,12 @@ how GC and molt treat them.
   19:04.
 - (b) `worktree-gc.sh` skips a dead-pid locked worktree whose branch still
   exists upstream; a seat removed t0774 by hand after preflight.
-- (c) In repos that do not ignore `.claude/worktrees/` (all but git-erg),
+- (c) [corrected 2026-11-09: the Claude Code runtime already writes `**/.claude/worktrees/` into info/exclude in the harness, git-erg, arena, search-works-for-zotero and zoteus; absent in DOIfetch; the harness's own registration writes only `/.tmp/`] In repos that do not ignore `.claude/worktrees/` (all but git-erg),
   the primary checkout lists the live worktree as untracked and worktree-gc
   skips it as "uncommitted WIP". The hunt recipe
   (`skills/hunt/SKILL.md` § Worktree) does not add the path to
   `.git/info/exclude`.
-- (d) The pre-commit erg-claims hook refuses any commit on a base older than
+- (d) [corrected 2026-11-09: the hook refuses only when the index holds a ticket without its claim or a duplicate number, e.g. a pre-migration base or a staged draft; escape hatches: migrate --claims, add the claim, --no-verify] The pre-commit erg-claims hook refuses any commit on a base older than
   the claims. In an old AEDIST worktree it blocked molt's "commit dirty files
   to a WIP branch" step and left the files staged.
 
@@ -39,10 +40,9 @@ spare, or because the pid was recycled; the lock reason alone cannot tell.
 
 ## Exit criteria
 
-- [ ] The lock reason records a session id, or the pid is validated against the claude session process before it counts as live
-- [ ] worktree-gc handles a dead-pid locked worktree whose branch exists upstream (case b)
-- [ ] The hunt recipe adds `.claude/worktrees/` to `.git/info/exclude`
-- [ ] The claims hook allows WIP-preservation commits, or molt documents the fresh-worktree workaround
+- [ ] worktree-gc handles a dead-pid locked worktree whose branch exists upstream (case b): dead pid, clean tree and HEAD equal to its upstream → unlock and remove, branch kept
+- [ ] The hunt worktree registration adds `/.claude/worktrees/` to `.git/info/exclude` (next to `/.tmp/`)
+- [ ] molt step 1.5 documents the WIP-commit workaround when the claims hook refuses (migrate --claims, restore the claim, or a fresh worktree on origin/main)
 
 ## Verify and Imagine (raid 4afdb3, 2026-11-09)
 - Verified: (a) live now: this raid's shells have PPID 3046370 = `claude bg-spare --bg-spare
@@ -70,3 +70,8 @@ spare, or because the pid was recycled; the lock reason alone cannot tell.
   unclaimed spare (children, claim socket state); none → drop criterion 1 and close (a) as working
   as intended; (2) criterion 4: documentation form (recommended) or a git-erg hook change;
   (3) correct Evidence (c) and (d) before anyone implements from them.
+
+## Author decisions (raid 5c2a37, 2026-11-09)
+- Criterion 1 dropped (author, 2026-11-09): a claimed bg-spare keeps its command line for the session's life, so rejecting bg-spare pids would reclaim live sessions; (a) closes as working as intended.
+- Criterion 4 in documentation form; no git-erg hook change.
+- Evidence (c) and (d) corrected below before implementation.
