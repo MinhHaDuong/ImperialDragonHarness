@@ -1,0 +1,59 @@
+%erg 0.1
+Title: Tracker: roll out required erg ID claims to every store on padme and doudou
+Created: 2026-11-09
+Author: reviewer
+
+--- log ---
+2026-11-09T12:13Z reviewer created
+
+--- body ---
+## Context
+Author decision relayed by the git-erg session (2026-11-09): the harness drives the rollout of
+required ID claims (git-erg 0306/0307) to every erg store on padme and doudou. Pin, not release:
+every repo takes the binary with sha256
+`dafb1d48f2ce5b380e790244d958678b9eea307d9d16588c1358dddf4dc15a58` (git-erg rev 8d24e74,
+commit aee15dd); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
+git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
+
+## Recipe (one PR per repo, one host, fresh worktree)
+1. fetch; skip if origin/main already has `tickets/.claims/`
+2. `tickets/erg sync --upstream`; 3. check `tickets/erg version` shows the sha256
+4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init`
+6. tracked core.hooksPath: `tickets/erg install --hooks`, review the chaining, commit it
+7. the repo's own gate; 8. merge by the repo's process.
+After landing: every other clone pulls; per-clone hooks run `tickets/erg install --hooks`.
+Branch cut before migration: rebase, `tickets/erg migrate --claims tickets`, commit. Duplicate
+number: migrate lists it and writes nothing; renumber one by hand, rerun.
+Each repo's migration runs under that repo's own rules (rules/workflow.md, Cross-project work):
+its own session, or one launched there; the harness tracks, it does not edit other repos.
+
+## Children
+- [ ] canary: cadens (end to end first)
+- [ ] quiet, parallel: archiveCIRED, fuzzy-corpus, aedist-technical-report, chemin-de-voix
+      (Tracing-Kieu), gavard-schoch-2026-comment, polycentric_activity
+- [ ] harness: 1472 (alongside the quiet wave)
+- [ ] own sessions (messaged by git-erg): JETP-observer, sen-causal-reading, padme;
+      climate-finance-het if "Scoring abstracts" is its session, else ours
+- [ ] ours, active: search-works-for-zotero, zoteus-fts5, DOIfetch (10 open ticket PRs across
+      swz 3, zoteus 3, cfh 2, JETP 1, DOIfetch 1: land or park first, or rebase + rerun migrate)
+- [ ] no GitHub remote: arena (padme, direct merge --no-ff per its CLAUDE.md); doudou: askMinh,
+      fs-housekeeper, matrice-hybride, html (pushes to padme:CNRS/projets/actifs/homepage);
+      no CI there, hooks mandatory
+- [ ] clone sweep after each merge: doudou cadens, archiveCIRED, Fuzzy Corpus, JETP-observer,
+      climate-finance-het, chemin-de-voix, padme, sen-causal-reading, search-works-for-zotero,
+      DOIfetch, .agents, both aedist clones; padme ~/data/search-works-for-zotero; doudou
+      git-erg clone: pull only
+- Excluded: arena/workloads/*, arena/repos/*, ~/tmp-*, ~/sen-causal-reading-check
+
+## Hazards
+- padme clones of aedist-technical-report and chemin-de-voix: core.hooksPath points at dead
+  pre-move paths; fix that per-clone config before their wave.
+- padme PATH `erg` is old (2c490b7); doudou has none (padme session files the host ticket).
+- padme swz primary checkout: ticket branch, 11 dirty files, 17 worktrees: never touch it.
+- doudou codex session in sen-causal-reading: reach it by `scripts/runtime.py wake send` or ticket.
+- Hundreds of advisory "displaced log entry" WARNs: expected.
+
+## Exit criteria
+- [ ] every store above has `tickets/.claims/` on its default branch with the pinned binary
+- [ ] clone sweep done on both hosts; per-clone hooks installed where needed
+- [ ] blockers reported to the author one at a time
