@@ -13,7 +13,8 @@ set -euo pipefail
 # output) are tolerated, a hand-made build/notes.txt stays residue. An untracked
 # root .venv holding a regular pyvenv.cfg is tolerated too, provided its
 # top level holds only usual venv entries (pyvenv.cfg, bin, Scripts, lib, lib64,
-# include, share, .gitignore, CACHEDIR.TAG); any other entry is residue and the
+# include, share, .gitignore, CACHEDIR.TAG, and the .lock uv sync and uv run
+# write); any other entry is residue and the
 # whole .venv is kept. worktree_scrub deletes it, since git refuses to remove a
 # tree holding untracked files. A build/ child (lib*, bdist.*, temp.*) is
 # regenerable only when every file in it is build output: its bytes are
@@ -44,7 +45,7 @@ _venv_disposable() {
     for e in "$v"/* "$v"/.[!.]*; do
         [ -e "$e" ] || [ -L "$e" ] || continue
         case "${e##*/}" in
-            pyvenv.cfg|bin|Scripts|lib|lib64|include|share|.gitignore|CACHEDIR.TAG) ;;
+            pyvenv.cfg|bin|Scripts|lib|lib64|include|share|.gitignore|CACHEDIR.TAG|.lock) ;;
             *) return 1 ;;
         esac
     done

@@ -1529,6 +1529,79 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
         assert (wt / ".venv" / "notes.txt").read_text() == "precious\n"
 
 
+def _uv_venv(wt):
+    """The root .venv as `uv venv` 0.12 lays it out (copied from a real one on
+    padme): its own `*` .gitignore, an empty .lock, CACHEDIR.TAG, pyvenv.cfg,
+    bin, lib and a lib64 -> lib symlink."""
+    v = wt / ".venv"
+    (v / "bin").mkdir(parents=True)
+    (v / "bin" / "python").write_text("")
+    (v / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
+    (v / "lib64").symlink_to("lib")
+    (v / ".gitignore").write_text("*")
+    (v / ".lock").write_text("")
+    (v / "CACHEDIR.TAG").write_text("Signature: 8a477f597d28d172789f06886806bc55")
+    (v / "pyvenv.cfg").write_text("home = /usr/bin\nimplementation = CPython\nuv = 0.12.7\n")
+
+
+def test_gc_reclaims_dead_pid_locked_worktree_with_uv_venv(origin):
+    """Review rv-20261109-pr-2348-4758: uv writes .venv/.lock; a tree that ran
+    uv is still reclaimed at its upstream."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-dead-uv")
+    _uv_venv(wt)
+    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
+
+    res = _gc(primary)
+    assert "removed agent-dead-uv (dead-pid lock" in res.stdout, res.stdout + res.stderr
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_reclaims_idle_ownerless_tree_holding_uv_venv(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-uv", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-uv")
+    _uv_venv(wt)
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert "removed agent-ownerless-uv" in res.stdout, res.stdout + res.stderr
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_preflight_passes_on_uv_venv(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-uv", dirty=False)
+    _uv_venv(wt)
+    res = _removal(wt)
+    assert res.returncode == 0, res.stderr
+    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
+
+
+@pytest.mark.parametrize("case", ["dirty", "ignored-draft"])
+def test_uv_venv_does_not_mask_real_work(origin, case):
+    """Negative controls: beside a disposable uv venv, uncommitted work and an
+    ignored file outside the venv still block gc and the preflight."""
+    _, primary = origin
+    name = f"agent-uv-keep-{case}"
+    wt = make_agent_worktree(primary, name, dirty=(case == "dirty"))
+    if case == "ignored-draft":
+        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
+        git(wt, "add", "-f", ".gitignore")
+        git(wt, "commit", "-m", "ignore all")
+        git(wt, "push")
+        (wt / "draft.md").write_text("precious\n")
+    _uv_venv(wt)
+    assert _removal(wt).returncode == 1
+    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
+    res = _gc(primary)
+    assert f"removed {name}" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    if case == "ignored-draft":
+        assert (wt / "draft.md").read_text() == "precious\n"
+
+
 def test_gc_keeps_pid_1_locked_worktree(origin):
     """A lock recording pid 1 names no owner: inside a pid namespace (a
     sandboxed runtime) `$PPID` reads 1, and that session may still be live
