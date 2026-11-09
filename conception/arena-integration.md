@@ -2,7 +2,7 @@
 
 Arena is an independent repository, currently checked out at
 `~/CNRS/code/arena`. Set `ARENA_ROOT` to its checkout; there is no implicit
-fallback to the harness. Its protocol is `skills/arena/SKILL.md`, its analysis
+fallback to the harness. Its protocol is `conception/arena-protocol.md`, its analysis
 is `scripts/tournament-analysis.py`, and its reports are `docs/tournament-graphs/`
 and `docs/tournament-graphs-en/` relative to that repository.
 
