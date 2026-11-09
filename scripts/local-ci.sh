@@ -4,10 +4,10 @@
 # The workflow file stays the single definition of the checks; this script only
 # supplies what a forge runner would: a clean clone, a runner image, an event
 # and, when a forge is reachable, a token. CI.yml runs under workflow_dispatch,
-# its trigger that needs no push (it has no pull_request trigger, ticket 1174);
-# ticket-collision.yml, when present, runs under a pull_request event. Usage:
+# its trigger that needs no push (it has no pull_request trigger, ticket 1174).
+# Usage:
 #
-#   scripts/local-ci.sh [job ...]     # default: every job of both workflows
+#   scripts/local-ci.sh [job ...]     # default: every job of the workflow
 #
 # What is tested: the COMMITTED HEAD of the current checkout, cloned fresh. An
 # uncommitted change is not tested (a warning says so). The forge tests the
@@ -36,7 +36,6 @@
 set -euo pipefail
 
 workflow=.github/workflows/CI.yml
-collision_workflow=.github/workflows/ticket-collision.yml
 root=$(git rev-parse --show-toplevel)
 # A repository with no workflow has intentionally opted out of CI. Check this
 # before project-local runner files or container tools are needed.
@@ -89,39 +88,21 @@ else
     echo "local-ci: no forge access (needs an origin remote, gh, and a gh login); jobs that use the forge's secrets will be skipped" >&2
 fi
 
-pr=0
-base=main
 secrets="$work/secrets"
 : > "$secrets"
 chmod 600 "$secrets"
 if [ "$forge" -eq 1 ]; then
-    # Find this checkout's PR by the commit it points at, not by branch name: a
-    # local branch is often pushed under another name, and an unrecognised PR
-    # would then count as its own sibling in the collision job.
-    # Keep (ticket 1321): act is a GitHub Actions runner; the PR lookup is gh-only and runs only with forge access.
-    open_prs=$(gh pr list --state open --json number,baseRefName,headRefOid)
-    head_sha=$(git rev-parse HEAD)
-    found_pr=$(jq -r --arg sha "$head_sha" '[.[] | select(.headRefOid == $sha)][0].number // empty' <<< "$open_prs")
-    found_base=$(jq -r --arg sha "$head_sha" '[.[] | select(.headRefOid == $sha)][0].baseRefName // empty' <<< "$open_prs")
-    if [ -n "$found_pr" ] && [ -n "$found_base" ]; then
-        pr=$found_pr
-        base=$found_base
-    else
-        echo "local-ci: HEAD is not the head of an open PR; assuming base main, so every open PR counts as a sibling" >&2
-    fi
     # Keep (ticket 1321): act takes GITHUB_TOKEN by design; the gh token is written only when forge access exists.
     printf 'GITHUB_TOKEN=%s\n' "$(gh auth token)" > "$secrets"
 fi
-printf '{"pull_request":{"number":%s,"base":{"ref":"%s"}},"number":%s}\n' "$pr" "$base" "$pr" > "$work/event.json"
+# workflow_dispatch carries no payload (ticket 1472 retired the pull_request
+# collision workflow, the only one that read the event).
+printf '{}\n' > "$work/event.json"
 
 # Each workflow file with the event it is run under: one a workflow still
 # accepts, or act selects none of its jobs.
 workflows=("$workflow")
 events=(workflow_dispatch)
-if [ -e "$clone/$collision_workflow" ]; then
-    workflows+=("$collision_workflow")
-    events+=(pull_request)
-fi
 
 # The job list must be the workflows', not whatever discovery printed: a run
 # that selects no jobs, or fewer than the workflows define, checks nothing.
