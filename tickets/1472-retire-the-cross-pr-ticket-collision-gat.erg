@@ -13,6 +13,7 @@ Author: MinhHaDuong
 2026-11-09T12:26Z reviewer pin moved to sha256 6a104262 (rev 2d0dbea, git-erg ab519a3) by author decision relayed by git-erg; dafb1d48 superseded
 2026-11-09T12:30Z reviewer exit criteria met on branch t1472-erg-claims: pin 6a104262, 965 claims, gate retired, tests/test_erg_claims_conflict.py, make check 3489 passed
 2026-11-09T12:36Z reviewer criterion 2 open on the PR head: ticket-collision.yml and the CI.yml pointer need the author's workflow-scope push (3f90ffd1 on t1472-erg-claims-workflows), which ticks it
+2026-11-09T12:37Z reviewer pin moved to sha256 513cd3c4 (rev bf71ab5, git-erg bcbfa63) by author decision relayed by git-erg; behaviour as 6a104262, hook blocks unchanged
 
 --- body ---
 Parent: 1478
@@ -52,10 +53,11 @@ both were open).
 - [x] `make check` passes.
 
 ## Ripe (git-erg session, 2026-11-09 12:15Z)
-Preconditions met. Pin moved by author decision 2026-11-09 (relayed by git-erg): take sha256
-`6a10426263e7571a054557df8965229c92fb87540b07059279f3d20f56c58991`, revision 2d0dbea
-(git-erg ab519a3), not the earlier dafb1d48 (8d24e74, aee15dd) nor 9ab13c9. 2d0dbea drops the
-managed pre-commit rule that refused tickets/erg off the default branch. It adds required-claims checks, a pre-merge-commit hook, unclaimed-ticket
+Preconditions met. Pin moved twice by author decision 2026-11-09 (relayed by git-erg): take
+sha256 `513cd3c4d916fd170d2d71b2cfe2182d4ab8db413822766db2e1ae5c5488b4ac`, revision bf71ab5
+(git-erg bcbfa63), not 6a104262 (2d0dbea, ab519a3), dafb1d48 (8d24e74, aee15dd) nor 9ab13c9.
+bf71ab5 behaves as 2d0dbea (only the revision stamp changed, git-erg docs/ renamed design/);
+2d0dbea dropped the managed pre-commit rule that refused tickets/erg off the default branch. It adds required-claims checks, a pre-merge-commit hook, unclaimed-ticket
 warnings and the 0309/0310 fixes. git-erg itself migrated in #393; the harness is the first
 other adopter. That pin is also the one for the rollout to other repos.
 
