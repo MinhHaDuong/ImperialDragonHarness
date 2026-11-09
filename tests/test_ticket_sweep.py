@@ -301,3 +301,98 @@ def test_molt_writes_no_state_stamp():
     assert "STATE timestamp" not in skill
     assert "6.5" not in skill
     assert "**Open merge request.** If any commits were created" in skill
+
+
+# --- merged-probe: default branch and patch-id evidence ---
+
+def master_repo(tmp_path, set_head=True):
+    """A repo whose default branch is master, with a bare origin."""
+    repo = make_repo(tmp_path)
+    run("git", "branch", "-qm", "master", cwd=repo)
+    origin = tmp_path / "origin.git"
+    run("git", "init", "-q", "--bare", str(origin), cwd=tmp_path)
+    run("git", "remote", "add", "origin", str(origin), cwd=repo)
+    run("git", "push", "-q", "origin", "master", cwd=repo)
+    run("git", "fetch", "-q", "origin", cwd=repo)
+    if set_head:
+        run("git", "remote", "set-head", "origin", "master", cwd=repo)
+    return repo
+
+
+def switch_branch(repo, name, *, create=False):
+    run("git", "switch", "-q", *(["-c"] if create else []), name, cwd=repo)
+
+
+@pytest.mark.integration
+def test_probe_master_default_ancestor_is_merged(tmp_path):
+    repo = master_repo(tmp_path)
+    run("git", "switch", "-q", "master", cwd=repo)
+    switch_branch(repo, "feature-x", create=True)
+    (repo / "x.txt").write_text("x")
+    run("git", "add", "--", "x.txt", cwd=repo)
+    run("git", "commit", "-qm", "wip", cwd=repo)
+    switch_branch(repo, "master")
+    run("git", "merge", "-q", "--ff-only", "feature-x", cwd=repo)
+    assert sweep(repo, "merged-probe", "feature-x").returncode == 0
+
+
+@pytest.mark.integration
+def test_probe_master_default_via_origin_head_only(tmp_path):
+    """origin/HEAD names master and no local main exists; unmerged stays 1."""
+    repo = master_repo(tmp_path)
+    run("git", "switch", "-q", "master", cwd=repo)
+    closed_ticket(repo, 7, "autoclosed — PR #42")
+    switch_branch(repo, "t0007-thing", create=True)
+    (repo / "t.txt").write_text("t")
+    run("git", "add", "--", "t.txt", cwd=repo)
+    run("git", "commit", "-qm", "wip", cwd=repo)
+    switch_branch(repo, "master")
+    assert sweep(repo, "merged-probe", "t0007-thing").returncode == 1
+
+
+@pytest.mark.integration
+def test_probe_no_default_branch_is_could_not_determine(tmp_path):
+    repo = make_repo(tmp_path)
+    run("git", "branch", "-qm", "trunk", cwd=repo)
+    r = sweep(repo, "merged-probe", "trunk")
+    assert r.returncode == 2 and "no default branch" in r.stderr
+
+
+def cherry_picked(repo, name, files=1):
+    """Branch with commits that main then gained by cherry-pick (no ancestry)."""
+    switch_branch(repo, name, create=True)
+    for i in range(files):
+        (repo / f"{name}-{i}.txt").write_text(str(i))
+        run("git", "add", "--", f"{name}-{i}.txt", cwd=repo)
+        run("git", "commit", "-qm", f"wip {i}", cwd=repo)
+    switch_branch(repo, "main")
+    return name
+
+
+@pytest.mark.integration
+def test_probe_cherry_picked_branch_is_merged_without_pr_number(tmp_path):
+    repo = make_repo(tmp_path)
+    closed_ticket(repo, 7, "implemented in this PR")
+    cherry_picked(repo, "t0007-thing")
+    run("git", "cherry-pick", "t0007-thing", cwd=repo)
+    run("git", "commit", "-q", "--allow-empty", "-m", "unrelated", cwd=repo)
+    assert sweep(repo, "merged-probe", "t0007-thing").returncode == 0
+
+
+@pytest.mark.integration
+def test_probe_partially_landed_branch_is_not_merged(tmp_path):
+    """One '+' in git cherry: the squash dropped a change, so not merged (exit 1)."""
+    repo = make_repo(tmp_path)
+    closed_ticket(repo, 7, "autoclosed — PR #42")
+    cherry_picked(repo, "t0007-thing", files=2)
+    run("git", "cherry-pick", "t0007-thing~1", cwd=repo)
+    assert sweep(repo, "merged-probe", "t0007-thing").returncode == 1
+
+
+@pytest.mark.integration
+def test_probe_partially_landed_unmapped_branch_is_could_not_determine(tmp_path):
+    repo = make_repo(tmp_path)
+    cherry_picked(repo, "feature-x", files=2)
+    run("git", "cherry-pick", "feature-x~1", cwd=repo)
+    r = sweep(repo, "merged-probe", "feature-x")
+    assert r.returncode == 2 and "could-not-determine" in r.stdout
