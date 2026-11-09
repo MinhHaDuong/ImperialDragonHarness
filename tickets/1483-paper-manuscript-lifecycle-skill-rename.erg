@@ -9,6 +9,7 @@ Author: haduong
 2026-11-09T16:21Z Minh-Ha-Duong haduong renamed fly → paper: with /mission (1485) kept as a noun, object skills take their directory's name (papiers/ → /paper); dragon verbs stay for the harness's skills on itself
 2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
 2026-11-09T16:49Z reviewer execute (raid 8d6894): skill paper + five references (same seven headings), submission-event retired with no alias (RETIRED in test_retired_skill_names; red then green), catalog regenerated, census skills 6201/6300. Criterion 6 skill side done (places read from the papers directory's AGENTS.md; no ~/CNRS path in skills/paper); the AGENTS.md itself is CNRS content on doudou, draft in the merge request. Criterion 4 open: padme text-trace in the merge request, live run on doudou after idh install. make check: 3499 passed, 4 failed only under TMPDIR inside the worktree, pass with default TMPDIR.
+2026-11-09T17:00Z reviewer note verify-reroll — round 1: criterion "An AGENTS.md in ~/CNRS/papiers/ holds what is local ..., the skill reads it ..." MISSING (AGENTS.md and memory-file move are CNRS-project work, not in this diff); criterion "/paper <paper> published dry run ... lands on nothing to do except HAL" MISSING (padme trace reads unknown/to do)
 
 --- body ---
 ## Context
