@@ -1,0 +1,41 @@
+%erg 0.1
+Title: ticket-sweep.sh merged-probe exits 2 where git or the forge can settle
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T19:17Z haduong created
+
+--- body ---
+## Context
+
+Found by the 14-repo housekeeping sweep of 2026-11-09 (19:05-19:15 UTC, run
+from the ~/CNRS session). `scripts/ticket-sweep.sh merged-probe` exits 2
+(could-not-determine) on branches git or the forge can settle, so molt never
+cleans them.
+
+## Evidence
+
+- (a) Default branch `master`: chemin-de-voix, every branch exits 2 with
+  "git could not compare <branch> with main", including
+  `codex/1463-check-fast`, a plain ancestor of origin/master.
+- (b) Squash-landed branches whose ticket's `Closed:` line names no PR:
+  padme `t0106-btrbk-cold`, search-works-for-zotero `t1141` and
+  `ticket/0811`, chemin-de-voix `t1141`. `git cherry` and `git range-diff`
+  show them landed.
+- (c) Branches that map to no ticket by name: AEDIST's 78
+  `tournament/<id>-*` branches; livre-milliards-climat has no `tickets/` at
+  all, while the forge shows its PR #3 closed unmerged.
+
+## Diagnosis
+
+Established: exit 2 in all three classes, with the observations above. Not
+established: whether (a) is a hard-coded `main` or a missing `origin/HEAD`
+lookup; whether (c) should be settled by the probe or left to molt.
+
+## Exit criteria
+
+- [ ] The probe detects the default branch (origin/HEAD, else main/master) instead of assuming `main`
+- [ ] Patch-id evidence (`git cherry` all `-`, or equivalent) is accepted as a second landed signal
+- [ ] A forge closed-unmerged state yields exit 1 (not merged), not 2
+- [ ] Tests cover (a), (b) and (c)

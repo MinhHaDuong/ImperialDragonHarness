@@ -1,0 +1,44 @@
+%erg 0.1
+Title: worktree lock and GC liveness gaps: pool pids, dead-pid skips, unignored dirs, claims hook
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T19:17Z haduong created
+
+--- body ---
+## Context
+
+Found by the 14-repo housekeeping sweep of 2026-11-09 (19:05-19:15 UTC, run
+from the ~/CNRS session). Four gaps in how worktree locks prove liveness and
+how GC and molt treat them.
+
+## Evidence
+
+- (a) A lock reason's pid can name a `claude bg-spare` pool process: pid
+  1696669 held the locks of AEDIST t0682 and search-works-for-zotero t0774
+  for hours while alive, blocking molt step 0 in both repos. It was dead by
+  19:04.
+- (b) `worktree-gc.sh` skips a dead-pid locked worktree whose branch still
+  exists upstream; a seat removed t0774 by hand after preflight.
+- (c) In repos that do not ignore `.claude/worktrees/` (all but git-erg),
+  the primary checkout lists the live worktree as untracked and worktree-gc
+  skips it as "uncommitted WIP". The hunt recipe
+  (`skills/hunt/SKILL.md` § Worktree) does not add the path to
+  `.git/info/exclude`.
+- (d) The pre-commit erg-claims hook refuses any commit on a base older than
+  the claims. In an old AEDIST worktree it blocked molt's "commit dirty files
+  to a WIP branch" step and left the files staged.
+
+## Diagnosis
+
+Established: the four observations above. Not established for (a): whether
+`$PPID` resolves to the pool process because the session was spawned from a
+spare, or because the pid was recycled; the lock reason alone cannot tell.
+
+## Exit criteria
+
+- [ ] The lock reason records a session id, or the pid is validated against the claude session process before it counts as live
+- [ ] worktree-gc handles a dead-pid locked worktree whose branch exists upstream (case b)
+- [ ] The hunt recipe adds `.claude/worktrees/` to `.git/info/exclude`
+- [ ] The claims hook allows WIP-preservation commits, or molt documents the fresh-worktree workaround
