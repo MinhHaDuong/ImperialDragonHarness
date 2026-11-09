@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 
 --- body ---
 ## Context
@@ -39,3 +40,20 @@ the AEDIST PR picked a number already claimed on main (stale base or no
 - [ ] The ticket-filing flow writes `Ticket-ref:`, not `**Ticket:**`, on a PR that creates the ticket
 - [ ] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 are repaired (close claim rewritten; AEDIST renumbered off 0690)
 - [ ] A test covers the filing flow's PR-body line
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified: no harness file writes the filing PR's `**Ticket:**` line; the 1481 executor wrote the
+  bodies freehand (journal 2026-11-09-raid-829e9e). Since filing: Tracing-Kieu #185, padme #258 and
+  AEDIST #1198 are MERGED with Ticket-ref (19:56-19:59Z; AEDIST renumbered 0691, merge subject still
+  says 0690). Criterion 2 met by events. Not listed: climate-finance-het #2050 still OPEN with
+  `**Ticket:** tickets/2831-...`, the sixth PR of the flow; its repair is that repo's session's.
+- AEDIST duplicate number: `erg new`'s next-id scan timed out and the executor kept 0690 (journal),
+  not a stale base; a separate below-floor defect, noted here, not filed.
+- Blind-Spot: a guard refusing any `**Ticket:**` claim on a ticket file the same PR adds would block
+  legitimate file-and-close PRs (five of the last 100 harness merges: #2336, #2325, #2323, #2272,
+  #2242). merge step 1 already stops on a claimed ticket absent from main (SKILL.md:143); check
+  whether that is what blocked the three PRs. If so the ticket shrinks to one rule line in
+  skills/merge/references/claims.md ("a PR that only files a ticket uses Ticket-ref"); a guard, if
+  still wanted, applies only when every file the PR touches is a ticket file.
+- Author decisions: (1) criteria 1 and 3 target a filing flow that has no template: reword to a
+  rule line plus a narrow guard, or drop the guard; (2) add #2050 to criterion 2.

@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 
 --- body ---
 ## Context
@@ -42,3 +43,30 @@ spare, or because the pid was recycled; the lock reason alone cannot tell.
 - [ ] worktree-gc handles a dead-pid locked worktree whose branch exists upstream (case b)
 - [ ] The hunt recipe adds `.claude/worktrees/` to `.git/info/exclude`
 - [ ] The claims hook allows WIP-preservation commits, or molt documents the fresh-worktree workaround
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified: (a) live now: this raid's shells have PPID 3046370 = `claude bg-spare --bg-spare
+  .../a13e5edc.claim.sock`, up 4 h, child of bg-pty-host 3046358; the raid and hunt worktrees
+  raid-1486-1491-3046370-*, t1486-3046370-*, t1491-3046370-* are locked with that pid. A claimed
+  spare keeps its bg-spare command line for the session's whole life, so "a bg-spare pid is not a
+  live owner" would make gc reclaim live sessions; pid 1696669 that "held locks for hours, dead by
+  19:04" fits a real session that ended: (a) may be working as intended. (b) by code order:
+  worktree-gc.sh flush() gates on upstream:track != "[gone]" before the lock rail, deliberately.
+  (c) partly stale: register_tmp_exclude writes only `/.tmp/`, but the Claude Code runtime writes a
+  `# claude-code-runtime` block with `**/.claude/worktrees/` into info/exclude: present in the
+  harness, git-erg, arena, search-works-for-zotero (the ticket's claim about swz is contradicted),
+  zoteus; absent in DOIfetch; AEDIST unchecked. (d) imprecise: the managed block
+  (git-erg src/go/assets/integration.md ~63-85) scans the index for a ticket without its claim or a
+  duplicate number; a WIP commit fails only when the index holds unclaimed tickets (pre-migration
+  base, or a staged draft without its claim); escape hatches exist (migrate --claims, add the
+  claim, --no-verify).
+- Path if kept: (b) narrow gc branch after the gone gate: dead pid + clean tree + HEAD == upstream
+  → unlock and remove, branch kept (~15 lines, 2 tests in tests/test_worktree_tools.py); (c) second
+  line `/.claude/worktrees/` in register_tmp_exclude under the same flock (~5 lines); (d) molt step
+  1.5 prose: migrate --claims, restore the claim, or a fresh worktree on origin/main; the hook text
+  is git-erg's (ticket there only if the author wants the hook changed). Not a monster; one PR.
+  Guards on guards: the lock rail is six cases deep; fix at the source if anything.
+- Author decisions: (1) criterion 1: find an observable difference between a claimed and an
+  unclaimed spare (children, claim socket state); none → drop criterion 1 and close (a) as working
+  as intended; (2) criterion 4: documentation form (recommended) or a git-erg hook change;
+  (3) correct Evidence (c) and (d) before anyone implements from them.
