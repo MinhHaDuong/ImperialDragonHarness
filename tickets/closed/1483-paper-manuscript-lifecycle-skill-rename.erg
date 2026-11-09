@@ -1,0 +1,306 @@
+%erg 0.1
+Title: paper: manuscript lifecycle skill, rename submission-event, stage checklists
+Created: 2026-11-09
+Author: haduong
+Closed: autoclosed — PR #2325
+
+--- log ---
+2026-11-09T15:45Z haduong created
+2026-11-09T15:51Z Minh-Ha-Duong haduong note renamed soar → fly after the naming round (candidates: soar, stride, step, fledge, flare, clic, cran, clink, fly)
+2026-11-09T16:21Z Minh-Ha-Duong haduong renamed fly → paper: with /mission (1485) kept as a noun, object skills take their directory's name (papiers/ → /paper); dragon verbs stay for the harness's skills on itself
+2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
+2026-11-09T16:49Z reviewer execute (raid 8d6894): skill paper + five references (same seven headings), submission-event retired with no alias (RETIRED in test_retired_skill_names; red then green), catalog regenerated, census skills 6201/6300. Criterion 6 skill side done (places read from the papers directory's AGENTS.md; no ~/CNRS path in skills/paper); the AGENTS.md itself is CNRS content on doudou, draft in the merge request. Criterion 4 open: padme text-trace in the merge request, live run on doudou after idh install. make check: 3499 passed, 4 failed only under TMPDIR inside the worktree, pass with default TMPDIR.
+2026-11-09T17:00Z reviewer note verify-reroll — round 1: criterion "An AGENTS.md in ~/CNRS/papiers/ holds what is local ..., the skill reads it ..." MISSING (AGENTS.md and memory-file move are CNRS-project work, not in this diff); criterion "/paper <paper> published dry run ... lands on nothing to do except HAL" MISSING (padme trace reads unknown/to do)
+2026-11-09T17:07Z reviewer note criterion 1 evidence: ~/CNRS/papiers/AGENTS.md on doudou (3241 bytes, 2026-11-09 17:33, names /paper and ticket 1483) holds the local conventions; memory project-cnrs-filing-convention.md reduced to a pointer the same minute; skill side in 1ca7c66f
+2026-11-09T17:07Z reviewer note author decision A (2026-11-09): criterion 5 live positive control moved to ticket 1489; no CNRS ticket store exists, the harness carries it
+2026-11-09T17:07Z reviewer closed — autoclosed — PR #2325
+
+--- body ---
+## Context
+
+Author decision (Imagine, 2026-11-09, CNRS session on the RDJHSS data
+paper release): grow `/submission-event` into the one manuscript
+lifecycle skill, with one checklist per stage, and rename it `/paper`
+(one syllable, the verb of the dragon, fits every stage including a rejection: the paper is still flying; chosen 2026-11-09 over soar, cran, fledge, clic).
+Option A of the design discussion; B (one skill per stage) rejected as
+multiplication, C (chapter-only fix) kept as a complement, done in the
+CNRS project.
+
+Reference: REALF How-to 44 « Clean up after acceptance / publication »
+(`~/CNRS/papiers/actif/REALF 2025 édition/main.pdf`, p. 62) is the
+author's own checklist; the skill is derived from the harness
+infrastructure, the chapter is its rationale, not its text.
+
+Worked example for the `published` stage: the 2026-11-09 release of the
+climate finance corpus data paper (RDJHSS 10, 1–15, DOI
+10.52024/fn48qf66). Steps actually needed, none of them in any skill:
+dated release subfolder with the publisher PDF and the publication mail;
+move `papiers/sent/` → `papiers/published/`; swap the hosted preprint
+for the publisher's PDF under the same filename when the license allows;
+check the publisher's HTML metadata against the PDF (the landing page
+dropped "Multi-Source" from the title); Zotero indexing of supporting
+material and informing co-authors as author-only items to ask about.
+Memory: `~/.claude/projects/-home-haduong-CNRS/memory/reference-realf-howto-44-release-checklist.md`.
+
+## Design
+
+- `skills/paper/SKILL.md` is a short router: argument `<paper> <event>`,
+  the register question first (homepage = works, roadmap = work in
+  progress, never both automatically), then load
+  `references/<event>.md`. Lifecycle starts at submission; venue choice
+  stays with `/choose-venue` and `/conference-submission-prep`.
+- `references/` holds one checklist per event: `submitted`,
+  `decision-received`, `resubmitted`, `accepted`, `published`. Each
+  checklist states: register(s) touched; provenance step (find the
+  authentic artifact at its source, hash it; the July 2026 feedback
+  memory on reconstructed artifacts); the filesystem steps per the CNRS
+  filing convention (dated release subfolders, sent → published);
+  outward gates named explicitly with who clicks (`make sync`, HAL
+  SWORD via `/update-publist`); delegates (`/ingest-decision-letter`
+  for decisions, `/update-publist` for page and HAL); author-only items
+  listed so they are asked, not dropped.
+- Rename everywhere the name is referenced (`skills-catalog.md`,
+  `rules/README.md` line 125, projections, tests). Keep the old name as
+  nothing: no alias, the catalog is the lookup.
+
+## Exit criteria
+
+- [x] An AGENTS.md in ~/CNRS/papiers/ holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. Moves the filing convention out of the memory file `project-cnrs-filing-convention.md` into the directory.
+- [x] `skills/paper/SKILL.md` exists, `skills/submission-event/` is gone, catalog and rules/README updated, hygiene tests pass
+- [x] Five stage checklists in `skills/paper/references/`, each with the sections above
+- [x] The `published` checklist reproduces the 2026-11-09 steps and would have left nothing for the agent to discover
+- [x] `/paper <paper> published` dry run on the data paper lands on "nothing to do except HAL" (positive control): moved to ticket 1489 (doudou act after merge), author's decision A, 2026-11-09
+- [x] `make check` passes
+
+## Imagine
+
+Raid 8d6894, 2026-11-09, base c7adf980. Seats: Imagine (opus), Blind-Spot (opus).
+
+### Premise
+PREMISE HOLDS. Since 15:45Z main received ticket commits only (0897a8e1,
+9363f8bc, 0189744d); nothing touched `skills/`, `rules/`, `tests/`, the catalog.
+
+### Inputs missing on padme (where this raid runs)
+- The memory file `reference-realf-howto-44-release-checklist.md` does not
+  exist in the CNRS project memory; the How-to 44 PDF, `~/CNRS/html`,
+  `~/CNRS/secretariat`, `papiers/sent/`, `papiers/published/` are all absent
+  on padme (the release session ran on doudou, the Nextcloud client).
+- Sources the checklists derive from here: this ticket's worked example,
+  `skills/submission-event/SKILL.md`, `skills/update-publist/SKILL.md`,
+  `skills/ingest-decision-letter/SKILL.md`, `skills/pdf-finish/SKILL.md`,
+  `skills/track-changes-pdf/SKILL.md`, the CNRS memories
+  `project-cnrs-filing-convention.md` and
+  `feedback-authentic-artifacts-not-reconstructions.md`, and the data paper's
+  `~/CNRS/projets/actifs/climate-finance-het/docs/release-journal.md`
+  (lines 73-115: submission branch, tag `v1.1-rdj-submitted`, Zenodo
+  10.5281/zenodo.19236130, `papiers/sent/<m>/<date venue>/` folder shape).
+  A step attributed to How-to 44 stays unsourced until its text is supplied.
+
+### Scope (how changed, exit criteria untouched)
+- Router `skills/paper/SKILL.md` (~50 lines): frontmatter; the register
+  question (moved from submission-event); the procedures shared by every
+  stage written once: provenance (authentic artifact at its source, one
+  `sha256sum` line beside the frozen copy), landing-page link check on the
+  version, delegation wording for `/update-publist` that reads true before
+  and after ticket 1484 ("load it and follow its gates; if the runtime
+  refuses the load, ask the author to type it"); one backticked
+  `references/<event>.md` pointer per stage (`tests/test_skill_reference_pointers.py:27`).
+- Five references, same skeleton each: Registers · Provenance · Filesystem ·
+  Outward gates (who clicks) · Delegates · Author-only (ask, do not drop) ·
+  Done when. Entry types are never written in /paper: "type per
+  `/update-publist`'s status table" (books, talks and chapters follow the
+  same lifecycle; `accepted` names "contract signed" as the book trigger).
+  Two folder conventions named, never merged: the paper repo's
+  `release/<date>/` (tracked text, ingest-decision-letter) and the
+  `papiers/` dated folder (frozen authentic outputs, CNRS convention).
+  Repo-side bookkeeping stays in each checklist (submission branch, git tag
+  per event, STATE); a dataset deposit (Zenodo) with related identifiers is
+  an Author-only ask item at `published`.
+  Delegates: `/update-publist` (page, HAL), `/ingest-decision-letter`
+  (decision-received), `/pdf-finish` (submitted, resubmitted, published),
+  `/track-changes-pdf` (resubmitted), `/choose-venue` after a rejection.
+- `published` reproduces the worked example step by step: dated release
+  folder with publisher PDF and publication mail, hashed; `sent/` →
+  `published/` move; hosted preprint swapped for the publisher PDF under the
+  same filename when the licence allows (`/update-publist --page-only`, gate
+  `make sync`, author confirms); bib entry per the status table; publisher
+  HTML metadata checked against the PDF; HAL version via `/update-publist
+  --hal-only`; roadmap row; DOI landing-page check; author-only: Zotero
+  indexing of supporting material, co-authors informed, Zenodo related
+  identifiers, release-journal entry.
+- No helper script (YAGNI: `sha256sum`, `ingest_letter.py archive`).
+- Rename sweep, one commit: delete `skills/submission-event/`; edit
+  `skills/choose-venue/SKILL.md:15`, `skills/conference-submission-prep/SKILL.md:67`,
+  `rules/README.md:125`, `tests/test_rules_resident_budget.py:39`; `make
+  skills-catalog`; add `submission-event` to RETIRED in
+  `tests/test_retired_skill_names.py` (the one existing guard for "no alias").
+  Historical records (`design/audits/`, `memory/evidence/`, `health/journal.jsonl`)
+  untouched. Projection symlinks are refreshed by `idh install`
+  (`adapters/lifecycle.py:83-88` creates `paper`, `:233-258` prunes the
+  dangling `submission-event`), on padme and doudou after merge.
+
+### Constraints for the coder
+- Skills resident budget 6282 of 6300 (`tests/test_resident_census.py:65`;
+  a card counts `len(name)+len(description)`, current card 261): `paper` plus
+  its description ≤ 279 chars, description ≤ 274; aim lower, 1485 will need
+  headroom too.
+- `check-agnostic.sh` rejects `/home/[a-z]`: write `~/CNRS/...`.
+- Frontmatter free text quoted (`tests/test_skill_frontmatter.py:145`); no
+  dragon vocabulary in the description's first sentence
+  (`tests/test_skill_descriptions.py:23`).
+
+### Exit criterion 4 (dry run) on padme
+Padme can evidence criteria 1, 2 and 5. Criterion 3 is evidenced as a text
+trace: a table mapping each worked-example step of this ticket to a line of
+`published.md`. Criterion 4 is run on padme as the same walk against the data
+paper's facts in this ticket (one row per step: done / to do / author-only,
+with the evidence kind each row would take), reported in the merge-request
+body and labelled a padme text-trace. The live positive control runs on
+doudou: sync the harness, `idh install`, then `/paper <data paper> published`;
+the merge request carries those instructions.
+
+### Questions queued for the author (raid continues on the defaults)
+1. Who runs the live dry run on doudou, and when? Default: the author, after
+   merge, per the instructions in the merge request.
+2. Is "nothing to do except HAL" still the expected answer? Ticket 1484 logs a
+   HAL SWORD PUT on hal-05570600 v3 on 2026-11-09, likely this paper. Default:
+   the checklist is written for the general case; the expected row set is
+   reported as found.
+3. Did the 2026-11-09 release update Zenodo 19236130's related identifiers,
+   and is a git tag per event part of the convention? Default: both listed as
+   Author-only ask items, not as done steps.
+4. Can the How-to 44 text be supplied, or located on doudou? Default: the
+   `accepted` HAL step is marked "confirm against How-to 44".
+
+### Later review
+Observe only. At the next real manuscript event (for instance a decision on
+the Oeconomia Varia submission of 2026-03-18): did the agent need a step
+absent from the checklist? Record in the CNRS journal; reopen on evidence.
+
+### Blind-Spot verdict
+Four material omissions, all folded above (tags and Zenodo registers; entry
+types owned by `/update-publist`; `/pdf-finish` and `/track-changes-pdf`
+delegates; `idh install` before the doudou dry run). Resident budget, rename
+consumers, other-project mentions, name clash: checked clean.
+
+## Plan
+
+Plan seat (sonnet), raid 8d6894, base b2743e9f. Follows the Imagine section.
+
+### Actions (three commits)
+
+**Commit A, new skill (additive; catalog stale until B).**
+1. `skills/paper/SKILL.md` (~50 lines). Frontmatter in the order of
+   `skills/submission-event/SKILL.md:1-9`: `metadata.category: publication`,
+   `name: paper`, quoted `description` (below), `disable-model-invocation: false`,
+   `user-invocable: true`,
+   `argument-hint: "<paper> <event: submitted|decision-received|resubmitted|accepted|published>"`.
+   Body, written once: the register question with its bullets and the
+   book-proposal example (`submission-event/SKILL.md:19-38`); invoking `/paper`
+   is not authorization for an outward mutation (`:47-49`); shared
+   provenance (authentic artifact from its source, one `sha256sum` line
+   beside the frozen copy); landing-page link check on the version (`:58-63`);
+   `/update-publist` delegation ("load it and follow its gates; if the runtime
+   refuses the load, ask the author to type it"; it carries
+   `disable-model-invocation: true` today); entry types "per
+   `/update-publist`'s status table", never copied; the two folder
+   conventions named apart (paper repo `release/<date>/`, tracked text, vs
+   `papiers/` dated folder, frozen outputs); one backticked pointer per
+   stage, regex `` `references/([\w.-]+\.md)` ``
+   (`tests/test_skill_reference_pointers.py:27`). No `/home/<user>` paths,
+   no bare `scripts/x`, no `gh `, no `github.com` (`scripts/check-agnostic.sh`,
+   scanning every file under `skills/`).
+2. `skills/paper/references/{submitted,decision-received,resubmitted,accepted,published}.md`,
+   same seven `##` headings in this order: Registers · Provenance ·
+   Filesystem · Outward gates (who clicks) · Delegates · Author-only (ask, do
+   not drop) · Done when. Content per stage as the Imagine section lists;
+   `published.md` as numbered steps reproducing the worked example (release
+   folder with publisher PDF and mail, hashed; `sent/` → `published/`;
+   preprint swap under the same filename via `/update-publist --page-only`,
+   gate `make sync`, author confirms; publisher HTML metadata vs PDF; HAL
+   version via `--hal-only`, an update is a PUT never a second POST, by
+   reference; roadmap row; DOI landing check; author-only: Zotero supporting
+   material, co-authors, Zenodo related identifiers, release-journal entry).
+   `accepted`: "contract signed" as the book trigger; HAL step marked
+   "confirm against How-to 44". No reference points at itself or at a file
+   outside the five.
+3. Run `pytest tests/test_skill_reference_pointers.py tests/test_skill_frontmatter.py tests/test_skill_descriptions.py tests/test_resident_census.py`; commit A.
+
+**Commit B, rename sweep (one commit).**
+4. `tests/test_retired_skill_names.py:19`: `RETIRED = ("review-pr", "submission-event")` (red first).
+5. `git rm -r skills/submission-event/`.
+6. `skills/choose-venue/SKILL.md:14-15`: the wrapped sentence ends "`/paper` with `submitted`."
+7. `skills/conference-submission-prep/SKILL.md:67`: "`/paper <paper> submitted`".
+8. `rules/README.md:125`: "cut-prose and paper".
+9. `tests/test_rules_resident_budget.py:39`: comment `/submission-event` → `/paper`.
+10. `make skills-catalog`; never hand-edit `skills-catalog.md`. Historical
+    records (`design/audits/`, `memory/evidence/`, `health/journal.jsonl`,
+    `tickets/`) untouched.
+
+**Commit C, ticket log:** evidence table, boxes ticked.
+
+### Skill card budget
+`python3 scripts/resident_census.py`: skills 6282 of 6300; card =
+`len(name)+len(description)` (`scripts/resident_census.py:179-182`); the
+old card is 261, so after deletion the total is 6021 and the new card may
+be ≤ 279. Proposed description (175 chars, card 180, headroom 99 for 1485):
+`"Run a manuscript lifecycle event (submitted, decision-received, resubmitted, accepted, published): register choice, files, outward gates. Not for venue choice (/choose-venue)."`
+The catalog drops the `Not for` sentence (`scripts/gen_skills_catalog.py:38`);
+the first sentence carries no theme lexicon (`tests/test_skill_descriptions.py`).
+
+### Test (red first)
+Red: step 4 alone, then
+`python3 -m pytest tests/test_retired_skill_names.py -q` fails on
+`test_no_live_reference_to_a_retired_skill` naming the live sites. Green:
+after steps 5-10, the same plus
+`python3 -m pytest tests/test_skill_reference_pointers.py tests/test_resident_census.py tests/test_skill_frontmatter.py tests/test_skill_descriptions.py tests/test_rules_resident_budget.py tests/test_skill_seam.py tests/test_skill_blanket_add.py -q`
+and `make check-skills-drift`. `git add` before running the retired-name
+test: it uses `git grep`. No new test beyond the RETIRED entry.
+
+### Antipattern scan
+- `test_skill_reference_pointers` is two-directional but parametrized over
+  split skills only: a skill with no `references/` is never tested. Check
+  `ls skills/paper/references/` lists five files. No new guard.
+- `test_retired_skill_names` matches substrings with `-F`: write no
+  "formerly submission-event" history in live files.
+- `test_resident_census` ceiling is paired with a floor test; fine.
+- `test_skill_descriptions` cannot judge routing; §budget text is read by eye.
+
+### Evidence for exit criteria 3 and 4 (padme text trace)
+In the merge-request body, labelled "padme text-trace, not a live run", one
+row per worked-example step: step · `published.md` line · status for the data
+paper (done / to do / author-only, as found; do not pre-fill "nothing to do
+except HAL") · evidence kind. Then the doudou line: "sync the harness, run
+`idh install` (creates the `paper` projection, prunes the dangling
+`submission-event`), then `/paper <data paper> published`; the author runs it
+after merge."
+
+### Verification, in order
+Red pytest; green pytest; `make skills-catalog`; `make check-skills-drift`;
+`make check-fast`; `make lint` (adherence-marked hygiene tests live there,
+not in check-fast); `make check` (criterion 5). Declared gate
+(`.merge-gate.json`): validate-tickets, agnostic-guard, pipefail-guard,
+pytest-guard, skills-drift, lint.
+
+### Dependencies and risks
+Ticket 1484 (PR #2318) may change `update-publist` wording: the delegation
+sentence reads true either way; rebase onto `origin/main` before the gate and
+rescan `git diff --name-only origin/main...HEAD`. `skills-catalog.md` is the
+only cross-cutting file: a conflict is resolved by regenerating. Recheck the
+budget with `python3 scripts/resident_census.py` after the rebase.
+
+## Feasibility (raid 8d6894)
+
+PASS. Every path and line cited in Plan exists as described, checked by the
+orchestrator on b2743e9f, except `tests/test_retired_skill_names.py`: the
+`RETIRED` tuple is at line 17, not 19. `update-publist` facts confirmed:
+`disable-model-invocation: true` (line 6), `--page-only`/`--hal-only` (lines
+8, 15-16), PUT-not-second-POST (lines 224-226). `adapters/lifecycle.py:83-88`
+creates projection links, `:233` is `prune_dangling`. Single ticket: no
+cross-ticket conflict, no cross-cutting registry edited by 3+ PRs, so no
+coordination PR.
+
+### Rename note (raid 8d6894)
+The author renamed the skill fly → paper on main (4ab448e0, 2026-11-09T16:21Z)
+while Imagine and Plan ran; the sections above were rewritten to `paper`
+by the orchestrator. Budget: name 5 chars, card 180, headroom 99.

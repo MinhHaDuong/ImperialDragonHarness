@@ -1,0 +1,66 @@
+%erg 0.1
+Title: ticket-only PRs carry a self-closing Ticket close claim on the ticket they create
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
+2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
+
+--- body ---
+## Context
+
+Found by the 14-repo housekeeping sweep of 2026-11-09 (19:05-19:15 UTC, run
+from the ~/CNRS session). The ticket-only PRs that the harness 1481
+native-prune rollout filed in adopter repos carry a `**Ticket:** NNNN` line
+naming the very ticket the PR creates. The `/merge` close step runs
+`erg close` on the ticket named by `**Ticket:**`, so landing such a PR by the
+merge skill closes the new ticket at birth with its exit criteria unmet.
+
+## Evidence
+
+- fuzzy-corpus #74 and sen-causal-reading #171: merged, after review seats
+  rewrote the line to `Ticket-ref:` by hand.
+- chemin-de-voix #185 (ticket 0262): open, blocked on the close claim.
+- padme #258 (ticket 0112): open, blocked on the close claim.
+- AEDIST-technical-report #1198: open, blocked on the close claim, and it
+  also reuses ticket number 0690 already on main, so it conflicts add/add on
+  `tickets/.claims/0690`.
+
+## Diagnosis
+
+Established: the five PRs above carry `**Ticket:**` on the ticket they create
+(two repaired by hand, three still open). Not established: which step of the
+1481 filing flow writes the line (template, script or agent prompt), and how
+the AEDIST PR picked a number already claimed on main (stale base or no
+`erg next-id` against origin).
+
+## Exit criteria
+
+- [ ] `skills/merge/references/claims.md` states the rule: a PR that only files a ticket names it with `Ticket-ref:`, never a `**Ticket:**` close claim
+- [ ] A guard refuses a `**Ticket:**` close claim on a ticket the PR adds only when every file the PR touches is a ticket file; a file-and-close PR that touches anything else passes
+- [x] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 repaired (merged with Ticket-ref 19:56-19:59Z; AEDIST renumbered 0691)
+- [ ] climate-finance-het #2050 repaired by that repo's session (ticket filed in climate-finance-het)
+- [ ] A test covers the guard: ticket-only PR with a close claim on its own new ticket refused; file-and-close PR touching code passes
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified: no harness file writes the filing PR's `**Ticket:**` line; the 1481 executor wrote the
+  bodies freehand (journal 2026-11-09-raid-829e9e). Since filing: Tracing-Kieu #185, padme #258 and
+  AEDIST #1198 are MERGED with Ticket-ref (19:56-19:59Z; AEDIST renumbered 0691, merge subject still
+  says 0690). Criterion 2 met by events. Not listed: climate-finance-het #2050 still OPEN with
+  `**Ticket:** tickets/2831-...`, the sixth PR of the flow; its repair is that repo's session's.
+- AEDIST duplicate number: `erg new`'s next-id scan timed out and the executor kept 0690 (journal),
+  not a stale base; a separate below-floor defect, noted here, not filed.
+- Blind-Spot: a guard refusing any `**Ticket:**` claim on a ticket file the same PR adds would block
+  legitimate file-and-close PRs (five of the last 100 harness merges: #2336, #2325, #2323, #2272,
+  #2242). merge step 1 already stops on a claimed ticket absent from main (SKILL.md:143); check
+  whether that is what blocked the three PRs. If so the ticket shrinks to one rule line in
+  skills/merge/references/claims.md ("a PR that only files a ticket uses Ticket-ref"); a guard, if
+  still wanted, applies only when every file the PR touches is a ticket file.
+- Author decisions: (1) criteria 1 and 3 target a filing flow that has no template: reword to a
+  rule line plus a narrow guard, or drop the guard; (2) add #2050 to criterion 2.
+
+## Author decisions (raid 5c2a37, 2026-11-09)
+- Rule line plus narrow guard (author, 2026-11-09): no filing template exists, so the rule lives in claims.md; the guard fires only on ticket-only PRs, sparing file-and-close PRs (#2336, #2325, #2323, #2272, #2242).
+- #2050 added to criterion 2; its repair is climate-finance-het's, reached by a ticket there.

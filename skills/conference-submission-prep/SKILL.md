@@ -64,4 +64,4 @@ and the remaining author decisions with a recommendation.
   acknowledgments, identifying project names and identifying figure content
   (logos, maps, screenshots) removed; then the pdf-finish skill
   builds the anonymous variant and sweeps it, metadata included.
-- Once sent: the submission-event skill with `submitted`.
+- Once sent: `/paper <paper> submitted`.
