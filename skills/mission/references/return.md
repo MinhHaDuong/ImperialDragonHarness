@@ -1,7 +1,8 @@
 # return
 
 Back from the trip. Three strands, each with its own register and gate, then
-the close. A dossier whose README carries a closing section and that sits
+the close. Steps 1-9 run in order, one at a time: 3, 5 and 6 wait for the
+author, and the close records what the strands answered. A dossier whose README carries a closing section and that sits
 where the local `AGENTS.md` puts closed dossiers is done: report "nothing to
 do" and stop. Otherwise walk every step; a dry run lists each one with its
 evidence or "missing".
