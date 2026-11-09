@@ -1,6 +1,8 @@
 # published
 
-The publisher's version of record is out, with its DOI.
+The publisher's version of record is out, with its DOI. Steps 1-8 run in
+order, one at a time: 4 and 6 wait for the author's confirmation, 8 checks the
+links the earlier steps wrote.
 
 ## Registers
 
