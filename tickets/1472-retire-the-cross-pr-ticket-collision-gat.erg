@@ -48,7 +48,7 @@ both were open).
 
 ## Exit criteria
 - [x] The preconditions hold.
-- [ ] The script, its test, the workflow, the local-ci wiring and the LOCAL.md line are removed.
+- [x] The script, its test, the workflow, the local-ci wiring and the LOCAL.md line are removed.
 - [x] A scratch test: two branches adding the same ticket number conflict on `tickets/.claims/NNNN`.
 - [x] `make check` passes.
 
