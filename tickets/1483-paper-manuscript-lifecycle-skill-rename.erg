@@ -7,6 +7,7 @@ Author: haduong
 2026-11-09T15:45Z haduong created
 2026-11-09T15:51Z Minh-Ha-Duong haduong note renamed soar → fly after the naming round (candidates: soar, stride, step, fledge, flare, clic, cran, clink, fly)
 2026-11-09T16:21Z Minh-Ha-Duong haduong renamed fly → paper: with /mission (1485) kept as a noun, object skills take their directory's name (papiers/ → /paper); dragon verbs stay for the harness's skills on itself
+2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
 
 --- body ---
 ## Context
@@ -58,6 +59,7 @@ Memory: `~/.claude/projects/-home-haduong-CNRS/memory/reference-realf-howto-44-r
 
 ## Exit criteria
 
+- [ ] An AGENTS.md in ~/CNRS/papiers/ holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. Moves the filing convention out of the memory file `project-cnrs-filing-convention.md` into the directory.
 - [ ] `skills/paper/SKILL.md` exists, `skills/submission-event/` is gone, catalog and rules/README updated, hygiene tests pass
 - [ ] Five stage checklists in `skills/paper/references/`, each with the sections above
 - [ ] The `published` checklist reproduces the 2026-11-09 steps and would have left nothing for the agent to discover

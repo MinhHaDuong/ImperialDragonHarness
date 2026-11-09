@@ -7,6 +7,7 @@ Blocked-by: 1485
 
 --- log ---
 2026-11-09T16:22Z haduong created
+2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
 
 --- body ---
 ## Context
@@ -74,6 +75,7 @@ Evidence that a skill is missing: the same landing exists in two copies.
 
 ## Exit criteria
 
+- [ ] An AGENTS.md in the carnet (`~/CNRS/projets/actifs/realf.hypotheses.org/`) holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. The existing AGENTS.md keeps its WordPress and HAL recipes and gains the one line pointing at `/post`.
 - [ ] `skills/post/SKILL.md` router and three checklists in
       `skills/post/references/`, catalog updated, hygiene tests pass
 - [ ] Each checklist carries the six sections shared with `/paper` and
