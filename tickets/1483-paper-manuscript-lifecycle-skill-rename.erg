@@ -176,3 +176,109 @@ Four material omissions, all folded above (tags and Zenodo registers; entry
 types owned by `/update-publist`; `/pdf-finish` and `/track-changes-pdf`
 delegates; `idh install` before the doudou dry run). Resident budget, rename
 consumers, other-project mentions, name clash: checked clean.
+
+## Plan
+
+Plan seat (sonnet), raid 8d6894, base b2743e9f. Follows the Imagine section.
+
+### Actions (three commits)
+
+**Commit A, new skill (additive; catalog stale until B).**
+1. `skills/fly/SKILL.md` (~50 lines). Frontmatter in the order of
+   `skills/submission-event/SKILL.md:1-9`: `metadata.category: publication`,
+   `name: fly`, quoted `description` (below), `disable-model-invocation: false`,
+   `user-invocable: true`,
+   `argument-hint: "<paper> <event: submitted|decision-received|resubmitted|accepted|published>"`.
+   Body, written once: the register question with its bullets and the
+   book-proposal example (`submission-event/SKILL.md:19-38`); invoking `/fly`
+   is not authorization for an outward mutation (`:47-49`); shared
+   provenance (authentic artifact from its source, one `sha256sum` line
+   beside the frozen copy); landing-page link check on the version (`:58-63`);
+   `/update-publist` delegation ("load it and follow its gates; if the runtime
+   refuses the load, ask the author to type it"; it carries
+   `disable-model-invocation: true` today); entry types "per
+   `/update-publist`'s status table", never copied; the two folder
+   conventions named apart (paper repo `release/<date>/`, tracked text, vs
+   `papiers/` dated folder, frozen outputs); one backticked pointer per
+   stage, regex `` `references/([\w.-]+\.md)` ``
+   (`tests/test_skill_reference_pointers.py:27`). No `/home/<user>` paths,
+   no bare `scripts/x`, no `gh `, no `github.com` (`scripts/check-agnostic.sh`,
+   scanning every file under `skills/`).
+2. `skills/fly/references/{submitted,decision-received,resubmitted,accepted,published}.md`,
+   same seven `##` headings in this order: Registers · Provenance ·
+   Filesystem · Outward gates (who clicks) · Delegates · Author-only (ask, do
+   not drop) · Done when. Content per stage as the Imagine section lists;
+   `published.md` as numbered steps reproducing the worked example (release
+   folder with publisher PDF and mail, hashed; `sent/` → `published/`;
+   preprint swap under the same filename via `/update-publist --page-only`,
+   gate `make sync`, author confirms; publisher HTML metadata vs PDF; HAL
+   version via `--hal-only`, an update is a PUT never a second POST, by
+   reference; roadmap row; DOI landing check; author-only: Zotero supporting
+   material, co-authors, Zenodo related identifiers, release-journal entry).
+   `accepted`: "contract signed" as the book trigger; HAL step marked
+   "confirm against How-to 44". No reference points at itself or at a file
+   outside the five.
+3. Run `pytest tests/test_skill_reference_pointers.py tests/test_skill_frontmatter.py tests/test_skill_descriptions.py tests/test_resident_census.py`; commit A.
+
+**Commit B, rename sweep (one commit).**
+4. `tests/test_retired_skill_names.py:19`: `RETIRED = ("review-pr", "submission-event")` (red first).
+5. `git rm -r skills/submission-event/`.
+6. `skills/choose-venue/SKILL.md:14-15`: the wrapped sentence ends "`/fly` with `submitted`."
+7. `skills/conference-submission-prep/SKILL.md:67`: "`/fly <paper> submitted`".
+8. `rules/README.md:125`: "cut-prose and fly".
+9. `tests/test_rules_resident_budget.py:39`: comment `/submission-event` → `/fly`.
+10. `make skills-catalog`; never hand-edit `skills-catalog.md`. Historical
+    records (`design/audits/`, `memory/evidence/`, `health/journal.jsonl`,
+    `tickets/`) untouched.
+
+**Commit C, ticket log:** evidence table, boxes ticked.
+
+### Skill card budget
+`python3 scripts/resident_census.py`: skills 6282 of 6300; card =
+`len(name)+len(description)` (`scripts/resident_census.py:179-182`); the
+old card is 261, so after deletion the total is 6021 and the new card may
+be ≤ 279. Proposed description (175 chars, card 178, headroom 101 for 1485):
+`"Run a manuscript lifecycle event (submitted, decision-received, resubmitted, accepted, published): register choice, files, outward gates. Not for venue choice (/choose-venue)."`
+The catalog drops the `Not for` sentence (`scripts/gen_skills_catalog.py:38`);
+the first sentence carries no theme lexicon (`tests/test_skill_descriptions.py`).
+
+### Test (red first)
+Red: step 4 alone, then
+`python3 -m pytest tests/test_retired_skill_names.py -q` fails on
+`test_no_live_reference_to_a_retired_skill` naming the live sites. Green:
+after steps 5-10, the same plus
+`python3 -m pytest tests/test_skill_reference_pointers.py tests/test_resident_census.py tests/test_skill_frontmatter.py tests/test_skill_descriptions.py tests/test_rules_resident_budget.py tests/test_skill_seam.py tests/test_skill_blanket_add.py -q`
+and `make check-skills-drift`. `git add` before running the retired-name
+test: it uses `git grep`. No new test beyond the RETIRED entry.
+
+### Antipattern scan
+- `test_skill_reference_pointers` is two-directional but parametrized over
+  split skills only: a skill with no `references/` is never tested. Check
+  `ls skills/fly/references/` lists five files. No new guard.
+- `test_retired_skill_names` matches substrings with `-F`: write no
+  "formerly submission-event" history in live files.
+- `test_resident_census` ceiling is paired with a floor test; fine.
+- `test_skill_descriptions` cannot judge routing; §budget text is read by eye.
+
+### Evidence for exit criteria 3 and 4 (padme text trace)
+In the merge-request body, labelled "padme text-trace, not a live run", one
+row per worked-example step: step · `published.md` line · status for the data
+paper (done / to do / author-only, as found; do not pre-fill "nothing to do
+except HAL") · evidence kind. Then the doudou line: "sync the harness, run
+`idh install` (creates the `fly` projection, prunes the dangling
+`submission-event`), then `/fly <data paper> published`; the author runs it
+after merge."
+
+### Verification, in order
+Red pytest; green pytest; `make skills-catalog`; `make check-skills-drift`;
+`make check-fast`; `make lint` (adherence-marked hygiene tests live there,
+not in check-fast); `make check` (criterion 5). Declared gate
+(`.merge-gate.json`): validate-tickets, agnostic-guard, pipefail-guard,
+pytest-guard, skills-drift, lint.
+
+### Dependencies and risks
+Ticket 1484 (PR #2318) may change `update-publist` wording: the delegation
+sentence reads true either way; rebase onto `origin/main` before the gate and
+rescan `git diff --name-only origin/main...HEAD`. `skills-catalog.md` is the
+only cross-cutting file: a conflict is resolved by regenerating. Recheck the
+budget with `python3 scripts/resident_census.py` after the rebase.
