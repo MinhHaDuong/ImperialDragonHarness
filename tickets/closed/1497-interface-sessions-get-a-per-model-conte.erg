@@ -2,9 +2,11 @@
 Title: Interface sessions get a per-model context ceiling
 Created: 2026-11-09
 Author: reviewer
+Closed: autoclosed — PR #2358
 
 --- log ---
 2026-11-09T22:05Z reviewer created
+2026-11-09T22:12Z reviewer closed — autoclosed — PR #2358
 
 --- body ---
 ## Context
