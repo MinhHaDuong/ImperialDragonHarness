@@ -221,8 +221,9 @@ observed). Verdict: sound with changes. Findings:
 - A hard cap by construction was missing. Adopted: alternative D.
 - The monitor had no denominator. Adopted: shares, not counts.
 
-**GPT-6.1 Sol** (OpenAI, other family; `codex exec`, read-only sandbox,
-effort medium). Verdict: sound with changes; "replace 'measure first' with a
+**GPT-6.1 Sol** (OpenAI, other family; `codex exec -m gpt-6.1-sol`,
+read-only sandbox, effort medium; the id is the `model:` line of the
+session header, not the model's own answer). Verdict: sound with changes; "replace 'measure first' with a
 bounded trial of the existing stop-and-handoff procedure". Findings:
 - Visibility is not stopping, and the cause is unknown. Partly adopted: see
   Opus's first finding; the trial is alternative E, not the pick.
