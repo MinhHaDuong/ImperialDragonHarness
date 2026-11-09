@@ -38,6 +38,12 @@ def test_bundle_exit_needs_pushed_tip_and_armed_auto_merge():
     assert "gh pr view" not in SCRIPT, "the merge request is read through scripts/forge.py (ticket 1318)"
 
 
+def test_ungated_bundle_merged_directly_may_exit():
+    # ticket 1473: merge step 6 may merge directly, which reads `MERGED <head> -`
+    probe = _function("bundle_armed")
+    assert '"MERGED "*) note "EXIT: bundle $BUNDLE merged"; return 0' in probe
+
+
 def test_bundle_exception_excludes_task_and_reused_branches():
     assert "`roar-*` wrap-up branch this run created" in _step9()
     assert "never the task branch or a reused branch" in _step9()

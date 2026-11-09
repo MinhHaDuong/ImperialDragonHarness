@@ -123,15 +123,15 @@ After completing the ticket checks in steps 7–8, commit the complete bundle,
 push it and open **one PR**. Fast-track it: on a gated base
 (`skills/merge/SKILL.md` § Gated base) write its gate record and
 merge by the recipe, both as one background command (a record missing
-after the base moved: record again on the same head); elsewhere pass the project's required checks and enable auto-merge
-using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
+after the base moved: record again on the same head); elsewhere pass the project's required checks and land it by
+`skills/merge/SKILL.md` step 6 (a direct merge or `--auto`, by what the repo allows). This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Smelt, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
 Do not wait for the bundle's checks: step 9's exit check lets the
-worktree go once the branch is pushed and auto-merge is armed, or, on a gated
-base, once a passing gate record covers the bundle's candidate.
+worktree go once the branch is pushed and merged or auto-merge is armed, or,
+on a gated base, once a passing gate record covers the bundle's candidate.
 
 ## Close and clean up
 
@@ -217,7 +217,8 @@ base, once a passing gate record covers the bundle's candidate.
        `after-exit --remove-worktree` runs the removal-mode `.tmp/` gate before
        unlocking the tree (hunt locks it) and running `git worktree remove`.
        The removal gate's rules (step 9b): `references/close-and-clean.md`. Never `--force`.
-       An auto-merge-armed bundle is named in step 11 as pending forge
+       A bundle merged directly reads MERGED and is done; an auto-merge-armed
+       one is named in step 11 as pending forge
        integration and does not block the `/clear` verdict; nothing re-checks
        it later, so a check that fails afterwards shows only on its merge
        request. On a gated base the exit check needs the merge request OPEN

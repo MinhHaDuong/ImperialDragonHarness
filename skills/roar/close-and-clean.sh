@@ -329,9 +329,9 @@ resolve_base() { # <label>
 
 # ── Step 9: exit check, one call before leaving the worktree (ticket 1098) ─────
 # READY means: the tree is clean and its work is integrated (or is the wrap-up
-# bundle: pushed, with auto-merge armed or, on a gated base, its merge request
-# OPEN with a passing gate record, or MERGED; a gated one stays pending in
-# step 11 until MERGED). The caller then cds to the main checkout and lets
+# bundle: pushed, MERGED, or open with auto-merge armed or, on a gated base,
+# its merge request OPEN with a passing gate record; an unmerged one stays
+# pending in step 11 until MERGED). The caller then cds to the main checkout and lets
 # after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
 # The merge request's `STATE head queued|-` through the forge adapter (ticket 1318): a landing
 # read, no offline cache. Any nonzero exit (2 could not look, 3 no forge) is unreadable.
@@ -380,9 +380,14 @@ bundle_armed() { # <head oid>
     armed=$(forge_read_back "$BUNDLE") || {
         note "EXIT: COULD-NOT-LOOK cannot read the merge request for $BUNDLE"; bump 2; return 1;
     }
-    case "$armed" in "OPEN "*" queued") armed=armed ;; esac
+    # Ungated base (ticket 1473): the landing follows merge step 6, so a bundle
+    # is either merged directly (`MERGED <head> -`) or queued by auto-merge.
+    case "$armed" in
+        "MERGED "*) note "EXIT: bundle $BUNDLE merged"; return 0 ;;
+        "OPEN "*" queued") armed=armed ;;
+    esac
     if [ "$armed" != armed ]; then
-        note "EXIT: KEEP-PENDING merge request for $BUNDLE is not open with auto-merge armed"; bump 1; return 1
+        note "EXIT: KEEP-PENDING merge request for $BUNDLE is neither merged nor open with auto-merge armed"; bump 1; return 1
     fi
     note "EXIT: bundle $BUNDLE pushed, merge request open with auto-merge armed"
 }
