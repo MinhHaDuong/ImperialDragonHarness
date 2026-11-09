@@ -5,6 +5,10 @@ Author: reviewer
 
 --- log ---
 2026-11-09T12:13Z reviewer created
+2026-11-09T12:15Z reviewer recipe step 2 corrected (git-erg 2026-11-09): pre-sync binaries use ERG_UPDATE_URL=... tickets/erg update
+2026-11-09T12:15Z reviewer sen-causal-reading migrated: PR #165 merged b12ae1a, 111 claims, hooks on padme; pending its doudou clone and codex session (pull, install --hooks, rebase + migrate)
+2026-11-09T12:15Z reviewer padme: its own session, resuming with the corrected command
+2026-11-09T12:15Z reviewer climate-finance-het: author approved; its own session migrates (told by git-erg)
 
 --- body ---
 ## Context
@@ -17,8 +21,13 @@ git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 
 ## Recipe (one PR per repo, one host, fresh worktree)
 1. fetch; skip if origin/main already has `tickets/.claims/`
-2. `tickets/erg sync --upstream`; 3. check `tickets/erg version` shows the sha256
-4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init`
+2. `tickets/erg sync --upstream` (binaries 2c490b7 and later: harness, arena, sen-causal-reading);
+   older binaries have no `sync` (it prints help, exits 1): run
+   `ERG_UPDATE_URL=https://github.com/MinhHaDuong/git-erg.git tickets/erg update` instead
+   (63b5e92: swz, AEDIST, fuzzy-corpus, JETP-observer, chemin-de-voix, climate-finance-het, padme;
+   616b023: DOIfetch; 5158508: archiveCIRED; 8331a94: cadens; doudou-only repos: check
+   `tickets/erg --help`). 3. check `tickets/erg version` shows the sha256
+4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init` (a locally edited `.ergrc` is kept; one WARN stays)
 6. tracked core.hooksPath: `tickets/erg install --hooks`, review the chaining, commit it
 7. the repo's own gate; 8. merge by the repo's process.
 After landing: every other clone pulls; per-clone hooks run `tickets/erg install --hooks`.
