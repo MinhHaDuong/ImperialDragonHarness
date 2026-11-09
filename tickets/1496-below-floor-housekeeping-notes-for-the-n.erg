@@ -7,6 +7,16 @@ Label: deferred
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T19:17Z reviewer label deferred
+2026-11-09T22:55Z reviewer worked despite Label: deferred: the author's 2026-11-09 night instruction 'Close all tickets you can' makes this run the harness tidy the ticket waits for
+2026-11-09T22:55Z reviewer note 1 (render-pr 'not derivable: review' on bookkeeping PRs) dropped: by design, as the note says; a bookkeeping PR has no review and the warn-only line says so truthfully, silencing it by tier would add a tier check to a warning path
+2026-11-09T22:55Z reviewer note 2 (empty molt still cuts a worktree) dropped: by design; step 1 cuts the worktree before yawn tells whether anything needs fixing, and case 3 removes it in seconds
+2026-11-09T22:55Z reviewer note 3 (tmp-guard register usage shows repo [worktree]) fixed: usage now lists 'register WORKTREE' and '{preflight,removal} REPO WORKTREE'
+2026-11-09T22:55Z reviewer note 4 (molt 0.7 'pin in scripts/erg-pin') fixed: molt 0.7 and yawn 10b name the harness's $IDH_ROOT/scripts/erg-pin
+2026-11-09T22:55Z reviewer note 5 (molt has no worktree name template) fixed: molt step 1 names housekeeping-$P-$RANDOM in hunt's recipe
+2026-11-09T22:55Z reviewer note 6 (housekeeping-git.sh assumes origin/main) fixed in molt, where the assumption lives: the script names no origin/main; molt steps 1, 6 and 7 now use <base> (main without a remote) and skip the merge request with no remote
+2026-11-09T22:55Z reviewer note 7 (molt step 2 Action plan headings vs probe JSON) fixed: molt says the headings come from yawn's report, not the probe's JSON, and an absent section means nothing to fix
+2026-11-09T22:55Z reviewer note 8 (molt 7 case 1 keeps a worktree for the sweep's own .tmp/) dropped: by design; molt 7 keeps .tmp/ whatever the preflight says and .tmp/ is never purged on its own (ticket 1119), so reversing that is a design call, not a tidy
+2026-11-09T22:55Z reviewer note 9 (raid_land.py armed auto-merge on an ungated base) dropped: by design; merge step 6 prescribes --auto on an ungated base and raid_land documents exit 5 'queued on an ungated base' (6e092f3f); no code change
 
 --- body ---
 ## Context
