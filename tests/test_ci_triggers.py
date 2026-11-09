@@ -1,10 +1,10 @@
 """Forge CI triggers (ticket 1174).
 
 The full workflow runs on push to main (the ex-post record) and by hand
-(workflow_dispatch), never on pull_request. The one PR-only job, the cross-PR
-ticket-ID collision check, lives in its own small workflow triggered by
-pull_request. The local runners must invoke each workflow through a trigger it
-still accepts, which `act -l` checks without a container.
+(workflow_dispatch), never on pull_request. The PR-only cross-PR ticket-ID
+collision workflow retired with ticket 1472 (erg ID claims replace it). The
+local runners must invoke the workflow through a trigger it still accepts,
+which `act -l` checks without a container.
 """
 
 import shutil
@@ -19,7 +19,6 @@ from child_env import child_env
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOWS = ROOT / ".github" / "workflows"
 CI = WORKFLOWS / "CI.yml"
-COLLISION = WORKFLOWS / "ticket-collision.yml"
 
 
 def _load(path: Path) -> dict:
@@ -36,17 +35,7 @@ def test_full_workflow_runs_on_push_to_main_and_by_hand_only():
 
 
 def test_full_workflow_has_no_pull_request_only_job():
-    jobs = _load(CI)["jobs"]
-    assert "cross-pr-ticket-collision" not in jobs
     assert "pull_request" not in CI.read_text().split("jobs:", 1)[1]
-
-
-def test_collision_check_runs_on_pull_requests_in_its_own_workflow():
-    doc = _load(COLLISION)
-    assert set(doc["on"]) == {"pull_request"}
-    assert list(doc["jobs"]) == ["cross-pr-ticket-collision"]
-    steps = doc["jobs"]["cross-pr-ticket-collision"]["steps"]
-    assert any("check-cross-pr-ticket-collision.sh" in s.get("run", "") for s in steps)
 
 
 @pytest.mark.parametrize(
@@ -66,7 +55,6 @@ def test_local_runners_never_send_a_pull_request_to_the_full_workflow(runner):
     [
         (CI, "workflow_dispatch", None),
         (CI, "pull_request", set()),
-        (COLLISION, "pull_request", {"cross-pr-ticket-collision"}),
     ],
 )
 def test_act_selects_the_jobs_each_trigger_should(workflow, event, expected):

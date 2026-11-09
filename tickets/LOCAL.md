@@ -10,10 +10,13 @@ while it is not resident in every session.
 
 `.github/workflows/CI.yml`:
 
-- `validate-tickets` runs `erg check tickets/` on push and PR.
-- `cross-pr-ticket-collision` runs `scripts/check-cross-pr-ticket-collision.sh`
-  on `pull_request` and fails a PR whose added ticket ID is also added by an
-  open PR, or already present on the base tip.
+- `validate-tickets` runs `erg check tickets/` on push and by hand.
+
+Ticket-number collisions are caught by erg ID claims (`tickets/.claims/NNNN`):
+two branches allocating one number conflict add/add on merge or rebase, and the
+`hooks/` pre-commit and pre-merge-commit blocks refuse an unclaimed or
+duplicated number. The forge-side cross-PR collision gate retired with ticket
+1472.
 
 Forge-specific calls are isolated behind `# harness-extension-point`.
 
