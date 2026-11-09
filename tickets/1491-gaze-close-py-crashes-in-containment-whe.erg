@@ -1,0 +1,34 @@
+%erg 0.1
+Title: gaze_close.py crashes in containment() when the entry session worktree was removed during the run; the answer never lands on notes
+Created: 2026-11-09
+Author: reviewer
+
+--- log ---
+2026-11-09T19:13Z reviewer created
+2026-11-09T19:14Z reviewer Second occurrence, same minute: search-works-for-zotero PR #648 gaze (run gz-20261109T190745214Z-a472) crashed at the same line on the same vanished session tree (.claude/worktrees/t0774-288575-4791) after cleanup had removed the review worktree. Recovery that worked within the 15-minute deadline, as a recipe until the fix lands: gaze_setup.py <pr> again from the primary checkout (recreates review-<pr> with an entry-state whose session tree exists), seat_clock.py plan-write with the same arguments, deterministic check items re-run, seat reports restored from raw/<host>/seat-raw/<raw_id>-<seat>.raw with the launcher header (worker: model=<pin> ...) replacing the seat's self-reported first line plus the .md.status line, then gaze_close.py once more: answer 20261109T191430318Z-padme-0e1fd56f recorded in rv-20261109-pr-648-f9d6, pointer posted, containment clean. The recovery re-files, it does not re-review; the answer text says so.
+
+--- body ---
+
+## Observation (search-works-for-zotero PR #642, 2026-11-09 19:07-19:17Z, padme)
+gaze ran its pass to the end (plan check: PASS; seats tests, redteam on headless codex, read). `gaze_close.py`
+printed the plan line and the two `seat:` lines, built the attribution, removed the review worktree
+(`cleanup: review worktree removed`), then raised `FileNotFoundError` in `containment()` at
+`git("rev-parse", "--show-toplevel", cwd=session_tree)`: the session worktree recorded in
+entry-state.json (`.claude/worktrees/t0774-288575-4791`) had been removed by another actor
+while the review ran. `record_answer` and `pointer` never ran: no answer on notes, no pointer on
+the PR, and the panel (manifest, reports, entry-state.json) was already gone, so a re-run of the
+closing call has nothing to record from. The seat's raw output survives in the archive spool
+(`raw/padme/seat-raw/20261109T191009Z-2227419-redteam.raw`).
+
+## Fix wanted
+- `containment()` treats a missing session tree as a finding ("session worktree gone"), reading
+  the primary instead, and never raises: the answer is recorded (exit 4 with the flag), as the
+  cleanup-blocked path already does.
+- Order: record the answer before, or independently of, the containment read, so a containment
+  failure can never lose the review's evidence after the panel was removed.
+- A test: entry-state naming a nonexistent session tree → answer recorded, `containment: ... FLAGGED
+  session worktree gone`, exit 4.
+
+## Exit criteria
+- [ ] gaze_close.py records the answer when the entry session tree no longer exists
+- [ ] a test pins it
