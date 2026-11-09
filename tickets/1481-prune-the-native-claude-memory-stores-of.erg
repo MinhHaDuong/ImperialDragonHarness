@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Prune the native Claude memory stores of projects that adopted memory v8
+Created: 2026-11-09
+Author: reviewer
+
+--- log ---
+2026-11-09T13:53Z reviewer created
+
+--- body ---
+## Context
+The 2026-11-09 memory v8 deployments consolidated each project's Claude Code native memory store
+(`~/.claude/projects/<cwd-key>/memory/`) into the project's own `memory/` but left the native
+stores untouched and still loading, by design: pruning is the author's call. Stores left live:
+fuzzy-corpus (15 notes, PR fuzzy-corpus#68), chemin-de-voix (59, Tracing-Kieu#179),
+aedist-technical-report (197, aedist-technical-report#1187). Earlier deployments (JETP-observer,
+climate-finance-het, sen-causal-reading) may be in the same state; padme's was triaged and pruned
+on 2026-11-07, which is the model. Each project's `memory/SOURCES.md` lists every note with its
+disposition and blob id, so pruning loses nothing the repo did not keep or deliberately drop.
+Related: 1480 stops publishing the harness's copies of these stores under `projects/`.
+
+## Work
+For each project that has adopted v8: read its SOURCES.md, triage the native notes (consolidated
+-> delete; deliberately excluded personal or private -> author decides; harness-generic -> drop),
+then prune the native store as padme was. Codex and Pi stores: confirm none exists per project.
+
+## Exit criteria
+- [ ] every v8 project's native store is pruned, or the author kept it on purpose (noted)
+- [ ] no consolidated fact exists only in a native store
