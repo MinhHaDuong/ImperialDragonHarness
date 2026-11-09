@@ -41,3 +41,26 @@ it loadable.
 - [ ] The skill still asks for explicit confirmation before `make sync` and before each non-dry-run SWORD call (text unchanged there)
 - [ ] `submission-event`/`fly` no longer tells the agent to hand the invocation back to the author
 - [ ] `tests/test_skill_frontmatter.py`, `test_skill_descriptions.py`, `test_gen_skills_catalog.py` pass
+
+## Imagine + Plan (raid a8b3e4, 2026-11-09)
+
+Premise: PR #2325 replaced `submission-event` with `paper` (the planned `fly`
+became `paper`, ticket 1483). Criteria 1, 2, 4 hold on the tree
+(`skills/update-publist/SKILL.md` still `disable-model-invocation: true`).
+Criterion 3 now reads on `skills/paper/SKILL.md` § Written once: it already
+says "load it and follow its gates" but keeps the fallback "if the runtime
+refuses the load, ask the author to type it", which is the hand-back to drop.
+Not voided; mapped, wording of the criterion left as filed.
+
+Actions: flip the flag; replace paper's fallback clause; leave every
+confirmation gate paragraph byte-identical; run the three named tests (no
+description change, so no catalog regeneration). The log note on HAL PUT
+(`Content-Disposition` filename must be the XML name for a zip PUT) gets one
+note in § 2c outside the gate paragraphs; the POST example is left as is
+(evidence covers PUT only).
+
+Blind spot: a loadable skill can be loaded in a subagent, whose "user" is
+its parent agent; the gate text says "user". No hook guards `make sync` or
+SWORD. Criterion 2 forbids touching the gate text, so paper's replacement
+sentence says to load update-publist in the session that talks with the
+author, never in a delegated worker.

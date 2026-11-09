@@ -34,3 +34,24 @@ Exit criteria (proposed):
    integration-tier gates, or the fork is fixed.
 3. A stale `gate-<pr>-<session>-r1` tree never blocks a relaunch under the
    same session.
+
+## Imagine + Plan (raid a8b3e4, 2026-11-09)
+
+Premise holds: verify-gate is `context: fork`; its touched-tests step has no
+wait rule and falls back to the integration tier (~15 min, beyond one Bash
+call's 10-min cap); raid Phase 6 does not name the `gate-seat` agent; a stalled
+round records no verdict, so a relaunch under the same session recomputes
+`gate-<pr>-<session>-r1`, `git worktree add` fails, and the gate ESCALATEs.
+
+Actions: (1) verify-gate's long touched-tests run goes through the existing
+`scripts/raid-gate.py` heartbeat path or `runtime.py wake arm`, not a new
+polling rule; the gate never ends its turn with a run armed. (2) raid Phase 6
+names the `gate-seat` agent as the launch for integration-tier gates. (3) a
+stale same-round gate tree with no recorded verdict is removed through the
+preflight and recreated; a dirty tree or a recorded verdict still refuses.
+Reconcile with `circuit-breakers.md` STALL recovery: no salvage commit on a
+detached gate tree. Tests exercise the stale-tree behaviour, not prose; text
+pins in `tests/test_verify_fork_contracts.py` updated where strings move.
+
+Wave 2: runs on top of 1487 (same SKILL.md region; stale-tree removal uses
+1487's `--ignored-ok`).
