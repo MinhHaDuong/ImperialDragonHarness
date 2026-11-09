@@ -58,13 +58,13 @@ Verdicts are NEED, WANT or DROP. "Converge" means all four columns agree.
 | F2 | guards.md named ordre public | DROP: vocabulary only, it already says nothing overrides it | DROP: existing non-override language does the work | DROP: pure relabel | DROP: vocabulary only | converge: DROP |
 | F3 | guards.md enforcement column | WANT: real gap, but keep the table outside the resident file | NEED: prevents false assurance; record partial coverage and bypasses | WANT: honest gap map; all rows "declared only"; one line or none | WANT: honest map, but upkeep (the memo's own table is already stale) | diverge: Astra NEED, three WANT |
 | F4 | Memory court on every smelt MR | DROP: no recurring defect; n=1; memory rarely read | DROP: duplicates existing checks; pick review by risk | DROP: one failure caught without a court; use one gaze brief | WANT, reduced to one other-family materiality seat | diverge: coder WANT, three DROP |
-| F5 | Registry facts: date + probe; chamber re-runs | WANT: dating is cheap; probes fit host facts; chamber falls with F4 | WANT: for volatile facts; allow authoritative sources; no standing chamber | WANT: cheap habit for host facts; drop the chamber half | WANT, host facts only | converge: WANT, narrowed to dating plus a probe for host or volatile facts, without the chamber |
-| F6 | 1350 takes §4–5 as frame | DROP: 1350 closed 2026-11-01 (PR #2170) | DROP: would prejudge the storage design | DROP: ties a stores design to an unproven court | DROP: premise expired, 1350 closed under option b | converge: DROP |
+| F5 | Registry facts: date + probe; chamber re-runs | WANT: dating is cheap; probes fit host facts; chamber falls with F4 | WANT: for volatile facts; allow authoritative sources; no standing chamber | WANT: cheap habit for host facts; drop the chamber half | WANT, host facts only | converge: WANT, narrowed to dating plus a probe for host facts (Astra: volatile facts, authoritative sources allowed), without the chamber |
+| F6 | 1350 takes §4–5 as frame | DROP: 1350 closed 2026-11-01 (PR #2170) | DROP: would prejudge the storage design | DROP: ties a stores design to an unproven court | DROP: premise expired, 1350 closed under option b (coder's own check of the ticket) | converge: DROP |
 
 Overall verdicts: Fable KEEP, TRIMMED; Astra KEEP, TRIMMED; KISS VOCABULARY ONLY.
 
-Where the seats agree beyond the table. All three call the separation-of-powers frame
-and MOA/MOE mostly decoration. All three keep, as real work, the "where does new
+Where the seats agree beyond the table. All three call MOA/MOE mostly decoration; Fable
+and KISS call separation of powers decoration, while Astra calls it real work. All three keep, as real work, the "where does new
 knowledge go" list (§1), the declared-versus-enforced distinction (§3) and the
 fact-versus-ruling split (§5). They also agree on stale facts in the memo:
 - `conception/` is now `design/`;
@@ -77,8 +77,9 @@ Coder's reading. Six rows: four converge (F1, F2, F6 DROP; F5 WANT, narrowed) an
 diverge. On F3 the question is how strongly: NEED or WANT, and inside or outside the
 resident guards file. On F4 the coder's draft is the only one not to drop the court. In
 light of the seats, the coder's reduced variant (one other-family materiality seat) is
-the same as the KISS seat's fallback ("if a smelt review is wanted, add one gaze brief").
-That variant is a new proposal, not the memo's follow-up.
+close to the KISS seat's fallback ("if a smelt review is wanted, add one gaze brief"),
+which does not require another family; Astra's check disputes it. That variant is a new
+proposal, not the memo's follow-up.
 
 ## Advisor check of the draft: GPT-6 Astra, row by row
 
