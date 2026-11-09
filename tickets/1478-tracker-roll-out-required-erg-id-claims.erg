@@ -22,14 +22,16 @@ Author: reviewer
 2026-11-09T12:25Z reviewer quiet wave DONE on dafb1d48: archiveCIRED #71, fuzzy-corpus #66, aedist-technical-report #1184, chemin-de-voix #176, gavard #8, polycentric_activity #210; clones fixed: padme archiveCIRED, doudou Fuzzy Corpus, aedist-technical-report-git, aedist, polycentric_activity
 2026-11-09T12:25Z reviewer left for the author: padme fuzzy-corpus, AEDIST-technical-report, chemin-de-voix primaries dirty with an unfinished memory-v8 deployment (tickets/erg, .erg-assets, AGENTS.md, untracked *-déployer-la-mémoire-v8.erg) and dead core.hooksPath; doudou chemin-de-voix diverged (2 local Release commits); doudou gavard has docs/missing-papers.html modified
 2026-11-09T12:27Z reviewer JETP race: ticket 2127 (harness-filed alignment, PR #284) merged between migrate and merge; fixed by their PR #286; recipe step 8 now re-runs migrate right before merge; JETP doudou clone pulled 6795e309
+2026-11-09T12:37Z reviewer pin moved to 513cd3c4 (rev bf71ab5): identical behaviour to 6a104262, revision stamp only
 
 --- body ---
 ## Context
 Author decision relayed by the git-erg session (2026-11-09): the harness drives the rollout of
 required ID claims (git-erg 0306/0307) to every erg store on padme and doudou. Pin, not release:
 every repo takes the binary with sha256
-`6a10426263e7571a054557df8965229c92fb87540b07059279f3d20f56c58991` (git-erg rev 2d0dbea,
-commit ab519a3; moved by author decision 2026-11-09 from dafb1d48/8d24e74, which forced --no-verify); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
+`513cd3c4d916fd170d2d71b2cfe2182d4ab8db413822766db2e1ae5c5488b4ac` (git-erg rev bf71ab5,
+commit bcbfa63; author decision 2026-11-09; same behaviour as 6a104262, rebuilt when git-erg
+renamed docs/ to design/); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
 git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 
 ## Recipe (one PR per repo, one host, fresh worktree)
@@ -89,4 +91,5 @@ its own session, or one launched there; the harness tracks, it does not edit oth
   archiveCIRED #71, fuzzy-corpus #66, aedist-technical-report #1184, chemin-de-voix #176,
   gavard-schoch-2026-comment #8, polycentric_activity #210. They stay; next binary refresh takes the
   current pin by the same order (import, install --hooks, commit).
-- 6a104262 (2d0dbea): every repo not yet migrated.
+- 6a104262 (2d0dbea): superseded the same day, no repo landed on it.
+- 513cd3c4 (bf71ab5): every repo not yet migrated. git-erg doc links are now design/, not docs/.
