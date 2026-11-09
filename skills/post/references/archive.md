@@ -1,12 +1,14 @@
 # archive
 
 The post is live; make it citable and findable. Steps 1-7 run in order; 3
-stops for the author, 4 and 5 for the author's go-ahead on the outward act.
+stops for the author, 4, 5 and 6 for the author's go-ahead on the outward act.
 
-A post already on the personal page and in the open archive is done: report
-"nothing to do except the roadmap check", check the roadmap row, and stop.
-Otherwise walk every step; a dry run lists each one with its evidence or
-"missing".
+A post with evidence for every step that applies to its channel (on the
+personal page, in the open archive, the back-link on a blog post, the log
+line) is done: report "nothing to do except the roadmap check", check the
+roadmap row, and stop. Otherwise walk every step. A dry run always walks
+every step, even when this stop rule would fire, lists each one with its
+evidence or "missing", and ends on the stop rule's verdict when it holds.
 
 ## Registers
 
@@ -40,16 +42,16 @@ where the local `AGENTS.md` asks for one.
    recipe (doctype BLOG), which is authoritative. An op-ed goes through
    `/update-publist` with doctype OTHER, unless the venue fits another
    doctype; `/update-publist` carries no op-ed row yet, so name that gap to
-   the author rather than inventing a recipe. Validate first with the
-   archive's test mode, keep the deposited metadata, record the returned
-   identifier. The final deposit is the author's go-ahead.
+   the author rather than inventing a recipe. Keep the deposited metadata
+   and record the returned identifier. The final deposit is the author's
+   go-ahead.
 5. Personal bibliography: a `@misc` entry in the bibliography the local
-   `AGENTS.md` names (url of the live post, eprint of the archive, file of
-   the PDF), the PDF copied to the page's files, the page rebuilt and shown
-   to the author; commit and deploy on the author's go-ahead.
+   `AGENTS.md` names, the PDF copied to the page's files, the page rebuilt
+   and shown to the author; commit and deploy on the author's go-ahead.
 6. Back-link from the live post to the PDF on the personal page, by the
-   blog's publishing recipe, at the end of the body; no media attachment.
-   A newspaper or partner page: nothing to do.
+   blog's publishing recipe: the agent prepares the edit and shows it; the
+   write to the live post waits for the author's go-ahead. A newspaper or
+   partner page: nothing to do.
 7. Log it: a blog post gets a line in the blog's journal (PDF, archive
    identifier, date) and its backlog status updated; an op-ed gets a line in
    its folder's README. Then the roadmap row: the agent edits the local
