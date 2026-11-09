@@ -152,3 +152,16 @@ def test_a_tree_not_named_gate_is_refused(tmp_path):
     primary = repo(tmp_path)
     r = add(primary, primary / ".claude" / "worktrees" / "t7-x")
     assert r.returncode == 2
+
+
+def test_unreadable_gate_state_refuses_without_a_traceback(tmp_path):
+    primary = repo(tmp_path)
+    tree = stale(primary)
+    f = tmp_path / "state.json"
+    f.write_text("not json")
+    r = subprocess.run(["python3", str(HELPER), "add", "--repo", str(primary), "--tree", str(tree),
+                        "--ref", "HEAD", "--session", SESSION, "--round", "1",
+                        "--gate-state", str(f)], capture_output=True, text=True)
+    assert r.returncode == 1
+    assert "Traceback" not in r.stderr and "unreadable gate state" in r.stderr
+    assert git(tree, "rev-parse", "HEAD") == git(primary, "rev-parse", "HEAD~1")
