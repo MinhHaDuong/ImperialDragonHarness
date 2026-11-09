@@ -446,6 +446,61 @@ def test_land_refuses_self_closing_claim_before_any_merge(repo):
     sh(repo, "reset", "-q", "--hard", "origin/main")
     _ticket_branch(repo)
     forge = StubForge(head(repo), body="**Ticket:** tickets/0042-x.erg\n")
-    with pytest.raises(rl.Refusal, match="adds"):
+    with pytest.raises(rl.Refusal, match="not on"):
         land(repo, forge, "-", ruled_claims=["0042"])
     assert merged_calls(forge) == []
+
+
+def test_unreadable_diff_refuses_instead_of_passing(repo):
+    with pytest.raises(rl.Refusal, match="cannot read"):
+        rl.refuse_self_closing(repo, "origin/nonexistent", ["0042"])
+
+
+def test_archive_move_to_closed_passes(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    (repo / "tickets").mkdir()
+    (repo / "tickets" / "0042-x.erg").write_text("Title: x\n")
+    sh(repo, "add", "tickets")
+    sh(repo, "commit", "-qm", "ticket")
+    sh(repo, "push", "-q", "origin", "HEAD:main")
+    sh(repo, "fetch", "-q", "origin")
+    (repo / "tickets" / "closed").mkdir()
+    sh(repo, "mv", "tickets/0042-x.erg", "tickets/closed/0042-x.erg")
+    sh(repo, "commit", "-qm", "archive")
+    rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_delete_and_near_identical_add_is_still_a_filing(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    (repo / "tickets").mkdir()
+    (repo / "tickets" / "0041-old.erg").write_text("Title: old ticket body\nline\nline\n")
+    sh(repo, "add", "tickets")
+    sh(repo, "commit", "-qm", "ticket")
+    sh(repo, "push", "-q", "origin", "HEAD:main")
+    sh(repo, "fetch", "-q", "origin")
+    sh(repo, "mv", "tickets/0041-old.erg", "tickets/0042-x.erg")
+    sh(repo, "commit", "-qm", "rename to new id")
+    with pytest.raises(rl.Refusal, match="not on"):
+        rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_stale_base_is_fetched_before_the_guard_runs(repo, monkeypatch):
+    """origin/main moves to carry a code file; land() must fetch (check_head) before judging."""
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    _ticket_branch(repo, extra="fix.py")
+    sh(repo, "update-ref", "refs/remotes/origin/main", "HEAD")  # stale: already ahead, the diff would read empty
+    # land via a stale tracking ref: the fetch in check_head restores origin/main, the guard sees a clean base.
+    monkeypatch.setattr(rl, "gate", lambda cwd, *a: 1 if a[0] == "enabled" else 0)
+    forge = StubForge(head(repo), body="**Ticket:** tickets/0042-x.erg\n")
+    calls = []
+    real = rl.refuse_self_closing
+    monkey = pytest.MonkeyPatch()
+    monkey.setattr(rl, "refuse_self_closing", lambda cwd, b, ids: (calls.append(sh(cwd, "rev-parse", b)), real(cwd, b, ids)))
+    try:
+        land(repo, forge, head(repo), ruled_claims=["0042"])
+    except (rl.Refusal, OSError):  # past the guard, close_tickets has no erg here
+        pass
+    finally:
+        monkey.undo()
+    assert calls and calls[0] == sh(repo, "rev-parse", "origin/main")
+    assert calls[0] != sh(repo, "rev-parse", "HEAD")  # the fetch ran before the guard
