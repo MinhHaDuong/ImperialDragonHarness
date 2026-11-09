@@ -9,6 +9,13 @@ Author: reviewer
 2026-11-09T12:15Z reviewer sen-causal-reading migrated: PR #165 merged b12ae1a, 111 claims, hooks on padme; pending its doudou clone and codex session (pull, install --hooks, rebase + migrate)
 2026-11-09T12:15Z reviewer padme: its own session, resuming with the corrected command
 2026-11-09T12:15Z reviewer climate-finance-het: author approved; its own session migrates (told by git-erg)
+2026-11-09T12:19Z reviewer sen-causal-reading doudou clone done (c917776, hooks installed, check PASS); its codex session had no branches to rebase
+2026-11-09T12:19Z reviewer hazard (git-erg via JETP #285): a pre-installed erg pre-commit block refuses committing tickets/erg off the default branch; per migration PR: erg check by hand, --no-verify that one commit, say so in the PR body
+2026-11-09T12:19Z reviewer hazard: an absolute core.hooksPath into the primary checkout (JETP, cfh) makes install --hooks from a worktree write there; install in the PR worktree or after merge from a clean primary
+2026-11-09T12:19Z reviewer canary cadens DONE: PR #71 merged 1e55e451, 53 claims, pin verified, per-clone hooks on padme and doudou; probes new-writes-claim, add/add conflict on .claims/NNNN (forced: erg new skips numbers claimed on local branches), pre-commit refuses unclaimed: all pass
+2026-11-09T12:19Z reviewer hazard: doudou cadens also had a dead core.hooksPath; check every clone on both hosts
+2026-11-09T12:19Z reviewer JETP-observer: own session, PR #285 open (310 claims)
+2026-11-09T12:19Z reviewer wave 2 launched 2026-11-09: quiet repos (one agent) and harness 1472 (hunt, PR left for the session to gate)
 
 --- body ---
 ## Context
