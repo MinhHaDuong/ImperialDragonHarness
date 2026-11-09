@@ -590,12 +590,15 @@ def environment_only(config, results):
 
 
 def runner_env():
-    """The runner's environment without the triggering shell's VIRTUAL_ENV.
+    """The runner's environment without the triggering shell's VIRTUAL_ENV and TMPDIR.
 
     An inherited VIRTUAL_ENV empties the Makefile's RUN, so the checks would run
     in that shell's venv instead of the locked environment of the tip (ticket 1288).
+    An inherited TMPDIR is a session's worktree scratch: the detached run outlives
+    it, and temporary files inside a repository break the tests that need a path
+    outside one (ticket 1498).
     """
-    return {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+    return {k: v for k, v in os.environ.items() if k not in ("VIRTUAL_ENV", "TMPDIR")}
 
 
 def cmd_run(args):
