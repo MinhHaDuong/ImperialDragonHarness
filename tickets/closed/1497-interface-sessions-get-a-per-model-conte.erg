@@ -1,0 +1,56 @@
+%erg 0.1
+Title: Interface sessions get a per-model context ceiling
+Created: 2026-11-09
+Author: reviewer
+Closed: autoclosed — PR #2358
+
+--- log ---
+2026-11-09T22:05Z reviewer created
+2026-11-09T22:12Z reviewer closed — autoclosed — PR #2358
+
+--- body ---
+## Context
+
+`rules/guards.md` stops every session at 230K tokens of context: past it the
+task is too big and gets split. The author ruled on 2026-11-09, while
+designing a relay pattern for long conversations, that interface sessions may
+run longer: 450K on Sol or Opus, 550K on Astra or Fable.
+
+The 230K number does three jobs. It bounds coherence, which depends on the
+model. It signals a task too big to review, which does not. It bounds cost,
+since every turn re-reads the context. An interface session converses with the
+author and has no task to split, so only coherence and cost bind there; a
+launched worker keeps the fixed number.
+
+## Decisions
+
+- **The exception is stated in `rules/guards.md`**, in one sentence, because
+  no rule or skill overrides that file. An exception written only in the route
+  skill would be void.
+- **The numbers live in the route skill**, the single home for model facts.
+  The rule names no model.
+- **Any other model keeps 230K**, and so do launched workers, team leads and
+  unattended runs. This is the executor's reading of a ruling that named four
+  models; the author may widen it.
+- **The compaction ban is untouched.** At its ceiling an interface session
+  still stops and proposes a split. Whether a relay handoff may compact is the
+  relay design's question, not this ticket's.
+
+## Resident budget
+
+The sentence adds 86 characters to the resident rules (15094 to 15180,
+measured with `scripts/resident_census.py`). The cap had 6 characters of
+headroom. Trimming 80 characters elsewhere would mean rewording guards the
+author did not ask to change, so the cap rises by the same 86, to 15186. The
+cost is about 31 tokens per session (derived: 86 / 2.8 chars per token, the
+census's ratio, not measured).
+
+## Exit criteria
+
+- [x] `rules/guards.md` sends an interface session to its model's ceiling in
+  the route skill, and names no model
+- [x] `skills/route/SKILL.md` states the ceilings: Sol and Opus 450K, Astra and
+  Fable 550K, any other model 230K
+- [x] `RESIDENT_BUDGET` raised to the measured growth, with the reason in the
+  test's comment; `STATE.md` restates the new cap
+- [x] `make lint` and `make check-fast` pass

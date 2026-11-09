@@ -67,6 +67,21 @@ concrete fixes and trivial swaps are not.
 - The 230K context guard (`rules/guards.md`) is a hard floor and stays: oversize context is a
   split-the-work ticket, never a bigger-window ticket.
 
+## Interface session context ceiling
+
+An interface session is the one the author converses with. It may run past
+230K, up to its model's ceiling (author ruling 2026-11-09):
+
+| Model | Ceiling |
+|---|---|
+| Sol, Opus | 450K |
+| Astra, Fable | 550K |
+| any other | 230K |
+
+At the ceiling the guard applies as written: stop and hand the author a
+proposed split. Launched workers, team leads and unattended runs keep 230K
+whatever their model: for them the number measures the size of the task.
+
 ## Choosing a worker
 
 The orchestrating model chooses, from the task and its context. No script
