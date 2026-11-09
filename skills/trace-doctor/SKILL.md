@@ -312,7 +312,7 @@ Commit the new tickets on a branch landed through a merge request, naming each
 file (never a blanket add in the shared `tickets/` checkout):
 
 ```bash
-git add tickets/<id>-<slug>.erg          # name each new ticket file, one per add
+git add tickets/<id>-<slug>.erg tickets/.claims/<id>   # each new ticket with its ID claim
 git commit -m "chore(trace-doctor): open N tickets from monthly survey"
 ```
 
