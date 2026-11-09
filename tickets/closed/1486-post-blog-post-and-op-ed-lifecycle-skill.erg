@@ -17,6 +17,7 @@ Closed: autoclosed — PR #2342
 2026-11-09T20:15Z reviewer note cross-project route: the carnet (~/CNRS/projets/actifs/realf.hypotheses.org on doudou) has no tickets/ store and is not a git repository (checked over ssh with a positive control), so the AGENTS.md line above is reported to the author in the hand-back, not written into the carnet (rules/guards.md: an unreachable destination is reported)
 2026-11-09T20:17Z reviewer note exit criteria 1 and 6 (the carnet AGENTS.md line) are handed to the author: the text is delivered verbatim above and in the PR body; the carnet is outside this repo and has no ticket store. Criteria 2, 3, 4, 5 and 7 are met on this branch
 2026-11-09T20:28Z reviewer closed — autoclosed — PR #2342
+2026-11-09T20:35Z reviewer note verify-reroll — round 1: criterion 'The carnet's AGENTS.md points at /post in one line, its recipes unchanged' MISSING (doudou ~/CNRS/projets/actifs/realf.hypotheses.org/AGENTS.md, 19267 B, dated 2026-10-09, has no /post line; the author lands the line given in the PR body, 1483 precedent; no branch change needed)
 
 --- body ---
 ## Context
