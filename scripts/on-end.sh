@@ -67,6 +67,23 @@ if [ -z "$session_id" ]; then
 fi
 if [ -z "$session_id" ]; then exit 0; fi
 
+# `/clear` ends the old session id but the runtime keeps advertising its
+# scratchpad to the new session (ticket 1474): removing it breaks the first
+# write after the clear. Keep the directory; `session_scratch.py --sweep`
+# reclaims it once no live process holds it. Any other reason, and a payload
+# with no reason at all, remove as before.
+reason=""
+if command -v jq >/dev/null 2>&1; then
+    reason=$(printf '%s' "$payload" | jq -r '.reason // empty' 2>/dev/null) \
+        || reason=""
+fi
+if [ -z "$reason" ]; then
+    reason=$(printf '%s' "$payload" | tr -d '\n' \
+        | sed -n 's/.*"reason"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+        | head -1) || reason=""
+fi
+if [ "$reason" = "clear" ]; then exit 0; fi
+
 # The id becomes a path component, so it must be a plain name: no separator, no
 # `.`, no glob metacharacter. `*` or `..` here would widen the deletion from one
 # session to the whole temp root — every live session on the machine.
