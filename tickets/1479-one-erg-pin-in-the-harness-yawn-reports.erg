@@ -1,0 +1,42 @@
+%erg 0.1
+Title: One erg pin in the harness; yawn reports drift, molt repairs, git-erg optional
+Created: 2026-11-09
+Author: reviewer
+
+--- log ---
+2026-11-09T12:39Z reviewer created
+
+--- body ---
+Parent: 1478
+
+## Context
+The 2026-11-09 claims rollout moved the erg pin three times in a day (9ab13c9 -> dafb1d48 ->
+6a104262 -> 513cd3c4) and showed three silent drifts: a host PATH `erg` left on an old build
+(padme ~/.local/bin/erg, 2c490b7), repos left on a superseded pin until their next refresh (ten
+on dafb1d48), and clones whose core.hooksPath pointed at a dead directory, so no hook ever ran
+(padme aedist-technical-report, chemin-de-voix, fuzzy-corpus; doudou cadens, aedist, Fuzzy
+Corpus). Author decision (2026-11-09): lair must not update erg itself (it would take git-erg's
+main, "too fresh"); detect drift and repair only what is local and safe.
+
+## Design (author ruling: git-erg is optional, the harness is tolerant)
+- One pin, recorded once in the harness: sha256 plus git-erg revision. Moving it is an author
+  decision landed by harness PR; later a signed release tag replaces the hash.
+- yawn (read-only) reports, per project and host: `tickets/erg` sha256 vs the pin; PATH `erg`
+  vs the pin; `tickets/.claims/` present; core.hooksPath dead or alive.
+- molt repairs the local, safe part: unset a dead core.hooksPath, re-run `tickets/erg install
+  --hooks`. A binary behind the pin: one ticket in that project (or the rollout recipe when the
+  author moved the pin), never an import of an unpinned binary.
+- lair: no change; it surfaces molt's findings.
+- Tolerance: a project without `tickets/erg`, a store without `.claims/`, a host without a PATH
+  `erg`, or a harness checkout with no pin file is not a finding: report "n/a" (or nothing) and
+  continue. Only a present erg that differs from the pin, or a hook path that names a missing
+  directory, counts. No check may fail a gate or block a merge; Codex and Pi sessions read the
+  same report.
+
+## Exit criteria
+- [ ] the pin lives in one harness file; tracker 1478 and the rollout recipe cite it
+- [ ] yawn reports the four conditions above; tests cover pinned, drifted, absent-erg (n/a),
+      no-claims (n/a) and dead-hooksPath cases
+- [ ] molt unsets a dead hooksPath and re-installs hooks; files a ticket for a binary behind the
+      pin; never imports a binary
+- [ ] no new gate failure: a project or host without erg passes every check unchanged
