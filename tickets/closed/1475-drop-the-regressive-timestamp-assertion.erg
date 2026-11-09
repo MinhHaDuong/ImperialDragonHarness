@@ -2,10 +2,12 @@
 Title: Drop the regressive-timestamp assertion once erg 0308 lands
 Created: 2026-11-09
 Author: claude
+Closed: autoclosed — PR #2283
 
 --- log ---
 2026-11-09T10:46Z claude created
 2026-11-09T10:59Z reviewer plan widened (author, 2026-11-09): delete the whole test file and fixtures; git-erg covers placement (src/go/close_test.go TestAppendLogLine) and the check warnings (src/go/check_test.go TestLogPlacementWarnings), and the corpus check duplicates the gate's validate-tickets
+2026-11-09T10:59Z reviewer closed — autoclosed — PR #2283
 
 --- body ---
 ## Context
