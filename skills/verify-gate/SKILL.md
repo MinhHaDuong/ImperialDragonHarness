@@ -124,9 +124,9 @@ On every exit path, after the verdict is recorded:
 `git -C "$primary_root" worktree remove "$gate_tree"`. The touched-tests step
 leaves a `.venv` (and setuptools `build/` output) that git counts as untracked
 when the repository does not ignore it; the preflight deletes those regenerable
-paths and refuses on anything else. `--ignored-ok` tolerates git-ignored files,
-the build products of the project's own check target, as gaze's cleanup does. The session and round suffix keeps a
-round-1 tree left behind by a refused removal from blocking round 2. A refusal
+paths and, with `--ignored-ok` (as in gaze's cleanup), tolerates git-ignored
+files, the build products of the project's own check target; it refuses on
+any other residue. The session and round suffix keeps a round-1 tree left behind by a refused removal from blocking round 2. A refusal
 is reported in the verdict, never forced.
 
 ## Evidence discovery
