@@ -2,6 +2,7 @@
 Title: gaze_close.py crashes in containment() when the entry session worktree was removed during the run; the answer never lands on notes
 Created: 2026-11-09
 Author: reviewer
+Closed: autoclosed — PR #2341
 
 --- log ---
 2026-11-09T19:13Z reviewer created
@@ -9,6 +10,7 @@ Author: reviewer
 2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: non-raising containment() with a 'session worktree gone' flag, no primary substitution, cwd-inside-removed-tree case added by the Blind-Spot pass; exit criteria unchanged
 2026-11-09T20:05Z reviewer raid 4afdb3 feasibility PASS: every path, line and helper the plan cites exists (containment() :258, cwd read :371, exit-4 return :440, test helpers, caller-worktree pattern :242-252); WARN: cleanup.md heading is 'Containment postcondition' (line 30), not 'Containment'
 2026-11-09T20:08Z reviewer fixed on t1491-gaze-close-session-gone: containment flags session worktree gone, cwd guard; 2 tests
+2026-11-09T20:12Z reviewer closed — autoclosed — PR #2341
 
 --- body ---
 
