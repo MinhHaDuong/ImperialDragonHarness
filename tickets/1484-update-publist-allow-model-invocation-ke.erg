@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T15:57Z haduong created
+2026-11-09T16:07Z Minh-Ha-Duong note HAL SWORD PUT with a zip package: Content-Disposition filename must be the XML name (meta.xml), not the zip; the skill's § 2c example says deposit.zip and HAL answers 400 'content-disposition header missing or mismatched'. Verified on hal-05570600 v3, 2026-11-09.
 
 --- body ---
 ## Context
