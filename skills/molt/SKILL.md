@@ -75,8 +75,10 @@ Run full repo housekeeping and act on every finding.
    local and reversible only: `git config --local --unset core.hooksPath` when
    it names a missing directory; strip a reported legacy block
    (`# --- git-erg --- begin` … `end`, superseded or naming a missing path) from
-   the clone's pre-commit after copying the hook to `pre-commit.bak` beside it;
-   then `tickets/erg install --hooks`, which writes the managed block.
+   a pre-commit under the git common dir, after copying the hook to
+   `pre-commit.bak` beside it (one in a tracked hooks directory is the
+   project's: report only); then, when `tickets/erg` exists,
+   `tickets/erg install --hooks`, which writes the managed block.
    Open-ticket: a `tickets/erg` behind the pin, one ticket in that project (or,
    when the author just moved the pin, the rollout recipe in tracker 1478). A
    PATH `erg` behind the pin is the operator's: report only. Never import or
