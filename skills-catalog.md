@@ -85,6 +85,7 @@
 | [`/aap-annonce`](skills/aap-annonce/SKILL.md) | Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles. |
 | [`/choose-venue`](skills/choose-venue/SKILL.md) | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | [`/conference-submission-prep`](skills/conference-submission-prep/SKILL.md) | Prepare a humanities and social sciences conference submission from its call for papers. Use once venue is chosen and key messages are framed. |
+| [`/mission`](skills/mission/SKILL.md) | Walk one stage of a work trip (prepare, check, return): dossier, receipts, report, gates. |
 | [`/paper`](skills/paper/SKILL.md) | Run a manuscript lifecycle event (submitted, decision-received, resubmitted, accepted, published): register choice, files, outward gates. |
 | [`/release`](skills/release/SKILL.md) | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | [`/update-publist`](skills/update-publist/SKILL.md) | Add or update a publication on the author's personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
