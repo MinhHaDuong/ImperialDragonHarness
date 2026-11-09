@@ -2,9 +2,14 @@
 Title: gaze cleanup turns a clean review into ESCALATE when git-ignored build files remain in the review copy
 Created: 2026-11-09
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #2357
 
 --- log ---
 2026-11-09T16:42Z Minh Ha-Duong created
+2026-11-09T22:02Z reviewer note: criterion 1: tests/test_preflight_ignored_ok.py reproduces the false ESCALATE (gaze_close on an ignored *.stamp, red before the fix) with its positive control (untracked unignored draft.txt still ESCALATEs)
+2026-11-09T22:02Z reviewer note: criterion 2: gaze_close and verify-gate both call worktree-exit-preflight.sh --removal --ignored-ok; roar/lair/gc keep the 1212 rule
+2026-11-09T22:02Z reviewer note: criterion 3: not reproducible: no harness path runs checkout/restore/clean in a review copy; likely the project's make target regenerating output/05_manuscript/*.md. fuzzy-corpus mirror case not reproducible from current code; worktree-gc.sh keeps the strict rule for stranded review/gate trees (out of scope, PR #2348 owns it)
+2026-11-09T22:10Z reviewer closed — autoclosed — PR #2357
 
 --- body ---
 ## Context
@@ -43,9 +48,9 @@ file and one untracked-unignored file.
 
 ## Exit criteria
 
-- [ ] A reproduction shows the false ESCALATE on an ignored file and the correct ESCALATE on an untracked, unignored file
-- [ ] gaze and the gate's cleanup agree on the same leftover rule
-- [ ] The second observation (tracked files deleted then restored inside the review copy) is either reproduced and ticketed separately or recorded as not reproducible
+- [x] A reproduction shows the false ESCALATE on an ignored file and the correct ESCALATE on an untracked, unignored file
+- [x] gaze and the gate's cleanup agree on the same leftover rule
+- [x] The second observation (tracked files deleted then restored inside the review copy) is either reproduced and ticketed separately or recorded as not reproducible
 
 ## Imagine + Plan (raid a8b3e4, 2026-11-09)
 

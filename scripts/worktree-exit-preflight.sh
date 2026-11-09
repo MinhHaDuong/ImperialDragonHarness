@@ -11,14 +11,21 @@ set -euo pipefail
 # skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged, untracked AND
 # ignored entries (minus regenerable caches), via scripts/worktree-clean-lib.sh.
 #
+# --ignored-ok (ticket 1487): drop ignored (`!!`) records from the residue, for
+# the throwaway review-*/gate-* checkouts of a pushed head that gaze and the
+# gate remove; a project's check target leaves ignored build products there.
+# Refused (exit 2) on any other tree, where ticket 1212's rule stands.
+#
 # Arg: worktree path (default: current directory).
 # Exit 0 silently when clean. Exit 1 with a listing on stderr when dirty.
 
 removal=0
+ignored_ok=0
 branch=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --removal) removal=1; shift ;;
+        --ignored-ok) ignored_ok=1; shift ;;
         --branch) [ "$#" -ge 2 ] || exit 2; branch="$2"; shift 2 ;;
         --) shift; break ;;
         -*) echo "worktree-exit-preflight: unknown option: $1" >&2; exit 2 ;;
@@ -34,6 +41,13 @@ root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
 if [ "$(realpath "$path")" != "$(realpath "$root")" ]; then
     echo "worktree-exit-preflight: expected worktree root: $path" >&2
     exit 2
+fi
+if [ "$ignored_ok" -eq 1 ]; then
+    case "$(basename "$root")" in
+        review-*|gate-*) ;;
+        *) echo "worktree-exit-preflight: --ignored-ok applies only to review-* or gate-* trees: $path" >&2
+           exit 2 ;;
+    esac
 fi
 
 # `.tmp/` is ignored by common Git metadata, so status alone cannot protect it.
@@ -91,6 +105,9 @@ status=$(worktree_residue "$path") || {
 # the removal gate deletes it); ignored, it is preserved, not uncommitted work.
 if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
     status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
+fi
+if [ "$ignored_ok" -eq 1 ] && [ -n "$status" ]; then
+    status=$(printf '%s\n' "$status" | grep -v '^!! ' || true)
 fi
 if [ "$purge_panel" -eq 1 ] && [ -n "$status" ]; then
     status=$(printf '%s\n' "$status" | grep -Ev '^(\?\?|!!) \.panel(/|$)' || true)

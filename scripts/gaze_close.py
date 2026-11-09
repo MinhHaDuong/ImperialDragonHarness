@@ -10,7 +10,7 @@ Review scratch contract (ticket 0948, pinned by tests/test_review_panel_cleanup_
 every exit path runs this after the panel has consumed its artifacts; the
 scratch `.panel/<pr>` and `build/panel-head` are removed only when untracked,
 after `worktree-tmp-guard.py removal`; `worktree-exit-preflight.sh --removal
---branch` must pass, else the review worktree stays registered (cleanup blocked,
+--ignored-ok --branch` must pass, else the review worktree stays registered (cleanup blocked,
 exit 1) and the result is ESCALATE naming the files; the attribution lines are built
 before cleanup so a blocked cleanup still records the review, as an ESCALATE answer
 on notes carrying them, with its pointer on the PR. A tree with real uncommitted files is never force-removed.
@@ -159,7 +159,9 @@ def cleanup(primary, pr, branch):
         (tree / ".panel").rmdir()
     except OSError:
         pass
-    r = subprocess.run([str(HERE / "worktree-exit-preflight.sh"), "--removal",
+    # --ignored-ok: a project's check target leaves ignored build products in the
+    # review copy of a pushed head; only unignored files are WIP here (ticket 1487).
+    r = subprocess.run([str(HERE / "worktree-exit-preflight.sh"), "--removal", "--ignored-ok",
                         "--branch", branch, str(tree)], capture_output=True, text=True)
     if r.returncode:
         return False, f"real WIP remains in {tree}: " + (r.stderr or r.stdout).strip()
