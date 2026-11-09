@@ -28,7 +28,7 @@ DAYS=7
 DEFAULT=""
 PHASE=all
 BUNDLE=""
-RM_TREE=""
+RM_TREES=()
 LOCAL_TARGETS=()
 REMOTE_TARGETS=()
 while [ $# -gt 0 ]; do
@@ -44,12 +44,13 @@ while [ $# -gt 0 ]; do
         --default-branch) DEFAULT="$2"; shift 2 ;;
         --phase)          PHASE="$2"; shift 2 ;;
         --bundle-branch)  BUNDLE="$2"; shift 2 ;;
-        --remove-worktree) RM_TREE="$2"; shift 2 ;;
+        --remove-worktree) RM_TREES+=("$2"); shift 2 ;;
         -h|--help)
-            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|preflight|exit-check|after-exit|all] [--bundle-branch B] [--remove-worktree PATH] [--local-branch B=OID] [--remote-branch B=OID]"
+            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|preflight|exit-check|after-exit|all] [--bundle-branch B] [--remove-worktree PATH]... [--local-branch B=OID] [--remote-branch B=OID]"
             echo "  Roar steps 7-10. Exit 0 clean, 1 findings, 2 could-not-look."
             echo "  Repeat branch options only for this completed task; OID is its merged PR head (full hex)."
             echo "  --bundle-branch and --remove-worktree name only what this task owns."
+            echo "  --remove-worktree repeats: each tree gets its own gate and WORKTREE line; one refusal does not skip the others."
             exit 0 ;;
         *) echo "close-and-clean: unknown argument '$1'" >&2; exit 2 ;;
     esac
@@ -439,7 +440,13 @@ exit_check() {
 real() { cd -P "$1" 2>/dev/null && pwd -P; }
 
 remove_worktree() {
-    local path listing p primary="" registered=0 here
+    local t
+    for t in "${RM_TREES[@]}"; do remove_one_worktree "$t"; done
+}
+
+# One tree; every refusal returns so the loop above still reaches the others.
+remove_one_worktree() {
+    local path listing p primary="" registered=0 here RM_TREE="$1"
     [ -n "$RM_TREE" ] || return 0
     path=$(real "$RM_TREE") || { note "WORKTREE: ALREADY-ABSENT $RM_TREE"; return 0; }
     listing=$(git worktree list --porcelain) || { note "WORKTREE: COULD-NOT-LOOK cannot list worktrees"; bump 2; return 0; }

@@ -2,9 +2,11 @@
 Title: roar close-and-clean: a repeated --remove-worktree is silently dropped
 Created: 2026-11-09
 Author: claude
+Closed: autoclosed — PR #2293
 
 --- log ---
 2026-11-09T11:07Z claude created
+2026-11-09T12:23Z reviewer closed — autoclosed — PR #2293
 
 --- body ---
 ## Problem
