@@ -1,0 +1,16 @@
+#!/bin/sh
+# >>> erg managed >>>
+# Warn about tickets that are closed but not yet archived.
+# This hook never mutates the tree and never blocks the push (charter blocker
+# #2 + design council 0209): archiving at push cannot enter the gated push and
+# would risk a dirty-tree resurrection. Archive happens at merge time and via
+# manual 'erg archive'.
+if [ -x tickets/erg ]; then
+    pending=$(tickets/erg archive --dry-run 2>/dev/null | grep '^WOULD ARCHIVE ' || true)
+    if [ -n "$pending" ]; then
+        echo "pre-push: closed tickets are not yet archived:" >&2
+        echo "$pending" | sed 's/^WOULD ARCHIVE /  /' >&2
+        echo "  run: tickets/erg archive && git add tickets/ && git commit -m 'archive closed tickets' && git push" >&2
+    fi
+fi
+# <<< erg managed <<<
