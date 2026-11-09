@@ -43,6 +43,6 @@ When roar runs this: roar steps 4-5, after capture, on the ref and not the worki
    `git ls-tree -r --name-only refs/remotes/origin/main -- <dir>` and read with
    `git show refs/remotes/origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
- Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+ Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it and its `tickets/.claims/NNNN` in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 5. **Report related findings** from the sweep. Do not turn experiences into
    unsolicited standing tests, rule proposals or crystallisation tickets.
