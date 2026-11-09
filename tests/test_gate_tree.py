@@ -165,3 +165,16 @@ def test_unreadable_gate_state_refuses_without_a_traceback(tmp_path):
     assert r.returncode == 1
     assert "Traceback" not in r.stderr and "unreadable gate state" in r.stderr
     assert git(tree, "rev-parse", "HEAD") == git(primary, "rev-parse", "HEAD~1")
+
+
+def test_a_commit_only_the_stale_tree_reaches_refuses(tmp_path):
+    """Gaze finding: the preflight sees uncommitted files, never commits; a
+    local commit on the detached tree would vanish with it."""
+    primary = repo(tmp_path)
+    tree = stale(primary)
+    git(tree, "commit", "--allow-empty", "-m", "local only")
+    local = git(tree, "rev-parse", "HEAD")
+    r = add(primary, tree)
+    assert r.returncode == 1
+    assert "not reachable" in r.stderr
+    assert git(tree, "rev-parse", "HEAD") == local

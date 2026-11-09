@@ -126,7 +126,8 @@ relaunch under the same session derives the same round and path. `gate_tree.py`
 then removes that stale tree through the removal preflight below and recreates
 it: a gate tree is a detached checkout of a pushed head, so there is nothing to
 salvage. It refuses, and the gate rules ESCALATE, when that session and round
-already carry a verdict, when the tree is locked, or when it holds residue.
+already carry a verdict, when the tree is locked, or when it holds residue
+or a commit no branch, remote or tag reaches.
 
 On every exit path, after the verdict is recorded:
 `$IDH_ROOT/scripts/worktree-exit-preflight.sh --removal --ignored-ok "$gate_tree"`, then

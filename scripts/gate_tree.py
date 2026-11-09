@@ -15,6 +15,7 @@ Refused (exit 1, nothing removed; the gate rules ESCALATE, Missing Data):
 - `--gate-state` (the JSON `review_notes.py gate` printed) records a verdict
   for this session and round: that round is ruled, its tree is not stale;
 - the tree is locked, or the path exists but is not a worktree of `--repo`;
+- the tree's HEAD holds a commit no branch, remote or tag reaches;
 - the preflight finds residue other than regenerable or git-ignored output.
 Exit 2: usage, including a tree whose name does not start with `gate-`.
 Prints the tree path on success.
@@ -73,7 +74,16 @@ def add(a: argparse.Namespace) -> int:
         if "locked" in record:
             return refuse(f"{a.tree} is locked ({record['locked'] or 'no reason'}); a live run may own it")
         if a.tree.is_dir():
-            check = subprocess.run([str(PREFLIGHT), "--removal", "--ignored-ok", str(a.tree)],
+            # The preflight sees uncommitted state only; a commit made on the
+            # detached tree that no branch, remote or tag reaches dies with it.
+            loose = subprocess.run(["git", "-C", str(a.tree), "rev-list", "-n1", "HEAD",
+                                    "--not", "--branches", "--remotes", "--tags"],
+                                   capture_output=True, text=True)
+            if loose.returncode != 0 or loose.stdout.strip():
+                sys.stderr.write(loose.stderr)
+                return refuse(f"stale {a.tree} holds a commit not reachable from any "
+                              f"branch, remote or tag; left in place")
+            check =subprocess.run([str(PREFLIGHT), "--removal", "--ignored-ok", str(a.tree)],
                                    capture_output=True, text=True)
             if check.returncode != 0:
                 sys.stderr.write(check.stderr)

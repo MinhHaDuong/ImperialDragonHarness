@@ -34,7 +34,9 @@ the latest of these. During a declared project gate, check the executor's
 worktree with `python3 "$IDH_ROOT/scripts/raid-breaker.py" --worktree <path>
 --last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
 A gate run through `raid-gate.py` has a short-lived heartbeat
-keyed to this worktree. Hunt's own pre-merge-request run is only the fast
+keyed to this worktree. Verify-gate's touched-tests run beats on its own gate
+tree (`gate-<unit>-<session>-r<round>`): check a gate with `--worktree <gate tree>`,
+never the executor's, or a live integration run reads as `STALL`. Hunt's own pre-merge-request run is only the fast
 tier, which stays well inside the ordinary window and carries no heartbeat;
 a project that declares a longer gate runs it through `raid-gate.py`. Another session's gate cannot excuse this executor,
 and a gate in another process namespace is still visible. A heartbeat older
@@ -50,7 +52,7 @@ detached checkout of a pushed head, with no branch to salvage onto. Relaunch
 the gate under the same session (as a `gate-seat` agent, `SKILL.md` § Phase 6);
 `gate_tree.py` replaces the stale tree through the removal preflight, and
 refuses, so the gate escalates, when that round already carries a verdict or
-the tree holds residue.
+the tree holds residue or an unreachable commit.
 A WIP push after the red test improves salvage but does not exempt the later
 gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
