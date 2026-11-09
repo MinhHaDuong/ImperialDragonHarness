@@ -34,8 +34,8 @@ skills/directory
 !bin/**
 !commands/
 !commands/**
-!conception/
-!conception/**
+!design/
+!design/**
 !memory/
 !memory/**
 # Health journal (ticket 1334): one checkup record per harness-doctor visit.
