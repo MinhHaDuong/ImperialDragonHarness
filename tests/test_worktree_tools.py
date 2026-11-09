@@ -1466,7 +1466,7 @@ def test_gc_reclaims_dead_pid_locked_worktree_equal_to_upstream(origin):
     assert git(primary, "rev-parse", "--verify", "-q", "refs/heads/agent-dead-live-branch").returncode == 0
 
 
-@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream"])
+@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream", "ignored-file", "nested-worktree"])
 def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     _, primary = origin
     name = f"agent-keep-{case}"
@@ -1474,6 +1474,19 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     pid = os.getpid() if case == "live-pid" else _dead_pid()
     if case != "unlocked":
         git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {pid})")
+    if case == "ignored-file":
+        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
+        git(wt, "add", "-f", ".gitignore")
+        git(wt, "commit", "-m", "ignore all")
+        git(wt, "push")
+        (wt / "draft.md").write_text("precious\n")
+    if case == "nested-worktree":
+        _ignore_worktree_tmp(primary)
+        common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+        with (common / "info" / "exclude").open("a") as stream:
+            stream.write("/.claude/worktrees/\n")
+        (wt / ".claude" / "worktrees").mkdir(parents=True)
+        (wt / ".claude" / "worktrees" / "inner.txt").write_text("live\n")
     if case == "ahead":
         (wt / "more.txt").write_text("x\n")
         git(wt, "add", "-A")
@@ -1482,6 +1495,8 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     res = _gc(primary)
     assert f"removed {name}" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
+    if case == "ignored-file":
+        assert (wt / "draft.md").read_text() == "precious\n"
 
 
 def test_gc_keeps_pid_1_locked_worktree(origin):

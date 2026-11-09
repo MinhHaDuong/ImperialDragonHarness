@@ -157,7 +157,7 @@ flush() {
         if [ "$locked_flag" -eq 1 ] && [ -n "$dpid" ] && [ "$dpid" -gt 1 ] &&
            ! ps -p "$dpid" -o pid= >/dev/null 2>&1 && [ -n "$up" ] &&
            [ "$up" = "$(git -C "$path" rev-parse --verify -q HEAD 2>/dev/null || true)" ] &&
-           [ -z "$(git -C "$path" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null || echo x)" ]; then
+           ownerless_tree_clean "$path"; then
             branch_kept=1
         else
             report_wip "$path" "$base" || true
