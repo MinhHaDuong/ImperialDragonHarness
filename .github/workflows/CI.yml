@@ -4,8 +4,7 @@ name: CI
 # (scripts/local-ci.sh, which runs this file under workflow_dispatch). The push
 # run is the ex-post record of main on a clean forge runner; workflow_dispatch
 # runs it by hand on any branch. To run it on every pull request again, add
-# `pull_request:` under `on:`. The PR-only collision check is in
-# ticket-collision.yml.
+# `pull_request:` under `on:`.
 on:
   push:
     branches: [main]

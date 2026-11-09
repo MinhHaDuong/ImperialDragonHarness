@@ -1,4 +1,52 @@
 #!/bin/sh
+# >>> erg managed >>>
+# Validate staged .erg files and the corpus.
+erg_files=$(git diff --cached --name-only | grep '\.erg$' || true)
+if [ -n "$erg_files" ]; then
+    if [ -x tickets/erg ]; then
+        # shellcheck disable=SC2086
+        if ! tickets/erg validate $erg_files; then
+            echo "ERROR: ticket validation failed." >&2
+            exit 1
+        fi
+        if ! tickets/erg check tickets/; then
+            echo "ERROR: ticket corpus check failed." >&2
+            exit 1
+        fi
+    else
+        echo "ERROR: tickets/erg not found. Build it from the git-erg source" >&2
+        echo "  (make build there), or 'git pull' if your project vendors the committed binary." >&2
+        exit 1
+    fi
+fi
+
+erg_hook=pre-commit
+# The index keeps the ID claim rules: every ticket number has its claim,
+# and no number is held by two tickets. The index, not the working tree: an
+# untracked claim on disk lets erg check pass while the commit lacks it.
+erg_index=$(git -c core.quotePath=false ls-files -- tickets | awk '
+    /^tickets\/\.claims\/[0-9][0-9][0-9][0-9]$/ { claimed[substr($0, length($0) - 3)] = 1; next }
+    /^tickets\/(.*\/)?[0-9][0-9][0-9][0-9]-[^\/]*\.erg$/ {
+        n = split($0, part, "/")
+        id = substr(part[n], 1, 4)
+        count[id]++
+        held[id] = (count[id] > 1) ? held[id] " " $0 : $0
+    }
+    END {
+        for (id in count) {
+            if (count[id] > 1) print "  " id " is held by " count[id] " tickets: " held[id]
+            else if (!(id in claimed)) print "  " held[id] " has no claim"
+        }
+    }' | sort)
+if [ -n "$erg_index" ]; then
+    echo "$erg_hook: the index breaks the ID claim rules:" >&2
+    echo "$erg_index" >&2
+    echo " Stage each missing claim: git add tickets/.claims/NNNN (none yet? run: tickets/erg migrate --claims tickets)." >&2
+    echo " Renumber all but one ticket of a shared number clear of the frontier ('erg integration')." >&2
+    exit 1
+fi
+# <<< erg managed <<<
+
 # --- main-branch-guard ---
 # Refuse a direct commit on `main` in the PRIMARY checkout. Commits on a
 # branch are fine; commits from any worktree (raid/agent worktrees) are fine
@@ -83,24 +131,3 @@ if [ "${ALLOW_PERSONAL_DATA:-}" != "1" ]; then
 fi
 # --- personal-data-guard ---
 
-# --- git-erg: begin managed block ---
-# Pre-commit hook fragment for git-erg ticket validation.
-# The install script appends this between "# --- git-erg ---" markers,
-# composing safely with any existing pre-commit hook.
-# To install manually, append everything below the shebang to your hook.
-
-# Validate .erg files (if any are staged)
-erg_files=$(git diff --cached --name-only | grep '\.erg$' || true)
-if [ -n "$erg_files" ]; then
-    erg_bin="${ERG:-tickets/erg}"
-    if [ -x "$erg_bin" ]; then
-        if ! "$erg_bin" check tickets/; then
-            echo "ERROR: Ticket validation failed. Fix errors above." >&2
-            exit 1
-        fi
-    else
-        echo "ERROR: erg binary not found. Refresh the vendored binary: git pull (tickets/erg is committed), or build from git-erg source." >&2
-        exit 1
-    fi
-fi
-# --- git-erg: end managed block ---

@@ -347,6 +347,9 @@ def branch_touching(repo, *paths, name="books"):
     [
         ("tickets/1221-x.erg", True),
         ("tickets/closed/1221-x.erg", True),
+        ("tickets/.claims/1221", True),  # ticket 1472: a new ticket lands with its ID claim
+        ("tickets/.claims/.keep", False),
+        ("tickets/.claims/12345", False),
         ("STATE.md", True),
         ("memory/journal/2026-10-26.md", True),
         ("tickets/erg", False),
