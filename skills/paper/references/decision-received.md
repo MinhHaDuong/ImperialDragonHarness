@@ -4,8 +4,8 @@ An editor's decision arrived: accept, minor or major revision, or reject.
 
 ## Registers
 
-- Roadmap: yes, record the decision and the next action ("révision majeure
-  demandée, réponse avant <date>"; or "refusé, cible suivante à choisir").
+- Roadmap: yes, record the decision and the next action ("major revision,
+  reply due <date>"; or "rejected, next venue to choose").
 - Publications list: no change for a revision or a rejection. An acceptance
   continues in `references/accepted.md`.
 
@@ -19,10 +19,10 @@ wastes a session.
 
 1. Paper repo: archive the letter and reports into `release/<date>/` and commit
    them (tracked text). STATE line with the decision and the deadline.
-2. `~/CNRS/papiers/sent/<manuscript>/<date venue decision>/`: the authentic
-   letter and any attached PDFs, with `SHA256SUMS`.
-3. Rejection: the manuscript folder stays in `sent/` until the next submission
-   moves it back to `actif/`.
+2. Manuscript folder, new dated event subfolder: the authentic letter and any
+   attached PDFs, with `SHA256SUMS`.
+3. Rejection: the folder keeps its "sent" state until the next submission
+   moves it back to the working state the local `AGENTS.md` names.
 
 ## Outward gates (who clicks)
 

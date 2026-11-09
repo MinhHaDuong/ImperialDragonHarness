@@ -5,7 +5,7 @@ The venue accepted the paper, or the publisher signed the book contract
 
 ## Registers
 
-- Roadmap: yes, "accepté le <date>, parution prévue <when>".
+- Roadmap: yes, "accepted on <date>, expected in print <when>".
 - Publications list: yes, the work now exists. Create or retype the entry per
   `/update-publist`'s status table (an accepted article leaves the preprint
   type).
@@ -19,14 +19,14 @@ open-access deposit may carry; take it from the last upload, not a rebuild.
 ## Filesystem
 
 1. Paper repo: tag the accepted version, STATE line, release-journal entry.
-2. `~/CNRS/papiers/sent/<manuscript>/<date venue accepted>/`: acceptance mail,
-   accepted manuscript, signed licence or contract, `SHA256SUMS`.
+2. Manuscript folder, new dated event subfolder: acceptance mail, accepted
+   manuscript, signed licence or contract, `SHA256SUMS`.
 
 ## Outward gates (who clicks)
 
 - Publisher forms (licence, copyright transfer, APC waiver): the author.
-- Homepage entry: `/update-publist --page-only`, `make sync` after the author
-  confirms.
+- Homepage entry: `/update-publist --page-only`; its deploy (`make sync`)
+  runs after the author confirms.
 - HAL: deposit or update the author's accepted version via
   `/update-publist --hal-only` (PUT on an existing deposit), embargo per the
   licence. Confirm against How-to 44: this step is inferred, not yet checked

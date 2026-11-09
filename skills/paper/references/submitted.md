@@ -4,7 +4,7 @@ The manuscript has left: uploaded to the venue's platform or mailed.
 
 ## Registers
 
-- Roadmap: yes, the row moves to "soumis à <venue> le <date>".
+- Roadmap: yes, the row moves to "submitted to <venue> on <date>".
 - Publications list: only for a preprint the author chooses to announce, as a
   preprint entry typed per `/update-publist`'s status table. A book proposal or
   a dossier never gets an entry at this stage.
@@ -20,15 +20,16 @@ platform's submission record, not from a fresh build; hash each one.
 1. Paper repo: submission branch, git tag for the event (for instance
    `v1.1-<venue>-submitted`), STATE line, release-journal entry naming the
    platform, the files uploaded, the deposits and the tag.
-2. `~/CNRS/papiers/actif/<manuscript>/<date venue>/`: PDF, cover letter,
-   statements (AI use, data availability), `SHA256SUMS`. Move the manuscript
-   folder to `papiers/sent/` once the submission is acknowledged.
+2. Manuscript folder, new dated event subfolder: PDF, cover letter,
+   statements (AI use, data availability), `SHA256SUMS`. Once the submission
+   is acknowledged, move the folder to the "sent" state the local `AGENTS.md`
+   names.
 
 ## Outward gates (who clicks)
 
 - Platform upload and cover letter: the author.
-- Preprint on the homepage: `/update-publist --page-only`, `make sync` after
-  the author confirms the diff.
+- Preprint on the homepage: `/update-publist --page-only`; its deploy
+  (`make sync`) runs after the author confirms the diff.
 - HAL preprint deposit: `/update-publist --hal-only`, the author approves the
   payload before the POST.
 

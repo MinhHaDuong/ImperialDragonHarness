@@ -4,7 +4,7 @@ A revised manuscript and its response to reviewers have gone back to the venue.
 
 ## Registers
 
-- Roadmap: yes, "révision soumise le <date>".
+- Roadmap: yes, "revision submitted on <date>".
 - Publications list: update an existing preprint entry to the revised version
   only if the author announces revisions; the type follows
   `/update-publist`'s status table.
@@ -18,14 +18,14 @@ tracked-changes PDF. Take them from the platform or sent mail; hash each.
 
 1. Paper repo: tag the event (`v<n>-<venue>-r<round>`), file the response
    letter in `release/<date>/`, STATE line, release-journal entry.
-2. `~/CNRS/papiers/sent/<manuscript>/<date venue r<round>>/`: revised PDF,
-   response letter, diff PDF, `SHA256SUMS`.
+2. Manuscript folder, new dated event subfolder: revised PDF, response
+   letter, diff PDF, `SHA256SUMS`.
 
 ## Outward gates (who clicks)
 
 - Platform upload: the author.
-- Revised preprint on the homepage: `/update-publist --page-only`, `make sync`
-  after the author confirms.
+- Revised preprint on the homepage: `/update-publist --page-only`; its
+  deploy (`make sync`) runs after the author confirms.
 - HAL new version: `/update-publist --hal-only`; an update to an existing
   deposit is a PUT, never a second POST (the procedure lives there).
 
