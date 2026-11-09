@@ -223,6 +223,42 @@ def test_a_removal_that_fails_still_exits_zero(tmp_path):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("jq", [True, False], ids=["jq", "no-jq"])
+def test_clear_keeps_the_dir_other_reasons_remove(tmp_path, jq):
+    """/clear ends the old id but the runtime still advertises its scratchpad
+    to the new session (ticket 1474): keep it; the sweep reclaims it later."""
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    for tool in ("bash", "cat", "tr", "head", "sed", "rm", "rmdir", "id", "jq"):
+        found = shutil.which(tool)
+        if found and (jq or tool != "jq"):
+            (bindir / tool).symlink_to(found)
+    env = {"PATH": str(bindir)}
+
+    root, dirs = _fixture(tmp_path / "clear")
+    result = _run_hook(
+        root, tmp_path, {"session_id": TARGET_SID, "reason": "clear"}, env
+    )
+    assert result.returncode == 0, result.stderr
+    for name, path in dirs.items():
+        assert path.exists(), f"{name} removed on reason=clear"
+
+    for reason in ("logout", "other", "exit"):
+        root, dirs = _fixture(tmp_path / reason)
+        result = _run_hook(
+            root, tmp_path, {"session_id": TARGET_SID, "reason": reason}, env
+        )
+        assert result.returncode == 0, result.stderr
+        assert not dirs["target_a"].exists(), f"kept on reason={reason}"
+        assert dirs["sibling"].exists()
+
+    # No reason field at all: today's removal.
+    root, dirs = _fixture(tmp_path / "noreason")
+    _run_hook(root, tmp_path, {"session_id": TARGET_SID}, env)
+    assert not dirs["target_a"].exists(), "kept on a payload with no reason"
+
+
+@pytest.mark.integration
 def test_a_symlinked_cwd_key_is_not_followed_out_of_the_root(tmp_path):
     """A symlink at the CWD-KEY level must not carry the deletion outside.
 
