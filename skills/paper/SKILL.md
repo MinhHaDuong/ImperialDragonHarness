@@ -48,7 +48,8 @@ time.
   (deploy, deposit, mail). Each checklist names its gates and who clicks.
 - **`/update-publist`** owns the page entry, the HAL deposit and the entry
   types (per `/update-publist`'s status table; never copy it here). Load it and
-  follow its gates; if the runtime refuses the load, ask the author to type it.
+  follow its gates, in the session that talks with the author, never in a
+  delegated worker (the gates ask "the user").
 - **Provenance.** A frozen artifact is the authentic one, fetched from its
   source (mail archive, publisher, HAL, the homepage's hosted file), never
   rebuilt from the repo. Write one `sha256sum` line beside the frozen copy.
