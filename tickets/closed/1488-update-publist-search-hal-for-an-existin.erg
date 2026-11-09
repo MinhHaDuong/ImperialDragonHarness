@@ -1,0 +1,143 @@
+%erg 0.1
+Title: update-publist: search HAL for an existing record before any SWORD POST
+Created: 2026-11-09
+Author: haduong
+Closed: autoclosed — PR #2336
+
+--- log ---
+2026-11-09T17:06Z haduong created
+2026-11-09T18:59Z reviewer raid 681f31: Imagine annotated (reimagine + blind-spot), premise holds, no drift
+2026-11-09T19:00Z reviewer raid 681f31: planned (4 prose files) and feasibility PASS
+2026-11-09T19:14Z reviewer closed — autoclosed — PR #2336
+
+--- body ---
+## Context
+
+2026-11-09, MeSSH slides deposit (hal-05858144): the agent ran the
+pre-upload PDF review, the payload gate and the X-test dry run, then the
+real POST, and only afterwards, on the author's question « t'es sûr que
+c'est pas déjà déposé en une autre version ? », searched HAL, the mail
+archive, the project and the homepage bib for an earlier deposit. None
+existed, but the order was wrong: a second POST creates a duplicate
+record that only a moderator can merge, and the skill's own § 2c says so
+without asking for the search that would prevent it.
+
+## Design
+
+Add a step 2a-0 « Prior record check » to `skills/update-publist/SKILL.md`,
+before the TEI is built, with its own GATE line:
+
+- Public HAL search by author and title words
+  (`authIdHal_s:minh-ha-duong AND title_t:(...)`), and by the companion
+  work's `seeAlso` when the deposit is a slide deck or a translation.
+- The private side the public API does not show: `Ha-Duong.bib` for an
+  `eprint` on the same object or its companion, the project's STATE.md,
+  the dated `release/` folders of the object, the mail archive for a HAL
+  acknowledgement carrying the title (the `email` skill's paths).
+- Outcome written in the release record: `prior_deposit_check` with
+  what was searched and what was found. A hit routes to `PUT
+  /sword/hal/{id}` (new version) or to the author, never to a POST.
+
+## Exit criteria
+
+- [ ] SKILL.md carries the step and its gate, before 2a
+- [ ] The release record template names `prior_deposit_check`
+- [ ] Hygiene tests pass
+
+## Imagine (raid 681f31, 2026-11-09)
+
+Premise holds: no commit on `skills/update-publist/` since the ticket was
+created; open PR #2318 is ticket-only. Reimagine (Sonnet 5.5) and Blind-Spot
+pass (Opus 5.5, three material findings, folded in below).
+
+- **Placement.** One new `### Prior record check (GATE)` section directly
+  after the Step 2 credentials preamble, before « Pre-upload PDF review »:
+  cheapest check, independent of the PDF, and it satisfies « before 2a ».
+  The ticket's « 2a-0 » label is kept only in the section's first line
+  (« step 2a-0 of this skill ») so the exit criterion reads literally.
+- **No script, no test, no helper.** A checklist in prose is proportionate.
+- **The release record template is the release-journal entry** of the
+  paper runbooks (`skills/paper/references/submitted.md:21`, `resubmitted.md:20`,
+  `accepted.md:21`: « naming the platform, the files uploaded, the deposits and
+  the tag »), through which every HAL deposit is routed with
+  `/update-publist --hal-only`. No other template exists in this repository
+  and no `email` skill exists. Criterion 2 is met by (a) defining the
+  `prior_deposit_check` block (searched, found, route: none|PUT|author) in the
+  new step and (b) adding `prior_deposit_check` to those three release-journal
+  lines. The mail archive is named as « the author's mail archive, with
+  whichever mail tool the session has », no invented paths.
+- **The common duplicate is a new version with a stale hal-id**, not a
+  fresh object (§ 2d already says so). A hit yields the `{hal-id}` that § 2c's
+  PUT needs; when the bib `eprint`, STATE.md and HAL disagree, the author
+  decides.
+- **A record under moderation is invisible to the public search API.** A
+  SWORD POST made in this session or in the last days counts as a hit until
+  HAL's mail confirms it. Named limitation: a deposit under another idHal is
+  not caught.
+- **Query syntax verified** on the public API
+  (`authIdHal_s:minh-ha-duong AND title_t:(w1 OR w2)`); use distinctive
+  title words joined by OR. `seeAlso` is not a search field: the companion
+  work is searched by its title or halId.
+- **Review point.** Next `/update-publist` run or ~60 days: does the
+  transcript or release-journal entry carry `prior_deposit_check` before the
+  first POST? No run by then: drop the review.
+
+Drift guard: criteria 1 to 3 kept; the runbook lines are the template
+criterion 2 names, not new scope.
+
+## Plan (raid 681f31)
+
+Prose only; no script, no new test file. Four files.
+
+### Actions
+
+1. `skills/update-publist/SKILL.md`: insert `### Prior record check (GATE)`
+   between the Step 2 credentials preamble (line 96, « Mask `<hal:password>` … »)
+   and `### Pre-upload PDF review (GATE)` (line 98). Content, in this order:
+   - one line: this is step 2a-0 of the skill; it runs before any TEI is
+     built and before the PDF review, because a hit changes the whole route;
+   - public HAL: one `curl` GET on the search API with
+     `q=authIdHal_s:minh-ha-duong AND title_t:(w1 OR w2)`, distinctive title
+     words joined by OR, `fl=halId_s,title_s,docType_s,version_i`; for a
+     slide deck or translation, a second search on the companion work's
+     title or halId;
+   - private side: `~/CNRS/html/src/Ha-Duong.bib` (`eprint` on the object or
+     its companion), the project's `STATE.md`, its dated `release/` folders,
+     the author's mail archive for a HAL acknowledgement carrying the title,
+     with whichever mail tool the session has;
+   - a SWORD POST made in this session or in the last days counts as a hit
+     until HAL's mail confirms it (a record under moderation is not in the
+     public API); a deposit under another idHal is not caught;
+   - the record block, verbatim shape:
+     `prior_deposit_check: searched=[…] found=[hal-id|none] route=none|PUT|author`,
+     shown to the author;
+   - **GATE** line: a hit yields the `{hal-id}` for § 2c's PUT, never a POST;
+     sources that disagree go to the author; `none` allows 2a. No TEI before
+     this block is shown.
+2. Same file, § 2c « Updating an existing deposit » (line 224): add that the
+   `{hal-id}` is the one the Prior record check found.
+3. `skills/paper/references/submitted.md:21-22`, `resubmitted.md:20`,
+   `accepted.md:21`: the release-journal entry also names
+   `prior_deposit_check` (the block of update-publist's step 2a-0).
+   `published.md` has no release-journal line and is left alone.
+
+### First test
+
+No red test exists for prose. Evidence instead, quoted in the merge request:
+- `grep -n "Prior record check\|### 2a\." skills/update-publist/SKILL.md`
+  shows the gate heading before the 2a heading;
+- `grep -rn prior_deposit_check skills/` hits the four files;
+- `python3 scripts/scoped-check.py` (doc-only diff) with `selected:` and
+  `skipped:` quoted, then `make check-fast` green.
+
+### Dependencies
+
+None. PR #2318 (ticket 1484, model-invocation flag) touches no shared line.
+
+## Feasibility (raid 681f31): PASS
+
+Anchors verified on origin/main at fa72bd5f^: SKILL.md lines 96/98/117/224
+as above; the three runbook lines exist; `published.md` carries none. No
+cross-ticket conflict, no shared registry, single-ticket wave. Hygiene
+targets `check-agnostic-skills` and `check-personal-data` do not match idHal
+or HAL URLs the skill already carries.

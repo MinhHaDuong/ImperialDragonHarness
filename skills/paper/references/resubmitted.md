@@ -17,7 +17,8 @@ tracked-changes PDF. Take them from the platform or sent mail; hash each.
 ## Filesystem
 
 1. Paper repo: tag the event (`v<n>-<venue>-r<round>`), file the response
-   letter in `release/<date>/`, STATE line, release-journal entry.
+   letter in `release/<date>/`, STATE line, release-journal entry naming `prior_deposit_check` (the block of
+   update-publist's step 2a-0).
 2. Manuscript folder, new dated event subfolder: revised PDF, response
    letter, diff PDF, `SHA256SUMS`.
 

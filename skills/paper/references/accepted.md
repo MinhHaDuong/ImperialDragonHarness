@@ -18,7 +18,8 @@ open-access deposit may carry; take it from the last upload, not a rebuild.
 
 ## Filesystem
 
-1. Paper repo: tag the accepted version, STATE line, release-journal entry.
+1. Paper repo: tag the accepted version, STATE line, release-journal entry naming `prior_deposit_check` (the block of
+   update-publist's step 2a-0).
 2. Manuscript folder, new dated event subfolder: acceptance mail, accepted
    manuscript, signed licence or contract, `SHA256SUMS`.
 

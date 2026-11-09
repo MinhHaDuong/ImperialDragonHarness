@@ -19,7 +19,8 @@ platform's submission record, not from a fresh build; hash each one.
 
 1. Paper repo: submission branch, git tag for the event (for instance
    `v1.1-<venue>-submitted`), STATE line, release-journal entry naming the
-   platform, the files uploaded, the deposits and the tag.
+   platform, the files uploaded, the deposits, `prior_deposit_check` (the block
+   of update-publist's step 2a-0) and the tag.
 2. Manuscript folder, new dated event subfolder: PDF, cover letter,
    statements (AI use, data availability), `SHA256SUMS`. Once the submission
    is acknowledged, move the folder to the "sent" state the local `AGENTS.md`
