@@ -3,6 +3,7 @@ Title: below-floor housekeeping notes for the next harness tidy
 Created: 2026-11-09
 Author: haduong
 Label: deferred
+Closed: autoclosed — PR #2367
 
 --- log ---
 2026-11-09T19:17Z haduong created
@@ -17,6 +18,7 @@ Label: deferred
 2026-11-09T22:55Z reviewer note 7 (molt step 2 Action plan headings vs probe JSON) fixed: molt says the headings come from yawn's report, not the probe's JSON, and an absent section means nothing to fix
 2026-11-09T22:55Z reviewer note 8 (molt 7 case 1 keeps a worktree for the sweep's own .tmp/) dropped: by design; molt 7 keeps .tmp/ whatever the preflight says and .tmp/ is never purged on its own (ticket 1119), so reversing that is a design call, not a tidy
 2026-11-09T22:55Z reviewer note 9 (raid_land.py armed auto-merge on an ungated base) dropped: by design; merge step 6 prescribes --auto on an ungated base and raid_land documents exit 5 'queued on an ungated base' (6e092f3f); no code change
+2026-11-09T23:02Z reviewer closed — autoclosed — PR #2367
 
 --- body ---
 ## Context
