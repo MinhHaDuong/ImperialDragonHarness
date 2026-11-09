@@ -76,3 +76,51 @@ Queue for the author: (1) delete or keep the audience-excluded notes, default ke
 the CFH remnants, default keep until smelt; (3) git-erg kept on purpose, default yes; (4) turn
 native auto-memory off in v8 projects, default not in this ticket; (5) the harness's own store and
 -home-haduong--claude, default out.
+
+## Plan (raid 829e9e, 2026-11-09)
+Deliverable kind: configuration (runtime memory stores on two hosts) plus records; no code, no test.
+Stores in scope, by (project, host), with the disposition source the invariant reads:
+AEDIST padme 198 / doudou 199 (its SOURCES.md § Per-note dispositions); chemin-de-voix padme 60 /
+doudou 60 (SOURCES.md § Notes natives); fuzzy-corpus padme 16 / doudou 16 (SOURCES.md § Mapping);
+climate-finance-het padme 11 / doudou 310 (memory/imports/claude-code-native/, 103 files, byte match
+only); padme doudou 16 (padme's SOURCES.md; padme's own store was pruned 2026-11-07, 2 notes left).
+Kept, nothing deleted, state recorded: JETP-observer (7 / 6), git-erg (67 / 66), sen-causal-reading
+(padme 0 / doudou 15, never seen by its 2026-11-07 smelt).
+Actions:
+1. Preflight per host: no live Claude Code process whose cwd is under a target project (padme:
+   /proc/<pid>/cwd; doudou: the same over ssh). A live session skips that store on that host for
+   this run; the skip is recorded. At plan time padme has one session in climate-finance-het.
+2. Per store: `git hash-object` every *.md (doudou over ssh, git is present there); test (a) with
+   `git -C /home/haduong/.agents log origin/main --find-object=<sha>` or the same in the project's
+   padme checkout; test (b) by the note's basename in the disposition source. Classify: delete
+   (both pass, disposition consolidated/dropped/tombstone/stale/harness-generic/other project);
+   keep-excluded (SOURCES.md left it out for audience or as personal); keep-no-disposition;
+   keep-no-blob. Write the table to $W/.tmp first, then act.
+3. Native MEMORY.md per store: every line that names no note file is checked by a distinctive
+   phrase against the project's memory/; the rewritten index holds one pointer line to the repo's
+   memory/MEMORY.md with the prune date and this ticket, the index lines of kept notes, and every
+   unmatched free line verbatim.
+4. Scratch copy of each store into $W/.tmp (doudou: tar over ssh) before the deletions; delete the
+   delete set and rewrite the index; recount; the scratch copy is not a deliverable.
+5. Records: memory/journal/2026/2026-11-09-native-store-prune-1481.md on this branch (per store and
+   host: counts deleted and kept, kept names and why, invariant result, skips, the scrub caveat, the
+   superseded keys seen and left alone). In each project whose store changed (AEDIST, chemin-de-voix,
+   fuzzy-corpus, climate-finance-het, padme) and in sen-causal-reading (doudou store never
+   consolidated): one new ticket through that project's `tickets/erg new`, on a branch of that
+   project's checkout, pushed, with a ticket-only PR left open for the author (guards: no other file
+   there). JETP-observer and git-erg: journal only.
+6. Close this ticket on the branch at the end of Verify, per hunt.
+First check (no test to write): run the classification of step 2 on fuzzy-corpus padme and confirm
+it yields 15 delete + MEMORY.md before any deletion; a classification that puts a kept-excluded
+note in the delete set is the wrong-implementation signal.
+Dependencies: ssh doudou (BatchMode, verified), git on doudou (verified), the five project checkouts
+on padme clean on their default branch (verified), tickets/erg in each (verified).
+Antipattern scan: no tautological test (nothing pins the journal's wording); the invariant check is
+positive-controlled by fuzzy-corpus where all 16 match.
+
+## Feasibility (raid 829e9e, 2026-11-09)
+PASS with warnings. Paths and counts verified on both hosts 2026-11-09 17:40Z. WARN: a live Claude
+session sits in climate-finance-het on padme (skip rule, action 1); doudou shows two live claude
+processes whose cwd is not yet read. WARN: doudou's padme (16) and sen-causal-reading (15) stores
+were not in the Imagine scope table; added above. No cross-ticket conflict (single-ticket raid); no
+shared registry.
