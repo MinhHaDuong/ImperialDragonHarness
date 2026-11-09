@@ -3,10 +3,10 @@
 Ticket 1369, run 2026-11-09 on padme. Subject: `design/2026-10-30-harness-government.md`
 (PR #2040). This record holds three reviews as returned, a draft triage table and an
 advisor's row-by-row answer on it. The triage table is a draft by this session's workers,
-made under the author's license of 2026-11-09 to reconsider needs-human; Astra agrees with
-it on five rows and disagrees on F4. It is not the author's triage: exit criterion 2 stays
-open, the triage is the author's, and nothing here marks a follow-up need, want or drop on the author's behalf, and nothing in
-the memo has been implemented, ticketed or written into a rule, skill, guard or memory file.
+made under the author's license of 2026-11-09 to reconsider needs-human; the separate
+Astra advisor check (below) agrees with it on five rows and disagrees on F4. It is not the
+author's triage, and exit criterion 2 stays open. Nothing here marks a follow-up need, want
+or drop on the author's behalf. Nothing in the memo has been implemented, ticketed or written into a rule, skill, guard or memory file.
 
 The author's caution framed every seat: "It is easy to be overenthusiastic about a metaphor."
 
