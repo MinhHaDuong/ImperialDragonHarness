@@ -2221,11 +2221,6 @@ def _filename_title(path: Path) -> str:
     stem = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", path.stem)
     stem = re.sub(r"[-_]+", " ", stem)
     stem = re.sub(r"(?:1[6-9]|20)\d\d\b", " ", stem)
-    # Observed staging annotations, removed only at the end. This is a
-    # search hint, not a parser that claims to identify the document.
-    stem = re.sub(r"\s+(?:(?:GTAP\s+)?WP\d+|R\d+|vol\d+|"
-                  r"chapter\s+\d+|ch\d+|scan|AJAE|(?:libreoffice\s+)?render)$",
-                  "", stem, flags=re.IGNORECASE)
     return " ".join(stem.split())
 
 
