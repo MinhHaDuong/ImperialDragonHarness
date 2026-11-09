@@ -73,17 +73,18 @@ def add(a: argparse.Namespace) -> int:
     if record is not None:
         if "locked" in record:
             return refuse(f"{a.tree} is locked ({record['locked'] or 'no reason'}); a live run may own it")
+        # The preflight sees uncommitted state only; a commit made on the detached
+        # tree that no branch, remote or tag reaches dies with it. The registered
+        # HEAD is read through the repository, so a deleted directory is checked too.
+        loose = subprocess.run(["git", "-C", str(a.repo), "rev-list", "-n1", record.get("HEAD", ""),
+                                "--not", "--branches", "--remotes", "--tags"],
+                               capture_output=True, text=True)
+        if not record.get("HEAD") or loose.returncode != 0 or loose.stdout.strip():
+            sys.stderr.write(loose.stderr)
+            return refuse(f"stale {a.tree} holds a commit not reachable from any "
+                          f"branch, remote or tag; left in place")
         if a.tree.is_dir():
-            # The preflight sees uncommitted state only; a commit made on the
-            # detached tree that no branch, remote or tag reaches dies with it.
-            loose = subprocess.run(["git", "-C", str(a.tree), "rev-list", "-n1", "HEAD",
-                                    "--not", "--branches", "--remotes", "--tags"],
-                                   capture_output=True, text=True)
-            if loose.returncode != 0 or loose.stdout.strip():
-                sys.stderr.write(loose.stderr)
-                return refuse(f"stale {a.tree} holds a commit not reachable from any "
-                              f"branch, remote or tag; left in place")
-            check =subprocess.run([str(PREFLIGHT), "--removal", "--ignored-ok", str(a.tree)],
+            check = subprocess.run([str(PREFLIGHT), "--removal", "--ignored-ok", str(a.tree)],
                                    capture_output=True, text=True)
             if check.returncode != 0:
                 sys.stderr.write(check.stderr)

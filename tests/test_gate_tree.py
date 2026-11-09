@@ -178,3 +178,17 @@ def test_a_commit_only_the_stale_tree_reaches_refuses(tmp_path):
     assert r.returncode == 1
     assert "not reachable" in r.stderr
     assert git(tree, "rev-parse", "HEAD") == local
+
+
+def test_a_missing_tree_whose_head_only_it_reaches_refuses(tmp_path):
+    """Gaze round 2: with the directory gone, git's registration still holds
+    the only reference to a local commit; removing it would drop that commit."""
+    primary = repo(tmp_path)
+    tree = stale(primary)
+    git(tree, "commit", "--allow-empty", "-m", "local only")
+    local = git(tree, "rev-parse", "HEAD")
+    run_checked(["rm", "-rf", str(tree)])
+    r = add(primary, tree)
+    assert r.returncode == 1
+    assert "not reachable" in r.stderr
+    assert local in git(primary, "rev-list", "--all")
