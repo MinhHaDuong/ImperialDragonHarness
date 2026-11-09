@@ -282,3 +282,14 @@ sentence reads true either way; rebase onto `origin/main` before the gate and
 rescan `git diff --name-only origin/main...HEAD`. `skills-catalog.md` is the
 only cross-cutting file: a conflict is resolved by regenerating. Recheck the
 budget with `python3 scripts/resident_census.py` after the rebase.
+
+## Feasibility (raid 8d6894)
+
+PASS. Every path and line cited in Plan exists as described, checked by the
+orchestrator on b2743e9f, except `tests/test_retired_skill_names.py`: the
+`RETIRED` tuple is at line 17, not 19. `update-publist` facts confirmed:
+`disable-model-invocation: true` (line 6), `--page-only`/`--hal-only` (lines
+8, 15-16), PUT-not-second-POST (lines 224-226). `adapters/lifecycle.py:83-88`
+creates projection links, `:233` is `prune_dangling`. Single ticket: no
+cross-ticket conflict, no cross-cutting registry edited by 3+ PRs, so no
+coordination PR.
