@@ -2,11 +2,13 @@
 Title: update-publist: search HAL for an existing record before any SWORD POST
 Created: 2026-11-09
 Author: haduong
+Closed: autoclosed — PR #2336
 
 --- log ---
 2026-11-09T17:06Z haduong created
 2026-11-09T18:59Z reviewer raid 681f31: Imagine annotated (reimagine + blind-spot), premise holds, no drift
 2026-11-09T19:00Z reviewer raid 681f31: planned (4 prose files) and feasibility PASS
+2026-11-09T19:14Z reviewer closed — autoclosed — PR #2336
 
 --- body ---
 ## Context
