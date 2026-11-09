@@ -2,6 +2,7 @@
 Title: paper: manuscript lifecycle skill, rename submission-event, stage checklists
 Created: 2026-11-09
 Author: haduong
+Closed: autoclosed — PR #2325
 
 --- log ---
 2026-11-09T15:45Z haduong created
@@ -12,6 +13,7 @@ Author: haduong
 2026-11-09T17:00Z reviewer note verify-reroll — round 1: criterion "An AGENTS.md in ~/CNRS/papiers/ holds what is local ..., the skill reads it ..." MISSING (AGENTS.md and memory-file move are CNRS-project work, not in this diff); criterion "/paper <paper> published dry run ... lands on nothing to do except HAL" MISSING (padme trace reads unknown/to do)
 2026-11-09T17:07Z reviewer note criterion 1 evidence: ~/CNRS/papiers/AGENTS.md on doudou (3241 bytes, 2026-11-09 17:33, names /paper and ticket 1483) holds the local conventions; memory project-cnrs-filing-convention.md reduced to a pointer the same minute; skill side in 1ca7c66f
 2026-11-09T17:07Z reviewer note author decision A (2026-11-09): criterion 5 live positive control moved to ticket 1489; no CNRS ticket store exists, the harness carries it
+2026-11-09T17:07Z reviewer closed — autoclosed — PR #2325
 
 --- body ---
 ## Context
