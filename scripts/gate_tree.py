@@ -47,14 +47,23 @@ def registered(repo: Path, tree: Path) -> dict | None:
 
 
 def ruled(state_file: Path | None, session: str, rnd: int) -> bool:
+    """True when the gate state records a verdict for this session and round.
+    An unreadable state raises ValueError: no proof that the round is unruled."""
     if state_file is None:
         return False
-    verdicts = json.loads(state_file.read_text()).get("verdicts") or []
-    return any(v.get("session") == session and v.get("round") == rnd for v in verdicts)
+    try:
+        verdicts = json.loads(state_file.read_text()).get("verdicts") or []
+        return any(v.get("session") == session and v.get("round") == rnd for v in verdicts)
+    except (OSError, ValueError, AttributeError) as error:
+        raise ValueError(f"unreadable gate state {state_file}: {error}") from error
 
 
 def add(a: argparse.Namespace) -> int:
-    if ruled(a.gate_state, a.session, a.round):
+    try:
+        done_round = ruled(a.gate_state, a.session, a.round)
+    except ValueError as error:
+        return refuse(str(error))
+    if done_round:
         return refuse(f"a verdict is already recorded for session {a.session} round {a.round}; "
                       f"not replacing {a.tree}")
     record = registered(a.repo, a.tree)
