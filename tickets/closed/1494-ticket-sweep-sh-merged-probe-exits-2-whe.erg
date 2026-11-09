@@ -2,11 +2,13 @@
 Title: ticket-sweep.sh merged-probe exits 2 where git or the forge can settle
 Created: 2026-11-09
 Author: haduong
+Closed: closed at merge — PR #2347
 
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
+2026-11-09T21:18Z reviewer closed — closed at merge — PR #2347
 
 --- body ---
 ## Context
