@@ -1,0 +1,35 @@
+%erg 0.1
+Title: on-end.sh deletes the scratch dir on /clear while the runtime still advertises it
+Created: 2026-11-09
+Author: claude
+
+--- log ---
+2026-11-09T10:43Z claude created
+
+--- body ---
+## Context
+Observed in sen-causal-reading on padme, 2026-11-09. After `/clear`, the
+runtime started a new session id (transcripts: `b33fb9a4-…` before, `53df30ba-…`
+after). `/clear` fires SessionEnd for the old id, and `scripts/on-end.sh`
+removes `<temp-root>/<cwd-key>/<old-id>/` unconditionally. The new session's
+system prompt still advertised `…/b33fb9a4-…/scratchpad` as its scratchpad, so
+the first write to it failed (`No such file or directory`); the runtime later
+withdrew the path. The new session's own directory existed and worked.
+
+Cause, established from the transcripts and the hook source: the hook treats
+`/clear` like an exit; the runtime advertises the previous id's scratchpad
+across `/clear`. The second half is runtime behaviour outside the harness.
+
+Author's view (2026-11-09): a runtime command such as `/clear` should not
+delete a directory.
+
+## Proposed fix
+`on-end.sh` reads `reason` from the SessionEnd payload and skips removal when
+it is `clear`; `session_scratch.py --sweep` (molt step 1.7) reclaims the
+directory once no live process holds it.
+
+## Exit criteria
+- [ ] `on-end.sh` keeps the directory when the payload's `reason` is `clear`,
+      and removes it for other reasons as today
+- [ ] Test covering both payloads
+- [ ] The sweep still reclaims a cleared session's directory once orphaned

@@ -1,0 +1,26 @@
+%erg 0.1
+Title: molt step 6: merge directly on a base with no checks instead of arming auto-merge
+Created: 2026-11-09
+Author: claude
+
+--- log ---
+2026-11-09T10:43Z claude created
+
+--- body ---
+## Context
+Reported from sen-causal-reading, 2026-11-09 (housekeeping PR #154 there).
+`skills/molt/SKILL.md` step 6 says, for an ungated base, "enable auto-merge so
+it lands after CI". That repo has no CI and `allow_auto_merge: false`, so
+`gh pr merge --auto` fails ("Auto merge is not allowed for this repository")
+on every sweep before the direct merge succeeds. `skills/merge/SKILL.md`
+step 6 already allows a direct merge "where the repo has auto-merge off and
+every check is done"; molt's shortcut does not defer to it.
+
+Author decision (2026-11-09): leave auto-merge off on repos without CI; fix
+the skill, not the repo settings. No installer step should toggle it.
+
+## Exit criteria
+- [ ] molt step 6 lands an ungated request by `skills/merge/SKILL.md` step 6
+      (direct merge when the repo has no checks or auto-merge is off) rather
+      than restating "enable auto-merge"
+- [ ] No other skill arms auto-merge on a repo where it is disabled
