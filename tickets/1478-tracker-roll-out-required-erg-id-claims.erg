@@ -16,14 +16,19 @@ Author: reviewer
 2026-11-09T12:19Z reviewer hazard: doudou cadens also had a dead core.hooksPath; check every clone on both hosts
 2026-11-09T12:19Z reviewer JETP-observer: own session, PR #285 open (310 claims)
 2026-11-09T12:19Z reviewer wave 2 launched 2026-11-09: quiet repos (one agent) and harness 1472 (hunt, PR left for the session to gate)
+2026-11-09T12:25Z reviewer pin moved to 6a104262 (rev 2d0dbea) by author decision: git-erg #399 drops the managed-block rule that forced --no-verify
+2026-11-09T12:25Z reviewer padme DONE (own session): PR #244 merged 00952e4, 85 claims, hooks tested; pending doudou clone; host PATH erg tracked in padme 0110, refreshed by the harness after 1472
+2026-11-09T12:25Z reviewer JETP-observer DONE (own session): PR #285 merged 6795e309, 310 claims, hooks chained; pending doudou clone pull, its PR #266 (merge main + migrate)
+2026-11-09T12:25Z reviewer quiet wave DONE on dafb1d48: archiveCIRED #71, fuzzy-corpus #66, aedist-technical-report #1184, chemin-de-voix #176, gavard #8, polycentric_activity #210; clones fixed: padme archiveCIRED, doudou Fuzzy Corpus, aedist-technical-report-git, aedist, polycentric_activity
+2026-11-09T12:25Z reviewer left for the author: padme fuzzy-corpus, AEDIST-technical-report, chemin-de-voix primaries dirty with an unfinished memory-v8 deployment (tickets/erg, .erg-assets, AGENTS.md, untracked *-déployer-la-mémoire-v8.erg) and dead core.hooksPath; doudou chemin-de-voix diverged (2 local Release commits); doudou gavard has docs/missing-papers.html modified
 
 --- body ---
 ## Context
 Author decision relayed by the git-erg session (2026-11-09): the harness drives the rollout of
 required ID claims (git-erg 0306/0307) to every erg store on padme and doudou. Pin, not release:
 every repo takes the binary with sha256
-`dafb1d48f2ce5b380e790244d958678b9eea307d9d16588c1358dddf4dc15a58` (git-erg rev 8d24e74,
-commit aee15dd); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
+`6a10426263e7571a054557df8965229c92fb87540b07059279f3d20f56c58991` (git-erg rev 2d0dbea,
+commit ab519a3; moved by author decision 2026-11-09 from dafb1d48/8d24e74, which forced --no-verify); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
 git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 
 ## Recipe (one PR per repo, one host, fresh worktree)
@@ -35,7 +40,8 @@ git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
    616b023: DOIfetch; 5158508: archiveCIRED; 8331a94: cadens; doudou-only repos: check
    `tickets/erg --help`). 3. check `tickets/erg version` shows the sha256
 4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init` (a locally edited `.ergrc` is kept; one WARN stays)
-6. tracked core.hooksPath: `tickets/erg install --hooks`, review the chaining, commit it
+6. `tickets/erg install --hooks` (rewrites an old managed block, so the commit passes; no --no-verify);
+   tracked core.hooksPath: stage the hook change in the PR worktree, review the chaining
 7. the repo's own gate; 8. merge by the repo's process.
 After landing: every other clone pulls; per-clone hooks run `tickets/erg install --hooks`.
 Branch cut before migration: rebase, `tickets/erg migrate --claims tickets`, commit. Duplicate
@@ -73,3 +79,10 @@ its own session, or one launched there; the harness tracks, it does not edit oth
 - [ ] every store above has `tickets/.claims/` on its default branch with the pinned binary
 - [ ] clone sweep done on both hosts; per-clone hooks installed where needed
 - [ ] blockers reported to the author one at a time
+
+## Pin history
+- dafb1d48 (8d24e74): sen-causal-reading #165, padme #244, JETP-observer #285, cadens #71,
+  archiveCIRED #71, fuzzy-corpus #66, aedist-technical-report #1184, chemin-de-voix #176,
+  gavard-schoch-2026-comment #8, polycentric_activity #210. They stay; next binary refresh takes the
+  current pin by the same order (import, install --hooks, commit).
+- 6a104262 (2d0dbea): every repo not yet migrated.
