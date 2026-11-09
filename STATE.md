@@ -12,6 +12,6 @@ Merging: the before-merge record is the cheap set; the main-update hook starts t
 Review flows (design/2026-10-27-review-merge-flows.md): F1 default, gaze answers and verify-gate verdicts on `refs/notes/review`, pushed at landing, the PR comment a pointer; F2 (local gated merge) only for repositories with no origin remote. Web sessions read and relay-publish (outcome B).
 DOIfetch: not installed by `idh install` (1343); the zotero skill runs it on demand with `uvx` at the pinned tag `v0.2.0` (unsigned, author ruling 2026-10-29), with open sources first and shadow sources as fallback.
 Agent credential (1196): Claude Code shells use a fine-grained PAT through `~/.config/gh-agent` (no admin; owner login for the author's acts). Codex and Pi get it through the `codex`/`pi` wrappers in `scripts/shell-init.sh` (1284); launches outside them stay on the owner login. `refs/notes/*` is not protected by the forge ruleset.
-Resident rules (ruleset review 2026-11-01): the budget counts loaded text, HTML comments stripped (cap 15100); they reach Codex and Pi via generated `~/.codex/AGENTS.md` / `~/.pi/agent/AGENTS.md` (1424); `pi --print` needs stdin closed.
+Resident rules (ruleset review 2026-11-01): the budget counts loaded text, HTML comments stripped (cap 15186); they reach Codex and Pi via generated `~/.codex/AGENTS.md` / `~/.pi/agent/AGENTS.md` (1424); `pi --print` needs stdin closed.
 Model-service transmission authorization prints in every session's start context (PR #1783); whether Codex's managed approval reviewer reads it is untested.
 
