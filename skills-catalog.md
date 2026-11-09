@@ -57,8 +57,8 @@
 | [`/biblio-saturation`](skills/biblio-saturation/SKILL.md) | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | [`/critical-lit-review`](skills/critical-lit-review/SKILL.md) | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | [`/reading-note`](skills/reading-note/SKILL.md) | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
-| [`/related-work-note`](skills/related-work-note/SKILL.md) | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
-| [`/zotero`](skills/zotero/SKILL.md) | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API. |
+| [`/related-work-note`](skills/related-work-note/SKILL.md) | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist. |
+| [`/zotero`](skills/zotero/SKILL.md) | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files. |
 
 ### Reviewing
 
@@ -66,7 +66,7 @@
 |---------|-------------|
 | [`/external-peer-review`](skills/external-peer-review/SKILL.md) | Obtain independent AI peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings. |
 | [`/manuscript-review`](skills/manuscript-review/SKILL.md) | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
-| [`/ingest-decision-letter`](skills/ingest-decision-letter/SKILL.md) | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket. Helps streamline Revise-and-Resubmit. |
+| [`/ingest-decision-letter`](skills/ingest-decision-letter/SKILL.md) | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket, for a Revise-and-Resubmit. |
 
 ### Writing and delivery
 
@@ -87,5 +87,6 @@
 | [`/conference-submission-prep`](skills/conference-submission-prep/SKILL.md) | Prepare a humanities and social sciences conference submission from its call for papers. Use once venue is chosen and key messages are framed. |
 | [`/mission`](skills/mission/SKILL.md) | Walk one stage of a work trip (prepare, check, return): dossier, receipts, report, gates. |
 | [`/paper`](skills/paper/SKILL.md) | Run a manuscript lifecycle event (submitted, decision-received, resubmitted, accepted, published): register choice, files, outward gates. |
+| [`/post`](skills/post/SKILL.md) | Walk one blog post or op-ed through a stage (draft, publish, archive): PDF, HAL, gates. |
 | [`/release`](skills/release/SKILL.md) | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | [`/update-publist`](skills/update-publist/SKILL.md) | Add or update a publication on the author's personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |

@@ -2,6 +2,7 @@
 Title: post: blog post and op-ed lifecycle skill (draft, publish, archive) behind paper and mission
 Created: 2026-11-09
 Author: haduong
+Closed: autoclosed — PR #2342
 
 --- log ---
 2026-11-09T16:22Z haduong created
@@ -10,6 +11,13 @@ Author: haduong
 2026-11-09T19:46Z reviewer note blocker 1485 closed — Blocked-by removed.
 2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: clone /mission's shape; carnet and missions live on doudou, read over ssh for the dry-run traces; /update-publist has no post or op-ed row (Blind-Spot): posts deposit by the carnet recipe, op-eds via /update-publist OTHER with the gap named; census freed by trimming cards; exit criteria unchanged
 2026-11-09T20:05Z reviewer raid 4afdb3 feasibility PASS: /mission template, update-publist table :37-44 (no post or op-ed row), census BUDGETS['skills']=6300 at :65 with the channel at 6297 measured, the three trim texts verbatim at ingest-decision-letter:6 related-work-note:5 zotero:5, no test cites them, Makefile targets present, /post description 87 chars; WARN: the Jéco folder is on doudou at ~/CNRS/missions/done/Conférences/Lyon 2026-11-03 Jéco/ (result.json: hal-05847469v1, homepage_entry_verified true), the 2026-11-06 post is already archived; both read over ssh only
+2026-11-09T20:12Z reviewer note carnet AGENTS.md line, for the author or a carnet session to land at the head of 'Procedure, once per billet': "The stages and gates of this procedure (draft, publish, archive) are also run by the harness skill /post, which reads this file for the places and recipes; the recipes below stay authoritative."
+2026-11-09T20:12Z reviewer note follow-up, author's call, not done here: /update-publist has no row for a blog post or an op-ed (OTHER deposit has no recipe outside the Jéco one-off); the carnet names the bibliography ~/CNRS/html/Ha-Duong.bib, /update-publist src/Ha-Duong.bib; archive.md defers to the local AGENTS.md
+2026-11-09T20:12Z reviewer note traces (read over ssh doudou, read-only): A, post 2026-11-06: carnet steps 0-7 each map to archive.md items 1-7 (gabarit in item 1) with folder evidence (print.md, PDF, hal-meta.xml, hal-response.xml, wp-post-442.json, journal.md:399, backlog.md:219); B, Jéco tribune: result.json homepage_entry_verified true, hal-05847469v1 (OTHER), so the stop rule fires: nothing to do except the roadmap check; Jéco row present in Feuille de route 2026.odt Archive section. Live runs post-merge on doudou.
+2026-11-09T20:15Z reviewer note cross-project route: the carnet (~/CNRS/projets/actifs/realf.hypotheses.org on doudou) has no tickets/ store and is not a git repository (checked over ssh with a positive control), so the AGENTS.md line above is reported to the author in the hand-back, not written into the carnet (rules/guards.md: an unreachable destination is reported)
+2026-11-09T20:17Z reviewer note exit criteria 1 and 6 (the carnet AGENTS.md line) are handed to the author: the text is delivered verbatim above and in the PR body; the carnet is outside this repo and has no ticket store. Criteria 2, 3, 4, 5 and 7 are met on this branch
+2026-11-09T20:28Z reviewer closed — autoclosed — PR #2342
+2026-11-09T20:35Z reviewer note verify-reroll — round 1: criterion 'The carnet's AGENTS.md points at /post in one line, its recipes unchanged' MISSING (doudou ~/CNRS/projets/actifs/realf.hypotheses.org/AGENTS.md, 19267 B, dated 2026-10-09, has no /post line; the author lands the line given in the PR body, 1483 precedent; no branch change needed)
 
 --- body ---
 ## Context
