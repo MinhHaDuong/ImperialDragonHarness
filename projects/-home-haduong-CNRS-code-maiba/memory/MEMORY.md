@@ -1,5 +1,0 @@
-- [Use rispy for RIS parsing](feedback_use_rispy.md)
-- [Orchestrator: serialize tickets](feedback_orchestrator_sequential.md)
-- [Persistent-state writes are opt-in](feedback_state_opt_in.md)
-- [Spike unverified library APIs](feedback_spike_before_implement.md)
-- [Bundle imports with usage in one Edit](feedback_formatter_strips_imports.md)

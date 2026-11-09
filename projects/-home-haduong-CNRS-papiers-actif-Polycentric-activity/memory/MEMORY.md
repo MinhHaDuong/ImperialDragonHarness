@@ -1,1 +1,0 @@
-- [Récolte bibliographique horde + bibCNRS](bibcnrs-harvest-workflow.md)
