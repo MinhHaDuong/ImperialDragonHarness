@@ -39,6 +39,7 @@ Author: reviewer
 2026-11-09T14:35Z reviewer note raid 632b19: the padme remainder (swz #639 verdict+merge, rebase+migrate swz #632 #633 #635 #638 #640 and DOIfetch #45, clone sweep) could not be launched from the harness session — auto-mode classifier denied the cross-repo agent twice; left for sessions in those repos
 2026-11-09T15:29Z reviewer note raid 632b19, restart by author 2026-11-09: swz #639 reviewed by the harness session itself (383/383 claims, pin 513cd3c4, diff = claims + erg files, check-fast 1596 passed), but the auto-mode classifier refused posting the self-review verdict and the merge (Auto-Mode Bypass / Merge Without Review); #639 left OPEN for the author; swz #632 #633 #635 #638 #640 wait on it
 2026-11-09T15:30Z reviewer note raid 632b19: DOIfetch #45 found already MERGED on the forge when the restart reached it; nothing to rebase; DOIfetch main claims/tickets counted in this log's companion line
+2026-11-09T16:01Z reviewer note raid 632b19, 1478 restart outcome: swz #639 MERGED by its own session at 15:48 (cb0c5293; step-8 commit 580371d2 took pin 89952604; 386 claims on main) before the author's pinned merge ran; #633 #635 #638 #640 also merged there; #632 brought onto main by merge (head 5b958987, claims already on main, plain push: a rebase + force-with-lease was refused as Git Destructive); new #641 left to its lane; padme ~/data/search-works-for-zotero clone on main but 4 dirty files and 2099 behind: left for the author; doudou clone not reached from this session
 
 --- body ---
 ## Context
