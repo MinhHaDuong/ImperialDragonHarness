@@ -9,6 +9,7 @@ Author: haduong
 2026-11-09T17:07Z reviewer note blocker 1483 closed — Blocked-by removed.
 2026-11-09T19:46Z reviewer note blocker 1485 closed — Blocked-by removed.
 2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: clone /mission's shape; carnet and missions live on doudou, read over ssh for the dry-run traces; /update-publist has no post or op-ed row (Blind-Spot): posts deposit by the carnet recipe, op-eds via /update-publist OTHER with the gap named; census freed by trimming cards; exit criteria unchanged
+2026-11-09T20:05Z reviewer raid 4afdb3 feasibility PASS: /mission template, update-publist table :37-44 (no post or op-ed row), census BUDGETS['skills']=6300 at :65 with the channel at 6297 measured, the three trim texts verbatim at ingest-decision-letter:6 related-work-note:5 zotero:5, no test cites them, Makefile targets present, /post description 87 chars; WARN: the Jéco folder is on doudou at ~/CNRS/missions/done/Conférences/Lyon 2026-11-03 Jéco/ (result.json: hal-05847469v1, homepage_entry_verified true), the 2026-11-06 post is already archived; both read over ssh only
 
 --- body ---
 ## Context

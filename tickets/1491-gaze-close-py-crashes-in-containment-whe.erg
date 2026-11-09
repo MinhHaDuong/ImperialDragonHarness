@@ -7,6 +7,7 @@ Author: reviewer
 2026-11-09T19:13Z reviewer created
 2026-11-09T19:14Z reviewer Second occurrence, same minute: search-works-for-zotero PR #648 gaze (run gz-20261109T190745214Z-a472) crashed at the same line on the same vanished session tree (.claude/worktrees/t0774-288575-4791) after cleanup had removed the review worktree. Recovery that worked within the 15-minute deadline, as a recipe until the fix lands: gaze_setup.py <pr> again from the primary checkout (recreates review-<pr> with an entry-state whose session tree exists), seat_clock.py plan-write with the same arguments, deterministic check items re-run, seat reports restored from raw/<host>/seat-raw/<raw_id>-<seat>.raw with the launcher header (worker: model=<pin> ...) replacing the seat's self-reported first line plus the .md.status line, then gaze_close.py once more: answer 20261109T191430318Z-padme-0e1fd56f recorded in rv-20261109-pr-648-f9d6, pointer posted, containment clean. The recovery re-files, it does not re-review; the answer text says so.
 2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: non-raising containment() with a 'session worktree gone' flag, no primary substitution, cwd-inside-removed-tree case added by the Blind-Spot pass; exit criteria unchanged
+2026-11-09T20:05Z reviewer raid 4afdb3 feasibility PASS: every path, line and helper the plan cites exists (containment() :258, cwd read :371, exit-4 return :440, test helpers, caller-worktree pattern :242-252); WARN: cleanup.md heading is 'Containment postcondition' (line 30), not 'Containment'
 
 --- body ---
 
