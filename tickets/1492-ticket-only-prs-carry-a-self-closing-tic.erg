@@ -1,0 +1,41 @@
+%erg 0.1
+Title: ticket-only PRs carry a self-closing Ticket close claim on the ticket they create
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T19:17Z haduong created
+
+--- body ---
+## Context
+
+Found by the 14-repo housekeeping sweep of 2026-11-09 (19:05-19:15 UTC, run
+from the ~/CNRS session). The ticket-only PRs that the harness 1481
+native-prune rollout filed in adopter repos carry a `**Ticket:** NNNN` line
+naming the very ticket the PR creates. The `/merge` close step runs
+`erg close` on the ticket named by `**Ticket:**`, so landing such a PR by the
+merge skill closes the new ticket at birth with its exit criteria unmet.
+
+## Evidence
+
+- fuzzy-corpus #74 and sen-causal-reading #171: merged, after review seats
+  rewrote the line to `Ticket-ref:` by hand.
+- chemin-de-voix #185 (ticket 0262): open, blocked on the close claim.
+- padme #258 (ticket 0112): open, blocked on the close claim.
+- AEDIST-technical-report #1198: open, blocked on the close claim, and it
+  also reuses ticket number 0690 already on main, so it conflicts add/add on
+  `tickets/.claims/0690`.
+
+## Diagnosis
+
+Established: the five PRs above carry `**Ticket:**` on the ticket they create
+(two repaired by hand, three still open). Not established: which step of the
+1481 filing flow writes the line (template, script or agent prompt), and how
+the AEDIST PR picked a number already claimed on main (stale base or no
+`erg next-id` against origin).
+
+## Exit criteria
+
+- [ ] The ticket-filing flow writes `Ticket-ref:`, not `**Ticket:**`, on a PR that creates the ticket
+- [ ] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 are repaired (close claim rewritten; AEDIST renumbered off 0690)
+- [ ] A test covers the filing flow's PR-body line
