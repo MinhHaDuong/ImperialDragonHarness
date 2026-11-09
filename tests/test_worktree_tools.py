@@ -801,6 +801,7 @@ def test_preflight_passes_on_ignored_caches_only(origin):
     (wt / "__pycache__" / "m.pyc").write_bytes(b"\0")
     (wt / ".venv" / "bin").mkdir(parents=True)
     (wt / ".venv" / "bin" / "python").write_text("")
+    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
     res = _preflight(wt)
     assert res.returncode == 0, res.stderr
@@ -824,6 +825,7 @@ def test_preflight_passes_on_uv_run_build_output(origin, egg):
     (wt / ".pytest_cache" / "README.md").write_text("")
     (wt / ".venv" / "bin").mkdir(parents=True)
     (wt / ".venv" / "bin" / "python").write_text("")
+    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
     res = _preflight(wt)
     assert res.returncode == 0, res.stderr
@@ -1466,7 +1468,30 @@ def test_gc_reclaims_dead_pid_locked_worktree_equal_to_upstream(origin):
     assert git(primary, "rev-parse", "--verify", "-q", "refs/heads/agent-dead-live-branch").returncode == 0
 
 
-@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream", "ignored-file", "nested-worktree"])
+def _ignored_venv(wt):
+    """A committed .gitignore hides .venv/; give it a plain venv shape."""
+    (wt / ".gitignore").write_text(".venv/\n")
+    git(wt, "add", ".gitignore")
+    git(wt, "commit", "-m", "ignore venv")
+    git(wt, "push")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
+
+
+def test_gc_reclaims_dead_pid_locked_worktree_with_disposable_ignored_venv(origin):
+    """Positive control: a venv holding only usual entries is regenerable."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-dead-venv")
+    _ignored_venv(wt)
+    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
+
+    res = _gc(primary)
+    assert "removed agent-dead-venv (dead-pid lock" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream", "ignored-file", "nested-worktree", "ignored-venv-handmade"])
 def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     _, primary = origin
     name = f"agent-keep-{case}"
@@ -1480,6 +1505,9 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
         git(wt, "commit", "-m", "ignore all")
         git(wt, "push")
         (wt / "draft.md").write_text("precious\n")
+    if case == "ignored-venv-handmade":
+        _ignored_venv(wt)
+        (wt / ".venv" / "notes.txt").write_text("precious\n")
     if case == "nested-worktree":
         _ignore_worktree_tmp(primary)
         common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
@@ -1497,6 +1525,8 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     assert str(wt) in _worktree_paths(primary)
     if case == "ignored-file":
         assert (wt / "draft.md").read_text() == "precious\n"
+    if case == "ignored-venv-handmade":
+        assert (wt / ".venv" / "notes.txt").read_text() == "precious\n"
 
 
 def test_gc_keeps_pid_1_locked_worktree(origin):
@@ -1697,6 +1727,7 @@ def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
     (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
     (wt / ".venv" / "bin").mkdir(parents=True)
     (wt / ".venv" / "bin" / "python").write_text("")
+    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
     _age_worktree_metadata(wt, 100)
 
     res = _gc(primary)

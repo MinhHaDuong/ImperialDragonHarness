@@ -6,7 +6,7 @@ set -euo pipefail
 # worktree_residue <path> prints, one per line, every status entry that
 # removing the tree would destroy and that is not disposable: anything
 # modified, staged or untracked, and any ignored path except regenerable
-# caches (the root .venv/, rebuilt from the lock, tool caches anywhere, and
+# caches (the root .venv/, rebuilt from the lock, when it passes the shape check below, ignored or not, tool caches anywhere, and
 # the *.egg-info/ setuptools rebuilds on every `uv run`) and .tmp/ (its own
 # guard decides). Git prints an ignored directory as one `!! build/` entry, so
 # that entry is expanded: only its lib*, bdist.* and temp.* children (setuptools
@@ -95,7 +95,10 @@ worktree_residue() {
                     continue
                 fi
                 case "/$p" in
-                    /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
+                    /.venv/*) [ "$venv_ok" -eq 1 ] && continue ;;
+                esac
+                case "/$p" in
+                    /.tmp/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
                 esac ;;
         esac
         if [[ "$line" == '!! '* ]] && python3 "$(dirname "${BASH_SOURCE[0]}")/worktree_setup_copy.py" "$1" "$p"; then
