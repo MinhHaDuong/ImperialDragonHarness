@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-09T12:11Z reviewer created
+2026-11-09T13:53Z reviewer note raid 632b19 — Imagine+Blind-Spot annotated; plan written; feasibility PASS
 
 --- body ---
 ## Context
@@ -38,3 +39,57 @@ in scripts (21 files), skills (19), tests (16), projects/ (16), memory topics, a
       remaining hit is listed in the PR as deliberate
 - [ ] `make check` passes
 - [ ] The cross-project alignment tickets cite this ticket and can start once it lands
+
+## Imagine (raid 632b19, 2026-11-09)
+Shape: one PR, two commits. (a) `git mv conception design` plus the `.gitignore` allowlist
+swap (`!conception/` → `!design/`); renames only, so `-M100%` and `--follow` hold; red on
+its own and says so. (b) one path-scoped reference sweep (rules/workflow.md rename rule).
+No redirect README, no symlink: no runtime consumer found, and both would pollute the
+exit-criterion grep. Playbook: `memory/journal/2026/2026-10-27-docs-to-conception-pr1744.md`
+(the docs/→conception/ move): rewrite by exact name, restore hash-pinned records byte-identical.
+
+Runtime paths that break silently if missed: `.gitignore:37-38`, `scripts/census/deps.py:28`,
+`scripts/trace_ab_harvest.py:223-224` (+ skills/trace-doctor/SKILL.md), `scripts/check-personal-data.sh:6,10`,
+`scripts/local-ci-negative-controls.sh:59`, `memory/MEMORY.md:4-5` (live link into memory-v8).
+Link-mapping tests: `tests/test_memory_v8_pilot.py:70` and `tests/test_dream_v8.py:182` map
+docs/X→conception/X; they must now send docs/X and conception/X → design/X so frozen journal
+and evidence links (15 relative links under memory/) stay as written and the relocation test
+stays green. `tests/test_retired_skill_names.py:5` exemption → design/.
+
+Frozen, left as written: tickets/closed, memory/journal, memory/smelts, memory/evidence
+(attribution anchors like `conception/README.md:3`), projects/* (ticket 1480's territory),
+commit messages, dated memos inside the moved tree, the French word (tests/test_gaze_prose_routing.py),
+`memory/.provenance.json` slug, tests/fixtures (sha256-pinned), and `adapters/codex/hooks.json:2`
+(the description string is part of the trusted hook definition; listed as a deliberate remainder).
+
+Transitional wording, both directions since some projects (padme 0111) aligned first:
+`rules/prose-adherence-tests.md:5,18`, `rules/README.md:32`, `skills/gaze/references/prose-panel.md:22-23`
+name `design/editorial-brief.md`, falling back to `conception/` until the alignment tickets close.
+The "projects/ registry entries" decision is vacuous: no registry or installer template names the
+harness conception/; the PR says so.
+
+Byte-compare: `diff <(git ls-tree -r BASE:conception) <(git ls-tree -r A:design)` empty, and
+`git diff --summary -M100% BASE A` shows 312 renames and nothing else (plumbing, not rtk counts).
+Generated: `make skills-catalog` expected no-op, then `make check-skills-drift`; `python3 -m json.tool`
+on edited adapters/*.json.
+
+Later review: at the next molt sweep ~2026-11-23 or when the alignment tickets close, rerun the
+sweep across projects; then drop the transitional `conception/` fallback with a log line here.
+Blind-Spot pass: 3 material findings (playbook, link-mapping chain, pinned files), folded above.
+
+## Plan
+Actions, in the hunt worktree:
+1. Commit (a): `git mv conception design`; swap the two `.gitignore` lines; run the byte-compare.
+2. Commit (b): sweep `conception/` → `design/` on the live pathspec only
+   (`':!tickets/closed' ':!memory/journal' ':!memory/smelts' ':!memory/evidence' ':!projects' ':!tests/fixtures' ':!adapters/codex/hooks.json' ':!memory/.provenance.json'`,
+   slash-terminated pattern, French word excluded), review the diff for `design/design`
+   and relative-link depth; chain the two test mappings; retitle the two prose-panel spots
+   with the fallback wording; fix relative links inside design/ live docs (README, template, index).
+3. First test (red before step 2, green after): `uv run pytest tests/test_memory_v8_pilot.py tests/test_dream_v8.py -m integration`
+   fails on the journal links after commit (a) alone (positive control), passes after the mapping chain.
+4. `make check`; `scripts/local-ci-negative-controls.sh`; the remainder grep pasted in the PR as deliberate.
+Dependencies: none. Ticket 1480 stays separate.
+
+## Feasibility
+PASS — paths checked on base 24ebc840 by the Imagine and Blind-Spot seats (file:line cited above).
+No cross-ticket conflict: single-ticket wave; open PR #2308 adds nothing under conception/.
