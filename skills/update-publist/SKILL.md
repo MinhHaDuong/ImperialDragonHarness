@@ -3,7 +3,7 @@ metadata:
   category: publication
 name: update-publist
 description: "Add or update a publication on the author's personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call."
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pdf-path> [--hal-only] [--page-only]"
 ---
@@ -222,6 +222,11 @@ curl -K "$TMPCONFIG" \
   -H 'Packaging: http://purl.org/net/sword-types/AOfr' \
   --data-binary @deposit.zip
 ```
+
+For a zip package sent with PUT (an update of an existing deposit), the
+`Content-Disposition` filename must be the XML name (`meta.xml`), not the zip's;
+HAL otherwise answers 400 `content-disposition header missing or mismatched`
+(verified on hal-05570600 v3, 2026-11-09). The POST example above is unchanged.
 
 Where `$TMPCONFIG` is created with `mktemp` in `/tmp` (outside the
 repo tree), chmod-600'd, and cleaned up via `trap 'rm -f "$TMPCONFIG"' EXIT`
