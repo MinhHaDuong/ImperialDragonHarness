@@ -468,7 +468,11 @@ def red_repo(tmp_path, monkeypatch, module):
     config = json.loads((work / ".merge-gate.json").read_text())
     config["before"] = ["always-pass"]
     (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
-    git(work, "commit", "-q", "-am", "before set")
+    # A claims store (ticket 1472): the vendored erg requires tickets/.claims/.
+    (work / "tickets" / ".claims").mkdir(parents=True)
+    (work / "tickets" / ".claims" / ".keep").write_text("", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "before set, claims store")
     git(work, "push", "-q", "origin", "main")
     monkeypatch.chdir(work)
     return work
@@ -503,6 +507,8 @@ def test_a_red_record_opens_one_ticket_and_a_second_red_run_opens_none(red_repo,
     assert f"Last green after-merge tip: {green}" in text
     for merge in (first, tip):
         assert merge[:12] in text
+    claim = git(work, "show", f"origin/main:tickets/.claims/{name[:4]}")  # ticket 1472: landed with its ID claim
+    assert claim.startswith(f"after-merge-red-{tip[:12]} "), claim
     tree = tmp_path / "check-tree"
     git(work, "worktree", "add", "-q", "--detach", str(tree), "origin/main")
     proc = subprocess.run([str(ERG), "check", str(tree / "tickets")], capture_output=True, text=True,

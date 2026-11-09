@@ -113,7 +113,7 @@ PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # Bookkeeping paths, the one home of the list (ticket 1221). A pattern ending
 # in "/" covers its whole subtree; any other matches segment by segment, so
 # "tickets/*.erg" does not reach tickets/erg (code) or tickets/closed/.
-BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "STATE.md", "memory/")
+BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "tickets/.claims/[0-9][0-9][0-9][0-9]", "STATE.md", "memory/")
 BOOKKEEPING_TIER = "bookkeeping"
 BEFORE_SCOPE = "before-merge"  # scope suffix of a `run` record when "before" is declared (ticket 1245)
 AFTER_SCOPE = "after-merge"  # scope suffix of a run-after record (ticket 1244)
@@ -994,8 +994,15 @@ def open_red_ticket(report, results, tip, forge, remote, base, config=None):
             path = tree / "tickets" / f"{number}-after-merge-red-{tip[:12]}.erg"
             path.write_text(red_ticket_text(report, results), encoding="utf-8")
             run_in(tree, erg, "validate", str(path))
+            staged = [path]
+            claims = tree / "tickets" / ".claims"
+            if claims.is_dir():  # an ID-claims store (ticket 1472): the number lands with its claim
+                claim = claims / number
+                with claim.open("x", encoding="utf-8") as fh:
+                    fh.write(f"{path.stem.split('-', 1)[1]} {os.urandom(4).hex()}\n")
+                staged.append(claim)
             title = f"ticket({number}): after-merge red on main {tip[:12]}: {', '.join(key)}"
-            run_in(tree, "git", "add", str(path.relative_to(tree)))
+            run_in(tree, "git", "add", *(str(p.relative_to(tree)) for p in staged))
             run_in(tree, "git", "commit", "-q", "-m", f"{title}\n\nOpened by merge-gate.py run-after (ticket 1251).")
             # A plain push: an existing red-<tip12> (another failing set on this tip) is never overwritten.
             run_in(tree, "git", "push", "-q", remote, f"HEAD:refs/heads/{branch}")
