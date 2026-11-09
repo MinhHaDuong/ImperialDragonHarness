@@ -177,6 +177,7 @@ def test_hunt_tmp_exclude_registration_uses_shared_git_metadata(origin):
     common = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
     rules = (common / "info" / "exclude").read_text().splitlines()
     assert rules.count("/.tmp/") == 1
+    assert rules.count("/.claude/worktrees/") == 1
     (wt / ".tmp").mkdir()
     (wt / ".tmp" / "ignored.txt").write_text("scratch\n")
     assert git(wt, "status", "--porcelain", "--untracked-files=all").stdout.strip() == ""
@@ -1443,6 +1444,44 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert f"unlocked agent-dead-lock (lock pid {dead.pid} dead" in res.stdout
     assert "removed agent-dead-lock" in res.stdout
     assert str(wt) not in _worktree_paths(primary)
+
+
+def _dead_pid():
+    dead = subprocess.Popen(["true"], env=child_env())
+    dead.wait()
+    return dead.pid
+
+
+def test_gc_reclaims_dead_pid_locked_worktree_equal_to_upstream(origin):
+    """Ticket 1495: a dead-pid lock on a clean tree at its upstream holds no
+    unique work; the worktree goes, the live branch stays."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-dead-live-branch")
+    git(primary, "worktree", "lock", str(wt), "--reason",
+        f"hunt t1 (pid {_dead_pid()})")
+
+    res = _gc(primary)
+    assert "removed agent-dead-live-branch (dead-pid lock, branch" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+    assert git(primary, "rev-parse", "--verify", "-q", "refs/heads/agent-dead-live-branch").returncode == 0
+
+
+@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream"])
+def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
+    _, primary = origin
+    name = f"agent-keep-{case}"
+    wt = make_agent_worktree(primary, name, dirty=(case == "dirty"), push=(case != "no-upstream"))
+    pid = os.getpid() if case == "live-pid" else _dead_pid()
+    if case != "unlocked":
+        git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {pid})")
+    if case == "ahead":
+        (wt / "more.txt").write_text("x\n")
+        git(wt, "add", "-A")
+        git(wt, "commit", "-m", "unpushed")
+
+    res = _gc(primary)
+    assert f"removed {name}" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
 
 
 def test_gc_keeps_pid_1_locked_worktree(origin):

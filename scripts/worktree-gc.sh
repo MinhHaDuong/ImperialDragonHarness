@@ -28,6 +28,9 @@ set -euo pipefail
 # the worktree — branches and commits survive — and we never rm -rf, so a
 # mistaken removal loses no history. Idempotent. Relies on the caller having
 # run `git fetch --prune` first (housekeeping / molt do).
+# One exception to the upstream-gone rail: a dead-pid (> 1) locked worktree
+# whose tree is clean and whose HEAD equals its upstream is removed with its
+# branch kept (ticket 1495); all other rails apply.
 # Also report-only surfaces "husk" dirs under .claude/worktrees/ — directories
 # that are no longer registered worktrees (a session base cwd deregistered
 # mid-session) — which the registered pass cannot see. Husks are never removed
@@ -62,6 +65,19 @@ idle_hours() {
 }
 
 . "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
+
+# The single pid a lock reason records: exactly one `(pid N` with N at most
+# 4194304 (the Linux pid_max ceiling); a second group or an out-of-range
+# number reads as no recorded pid, never as a dead one. Prints N or nothing.
+lock_reason_pid() {
+    local reason="$1" n
+    if [[ "$reason" =~ \(pid\ ([0-9]{1,7})([^0-9]|$) ]] &&
+       [[ "${reason#*"(pid"}" != *"(pid"* ]]; then
+        n=$((10#${BASH_REMATCH[1]}))
+        [ "$n" -le 4194304 ] && echo "$n"
+    fi
+    return 0
+}
 
 # Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
 # first removal candidate — a quiet repo never pays for it. One python3 call
@@ -129,9 +145,24 @@ flush() {
     # 'gone' = the branch had an upstream that no longer exists (merged + pruned).
     local track
     track=$(git -C "$repo" for-each-ref --format='%(upstream:track)' "refs/heads/$branch" 2>/dev/null || true)
+    # A live branch is kept, with one exception: a worktree locked by a dead
+    # pid (> 1) whose tree is clean and whose HEAD equals its upstream holds
+    # no work that exists only here (ticket 1495). It is reclaimed like a
+    # gone one, the branch kept; every later rail still applies.
+    local branch_kept=0
     if [ "$track" != "[gone]" ]; then
-        report_wip "$path" "$base" || true
-        reset; return
+        local dpid up
+        dpid=$(lock_reason_pid "$lock_reason")
+        up=$(git -C "$repo" rev-parse --verify -q "$branch@{upstream}" 2>/dev/null || true)
+        if [ "$locked_flag" -eq 1 ] && [ -n "$dpid" ] && [ "$dpid" -gt 1 ] &&
+           ! ps -p "$dpid" -o pid= >/dev/null 2>&1 && [ -n "$up" ] &&
+           [ "$up" = "$(git -C "$path" rev-parse --verify -q HEAD 2>/dev/null || true)" ] &&
+           [ -z "$(git -C "$path" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null || echo x)" ]; then
+            branch_kept=1
+        else
+            report_wip "$path" "$base" || true
+            reset; return
+        fi
     fi
     # The tree is now a removal candidate. Never remove one that is a live
     # process's cwd: that process is an active session based there, whatever
@@ -169,15 +200,8 @@ flush() {
     # the two harness owner-less shapes below.
     local unlock_at_removal=0 stale_why=""
     if [ "$locked_flag" -eq 1 ]; then
-        # Exactly one `(pid N` with N at most 4194304 (the Linux pid_max
-        # ceiling); a second group or an out-of-range number reads as no
-        # recorded pid, never as a dead one.
-        local lock_pid=""
-        if [[ "$lock_reason" =~ \(pid\ ([0-9]{1,7})([^0-9]|$) ]] &&
-           [[ "${lock_reason#*"(pid"}" != *"(pid"* ]]; then
-            lock_pid=$((10#${BASH_REMATCH[1]}))
-            [ "$lock_pid" -le 4194304 ] || lock_pid=""
-        fi
+        local lock_pid
+        lock_pid=$(lock_reason_pid "$lock_reason")
         # Pid 1 names no owner either: `$PPID` reads 1 inside a pid
         # namespace (a sandboxed runtime), whose session may still be live
         # and invisible to the live-cwd rail. The harness writes two such
@@ -284,7 +308,11 @@ flush() {
         echo "worktree-gc: unlocked $base (lock $stale_why — stale marker)"
     fi
     if git -C "$repo" worktree remove "$path" 2>/dev/null; then
-        echo "worktree-gc: removed $base (branch '$branch' gone)"
+        if [ "$branch_kept" -eq 1 ]; then
+            echo "worktree-gc: removed $base (dead-pid lock, branch '$branch' kept at its upstream)"
+        else
+            echo "worktree-gc: removed $base (branch '$branch' gone)"
+        fi
         removed=$((removed + 1))
     else
         echo "worktree-gc: could not remove $base — left in place" >&2
