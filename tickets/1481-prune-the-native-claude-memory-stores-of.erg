@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-09T13:53Z reviewer created
+2026-11-09T14:35Z reviewer note from 1480 Imagine (raid 632b19): the harness key -home-haduong--claude (139 notes) was never consolidated into memory-v8 (design/memory-v8/source-inventory.md:22,85); once 1480 untracks projects/, it survives only in padme's ~/.claude/projects store and git history — not a backup to prune against
 
 --- body ---
 ## Context
