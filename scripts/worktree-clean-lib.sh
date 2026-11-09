@@ -6,14 +6,15 @@ set -euo pipefail
 # worktree_residue <path> prints, one per line, every status entry that
 # removing the tree would destroy and that is not disposable: anything
 # modified, staged or untracked, and any ignored path except regenerable
-# caches (the root .venv/, rebuilt from the lock, tool caches anywhere, and
+# caches (the root .venv/, rebuilt from the lock, when it passes the shape check below, ignored or not, tool caches anywhere, and
 # the *.egg-info/ setuptools rebuilds on every `uv run`) and .tmp/ (its own
 # guard decides). Git prints an ignored directory as one `!! build/` entry, so
 # that entry is expanded: only its lib*, bdist.* and temp.* children (setuptools
 # output) are tolerated, a hand-made build/notes.txt stays residue. An untracked
 # root .venv holding a regular pyvenv.cfg is tolerated too, provided its
 # top level holds only usual venv entries (pyvenv.cfg, bin, Scripts, lib, lib64,
-# include, share, .gitignore, CACHEDIR.TAG); any other entry is residue and the
+# include, share, .gitignore, CACHEDIR.TAG, and the .lock uv sync and uv run
+# write); any other entry is residue and the
 # whole .venv is kept. worktree_scrub deletes it, since git refuses to remove a
 # tree holding untracked files. A build/ child (lib*, bdist.*, temp.*) is
 # regenerable only when every file in it is build output: its bytes are
@@ -44,7 +45,7 @@ _venv_disposable() {
     for e in "$v"/* "$v"/.[!.]*; do
         [ -e "$e" ] || [ -L "$e" ] || continue
         case "${e##*/}" in
-            pyvenv.cfg|bin|Scripts|lib|lib64|include|share|.gitignore|CACHEDIR.TAG) ;;
+            pyvenv.cfg|bin|Scripts|lib|lib64|include|share|.gitignore|CACHEDIR.TAG|.lock) ;;
             *) return 1 ;;
         esac
     done
@@ -95,7 +96,10 @@ worktree_residue() {
                     continue
                 fi
                 case "/$p" in
-                    /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
+                    /.venv/*) [ "$venv_ok" -eq 1 ] && continue ;;
+                esac
+                case "/$p" in
+                    /.tmp/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*|*.egg-info/*) continue ;;
                 esac ;;
         esac
         if [[ "$line" == '!! '* ]] && python3 "$(dirname "${BASH_SOURCE[0]}")/worktree_setup_copy.py" "$1" "$p"; then

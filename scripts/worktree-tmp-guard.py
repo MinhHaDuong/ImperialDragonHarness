@@ -51,13 +51,14 @@ def register_tmp_exclude(worktree_arg: Path) -> int:
             fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
             stream.seek(0)
             lines = stream.read().splitlines()
-            if "/.tmp/" not in lines:
+            missing = [rule for rule in ("/.tmp/", "/.claude/worktrees/") if rule not in lines]
+            if missing:
                 stream.seek(0, os.SEEK_END)
-                stream.write("\n/.tmp/\n")
+                stream.write("\n" + "\n".join(missing) + "\n")
                 stream.flush()
     except OSError as exc:
-        raise Blocked(f"could not register /.tmp/ in common info/exclude: {exc}") from exc
-    print(f"{PREFIX} registered /.tmp/ in {exclude}")
+        raise Blocked(f"could not register exclude rules in common info/exclude: {exc}") from exc
+    print(f"{PREFIX} registered /.tmp/ and /.claude/worktrees/ in {exclude}")
     return 0
 
 
