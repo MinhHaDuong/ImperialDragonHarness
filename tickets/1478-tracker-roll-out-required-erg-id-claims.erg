@@ -32,6 +32,7 @@ Author: reviewer
 2026-11-09T12:47Z reviewer padme 0110 closed (padme PR #249): ~/.local/bin/erg refreshed to dafb1d48 on padme and doudou (author decision: replace, not delete); doudou did carry the stale 4776df5d in ~/.local/bin (a non-interactive ssh PATH hides it), so 'doudou has none' no longer holds; backups in ~/.local/share/erg-backup/
 2026-11-09T13:28Z git-erg pin move asked by git-erg (author decision 2026-11-09, relayed): new pin 89952604da1d46ad532573a5907512070ee580ff9bb8fb99d3757d00a0ff4101 (git-erg rev 4f2326e, commit a387c41); only change since 513cd3c4: the managed pre-commit block prints only the ERG CHECK count line on a passing check, full output on failure (git-erg 0313, PR #405); repos already on 513cd3c4: take the new binary, then tickets/erg install --hooks in every clone (the hook text is written at install time); git-erg itself done (hooks reinstalled, 2 lines per ticket commit instead of 267)
 2026-11-09T13:21Z reviewer pin now lives in scripts/erg-pin (ticket 1479); Context and recipe step 3 cite it; history lines keep their hashes
+2026-11-09T13:38Z reviewer child 1479 closed by PR #2303 (main 8e984793): pin in scripts/erg-pin (89952604, rev 4f2326e); yawn check 10b reports drift per repo and host; harness tickets/erg and padme PATH erg read drifted until the refresh PR; tracker stays open on its rollout exit criteria
 
 --- body ---
 ## Context
