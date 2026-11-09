@@ -26,8 +26,12 @@ This skill is user-level and must **gracefully degrade**: each check runs only i
 First, run the mechanical probe to collect structured state:
 
 ```bash
-python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --tests
+python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --tests --tests-timeout <seconds>
 ```
+
+Set `<seconds>` below the wall-clock limit of the call that runs the probe (the
+probe cannot know it); the default is 300. A run past the budget reports
+`tests.status: timeout`, never `fail`.
 
 Parse the JSON output. Use its fields to populate checks 1–12 below without re-running git commands — the probe covers everything through check 10 and checks 12–13; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
 
@@ -39,7 +43,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
    ```bash
    git rev-list --left-right --count main...origin/main
    ```
-   Flag `warn` if local main is behind origin/main (needs pull) or ahead (unpushed commits on main).
+   Report `git.diverged` (ahead and behind both nonzero) as `warn: diverged`, and `git.upstream: false` as "no upstream", never as synced. Flag `warn` if local main is behind origin/main (needs pull) or ahead (unpushed commits on main).
 4. **Branch hygiene** — from `branches.local` / `branches.remote` / `branches.details`. For each local branch:
    - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
    - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:

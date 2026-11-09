@@ -27,7 +27,11 @@ SCRATCH_ORPHAN_SAMPLE = 20
 # "fail"/"timeout" for suites that pass (2026-09-28 healthcheck); test runs
 # pass their own budget.
 PROBE_TIMEOUT = 30
+# Fallback only: the caller that owns the outer wall-clock limit passes its own
+# budget with --tests-timeout (ticket 1493); no constant here tracks that limit.
 TEST_TIMEOUT = 300
+# Exit code run() reports for a timed-out subprocess (the `timeout(1)` value).
+TIMEOUT_RC = 124
 
 
 def run(args, cwd, timeout=PROBE_TIMEOUT):
@@ -40,7 +44,7 @@ def run(args, cwd, timeout=PROBE_TIMEOUT):
 
         print(f"WARNING: subprocess timed out: {args}", file=sys.stderr)
         return subprocess.CompletedProcess(
-            args=args, returncode=1, stdout="", stderr="timeout"
+            args=args, returncode=TIMEOUT_RC, stdout="", stderr="timeout"
         )
 
 
@@ -58,10 +62,12 @@ def git_state(project):
 
     lr = run(["git", "rev-list", "--left-right", "--count", "HEAD...@{u}"], project)
     ahead, behind = 0, 0
+    upstream = False  # an unresolvable @{u} is not "0/0 synced"
     if lr.returncode == 0:
         parts = lr.stdout.strip().split()
         if len(parts) == 2:
             ahead, behind = int(parts[0]), int(parts[1])
+            upstream = True
 
     log_r = run(
         ["git", "log", "--since=12 hours ago", "--format=%H\t%ct\t%s"],
@@ -87,6 +93,8 @@ def git_state(project):
         "dirty_files": dirty_files,
         "ahead": ahead,
         "behind": behind,
+        "upstream": upstream,
+        "diverged": ahead > 0 and behind > 0,
         "recent_commits": recent_commits,
     }
 
@@ -290,7 +298,34 @@ def worktree_state(project):
     return worktrees
 
 
-def test_state(project):
+_MAKE_TARGETS = ("check-fast", "check", "test")
+
+
+def _pick_runner(project):
+    """(argv, runner name) the project declares, else (None, None).
+
+    Order: Makefile target (check-fast, check, test), then `uv run pytest` when
+    uv.lock or pyproject.toml exists and uv is on PATH, then bare pytest, then
+    npm. Bare pytest in a uv project fails collection on missing dependencies.
+    """
+    makefile = project / "Makefile"
+    if makefile.exists():
+        content = makefile.read_text(errors="replace")
+        for target in _MAKE_TARGETS:
+            if re.search(rf"^{re.escape(target)}\s*:", content, re.M):
+                return ["make", target], "make"
+    pyproject = (project / "pyproject.toml").exists()
+    if pyproject or (project / "setup.py").exists() or (project / "uv.lock").exists():
+        if (pyproject or (project / "uv.lock").exists()) and shutil.which("uv"):
+            frozen = ["--frozen"] if (project / "uv.lock").exists() else []
+            return ["uv", "run", *frozen, "pytest", "--tb=no", "-q"], "uv"
+        return ["pytest", "--tb=no", "-q"], "pytest"
+    if (project / "package.json").exists():
+        return ["npm", "test"], "npm"
+    return None, None
+
+
+def test_state(project, budget=TEST_TIMEOUT):
     # Yawn relies on the project's clean-checkout test-target contract. Check
     # here, immediately before runner selection, rather than reuse an older
     # git_state snapshot collected by another thread.
@@ -299,56 +334,21 @@ def test_state(project):
         return {"runner": "none", "status": "skip", "detail": "git status unreadable"}
     if status.stdout.strip():
         return {"runner": "none", "status": "skip", "detail": "dirty tree"}
-    makefile = project / "Makefile"
-    if makefile.exists():
-        content = makefile.read_text(errors="replace")
-        if "check-fast" in content:
-            target = "check-fast"
-        elif "check:" in content:
-            target = "check"
-        elif "test" in content:
-            target = "test"
-        else:
-            return {
-                "runner": "none",
-                "status": "skip",
-                "detail": "no test target in Makefile",
-            }
-        r = run(["make", target], project, timeout=TEST_TIMEOUT)
-        return {
-            "runner": "make",
-            "status": "pass" if r.returncode == 0 else "fail",
-            "detail": r.stdout.strip().splitlines()[-1]
-            if r.stdout.strip()
-            else r.stderr.strip().splitlines()[-1]
-            if r.stderr.strip()
-            else "",
-        }
-
-    if (project / "pyproject.toml").exists() or (project / "setup.py").exists():
-        try:
-            r = run(["pytest", "--tb=no", "-q"], project, timeout=TEST_TIMEOUT)
-            last_line = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""
-            return {
-                "runner": "pytest",
-                "status": "pass" if r.returncode == 0 else "fail",
-                "detail": last_line,
-            }
-        except FileNotFoundError:
-            return {"runner": "pytest", "status": "skip", "detail": "pytest not found"}
-
-    if (project / "package.json").exists():
-        try:
-            r = run(["npm", "test"], project, timeout=TEST_TIMEOUT)
-            return {
-                "runner": "npm",
-                "status": "pass" if r.returncode == 0 else "fail",
-                "detail": r.stdout.strip().splitlines()[-1] if r.stdout.strip() else "",
-            }
-        except FileNotFoundError:
-            return {"runner": "npm", "status": "skip", "detail": "npm not found"}
-
-    return {"runner": "none", "status": "skip", "detail": "no test runner detected"}
+    argv, runner = _pick_runner(project)
+    if argv is None:
+        return {"runner": "none", "status": "skip", "detail": "no test runner detected"}
+    try:
+        r = run(argv, project, timeout=budget)
+    except FileNotFoundError:
+        return {"runner": runner, "status": "skip", "detail": f"{argv[0]} not found"}
+    if r.returncode == TIMEOUT_RC and r.stderr.strip() == "timeout":
+        return {"runner": runner, "status": "timeout", "detail": f"timeout after {budget}s"}
+    lines = r.stdout.strip().splitlines() or r.stderr.strip().splitlines()
+    return {
+        "runner": runner,
+        "status": "pass" if r.returncode == 0 else "fail",
+        "detail": lines[-1] if lines else "",
+    }
 
 
 def hooks_state(project):
@@ -569,6 +569,13 @@ def main():
         "--tests", action="store_true", help="Run test suite (may be slow)"
     )
     parser.add_argument(
+        "--tests-timeout",
+        type=int,
+        default=TEST_TIMEOUT,
+        metavar="SECONDS",
+        help="Budget for the test run; the caller sets it below its own outer limit",
+    )
+    parser.add_argument(
         "--fingerprint",
         action="store_true",
         help="Print only the state fingerprint (fast; molt compares it)",
@@ -606,7 +613,7 @@ def main():
 
     if args.tests:
         try:
-            out["tests"] = test_state(project)
+            out["tests"] = test_state(project, args.tests_timeout)
         except Exception as e:
             out["tests"] = {"error": repr(e)}
     else:
