@@ -12,6 +12,7 @@ Label: needs-human
 2026-11-09T21:53Z reviewer step 2 Astra seat (codex header: gpt-6-astra @high, OpenAI; session 01a1c249), same brief, independent: KEEP, TRIMMED
 2026-11-09T21:53Z reviewer step 3 KISS seat (observed claude-opus-5-5, Anthropic; same family as Fable and the coder): VOCABULARY ONLY
 2026-11-09T21:53Z reviewer step 4 prepared, not decided: draft triage table + Astra row-by-row check (AGREE F1 F2 F3 F5 F6, DISAGREE F4 -> DROP) in design/2026-11-09-harness-government-cooldown-review.md
+2026-11-09T22:38Z reviewer note verify-reroll — round 1: PR body close-claim line not canonical
 
 --- body ---
 ## Context
