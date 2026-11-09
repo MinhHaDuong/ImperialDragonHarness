@@ -10,6 +10,8 @@ Author: haduong
 2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
 2026-11-09T16:49Z reviewer execute (raid 8d6894): skill paper + five references (same seven headings), submission-event retired with no alias (RETIRED in test_retired_skill_names; red then green), catalog regenerated, census skills 6201/6300. Criterion 6 skill side done (places read from the papers directory's AGENTS.md; no ~/CNRS path in skills/paper); the AGENTS.md itself is CNRS content on doudou, draft in the merge request. Criterion 4 open: padme text-trace in the merge request, live run on doudou after idh install. make check: 3499 passed, 4 failed only under TMPDIR inside the worktree, pass with default TMPDIR.
 2026-11-09T17:00Z reviewer note verify-reroll — round 1: criterion "An AGENTS.md in ~/CNRS/papiers/ holds what is local ..., the skill reads it ..." MISSING (AGENTS.md and memory-file move are CNRS-project work, not in this diff); criterion "/paper <paper> published dry run ... lands on nothing to do except HAL" MISSING (padme trace reads unknown/to do)
+2026-11-09T17:07Z reviewer note criterion 1 evidence: ~/CNRS/papiers/AGENTS.md on doudou (3241 bytes, 2026-11-09 17:33, names /paper and ticket 1483) holds the local conventions; memory project-cnrs-filing-convention.md reduced to a pointer the same minute; skill side in 1ca7c66f
+2026-11-09T17:07Z reviewer note author decision A (2026-11-09): criterion 5 live positive control moved to ticket 1489; no CNRS ticket store exists, the harness carries it
 
 --- body ---
 ## Context
@@ -61,11 +63,11 @@ Memory: `~/.claude/projects/-home-haduong-CNRS/memory/reference-realf-howto-44-r
 
 ## Exit criteria
 
-- [ ] An AGENTS.md in ~/CNRS/papiers/ holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. Moves the filing convention out of the memory file `project-cnrs-filing-convention.md` into the directory.
+- [x] An AGENTS.md in ~/CNRS/papiers/ holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. Moves the filing convention out of the memory file `project-cnrs-filing-convention.md` into the directory.
 - [x] `skills/paper/SKILL.md` exists, `skills/submission-event/` is gone, catalog and rules/README updated, hygiene tests pass
 - [x] Five stage checklists in `skills/paper/references/`, each with the sections above
 - [x] The `published` checklist reproduces the 2026-11-09 steps and would have left nothing for the agent to discover
-- [ ] `/paper <paper> published` dry run on the data paper lands on "nothing to do except HAL" (positive control)
+- [x] `/paper <paper> published` dry run on the data paper lands on "nothing to do except HAL" (positive control): moved to ticket 1489 (doudou act after merge), author's decision A, 2026-11-09
 - [x] `make check` passes
 
 ## Imagine
