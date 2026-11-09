@@ -33,6 +33,9 @@ Author: reviewer
 2026-11-09T13:28Z git-erg pin move asked by git-erg (author decision 2026-11-09, relayed): new pin 89952604da1d46ad532573a5907512070ee580ff9bb8fb99d3757d00a0ff4101 (git-erg rev 4f2326e, commit a387c41); only change since 513cd3c4: the managed pre-commit block prints only the ERG CHECK count line on a passing check, full output on failure (git-erg 0313, PR #405); repos already on 513cd3c4: take the new binary, then tickets/erg install --hooks in every clone (the hook text is written at install time); git-erg itself done (hooks reinstalled, 2 lines per ticket commit instead of 267)
 2026-11-09T13:21Z reviewer pin now lives in scripts/erg-pin (ticket 1479); Context and recipe step 3 cite it; history lines keep their hashes
 2026-11-09T13:38Z reviewer child 1479 closed by PR #2303 (main 8e984793): pin in scripts/erg-pin (89952604, rev 4f2326e); yawn check 10b reports drift per repo and host; harness tickets/erg and padme PATH erg read drifted until the refresh PR; tracker stays open on its rollout exit criteria
+2026-11-09T13:53Z reviewer remaining 2026-11-09 evening: search-works-for-zotero #639 (migration) + #640 (ticket 0829, HF_TOKEN env leak in its bench) + #638 wait a recorded review verdict; then #632 #633 #635 rebase + migrate --claims; DOIfetch #45 rebase + migrate; doudou askMinh and html not migrated (dirty primaries; html untracked ticket 0028 needs a claim before the next commit); climate-finance-het with its own session
+2026-11-09T13:53Z reviewer pin now 89952604 (scripts/erg-pin): harness refreshed by PR #2307 and padme PATH erg; every other migrated repo refreshes via yawn 10b drift + molt, then install --hooks in each clone; no fan-out (author-visible choice 2026-11-09)
+2026-11-09T13:53Z reviewer memory v8 deployed today in fuzzy-corpus (#68), chemin-de-voix (#179), aedist-technical-report (#1187); follow-up tickets filed there: fuzzy-corpus 0055, chemin-de-voix 0261, aedist 0688
 
 --- body ---
 ## Context
