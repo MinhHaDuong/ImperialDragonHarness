@@ -49,7 +49,7 @@ never the model's to write; the line is also printed on stdout, before
 cleanup, for the caller's return text and a blocked-cleanup ESCALATE. The line is also printed on stdout, before cleanup, so a blocked cleanup
 still gives the calling gaze the line to paste. It may also hold `{{duration}}` and
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
-(ESCALATE answer recorded with its attribution; 2 when the answer also failed or a seat line failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (result still recorded).
+(ESCALATE answer recorded with its attribution; 2 when the answer also failed or a seat line failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged, an entry session worktree that is gone included (result still recorded).
 
 Every unit records its result in refs/notes/review (ticket 1273 for `branch:<name>`,
 ticket 1300 for a PR number): the attribution lines and the result text go into one
@@ -259,12 +259,19 @@ def containment(primary, entry_branch, entry_status=(), entry_primary=(), sessio
     """Return (flags, report). Flags are the findings to surface; the caller's
     own uncommitted work at entry is not contamination. The session worktree is the one
     gaze_setup recorded (ticket 1356), never wherever the runtime moved the shell; an entry
-    state without it (legacy) reads the cwd."""
+    state without it (legacy) reads the cwd. A recorded session tree that no longer exists is a
+    finding (ticket 1491), never a crash: nothing is read from it, and the primary is not
+    substituted for it (its branch is main, not the entry branch)."""
     flags = []
     cwd = session_tree or None
-    _, top = git("rev-parse", "--show-toplevel", cwd=cwd)
-    _, st = git("status", "--porcelain", cwd=cwd)
-    _, br = git("branch", "--show-current", cwd=cwd)
+    gone = bool(session_tree) and not Path(session_tree).is_dir()
+    if gone:
+        flags.append(f"session worktree gone: {session_tree}")
+        top, st, br = str(session_tree), "", None
+    else:
+        _, top = git("rev-parse", "--show-toplevel", cwd=cwd)
+        _, st = git("status", "--porcelain", cwd=cwd)
+        _, br = git("branch", "--show-current", cwd=cwd)
     _, pst = git("-C", str(primary), "status", "--porcelain")
     new = [ln for ln in st.splitlines() if ln not in entry_status]
     if new:
@@ -272,9 +279,9 @@ def containment(primary, entry_branch, entry_status=(), entry_primary=(), sessio
     newp = [ln for ln in pst.splitlines() if ln not in entry_primary]
     if newp and Path(top).resolve() != primary.resolve():
         flags.append("foreign files in primary checkout: " + "; ".join(newp))
-    if entry_branch and br != entry_branch:
+    if entry_branch and not gone and br != entry_branch:
         flags.append(f"branch {br!r} differs from entry branch {entry_branch!r}")
-    report = f"containment: toplevel={top} branch={br}; " + ("FLAGGED " + " | ".join(flags) if flags else "clean")
+    report = f"containment: toplevel={top} branch={br if not gone else '(unknown)'}; " + ("FLAGGED " + " | ".join(flags) if flags else "clean")
     return flags, report
 
 
@@ -368,8 +375,11 @@ def main():
     a = ap.parse_args()
     primary = primary_root(cwd=a.repo)
     tree = (primary / ".claude" / "worktrees" / f"review-{unit_key(a.pr)}").resolve()
-    here = Path.cwd().resolve()
-    if here == tree or tree in here.parents:
+    try:
+        here = Path.cwd().resolve()
+    except OSError:  # cwd inside a removed tree: outside the review tree, which still exists
+        here = None
+    if here is not None and (here == tree or tree in here.parents):
         print(f"gaze_close: cwd is inside the review worktree {tree}, which this call removes; "
               "run it from the invoking session worktree", file=sys.stderr)
         return 2
