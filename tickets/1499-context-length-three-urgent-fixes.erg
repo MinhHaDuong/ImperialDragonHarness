@@ -1,0 +1,75 @@
+%erg 0.1
+Title: Context length: three urgent fixes
+Created: 2026-11-09
+Author: reviewer
+
+--- log ---
+2026-11-09T22:46Z reviewer created
+
+--- body ---
+## Context
+
+Design note: `design/2026-11-09-context-length-strategy.md`, reviewed by two
+advisors. Do not start before the author has accepted it.
+
+The harness sets limits on context length (230K for workers and unattended
+runs; 450K or 550K for interface sessions, by model). Neither a session, nor
+the author, nor a committed script can tell whether a session respects its
+own. An ad hoc scan of main-session transcripts on padme found, for turns
+since 2026-11-01: 281 sessions; 24 with 30 or more turns at or above 230K
+cache-read tokens (19 on Opus 5.5, 5 on Fable 5.1); 4 at or above 450K; 1 at
+or above 550K. The author asked for up to three small pain points to fix
+first. The wider strategy is in the note and is out of scope here.
+
+## Pain points, in order
+
+1. **The author cannot read the ceiling he set.** `scripts/statusline.sh`
+   prints a percentage of the window: on a 1M window, 23% at 230K and 55% at
+   550K. Print tokens, for example `212K`. No ceiling and no role: the
+   author knows both.
+2. **No committed command says which sessions overran.**
+   `scripts/trace-compact-audit.py` thresholds on cache reads (line 126),
+   labels a session by its first skill (line 142), keeps a whole transcript
+   when its last record is in the window (line 246), and reports runs. The
+   scan above is not reproducible.
+3. **A session cannot read its own length.** A probe on 2026-11-09 did it in
+   one command: the session id in the environment locates the transcript,
+   and the last main-chain assistant record's usage gave 211,485 tokens of
+   prompt (209,362 cache read). The transcript format is internal to the
+   runtime; the audit already parses it. Both reviewers would diagnose
+   before building this one; the author may cut it.
+
+## Decisions for the plan
+
+- One definition of "context length" for the status line, the audit, and
+  the command: the whole prompt, or cache reads as in the June audit. State
+  it where each prints a figure.
+- The audit's threshold per model: read the ceilings from the route skill's
+  data, or take them as options.
+- Each point may land in its own merge request: propose the split at
+  planning (`skills/hunt/references/decomposition.md`).
+
+Out of scope, waiting on the author: whether an attended raid is an
+interface session; what an interface session may do at its ceiling.
+
+## Test
+
+- Status line, on a fixture input: the token figure for a small and a large
+  context; an input with no usage field.
+- Audit, on fixture transcripts: a turn outside the window is not counted; a
+  session with two runs counts once as a session; the main model is reported.
+- Usage reader, on fixture transcripts: the last main-chain assistant
+  record; a transcript with no such record; a missing transcript.
+
+## Exit criteria
+
+- [ ] The status line shows the context in tokens
+- [ ] The audit counts sessions as well as runs, restricts events to its
+  window, reports the main model, and takes a threshold per model; one
+  command reproduces the table of section 1 of the design note
+- [ ] One command prints the current session's context in tokens on Claude
+  Code, and answers "could not look" with its own exit code on a runtime or
+  session it cannot read
+- [ ] Raid's wave loop and lair's metrics call that command where they now
+  estimate or say nothing
+- [ ] `make check` passes
