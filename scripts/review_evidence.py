@@ -212,7 +212,11 @@ def git(repo: Path, *args: str, stdin: str | None = None) -> str:
 
 
 def is_ticket_file(path: str) -> bool:
-    """`tickets/*.erg` or `tickets/closed/*.erg`, the ticket paths merge-gate calls bookkeeping."""
+    """`tickets/*.erg` or `tickets/closed/*.erg`: a ticket file.
+
+    Not merge-gate's BOOKKEEPING, which also holds `tickets/.claims/NNNN`
+    (ticket 1472): a claim is no ticket for --ticket, and stays in the patch.
+    """
     parts = path.split("/")
     return (path.endswith(".erg") and parts[0] == "tickets"
             and (len(parts) == 2 or (len(parts) == 3 and parts[1] == "closed")))
