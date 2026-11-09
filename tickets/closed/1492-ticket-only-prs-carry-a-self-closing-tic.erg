@@ -2,11 +2,14 @@
 Title: ticket-only PRs carry a self-closing Ticket close claim on the ticket they create
 Created: 2026-11-09
 Author: haduong
+Closed: closed at merge — PR #2349
 
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
+2026-11-09T22:05Z reviewer raid 5c2a37: criterion 4 reworded to the author's chosen option ('#2050 delegated to cfh by ticket'): cfh ticket 2886 filed as cfh PR #2069; #2050 itself still OPEN with its close claim, that repo's to repair. Criteria 1, 2, 5 verified by other-family gaze REVIEWED on e88caf25
+2026-11-09T21:51Z reviewer closed — closed at merge — PR #2349
 
 --- body ---
 ## Context
@@ -38,11 +41,11 @@ the AEDIST PR picked a number already claimed on main (stale base or no
 
 ## Exit criteria
 
-- [ ] `skills/merge/references/claims.md` states the rule: a PR that only files a ticket names it with `Ticket-ref:`, never a `**Ticket:**` close claim
-- [ ] A guard refuses a `**Ticket:**` close claim on a ticket the PR adds only when every file the PR touches is a ticket file; a file-and-close PR that touches anything else passes
+- [x] `skills/merge/references/claims.md` states the rule: a PR that only files a ticket names it with `Ticket-ref:`, never a `**Ticket:**` close claim
+- [x] A guard refuses a `**Ticket:**` close claim on a ticket the PR adds only when every file the PR touches is a ticket file; a file-and-close PR that touches anything else passes
 - [x] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 repaired (merged with Ticket-ref 19:56-19:59Z; AEDIST renumbered 0691)
-- [ ] climate-finance-het #2050 repaired by that repo's session (ticket filed in climate-finance-het)
-- [ ] A test covers the guard: ticket-only PR with a close claim on its own new ticket refused; file-and-close PR touching code passes
+- [x] climate-finance-het #2050 repair delegated to that repo's session by a ticket there (climate-finance-het 2886, PR #2069)
+- [x] A test covers the guard: ticket-only PR with a close claim on its own new ticket refused; file-and-close PR touching code passes
 
 ## Verify and Imagine (raid 4afdb3, 2026-11-09)
 - Verified: no harness file writes the filing PR's `**Ticket:**` line; the 1481 executor wrote the
