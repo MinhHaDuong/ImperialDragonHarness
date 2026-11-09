@@ -79,3 +79,13 @@ the padme store skipped this run), sen-causal-reading (doudou's 14
 unconsolidated notes). Review at each project's next smelt or by 2026-11-23:
 count the notes in each pruned store; regrowth reopens R4 of
 `design/2026-10-29-memory-system-audit.md`.
+
+Merge requests filed (ticket-only, open): AEDIST-technical-report
+https://github.com/MinhHaDuong/aedist-technical-report/pull/1198 (ticket 0690),
+chemin-de-voix https://github.com/MinhHaDuong/Tracing-Kieu/pull/185 (0262),
+fuzzy-corpus https://github.com/MinhHaDuong/fuzzy-corpus/pull/74 (0056),
+padme https://github.com/MinhHaDuong/padme/pull/258 (0112),
+climate-finance-het https://github.com/MinhHaDuong/climate-finance-het/pull/2050 (2831),
+sen-causal-reading https://github.com/MinhHaDuong/sen-causal-reading/pull/171 (0113).
+AEDIST's `erg new` warned that its next-id branch scan timed out: a claim
+conflict on `tickets/.claims/0690` at merge means renumber.
