@@ -122,7 +122,7 @@ itself conditional (`paths:` on the rules tree), since describing a resident bod
 again is paying for it twice.
 
 A rule whose trigger is a *task*, which no `paths:` glob reaches, is a skill: pdf-finish,
-cut-prose and submission-event. A skill's description stays resident in
+cut-prose and paper. A skill's description stays resident in
 the catalog and its body loads on invocation — the same pointer-and-payload
 split as `paths:`, for triggers a filename cannot express.
 
