@@ -122,3 +122,178 @@ Evidence that a skill is missing: the same landing exists in two copies.
   harness skill /post, which reads this file for the places and recipes; the recipes below stay
   authoritative." Landed by the author or a session in the carnet repo (1483/1485 precedent);
   the executor puts the line in the PR body and the ticket log.
+
+## Plan (raid 4afdb3, 2026-11-09)
+
+Read-only sources consulted: /mission SKILL and its three references (clone template), /paper,
+/update-publist (status table has no post or op-ed row; BLOG is carnet-only), the carnet
+AGENTS.md over ssh (doudou, "Procedure, once per billet", lines 120-308), the Jéco mission
+folder (found under `~/CNRS/missions/done/Conférences/Lyon 2026-11-03 Jéco/`, not actif/).
+
+### Actions
+
+1. Create `skills/post/SKILL.md` (~55 lines, clone of `skills/mission/SKILL.md`). Frontmatter:
+   `metadata.category: publication`, `name: post`, `user-invocable: true`,
+   `disable-model-invocation: false`, `argument-hint: "<post> <stage: draft|publish|archive> [dry-run]"`,
+   description (quoted, measured 87 chars, card = 4 + 87 = 91):
+   "Walk one blog post or op-ed through a stage (draft, publish, archive): PDF, HAL, gates."
+   First sentence has no themed word (test_skill_descriptions) and no model name (frontmatter test).
+   Body sections, in mission's order:
+   - Intro (3 debts: the page, the open archive, the registers).
+   - "Local conventions come from the project's AGENTS.md": for a carnet post the carnet's
+     AGENTS.md (places, gabarit, WordPress and HAL recipes, journal/backlog); for an op-ed the
+     missions directory's or the project's. Verbatim fallback: no file, ask the author for those
+     places before writing anything, offer the answers as that file's content. The recipes stay
+     in that file and are authoritative.
+   - "Resolving the post": `<post>` = folder name or unique part (`billets/AAAA-MM-JJ slug/`, or a
+     mission folder for an op-ed); two matches or none: ask, never guess. Dossier README, journal
+     lines and release subfolder say what is already done.
+   - "Routing": venue/abstract not here; framing and cutting `/message-framing`, `/cut-prose`;
+     PDF finishing `/pdf-finish`; a manuscript `/paper`; a trip `/mission`; page entries and
+     deposits `/update-publist`, never copied.
+   - "Written once": outward-acts line (deploy, deposit, publish, mail, signature), provenance
+     (authentic = fetched from source: the live post, the editor's published page; sent
+     version vs published version kept), `/update-publist` delegation (verbatim from mission),
+     links-land-on-the-version (copy from /paper), evidence-before-a-step with `dry-run`,
+     author-only asked not dropped.
+   - "Stages": three pointers to the references.
+2. Create `skills/post/references/draft.md` (~20 lines), sections: Registers (roadmap: yes;
+   publications list: no, not before publication); Provenance (the text as sent to the venue
+   or as validated); Filesystem (1. working Markdown in the post folder); Outward gates (none:
+   nothing leaves); Delegates (`/message-framing` then `/cut-prose`; editorial rules, language,
+   red lines read from the project's `backlog.md`/AGENTS.md, not copied); Author-only (language,
+   title, sign-off on the text); Done when.
+3. Create `skills/post/references/publish.md` (~30 lines), one section per channel, each naming
+   who clicks. Carnet: recipe stays in the carnet AGENTS.md ("Publishing to WordPress (REST
+   API)", line 37); gates = draft status, category and tags, preview, publication is the
+   author's gesture. Newspaper or partner site: the editor publishes; record sent version,
+   published version, and their diff (provenance). Six sections as above.
+4. Create `skills/post/references/archive.md` (~45 lines), numbered steps mapped to the carnet
+   procedure (titles quoted from AGENTS.md lines 120-308):
+   - Intro: stop rule (post already on page and HAL = "nothing to do" except roadmap check);
+     dry-run lists each step with evidence or "missing".
+   - Registers: roadmap row in "Communications" (yes, always); publications list yes
+     (post: `@misc`; op-ed: `@misc`).
+   - Provenance: PDF built from the Markdown source, never from the rendered page; frozen
+     outputs in `release/<AAAA-MM-JJ>/` with `sha256sum` lines.
+   - Filesystem 1. "Write a print Markdown file" (also step 0, the shared gabarit, never forked);
+     2. "Render" (pandoc/xelatex per the project's recipe; `/pdf-finish` for a PDF leaving the machine).
+   - Outward gates: 3. "Human validation gate" (author reads the PDF; no deposit before);
+     4. "Deposit to HAL" (prior-record check and pre-upload review per `/update-publist`; doctype
+     BLOG for a carnet post by the carnet's recipe, authoritative; OTHER for an op-ed through
+     `/update-publist` and its "adjust per doctype" clause, the missing OTHER recipe named as a
+     gap, not filled; keep the deposited metadata; payload gate and click are the author's);
+     5. "Index in the personal bibliography" (`@misc`, page first then archive, build and show,
+     author go-ahead, then sync); 6. "Add the download link on the post" (carnet: REST API at the
+     end of the body, no media attachment; newspaper: nothing); 7. "Log it" (carnet: `journal.md`
+     and `backlog.md` lines; op-ed: the dossier README).
+   - Plus roadmap row: the agent edits the local roadmap, with the HAL link once it exists.
+   - Delegates: `/update-publist`, `/pdf-finish`, `/paper` if a manuscript. Author-only: PDF
+     approval, HAL moderation follow-up, social-media post. Done when.
+   Out: no helper script, channel registry, shared trunk file, or per-doctype TEI (YAGNI).
+5. Trim existing cards to free the census (BUDGETS["skills"]=6300, now 6297; /post adds 91).
+   Three trims, 167 chars freed, result 6297 + 91 - 167 = 6221 (measured by the census test,
+   not derived; re-measure after editing):
+   - `skills/ingest-decision-letter/SKILL.md` line 6: old `... mapping every remark to a ticket. Helps streamline Revise-and-Resubmit.`
+     new `... mapping every remark to a ticket.` (38 chars).
+   - `skills/related-work-note/SKILL.md` line 5: old `verification checklist, bibliography with DOI/URL.`
+     new `verification checklist.` (27 chars).
+   - `skills/zotero/SKILL.md` line 5: old `...or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API.`
+     new `...or report duplicate files.` (102 chars).
+   Fallback if the author wants zotero's tail kept: description "Walk one blog post or op-ed
+   through draft, publish or archive." (card 66) with only the first two trims = 6298, under the
+   cap by 2; still no budget raise. Grep found no test or routing hint using the cut text
+   (only the catalog, regenerated in 6).
+6. `make skills-catalog` (regenerates `skills-catalog.md`: post row, three trimmed rows).
+7. Carnet AGENTS.md line (criteria 1 and 6): not edited here. Delivered as text, identical in
+   the PR body and as a ticket log line, with the target "head of 'Procedure, once per billet'":
+   "The stages and gates of this procedure (draft, publish, archive) are also run by the harness
+   skill /post, which reads this file for the places and recipes; the recipes below stay
+   authoritative." Criterion 1 (a carnet AGENTS.md holding what is local) is met by the existing
+   file plus that line; the author or a carnet session lands it (1483/1485 precedent).
+8. Follow-up logged, not done: an op-ed/post row in `/update-publist` (another skill's contract).
+   Note in the log that the bib path differs: the carnet recipe says `~/CNRS/html/Ha-Duong.bib`,
+   `/update-publist` says `src/Ha-Duong.bib`; archive.md says "the personal bibliography as the
+   project's AGENTS.md names it" and does not pick one.
+
+### First test (prose repo: checks that fit prose, then two traces)
+
+Run, in order, and quote each result: `make skills-catalog`; `make check-skills-drift`;
+`pytest tests/test_resident_census.py -k "channel_budgets or every_channel_is_populated"`
+(positive control: populated floor passes, budget under 6300); `pytest tests/test_skill_descriptions.py
+tests/test_skill_frontmatter.py`; `make check-agnostic-skills` (no model names, no runtime tool
+names outside the extension point); finally `make check` for criterion 7.
+
+Trace A (text trace against the real carnet text, done by reading, not by running):
+post `2026-11-06 The client the contractor and 18 agents`. Its folder (read over ssh) holds `client-contractor.md`,
+`client-contractor-print.md`, `HaDuong-2026-client-contractor.pdf`, `hal-meta.xml`, `hal-response.xml`,
+`diffusion-2026-11-06.md`, `published-442.html`, `wp-post-442.json`; the post is already archived, so
+under `dry-run` each item reads "done" with that evidence and the table proves coverage.
+
+| Carnet step (AGENTS.md title) | archive.md item | Evidence in the post folder |
+|---|---|---|
+| 0. "The gabarit lives in header-includes.tex" | Local conventions + Filesystem 1 (gabarit never forked) | root `header-includes.tex`; print.md input line |
+| 1. "Write a print Markdown file" | Filesystem 1 | `client-contractor-print.md` |
+| 2. "Render" | Filesystem 2 | `HaDuong-2026-client-contractor.pdf` |
+| 3. "Human validation gate" | Gate 3 | author's answer asked (not provable by file: ask) |
+| 4. "Deposit to HAL" (BLOG, X-test, affiliation, note) | Gate 4 + carnet recipe pointer | `hal-meta.xml`, `hal-response.xml` |
+| 5. "Index in the personal bibliography" | Gate 5 | `@misc` with `eprint` in `Ha-Duong.bib` |
+| 6. "Add the download link on the post" | Gate 6 | link line in `wp-post-442.json` / `published-442.html` |
+| 7. "Log it" | Step 7 | `journal.md` line, `backlog.md` status |
+
+Pass condition: every carnet step 0-7 has a row, no row says "see recipe" without a named
+location, and the executor finds no action in the carnet that archive.md lacks. Anything found
+that is missing from archive.md is added before merge (the "nothing left to discover" test).
+
+Trace B (positive control, the Jéco tribune in `done/Conférences/Lyon 2026-11-03 Jéco/`):
+walk archive.md with evidence-before-a-step: PDF at `output/pdf/Tribune - Transition électrique, qui porte le risque.pdf`;
+source `tribune-source.md`; validated ("Validé, current conversation", `result.json`);
+`release/2026-11-01/publication/` holds `hal/deposit.zip`, `deposit.response.xml`,
+`entry.deposited.bib`; `result.json` carries `pdf_sha256`, `hal_url` hal-05847469v1 and
+`homepage_entry_verified: true`; no back-link (newspaper: none); no `journal.md`/`backlog.md`
+(not a carnet post); README "Suite" says the roadmap line was written. Expected landing: all
+items done except "roadmap row present", checked against the roadmap file named by the
+missions AGENTS.md: "nothing to do except the roadmap check". Moderation of the HAL record is
+a wait the README already names, not a step. Gap to watch: whether a `sha256sum` line file
+exists beside the frozen outputs, or only `result.json` carries the hash; if only the JSON,
+archive.md accepts a hash recorded in the release record.
+
+### Dependencies
+
+None open (1483 and 1485 closed). Read-only ssh to doudou for the traces; the live runs wait
+for post-merge on doudou. The author's call, not blocking: the follow-up for `/update-publist`
+(item 8) and the carnet line (item 7). Contention: none; only new files, three one-line card
+edits and the regenerated catalog.
+
+### Antipattern scan
+
+- Tautology: a trace that only restates archive.md's checklist proves nothing. Guard: the table
+  is keyed on the carnet's own step titles and file evidence read over ssh, and trace B must be
+  able to fail (it fails if a Jéco artifact is missing or the walk finds a step with no
+  evidence). Also, trace A walks a post already archived, so it tests coverage of the
+  procedure, not the live path; said plainly in the log.
+- Copying recipes into the skill (WordPress REST, TEI fields, HAL structure id): they drift
+  from the carnet; the skill points, it does not carry.
+- YAGNI, left out: helper script, channel registry, shared trunk file, op-ed TEI template,
+  an `/update-publist` row, a per-stage argument for the newspaper variants, a census budget
+  raise.
+- Count-gaming: the trims are real text deletions with no behaviour tied to them (grep
+  checked); re-measure the census after the edit, do not trust the arithmetic.
+
+### Done when
+
+1. Carnet AGENTS.md holds what is local, the skill holds only stages, routing, gates: text
+   delivered (the line in the PR body and ticket log), author lands it in the carnet.
+2. Router and three references exist, catalog updated, hygiene tests pass: evidence = outputs
+   of `make skills-catalog`, `make check-skills-drift`, the census test, the description and
+   frontmatter tests, `make check-agnostic-skills`.
+3. Six sections in each of draft, publish, archive: evidence = `grep -c` of the six headings
+   (Registers, Provenance, Filesystem, Outward gates, Delegates, Author-only) per file, plus
+   Done when.
+4. Dry run for the 2026-11-06 post reproduces steps 1-7 with nothing left to discover:
+   traced against the real carnet text (table A), live run post-merge on doudou.
+5. Jéco tribune dry run lands on "nothing to do except the roadmap check": traced against the
+   real mission folder (trace B), live run post-merge on doudou.
+6. Carnet AGENTS.md points at `/post` in one line, recipes unchanged: text delivered, author
+   lands it in the carnet.
+7. `make check` passes: its full output last line quoted.
