@@ -23,6 +23,12 @@ Author: reviewer
 2026-11-09T12:25Z reviewer left for the author: padme fuzzy-corpus, AEDIST-technical-report, chemin-de-voix primaries dirty with an unfinished memory-v8 deployment (tickets/erg, .erg-assets, AGENTS.md, untracked *-déployer-la-mémoire-v8.erg) and dead core.hooksPath; doudou chemin-de-voix diverged (2 local Release commits); doudou gavard has docs/missing-papers.html modified
 2026-11-09T12:27Z reviewer JETP race: ticket 2127 (harness-filed alignment, PR #284) merged between migrate and merge; fixed by their PR #286; recipe step 8 now re-runs migrate right before merge; JETP doudou clone pulled 6795e309
 2026-11-09T12:37Z reviewer pin moved to 513cd3c4 (rev bf71ab5): identical behaviour to 6a104262, revision stamp only
+2026-11-09T13:07Z reviewer harness 1472 DONE: PR #2297 merged (main 3c700b76), pin 513cd3c4, 966 claims, hooks chained; padme ~/.local/bin/erg refreshed to 513cd3c4
+2026-11-09T13:07Z reviewer wave 3 on 513cd3c4: DOIfetch #46 merged b717ad8 (27 claims; open PR #45 needs rebase+migrate by owner); arena merge --no-ff db47052 (139); doudou fs-housekeeper 075fde4 (1), matrice-hybride 4305828 (4)
+2026-11-09T13:07Z reviewer search-works-for-zotero (= zoteus-fts5, same repo renamed): migration PR #639 OPEN, 383 claims, make check exit 0; waits a recorded review verdict per its AGENTS.md; open ticket PRs #632 #633 #635 #638 need rebase+migrate after it lands
+2026-11-09T13:07Z reviewer not migrated: doudou askMinh (primary on master, 4 dirty files, no remote); doudou html (primary has untracked ticket 0028, old binary 089cd31, core.hooksPath points at ~/CNRS/html/src/.git/hooks)
+2026-11-09T13:07Z reviewer clone sweep: doudou padme (85 claims; still dafb1d48), DOIfetch, ~/.agents, git-erg pulled + hooks; padme DOIfetch pulled + hooks; left: doudou swz and padme ~/data/swz (wait #639), doudou archiveCIRED (5 dirty, 6 behind), doudou climate-finance-het (dirty, 182 behind, its own session)
+2026-11-09T13:07Z reviewer padme memory-v8 leftovers (fuzzy-corpus 0052, AEDIST 0682 now taken on remote, chemin-de-voix 0257): untracked tickets from a 2026-10-05 Codex fan-out (parent 0913 closed), GitHub issues #64/#1177/#173 open, plus a stale erg upgrade to 63b5e92; no live owner; disposition asked of the author
 
 --- body ---
 ## Context
