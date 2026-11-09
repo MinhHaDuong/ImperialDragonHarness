@@ -79,6 +79,22 @@ def close_claims(body: str) -> list[str]:
         raise Refusal(str(exc)) from exc
 
 
+def refuse_self_closing(cwd: Path, base_ref: str, ids: list[str]) -> None:
+    """Ticket 1492: a request that only files a ticket must not claim to close it. Refuses when every
+    file the request touches is under tickets/ and a claimed ticket is one it adds; a file-and-close
+    request touching anything else passes."""
+    if not ids:
+        return
+    changed = git(cwd, "diff", "--name-only", f"{base_ref}...HEAD").stdout.split()
+    if not changed or not all(f.startswith("tickets/") for f in changed):
+        return
+    added = git(cwd, "diff", "--name-only", "--diff-filter=A", f"{base_ref}...HEAD").stdout.split()
+    for tid in ids:
+        if any(re.match(rf"tickets/(?:closed/)?{re.escape(tid)}-[^/]*\.erg$", f) for f in added):
+            raise Refusal(f"ticket-only request claims to close ticket {tid} that it adds: "
+                          "use `Ticket-ref:` (skills/merge/references/claims.md)")
+
+
 def close_tickets(cwd: Path, pr: str, ids: list[str]) -> bool:
     """Step 1. True when a close commit was pushed."""
     todo = []
@@ -315,6 +331,7 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
     else:
         same_claims(info.get("body") or "", ruled_claims)
         recheck_reviews(fg, pr, cwd, ruled)
+    refuse_self_closing(cwd, base_ref, claims)
     head = check_head(cwd, branch, base_ref, ruled, remote=not local)
     if local:
         check_closed(cwd, claims)

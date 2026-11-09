@@ -397,3 +397,55 @@ def test_render_reads_the_block_again_after_the_notes_push(repo, monkeypatch):
     assert code == 0, out
     assert any(line.startswith("attribution: not derivable") for line in out)  # step 0: no reviewer yet
     assert "render" in forge.calls and REVIEWER in forge.body
+
+
+def _ticket_branch(repo, extra=None):
+    """On feat, add tickets/0042-x.erg (and `extra`, outside tickets/) in a new commit."""
+    (repo / "tickets").mkdir(exist_ok=True)
+    (repo / "tickets" / "0042-x.erg").write_text("Title: x\n")
+    sh(repo, "add", "tickets")
+    if extra:
+        (repo / extra).write_text("c\n")
+        sh(repo, "add", extra)
+    sh(repo, "commit", "-qm", "file ticket")
+    sh(repo, "push", "-qf", "origin", "feat")
+
+
+def test_ticket_only_request_closing_its_own_new_ticket_refuses(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    _ticket_branch(repo)
+    with pytest.raises(rl.Refusal, match="Ticket-ref"):
+        rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_ticket_only_request_with_ticket_ref_passes(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    _ticket_branch(repo)
+    rl.refuse_self_closing(repo, "origin/main", [])
+
+
+def test_file_and_close_request_touching_code_passes(repo):
+    _ticket_branch(repo, extra="fix.py")
+    rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_ticket_only_request_closing_an_existing_ticket_passes(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    (repo / "tickets").mkdir()
+    (repo / "tickets" / "0042-x.erg").write_text("Title: x\n")
+    sh(repo, "add", "tickets")
+    sh(repo, "commit", "-qm", "ticket")
+    sh(repo, "push", "-q", "origin", "HEAD:main")
+    sh(repo, "fetch", "-q", "origin")
+    (repo / "tickets" / "0042-x.erg").write_text("Title: x\nClosed: now\n")
+    sh(repo, "commit", "-qam", "close")
+    rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_land_refuses_self_closing_claim_before_any_merge(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    _ticket_branch(repo)
+    forge = StubForge(head(repo), body="**Ticket:** tickets/0042-x.erg\n")
+    with pytest.raises(rl.Refusal, match="adds"):
+        land(repo, forge, "-", ruled_claims=["0042"])
+    assert merged_calls(forge) == []

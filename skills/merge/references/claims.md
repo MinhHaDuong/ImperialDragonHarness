@@ -12,6 +12,11 @@ Close intent is read from the merge request **body** only — never the title:
   the named ticket. An already closed and archived ticket is a clean no-op.
 - `Ticket-ref: tickets/NNNN-...` — references a ticket **without closing it**
   (for annotating a deliberately-open ticket). Not a claim.
+- A request that only files a ticket (every file it touches is under
+  `tickets/`) names the new ticket with `Ticket-ref:`, never a close claim:
+  the claim would close it at birth, exit criteria unmet. `raid_land.py`
+  refuses such a claim on a ticket the request adds (ticket 1492); a request
+  that also changes anything outside `tickets/` may file and close in one.
 - `Ticket: NNNN` (short form) — a claim, once normalized: when exactly one
   `tickets/NNNN-*.erg` or `tickets/closed/NNNN-*.erg` matches, rewrite the
   body to the canonical path and read it back in the same command
