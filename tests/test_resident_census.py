@@ -57,7 +57,7 @@ BUDGETS = {
     # Raised 2026-10-02 (ticket 0920): the v8 pilot index links the real
     # topic, journal and reference surface, so it can no longer fit the
     # legacy 500-char stub.
-    "memory": 14500,  # the largest per-project index; only one is resident
+    "memory": 14500,  # the harness memory index; one index is resident per session
     # Lowered 2026-10-20 (ticket 1140): coaching became a script and three
     # step-only skills (typography-finish, bib-merge, related-work-note-validate)
     # became runbooks; with the lifecycle trim of 1132, 6993 -> 6120 chars
@@ -115,7 +115,7 @@ def test_channel_budgets(entries):
 
 
 def test_no_project_memory_index_exceeds_the_budget(entries):
-    """Each index is resident in its own project's sessions, so cap each one."""
+    """The index is resident in every session, so cap it."""
     budget = BUDGETS["memory"]
     over = [e for e in entries if e.channel == "memory" and e.chars > budget]
     detail = "; ".join(f"{e.path} is {e.chars} chars (> {budget})" for e in over)
@@ -128,9 +128,9 @@ def test_no_project_memory_index_exceeds_the_budget(entries):
 def test_session_total_is_the_sum_of_the_channels(entries):
     """One session pays every channel once, with a single memory index.
 
-    Guards the modelling, not the size: summing all 40-odd project indexes
-    would describe a session nobody runs, and quietly inflate every report
-    built on this module.
+    Guards the modelling, not the size: summing several indexes would
+    describe a session nobody runs, and quietly inflate every report built
+    on this module.
     """
     totals = rc.channel_chars(entries)
     assert rc.session_chars(entries) == sum(totals.values()), (
@@ -143,9 +143,9 @@ def test_session_total_is_the_sum_of_the_channels(entries):
         f"largest index is {max(memory)}: a session is resident in exactly "
         "one project's index, so anything else inflates every report"
     )
-    assert totals["memory"] < sum(memory), (
-        "the memory channel is reporting a sum across all projects, not the "
-        "largest index — that describes a session nobody runs"
+    assert len(memory) == 1, (
+        "the census found several memory indexes; a session is resident in "
+        "exactly one, so the channel must name that one file"
     )
 
 

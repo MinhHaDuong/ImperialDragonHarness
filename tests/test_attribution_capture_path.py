@@ -114,3 +114,11 @@ def test_smelt_migration_refuses_attribution_records():
     migrate = load("smelt_migrate")
     with pytest.raises(migrate.MigrationError):
         migrate.plan_migration(ROOT, [f"{NEW_ROOT}/2026-10-03-review-attribution-pr1164.md"])
+
+
+@pytest.mark.integration
+def test_per_project_memory_export_stays_untracked():
+    """Ticket 1480: the public repo never again tracks projects/<key>/memory."""
+    probe = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "--no-index", "-q", "projects/k/memory/x.md"],
+                           capture_output=True, env=child_env())
+    assert probe.returncode == 0, "projects/ is allowlisted in .gitignore again"

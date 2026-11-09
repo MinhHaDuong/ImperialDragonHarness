@@ -1,2 +1,0 @@
-- [Offinity Diaries](reference_offinity.md) — Minh's shared project journal, diaries.offinity.io; register for entries
-- [Prose style corrections](feedback_prose_style_minh.md) — no contrast farming, self-contained bullets, idioms verbatim, no context-free numbers in promo texts

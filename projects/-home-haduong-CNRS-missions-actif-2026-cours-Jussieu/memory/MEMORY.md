@@ -1,4 +1,0 @@
-- [Use full hierarchical group codes for Jussieu cohort](feedback_group_codes.md)
-- [Machine roles in IDH setup](project_machine_roles.md)
-- [Barème fiche acteur IEE](project_bareme_fiches_acteur.md)
-- [Moodle grade CSV format](feedback_moodle_grade_csv_format.md)

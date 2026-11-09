@@ -1,2 +1,0 @@
-- [Carnet realf.hypotheses.org](reference_carnet_realf.md)
-- [Avancement DR1 2026](project_avancement_2026.md)

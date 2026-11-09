@@ -3,11 +3,11 @@
 # T2 = mail/IMAP/SMTP hosts, login aliases, keyring-extraction procedures,
 # credential-store inventories. T2 lives in ~/.config/harness/private/ (never
 # committed) — see design/2026-09-28-personal-data-tiers.md.
-# Usage: check-personal-data.sh [file-or-dir ...]   (default: skills/ projects/ design/)
+# Usage: check-personal-data.sh [file-or-dir ...]   (default: skills/ design/)
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-    TARGETS=(skills/ projects/ design/)
+    TARGETS=(skills/ design/)
 else
     TARGETS=("$@")
 fi
@@ -28,7 +28,7 @@ for target in "${TARGETS[@]}"; do
     [ -e "$target" ] || { echo "WARN: $target not found" >&2; continue; }
     # Explicit files are always scanned; directories inside a git work tree
     # are scanned over TRACKED files only (git-ignored local session
-    # transcripts and caches under projects/ are not committable data).
+    # transcripts and caches are not committable data).
     if [ -f "$target" ]; then
         matches=$(grep -InE "$PATTERN" "$target" 2>/dev/null || true)
     elif git rev-parse --is-inside-work-tree >/dev/null 2>&1 && \

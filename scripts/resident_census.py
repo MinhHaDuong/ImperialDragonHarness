@@ -169,10 +169,10 @@ def _rel(path: Path, root: Path) -> str:
 
 
 def memory_entries(root: Path) -> list[Entry]:
-    """One per project. Only the session's own project index is resident."""
+    """The harness's own memory index, the one resident in its sessions."""
     return [
         Entry("memory", str(p.relative_to(root)), len(p.read_text(encoding="utf-8")))
-        for p in sorted((root / "projects").glob("*/memory/MEMORY.md"))
+        for p in sorted(root.glob("memory/MEMORY.md"))
     ]
 
 

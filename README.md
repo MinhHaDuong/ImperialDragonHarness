@@ -188,7 +188,6 @@ ImperialDragonHarness/      # reference clone: ~/.agents
 ├── adapters/  hooks/       # Runtime plugin, git hooks
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store
-├── projects/<slug>/memory/ # Legacy project memories; migration tracked per project
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
 ├── design/             # Design history: memos, audits, reviews (not loaded)
 └── docs/                   # Staging for external documents, git-ignored (Zotero is the record)
