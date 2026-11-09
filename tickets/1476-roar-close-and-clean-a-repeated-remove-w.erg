@@ -1,0 +1,52 @@
+%erg 0.1
+Title: roar close-and-clean: a repeated --remove-worktree is silently dropped
+Created: 2026-11-09
+Author: claude
+
+--- log ---
+2026-11-09T11:07Z claude created
+
+--- body ---
+## Problem
+Observed in sen-causal-reading on 2026-11-09, roar step 10.
+
+A session that owned three merged worktrees ran one `after-exit` call naming
+all three, following step 10's "For a task with multiple completed PRs,
+repeat the options":
+
+    close-and-clean.sh --phase after-exit \
+      --remove-worktree <A> --remove-worktree <B> --remove-worktree <C> \
+      --local-branch a=<oid> --remote-branch a=<oid> ... (four pairs)
+
+Only `<C>`, the last path, was removed. `<A>` and `<B>` stayed registered and
+locked, their branches were then reported `RETAINED (occupied worktree)`, and
+the run ended `RESULT: findings (exit 1): SWEEP`, which does not say that two
+named worktrees were ignored. The session found out only by listing
+`git worktree list` afterwards; a second and third call, one tree each,
+cleaned up.
+
+Mechanics (`skills/roar/close-and-clean.sh`): `--local-branch` and
+`--remote-branch` append to arrays (l. 40), `--remove-worktree` assigns a
+scalar (l. 47, `RM_TREE="$2"`), so the last value wins with no message. The
+usage line lists all three flags alike, and step 10's wording ("repeat the
+options") sits next to the `--remove-worktree` example, so nothing tells the
+caller that one of the options does not repeat.
+
+## Why it matters
+A named cleanup target dropped without a word is an all-clear that cannot be
+told apart from a real one: the caller believes the trees are gone, locked
+worktrees accumulate, and their branches are kept as "occupied". Every roar
+covering more than one worktree (several PRs in one session is common) is
+exposed.
+
+## Open design
+Not prescribed: reimagine the fix. Candidate directions seen so far,
+none chosen: accept several worktrees; refuse a repeated flag with a usage
+error; one call per tree, documented in step 10 and the usage line. Weigh
+them against how step 9's exit check prints the `after-exit` command for a
+single tree, and against the ownership rule (only trees this task owns).
+
+## Exit criteria
+- [ ] No call naming several worktrees ends with any of them silently ignored
+- [ ] Step 10 and the script's usage text agree on how several trees are handled
+- [ ] A test pins the chosen behaviour for two `--remove-worktree` targets
