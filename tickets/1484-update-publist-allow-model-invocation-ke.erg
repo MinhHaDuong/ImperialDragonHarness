@@ -1,0 +1,43 @@
+%erg 0.1
+Title: update-publist: allow model invocation, keep the payload gates
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T15:57Z haduong created
+2026-11-09T16:07Z Minh-Ha-Duong note HAL SWORD PUT with a zip package: Content-Disposition filename must be the XML name (meta.xml), not the zip; the skill's § 2c example says deposit.zip and HAL answers 400 'content-disposition header missing or mismatched'. Verified on hal-05570600 v3, 2026-11-09.
+
+--- body ---
+## Context
+
+On the 2026-11-09 RDJHSS data-paper release (CNRS session), the agent
+reached the HAL step of REALF How-to 44 and could not load
+`update-publist`: `disable-model-invocation: true` refused the Skill call
+and told the agent to ask the author to type `/update-publist`. The author
+typed it; the same agent then ran the same procedure. The flag bought a
+round trip, not a protection: the protection lives inside the skill, whose
+own gates stop before `make sync` and before every SWORD call until the
+author confirms the displayed payload.
+
+Author instruction in that session: "Fix the harness, allow agent", then
+"Your channel to harness fixing is a ticket" — the direct PR (#2317) was
+withdrawn and this ticket replaces it. Related: 1483 (`/fly` lifecycle
+skill), which will delegate the page and HAL steps to this skill and needs
+it loadable.
+
+## Proposed change
+
+- `skills/update-publist/SKILL.md`: `disable-model-invocation: false`.
+  Keep `user-invocable: true` and every confirmation gate in the body.
+- `skills/submission-event/SKILL.md` (or `fly` after 1483): drop the
+  "explicit-only" wording and the instruction to ask the author to invoke
+  it; say instead to load it and follow its gates.
+- Alternative considered and set aside: an allow-list hook on `make sync`
+  and the SWORD URLs, heavier than gates the skill already enforces.
+
+## Exit criteria
+
+- [ ] An agent can load `update-publist` through the Skill tool
+- [ ] The skill still asks for explicit confirmation before `make sync` and before each non-dry-run SWORD call (text unchanged there)
+- [ ] `submission-event`/`fly` no longer tells the agent to hand the invocation back to the author
+- [ ] `tests/test_skill_frontmatter.py`, `test_skill_descriptions.py`, `test_gen_skills_catalog.py` pass

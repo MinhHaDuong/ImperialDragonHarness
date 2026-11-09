@@ -1,0 +1,48 @@
+%erg 0.1
+Title: gaze cleanup turns a clean review into ESCALATE when git-ignored build files remain in the review copy
+Created: 2026-11-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-11-09T16:42Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Observed three times in the 2026-11-09 TLC sprint (MOE session `CNRS` on
+padme), in three unrelated project repos, each by a different team lead:
+
+- sen-causal-reading PR #169: the first gaze answer was ESCALATE because the
+  project's `make check` left build output in the reviewer's worktree; a
+  second run answered REVIEWED and the gate accepted that one. The stale
+  ESCALATE comment is still visible on the PR.
+- chemin-de-voix (PRs #182/#183): a full `make test` writes two git-ignored
+  build files (`output/05_manuscript/.assemble.stamp`, `main.docx`); gaze's
+  cleanup counted them as leftovers and turned its result into ESCALATE. The
+  same lead also saw one gaze run delete the tracked
+  `output/05_manuscript/*.md` files in its own review copy, then restore
+  them; nothing outside the copy was affected.
+- fuzzy-corpus PR #72: the gate's removal of its temporary worktree should
+  have stopped on leftover LaTeX build files and went ahead anyway (the
+  mirror-image failure: the check did not fire when it should have); only
+  regenerable files were lost.
+
+Each false ESCALATE costs a second gaze run and leaves a misleading comment
+on the PR. The defect is in the harness, not the projects: the files are
+git-ignored build products the project's own check target creates.
+
+## Observation, cause not yet established
+
+`gaze` (and the gate's worktree removal) treat any untracked file in the
+review copy as a leftover, without consulting `.gitignore`. Candidate fix:
+count only files that `git status --porcelain --ignored=no` reports (i.e.
+untracked AND not ignored) as leftovers; ignored build products are the
+project's business and `git worktree remove --force` on them is safe.
+Reproduce first with a positive control: a review copy holding one ignored
+file and one untracked-unignored file.
+
+## Exit criteria
+
+- [ ] A reproduction shows the false ESCALATE on an ignored file and the correct ESCALATE on an untracked, unignored file
+- [ ] gaze and the gate's cleanup agree on the same leftover rule
+- [ ] The second observation (tracked files deleted then restored inside the review copy) is either reproduced and ticketed separately or recorded as not reproducible

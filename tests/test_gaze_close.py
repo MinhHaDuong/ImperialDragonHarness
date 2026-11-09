@@ -932,3 +932,46 @@ def test_raw_output_link_survives_cleanup_in_request_answer(tmp_path):
     assert 'result: ESCALATE' in text
     assert 'FAKECANARY' not in text and '/home/jane' not in text
     assert 'raw_id=20261107T000000Z-43' not in text
+
+
+def gone_session(tmp_path):
+    """Ticket 1491: a gaze opened from a caller worktree that another actor removes during the run."""
+    primary, env = make_repo(tmp_path)
+    caller = tmp_path / "caller"
+    git(primary, "worktree", "add", "-b", "callerbr", str(caller))
+    r = run(SETUP, ["7"], caller, env)
+    assert r.returncode == 0, r.stderr
+    (primary / "stray.txt").write_text("foreign\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{duration}}\n{{containment}}\n")
+    args = ["7", "--branch", "feature", "--token", fields(r.stdout)["clock"], *ATTR(tmp_path),
+            "--comment-file", str(comment)]
+    return primary, caller, env, fields(r.stdout), args
+
+
+def check_gone_close(primary, tmp_path, f, r):
+    assert r.returncode == 4, r.stdout + r.stderr
+    assert "Traceback" not in r.stderr and "FileNotFoundError" not in r.stderr, r.stderr
+    assert "FLAGGED" in r.stdout and "session worktree gone" in r.stdout
+    text = answer_text(primary, f)  # the evidence on notes, not only stdout
+    assert "result: REVIEWED" in text and "session worktree gone" in text
+    assert "differs from entry branch" not in r.stdout + text
+    assert "foreign files in primary checkout" in text and "stray.txt" in text
+    assert POINTER.match(posted(tmp_path).strip().splitlines()[-1])
+    assert not (primary / ".claude" / "worktrees" / "review-7").exists()
+
+
+def test_close_records_answer_when_session_worktree_gone(tmp_path):
+    primary, caller, env, f, args = gone_session(tmp_path)
+    git(primary, "worktree", "remove", "--force", str(caller))
+    check_gone_close(primary, tmp_path, f, run(CLOSE, args, primary, env))
+
+
+def test_close_with_cwd_inside_session_worktree_gone(tmp_path):
+    import subprocess
+    import sys
+    primary, caller, env, f, args = gone_session(tmp_path)
+    script = 'git -C "$1" worktree remove --force "$2" && shift 2 && exec "$@"'
+    r = subprocess.run(["sh", "-c", script, "sh", str(primary), str(caller), sys.executable, str(CLOSE), *args, "--repo", str(primary)],
+                       cwd=caller, env=env, capture_output=True, text=True)
+    check_gone_close(primary, tmp_path, f, r)
