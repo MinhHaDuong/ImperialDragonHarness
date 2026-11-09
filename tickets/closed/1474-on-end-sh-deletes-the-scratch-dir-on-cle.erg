@@ -2,9 +2,11 @@
 Title: on-end.sh deletes the scratch dir on /clear while the runtime still advertises it
 Created: 2026-11-09
 Author: claude
+Closed: autoclosed — PR #2292
 
 --- log ---
 2026-11-09T10:43Z claude created
+2026-11-09T12:20Z reviewer closed — autoclosed — PR #2292
 
 --- body ---
 ## Context
