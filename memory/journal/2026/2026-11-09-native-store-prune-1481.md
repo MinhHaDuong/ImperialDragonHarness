@@ -42,10 +42,10 @@ there); climate-finance-het on doudou all 6. Dropped: AEDIST 9 (10 on
 doudou), chemin-de-voix 6 (4 in its topics, 2 disposed by SOURCES.md),
 fuzzy-corpus none present.
 
-Left alone, state recorded: JETP-observer (padme 7, doudou 6; live writer,
-no repository copy), git-erg (padme 67, doudou 66; its SOURCES.md says not
+Left alone, state recorded: JETP-observer (files with index: padme 7, doudou 6; live writer,
+no repository copy), git-erg (padme 67, doudou 66 files; its SOURCES.md says not
 migrated, author triages through smelt), sen-causal-reading (padme 0;
-doudou 15 notes never seen by its smelt, none with a reachable blob),
+doudou 14 notes and an index never seen by its smelt, no note with a reachable blob),
 padme's own store on padme (2 files after the 2026-11-07 triage; the newer
 `one-line-root-commands` has no blob). Seen and not touched: superseded keys
 `-home-haduong-Climate-finance--superseded-20260913` (88),
@@ -75,7 +75,7 @@ Records in the projects (one ticket-only merge request each, left open for
 the author): AEDIST-technical-report, chemin-de-voix, fuzzy-corpus, padme
 (each asks its next session to add the prune paragraph to SOURCES.md, as padme
 did), climate-finance-het (the doudou remnant of 230 unconsolidated notes and
-the padme store skipped this run), sen-causal-reading (doudou's 15
+the padme store skipped this run), sen-causal-reading (doudou's 14
 unconsolidated notes). Review at each project's next smelt or by 2026-11-23:
 count the notes in each pruned store; regrowth reopens R4 of
 `design/2026-10-29-memory-system-audit.md`.
