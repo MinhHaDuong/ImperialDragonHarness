@@ -2,6 +2,7 @@
 
 review-pr and review-pr-prose folded into /gaze with no alias: a live mention
 sends an agent to a skill that no longer exists, which it may then improvise.
+submission-event became /paper (ticket 1483), also with no alias.
 History is exempt (design/, memory/, tickets/, projects/).
 """
 
@@ -14,7 +15,7 @@ from child_env import child_env
 pytestmark = pytest.mark.adherence
 
 ROOT = Path(__file__).resolve().parents[1]
-RETIRED = ("review-pr",)  # matches review-pr-prose too
+RETIRED = ("review-pr", "submission-event")  # review-pr matches review-pr-prose too
 LIVE = ("skills", "tests", "profiles", "agents", "adapters", "scripts", "rules",
         "hooks", "README.md", "AGENTS.md", "skills-catalog.md")
 SELF = str(Path(__file__).relative_to(ROOT))
