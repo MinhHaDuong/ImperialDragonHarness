@@ -37,6 +37,8 @@ Author: reviewer
 2026-11-09T13:53Z reviewer pin now 89952604 (scripts/erg-pin): harness refreshed by PR #2307 and padme PATH erg; every other migrated repo refreshes via yawn 10b drift + molt, then install --hooks in each clone; no fan-out (author-visible choice 2026-11-09)
 2026-11-09T13:53Z reviewer memory v8 deployed today in fuzzy-corpus (#68), chemin-de-voix (#179), aedist-technical-report (#1187); follow-up tickets filed there: fuzzy-corpus 0055, chemin-de-voix 0261, aedist 0688
 2026-11-09T14:35Z reviewer note raid 632b19: the padme remainder (swz #639 verdict+merge, rebase+migrate swz #632 #633 #635 #638 #640 and DOIfetch #45, clone sweep) could not be launched from the harness session — auto-mode classifier denied the cross-repo agent twice; left for sessions in those repos
+2026-11-09T15:29Z reviewer note raid 632b19, restart by author 2026-11-09: swz #639 reviewed by the harness session itself (383/383 claims, pin 513cd3c4, diff = claims + erg files, check-fast 1596 passed), but the auto-mode classifier refused posting the self-review verdict and the merge (Auto-Mode Bypass / Merge Without Review); #639 left OPEN for the author; swz #632 #633 #635 #638 #640 wait on it
+2026-11-09T15:30Z reviewer note raid 632b19: DOIfetch #45 found already MERGED on the forge when the restart reached it; nothing to rebase; DOIfetch main claims/tickets counted in this log's companion line
 
 --- body ---
 ## Context
