@@ -1,0 +1,42 @@
+%erg 0.1
+Title: below-floor housekeeping notes for the next harness tidy
+Created: 2026-11-09
+Author: haduong
+Label: deferred
+
+--- log ---
+2026-11-09T19:17Z haduong created
+2026-11-09T19:17Z reviewer label deferred
+
+--- body ---
+## Context
+
+Below-floor notes from the 14-repo housekeeping sweep of 2026-11-09
+(19:05-19:15 UTC, run from the ~/CNRS session), bundled for the next harness
+tidy. Low priority: not to be worked separately.
+
+## Notes
+
+- `attribution_record.py --render-pr` warns "not derivable: review" on
+  bookkeeping-tier PRs, by design: noise.
+- A molt with nothing to fix still cuts, locks, preflights and removes a
+  worktree only to write the marker.
+- `worktree-tmp-guard.py register` usage text shows `repo [worktree]` but
+  accepts only one path.
+- molt step 0.7 says "pin in scripts/erg-pin", but the pin lives in the
+  harness, not in the project.
+- molt has no name template for its own worktree.
+- `housekeeping-git.sh` assumes `origin/main` exists (arena has no remote).
+- molt step 2 expects "Action plan" headings that the probe's JSON does not
+  carry.
+- molt step 7 case 1 retains a worktree for a `.tmp/` the sweep itself wrote.
+- `raid_land.py` on an ungated base armed auto-merge instead of merging.
+
+## Diagnosis
+
+Established: each note was observed once during the sweep. Not established:
+none was reproduced in isolation; each is below the severity floor.
+
+## Exit criteria
+
+- [ ] Each note is fixed, or dropped with a one-line reason in this ticket's log, during the next harness tidy

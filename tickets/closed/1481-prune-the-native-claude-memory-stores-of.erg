@@ -1,0 +1,129 @@
+%erg 0.1
+Title: Prune the native Claude memory stores of projects that adopted memory v8
+Created: 2026-11-09
+Author: reviewer
+Closed: autoclosed — PR #2323
+
+--- log ---
+2026-11-09T13:53Z reviewer created
+2026-11-09T14:35Z reviewer note from 1480 Imagine (raid 632b19): the harness key -home-haduong--claude (139 notes) was never consolidated into memory-v8 (design/memory-v8/source-inventory.md:22,85); once 1480 untracks projects/, it survives only in padme's ~/.claude/projects store and git history — not a backup to prune against
+2026-11-09T16:39Z reviewer pruned: padme 265 notes deleted (AEDIST 192, chemin-de-voix 58, fuzzy-corpus 15), doudou 354 (AEDIST 193, chemin-de-voix 58, fuzzy-corpus 15, padme 13, climate-finance-het 75); kept and listed: 6 audience-excluded per host, 2+4+230 without blob or disposition; climate-finance-het padme skipped (live sessions); records: journal 2026-11-09-native-store-prune-1481 and six ticket-only PRs in the projects
+2026-11-09T16:53Z reviewer closed — autoclosed — PR #2323
+
+--- body ---
+## Context
+The 2026-11-09 memory v8 deployments consolidated each project's Claude Code native memory store
+(`~/.claude/projects/<cwd-key>/memory/`) into the project's own `memory/` but left the native
+stores untouched and still loading, by design: pruning is the author's call. Stores left live:
+fuzzy-corpus (15 notes, PR fuzzy-corpus#68), chemin-de-voix (59, Tracing-Kieu#179),
+aedist-technical-report (197, aedist-technical-report#1187). Earlier deployments (JETP-observer,
+climate-finance-het, sen-causal-reading) may be in the same state; padme's was triaged and pruned
+on 2026-11-07, which is the model. Each project's `memory/SOURCES.md` lists every note with its
+disposition and blob id, so pruning loses nothing the repo did not keep or deliberately drop.
+Related: 1480 stops publishing the harness's copies of these stores under `projects/`.
+
+## Work
+For each project that has adopted v8: read its SOURCES.md, triage the native notes (consolidated
+-> delete; deliberately excluded personal or private -> author decides; harness-generic -> drop),
+then prune the native store as padme was. Codex and Pi stores: confirm none exists per project.
+
+## Exit criteria
+- [ ] every v8 project's native store is pruned, or the author kept it on purpose (noted)
+- [ ] no consolidated fact exists only in a native store
+
+## Imagine (raid 829e9e, 2026-11-09)
+Premise checked against the tree after 1480 (projects/ untracked, history kept by author decision):
+every live note of the three named stores on padme byte-matches a blob reachable from the harness's
+origin/main (fuzzy 16/16, chemin-de-voix 60/60, AEDIST 197/198, the odd one its MEMORY.md), so the
+backup is the harness's public git history and holds only while the no-scrub decision holds.
+Scope per project: AEDIST, chemin-de-voix, fuzzy-corpus in (SOURCES.md disposes of every note);
+climate-finance-het partial (its repo's memory/imports/claude-code-native/ holds verbatim copies of
+8 of padme's 11 notes: those 8 go, 3 stay); JETP-observer kept (0 blobs in any repo, live writer);
+git-erg kept on purpose (its SOURCES.md: not migrated, author triages through smelt);
+and sen-causal-reading has an empty memory/ dir, nothing to do; padme done 2026-11-07. Out, author decision:
+the harness's own -home-haduong--agents store (40, live) and -home-haduong--claude (139, never
+consolidated). Superseded keys (Climate-finance--superseded-20260913 88 and 43, jetp 8, JETP-at-two
+7) no longer load: seen, left alone.
+Blind-Spot (second host): doudou holds its own ~/.claude/projects stores for the same keys
+(AEDIST 199, 197 byte-identical to padme's; chemin-de-voix 60; fuzzy-corpus 16; JETP-observer 6;
+climate-finance-het 310 with mtimes to 2026-10-21, about 200 never imported); no sync between hosts.
+The decision is that doudou is in scope for notes passing the same invariant there; doudou-only notes are kept
+and listed; CFH's unconsolidated doudou notes become a CFH ticket, not a prune.
+Blind-Spot (index text): native MEMORY.md files carry free "key insights" lines (AEDIST: 18 of 152);
+each such line is checked against the project's memory/ before the index is rewritten; unmatched
+lines stay in the kept index.
+Safety invariant, per note, both tests before deletion: (a) `git hash-object` of the live file is a
+blob reachable from origin/main of the harness or of the project's own repo (`git log --find-object`,
+not cat-file -e); (b) SOURCES.md, a smelt report or an import directory names the note with a
+disposition. Fails either: keep and list. Audience-excluded notes (AEDIST 5, chemin user_bio) are
+kept and listed for the author, as the ticket says. No durable backup (padme kept none): a scratch
+copy for the run only; the journal records that a history scrub of projects/ would void the backup.
+Authorization reading: the ticket is agent-filed and its context says pruning is the author's call;
+the author launching this raid on it is that call for the consolidated category; the excluded
+category stays the author's. Live Claude Code sessions in a target project rewrite MEMORY.md: the
+executor checks for one before touching a store.
+Simplest path: a ~15-line bash loop per store (hash-object + find-object + grep of the disposition
+list); scripts/smelt_native_notes.py already lists notes with blob shas. No new script, no harness
+absorption of the harness-generic notes (spot check: two obsolete, one without a harness
+equivalent; the text stays in history).
+The harness branch carries this ticket and memory/journal/2026/2026-11-09-native-store-prune-1481.md
+(per store and host: deleted, kept with names, invariant result, the scrub caveat). Each pruned
+project gets one ticket in its tickets/ (guards: no SOURCES.md edit from here) recording the prune
+and asking its next session to add the SOURCES.md paragraph as padme did. JETP-observer and
+git-erg get nothing written in their repos; their kept state is in the journal.
+Reviewed at each project's next smelt or by 2026-11-23: count notes in each pruned store; if stores
+regrow, reopen R4 of design/2026-10-29-memory-system-audit.md (autoMemoryEnabled false, or
+autoMemoryDirectory pointed at the repo) as the lasting fix.
+Drift guard: exit criteria kept verbatim; scope narrowed (kept stores are "kept on purpose, noted").
+Queue for the author: (1) delete or keep the audience-excluded notes, default keep; (2) JETP and
+the CFH remnants, default keep until smelt; (3) git-erg kept on purpose, default yes; (4) turn
+native auto-memory off in v8 projects, default not in this ticket; (5) the harness's own store and
+-home-haduong--claude, default out.
+
+## Plan (raid 829e9e, 2026-11-09)
+Deliverable kind: configuration (runtime memory stores on two hosts) plus records; no code, no test.
+Stores in scope, by (project, host), with the disposition source the invariant reads:
+AEDIST padme 198 / doudou 199 (its SOURCES.md § Per-note dispositions); chemin-de-voix padme 60 /
+doudou 60 (SOURCES.md § Notes natives); fuzzy-corpus padme 16 / doudou 16 (SOURCES.md § Mapping);
+climate-finance-het padme 11 / doudou 310 (memory/imports/claude-code-native/, 103 files, byte match
+only); padme doudou 16 (padme's SOURCES.md; padme's own store was pruned 2026-11-07, 2 notes left).
+Kept, nothing deleted, state recorded: JETP-observer (7 / 6), git-erg (67 / 66), sen-causal-reading
+(padme 0 / doudou 15, never seen by its 2026-11-07 smelt).
+Actions:
+1. Preflight per host: no live Claude Code process whose cwd is under a target project (padme:
+   /proc/<pid>/cwd; doudou: the same over ssh). A live session skips that store on that host for
+   this run; the skip is recorded. At plan time padme has one session in climate-finance-het.
+2. Per store: `git hash-object` every *.md (doudou over ssh, git is present there); test (a) with
+   `git -C /home/haduong/.agents log origin/main --find-object=<sha>` or the same in the project's
+   padme checkout; test (b) by the note's basename in the disposition source. Classify: delete
+   (both pass, disposition consolidated/dropped/tombstone/stale/harness-generic/other project);
+   keep-excluded (SOURCES.md left it out for audience or as personal); keep-no-disposition;
+   keep-no-blob. Write the table to $W/.tmp first, then act.
+3. Native MEMORY.md per store: every line that names no note file is checked by a distinctive
+   phrase against the project's memory/; the rewritten index holds one pointer line to the repo's
+   memory/MEMORY.md with the prune date and this ticket, the index lines of kept notes, and every
+   unmatched free line verbatim.
+4. Scratch copy of each store into $W/.tmp (doudou: tar over ssh) before the deletions; delete the
+   delete set and rewrite the index; recount; the scratch copy is not a deliverable.
+5. Records: memory/journal/2026/2026-11-09-native-store-prune-1481.md on this branch (per store and
+   host: counts deleted and kept, kept names and why, invariant result, skips, the scrub caveat, the
+   superseded keys seen and left alone). In each project whose store changed (AEDIST, chemin-de-voix,
+   fuzzy-corpus, climate-finance-het, padme) and in sen-causal-reading (doudou store never
+   consolidated): one new ticket through that project's `tickets/erg new`, on a branch of that
+   project's checkout, pushed, with a ticket-only PR left open for the author (guards: no other file
+   there). JETP-observer and git-erg: journal only.
+6. Close this ticket on the branch at the end of Verify, per hunt.
+First check (no test to write): run the classification of step 2 on fuzzy-corpus padme and confirm
+it yields 15 delete + MEMORY.md before any deletion; a classification that puts a kept-excluded
+note in the delete set is the wrong-implementation signal.
+Dependencies: ssh doudou (BatchMode, verified), git on doudou (verified), the five project checkouts
+on padme clean on their default branch (verified), tickets/erg in each (verified).
+Antipattern scan: no tautological test (nothing pins the journal's wording); the invariant check is
+positive-controlled by fuzzy-corpus where all 16 match.
+
+## Feasibility (raid 829e9e, 2026-11-09)
+PASS with warnings. Paths and counts verified on both hosts 2026-11-09 17:40Z. WARN: a live Claude
+session sits in climate-finance-het on padme (skip rule, action 1); doudou shows two live claude
+processes whose cwd is not yet read. WARN: doudou's padme (16) and sen-causal-reading (15) stores
+were not in the Imagine scope table; added above. No cross-ticket conflict (single-ticket raid); no
+shared registry.

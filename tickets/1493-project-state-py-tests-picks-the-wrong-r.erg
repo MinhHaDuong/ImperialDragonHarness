@@ -1,0 +1,77 @@
+%erg 0.1
+Title: project-state.py --tests picks the wrong runner, hides its timeout, misses divergence
+Created: 2026-11-09
+Author: haduong
+
+--- log ---
+2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
+2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
+
+--- body ---
+## Context
+
+Found by the 14-repo housekeeping sweep of 2026-11-09 (19:05-19:15 UTC, run
+from the ~/CNRS session). `scripts/project-state.py --tests`, the probe yawn
+and molt read, chooses a test command the project does not use and fails
+silently under yawn's outer kill.
+
+## Evidence
+
+- Without a Makefile it runs bare `pytest --tb=no -q` (about lines 330-340).
+  DOIfetch: exit 2, 24 collection errors
+  `ModuleNotFoundError: No module named 'doifetch'`; the project's mandated
+  `uv run pytest` passes 471 tests.
+- arena: runs the full serial tier instead of the declared fast tier (11 s).
+- The probe's internal TEST_TIMEOUT is 300 s, above yawn's 90 s outer kill.
+  On arena and cadens (suite 253 s) the probe is killed before printing
+  anything; yawn reports "tests unknown" or "housekeeping never".
+- cired.digital: the probe reported main "synced" while local main had
+  diverged 36/36 from origin after a history rewrite.
+
+## Diagnosis
+
+Established: the runner choice falls back to bare pytest whenever no Makefile
+exists; the inner timeout is larger than the outer one; the sync check said
+"synced" on a 36/36 divergence. Not established: whether the sync check
+compares only ahead counts or only fast-forwardability (cause of the
+divergence miss not isolated).
+
+## Exit criteria
+
+- [ ] The probe prefers the project's declared runner: Makefile target (`check-fast`, `check`, `test`) first, then `uv run pytest` when `uv.lock` or `pyproject.toml` exists and `uv` is on PATH, bare pytest last
+- [ ] The probe takes its time budget from the caller (an explicit option, no hard-coded outer value) and reports a timeout as status `timeout`, not a failure or an empty detail
+- [ ] Divergence (ahead and behind both nonzero) is reported as diverged; an unresolvable upstream is reported as such, not read as 0/0
+- [ ] Tests cover the three cases
+- [ ] check-fast tickets filed in arena and cadens (their fast tier is theirs to declare)
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified today: (a) bare `pytest` fallback at scripts/project-state.py:328-330; DOIfetch gives
+  status fail "24 errors" (ModuleNotFoundError doifetch) while `uv run pytest --co` collects 472.
+  (c) TEST_TIMEOUT=300 at :30; run() :38-44 maps TimeoutExpired to rc 1; the make branch reports
+  detail "timeout", the pytest and npm branches an empty detail; JSON is printed only at :619, so
+  an outer kill prints nothing. (d) the probe never says "synced": :59-64 defaults ahead,behind to
+  0,0 and overwrites only when `rev-list --left-right --count HEAD...@{u}` succeeds; an
+  unresolvable @{u} reads 0/0 silently; it compares HEAD with its upstream, not main with
+  origin/main; yawn's prose rule never names the both-nonzero case.
+- Premise corrections: arena has NO Makefile; its fast tier is prose in AGENTS.md (`uv run pytest
+  -m "not integration and not slow"`), so criterion 1 as written still runs arena's full tier: a
+  check-fast target is arena's to add (cross-project ticket). The 90 s outer kill exists nowhere in
+  the harness (yawn SKILL.md:29 is a bare bash line): it came from the sweep's launcher or the
+  runtime's Bash default; an inner constant "below 90" would track an absent stakeholder's value.
+- Path: one `_pick_runner()` (Makefile targets matched with `^check-fast:|^check:|^test:` re.M, then
+  `uv run [--frozen] pytest` when uv.lock or pyproject and `uv` on PATH, mirroring
+  touched-tests.py:101 without importing it, then bare pytest, then npm); timeout as its own status
+  with the caller passing the budget explicitly, or a partial JSON flushed before any kill, rather
+  than a hard-coded OUTER_KILL; `diverged = ahead>0 and behind>0` plus `upstream: false` when
+  rev-list fails; three tests with exact argv, TimeoutExpired → "timeout", "36\t36" → diverged and
+  "36\t0" → not.
+- Blind-Spot: below the severity floor on its face (no merge blocked, no state corrupted); the
+  strongest case is the false "fail" on a green suite, which could send an agent to fix nothing.
+- Author decisions: (1) keep as a ticket or fold the runner fix inline; (2) where the 90 s came
+  from (ask the ~/CNRS sweep session) and whether the caller passes the timeout; (3) file arena
+  and cadens check-fast tickets in their repos.
+
+## Author decisions (raid 5c2a37, 2026-11-09)
+- Caller passes the budget (author, 2026-11-09): the 90 s outer kill is defined nowhere in the harness, so no inner constant tracks it.
+- Kept as a ticket; arena and cadens check-fast targets go to those repos as tickets.

@@ -1,0 +1,38 @@
+%erg 0.1
+Title: paper: live positive control of /paper published on doudou
+Created: 2026-11-09
+Author: haduong
+Label: needs-human
+
+--- log ---
+2026-11-09T17:07Z haduong created
+2026-11-09T17:07Z reviewer note created by raid 8d6894 from ticket 1483 criterion 5 under the author's decision A (2026-11-09)
+
+--- body ---
+## Context
+
+Exit criterion moved out of ticket 1483 by the author's decision A
+(2026-11-09, raid 8d6894): the live positive control of `/paper` needs the
+registers that exist only on doudou (`~/CNRS/papiers/sent|published`,
+`~/CNRS/html`, `~/CNRS/secretariat`), so it runs there after PR #2325 lands.
+The CNRS directory has no ticket store, so the harness carries this ticket:
+the control tests a harness skill. Data paper: RDJHSS 10, 1-15,
+DOI 10.52024/fn48qf66, released 2026-11-09; HAL version PUT already logged by
+ticket 1484 on hal-05570600 v3.
+
+## Steps (on doudou, author's session)
+
+1. Sync the harness to a main that contains PR #2325, then `idh install`:
+   it creates the `paper` projection and prunes the dangling
+   `submission-event` link.
+2. `/paper <data paper> published`, dry run: no outward gate clicked.
+3. Compare the rows with the padme text-trace in the PR #2325 body. Expected
+   by the author: "nothing to do except HAL"; if HAL is also done, "nothing to
+   do". Report the rows as found.
+4. Note any step the agent needed that the checklist lacks: that is the
+   observe-only review 1483's Imagine section planned.
+
+## Exit criteria
+
+- [ ] The dry run ran on doudou after `idh install`; its row table is in this ticket's log
+- [ ] Any step missing from `skills/paper/references/published.md` is listed here, or "none" is logged

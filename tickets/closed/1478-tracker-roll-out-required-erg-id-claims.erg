@@ -2,6 +2,7 @@
 Title: Tracker: roll out required erg ID claims to every store on padme and doudou
 Created: 2026-11-09
 Author: reviewer
+Closed: closed at roar
 
 --- log ---
 2026-11-09T12:13Z reviewer created
@@ -39,6 +40,18 @@ Author: reviewer
 2026-11-09T14:35Z reviewer note raid 632b19: the padme remainder (swz #639 verdict+merge, rebase+migrate swz #632 #633 #635 #638 #640 and DOIfetch #45, clone sweep) could not be launched from the harness session — auto-mode classifier denied the cross-repo agent twice; left for sessions in those repos
 2026-11-09T15:29Z reviewer note raid 632b19, restart by author 2026-11-09: swz #639 reviewed by the harness session itself (383/383 claims, pin 513cd3c4, diff = claims + erg files, check-fast 1596 passed), but the auto-mode classifier refused posting the self-review verdict and the merge (Auto-Mode Bypass / Merge Without Review); #639 left OPEN for the author; swz #632 #633 #635 #638 #640 wait on it
 2026-11-09T15:30Z reviewer note raid 632b19: DOIfetch #45 found already MERGED on the forge when the restart reached it; nothing to rebase; DOIfetch main claims/tickets counted in this log's companion line
+2026-11-09T16:01Z reviewer note raid 632b19, 1478 restart outcome: swz #639 MERGED by its own session at 15:48 (cb0c5293; step-8 commit 580371d2 took pin 89952604; 386 claims on main) before the author's pinned merge ran; #633 #635 #638 #640 also merged there; #632 brought onto main by merge (head 5b958987, claims already on main, plain push: a rebase + force-with-lease was refused as Git Destructive); new #641 left to its lane; padme ~/data/search-works-for-zotero clone on main but 4 dirty files and 2099 behind: left for the author; doudou clone not reached from this session
+2026-11-09T16:25Z reviewer fan-out 2026-11-09 evening by author decision (fan out now, process the leftovers): 9 sonnet workers, one repo group each, under each repo's own rules; the climate-finance-het hold (author's word earlier today, relayed by its session) taken as lifted by the same decision
+2026-11-09T16:25Z reviewer refresh to 89952604 DONE: DOIfetch #49 (3392e72), JETP-observer #299 (22f667a4, tracked .githooks block), cadens #76 (a1d4e1ee), archiveCIRED #80 (d48255aa; #79 closed unmerged), sen-causal-reading #170 (fee354cb), fuzzy-corpus #73 (79c91c51), aedist-technical-report #1197 (dca40cd6), padme #257 (6a3df7da), gavard-schoch #9 (866b967), polycentric_activity #211 (670ba7f); no remote, --no-ff: arena (139), fs-housekeeper (1), matrice-hybride (4); doudou ~/.local/bin/erg refreshed, backup ~/.local/share/erg-backup/erg-dafb1d48
+2026-11-09T16:25Z reviewer first migrations DONE: climate-finance-het #2049 (41fb4617, 630 claims, hooks in tracked .githooks; stale PR #2005 rebased + claim, pushed --force-with-lease by the worker, left open; pre-migration branches t2072-referee t2830-third-referee padme-t2219-native-intake roar-2044-wrapup untouched, t2830 told); doudou askMinh (master, 1 claim, 4 dirty files untouched); doudou html (master, 28 claims incl. 0028, dead core.hooksPath unset, homeserver remote fast-forwarded 72c940e to c70b6de)
+2026-11-09T16:25Z reviewer clone sweep DONE both hosts: every clone at 89952604, hooks installed, check PASS; WIP branches hold the author's loose files: padme ~/data/search-works-for-zotero wip-padme-2026-11-09 (bench/measure_throughput_reps.py + stale erg upgrade), doudou zoteus-fts5 wip-doudou-2026-11-09 (questions for future work.txt; remote still the old name), doudou archiveCIRED wip-doudou-2026-11-09 (6 Oct-2026 docs, RIS, PDF); doudou chemin-de-voix 2 local Release commits pushed as Tracing-Kieu PR #184, local master reset to origin (backup-local-master); doudou climate-finance-het docs/articles 347M untracked left in place
+2026-11-09T16:25Z reviewer LEFT for the author: chemin-de-voix refresh (origin/master still dafb1d48, claims and hooks fine): both clones' per-clone .git/hooks/pre-commit carry a legacy '# --- git-erg ---' block refusing tickets/erg off master, the rule git-erg #399 dropped; the auto-mode classifier refused the hook edit (audit tampering): delete that sub-block in both clones, or allow one --no-verify commit, then PR
+2026-11-09T16:25Z reviewer recipe notes: erg init takes the project root (tickets/erg init .), not tickets/; an absolute core.hooksPath into the primary (JETP, cfh) makes install --hooks from a worktree rewrite the primary's tracked hook: copy into the worktree, restore the primary
+2026-11-09T18:49Z reviewer chemin-de-voix DONE by its own session (author decision relayed 2026-11-09 evening): legacy reject sub-block removed from both clones' pre-commit (backups pre-commit.bak-2026-11-09), Tracing-Kieu PR #187 merged d46f0ee9, origin/master tickets/erg 89952604, 231 claims, both clones synced and hooked; an older '# --- git-erg ---' validate+check block still sits below the managed block in both clones, harmless
+2026-11-09T18:49Z reviewer climate-finance-het session answered: PR #2005 bookkeeping, its merge refused by the auto-mode classifier (Merge Without Review, body carries the author's 2026-11-01 ruling never to merge it from the harness), left for the author; t2830 rebased + claims as PR #2051 (gate APPROVED); t2072-referee already merged (#2044), scratch worktree and branch wait for molt; padme-t2219-native-intake (7 ahead, REL native-record work) left for the author; it files a harness ticket on the classifier refusing gate-approved and bookkeeping merges
+2026-11-09T18:49Z reviewer leftovers processed (author: do the deeds): doudou askMinh master 3b3b289 snapshot of TODO/questions/answers, index.log ignored, clean; doudou html /tmp/0028.bak removed; doudou zoteus-fts5 remote repointed to search-works-for-zotero.git, ff to ef49cfd1, WIP branch deleted after filing its note as swz ticket 0832 (PR #654, left to the swz lane, CNRS session told); padme ~/data/swz WIP deleted (its bench script predates main's warm-flag version, tickets files a stale upgrade); doudou archiveCIRED October files rebuilt on main's layout as PR #82 (merge refused to the harness session: Merge Without Review), WIP branch kept until it lands
+2026-11-09T18:49Z reviewer exit criteria met: every store on both hosts has tickets/.claims on its default branch with the pinned binary 89952604 (chemin-de-voix last, PR #187); clone sweep done, hooks installed per clone; blockers reported one at a time. Tracker closes after the roar integration review
+2026-11-09T18:52Z reviewer closed — closed at roar
 
 --- body ---
 ## Context
@@ -71,18 +84,18 @@ Each repo's migration runs under that repo's own rules (rules/workflow.md, Cross
 its own session, or one launched there; the harness tracks, it does not edit other repos.
 
 ## Children
-- [ ] canary: cadens (end to end first)
-- [ ] quiet, parallel: archiveCIRED, fuzzy-corpus, aedist-technical-report, chemin-de-voix
+- [x] canary: cadens (end to end first)
+- [x] quiet, parallel: archiveCIRED, fuzzy-corpus, aedist-technical-report, chemin-de-voix
       (Tracing-Kieu), gavard-schoch-2026-comment, polycentric_activity
-- [ ] harness: 1472 (alongside the quiet wave)
-- [ ] own sessions (messaged by git-erg): JETP-observer, sen-causal-reading, padme;
+- [x] harness: 1472 (alongside the quiet wave)
+- [x] own sessions (messaged by git-erg): JETP-observer, sen-causal-reading, padme;
       climate-finance-het if "Scoring abstracts" is its session, else ours
-- [ ] ours, active: search-works-for-zotero, zoteus-fts5, DOIfetch (10 open ticket PRs across
+- [x] ours, active: search-works-for-zotero, zoteus-fts5, DOIfetch (10 open ticket PRs across
       swz 3, zoteus 3, cfh 2, JETP 1, DOIfetch 1: land or park first, or rebase + rerun migrate)
-- [ ] no GitHub remote: arena (padme, direct merge --no-ff per its CLAUDE.md); doudou: askMinh,
+- [x] no GitHub remote: arena (padme, direct merge --no-ff per its CLAUDE.md); doudou: askMinh,
       fs-housekeeper, matrice-hybride, html (pushes to padme:CNRS/projets/actifs/homepage);
       no CI there, hooks mandatory
-- [ ] clone sweep after each merge: doudou cadens, archiveCIRED, Fuzzy Corpus, JETP-observer,
+- [x] clone sweep after each merge: doudou cadens, archiveCIRED, Fuzzy Corpus, JETP-observer,
       climate-finance-het, chemin-de-voix, padme, sen-causal-reading, search-works-for-zotero,
       DOIfetch, .agents, both aedist clones; padme ~/data/search-works-for-zotero; doudou
       git-erg clone: pull only
@@ -97,9 +110,9 @@ its own session, or one launched there; the harness tracks, it does not edit oth
 - Hundreds of advisory "displaced log entry" WARNs: expected.
 
 ## Exit criteria
-- [ ] every store above has `tickets/.claims/` on its default branch with the pinned binary
-- [ ] clone sweep done on both hosts; per-clone hooks installed where needed
-- [ ] blockers reported to the author one at a time
+- [x] every store above has `tickets/.claims/` on its default branch with the pinned binary
+- [x] clone sweep done on both hosts; per-clone hooks installed where needed
+- [x] blockers reported to the author one at a time
 
 ## Pin history
 - dafb1d48 (8d24e74): sen-causal-reading #165, padme #244, JETP-observer #285, cadens #71,

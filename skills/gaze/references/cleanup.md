@@ -35,7 +35,7 @@ in the result:
 The script reads, and prints as `containment: ...`: the toplevel of the session
 tree `gaze_setup.py` recorded at entry (not cwd: a runtime may have moved the shell
 between setup and close, and a drifted cwd would report a foreign tree's state;
-an entry state without it reads the cwd), `git status --porcelain` of the
+an entry state without it reads the cwd; a recorded tree that no longer exists is flagged `session worktree gone`, with nothing to switch back to), `git status --porcelain` of the
 invoking session worktree, its branch (compared to `--entry-branch`), and the
 primary checkout's status; lines already present at entry (recorded by `gaze_setup.py`) are the caller's own work, not findings. Any finding exits 4 (the result is still recorded
 with the report); the repairs below stay with gaze.

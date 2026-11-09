@@ -12,7 +12,7 @@ argument-hint: "<paper-or-abstract> [journal|conference]"
 
 Journal mode is the default; conference mode when the author asks for a talk,
 poster or conference paper. Preparing the submission itself is the conference-submission-prep or pdf-finish skill; recording it,
-submission-event.
+`/paper` with `submitted`.
 
 ## Values, both modes
 

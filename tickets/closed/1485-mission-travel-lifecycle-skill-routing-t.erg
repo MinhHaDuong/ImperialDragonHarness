@@ -1,0 +1,128 @@
+%erg 0.1
+Title: mission: travel lifecycle skill routing to REALF-derived checklists (prepare, check, return)
+Created: 2026-11-09
+Author: haduong
+Closed: autoclosed — PR #2334
+
+--- log ---
+2026-11-09T16:10Z haduong created
+2026-11-09T16:11Z Minh-Ha-Duong haduong sibling of 1483 (/fly); working name mission, naming round open
+2026-11-09T16:21Z Minh-Ha-Duong haduong name mission kept after the naming round (roam, range, wing, swoop, sortie); 1483 renamed fly → paper for the same rule
+2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
+2026-11-09T18:59Z reviewer execute: skill mission + three references (seven /paper headings), catalog regenerated, census skills 6297/6300. Criterion 1 met on doudou, verified read-only over ssh: ~/CNRS/missions/AGENTS.md 3893 B, 2026-11-09 17:33, names /mission and 1485; skill names no local path. Dry runs, text traces against doudou read-only: Mahdia, MeSSH and Jeco now all sit in done/<rubrique>/ with a closing Suite section, so return lands on 'nothing to do' for each (positive control). MeSSH as it stood in the worked example traces to steps 5 (compte rendu), 6 (slides via /update-publist), 9 (move to done/Conferences/Paris 2026-07-09 MeSSH, name from AGENTS.md), plus 1/3 (registration only, no-expense exit) and 7-8; live run on doudou after idh install.
+2026-11-09T19:46Z reviewer closed — autoclosed — PR #2334
+
+--- body ---
+## Context
+
+Author decision (Imagine, 2026-11-09, session in `~/CNRS/missions` on the
+return from Jéco Lyon and MeSSH Condorcet): one travel lifecycle skill,
+sibling of `/paper` (ticket 1483), not one skill per step. Name `/mission`
+settled 2026-11-09 after a naming round (mission, roam, range, wing,
+swoop, sortie): the skills that manage an object of the trade carry the
+object's name, mirroring its directory (`missions/` → `/mission`,
+`papiers/` → `/paper`); the dragon verbs stay for the harness's skills on
+itself.
+
+Reference: REALF chapter 7 « How to present your work », How-to 35–39
+(`~/CNRS/papiers/actif/REALF 2025 édition/main.pdf`, p. 52–57): choose a
+venue, pack the bag, attend, wrap up after an event, get a refund. The
+chapter is the rationale; the checklists are derived from the harness
+infrastructure and the author's filing conventions, not copied.
+
+The author's own wrap-up list, in three strands (2026-11-09):
+- CNRS: declare the return, claim the refund, hand over the receipts,
+  make sure the mission is findable for the RIBAC.
+- CIRED: write and share a brief compte rendu.
+- Self: archive the communication on the personal page and HAL, update
+  the year's roadmap.
+
+Gap found: no skill mentions missions. `/update-publist` covers page +
+HAL, the `email` skill covers sending, `/submission-event` (→ `/paper`)
+knows the roadmap for manuscripts only. Nothing covers the ordre de
+mission, the état de frais, the receipts, the compte rendu, or the move
+to `done/`. The only tool reading `missions/` is
+`~/CNRS/code/activity_report_writer/ribac-check`, with hard-coded paths
+`missions/done/Conférences`, `missions/done/Cours`,
+`missions/actif/keynote`.
+
+## Filing conventions observed (to encode, not to change)
+
+- `missions/actif/AAAA-MM-JJ Événement/`, `missions/done/<rubrique>/Ville
+  AAAA-MM-JJ Événement/` with seven rubriques (Conférences, Séminaires,
+  Cours, Project meetings, GIEC, Jurikomités, Field trips), plus
+  `missions/annulees/` and `missions/annonce/`. The move to `done/`
+  implies a rename and a rubrique choice; the rubrique decides whether
+  ribac-check sees it.
+- Model folder: `missions/actif/2026-09-18 Mahdia/` — README with a table
+  of subfolders, `voyage/` (ordre de mission, bookings, cancellations),
+  `sources/`, the production folder, and a « Suite » section declaring
+  the folder closed with the compte rendu mail archived as Markdown.
+- Frozen outputs in a dated `release/<AAAA-MM-JJ>/` subfolder (Jéco:
+  `release/2026-11-01/publication/` holds the HAL deposit and homepage
+  result), per the CNRS filing convention memory
+  (`~/.claude/projects/-home-haduong-CNRS/memory/project-cnrs-filing-convention.md`).
+- Secretariat side: `~/CNRS/secretariat/procedures/Formulaires missions/`
+  (état de frais, instruction missions), roadmap `~/CNRS/secretariat/Feuille
+  de route <year>.odt` section « 2. Communications ».
+
+## Design
+
+- `skills/mission/SKILL.md` is a short router: argument `<dossier> <stage>`,
+  stage ∈ `prepare | check | return`; it resolves the dossier under
+  `missions/actif/`, reads its README if any, then loads
+  `references/<stage>.md`. Venue choice stays with `/choose-venue`;
+  abstracts with `/conference-submission-prep`; the talk's content with
+  `/message-framing` and `/slides`; a manuscript event met during a
+  mission goes to `/paper`.
+- `references/prepare.md` (How-to 35, 36 first half, 39 first half):
+  create the dossier with `voyage/` and README; estimate and ordre de
+  mission (Etamine) as author-only items; bookings through the lab's
+  procedures, never bought by hand; registration receipt filed; roadmap
+  row created in « Communications »; calendar entry.
+- `references/check.md` (How-to 36 second half, 37): the bag list, paper
+  and electronic; slides sent to organisers and chair the night before;
+  session brief (day, slot, chair, co-speakers, announced title) in one
+  page; talking points; contacts looked up through `directory`.
+- `references/return.md` (How-to 38, 39): the three strands above as
+  three sections, each with its register, its delegate and its
+  author-only gate. CNRS: receipts inventoried in `voyage/`, état de frais
+  as an explicit stop (browser + signature, the skill prepares the list
+  and hands back). CIRED: compte rendu drafted from the dossier, Mahdia
+  mail as the shape, sent via `email` on confirmation, archived in the
+  dossier. Self: communication PDF through `/update-publist` (page then
+  HAL), roadmap row updated, dated `release/` subfolder with the
+  authentic artifacts (provenance step, hash them), LinkedIn post as an
+  author-only item. Close: README « Suite » section, move to
+  `done/<rubrique>/Ville AAAA-MM-JJ Événement`, and extend ribac-check's
+  path list if the rubrique is not Conférences or Cours.
+- Each checklist states: register(s) touched; provenance step; filesystem
+  steps; outward gates named with who clicks; delegates; author-only items
+  listed so they are asked, not dropped. Same section skeleton as `/paper`
+  so the two skills read alike.
+
+## Worked examples for the `return` stage (state on 2026-11-09)
+
+- Jéco Lyon, 3 novembre 2026: tribune on the page and on HAL
+  (hal-05847469, in moderation), roadmap row written, outbound ticket
+  and Airbnb receipt in the folder, no return ticket, no état de frais,
+  no compte rendu, folder still in `actif/`.
+- MeSSH Campus Condorcet, 9 juillet 2026: slides `slides-messh26-cirdi.pdf`
+  not indexed on page or HAL (only the Cirdi final report of December
+  2025 is), roadmap row says « écrire un billet », registration
+  confirmation only, no compte rendu, folder still in `actif/`.
+
+## Exit criteria
+
+- [ ] An AGENTS.md in ~/CNRS/missions/ holds what is local (conventions, places, preferences), the skill reads it and holds only the stages, routing and gates. Content: naming in `actif/` and `done/<rubrique>/`, the seven rubriques, where the secretariat forms are, the paths `ribac-check` reads, local preferences.
+- [ ] `skills/mission/SKILL.md` router and three checklists in
+      `skills/mission/references/`, catalog updated, hygiene tests pass
+- [ ] Each checklist carries the six sections (registers, provenance,
+      filesystem, gates with who clicks, delegates, author-only items)
+- [ ] `/mission "2026-07-09 MeSSH Campus Condorcet" return` dry run lists
+      the slides indexing, the compte rendu, the move to
+      `done/Conférences/Paris 2026-07-09 MeSSH` and nothing the agent had
+      to discover
+- [ ] `/mission "2026-09-18 Mahdia" return` dry run lands on « nothing to
+      do » (positive control: the folder is the model)
+- [ ] `make check` passes

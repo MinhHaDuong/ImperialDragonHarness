@@ -95,6 +95,34 @@ and covers the cases a presence probe never did (missing or malformed
 to curl via a chmod-600 temporary config file (`curl -K`), never on the
 command line. Mask `<hal:password>` in any displayed API response.
 
+### Prior record check (GATE)
+
+This is step 2a-0 of the skill. It runs before any TEI is built and before the
+PDF review, because a hit changes the whole route: a second POST creates a
+duplicate record that only a moderator can merge.
+
+- **Public HAL.** One GET on the search API,
+  `q=authIdHal_s:minh-ha-duong AND title_t:(w1 OR w2)`, with distinctive title
+  words joined by OR and `fl=halId_s,title_s,docType_s,version_i`. For a slide
+  deck or a translation, search the companion work too, by its title or halId.
+- **Private side.** `~/CNRS/html/src/Ha-Duong.bib` (an `eprint` on the object
+  or its companion), the project's `STATE.md`, its dated `release/` folders,
+  and the author's mail archive for a HAL acknowledgement carrying the title,
+  with whichever mail tool the session has.
+- **Limits.** A record under moderation is not in the public API: a SWORD POST
+  made in this session or in the last days counts as a hit until HAL's mail
+  confirms it. A deposit under another idHal is not caught.
+
+Write the outcome in the release record and show it to the author:
+
+```
+prior_deposit_check: searched=[...] found=[hal-id|none] route=none|PUT|author
+```
+
+**GATE:** a hit yields the `{hal-id}` for § 2c's PUT, never a POST. Sources
+that disagree (bib `eprint`, STATE.md, HAL) go to the author. Only `none`
+allows 2a. No TEI is built before this block is shown.
+
 ### Pre-upload PDF review (GATE)
 
 Read **every page** of the PDF with vision before building any metadata.
@@ -223,8 +251,9 @@ then repeat without the header.
 
 **Updating an existing deposit** is the same request as a `PUT` to
 `https://api.archives-ouvertes.fr/sword/hal/{hal-id}`. Use it rather
-than a second POST — a second POST creates a duplicate record, and
-duplicates need moderator action to merge.
+than a second POST, with the `{hal-id}` that the Prior record check found: a
+second POST creates a duplicate record, and duplicates need moderator action
+to merge.
 
 The SWORD acknowledgement means "stored in workspace" — moderation
 status is confirmed by HAL's email, not the API response.

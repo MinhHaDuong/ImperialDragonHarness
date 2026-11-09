@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-01T11:25Z reviewer created
 2026-11-01T16:15Z reviewer 1416 closed moot by recount (author ruling 2026-11-01); 1417 unblocked
+2026-11-09T19:02Z reviewer de-risk section added; one live child since 1416 moot; a second child only after the author's Phase 2 ruling (1417 De-risk item 3)
 
 --- body ---
 ## Context
@@ -23,3 +24,17 @@ to make room for it in the always-listed skill catalog.
 
 ## Exit criteria
 - [ ] Both children closed; integration review per roar step 8
+
+## De-risk (2026-11-09)
+
+- One live child. 1416 closed moot, so roar step 8's integration review
+  (re-read the union of the children) has nothing to unite. Either 1417
+  splits (its De-risk item 2: raid Phase 2 delegation becomes a second
+  child after the author's ruling on the per-ticket reimagine) and 1415
+  stays a tracker of two, or 1415 closes in the same event as 1417. If the
+  1443 note on the bare template shows no skill is needed (1417 De-risk
+  item 1), both close together.
+- "Both children closed" reads "every open child closed"; 1416 counts as
+  closed (moot).
+- Do not open the second child before the author's ruling (1417 De-risk
+  item 3): a ticket for a decision not taken is a wait ticket.

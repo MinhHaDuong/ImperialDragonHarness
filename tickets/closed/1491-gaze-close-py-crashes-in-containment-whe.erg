@@ -1,0 +1,105 @@
+%erg 0.1
+Title: gaze_close.py crashes in containment() when the entry session worktree was removed during the run; the answer never lands on notes
+Created: 2026-11-09
+Author: reviewer
+Closed: autoclosed — PR #2341
+
+--- log ---
+2026-11-09T19:13Z reviewer created
+2026-11-09T19:14Z reviewer Second occurrence, same minute: search-works-for-zotero PR #648 gaze (run gz-20261109T190745214Z-a472) crashed at the same line on the same vanished session tree (.claude/worktrees/t0774-288575-4791) after cleanup had removed the review worktree. Recovery that worked within the 15-minute deadline, as a recipe until the fix lands: gaze_setup.py <pr> again from the primary checkout (recreates review-<pr> with an entry-state whose session tree exists), seat_clock.py plan-write with the same arguments, deterministic check items re-run, seat reports restored from raw/<host>/seat-raw/<raw_id>-<seat>.raw with the launcher header (worker: model=<pin> ...) replacing the seat's self-reported first line plus the .md.status line, then gaze_close.py once more: answer 20261109T191430318Z-padme-0e1fd56f recorded in rv-20261109-pr-648-f9d6, pointer posted, containment clean. The recovery re-files, it does not re-review; the answer text says so.
+2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: non-raising containment() with a 'session worktree gone' flag, no primary substitution, cwd-inside-removed-tree case added by the Blind-Spot pass; exit criteria unchanged
+2026-11-09T20:05Z reviewer raid 4afdb3 feasibility PASS: every path, line and helper the plan cites exists (containment() :258, cwd read :371, exit-4 return :440, test helpers, caller-worktree pattern :242-252); WARN: cleanup.md heading is 'Containment postcondition' (line 30), not 'Containment'
+2026-11-09T20:08Z reviewer fixed on t1491-gaze-close-session-gone: containment flags session worktree gone, cwd guard; 2 tests
+2026-11-09T20:12Z reviewer closed — autoclosed — PR #2341
+
+--- body ---
+
+## Observation (search-works-for-zotero PR #642, 2026-11-09 19:07-19:17Z, padme)
+gaze ran its pass to the end (plan check: PASS; seats tests, redteam on headless codex, read). `gaze_close.py`
+printed the plan line and the two `seat:` lines, built the attribution, removed the review worktree
+(`cleanup: review worktree removed`), then raised `FileNotFoundError` in `containment()` at
+`git("rev-parse", "--show-toplevel", cwd=session_tree)`: the session worktree recorded in
+entry-state.json (`.claude/worktrees/t0774-288575-4791`) had been removed by another actor
+while the review ran. `record_answer` and `pointer` never ran: no answer on notes, no pointer on
+the PR, and the panel (manifest, reports, entry-state.json) was already gone, so a re-run of the
+closing call has nothing to record from. The seat's raw output survives in the archive spool
+(`raw/padme/seat-raw/20261109T191009Z-2227419-redteam.raw`).
+
+## Fix wanted
+- `containment()` treats a missing session tree as a finding ("session worktree gone"), reading
+  the primary instead, and never raises: the answer is recorded (exit 4 with the flag), as the
+  cleanup-blocked path already does.
+- Order: record the answer before, or independently of, the containment read, so a containment
+  failure can never lose the review's evidence after the panel was removed.
+- A test: entry-state naming a nonexistent session tree → answer recorded, `containment: ... FLAGGED
+  session worktree gone`, exit 4.
+
+## Exit criteria
+- [ ] gaze_close.py records the answer when the entry session tree no longer exists
+- [ ] a test pins it
+
+## Imagine (raid 4afdb3, 2026-11-09)
+- Where: main() line 412 cleanup() removes the review tree; line 423 containment(..., session_tree);
+  line 265 git(..., cwd=session_tree) raises FileNotFoundError (subprocess.run with a missing cwd),
+  so record_answer (line 434) never runs. Note: the cleanup-blocked path returns 1 or 2 (lines
+  414-422); exit 4 is the containment-flagged path (line 440) and is the right code here.
+- Path: no reorder (the answer text embeds the containment line). Make containment() unable to
+  raise: if session_tree is set and not a directory, flag "session worktree gone: <path>", skip
+  the session's status and branch reads and the entry-branch comparison, keep top as the recorded
+  path so the foreign-files-in-primary check still runs. Never substitute the primary (its branch
+  is main: a false "differs from entry branch" flag whose documented repair, cleanup.md
+  § Containment, switches main's checkout). No guard inside git(); session_tree=None still means cwd.
+- Blind-Spot: the close may run with its cwd inside the removed tree (detached gaze pins cwd to
+  the PR worktree = session_tree); Path.cwd().resolve() at line 371 then raises before cleanup.
+  In scope: catch it and treat "here" as outside the review tree; a second test case covers it.
+- Test (tests/test_gaze_close.py, integration tier): caller worktree pattern of lines 242-252,
+  SETUP from the caller, remove it, CLOSE with --comment-file; assert exit 4, "FLAGGED session
+  worktree gone" in stdout, the flag in answer_text() on notes (anti-tautology), pointer posted,
+  no traceback, no "differs from entry branch", a stray primary file still flagged; second case
+  with cwd inside the removed tree. Run red first against the pre-fix script.
+- Known remover: raid_land.py --cleanup removed an adopted session tree during a gaze
+  (journal 2026-10-30-raid-2b69a0). Follow-up question for the author, not this ticket: should
+  cleanup refuse a worktree a live process sits in; post-merge monitor = grep notes answers for
+  "session worktree gone" (the detached-gaze poll never reads the exit status).
+
+## Plan (raid 4afdb3, 2026-11-09)
+
+### Actions
+1. scripts/gaze_close.py, containment() (lines ~259-282). Before the first git call: `gone = bool(session_tree) and not Path(session_tree).is_dir()`.
+   When gone: do NOT call git with cwd=session_tree; set top=str(session_tree) (kept so the foreign-files-in-primary check, `Path(top).resolve() != primary.resolve()`, still runs), st="" (no session status read), br=None; append the flag first: `session worktree gone: <session_tree>`. Skip the "branch differs from entry branch" test when gone (guard: `if entry_branch and not gone and br != entry_branch`). Never substitute primary; no guard inside git(); session_tree=None still reads the cwd. Update the docstring (one sentence: gone tree is a finding, containment never raises).
+   Report line when gone: `containment: toplevel=<session_tree> branch=(unknown); FLAGGED session worktree gone: <session_tree>[ | foreign files in primary checkout: ...]`. Exit stays 4 via the existing `flags` path (line 440 and the record_answer branch); no change in main() ordering.
+2. scripts/gaze_close.py, main() line 371: replace `here = Path.cwd().resolve()` with try/except OSError -> `here = None`; the refusal test becomes `if here is not None and (here == tree or tree in here.parents)`. A cwd inside a removed tree is outside the review tree by construction (the review tree still exists at that point), so the close proceeds. Add the exit-code note to the module docstring line 52 area ("4 also when the entry session worktree is gone").
+3. tests/test_gaze_close.py: add the two tests below next to test_preexisting_untracked_primary_file_is_not_contamination (same module pytestmark integration; no new helper in gaze_fixture.py).
+4. No change to skills/gaze/references/cleanup.md except, optionally, one line under Containment: "a recorded session tree that no longer exists is flagged `session worktree gone`; there is nothing to switch back" (so the documented repair does not point at main's checkout).
+
+### First test
+Tier: integration (subprocess scripts), via the module pytestmark. Run: `python3 -m pytest tests/test_gaze_close.py -k "session_worktree_gone" -q` (rtk fallback: `rtk proxy python3 -m pytest ...`).
+Shared fixture steps: `primary, env = make_repo(tmp_path)`; `caller = tmp_path/"caller"`; `git(primary,"worktree","add","-b","callerbr",str(caller))`; `run(SETUP,["7"],caller,env)` rc 0, `f = fields(r.stdout)`; write a stray `primary/"stray.txt"`; `git(primary,"worktree","remove","--force",str(caller))`; `comment = tmp_path/"c.md"` with `result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{duration}}\n{{containment}}\n`; `one_seat(primary)` so the plan is readable; then close from `primary` with `["7","--branch","feature","--token",f["clock"],*ATTR(tmp_path),"--comment-file",str(comment)]`.
+- test_close_records_answer_when_session_worktree_gone: assert
+  - `r.returncode == 4` (r.stdout + r.stderr as message);
+  - `"Traceback" not in r.stderr` and `"FileNotFoundError" not in r.stderr`;
+  - `"FLAGGED" in r.stdout and "session worktree gone" in r.stdout`;
+  - `text = answer_text(primary, f)`; `"session worktree gone" in text` and `"result: REVIEWED" in text` (answer on notes carries the flag, not only stdout);
+  - `"differs from entry branch" not in r.stdout` and not in text;
+  - `"foreign files in primary checkout" in text and "stray.txt" in text` (primary check still fires);
+  - pointer posted: `POINTER.match(posted(tmp_path).strip())` on the last gh.log line;
+  - `not (primary/".claude"/"worktrees"/"review-7").exists()`.
+- test_close_with_cwd_inside_session_worktree_gone: same fixture, but the close runs as `python3 -c` wrapper: `os.chdir(caller)`; `git worktree remove --force caller` (subprocess with cwd=primary); set `sys.argv` to the CLOSE argv plus `--repo <primary>`; `runpy.run_path(CLOSE, run_name="__main__")`; run via subprocess.run with cwd=caller, env, text capture. Assert returncode 4, no Traceback in stderr, no "inside the review worktree" in stderr, "session worktree gone" in answer_text. Risk: other cwd-relative reads in the close (inherited deleted cwd); if one surfaces, fix it in the script (primary-anchor it) rather than weaken the test; fallback only if infeasible: monkeypatch Path.cwd to raise FileNotFoundError and call gaze_close.main() in-process.
+Red first: before touching the script, run the command; expected failures: case 1 rc 1 with FileNotFoundError traceback and no answer (answer_text IndexError), case 2 FileNotFoundError at Path.cwd(). Record the red output in the commit message / PR, then apply actions 1-2 and rerun green. Also run `python3 -m pytest tests/test_gaze_close.py -q` for the neighbours (clean-containment and caller-worktree tests unchanged).
+
+### Dependencies
+None. Uses existing make_repo, run, fields, git, SETUP, CLOSE, ATTR, POINTER, posted, answer_text, one_seat, forge shim from gaze_fixture/test module. Working tree notes: the "worktree remove --force" is plain git in the test's own tmp repo.
+
+### Antipattern scan
+- rc == 4: a wrong implementation that raised caught-and-exited differently would give another code; but 4 is also returned by any other flag. Fix: paired with the "session worktree gone" text assertions, so the flag identity is pinned.
+- "FLAGGED"/"session worktree gone" in stdout alone: tautological for a fix that only prints. Fix: assert the same on answer_text from notes (the evidence the ticket is about).
+- No-Traceback: catches the crash, would not catch a swallow that skips record_answer; the answer_text assertion covers that.
+- "differs from entry branch" absent: would pass for an implementation that skips all branch logic, including for the live tree. Fix: existing tests for a real branch drift stay green (run the whole module); name that in the PR; no new test needed.
+- stray.txt flagged: catches an implementation that returns early on gone; it would not catch a primary-substitution implementation only by this assertion, but the "differs" absence does (primary is main vs entry callerbr).
+- pointer regex: POINTER is anchored on the exact format, catches a missing or malformed post.
+- Case 2 only proves no crash plus record; cwd-removed is genuine (real deleted cwd), not mocked.
+
+### Done when
+- gaze_close.py records the answer when the entry session tree no longer exists: test 1 green, answer on notes contains "session worktree gone", exit 4, pointer posted; red run recorded beforehand.
+- a test pins it: both test functions in tests/test_gaze_close.py, `-k session_worktree_gone` green, the full module green, `make check-fast`/`make lint` unchanged.
+- (Imagine addition, same criteria) cwd inside the removed tree no longer crashes: test 2 green.

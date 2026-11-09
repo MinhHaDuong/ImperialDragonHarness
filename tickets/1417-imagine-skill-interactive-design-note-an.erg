@@ -7,6 +7,7 @@ Author: reviewer
 2026-11-01T11:25Z reviewer created
 2026-11-01T13:09Z reviewer raid 1f0534: criterion 3 audit written, conception/2026-11-01-raid-phase2-imagine-audit.md (45 Imagine sections: 8 premise corrected, 7 scope changed, 28 grounded confirm, 2 restatement; 0 of 44 edit exit criteria). Criterion left open; other criteria wait for the author and 1416.
 2026-11-01T16:15Z reviewer Blocked-by 1416 removed: 1416 closed moot (author ruling 2026-11-01); the catalog entry fits the existing listing
+2026-11-09T19:02Z reviewer de-risk section added; audit now at design/2026-11-01-raid-phase2-imagine-audit.md (conception/ renamed, 1477); author decision pending: raid Phase 2 per-ticket reimagine, options a-d, session default d; recommend the 1443 note on the bare template before any skill
 
 --- body ---
 Parent: 1415
@@ -33,3 +34,79 @@ whose past use the author doubts was constructive.
 
 ## Feasibility (raid 1f0534)
 - PASS (audit only). Exclude raid 1f0534's own Imagine sections from the sample.
+
+## De-risk (2026-11-09)
+
+Session reading against design/2026-11-01-raid-phase2-imagine-audit.md
+(moved from conception/ by ticket 1477) and the raid journals of
+2026-11-07 to 2026-11-09; one Blind-Spot seat (opus, same family) read the
+draft and its findings are folded in. Judgments are the session's.
+
+1. Criterion 4 first, on the bare template. Since the template landed on
+   2026-11-01 no note in design/ follows it, and nothing shows a session
+   skipped it for want of a skill. One real note written with the author on
+   the template, before any skill, measures what a skill must add
+   (sequencing, state-of-the-art search, review launch, KISS pass) and may
+   shrink this ticket to criteria 3 and 4. Candidate: 1443 (memory redesign;
+   the author's design input of 2026-11-08 waits for a session of this
+   kind). 1369 stays closed to implementation until the author reopens it.
+2. One skill, two callers. Criterion 1 (interactive: a question in, a note
+   out, the author in the loop) and criterion 2 (agentic: a ticket in, an
+   annotation out) share a name and little else: inputs, outputs, cost,
+   runtime constraints. Built together the ticket trips the monster signals
+   (SKILL.md and references, raid SKILL.md, rules/workflow.md § Cycle,
+   catalog, tests, the note). Criterion 2 becomes a child of 1415 once the
+   author rules on item 3.
+3. Decision for the author: raid Phase 2's per-ticket reimagine. Evidence:
+   the audit (15 of 45 annotations claimed a premise or scope change;
+   delivery unmeasured; "zero criteria edited" says nothing, the drift guard
+   forbids such edits by design). After the audit: raid 829e9e's per-ticket
+   Imagine (opus) scoped a partial prune correctly; raid 632b19's (sonnet)
+   said "no script edits needed" and was wrong, the Blind-Spot pass caught
+   it; raids 88e70d and 1479 skipped the per-ticket agents after the author
+   pre-ruled, and the Blind-Spot pass still caught a stranded exit check.
+   Options: (a) keep the per-ticket reimagine and delegate it to the skill;
+   (b) cut it to hunt § Plan's premise check plus the Blind-Spot pass;
+   (c) leave Phase 2 as written; (d) write down current practice: the
+   Blind-Spot pass always, the per-ticket reimagine at the lead's judgment,
+   a stronger worker when it runs. Session default: (d); it costs one
+   paragraph in raid and no agentic skill mode.
+4. Pointer sweep. The phase is named in rules/workflow.md:19 and 35-38
+   (§ Posture, § Cycle), skills/hunt/references/session-start.md:12
+   (explore-* opens in Imagine: the skill's natural entry),
+   skills/verify-adherence/SKILL.md:45,
+   skills/harness-doctor/references/toolkit-diagnostics.md:256. A skill
+   landing sweeps the unit in one commit (workflow § Autonomous action).
+   Resident cap 15100 chars, comments stripped
+   (tests/test_rules_resident_budget.py): the skill name replaces the two
+   § Cycle pointers; measure with scripts/resident_census.py in the PR.
+5. Criterion 5 is unverifiable as written: 1416 made no room (closed moot;
+   5330 model-invocable description chars on Claude Code). Proposed
+   restatement, the number the session's own: description under 160 chars
+   including routing hints; `make skills-catalog` and
+   `make check-skills-drift` pass.
+6. Review cost per run. Template § Review asks two decorrelated
+   advisor-level reviews plus KISS; a cross-family seat costs money and
+   consent (gaze_seat.py consent, cross_family_spend) and an advisor call is
+   never a standing setting (raid § Model policy). The skill scales the
+   review to the stakes (decorrelation.md table), states the spend before
+   launch, records "same family, not independent"; two seats by default
+   only for a note that changes rules, guards or gates. Also:
+   rules/workflow.md:19 asks for options with probabilities and prices,
+   template § 5 for costs only; the skill or the template settles which wins.
+7. Three runtimes. Codex and Pi have no question widget: ask in plain
+   conversation, write the note section by section, nothing
+   runtime-specific outside a harness-extension-point
+   (scripts/check-agnostic.sh). Unattended (raid, a background job) the
+   skill degrades to the template's "draft alone, mark every judgment as
+   the agent's"; it does not fail.
+8. Name. Dragon names stay; a later rename costs path pointers (1416
+   counted about ten). Default `imagine`, the phase's name in every rule;
+   the author decides before the branch opens.
+9. Criterion 3 is done with the box open: the audit exists with stated
+   limits (one reader, no A/B). Tick on the author's acceptance, or add a
+   second reader.
+
+Order: author rulings (3, 8) → the 1443 note on the bare template (1) →
+a skill only for what the note showed missing (criteria 1, 5) → a Phase 2
+child only under (a).
