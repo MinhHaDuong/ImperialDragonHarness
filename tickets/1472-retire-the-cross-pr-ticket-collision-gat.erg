@@ -11,6 +11,7 @@ Author: MinhHaDuong
 2026-11-09T10:16Z reviewer undeferred: author plans to run it as soon as the erg conversation delivers
 2026-11-09T12:12Z reviewer ripe: git-erg session confirmed 2026-11-09; take sha256 dafb1d48 (rev 8d24e74); author approved raid wave 2
 2026-11-09T12:26Z reviewer pin moved to sha256 6a104262 (rev 2d0dbea, git-erg ab519a3) by author decision relayed by git-erg; dafb1d48 superseded
+2026-11-09T12:30Z reviewer exit criteria met on branch t1472-erg-claims: pin 6a104262, 965 claims, gate retired, tests/test_erg_claims_conflict.py, make check 3489 passed
 
 --- body ---
 Parent: 1478
@@ -44,10 +45,10 @@ both were open).
   `!tickets/.claims/*` to the allowlist; `erg migrate --claims` refuses an ignored claim path).
 
 ## Exit criteria
-- [ ] The preconditions hold.
-- [ ] The script, its test, the workflow, the local-ci wiring and the LOCAL.md line are removed.
-- [ ] A scratch test: two branches adding the same ticket number conflict on `tickets/.claims/NNNN`.
-- [ ] `make check` passes.
+- [x] The preconditions hold.
+- [x] The script, its test, the workflow, the local-ci wiring and the LOCAL.md line are removed.
+- [x] A scratch test: two branches adding the same ticket number conflict on `tickets/.claims/NNNN`.
+- [x] `make check` passes.
 
 ## Ripe (git-erg session, 2026-11-09 12:15Z)
 Preconditions met. Pin moved by author decision 2026-11-09 (relayed by git-erg): take sha256
