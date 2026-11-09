@@ -27,3 +27,52 @@ then prune the native store as padme was. Codex and Pi stores: confirm none exis
 ## Exit criteria
 - [ ] every v8 project's native store is pruned, or the author kept it on purpose (noted)
 - [ ] no consolidated fact exists only in a native store
+
+## Imagine (raid 829e9e, 2026-11-09)
+Premise checked against the tree after 1480 (projects/ untracked, history kept by author decision):
+every live note of the three named stores on padme byte-matches a blob reachable from the harness's
+origin/main (fuzzy 16/16, chemin-de-voix 60/60, AEDIST 197/198, the odd one its MEMORY.md), so the
+backup is the harness's public git history and holds only while the no-scrub decision holds.
+Scope per project: AEDIST, chemin-de-voix, fuzzy-corpus in (SOURCES.md disposes of every note);
+climate-finance-het partial (its repo's memory/imports/claude-code-native/ holds verbatim copies of
+8 of padme's 11 notes: those 8 go, 3 stay); JETP-observer kept (0 blobs in any repo, live writer);
+git-erg kept on purpose (its SOURCES.md: not migrated, author triages through smelt);
+and sen-causal-reading has an empty memory/ dir, nothing to do; padme done 2026-11-07. Out, author decision:
+the harness's own -home-haduong--agents store (40, live) and -home-haduong--claude (139, never
+consolidated). Superseded keys (Climate-finance--superseded-20260913 88 and 43, jetp 8, JETP-at-two
+7) no longer load: seen, left alone.
+Blind-Spot (second host): doudou holds its own ~/.claude/projects stores for the same keys
+(AEDIST 199, 197 byte-identical to padme's; chemin-de-voix 60; fuzzy-corpus 16; JETP-observer 6;
+climate-finance-het 310 with mtimes to 2026-10-21, about 200 never imported); no sync between hosts.
+The decision is that doudou is in scope for notes passing the same invariant there; doudou-only notes are kept
+and listed; CFH's unconsolidated doudou notes become a CFH ticket, not a prune.
+Blind-Spot (index text): native MEMORY.md files carry free "key insights" lines (AEDIST: 18 of 152);
+each such line is checked against the project's memory/ before the index is rewritten; unmatched
+lines stay in the kept index.
+Safety invariant, per note, both tests before deletion: (a) `git hash-object` of the live file is a
+blob reachable from origin/main of the harness or of the project's own repo (`git log --find-object`,
+not cat-file -e); (b) SOURCES.md, a smelt report or an import directory names the note with a
+disposition. Fails either: keep and list. Audience-excluded notes (AEDIST 5, chemin user_bio) are
+kept and listed for the author, as the ticket says. No durable backup (padme kept none): a scratch
+copy for the run only; the journal records that a history scrub of projects/ would void the backup.
+Authorization reading: the ticket is agent-filed and its context says pruning is the author's call;
+the author launching this raid on it is that call for the consolidated category; the excluded
+category stays the author's. Live Claude Code sessions in a target project rewrite MEMORY.md: the
+executor checks for one before touching a store.
+Simplest path: a ~15-line bash loop per store (hash-object + find-object + grep of the disposition
+list); scripts/smelt_native_notes.py already lists notes with blob shas. No new script, no harness
+absorption of the harness-generic notes (spot check: two obsolete, one without a harness
+equivalent; the text stays in history).
+The harness branch carries this ticket and memory/journal/2026/2026-11-09-native-store-prune-1481.md
+(per store and host: deleted, kept with names, invariant result, the scrub caveat). Each pruned
+project gets one ticket in its tickets/ (guards: no SOURCES.md edit from here) recording the prune
+and asking its next session to add the SOURCES.md paragraph as padme did. JETP-observer and
+git-erg get nothing written in their repos; their kept state is in the journal.
+Reviewed at each project's next smelt or by 2026-11-23: count notes in each pruned store; if stores
+regrow, reopen R4 of design/2026-10-29-memory-system-audit.md (autoMemoryEnabled false, or
+autoMemoryDirectory pointed at the repo) as the lasting fix.
+Drift guard: exit criteria kept verbatim; scope narrowed (kept stores are "kept on purpose, noted").
+Queue for the author: (1) delete or keep the audience-excluded notes, default keep; (2) JETP and
+the CFH remnants, default keep until smelt; (3) git-erg kept on purpose, default yes; (4) turn
+native auto-memory off in v8 projects, default not in this ticket; (5) the harness's own store and
+-home-haduong--claude, default out.
