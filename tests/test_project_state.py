@@ -448,6 +448,7 @@ def test_unreadable_status_never_runs_tests(tmp_path, monkeypatch):
     ("package.json", ["npm", "test"]),
 ])
 def test_clean_precondition_allows_every_runner(tmp_path, monkeypatch, configuration, command):
+    monkeypatch.setattr(ps.shutil, "which", lambda name: None)  # no uv: bare pytest
     (tmp_path / configuration).write_text("test:\n\ttrue\n")
     calls = []
 
@@ -458,6 +459,102 @@ def test_clean_precondition_allows_every_runner(tmp_path, monkeypatch, configura
     _patch_run(monkeypatch, respond)
     assert ps.test_state(tmp_path)["status"] == "pass"
     assert calls == [["git", "status", "--porcelain"], command]
+
+
+# ── ticket 1493: runner choice, timeout status, divergence ──────────────────
+
+
+def _record_calls(monkeypatch, test_rc=0, test_stderr=""):
+    calls = []
+
+    def respond(args):
+        calls.append(args)
+        if args[0] == "git":
+            return _cp("")
+        return _cp("ok\n", returncode=test_rc, stderr=test_stderr)
+
+    _patch_run(monkeypatch, respond)
+    return calls
+
+
+def test_runner_prefers_make_target_over_uv(tmp_path, monkeypatch):
+    (tmp_path / "Makefile").write_text("check-fast:\n\ttrue\ntest:\n\ttrue\n")
+    (tmp_path / "pyproject.toml").write_text("")
+    monkeypatch.setattr(ps.shutil, "which", lambda name: "/bin/uv")
+    calls = _record_calls(monkeypatch)
+    assert ps.test_state(tmp_path)["runner"] == "make"
+    assert calls[-1] == ["make", "check-fast"]
+
+
+@pytest.mark.parametrize("lock, argv", [
+    (True, ["uv", "run", "--frozen", "pytest", "--tb=no", "-q"]),
+    (False, ["uv", "run", "pytest", "--tb=no", "-q"]),
+])
+def test_runner_uses_uv_when_available(tmp_path, monkeypatch, lock, argv):
+    (tmp_path / "pyproject.toml").write_text("")
+    if lock:
+        (tmp_path / "uv.lock").write_text("")
+    monkeypatch.setattr(ps.shutil, "which", lambda name: "/bin/uv")
+    calls = _record_calls(monkeypatch)
+    ps.test_state(tmp_path)
+    assert calls[-1] == argv
+
+
+def test_runner_falls_back_to_bare_pytest_without_uv(tmp_path, monkeypatch):
+    (tmp_path / "pyproject.toml").write_text("")
+    monkeypatch.setattr(ps.shutil, "which", lambda name: None)
+    calls = _record_calls(monkeypatch)
+    ps.test_state(tmp_path)
+    assert calls[-1] == ["pytest", "--tb=no", "-q"]
+
+
+def test_makefile_without_test_target_falls_through(tmp_path, monkeypatch):
+    (tmp_path / "Makefile").write_text("build:\n\ttrue\n")
+    (tmp_path / "package.json").write_text("{}")
+    calls = _record_calls(monkeypatch)
+    assert ps.test_state(tmp_path)["runner"] == "npm"
+    assert calls[-1] == ["npm", "test"]
+
+
+def test_timeout_is_its_own_status_and_budget_is_passed(tmp_path, monkeypatch):
+    (tmp_path / "Makefile").write_text("test:\n\ttrue\n")
+    seen = []
+
+    def fake(args, cwd, timeout=30):
+        seen.append(timeout)
+        if args[0] == "git":
+            return _cp("")
+        return _cp(returncode=ps.TIMEOUT_RC, stderr="timeout")
+
+    monkeypatch.setattr(ps, "run", fake)
+    out = ps.test_state(tmp_path, 42)
+    assert out["status"] == "timeout"
+    assert "42" in out["detail"]
+    assert seen[-1] == 42
+
+
+def test_run_maps_expired_subprocess_to_timeout_rc():
+    r = ps.run([sys.executable, "-c", "import time; time.sleep(5)"], ".", timeout=0.2)
+    assert r.returncode == ps.TIMEOUT_RC and r.stderr == "timeout"
+
+
+@pytest.mark.parametrize("lr, ahead, behind, diverged, upstream", [
+    (_cp("36\t36\n"), 36, 36, True, True),
+    (_cp("36\t0\n"), 36, 0, False, True),
+    (_cp("0\t4\n"), 0, 4, False, True),
+    (_cp(returncode=128, stderr="no upstream"), 0, 0, False, False),
+])
+def test_git_state_divergence_and_missing_upstream(monkeypatch, lr, ahead, behind, diverged, upstream):
+    def respond(args):
+        if args[:2] == ["git", "rev-list"]:
+            return lr
+        return _cp("")
+
+    _patch_run(monkeypatch, respond)
+    out = ps.git_state(Path("."))
+    assert (out["ahead"], out["behind"]) == (ahead, behind)
+    assert out["diverged"] is diverged
+    assert out["upstream"] is upstream
 
 
 # ── erg_state (ticket 1479: optional git-erg pin report) ─────────────────────

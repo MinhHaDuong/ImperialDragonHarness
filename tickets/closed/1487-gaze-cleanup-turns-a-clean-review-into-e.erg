@@ -1,0 +1,81 @@
+%erg 0.1
+Title: gaze cleanup turns a clean review into ESCALATE when git-ignored build files remain in the review copy
+Created: 2026-11-09
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #2357
+
+--- log ---
+2026-11-09T16:42Z Minh Ha-Duong created
+2026-11-09T22:02Z reviewer note: criterion 1: tests/test_preflight_ignored_ok.py reproduces the false ESCALATE (gaze_close on an ignored *.stamp, red before the fix) with its positive control (untracked unignored draft.txt still ESCALATEs)
+2026-11-09T22:02Z reviewer note: criterion 2: gaze_close and verify-gate both call worktree-exit-preflight.sh --removal --ignored-ok; roar/lair/gc keep the 1212 rule
+2026-11-09T22:02Z reviewer note: criterion 3: not reproducible: no harness path runs checkout/restore/clean in a review copy; likely the project's make target regenerating output/05_manuscript/*.md. fuzzy-corpus mirror case not reproducible from current code; worktree-gc.sh keeps the strict rule for stranded review/gate trees (out of scope, PR #2348 owns it)
+2026-11-09T22:10Z reviewer closed — autoclosed — PR #2357
+
+--- body ---
+## Context
+
+Observed three times in the 2026-11-09 TLC sprint (MOE session `CNRS` on
+padme), in three unrelated project repos, each by a different team lead:
+
+- sen-causal-reading PR #169: the first gaze answer was ESCALATE because the
+  project's `make check` left build output in the reviewer's worktree; a
+  second run answered REVIEWED and the gate accepted that one. The stale
+  ESCALATE comment is still visible on the PR.
+- chemin-de-voix (PRs #182/#183): a full `make test` writes two git-ignored
+  build files (`output/05_manuscript/.assemble.stamp`, `main.docx`); gaze's
+  cleanup counted them as leftovers and turned its result into ESCALATE. The
+  same lead also saw one gaze run delete the tracked
+  `output/05_manuscript/*.md` files in its own review copy, then restore
+  them; nothing outside the copy was affected.
+- fuzzy-corpus PR #72: the gate's removal of its temporary worktree should
+  have stopped on leftover LaTeX build files and went ahead anyway (the
+  mirror-image failure: the check did not fire when it should have); only
+  regenerable files were lost.
+
+Each false ESCALATE costs a second gaze run and leaves a misleading comment
+on the PR. The defect is in the harness, not the projects: the files are
+git-ignored build products the project's own check target creates.
+
+## Observation, cause not yet established
+
+`gaze` (and the gate's worktree removal) treat any untracked file in the
+review copy as a leftover, without consulting `.gitignore`. Candidate fix:
+count only files that `git status --porcelain --ignored=no` reports (i.e.
+untracked AND not ignored) as leftovers; ignored build products are the
+project's business and `git worktree remove --force` on them is safe.
+Reproduce first with a positive control: a review copy holding one ignored
+file and one untracked-unignored file.
+
+## Exit criteria
+
+- [x] A reproduction shows the false ESCALATE on an ignored file and the correct ESCALATE on an untracked, unignored file
+- [x] gaze and the gate's cleanup agree on the same leftover rule
+- [x] The second observation (tracked files deleted then restored inside the review copy) is either reproduced and ticketed separately or recorded as not reproducible
+
+## Imagine + Plan (raid a8b3e4, 2026-11-09)
+
+Premise refined: the one decision site is `worktree_residue` in
+`scripts/worktree-clean-lib.sh`, which counts ignored files on purpose
+(ticket 1212: a `*` ignore hides drafts; pinned in
+`tests/test_worktree_tools.py`). gaze (`scripts/gaze_close.py`) and the gate
+(`skills/verify-gate/SKILL.md`) both call `worktree-exit-preflight.sh
+--removal` then plain `git worktree remove`, so they already share one rule;
+the fix must keep them aligned. The ticket's candidate fix (ignored=no
+everywhere) would reopen 1212 for roar, lair and gc.
+
+Actions: an opt-in `--ignored-ok` flag on `worktree-exit-preflight.sh`
+dropping `!!` records, refused unless the tree's basename is `review-*` or
+`gate-*` (throwaway checkouts of a pushed head); gaze_close and the gate's
+removal pass it after `--removal`; one line in
+`skills/gaze/references/cleanup.md`. Tests in a new test file (the peer raid's
+open PR #2348 owns `tests/test_worktree_tools.py`): ignored file with flag ->
+0, untracked unignored -> 1 naming it, ignored without flag -> 1, flag on a
+non-review tree -> refused; gaze_close cleanup on each case.
+
+Criterion 3: no harness path runs checkout/restore/clean in a review copy;
+likely the project's make target regenerating `output/05_manuscript/*.md`.
+Record as not reproducible. The fuzzy-corpus mirror case is not reproducible
+from current code either.
+
+Out of scope, reported: `worktree-gc.sh` keeps the strict rule for stranded
+review/gate trees; its files belong to PR #2348.

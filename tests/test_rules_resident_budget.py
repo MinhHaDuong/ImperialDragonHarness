@@ -59,7 +59,12 @@ import resident_census as rc  # noqa: E402
 # review (cap 18350 -> 18000), then the workflow.md diet (ticket 1410):
 # measured 14784, cap 15000; then counted as loaded (comments stripped)
 # and raised to 15100 for the Cycle section (author, 2026-11-01).
-RESIDENT_BUDGET = 15100
+# Raised 2026-11-09 (ticket 1497, author-ordered rule edit): guards.md gains
+# one sentence sending an interface session to its model's context ceiling in
+# the route skill. guards.md overrides every skill, so the exception has to be
+# stated there; the numbers stay in route. Measured 15180 (+86), cap raised by
+# the same 86: the 6 chars of headroom are unchanged.
+RESIDENT_BUDGET = 15186
 
 def resident_files() -> list[Path]:
     """The auto-loaded rule bodies, from the one definition of resident.

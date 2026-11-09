@@ -7,6 +7,12 @@ Label: needs-human
 --- log ---
 2026-10-30T11:43Z reviewer created
 2026-10-30T11:43Z reviewer label needs-human
+2026-11-09T21:53Z reviewer steps 1-3 run on padme under the author's license of 2026-11-09 to reconsider needs-human; label kept: step 4 triage stays the author's
+2026-11-09T21:53Z reviewer step 1 Fable seat (observed claude-fable-5-2, Anthropic), memo-only brief: KEEP, TRIMMED
+2026-11-09T21:53Z reviewer step 2 Astra seat (codex header: gpt-6-astra @high, OpenAI; session 01a1c249), same brief, independent: KEEP, TRIMMED
+2026-11-09T21:53Z reviewer step 3 KISS seat (observed claude-opus-5-5, Anthropic; same family as Fable and the coder): VOCABULARY ONLY
+2026-11-09T21:53Z reviewer step 4 prepared, not decided: draft triage table + Astra row-by-row check (AGREE F1 F2 F3 F5 F6, DISAGREE F4 -> DROP) in design/2026-11-09-harness-government-cooldown-review.md
+2026-11-09T22:38Z reviewer note verify-reroll — round 1: PR body close-claim line not canonical
 
 --- body ---
 ## Context
@@ -34,7 +40,7 @@ The cooldown is a review process. Precedent: the fifth consolidation (PR
 
 ## Exit criteria
 
-- [ ] The two independent reviews and the KISS review are recorded (in `design/` or on this ticket)
+- [x] The two independent reviews and the KISS review are recorded (in `design/` or on this ticket)
 - [ ] The author's triage is logged here: each follow-up marked need, want or drop
 
 No implementation ticket is filed from the memo before this ticket closes.

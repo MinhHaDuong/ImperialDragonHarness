@@ -79,6 +79,27 @@ def close_claims(body: str) -> list[str]:
         raise Refusal(str(exc)) from exc
 
 
+def refuse_self_closing(cwd: Path, base_ref: str, ids: list[str]) -> None:
+    """Ticket 1492: a request that only files a ticket must not claim to close it. Refuses when every
+    file the request touches is under tickets/ and a claimed ticket is absent from the base; a file-and-close
+    request touching anything else passes."""
+    if not ids:
+        return
+    diff = git(cwd, "diff", "--name-only", "-z", f"{base_ref}...HEAD")
+    tree = git(cwd, "ls-tree", "--name-only", "-z", base_ref, "tickets/", "tickets/closed/")
+    if diff.returncode != 0 or tree.returncode != 0:  # an unreadable diff never reads as an all-clear
+        raise Refusal(f"cannot read the request's diff against {base_ref}: "
+                      f"{(diff.stderr or tree.stderr).strip()}")
+    changed = [f for f in diff.stdout.split("\0") if f]
+    if not changed or not all(f.startswith("tickets/") for f in changed):
+        return
+    on_base = [f for f in tree.stdout.split("\0") if f]
+    for tid in ids:
+        if not any(re.match(rf"tickets/(?:closed/)?{re.escape(tid)}-[^/]*\.erg$", f) for f in on_base):
+            raise Refusal(f"ticket-only request claims to close ticket {tid}, which is not on {base_ref} "
+                          "(it files it): use `Ticket-ref:` (skills/merge/references/claims.md)")
+
+
 def close_tickets(cwd: Path, pr: str, ids: list[str]) -> bool:
     """Step 1. True when a close commit was pushed."""
     todo = []
@@ -315,7 +336,8 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
     else:
         same_claims(info.get("body") or "", ruled_claims)
         recheck_reviews(fg, pr, cwd, ruled)
-    head = check_head(cwd, branch, base_ref, ruled, remote=not local)
+    head = check_head(cwd, branch, base_ref, ruled, remote=not local)  # fetches the base first
+    refuse_self_closing(cwd, base_ref, claims)
     if local:
         check_closed(cwd, claims)
     elif close_tickets(cwd, pr, claims):

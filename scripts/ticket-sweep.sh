@@ -67,13 +67,36 @@ cmd_archive() {
   done
 }
 
+# Default branch: origin/HEAD, else local main, else local master (the ladder
+# of sync-local-main.sh). Prints a ref usable on the left of a range.
+default_ref() {
+  local name
+  name=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||') || true
+  if [ -n "${name:-}" ]; then
+    if git show-ref --verify --quiet "refs/heads/$name"; then echo "$name"; return 0; fi
+    if git show-ref --verify --quiet "refs/remotes/origin/$name"; then echo "origin/$name"; return 0; fi
+  fi
+  for name in main master; do
+    if git show-ref --verify --quiet "refs/heads/$name"; then echo "$name"; return 0; fi
+  done
+  return 1
+}
+
 cmd_merged_probe() {
-  local branch=${1:?usage: merged-probe <branch>} num ticket pr subjects base rc
+  local branch=${1:?usage: merged-probe <branch>} num ticket pr subjects base rc main cherry
+  main=$(default_ref) || cannot_look "no default branch (origin/HEAD, main or master)"
   # Signal A: ancestry (merge commits and fast-forwards).
   rc=0
-  git merge-base --is-ancestor "$branch" main 2>/dev/null || rc=$?
+  git merge-base --is-ancestor "$branch" "$main" 2>/dev/null || rc=$?
   [ "$rc" -eq 0 ] && return 0
-  [ "$rc" -eq 1 ] || cannot_look "git could not compare $branch with main"
+  [ "$rc" -eq 1 ] || cannot_look "git could not compare $branch with $main"
+  # Signal A2: patch ids. Every commit of the branch has an equivalent on the
+  # default branch ("-" lines): a cherry-pick or rebase landing. Any "+" line
+  # means some change is missing there, so fall through to the PR signal.
+  cherry=$(git cherry "$main" "$branch" 2>/dev/null) || cherry=
+  if [ -n "$cherry" ] && ! grep -q '^+' <<< "$cherry"; then
+    return 0
+  fi
   # Signal B: squash merges leave no ancestry; look for "(#N)" in the subjects
   # main gained since the branch forked, with N taken from the closed ticket's
   # Closed: header. Older history cannot be this branch's merge.
@@ -83,9 +106,9 @@ cmd_merged_probe() {
   [ -n "$ticket" ] || cannot_look "no closed ticket $num"
   pr=$(sed -nE 's/^Closed:[^#]*#([0-9]+).*/\1/p' "$ticket" | head -n 1)
   [ -n "$pr" ] || cannot_look "ticket $num has no PR number in Closed:"
-  base=$(git merge-base "$branch" main 2>/dev/null) || cannot_look "no merge base for $branch"
+  base=$(git merge-base "$branch" "$main" 2>/dev/null) || cannot_look "no merge base for $branch"
   # Capture first: grep -q exiting early would SIGPIPE git log under pipefail.
-  subjects=$(git log "$base..main" --format=%s) || cannot_look "git could not list main since $base"
+  subjects=$(git log "$base..$main" --format=%s) || cannot_look "git could not list $main since $base"
   if grep -qE "\(#${pr}\)" <<< "$subjects"; then
     return 0
   fi

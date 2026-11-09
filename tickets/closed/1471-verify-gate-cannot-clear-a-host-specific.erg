@@ -1,0 +1,32 @@
+%erg 0.1
+Title: verify-gate cannot clear a host-specific red baseline: every JETP PR gated on padme escalates
+Created: 2026-11-08
+Author: jetp-raid-e34cf5
+Closed: denied — a red baseline is fixed in its project (JETP 2098, PR 267, done 2026-11-08), not admitted by the gate
+
+--- log ---
+2026-11-08T21:41Z jetp-raid-e34cf5 created
+2026-11-09T22:43Z reviewer note audit 2026-11-09 (author's brief: deny special treatment, fix the repo): request denied. A base that is red on the gating host is repaired in its project, not gated around. JETP did so 23 minutes after filing: its ticket 2098 closed by JETP PR 267 (vendored parser, the two tests pass on padme and doudou), so the red baseline no longer exists. Admitting a 'proven baseline' would add a second full run on clean main, a node-set comparison and a diff-overlap rule to every gate, to serve one host-specific defect that cost one evening. verify-gate's present answer (REROLL then ESCALATE, root_cause_class Original Error) is the rule: it is what sent the raid to fix 2098. No skill text or test added.
+2026-11-09T22:43Z reviewer closed — denied — a red baseline is fixed in its project (JETP 2098, PR 267, done 2026-11-08), not admitted by the gate
+
+--- body ---
+
+## Context
+Filed from the JETP Observer night raid e34cf5 (2026-11-08, padme). On padme a
+clean JETP origin/main fails exactly two `make check-fast` nodes
+(tests/test_jetp_text_adapters.py, stdlib html.parser difference, JETP ticket
+2098). verify-gate bounces any red declared check; `root_cause_class: Original
+Error` labels it but still REROLLs, and round 2 ESCALATEs. JETP PR #261 (a
+two-line test-fixture fix, all exit criteria ADDRESSED) went REROLL then
+ESCALATE on that baseline alone; every other PR of the raid hits the same wall,
+so nothing can merge from padme until 2098 is fixed.
+
+## Ask
+Decide whether verify-gate admits a mechanically proven baseline: the branch's
+failing node set equals a fresh run on clean origin/main on the same host and
+venv, the diff touches no file of those nodes, the record quotes both lists and
+a ticket. Or state that a host with a red baseline cannot gate, so callers know
+to fix the baseline first.
+
+## Exit criteria
+- [ ] verify-gate states its rule for a pre-existing red declared check, with a test

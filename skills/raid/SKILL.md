@@ -333,7 +333,18 @@ verify-gate with `<pr-number> repo=<PR's worktree> session=<uuid>` the same way 
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
 its verdict is accepted only when the branch tip adds at most a bookkeeping
-delta to its `ruled_tip_sha` (§ Gating tiers). On `FINDINGS` or
+delta to its `ruled_tip_sha` (§ Gating tiers).
+**Integration-tier gates run in a `gate-seat` agent.** First list the gate's
+touched tests from the PR's worktree, `python3 "$IDH_ROOT/scripts/touched-tests.py"
+--list --base origin/<base>`. When its `fallback:` line names the integration
+tier, or the raid passes `integration`, the gate outlasts one shell call: launch
+it as one `gate-seat` agent (`profiles/gate-seat/PROFILE.md`) whose prompt holds
+the same `<pr-number> repo=<path> session=<uuid>`, asks it to follow
+`skills/verify-gate/SKILL.md`, and to wait for its own background work before
+ruling. Its returned verdict block is read as the skill's. A forked gate that ends
+its turn with no verdict (STALL, no verdict on notes) is relaunched under the
+same session: its stale gate tree is replaced, not salvaged
+(`references/circuit-breakers.md`). On `FINDINGS` or
 a REROLL, a coder fixes the listed items in the PR's worktree so its commits
 land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
 `skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.

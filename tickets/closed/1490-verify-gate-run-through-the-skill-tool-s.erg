@@ -1,0 +1,59 @@
+%erg 0.1
+Title: verify-gate run through the Skill tool stalls when it waits on its own background step
+Created: 2026-11-09
+Author: Claude (JETP raid 0176a9)
+Closed: autoclosed — PR #2359
+
+--- log ---
+2026-11-09T17:24Z Claude (JETP raid 0176a9) created
+2026-11-09T22:38Z reviewer closed — autoclosed — PR #2359
+
+--- body ---
+Observed 2026-11-09 on padme, JETP-observer raid 0176a9, PR 297.
+
+Defect: verify-gate invoked through the Claude Code Skill tool (forked
+execution) returned "Waiting on the touched-tests completion (background ...)"
+and "the verdict waits on the touched-tests outcome", then ended its turn.
+Nothing resumed it. This happened twice. `raid-breaker.py --worktree <gate
+tree> --last-progress-epoch ... --gate-max-seconds 1800` answered STALL: no
+pytest alive, gate worktree `gate-297-<session>-r1` left behind, no verdict on
+notes. Raid log lines: `BREAKER kind=gate-stall` and `gate-stall-2` (raid
+0176a9).
+
+Contrast: the same gate launched inside a `gate-seat` Agent with an explicit
+"wait for your own background work, then rule" instruction completed in 18m18s
+with APPROVED. Shorter gates (2-12 min, fast tier only) through the Skill tool
+completed normally the same evening (PRs 292-296, 298).
+
+Context: the touched-tests fallback selected the integration tier (376 tests,
+about 15 min), so the gate armed a background run and the fork ended its turn
+before it returned.
+
+Exit criteria (proposed):
+1. A forked skill that arms a background wait either blocks until it returns
+   or hands the wait to a mechanism that resumes it.
+2. Raid Phase 6 documents the gate-seat Agent shape as the default for
+   integration-tier gates, or the fork is fixed.
+3. A stale `gate-<pr>-<session>-r1` tree never blocks a relaunch under the
+   same session.
+
+## Imagine + Plan (raid a8b3e4, 2026-11-09)
+
+Premise holds: verify-gate is `context: fork`; its touched-tests step has no
+wait rule and falls back to the integration tier (~15 min, beyond one Bash
+call's 10-min cap); raid Phase 6 does not name the `gate-seat` agent; a stalled
+round records no verdict, so a relaunch under the same session recomputes
+`gate-<pr>-<session>-r1`, `git worktree add` fails, and the gate ESCALATEs.
+
+Actions: (1) verify-gate's long touched-tests run goes through the existing
+`scripts/raid-gate.py` heartbeat path or `runtime.py wake arm`, not a new
+polling rule; the gate never ends its turn with a run armed. (2) raid Phase 6
+names the `gate-seat` agent as the launch for integration-tier gates. (3) a
+stale same-round gate tree with no recorded verdict is removed through the
+preflight and recreated; a dirty tree or a recorded verdict still refuses.
+Reconcile with `circuit-breakers.md` STALL recovery: no salvage commit on a
+detached gate tree. Tests exercise the stale-tree behaviour, not prose; text
+pins in `tests/test_verify_fork_contracts.py` updated where strings move.
+
+Wave 2: runs on top of 1487 (same SKILL.md region; stale-tree removal uses
+1487's `--ignored-ok`).

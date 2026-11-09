@@ -21,4 +21,5 @@ overrides them.
   it becomes a rule only on an explicit user request naming the destination.
 - **Past 230K tokens of context, the task is too big: split it.** Stop and
   hand a proposed split to whoever launched you. Never answer a context wall
-  with a bigger window, KV tricks or compaction.
+  with a bigger window, KV tricks or compaction. An interface session's
+  threshold is its model's ceiling in `skills/route/SKILL.md`.

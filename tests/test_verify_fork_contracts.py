@@ -72,7 +72,7 @@ def test_verify_gate_owns_its_worktree():
     no caller passes `worktree=` to the gate (ticket 1153)."""
     gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
     iso = gate.split("**Isolation — the gate owns its checkout.**", 1)[1].split("## ", 1)[0]
-    assert 'worktree add --detach "$gate_tree"' in iso
+    assert 'gate_tree.py" add --repo "$primary_root" --tree "$gate_tree"' in iso
     assert 'worktree remove "$gate_tree"' in iso
     assert "worktree=" not in gate
     callers = [VERIFY, (SKILLS / "raid" / "SKILL.md").read_text(),
