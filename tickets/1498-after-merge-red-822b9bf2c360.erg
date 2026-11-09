@@ -1,0 +1,50 @@
+%erg 0.1
+Title: After-merge red on main 822b9bf2c360: pytest-guard
+Created: 2026-11-09
+Author: merge-gate
+
+--- log ---
+2026-11-09T22:06Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: 822b9bf2c36062deff4a3f151ba5a0f260b6b39d
+Failing checks: pytest-guard
+Last green after-merge tip: b28fbdfaadc57736d67f8ad5a448c8ba62219457
+Merges since (first parent, newest first):
+- 822b9bf2c360 Merge pull request #2355 from MinhHaDuong/roar-5c2a37-wrapup
+
+Failed tests (check, test id):
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_memory_capture.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_memory_stall_reproduction.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_precommit_main_guard.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_release_rewrite_url.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_resolve_hal_credentials.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_roar_close_and_clean.sh:cleanup]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_roar_close_and_clean.sh:tickets]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_roar_close_and_clean.sh:exit]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_seat_runner.sh:deterministic]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_seat_runner.sh:references]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_seat_runner.sh:containment]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_shell_init_gh_agent.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_sync_local_main.sh]
+- pytest-guard tests/test_bash_suites.py::test_stall_reproduction_without_age_is_skip_not_pass
+- pytest-guard tests/test_bash_suites.py::test_seat_runner_live_sections_preserve_failure_and_skip
+- pytest-guard tests/test_claude_code_adapter.py::test_loading_probe_accepts_its_expected_four_cases
+- pytest-guard tests/test_claude_code_adapter.py::test_loading_probe_rejects_an_unexpected_result[extra_env0-case B]
+- pytest-guard tests/test_claude_code_adapter.py::test_loading_probe_rejects_an_unexpected_result[extra_env1-case C]
+- pytest-guard tests/test_claude_code_adapter.py::test_loading_probe_rejects_an_unexpected_result[extra_env2-case D]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_bash_env_gh_agent_config.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_bash_env_no_credential_residency.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_bash_env_project_env_parse.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_bash_env_robustness.sh]
+- pytest-guard tests/test_bash_suites.py::test_shell_suite[test_bash_env_xtrace_silent.sh]
+- pytest-guard tests/test_raid_breaker_gate.py::test_gate_heartbeat_is_tied_to_its_worktree
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
