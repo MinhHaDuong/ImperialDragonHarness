@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 
 --- body ---
 ## Context
@@ -41,3 +42,30 @@ divergence miss not isolated).
 - [ ] A timeout is reported as such (inner timeout below the caller's outer kill, or output flushed before the kill)
 - [ ] Divergence (ahead and behind both nonzero) is reported, not "synced"
 - [ ] Tests cover the three cases
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified today: (a) bare `pytest` fallback at scripts/project-state.py:328-330; DOIfetch gives
+  status fail "24 errors" (ModuleNotFoundError doifetch) while `uv run pytest --co` collects 472.
+  (c) TEST_TIMEOUT=300 at :30; run() :38-44 maps TimeoutExpired to rc 1; the make branch reports
+  detail "timeout", the pytest and npm branches an empty detail; JSON is printed only at :619, so
+  an outer kill prints nothing. (d) the probe never says "synced": :59-64 defaults ahead,behind to
+  0,0 and overwrites only when `rev-list --left-right --count HEAD...@{u}` succeeds; an
+  unresolvable @{u} reads 0/0 silently; it compares HEAD with its upstream, not main with
+  origin/main; yawn's prose rule never names the both-nonzero case.
+- Premise corrections: arena has NO Makefile; its fast tier is prose in AGENTS.md (`uv run pytest
+  -m "not integration and not slow"`), so criterion 1 as written still runs arena's full tier: a
+  check-fast target is arena's to add (cross-project ticket). The 90 s outer kill exists nowhere in
+  the harness (yawn SKILL.md:29 is a bare bash line): it came from the sweep's launcher or the
+  runtime's Bash default; an inner constant "below 90" would track an absent stakeholder's value.
+- Path: one `_pick_runner()` (Makefile targets matched with `^check-fast:|^check:|^test:` re.M, then
+  `uv run [--frozen] pytest` when uv.lock or pyproject and `uv` on PATH, mirroring
+  touched-tests.py:101 without importing it, then bare pytest, then npm); timeout as its own status
+  with the caller passing the budget explicitly, or a partial JSON flushed before any kill, rather
+  than a hard-coded OUTER_KILL; `diverged = ahead>0 and behind>0` plus `upstream: false` when
+  rev-list fails; three tests with exact argv, TimeoutExpired → "timeout", "36\t36" → diverged and
+  "36\t0" → not.
+- Blind-Spot: below the severity floor on its face (no merge blocked, no state corrupted); the
+  strongest case is the false "fail" on a green suite, which could send an agent to fix nothing.
+- Author decisions: (1) keep as a ticket or fold the runner fix inline; (2) where the 90 s came
+  from (ask the ~/CNRS sweep session) and whether the caller passes the timeout; (3) file arena
+  and cadens check-fast tickets in their repos.

@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T19:17Z haduong created
+2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 
 --- body ---
 ## Context
@@ -39,3 +40,23 @@ lookup; whether (c) should be settled by the probe or left to molt.
 - [ ] Patch-id evidence (`git cherry` all `-`, or equivalent) is accepted as a second landed signal
 - [ ] A forge closed-unmerged state yields exit 1 (not merged), not 2
 - [ ] Tests cover (a), (b) and (c)
+
+## Verify and Imagine (raid 4afdb3, 2026-11-09)
+- Verified: (a) chemin-de-voix (master, origin/HEAD → origin/master): `merged-probe master~3`
+  exits 2 "could not compare ... with main"; `main` hard-coded at scripts/ticket-sweep.sh:74, 76,
+  86, 88 (four sites, settles the open question). (c) AEDIST's 78 tournament/* branches exit 2
+  "does not map to a ticket"; livre-milliards-climat has no tickets/ so the top-level guard (:21-22)
+  pre-empts any probe. (b) not reproducible: padme t0106-btrbk-cold and chemin-de-voix
+  codex/1463-check-fast are gone since the sweep; closed ticket 0106 still has a Closed line
+  without #N (landed as PR #251), so (b) lives on as a fixture only.
+- Path: default_ref() = origin/HEAD, else local main/master (ladder as sync-local-main.sh:30-39;
+  git_utils._default_branch, worktree-tmp-guard.py:65 and review_notes.py:306 have variants: inline
+  copy, no shared helper); replace the four sites; `git cherry $base $branch` all `-` → exit 0, any
+  `+` → fall through (a squash that dropped a file shows `+`, so it is safe). Tests in
+  tests/test_ticket_sweep.py: master-default fixture with a bare origin and remote set-head;
+  cherry-pick fixture with a Closed line without #N; negative controls with exact exit codes.
+- Blind-Spot: molt never deletes on exit 1 or 2 (SKILL.md:243-250), so criterion 3 (forge
+  closed-unmerged → exit 1) buys a log line and adds a forge dependency in adopter repos with
+  different push identities (cired.digital); moving the tickets/ guard serves only that criterion.
+  Stale branches are clutter: none of the three classes meets the severity floor.
+- Author decisions: (1) drop criterion 3 and keep criteria 1, 2, 4; (2) ticket or inline fix.
