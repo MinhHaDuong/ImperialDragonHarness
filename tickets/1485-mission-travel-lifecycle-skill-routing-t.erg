@@ -6,15 +6,19 @@ Author: haduong
 --- log ---
 2026-11-09T16:10Z haduong created
 2026-11-09T16:11Z Minh-Ha-Duong haduong sibling of 1483 (/fly); working name mission, naming round open
+2026-11-09T16:21Z Minh-Ha-Duong haduong name mission kept after the naming round (roam, range, wing, swoop, sortie); 1483 renamed fly → paper for the same rule
 
 --- body ---
 ## Context
 
 Author decision (Imagine, 2026-11-09, session in `~/CNRS/missions` on the
 return from Jéco Lyon and MeSSH Condorcet): one travel lifecycle skill,
-sibling of `/fly` (ticket 1483), not one skill per step. Working name
-`/mission` (same word in French, same as the directory); a naming round
-in the `/fly` style is open if the author wants a dragon verb.
+sibling of `/paper` (ticket 1483), not one skill per step. Name `/mission`
+settled 2026-11-09 after a naming round (mission, roam, range, wing,
+swoop, sortie): the skills that manage an object of the trade carry the
+object's name, mirroring its directory (`missions/` → `/mission`,
+`papiers/` → `/paper`); the dragon verbs stay for the harness's skills on
+itself.
 
 Reference: REALF chapter 7 « How to present your work », How-to 35–39
 (`~/CNRS/papiers/actif/REALF 2025 édition/main.pdf`, p. 52–57): choose a
@@ -30,7 +34,7 @@ The author's own wrap-up list, in three strands (2026-11-09):
   the year's roadmap.
 
 Gap found: no skill mentions missions. `/update-publist` covers page +
-HAL, the `email` skill covers sending, `/submission-event` (→ `/fly`)
+HAL, the `email` skill covers sending, `/submission-event` (→ `/paper`)
 knows the roadmap for manuscripts only. Nothing covers the ordre de
 mission, the état de frais, the receipts, the compte rendu, or the move
 to `done/`. The only tool reading `missions/` is
@@ -66,7 +70,7 @@ to `done/`. The only tool reading `missions/` is
   `references/<stage>.md`. Venue choice stays with `/choose-venue`;
   abstracts with `/conference-submission-prep`; the talk's content with
   `/message-framing` and `/slides`; a manuscript event met during a
-  mission goes to `/fly`.
+  mission goes to `/paper`.
 - `references/prepare.md` (How-to 35, 36 first half, 39 first half):
   create the dossier with `voyage/` and README; estimate and ordre de
   mission (Etamine) as author-only items; bookings through the lab's
@@ -90,7 +94,7 @@ to `done/`. The only tool reading `missions/` is
   path list if the rubrique is not Conférences or Cours.
 - Each checklist states: register(s) touched; provenance step; filesystem
   steps; outward gates named with who clicks; delegates; author-only items
-  listed so they are asked, not dropped. Same section skeleton as `/fly`
+  listed so they are asked, not dropped. Same section skeleton as `/paper`
   so the two skills read alike.
 
 ## Worked examples for the `return` stage (state on 2026-11-09)

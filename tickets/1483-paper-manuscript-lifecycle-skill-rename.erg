@@ -1,18 +1,19 @@
 %erg 0.1
-Title: fly: manuscript lifecycle skill, rename submission-event, stage checklists
+Title: paper: manuscript lifecycle skill, rename submission-event, stage checklists
 Created: 2026-11-09
 Author: haduong
 
 --- log ---
 2026-11-09T15:45Z haduong created
 2026-11-09T15:51Z Minh-Ha-Duong haduong note renamed soar → fly after the naming round (candidates: soar, stride, step, fledge, flare, clic, cran, clink, fly)
+2026-11-09T16:21Z Minh-Ha-Duong haduong renamed fly → paper: with /mission (1485) kept as a noun, object skills take their directory's name (papiers/ → /paper); dragon verbs stay for the harness's skills on itself
 
 --- body ---
 ## Context
 
 Author decision (Imagine, 2026-11-09, CNRS session on the RDJHSS data
 paper release): grow `/submission-event` into the one manuscript
-lifecycle skill, with one checklist per stage, and rename it `/fly`
+lifecycle skill, with one checklist per stage, and rename it `/paper`
 (one syllable, the verb of the dragon, fits every stage including a rejection: the paper is still flying; chosen 2026-11-09 over soar, cran, fledge, clic).
 Option A of the design discussion; B (one skill per stage) rejected as
 multiplication, C (chapter-only fix) kept as a complement, done in the
@@ -36,7 +37,7 @@ Memory: `~/.claude/projects/-home-haduong-CNRS/memory/reference-realf-howto-44-r
 
 ## Design
 
-- `skills/fly/SKILL.md` is a short router: argument `<paper> <event>`,
+- `skills/paper/SKILL.md` is a short router: argument `<paper> <event>`,
   the register question first (homepage = works, roadmap = work in
   progress, never both automatically), then load
   `references/<event>.md`. Lifecycle starts at submission; venue choice
@@ -57,8 +58,8 @@ Memory: `~/.claude/projects/-home-haduong-CNRS/memory/reference-realf-howto-44-r
 
 ## Exit criteria
 
-- [ ] `skills/fly/SKILL.md` exists, `skills/submission-event/` is gone, catalog and rules/README updated, hygiene tests pass
-- [ ] Five stage checklists in `skills/fly/references/`, each with the sections above
+- [ ] `skills/paper/SKILL.md` exists, `skills/submission-event/` is gone, catalog and rules/README updated, hygiene tests pass
+- [ ] Five stage checklists in `skills/paper/references/`, each with the sections above
 - [ ] The `published` checklist reproduces the 2026-11-09 steps and would have left nothing for the agent to discover
-- [ ] `/fly <paper> published` dry run on the data paper lands on "nothing to do except HAL" (positive control)
+- [ ] `/paper <paper> published` dry run on the data paper lands on "nothing to do except HAL" (positive control)
 - [ ] `make check` passes
