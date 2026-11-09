@@ -57,7 +57,7 @@ Run full repo housekeeping and act on every finding.
    *false* violations on tickets using format it predates (for example bogus
    hits on closed tickets carrying the newer `Label:` header), and an
    autonomous sweep would file tickets on them. Step 1 cuts the housekeeping
-   branch from `<base>`, which puts the project's reviewed binary in
+   branch from `<base>` (defined there), which puts the project's reviewed binary in
    place; nothing needs refreshing first.
 
    **Do not run `erg sync` in a sweep** (`erg update` is its old name). It
