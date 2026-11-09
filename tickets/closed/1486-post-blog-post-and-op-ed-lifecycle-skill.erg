@@ -2,6 +2,7 @@
 Title: post: blog post and op-ed lifecycle skill (draft, publish, archive) behind paper and mission
 Created: 2026-11-09
 Author: haduong
+Closed: autoclosed — PR #2342
 
 --- log ---
 2026-11-09T16:22Z haduong created
@@ -15,6 +16,7 @@ Author: haduong
 2026-11-09T20:12Z reviewer note traces (read over ssh doudou, read-only): A, post 2026-11-06: carnet steps 0-7 each map to archive.md items 1-7 (gabarit in item 1) with folder evidence (print.md, PDF, hal-meta.xml, hal-response.xml, wp-post-442.json, journal.md:399, backlog.md:219); B, Jéco tribune: result.json homepage_entry_verified true, hal-05847469v1 (OTHER), so the stop rule fires: nothing to do except the roadmap check; Jéco row present in Feuille de route 2026.odt Archive section. Live runs post-merge on doudou.
 2026-11-09T20:15Z reviewer note cross-project route: the carnet (~/CNRS/projets/actifs/realf.hypotheses.org on doudou) has no tickets/ store and is not a git repository (checked over ssh with a positive control), so the AGENTS.md line above is reported to the author in the hand-back, not written into the carnet (rules/guards.md: an unreachable destination is reported)
 2026-11-09T20:17Z reviewer note exit criteria 1 and 6 (the carnet AGENTS.md line) are handed to the author: the text is delivered verbatim above and in the PR body; the carnet is outside this repo and has no ticket store. Criteria 2, 3, 4, 5 and 7 are met on this branch
+2026-11-09T20:28Z reviewer closed — autoclosed — PR #2342
 
 --- body ---
 ## Context
