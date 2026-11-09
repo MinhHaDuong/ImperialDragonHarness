@@ -1,8 +1,8 @@
 # publish
 
-The text is settled and goes live. One section per channel; each names who
-clicks. A post already live (its URL answers with the final text) is done:
-report it and stop.
+The text is settled and goes live. Steps 1-4 run in order; 3 and 4 stop for
+the author. One section per channel; each names who clicks. A post already
+live (its URL answers with the final text) is done: report it and stop.
 
 ## Registers
 
