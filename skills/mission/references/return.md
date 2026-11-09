@@ -1,11 +1,13 @@
 # return
 
 Back from the trip. Three strands, each with its own register and gate, then
-the close. Steps 1-9 run in order, one at a time: 3, 5 and 6 wait for the
-author, and the close records what the strands answered. A dossier whose README carries a closing section and that sits
-where the local `AGENTS.md` puts closed dossiers is done: report "nothing to
-do" and stop. Otherwise walk every step; a dry run lists each one with its
-evidence or "missing".
+the close. Steps 1-9 run in order, one at a time: 3 to 6 wait for the
+author, and the close records what the strands answered.
+
+A dossier whose README carries a closing section and that sits where the
+local `AGENTS.md` puts closed dossiers is done: report "nothing to do" and
+stop. Otherwise walk every step; a dry run lists each one with its evidence or
+"missing".
 
 ## Registers
 
@@ -52,7 +54,8 @@ Self strand:
 
 6. The communication on the personal page and in the open archive via
    `/update-publist`, page first, then the archive; its gates apply.
-7. Roadmap row updated as the local `AGENTS.md` says.
+7. Roadmap row updated: the agent edits the local roadmap file as the local
+   `AGENTS.md` says, with the deposit link from step 6.
 
 Close:
 

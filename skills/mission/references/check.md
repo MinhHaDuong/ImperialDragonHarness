@@ -1,6 +1,6 @@
 # check
 
-The talk is days away. Steps 1-6 run in order; 4 stops for the author.
+The talk is days away. Steps 1-6 run in order; 5 stops for the author.
 
 ## Registers
 
@@ -21,16 +21,20 @@ last-minute edit.
 2. Talking points beside the slides: the three things the audience should
    leave with, and the answer to the obvious question.
 3. Bag list, paper and electronic: travel order and bookings at hand
-   (`voyage/`), slides on two media plus a copy online, adapter and clicker,
+   (`voyage/`), slides on two media plus a copy the author uploads to their own
+   online storage, adapter and clicker,
    receipts envelope, badge or registration proof.
+
+4. Contacts to meet, read-only: the agent looks each one up in the author's
+   directory, where one is installed, and lists them in the brief with what
+   to discuss.
 
 ## Outward gates (who clicks)
 
-4. Slides sent to the organisers and the chair the day before: the agent
+5. Slides sent to the organisers and the chair the day before: the agent
    drafts the mail with the PDF attached; the author sends it.
-5. Contacts to meet: look each one up in the author's directory, where one is
-   installed, and list them in the brief with what to discuss.
-6. Roadmap row moved to "ready".
+6. Roadmap row moved to "ready": the agent edits the local roadmap file once
+   the slides are sent.
 
 ## Delegates
 

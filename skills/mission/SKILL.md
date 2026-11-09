@@ -5,7 +5,7 @@ name: mission
 description: "Walk one stage of a work trip (prepare, check, return): dossier, receipts, report, gates."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<dossier> <stage: prepare|check|return>"
+argument-hint: "<dossier> <stage: prepare|check|return> [dry-run]"
 ---
 
 # Mission — one trip, one stage, one checklist
@@ -58,7 +58,8 @@ none: ask, never guess.
   `AGENTS.md` names it, with one `sha256sum` line per file.
 - **Evidence before a step.** Each step first looks in the dossier for its
   evidence (a file, a README line, a register row). Found: report it done and
-  move on. A dry run stops there and lists what is missing.
+  move on. With `dry-run`, the stage changes nothing: it lists each step as
+  done, with its evidence, or missing.
 - **Author-only items are asked, not dropped.** Each checklist ends with them;
   the stage is done when each has an answer, "no" included.
 

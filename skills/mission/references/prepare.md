@@ -1,7 +1,7 @@
 # prepare
 
 The invitation or acceptance is in, the trip is decided. Steps 1-7 run in
-order; 3 and 4 stop for the author.
+order; 3, 4 and 5 stop for the author, 6 and 7 for the author's confirmation.
 
 ## Registers
 
@@ -31,8 +31,10 @@ received (mail as Markdown or `.eml`, receipt as the PDF the organisers sent).
    each confirmation in `voyage/` as it arrives.
 5. Registration with the organisers, if not done: the author clicks; the
    receipt is filed.
-6. Roadmap row written as the local `AGENTS.md` says.
-7. Calendar entry for travel and the slot, once the programme is known.
+6. Roadmap row: the agent writes it in the roadmap file named by the local
+   `AGENTS.md` (a local file, no outward act) once the author confirms the wording.
+7. Calendar entry for travel and the slot, once the programme is known: the
+   agent drafts it, the author adds it.
 
 ## Delegates
 
