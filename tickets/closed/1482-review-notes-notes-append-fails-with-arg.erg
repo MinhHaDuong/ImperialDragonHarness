@@ -2,9 +2,11 @@
 Title: review_notes: notes append fails with Argument list too long on a large request
 Created: 2026-11-09
 Author: reviewer
+Closed: autoclosed — fix landed by its PR
 
 --- log ---
 2026-11-09T14:41Z reviewer created
+2026-11-09T14:43Z reviewer closed — autoclosed — fix landed by its PR
 
 --- body ---
 
