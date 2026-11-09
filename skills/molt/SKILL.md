@@ -120,6 +120,15 @@ Run full repo housekeeping and act on every finding.
    exit-criteria deliverable (a `**Ticket:**` claim closes its ticket at merge
    whatever landed). If so,
    preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
+   The WIP commit can be refused by the git-erg `erg-claims` pre-commit hook
+   when the index holds a ticket without its claim, or a duplicate ticket
+   number (typically a worktree on a pre-migration base, or a staged draft).
+   Do not bypass it blindly: run `tickets/erg migrate --claims`, restore the
+   missing claim, or commit from a fresh worktree on `origin/main` and copy
+   the files over; `--no-verify` is the last resort. The hook is git-erg's;
+   this step changes nothing there. The GC also reclaims a worktree whose lock
+   names a dead pid when its tree is clean and its HEAD equals its upstream,
+   keeping the branch.
 
 1.7. **Sweep orphan session scratch directories.** Every session gets a scratch
    directory under the user's temp root and nothing but the `SessionEnd` hook
