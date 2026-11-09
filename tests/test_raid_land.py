@@ -504,3 +504,24 @@ def test_stale_base_is_fetched_before_the_guard_runs(repo, monkeypatch):
         monkey.undo()
     assert calls and calls[0] == sh(repo, "rev-parse", "origin/main")
     assert calls[0] != sh(repo, "rev-parse", "HEAD")  # the fetch ran before the guard
+
+
+def test_accented_ticket_filename_is_still_a_filing(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    (repo / "tickets").mkdir()
+    (repo / "tickets" / "0042-né.erg").write_text("Title: x\n")
+    sh(repo, "add", "tickets")
+    sh(repo, "commit", "-qm", "file ticket")
+    with pytest.raises(rl.Refusal, match="not on"):
+        rl.refuse_self_closing(repo, "origin/main", ["0042"])
+
+
+def test_space_in_a_tickets_filename_keeps_the_request_ticket_only(repo):
+    sh(repo, "reset", "-q", "--hard", "origin/main")
+    (repo / "tickets").mkdir()
+    (repo / "tickets" / "0042-x.erg").write_text("Title: x\n")
+    (repo / "tickets" / "review notes.md").write_text("n\n")
+    sh(repo, "add", "tickets")
+    sh(repo, "commit", "-qm", "file ticket and notes")
+    with pytest.raises(rl.Refusal, match="not on"):
+        rl.refuse_self_closing(repo, "origin/main", ["0042"])

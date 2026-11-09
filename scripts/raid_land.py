@@ -85,15 +85,15 @@ def refuse_self_closing(cwd: Path, base_ref: str, ids: list[str]) -> None:
     request touching anything else passes."""
     if not ids:
         return
-    diff = git(cwd, "diff", "--name-only", f"{base_ref}...HEAD")
-    tree = git(cwd, "ls-tree", "--name-only", base_ref, "tickets/", "tickets/closed/")
+    diff = git(cwd, "diff", "--name-only", "-z", f"{base_ref}...HEAD")
+    tree = git(cwd, "ls-tree", "--name-only", "-z", base_ref, "tickets/", "tickets/closed/")
     if diff.returncode != 0 or tree.returncode != 0:  # an unreadable diff never reads as an all-clear
         raise Refusal(f"cannot read the request's diff against {base_ref}: "
                       f"{(diff.stderr or tree.stderr).strip()}")
-    changed = diff.stdout.split()
+    changed = [f for f in diff.stdout.split("\0") if f]
     if not changed or not all(f.startswith("tickets/") for f in changed):
         return
-    on_base = tree.stdout.split()
+    on_base = [f for f in tree.stdout.split("\0") if f]
     for tid in ids:
         if not any(re.match(rf"tickets/(?:closed/)?{re.escape(tid)}-[^/]*\.erg$", f) for f in on_base):
             raise Refusal(f"ticket-only request claims to close ticket {tid}, which is not on {base_ref} "
