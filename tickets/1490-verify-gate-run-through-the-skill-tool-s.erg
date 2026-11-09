@@ -1,0 +1,36 @@
+%erg 0.1
+Title: verify-gate run through the Skill tool stalls when it waits on its own background step
+Created: 2026-11-09
+Author: Claude (JETP raid 0176a9)
+
+--- log ---
+2026-11-09T17:24Z Claude (JETP raid 0176a9) created
+
+--- body ---
+Observed 2026-11-09 on padme, JETP-observer raid 0176a9, PR 297.
+
+Defect: verify-gate invoked through the Claude Code Skill tool (forked
+execution) returned "Waiting on the touched-tests completion (background ...)"
+and "the verdict waits on the touched-tests outcome", then ended its turn.
+Nothing resumed it. This happened twice. `raid-breaker.py --worktree <gate
+tree> --last-progress-epoch ... --gate-max-seconds 1800` answered STALL: no
+pytest alive, gate worktree `gate-297-<session>-r1` left behind, no verdict on
+notes. Raid log lines: `BREAKER kind=gate-stall` and `gate-stall-2` (raid
+0176a9).
+
+Contrast: the same gate launched inside a `gate-seat` Agent with an explicit
+"wait for your own background work, then rule" instruction completed in 18m18s
+with APPROVED. Shorter gates (2-12 min, fast tier only) through the Skill tool
+completed normally the same evening (PRs 292-296, 298).
+
+Context: the touched-tests fallback selected the integration tier (376 tests,
+about 15 min), so the gate armed a background run and the fork ended its turn
+before it returned.
+
+Exit criteria (proposed):
+1. A forked skill that arms a background wait either blocks until it returns
+   or hands the wait to a mechanism that resumes it.
+2. Raid Phase 6 documents the gate-seat Agent shape as the default for
+   integration-tier gates, or the fork is fixed.
+3. A stale `gate-<pr>-<session>-r1` tree never blocks a relaunch under the
+   same session.
