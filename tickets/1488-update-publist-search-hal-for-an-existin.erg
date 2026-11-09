@@ -5,6 +5,7 @@ Author: haduong
 
 --- log ---
 2026-11-09T17:06Z haduong created
+2026-11-09T18:59Z reviewer raid 681f31: Imagine annotated (reimagine + blind-spot), premise holds, no drift
 
 --- body ---
 ## Context
@@ -39,3 +40,44 @@ before the TEI is built, with its own GATE line:
 - [ ] SKILL.md carries the step and its gate, before 2a
 - [ ] The release record template names `prior_deposit_check`
 - [ ] Hygiene tests pass
+
+## Imagine (raid 681f31, 2026-11-09)
+
+Premise holds: no commit on `skills/update-publist/` since the ticket was
+created; open PR #2318 is ticket-only. Reimagine (Sonnet 5.5) and Blind-Spot
+pass (Opus 5.5, three material findings, folded in below).
+
+- **Placement.** One new `### Prior record check (GATE)` section directly
+  after the Step 2 credentials preamble, before « Pre-upload PDF review »:
+  cheapest check, independent of the PDF, and it satisfies « before 2a ».
+  The ticket's « 2a-0 » label is kept only in the section's first line
+  (« step 2a-0 of this skill ») so the exit criterion reads literally.
+- **No script, no test, no helper.** A checklist in prose is proportionate.
+- **The release record template is the release-journal entry** of the
+  paper runbooks (`skills/paper/references/submitted.md:21`, `resubmitted.md:20`,
+  `accepted.md:21`: « naming the platform, the files uploaded, the deposits and
+  the tag »), through which every HAL deposit is routed with
+  `/update-publist --hal-only`. No other template exists in this repository
+  and no `email` skill exists. Criterion 2 is met by (a) defining the
+  `prior_deposit_check` block (searched, found, route: none|PUT|author) in the
+  new step and (b) adding `prior_deposit_check` to those three release-journal
+  lines. The mail archive is named as « the author's mail archive, with
+  whichever mail tool the session has », no invented paths.
+- **The common duplicate is a new version with a stale hal-id**, not a
+  fresh object (§ 2d already says so). A hit yields the `{hal-id}` that § 2c's
+  PUT needs; when the bib `eprint`, STATE.md and HAL disagree, the author
+  decides.
+- **A record under moderation is invisible to the public search API.** A
+  SWORD POST made in this session or in the last days counts as a hit until
+  HAL's mail confirms it. Named limitation: a deposit under another idHal is
+  not caught.
+- **Query syntax verified** on the public API
+  (`authIdHal_s:minh-ha-duong AND title_t:(w1 OR w2)`); use distinctive
+  title words joined by OR. `seeAlso` is not a search field: the companion
+  work is searched by its title or halId.
+- **Review point.** Next `/update-publist` run or ~60 days: does the
+  transcript or release-journal entry carry `prior_deposit_check` before the
+  first POST? No run by then: drop the review.
+
+Drift guard: criteria 1 to 3 kept; the runbook lines are the template
+criterion 2 names, not new scope.
