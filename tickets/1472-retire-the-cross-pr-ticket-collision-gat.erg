@@ -2,12 +2,13 @@
 Title: Retire the cross-PR ticket-collision gate once erg claims land
 Created: 2026-11-08
 Author: MinhHaDuong
-Label: deferred
 
 --- log ---
 2026-11-08T21:46Z MinhHaDuong created
 2026-11-09T09:55Z reviewer label deferred
 2026-11-09T09:55Z reviewer deferred: waits on a git-erg release carrying ID claims and this store's migration (git-erg 0306)
+2026-11-09T10:16Z reviewer unlabel deferred
+2026-11-09T10:16Z reviewer undeferred: author plans to run it as soon as the erg conversation delivers
 
 --- body ---
 ## Context
