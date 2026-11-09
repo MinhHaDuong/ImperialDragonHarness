@@ -2,11 +2,15 @@
 Title: project-state.py --tests picks the wrong runner, hides its timeout, misses divergence
 Created: 2026-11-09
 Author: haduong
+Closed: closed at merge — PR #2346
 
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
 2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
+2026-11-09T21:14Z reviewer hunt: runner pick, --tests-timeout, timeout status, divergence/upstream in project-state.py; check-fast tickets in arena/cadens left to orchestrator
+2026-11-09T21:25Z reviewer raid 5c2a37: criterion 5 met: arena ticket 1220 landed (arena main b7b179f), cadens ticket 0055 as cadens PR #77
+2026-11-09T21:18Z reviewer closed — closed at merge — PR #2346
 
 --- body ---
 ## Context
@@ -39,11 +43,11 @@ divergence miss not isolated).
 
 ## Exit criteria
 
-- [ ] The probe prefers the project's declared runner: Makefile target (`check-fast`, `check`, `test`) first, then `uv run pytest` when `uv.lock` or `pyproject.toml` exists and `uv` is on PATH, bare pytest last
-- [ ] The probe takes its time budget from the caller (an explicit option, no hard-coded outer value) and reports a timeout as status `timeout`, not a failure or an empty detail
-- [ ] Divergence (ahead and behind both nonzero) is reported as diverged; an unresolvable upstream is reported as such, not read as 0/0
-- [ ] Tests cover the three cases
-- [ ] check-fast tickets filed in arena and cadens (their fast tier is theirs to declare)
+- [x] The probe prefers the project's declared runner: Makefile target (`check-fast`, `check`, `test`) first, then `uv run pytest` when `uv.lock` or `pyproject.toml` exists and `uv` is on PATH, bare pytest last
+- [x] The probe takes its time budget from the caller (an explicit option, no hard-coded outer value) and reports a timeout as status `timeout`, not a failure or an empty detail
+- [x] Divergence (ahead and behind both nonzero) is reported as diverged; an unresolvable upstream is reported as such, not read as 0/0
+- [x] Tests cover the three cases
+- [x] check-fast tickets filed in arena and cadens (their fast tier is theirs to declare)
 
 ## Verify and Imagine (raid 4afdb3, 2026-11-09)
 - Verified today: (a) bare `pytest` fallback at scripts/project-state.py:328-330; DOIfetch gives
