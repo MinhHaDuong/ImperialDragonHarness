@@ -10,6 +10,7 @@ Author: MinhHaDuong
 2026-11-09T10:16Z reviewer unlabel deferred
 2026-11-09T10:16Z reviewer undeferred: author plans to run it as soon as the erg conversation delivers
 2026-11-09T12:12Z reviewer ripe: git-erg session confirmed 2026-11-09; take sha256 dafb1d48 (rev 8d24e74); author approved raid wave 2
+2026-11-09T12:26Z reviewer pin moved to sha256 6a104262 (rev 2d0dbea, git-erg ab519a3) by author decision relayed by git-erg; dafb1d48 superseded
 
 --- body ---
 Parent: 1478
@@ -49,9 +50,10 @@ both were open).
 - [ ] `make check` passes.
 
 ## Ripe (git-erg session, 2026-11-09 12:15Z)
-Preconditions met. Take git-erg main's committed binary, not 9ab13c9: sha256
-`dafb1d48f2ce5b380e790244d958678b9eea307d9d16588c1358dddf4dc15a58`, revision 8d24e74
-(git-erg aee15dd). It adds required-claims checks, a pre-merge-commit hook, unclaimed-ticket
+Preconditions met. Pin moved by author decision 2026-11-09 (relayed by git-erg): take sha256
+`6a10426263e7571a054557df8965229c92fb87540b07059279f3d20f56c58991`, revision 2d0dbea
+(git-erg ab519a3), not the earlier dafb1d48 (8d24e74, aee15dd) nor 9ab13c9. 2d0dbea drops the
+managed pre-commit rule that refused tickets/erg off the default branch. It adds required-claims checks, a pre-merge-commit hook, unclaimed-ticket
 warnings and the 0309/0310 fixes. git-erg itself migrated in #393; the harness is the first
 other adopter. That pin is also the one for the rollout to other repos.
 
