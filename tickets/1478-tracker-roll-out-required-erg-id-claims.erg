@@ -38,8 +38,8 @@ Author: reviewer
 Author decision relayed by the git-erg session (2026-11-09): the harness drives the rollout of
 required ID claims (git-erg 0306/0307) to every erg store on padme and doudou. Pin, not release:
 every repo takes the binary pinned in `scripts/erg-pin` (the one live
-value: sha256 and git-erg rev; as of 2026-11-09 rev bf71ab5, commit bcbfa63, same behaviour
-as 6a104262, rebuilt when git-erg renamed docs/ to design/); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
+value: sha256 and git-erg rev; as of 2026-11-09 rev 4f2326e, commit a387c41: the managed pre-commit block prints only the
+PASS line on a passing check; history below); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
 git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 
 ## Recipe (one PR per repo, one host, fresh worktree)
@@ -101,3 +101,5 @@ its own session, or one launched there; the harness tracks, it does not edit oth
   current pin by the same order (import, install --hooks, commit).
 - 6a104262 (2d0dbea): superseded the same day, no repo landed on it.
 - 513cd3c4 (bf71ab5): every repo not yet migrated. git-erg doc links are now design/, not docs/.
+- 89952604 (4f2326e, commit a387c41): current, in `scripts/erg-pin`. Quieter managed pre-commit
+  block; repos on 513cd3c4 take it, then `tickets/erg install --hooks` in every clone.
