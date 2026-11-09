@@ -409,7 +409,7 @@ def test_housekeeping_state_stale_marker_still_needed(tmp_path):
 
 @pytest.mark.integration
 def test_dirty_tree_never_runs_deleting_target(tmp_path):
-    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run([_GIT, "init", "-q", str(tmp_path)], check=True)
     (tmp_path / "Makefile").write_text("test:\n\trm sentinel\n")
     (tmp_path / "sentinel").write_text("keep")
     out = ps.test_state(tmp_path)
@@ -458,3 +458,105 @@ def test_clean_precondition_allows_every_runner(tmp_path, monkeypatch, configura
     _patch_run(monkeypatch, respond)
     assert ps.test_state(tmp_path)["status"] == "pass"
     assert calls == [["git", "status", "--porcelain"], command]
+
+
+# ── erg_state (ticket 1479: optional git-erg pin report) ─────────────────────
+
+_GIT = __import__("shutil").which("git")  # PATH is emptied in these tests
+_MANAGED = "# >>> erg managed >>>\nexit 0\n# <<< erg managed <<<\n"
+_LEGACY = "# --- git-erg --- begin\nerg_bin=\"tickets/tools/go/erg\"\n# --- git-erg --- end\n"
+
+
+def _erg_proj(tmp_path, monkeypatch, *, erg=b"pinned-bin", pin=b"pinned-bin", path_erg=None):
+    import hashlib
+
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    subprocess.run([_GIT, "init", "-q", str(proj)], check=True)
+    if erg is not None:
+        (proj / "tickets").mkdir()
+        (proj / "tickets" / "erg").write_bytes(erg)
+    pinfile = tmp_path / "erg-pin"
+    if pin is not None:
+        pinfile.write_text(f"# c\nsha256={hashlib.sha256(pin).hexdigest()}\nrev=abc\n")
+    monkeypatch.setattr(ps, "ERG_PIN_FILE", pinfile)
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    if path_erg is not None:
+        (bindir / "erg").write_bytes(path_erg)
+        (bindir / "erg").chmod(0o755)
+    monkeypatch.setenv("PATH", str(bindir))  # git is found by absolute path below
+    monkeypatch.setattr(ps, "run", lambda a, cwd, timeout=30: subprocess.run(
+        [_GIT] + a[1:], capture_output=True, text=True, cwd=cwd))
+    return proj
+
+
+def test_erg_pinned(tmp_path, monkeypatch):
+    out = ps.erg_state(_erg_proj(tmp_path, monkeypatch, path_erg=b"pinned-bin"))
+    assert (out["tickets_erg"], out["path_erg"]) == ("pinned", "pinned")
+    assert out["findings"] == []
+
+
+def test_erg_drifted(tmp_path, monkeypatch):
+    out = ps.erg_state(_erg_proj(tmp_path, monkeypatch, erg=b"old", path_erg=b"old"))
+    assert (out["tickets_erg"], out["path_erg"]) == ("drifted", "drifted")
+    assert out["findings"] == ["tickets_erg drifted", "path_erg drifted"]
+
+
+def test_erg_absent_is_na(tmp_path, monkeypatch):
+    out = ps.erg_state(_erg_proj(tmp_path, monkeypatch, erg=None))
+    assert (out["tickets_erg"], out["path_erg"], out["claims"]) == ("n/a", "n/a", False)
+    assert out["findings"] == []
+
+
+def test_erg_no_pin_file_is_na(tmp_path, monkeypatch):
+    out = ps.erg_state(_erg_proj(tmp_path, monkeypatch, erg=b"x", pin=None))
+    assert out["pin"] is None and out["tickets_erg"] == "n/a"
+    assert out["findings"] == []
+
+
+def test_erg_no_claims_is_not_a_finding(tmp_path, monkeypatch):
+    proj = _erg_proj(tmp_path, monkeypatch)
+    assert ps.erg_state(proj)["claims"] is False
+    (proj / "tickets" / ".claims").mkdir()
+    assert ps.erg_state(proj)["claims"] is True
+    assert ps.erg_state(proj)["findings"] == []
+
+
+def test_erg_dead_hookspath(tmp_path, monkeypatch):
+    proj = _erg_proj(tmp_path, monkeypatch)
+    _set_hooks_path(proj, "nowhere/hooks")
+    assert ps.erg_state(proj)["findings"] == ["hooksPath dead"]
+    (proj / "nowhere" / "hooks").mkdir(parents=True)
+    out = ps.erg_state(proj)
+    assert out["hooks_path_dead"] is False and out["findings"] == []
+
+
+def _set_hooks_path(proj, value):
+    subprocess.run([_GIT, "-C", str(proj), "config", "core.hooksPath", value], check=True)
+
+
+def _hook(proj, text):
+    hooks = proj / ".git" / "hooks"
+    hooks.mkdir(exist_ok=True)
+    (hooks / "pre-commit").write_text(text)
+
+
+def test_erg_legacy_block_superseded(tmp_path, monkeypatch):
+    proj = _erg_proj(tmp_path, monkeypatch)
+    _hook(proj, _MANAGED + "\n# --- git-erg --- begin\nerg_bin=tickets/erg\n# --- git-erg --- end\n")
+    lb = ps.erg_state(proj)["legacy_block"]
+    assert lb["superseded"] is True and lb["dead_paths"] == []
+
+
+def test_erg_legacy_block_dead_path(tmp_path, monkeypatch):
+    proj = _erg_proj(tmp_path, monkeypatch)
+    _hook(proj, _LEGACY)
+    lb = ps.erg_state(proj)["legacy_block"]
+    assert lb["superseded"] is False and lb["dead_paths"] == ["tickets/tools/go/erg"]
+
+
+def test_erg_legacy_block_alone_is_silent(tmp_path, monkeypatch):
+    proj = _erg_proj(tmp_path, monkeypatch)
+    _hook(proj, "# --- git-erg --- begin\nerg_bin=tickets/erg\n# --- git-erg --- end\n")
+    assert ps.erg_state(proj)["legacy_block"] is None

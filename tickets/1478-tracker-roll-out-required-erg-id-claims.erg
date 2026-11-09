@@ -30,15 +30,15 @@ Author: reviewer
 2026-11-09T13:07Z reviewer clone sweep: doudou padme (85 claims; still dafb1d48), DOIfetch, ~/.agents, git-erg pulled + hooks; padme DOIfetch pulled + hooks; left: doudou swz and padme ~/data/swz (wait #639), doudou archiveCIRED (5 dirty, 6 behind), doudou climate-finance-het (dirty, 182 behind, its own session)
 2026-11-09T13:07Z reviewer padme memory-v8 leftovers (fuzzy-corpus 0052, AEDIST 0682 now taken on remote, chemin-de-voix 0257): untracked tickets from a 2026-10-05 Codex fan-out (parent 0913 closed), GitHub issues #64/#1177/#173 open, plus a stale erg upgrade to 63b5e92; no live owner; disposition asked of the author
 2026-11-09T12:47Z reviewer padme 0110 closed (padme PR #249): ~/.local/bin/erg refreshed to dafb1d48 on padme and doudou (author decision: replace, not delete); doudou did carry the stale 4776df5d in ~/.local/bin (a non-interactive ssh PATH hides it), so 'doudou has none' no longer holds; backups in ~/.local/share/erg-backup/
+2026-11-09T13:21Z reviewer pin now lives in scripts/erg-pin (ticket 1479); Context and recipe step 3 cite it; history lines keep their hashes
 
 --- body ---
 ## Context
 Author decision relayed by the git-erg session (2026-11-09): the harness drives the rollout of
 required ID claims (git-erg 0306/0307) to every erg store on padme and doudou. Pin, not release:
-every repo takes the binary with sha256
-`513cd3c4d916fd170d2d71b2cfe2182d4ab8db413822766db2e1ae5c5488b4ac` (git-erg rev bf71ab5,
-commit bcbfa63; author decision 2026-11-09; same behaviour as 6a104262, rebuilt when git-erg
-renamed docs/ to design/); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
+every repo takes the binary pinned in `scripts/erg-pin` (the one live
+value: sha256 and git-erg rev; as of 2026-11-09 rev bf71ab5, commit bcbfa63, same behaviour
+as 6a104262, rebuilt when git-erg renamed docs/ to design/); if git-erg main has moved, stop and ask git-erg. A signed release comes later.
 git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 
 ## Recipe (one PR per repo, one host, fresh worktree)
@@ -48,7 +48,7 @@ git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
    `ERG_UPDATE_URL=https://github.com/MinhHaDuong/git-erg.git tickets/erg update` instead
    (63b5e92: swz, AEDIST, fuzzy-corpus, JETP-observer, chemin-de-voix, climate-finance-het, padme;
    616b023: DOIfetch; 5158508: archiveCIRED; 8331a94: cadens; doudou-only repos: check
-   `tickets/erg --help`). 3. check `tickets/erg version` shows the sha256
+   `tickets/erg --help`). 3. check `sha256sum tickets/erg` equals `sha256` in `scripts/erg-pin` (yawn reports it)
 4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init` (a locally edited `.ergrc` is kept; one WARN stays)
 6. `tickets/erg install --hooks` (rewrites an old managed block, so the commit passes; no --no-verify);
    tracked core.hooksPath: stage the hook change in the PR worktree, review the chaining
