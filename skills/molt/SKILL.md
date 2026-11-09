@@ -71,6 +71,19 @@ Run full repo housekeeping and act on every finding.
    sweep's direct mutation. A stale `erg` on `PATH` is the operator's to
    reinstall; the sweep does not read it while `tickets/erg` exists.
 
+   **Erg pin findings (yawn check 10b; pin in `scripts/erg-pin`).** Fix-now,
+   local and reversible only: `git config --local --unset core.hooksPath` when
+   it names a missing directory; strip a reported legacy block
+   (`# --- git-erg --- begin` … `end`, superseded or naming a missing path) from
+   a pre-commit under the git common dir, after copying the hook to
+   `pre-commit.bak` beside it (one in a tracked hooks directory is the
+   project's: report only); then, when `tickets/erg` exists,
+   `tickets/erg install --hooks`, which writes the managed block.
+   Open-ticket: a `tickets/erg` behind the pin, one ticket in that project (or,
+   when the author just moved the pin, the rollout recipe in tracker 1478). A
+   PATH `erg` behind the pin is the operator's: report only. Never import or
+   sync a binary; the paragraph above stays the law.
+
 1. **Git phase.** Run `"$IDH_ROOT/scripts/housekeeping-git.sh"`, then create the run's own worktree; the primary checkout stays on `main` for every parallel session and is never switched (`rules/git.md`). Use hunt's recipe (`skills/hunt/SKILL.md` § Worktree) with the branch `housekeeping-$(date -u +%Y%m%d)` cut from `origin/main`, the lock reason `molt housekeeping (pid <PPID>)`, and the path printed as `$W`; `cd "$W"` and register it with `worktree-tmp-guard.py`. Note `$W`: every later step runs in it, with absolute paths and `git -C "$W"`, and all commits land on that branch. Step 0 ran before this lock exists, and step 1.5 skips locked worktrees, so the run never GCs itself.
 
 1.5. **GC stale worktrees.** Housekeeping owns worktree GC — but only of

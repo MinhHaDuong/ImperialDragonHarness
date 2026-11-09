@@ -2,9 +2,12 @@
 Title: One erg pin in the harness; yawn reports drift, molt repairs, git-erg optional
 Created: 2026-11-09
 Author: reviewer
+Closed: autoclosed — PR #2303
 
 --- log ---
 2026-11-09T12:39Z reviewer created
+2026-11-09T13:21Z reviewer pin file scripts/erg-pin, yawn check 10b (project-state.py erg collector), molt step 0.7 repairs; PR pending
+2026-11-09T13:28Z reviewer closed — autoclosed — PR #2303
 
 --- body ---
 Parent: 1478

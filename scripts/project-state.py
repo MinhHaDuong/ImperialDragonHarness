@@ -4,6 +4,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -402,6 +403,92 @@ def hooks_state(project):
     }
 
 
+ERG_PIN_FILE = Path(__file__).resolve().parent / "erg-pin"
+_LEGACY_BLOCK = re.compile(r"# --- git-erg --- begin\n(.*?)# --- git-erg --- end", re.S)
+_ERG_PATH = re.compile(r"(?<![\w./-])(tickets/[\w./-]*erg)(?![\w./-])")
+
+
+def _sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _erg_vs_pin(path, pin):
+    """pinned | drifted | n/a (no binary, or no pin to compare with)."""
+    if not pin or not path or not Path(path).is_file():
+        return "n/a"
+    try:
+        return "pinned" if _sha256_file(path) == pin["sha256"] else "drifted"
+    except OSError:
+        return "n/a"
+
+
+def erg_state(project):
+    """Optional git-erg pin report (ticket 1479). Everything absent is "n/a";
+    only a present erg differing from the pin, a dead core.hooksPath, or a
+    legacy per-clone pre-commit block (superseded, or naming a missing path)
+    is a finding. Advisory only."""
+    pin = None
+    try:
+        kv = dict(
+            ln.split("=", 1)
+            for ln in ERG_PIN_FILE.read_text().splitlines()
+            if "=" in ln and not ln.startswith("#")
+        )
+        if kv.get("sha256"):
+            pin = {"sha256": kv["sha256"].strip(), "rev": kv.get("rev", "").strip()}
+    except OSError:
+        pass
+    project = Path(project)
+    out = {
+        "pin": pin,
+        "tickets_erg": _erg_vs_pin(project / "tickets" / "erg", pin),
+        "path_erg": _erg_vs_pin(shutil.which("erg"), pin),
+        "claims": (project / "tickets" / ".claims").is_dir(),
+        "hooks_path_dead": None,
+        "legacy_block": None,
+    }
+    hp = run(["git", "config", "core.hooksPath"], project)
+    hooks_path = hp.stdout.strip() if hp.returncode == 0 else ""
+    hook_dirs = []
+    if hooks_path:
+        d = Path(hooks_path).expanduser()
+        d = d if d.is_absolute() else project / d
+        out["hooks_path_dead"] = not d.is_dir()
+        hook_dirs.append(d)
+    gc = run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], project)
+    if gc.returncode == 0:
+        hook_dirs.append(Path(gc.stdout.strip()) / "hooks")
+    for d in hook_dirs:
+        hook = d / "pre-commit"
+        try:
+            text = hook.read_text()
+        except OSError:
+            continue
+        m = _LEGACY_BLOCK.search(text)
+        if not m:
+            continue
+        superseded = "# >>> erg managed >>>" in text
+        dead = sorted({p for p in _ERG_PATH.findall(m.group(1)) if not (project / p).exists()})
+        if superseded or dead:
+            out["legacy_block"] = {"file": str(hook), "superseded": superseded, "dead_paths": dead}
+            break
+    out["findings"] = [
+        f
+        for f, hit in (
+            ("tickets_erg drifted", out["tickets_erg"] == "drifted"),
+            ("path_erg drifted", out["path_erg"] == "drifted"),
+            ("hooksPath dead", out["hooks_path_dead"] is True),
+            ("legacy block", out["legacy_block"] is not None),
+        )
+        if hit
+    ]
+    return out
+
+
 def session_scratch_state(project):
     """Host-level session scratch usage and orphan directories (ticket 0854).
 
@@ -503,6 +590,7 @@ def main():
         "branches": branch_state,
         "worktrees": worktree_state,
         "hooks": hooks_state,
+        "erg": erg_state,
         "prs": pr_state,
         "session_scratch": session_scratch_state,
         "disk_space": disk_space_state,

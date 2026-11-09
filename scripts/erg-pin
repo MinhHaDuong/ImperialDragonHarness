@@ -1,0 +1,5 @@
+# The harness's one erg pin: read by scripts/project-state.py (yawn) and cited by
+# tickets/1478. Moving it is an author decision, landed by harness PR.
+# git-erg is optional: a checkout without this file just reports "n/a".
+sha256=89952604da1d46ad532573a5907512070ee580ff9bb8fb99d3757d00a0ff4101
+rev=4f2326e
