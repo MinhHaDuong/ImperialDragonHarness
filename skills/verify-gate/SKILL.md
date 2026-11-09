@@ -108,16 +108,26 @@ and add the tree at its `head`. A refusal (never mapped) is ESCALATE, `Missing D
 ```bash
 PR_BRANCH=<head branch resolved from the forge for <pr-number>>
 # <session-id>: the caller's session=, else the standalone UUID generated now;
-# <round>: derived by `review_notes.py gate` (§ Notes review) before the tree exists.
+# <round>: derived by `review_notes.py gate` (§ Notes review) before the tree exists;
+# <gate-state>: a file holding the JSON that call printed.
 primary_root=$(git -C "<repo-path>" rev-parse --show-toplevel) || exit 1
 primary_root="${primary_root%%/.claude/worktrees/*}"
 gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"
 git -C "$primary_root" fetch origin "$PR_BRANCH" || exit 1
-if ! git -C "$primary_root" worktree add --detach "$gate_tree" origin/"$PR_BRANCH" || ! test -d "$gate_tree"; then
+if ! python3 "$IDH_ROOT/scripts/gate_tree.py" add --repo "$primary_root" --tree "$gate_tree" \
+        --ref origin/"$PR_BRANCH" --session <session-id> --round <round> --gate-state <gate-state>; then
     echo "verify-gate: cannot create isolated gate worktree for PR <pr-number>" >&2
     exit 1   # verdict ESCALATE, root_cause_class: Missing Data
 fi
 ```
+
+A round that stalled before its verdict leaves its tree behind, and the
+relaunch under the same session derives the same round and path. `gate_tree.py`
+then removes that stale tree through the removal preflight below and recreates
+it: a gate tree is a detached checkout of a pushed head, so there is nothing to
+salvage. It refuses, and the gate rules ESCALATE, when that session and round
+already carry a verdict, when the tree is locked, or when it holds residue
+or a commit no branch, remote or tag reaches.
 
 On every exit path, after the verdict is recorded:
 `$IDH_ROOT/scripts/worktree-exit-preflight.sh --removal --ignored-ok "$gate_tree"`, then
@@ -192,6 +202,32 @@ integration tier sees, such as a moved symbol an integration test still
 imports (ticket 1283). The verdict quotes the `selected:`, `fallback:` and
 `result:` lines. Exit 1 fails the criterion the change carries (REROLL);
 exit 4 (`skipped`, `incomplete`) is quoted as such, never as a pass.
+
+**The gate waits for its own checks.** It never ends its turn while a check
+it started is still running: nothing resumes a forked run, so the verdict
+would never come (ticket 1490). The touched tests may fall back to the
+integration tier and outlast one shell call. Run them under the heartbeat that
+raid's breaker reads (`skills/raid/references/circuit-breakers.md`), from the
+gate worktree, so a long run reads `GATE_RUNNING`, not `STALL`. Where the
+runtime bounds one shell call below the run, start it detached, its log and
+exit code in a directory outside the gate tree (note the printed path), then
+repeat the bounded wait until it prints the exit code:
+
+```bash
+out=$(mktemp -d) && echo "$out"
+(cd "$gate_tree" && timeout <budget> python3 "$IDH_ROOT/scripts/raid-gate.py" -- \
+    python3 "$IDH_ROOT/scripts/touched-tests.py" --base origin/<base-branch> \
+    >"$out/log" 2>&1; echo $? >"$out/rc") </dev/null >/dev/null 2>&1 &
+# one bounded wait; exit 124 means still running: run it again
+timeout 540 sh -c 'until [ -s "$1/rc" ]; do sleep 10; done; cat "$1/rc"' _ "$out"
+```
+
+`<budget>` is the caller's gate allowance in seconds (raid's
+`gate_max_seconds`), else 1800. An exit code of 124 in `rc` means the run hit
+that budget: the touched tests are quoted `incomplete`, never a pass.
+<!-- harness-extension-point -->
+On Claude Code this skill runs as a Skill-tool fork and one Bash call is capped
+at 10 minutes; a `run_in_background` completion never reaches a fork.
 
 A gate on an ungated base (the plan answers `off:`) applies the same rule by
 hand: `merge-gate.py tier --since <prior head>` answering 0 reuses the check

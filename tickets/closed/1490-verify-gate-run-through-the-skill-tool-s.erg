@@ -2,9 +2,11 @@
 Title: verify-gate run through the Skill tool stalls when it waits on its own background step
 Created: 2026-11-09
 Author: Claude (JETP raid 0176a9)
+Closed: autoclosed — PR #2359
 
 --- log ---
 2026-11-09T17:24Z Claude (JETP raid 0176a9) created
+2026-11-09T22:38Z reviewer closed — autoclosed — PR #2359
 
 --- body ---
 Observed 2026-11-09 on padme, JETP-observer raid 0176a9, PR 297.
