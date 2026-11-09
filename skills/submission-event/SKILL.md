@@ -40,12 +40,10 @@ scratch at the next event, and the two readings do not converge.
 ## 1. Homepage publications list
 
 `~/CNRS/html/src/Ha-Duong.bib`: when this event belongs in the publications
-list, the explicit-only update-publist skill owns the entry-type mapping,
-build, verification and deploy procedure. If the author has not already
-authorized this publication-list update, ask them to invoke `/update-publist`
-(usually with `--page-only` when no deposit is due). If the current session
-already carries explicit authorization for the update, read and follow that
-procedure. Invoking `/submission-event` alone is not authorization for the
+list, the update-publist skill owns the entry-type mapping, build,
+verification and deploy procedure. Load it (usually with `--page-only` when
+no deposit is due) and follow it: its own gates ask the author before every
+outward mutation. Invoking `/submission-event` alone is not authorization for the
 outward mutation or deployment.
 
 ## 2. CNRS secretariat roadmap

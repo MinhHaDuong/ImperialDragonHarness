@@ -3,7 +3,7 @@ metadata:
   category: publication
 name: update-publist
 description: "Add or update a publication on the author's personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call."
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pdf-path> [--hal-only] [--page-only]"
 ---
