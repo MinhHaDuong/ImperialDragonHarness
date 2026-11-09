@@ -37,7 +37,7 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 The author's three values — **integrity, excellence, kindness** — inspired the principles below.
 
 - **User's attention is the scarcest resource.** Do use the advisor model; ask one question at a time, explaining context and defaults. Ask in sequential turns, one after the other, without launching long tasks in between: do not make the user wait for the next question. Run to the end, do not stop if the next move is obvious. Do not speak in ticket or PR numbers without cleartext. See `rules/workflow.md` § Escalation protocol and § Autonomous action; resident budget cap `tests/test_rules_resident_budget.py`.
-- **KISS**. Do review every design note with an eye to remove the nice-to-haves, sticking to the must-haves. Do not goldplate, do not bulletproof unnecessarily, never optimize prematurely, do not fight windmills, only evidence justifies guardrails, no imagined risks. Example: `conception/design-note-template.md` § Review.
+- **KISS**. Do review every design note with an eye to remove the nice-to-haves, sticking to the must-haves. Do not goldplate, do not bulletproof unnecessarily, never optimize prematurely, do not fight windmills, only evidence justifies guardrails, no imagined risks. Example: `design/design-note-template.md` § Review.
 - **Trust, Verify, Monitor**. Do delegate, trust the delegate, verify cheaply, and monitor after merge. Do not re-run tests that passed, do not re-review. See `rules/workflow.md` § Trust, Verify, Monitor.
 - **Never write guards on guards**. A good barrier is no barrier. If a guard is a speedbump, blocks good work, or never bites in the field, consider removal not adding workarounds. See `rules/workflow.md` § Autonomous action (Severity floor); owner `skills/test-doctor/references/toolkit.md`.
 - **Minimize external dependencies**. Helpers bundled with a skill MUST use the standard library, with NO third-party imports; a third-party helper is only ever an optional specialized tool. The harness's own `scripts/` take their tools from the lock (`rules/coding-python.md` § Environment). See `skills/harness-doctor/references/authoring-skills.md`.
@@ -57,7 +57,7 @@ Every task passes through five phases:
 
 ## Workflows
 
-Each skill's `SKILL.md` is its procedure; `conception/` keeps the design
+Each skill's `SKILL.md` is its procedure; `design/` keeps the design
 history behind it.
 
 - **Day cycle**: `/yawn` (healthcheck) → `/molt` (housekeeping) → work → `/perch` (orient) → work → `/lair`
@@ -66,11 +66,11 @@ history behind it.
   its own worktree and branch, reviewed by `/gaze` and `/verify-gate`; merge
   lands it behind the merge gate. With an `origin` remote the forge merges
   the PR; without one the merge is local
-  ([flows ruling](conception/2026-10-27-review-merge-flows.md)).
+  ([flows ruling](design/2026-10-27-review-merge-flows.md)).
 - **Autonomous work**: `/raid` picks several tickets and runs them in waves,
   merging as the gate approves, unattended for hours, asking an advisor model
   for decisions.
-- **Research**: Skills and scripts to assist the complete ([research workflow](conception/research-workflow.md)),
+- **Research**: Skills and scripts to assist the complete ([research workflow](design/research-workflow.md)),
   according to procedures described my book ([Research Excellence à la française](http://minh.haduong.com/realf.html)).
 
 ## Components
@@ -109,7 +109,7 @@ explains the layout.
 > intact as the source with the pages as guides to it, and the runtimes'
 > native memories (Claude Code, Codex) drained as inboxes. `/smelt` becomes
 > `/smelt`, and a trial measures whether memory helps. See tickets 1346–1352
-> and [the audit](conception/2026-10-29-memory-system-audit.md). Until then,
+> and [the audit](design/2026-10-29-memory-system-audit.md). Until then,
 > the description below is the current mechanism.
 
 Memory is layered, from raw to distilled. Project memory is written in each
@@ -160,7 +160,7 @@ delegates to team leads (`agents/team-lead.md`), which manage workers:
 `coder`, `code-reviewer`, `gate-seat`, `prose-reviewer` (`agents/`, with
 their contracts in `profiles/`). `/route` assigns each task a model from
 benchmark evidence. The benchmarks come from **Arena**, an independent
-repository ([integration contract](conception/arena-integration.md)).
+repository ([integration contract](design/arena-integration.md)).
 
 Subagents start without the session's memory. Each worker profile tells its
 worker to read the project's `memory/MEMORY.md` index at task start, and a
@@ -190,7 +190,7 @@ ImperialDragonHarness/      # reference clone: ~/.agents
 ├── tickets/                # git-erg ticket store
 ├── projects/<slug>/memory/ # Legacy project memories; migration tracked per project
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
-├── conception/             # Design history: memos, audits, reviews (not loaded)
+├── design/             # Design history: memos, audits, reviews (not loaded)
 └── docs/                   # Staging for external documents, git-ignored (Zotero is the record)
 ```
 

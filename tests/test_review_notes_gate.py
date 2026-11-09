@@ -1,5 +1,5 @@
 """Ticket 1274: verify-gate rules on refs/notes/review with no forge
-(spec conception/2026-10-27-notes-review-spec.md §1, §5, §8). The gate reads the
+(spec design/2026-10-27-notes-review-spec.md §1, §5, §8). The gate reads the
 gaze `answer` entries of a review and appends `verdict` entries whose round the
 helper derives from the verdicts already recorded, every session and clone
 alike. Temp repos and a local bare remote only; nothing reaches a forge."""

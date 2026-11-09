@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One event model over the transcripts of every runtime (ticket 1385; memo conception/2026-10-31-monitoring-redesign.md 4.4).
+"""One event model over the transcripts of every runtime (ticket 1385; memo design/2026-10-31-monitoring-redesign.md 4.4).
 
 A reader turns one transcript into `Event`s with the same fields whatever the runtime: Claude Code
 (with its `subagents/`), Codex rollouts, Pi sessions, and a file-only event for runtimes with no

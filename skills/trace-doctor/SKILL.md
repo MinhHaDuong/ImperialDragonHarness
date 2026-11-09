@@ -72,7 +72,7 @@ wait
 # AND writes the accumulating committed cache (do not create a new dated cache).
 # Add --no-network if the forge is unreachable, and say so in the report.
 python3 "$HARNESS_DIR/scripts/trace-pr-join.py" \
-  --census "$SCRATCH/census.csv" --cache conception/trace-pr-join-2026-06.csv
+  --census "$SCRATCH/census.csv" --cache design/trace-pr-join-2026-06.csv
 
 # trace-hypotheses: one statistic per cost hypothesis H1-H13; needs the census, the
 # compact audit and the forge-join cache. The --compact-audit-json routing IS the
@@ -80,7 +80,7 @@ python3 "$HARNESS_DIR/scripts/trace-pr-join.py" \
 python3 "$HARNESS_DIR/scripts/trace-hypotheses.py" \
   --census "$SCRATCH/census.csv" \
   --compact-audit-json "$SCRATCH/compact-audit.json" \
-  --pr-stats conception/trace-pr-join-2026-06.csv \
+  --pr-stats design/trace-pr-join-2026-06.csv \
   --output "$SCRATCH/hypotheses.json"
 ```
 
@@ -88,12 +88,12 @@ Parse `$SCRATCH/hypotheses.json`, `$SCRATCH/census-summary.json` and `$SCRATCH/f
 census is empty (no agents in the window), report "no traces in window" and
 stop.
 
-If `trace-pr-join.py` changed `conception/trace-pr-join-2026-06.csv` (the join
+If `trace-pr-join.py` changed `design/trace-pr-join-2026-06.csv` (the join
 resolved new PRs), that single cache file is the *only* tracked artifact this
 run may commit; commit it on a branch landed through a merge request, with a named add:
 
 ```bash
-git add conception/trace-pr-join-2026-06.csv    # the newly resolved rows only
+git add design/trace-pr-join-2026-06.csv    # the newly resolved rows only
 git commit -m "chore(trace-doctor): accumulate forge-join cache"
 ```
 
@@ -102,10 +102,10 @@ git commit -m "chore(trace-doctor): accumulate forge-join cache"
 Read the hypothesis statistics against the two settled playbook tables — do not
 re-derive verdicts, apply them:
 
-- **Ranking table** — `conception/trace-hypotheses-2026-06.md` § Ranked
+- **Ranking table** — `design/trace-hypotheses-2026-06.md` § Ranked
   recommendations: which lever holds the most `$/week at stake` and whether the
   bound is upper or lower.
-- **Routing table** — `conception/trace-counterfactuals-2026-06.md` § Routing: the
+- **Routing table** — `design/trace-counterfactuals-2026-06.md` § Routing: the
   settled disposition of each recommendation (adopt now / phase-5 A/B / reject),
   the refined `$/week`, and why. The disjoint-bucket dedup total there
   ($2,356 = 34.8%) is the addressable ceiling — do not sum overlapping buckets
@@ -128,7 +128,7 @@ may be inflated by the same effect.
 
 Cost does not rank turns and wall-clock, so report velocity separately, from
 `friction.json`, ranked in **hours**, not dollars (method and caveats:
-`conception/2026-10-21-velocity-friction-scan.md`):
+`design/2026-10-21-velocity-friction-scan.md`):
 
 1. **Tool wall-clock over 30 s, by tool** (`slow_by_tool_hours_upper_bound`),
    largest first. Every duration is tool_use to tool_result, so it includes
@@ -204,7 +204,7 @@ any lever; this section never applies a fix.
 
 From `stopguard.json` (rules and limits: the docstring of
 `$HARNESS_DIR/scripts/trace-stopguard.py`; precision and recall:
-`conception/2026-10-27-stopguard-measure-labels.md`), one row per ISO week and
+`design/2026-10-27-stopguard-measure-labels.md`), one row per ISO week and
 runtime: stops, ask without ask-up, wait without wake, bad. Codex and Pi are
 reported unmeasured, never as zero.
 
@@ -247,7 +247,7 @@ stayed clear for three runs), and say so in the report.
 
 After the velocity section, report whether each past fix moved its error
 class. Closed tickets declare `Treats:` and `Baseline:` body lines
-(convention: `conception/trace-treatments.md`); the script dates each merge from git
+(convention: `design/trace-treatments.md`); the script dates each merge from git
 history and compares the class's daily rate before and after, from the same
 `friction.json`:
 
@@ -292,7 +292,7 @@ For each `uncovered`, actionable finding, show:
 - **Settled routing**: the disposition from the counterfactuals routing table
 - **Proposed action**: the concrete next step (a prompt-rule, an A/B, an advisory)
 
-The report lands in the invocation's output (or a `conception/` note if the caller
+The report lands in the invocation's output (or a `design/` note if the caller
 asks); it is never written as tracked per-session data.
 
 ## 5. Open tickets for uncovered findings

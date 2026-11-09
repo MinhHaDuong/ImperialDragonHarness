@@ -32,7 +32,7 @@ The 2026-11-07 Zotero filename batch is report-only and labelled pre-correction.
 - [Cycle 3, key displayed](../journal/2026/2026-10-12-t1048-cycle3-speed-stage-and-production-switch.md)
 - [Zotero architecture, PR #1143](../journal/2026/2026-10-02-zotero-interface-architecture-pr1143.md)
 - [Zotero train](../journal/2026/2026-10-04-zotero-train-breaker-and-the-review-it-cost.md)
-- Legacy `../reference_zotero.md`; provenance: [source inventory](../../conception/memory-v8/source-inventory.md).
+- Legacy `../reference_zotero.md`; provenance: [source inventory](../../design/memory-v8/source-inventory.md).
 
 
 [source1]: ../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md

@@ -208,7 +208,7 @@ semantics, missing intervening turns, or truncated messages leave the case
 unresolved. Do not fill those gaps with a plausible reconstruction.
 
 **Bounded availability example.** The committed historical digest
-`conception/trace-open-coding-2026-06/d27c1566-c018-4f41-838e-05b153511a28.digest.md`
+`design/trace-open-coding-2026-06/d27c1566-c018-4f41-838e-05b153511a28.digest.md`
 contains structural turn rows. `$IDH_ROOT/scripts/trace-digest.py` explicitly removes
 user and assistant text and command arguments; those rows cannot establish
 the observation/claim pair. The public review answer for PR 2246, recorded

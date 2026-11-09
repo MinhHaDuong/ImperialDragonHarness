@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-EVIDENCE = REPO / "conception" / "2026-10-02-memory-v8-runtime-smoke.md"
+EVIDENCE = REPO / "design" / "2026-10-02-memory-v8-runtime-smoke.md"
 ENTRY = REPO / "memory" / "journal" / "2026" / "2026-10-02-memory-v8-smoke.md"
 
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
@@ -80,6 +80,11 @@ def test_new_documents_link_only_resolving_targets():
         text = doc.read_text(encoding="utf-8")
         for target in relative_targets(text):
             resolved = (doc.parent / target).resolve()
+            # conception/ became design/ on 2026-11-09 (ticket 1477); the
+            # append-only journal entry keeps its old link text.
+            old = REPO / "conception"
+            if not resolved.exists() and old in resolved.parents:
+                resolved = REPO / "design" / resolved.relative_to(old)
             assert resolved.exists(), f"{doc.name}: dangling link {target}"
             assert resolved == REPO or REPO in resolved.parents, (
                 f"{doc.name}: link escapes the repository: {target}"

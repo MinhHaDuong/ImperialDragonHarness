@@ -23,7 +23,7 @@ Current status, blockers, next actions: `STATE.md`.
 Tickets: `tickets/*.erg`, also the channel between projects (`rules/guards.md`).
 A GitHub Issue, if any, only points to a ticket.
 
-Design history (memos, audits, review records): `conception/`, as in the
+Design history (memos, audits, review records): `design/`, as in the
 research projects. `docs/` is git-ignored staging for external documents
 (rules/zotero.md).
 

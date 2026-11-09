@@ -10,7 +10,7 @@ setup and closing from tool calls, so it covers headless seats too.
 
 Needs the session traces and, for the load join, sysstat files in /var/log/sysstat
 (host padme: 10-minute `sar -q` samples, 2026-10-19 on). Every figure is READ
-from a timestamp or derived from timestamps; see conception/2026-10-27-gaze-wall-time.md.
+from a timestamp or derived from timestamps; see design/2026-10-27-gaze-wall-time.md.
 """
 
 import subprocess

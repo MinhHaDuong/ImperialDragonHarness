@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One launch line per headless child (ticket 1384; memo conception/2026-10-31-monitoring-redesign.md 4.3).
+"""One launch line per headless child (ticket 1384; memo design/2026-10-31-monitoring-redesign.md 4.3).
 
 The one link transcripts cannot reconstruct is which session launched which headless child. Both
 launchers (`seat_clock.run_seat`, `manuscript_review.execute_stage`) call `record` once per child; it

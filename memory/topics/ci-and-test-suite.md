@@ -24,7 +24,7 @@ All timings are padme (32 cores, shared with parallel sessions and arena coders)
 
 - Carried claims and adapted native provenance: [accepted sixth report](../smelts/2026-11-01-sixth-smelt.md), [fifth native annex](../smelts/2026-10-30-fifth-smelt-native-notes.md), and [sixth native annex](../smelts/2026-11-01-sixth-smelt-native-notes.md).
 
-- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../design/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../design/memory-v8/source-revisions.tsv).
 - [Suite economics](../journal/2026/2026-10-02-session-suite-economics.md); [PR #1245](../journal/2026/2026-10-07-pr1245-forced-gaze-stuck-ci-merge.md); [1082](../journal/2026/2026-10-10-merge-script-ci-refusal-and-ticket-1082.md)
 - [Doctors landing](../journal/2026/2026-10-27-harness-doctor-and-project-coherence.md); [1240](../journal/2026/2026-10-27-harness-doctor-idh-root-paragraph-1240.md); [rename](../journal/2026/2026-10-27-test-doctor-rename-1228.md); [wall time](../journal/2026/2026-10-27-trace-wall-time-pr1722.md); [yawn](../journal/2026/2026-10-27-yawn-to-rest-pr1782-pr1789.md); [practice](../journal/2026/2026-10-28-doctor-practice-and-catalog-links.md)
 [diagnostics]: ../journal/2026/2026-11-07-raid-train-controls.md

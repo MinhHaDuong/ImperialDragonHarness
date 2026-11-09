@@ -6,7 +6,7 @@
 # agent (marker file). Every outcome is logged to
 # ${XDG_STATE_HOME:-~/.local/state}/idh/skill-notes/log, so a missing note and a
 # hook that never fired stay distinguishable. Design:
-# conception/2026-10-31-skill-case-notes.md. Fails open: always exit 0.
+# design/2026-10-31-skill-case-notes.md. Fails open: always exit 0.
 set -euo pipefail
 trap 'exit 0' EXIT
 

@@ -15,7 +15,7 @@ answer is incomplete or refused (Missing Data). A complete read prints `forge-re
 first, the time the gate's verdict records for the landing recheck.
 
 Subcommands: `identity`, `record`, `gate`, `forge`.
-Ticket 1142; design in conception/discussions/2026-10-14-1096-design.md.
+Ticket 1142; design in design/discussions/2026-10-14-1096-design.md.
 """
 
 import argparse
@@ -42,7 +42,7 @@ log = logging.getLogger("review_evidence")
 
 # Forge actors whose reviews may be read as evidence or binding findings:
 # the three accounts that posted reviews across 22 repositories in the census
-# of 2026-10-14 (conception/discussions/2026-10-14-1096-seats/evidence-review-authors.json).
+# of 2026-10-14 (design/discussions/2026-10-14-1096-seats/evidence-review-authors.json).
 # Node IDs, not logins: a login can be renamed and re-registered.
 FORGE_ACTORS = {
     ("github.com", "MDQ6VXNlcjE4NDc1MjA4"): "human",    # MinhHaDuong

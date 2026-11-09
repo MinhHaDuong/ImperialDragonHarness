@@ -24,7 +24,7 @@ Attribution still has unavailable writer identities, fact-order failures and scr
 
 ## Sources
 
-- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../design/memory-v8/source-inventory.md); revisions in [source-revisions.tsv](../../design/memory-v8/source-revisions.tsv).
 [opt]: ../journal/2026/2026-10-27-raid-optimistic-merge-afternoon.md
 [flows]: ../journal/2026/2026-10-28-review-gate-flows-pr1863.md
 [1316]: ../journal/2026/2026-10-28-erg-close-hand-recipe-dropped-ticket.md

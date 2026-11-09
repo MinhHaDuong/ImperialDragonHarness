@@ -39,7 +39,7 @@ read after a fetch from the remote; an unreadable remote with no local review ra
 it answers from the local entries and warns (tickets 1281, 1300). A PR number's notes review
 is keyed `pr:<n>` and found by review_notes.find_unit, never through this backend. Backend choice:
 `--forge`; `auto` is gh when `gh` is on PATH and the ref is a bare number. There is no environment
-switch: the landing route is read off the repository (ticket 1280, conception/2026-10-27-review-merge-flows.md).
+switch: the landing route is read off the repository (ticket 1280, design/2026-10-27-review-merge-flows.md).
 
 Operations: resolve, comments, checks, review_state, comment, append_body_line, create, ready,
 auto_merge_armed, disarm, merge, read_back. On the `none` backend comment,

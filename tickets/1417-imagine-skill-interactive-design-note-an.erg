@@ -13,12 +13,12 @@ Parent: 1415
 
 ## Context
 The author's description (2026-11-01): Imagine can be interactive, working
-towards a design note in conception/ on the standard plan (problem; situation
+towards a design note in design/ on the standard plan (problem; situation
 from git; state of the art from docs, web and forums; alternative solutions,
 the most direct one and one from a different family; synthesis and
 recommendation with cost estimates; phased implementation plan; double
 advisor-level review plus KISS), now written as
-conception/design-note-template.md. It can also be agentic, as raid's Phase 2,
+design/design-note-template.md. It can also be agentic, as raid's Phase 2,
 whose past use the author doubts was constructive.
 
 ## Exit criteria

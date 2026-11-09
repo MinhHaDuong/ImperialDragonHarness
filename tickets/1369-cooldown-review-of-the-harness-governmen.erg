@@ -11,7 +11,7 @@ Label: needs-human
 --- body ---
 ## Context
 
-`conception/2026-10-30-harness-government.md` (PR #2040) frames the harness
+`design/2026-10-30-harness-government.md` (PR #2040) frames the harness
 as a government: AGENTS.md as constitution, `rules/guards.md` as ordre public
 with an enforcement column, a three-chamber court reviewing smelt, and memory
 split into case law and registries of dated, probed facts. The author
@@ -34,7 +34,7 @@ The cooldown is a review process. Precedent: the fifth consolidation (PR
 
 ## Exit criteria
 
-- [ ] The two independent reviews and the KISS review are recorded (in `conception/` or on this ticket)
+- [ ] The two independent reviews and the KISS review are recorded (in `design/` or on this ticket)
 - [ ] The author's triage is logged here: each follow-up marked need, want or drop
 
 No implementation ticket is filed from the memo before this ticket closes.

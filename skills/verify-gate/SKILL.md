@@ -478,7 +478,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 
 A unit with a review in `refs/notes/review` (ticket 1274 for `branch:<name>
 [base=<ref>]`, ticket 1300 for a PR number; design
-`conception/2026-10-27-notes-review-spec.md` §5, §8) is gated as above with
+`design/2026-10-27-notes-review-spec.md` §5, §8) is gated as above with
 round, admission, gaze findings and verdict taken from the notes, read and
 written only through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`;
 never `git notes` by hand.

@@ -2,7 +2,7 @@
 
 The Imagine phase's deliverable when the author is in the loop
 (`rules/workflow.md` § Cycle). One file per question:
-`conception/YYYY-MM-DD-<topic>.md`. Write it with the author, section by
+`design/YYYY-MM-DD-<topic>.md`. Write it with the author, section by
 section; an agent drafting alone marks every judgment as its own.
 
 ## 1. Problem

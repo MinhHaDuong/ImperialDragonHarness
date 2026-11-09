@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render one session as a Chrome Trace Event JSON timeline (ticket 1385; memo conception/2026-10-31-monitoring-redesign.md 4.4).
+"""Render one session as a Chrome Trace Event JSON timeline (ticket 1385; memo design/2026-10-31-monitoring-redesign.md 4.4).
 
     trace_timeline.py <claude session id> [--out FILE] [--html FILE]
 

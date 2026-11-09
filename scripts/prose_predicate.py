@@ -4,7 +4,7 @@
 A changed file is a *manuscript* iff the axis resolver yields a ``doctype``
 for it — from the project manifest (``<repo>/.claude/rules-map.toml``) or,
 when no manifest maps it, from the ``\\documentclass`` sniff. Format alone is
-NOT the discriminant: process prose (conception notes, ``.erg`` tickets)
+NOT the discriminant: process prose (design notes, ``.erg`` tickets)
 resolves to no doctype and stays on the code panel — the 2026-08-17 audit
 measured that the code lenses served exactly those diffs correctly.
 

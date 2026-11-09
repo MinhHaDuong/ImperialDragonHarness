@@ -135,7 +135,7 @@ A project without a ticket store lists them in the report as unfiled.
 Claude Code keeps its own auto-memory outside the repository, and the author
 keeps it on purpose (ticket 1350, option b, 2026-11-01): dictated notes land
 there, and about 41% of them are working rules (brood run
-`conception/2026-11-01-brood-harness-run.md`). Smelt therefore ends every
+`design/2026-11-01-brood-harness-run.md`). Smelt therefore ends every
 writing run with a listing for the author. Run, with `PROJECT` the project's
 primary checkout (the store is keyed by the path Claude Code ran in, so an
 isolated worktree resolves to another, usually absent, store):
@@ -165,7 +165,7 @@ nomination proposes no rule and is no exception to this skill's boundary.
 
 Skill case notes (`memory/skills/<skill>.md`) are pushed at skill load, and
 nothing else maintains them (tickets 1431, 1432; principle in
-`conception/2026-10-31-skill-case-notes.md`). At each writing run, for every
+`design/2026-10-31-skill-case-notes.md`). At each writing run, for every
 existing note and for any skill whose memory shows recurring observed episodes,
 re-select its cases by judged usefulness: one to four observed cases, each
 dated, sourced to a journal episode or topic, ending in a `Use:` line, the

@@ -5,7 +5,7 @@ name: biblio-saturation
 description: "Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: 'register file path + novelty claim location, e.g. "conception/registre-verification-p1.md, claim = ligne 1"'
+argument-hint: 'register file path + novelty claim location, e.g. "design/registre-verification-p1.md, claim = ligne 1"'
 ---
 
 # Bibliographic saturation pass
@@ -80,7 +80,7 @@ is searched or excluded. Preserve diversity across:
 - **Recency**: recent preprints and material not yet indexed elsewhere.
 - **Textbooks and surveys**: possible folklore statements and older sources.
 
-Optional HAL access: [HAL discovery](../../conception/hal-discovery-mcp.md) when
+Optional HAL access: [HAL discovery](../../design/hal-discovery-mcp.md) when
 available; direct HAL API remains a fallback. The pointer loads no tools.
 
 For each angle retain queries, interface/date, returned leads, sources actually

@@ -65,7 +65,7 @@ check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agn
 # it could not look in full. --after (ticket 1244): tips with no after-merge
 # record, and the full set run on the latest; that run executes the gate's
 # checks and pushes a note to refs/notes/gate. Git-only otherwise, never in the merge path
-# (conception/2026-10-21-main-update-guard.md).
+# (design/2026-10-21-main-update-guard.md).
 .PHONY: main-sweep
 main-sweep:
 	$(RUN) ./scripts/main_sweep.py --fetch --after

@@ -27,7 +27,7 @@ import memory_sizes  # noqa: E402
 INDEX = MEMORY / "MEMORY.md"
 
 # The ten tracked memory/ root sources inventoried by 0917 in
-# conception/memory-v8/source-inventory.md (PR #1102). Old-path correspondence:
+# design/memory-v8/source-inventory.md (PR #1102). Old-path correspondence:
 # the nine sources stay at their inventory paths, unrewritten; MEMORY.md is
 # the index itself, replaced by design with its legacy text in Git history.
 PILOT_SOURCES = (
@@ -65,9 +65,11 @@ def unresolved_links(root, doc, archival_links=()):
         elif not resolved.is_file():
             source = doc.relative_to(root).as_posix()
             old = resolved.relative_to(root.resolve()).as_posix()
-            # Design history left docs/ for conception/ on 2026-10-27; pinned
+            # Design history left docs/ for conception/ on 2026-10-27, then
+            # conception/ for design/ on 2026-11-09 (ticket 1477); pinned
             # records keep their old link text.
-            if old.startswith("docs/") and (root / "conception" / old[5:]).is_file():
+            if any(old.startswith(p) and (root / "design" / old[len(p):]).is_file()
+                   for p in ("docs/", "conception/")):
                 continue
             # Attribution records left the journal for memory/evidence/attribution/
             # (ticket 1347); append-only journal entries keep their old link text.
@@ -86,8 +88,8 @@ def unresolved_links(root, doc, archival_links=()):
                     ).stdout.strip()):
                 continue
             current = (source == "memory/MEMORY.md" or source.startswith("memory/topics/")
-                       or source in {"conception/memory-v8/README.md",
-                                     "conception/2026-10-02-memory-v8-runtime-smoke.md"})
+                       or source in {"design/memory-v8/README.md",
+                                     "design/2026-10-02-memory-v8-runtime-smoke.md"})
             if current or (source, old) not in archival_links:
                 broken.append(target)
     return broken
@@ -224,7 +226,7 @@ def test_relocated_clone_remains_readable(tmp_path):
 
     Clone the repository, move the clone elsewhere, drop the origin remote —
     then read the memory surface with plain file access only: every relative
-    link in every Markdown file under memory/ and conception/memory-v8/, plus
+    link in every Markdown file under memory/ and design/memory-v8/, plus
     the live runtime-smoke document, must resolve inside the relocated clone.
     """
     checkout = tmp_path / "checkout"
@@ -244,8 +246,8 @@ def test_relocated_clone_remains_readable(tmp_path):
     archival_links = verified_archival_links(relocated)
     docs = [
         *sorted((relocated / "memory").rglob("*.md")),
-        *sorted((relocated / "conception" / "memory-v8").glob("*.md")),
-        relocated / "conception" / "2026-10-02-memory-v8-runtime-smoke.md",
+        *sorted((relocated / "design" / "memory-v8").glob("*.md")),
+        relocated / "design" / "2026-10-02-memory-v8-runtime-smoke.md",
     ]
     assert docs
     encountered = set()
