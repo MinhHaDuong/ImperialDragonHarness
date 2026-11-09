@@ -6,6 +6,7 @@ Author: haduong
 --- log ---
 2026-11-09T19:17Z haduong created
 2026-11-09T20:23Z reviewer raid 4afdb3 verify+reimagine 2026-11-09: see '## Verify and Imagine'; premise checked by reproduction, author decisions listed there; not executed
+2026-11-09T21:00Z reviewer raid 5c2a37: author decisions recorded (see '## Author decisions'); exit criteria reworded accordingly
 
 --- body ---
 ## Context
@@ -37,9 +38,11 @@ the AEDIST PR picked a number already claimed on main (stale base or no
 
 ## Exit criteria
 
-- [ ] The ticket-filing flow writes `Ticket-ref:`, not `**Ticket:**`, on a PR that creates the ticket
-- [ ] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 are repaired (close claim rewritten; AEDIST renumbered off 0690)
-- [ ] A test covers the filing flow's PR-body line
+- [ ] `skills/merge/references/claims.md` states the rule: a PR that only files a ticket names it with `Ticket-ref:`, never a `**Ticket:**` close claim
+- [ ] A guard refuses a `**Ticket:**` close claim on a ticket the PR adds only when every file the PR touches is a ticket file; a file-and-close PR that touches anything else passes
+- [x] chemin-de-voix #185, padme #258 and AEDIST-technical-report #1198 repaired (merged with Ticket-ref 19:56-19:59Z; AEDIST renumbered 0691)
+- [ ] climate-finance-het #2050 repaired by that repo's session (ticket filed in climate-finance-het)
+- [ ] A test covers the guard: ticket-only PR with a close claim on its own new ticket refused; file-and-close PR touching code passes
 
 ## Verify and Imagine (raid 4afdb3, 2026-11-09)
 - Verified: no harness file writes the filing PR's `**Ticket:**` line; the 1481 executor wrote the
@@ -57,3 +60,7 @@ the AEDIST PR picked a number already claimed on main (stale base or no
   still wanted, applies only when every file the PR touches is a ticket file.
 - Author decisions: (1) criteria 1 and 3 target a filing flow that has no template: reword to a
   rule line plus a narrow guard, or drop the guard; (2) add #2050 to criterion 2.
+
+## Author decisions (raid 5c2a37, 2026-11-09)
+- Rule line plus narrow guard (author, 2026-11-09): no filing template exists, so the rule lives in claims.md; the guard fires only on ticket-only PRs, sparing file-and-close PRs (#2336, #2325, #2323, #2272, #2242).
+- #2050 added to criterion 2; its repair is climate-finance-het's, reached by a ticket there.
