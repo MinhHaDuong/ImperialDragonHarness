@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Drop the regressive-timestamp assertion once erg 0308 lands
+Created: 2026-11-09
+Author: claude
+
+--- log ---
+2026-11-09T10:46Z claude created
+
+--- body ---
+## Context
+
+git-erg ticket 0308 (PR MinhHaDuong/git-erg#394) removes the advisory
+`erg check` warning `regressive log timestamps`. The spec sets no ordering
+rule on the log (append-only, never edited), and the only remedy the
+warning invited, reordering lines, the spec forbids; it fired on 44 files
+of git-erg's own store.
+
+tests/test_erg_log_placement.py:103-111
+(`test_check_warns_on_displaced_and_regressive_fixtures`, from ticket 0879)
+asserts `WARN 0002-regressive-timestamp.erg: regressive log timestamps` on
+stderr of the committed tickets/erg. It goes red when this store syncs a
+binary that includes #394.
+
+## Actions
+
+- Drop the regressive assertion and its 0002-regressive-timestamp.erg
+  fixture; keep the displaced-entry assertion. Optionally assert the
+  regressive fixture now draws no warning.
+- Reword the module docstring that justifies "regressive" as advisory.
+
+## Exit criteria
+
+- [ ] the test passes against a tickets/erg that includes git-erg #394
+- [ ] the displaced-entry assertion is unchanged
+
+Not actionable until git-erg #394 merges and this store syncs its binary;
+land it in the same PR as that sync.
