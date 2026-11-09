@@ -1,0 +1,30 @@
+%erg 0.1
+Title: review_notes: notes append fails with Argument list too long on a large request
+Created: 2026-11-09
+Author: reviewer
+Closed: autoclosed — fix landed by its PR
+
+--- log ---
+2026-11-09T14:41Z reviewer created
+2026-11-09T14:43Z reviewer closed — autoclosed — fix landed by its PR
+
+--- body ---
+
+## Context
+Found by raid 632b19 on PR #2312 (ticket 1480, `git rm --cached` of 1,085 files): gaze_setup
+crashed in `review_notes.open_review` → `request` → `_write` with `OSError: [Errno 7] Argument
+list too long: 'git'`. `_write` (scripts/review_notes.py:741-747) passes the whole JSON entry as
+`git notes append -m <line>`; the request's `what` field carries the request-pull diffstat, so a
+request over a large diff exceeds the OS argument limit. `keep_head` ran before the failing
+write, leaving the review head ref without its request entry. No review record exists for #2312,
+so its gate cannot run: the defect blocks a merge.
+
+## Plan
+Pass the entry through stdin: `git notes append -F - <anchor>` with `stdin=line` (the `_git`
+helper already takes `stdin`). Red test first in tests/test_review_notes.py: open a review whose
+request `what` is ~300 KB (monkeypatch `_request_what`), assert the entry reads back whole.
+
+## Exit criteria
+- [ ] `open_review` on a request whose entry exceeds the argument limit writes it and reads it back whole
+- [ ] the new test fails on main for `OSError: Argument list too long` and passes with the fix
+- [ ] `make check` passes

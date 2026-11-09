@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-09T13:39Z reviewer created
+2026-11-09T14:35Z reviewer note raid 632b19 — Imagine+Blind-Spot annotated; plan written; feasibility PASS
 
 --- body ---
 ## Context
@@ -41,3 +42,44 @@ padme, sen-causal-reading, fuzzy-corpus, chemin-de-voix; AEDIST in progress) now
 - [ ] no file under `projects/` is tracked on main; `.gitignore` no longer allowlists it
 - [ ] a test or check proves a new `projects/<key>/memory/x.md` stays untracked
 - [ ] the history-scrub question is put to the author with its cost, not executed
+
+## Imagine (raid 632b19, 2026-11-09)
+No runtime reader of the tracked export exists: every literal `projects/` hit in scripts and
+tests means `~/.claude/projects` (a real directory) or a tmp fixture; skills touch only the
+native store. The 1,085 files (44 keys, last touched 2026-10-27) are a stale public copy.
+Consumers that change: `scripts/check-personal-data.sh:6,10,31` (default scan targets drop
+`projects/`), `scripts/resident_census.py:171-175` (builds `root/"projects"/*/memory/MEMORY.md`
+from parts; its channel moves to the harness's own `memory/MEMORY.md`, else
+`tests/test_resident_census.py` fails the gate: memory floor 1000 vs 0, `max([])`), `README.md:191`
+(the tree listing). The 15 other grep hits are fixtures, docstrings or already `~/.claude/projects`.
+Mechanics: `git rm -r --cached projects` (one pathspec; never `git rm -r projects`, the primary
+holds ignored transcripts), delete `.gitignore:46-55` (the file is a `*` deny-all; those are the
+only re-includes; no nested .gitignore), add an explicit `projects/` line. A pull deletes the
+tracked copies from every clone's working tree: the ticket's "keep the local files" clause
+holds only for ignored transcripts; the PR says so.
+Audience: move nothing into `memory/`. Reason: each project's memory-v8 deployment owns its
+notes; the harness's old key `-home-haduong--claude` (139 files) was NOT absorbed by v8
+(`design/memory-v8/source-inventory.md:22,85` "path identity unverified", 66-70 "must not be
+pooled"), it survives only in padme's local store and in git history. 1481 is told so (log line).
+`memory/.provenance.json` lists project path keys: out of scope here, named in the PR.
+Exit criterion 3: one `git check-ignore --no-index -q projects/k/memory/x.md` assertion in
+`tests/test_attribution_capture_path.py` (already shells git); no new module, no CI probe.
+Exit criterion 4: the history-scrub question goes to the author in the raid briefing (options:
+no scrub / scrub user_* and infra_* paths / full scrub batched with the cired purge; ~2-4
+author-hours plus freeze and re-clone on padme and doudou; default: no scrub, old, no credentials).
+Blind-Spot pass: 4 material findings (census, README line, false "absorbed" claim, provenance), folded above.
+
+## Plan
+1. Red first: in the hunt worktree add the check-ignore assertion (fails on base, rc 1) and
+   run `tests/test_resident_census.py` after a trial `git rm -r --cached projects` to see the
+   gate failure for the targeted reason.
+2. One commit: `git rm -r --cached projects`; `.gitignore` lines 46-55 → `projects/`;
+   `scripts/check-personal-data.sh` defaults; `scripts/resident_census.py` memory channel →
+   `memory/MEMORY.md` with test comments corrected; `README.md:191` removed; the assertion.
+3. Evidence in the PR: `git ls-files projects | wc -l` 1085 → 0; `git check-ignore -v --no-index
+   projects/-x/memory/new.md` rc 1 before, 0 after; `make check` (full: Python changed).
+Dependencies: none. 1481 independent.
+
+## Feasibility
+PASS — paths verified on 4fda7bd6 by the Imagine and Blind-Spot seats and the raid
+(`.gitignore:2` is `*`; check-ignore on base matches line 54). No open PR or branch touches projects/.

@@ -36,6 +36,7 @@ Author: reviewer
 2026-11-09T13:53Z reviewer remaining 2026-11-09 evening: search-works-for-zotero #639 (migration) + #640 (ticket 0829, HF_TOKEN env leak in its bench) + #638 wait a recorded review verdict; then #632 #633 #635 rebase + migrate --claims; DOIfetch #45 rebase + migrate; doudou askMinh and html not migrated (dirty primaries; html untracked ticket 0028 needs a claim before the next commit); climate-finance-het with its own session
 2026-11-09T13:53Z reviewer pin now 89952604 (scripts/erg-pin): harness refreshed by PR #2307 and padme PATH erg; every other migrated repo refreshes via yawn 10b drift + molt, then install --hooks in each clone; no fan-out (author-visible choice 2026-11-09)
 2026-11-09T13:53Z reviewer memory v8 deployed today in fuzzy-corpus (#68), chemin-de-voix (#179), aedist-technical-report (#1187); follow-up tickets filed there: fuzzy-corpus 0055, chemin-de-voix 0261, aedist 0688
+2026-11-09T14:35Z reviewer note raid 632b19: the padme remainder (swz #639 verdict+merge, rebase+migrate swz #632 #633 #635 #638 #640 and DOIfetch #45, clone sweep) could not be launched from the harness session — auto-mode classifier denied the cross-repo agent twice; left for sessions in those repos
 
 --- body ---
 ## Context

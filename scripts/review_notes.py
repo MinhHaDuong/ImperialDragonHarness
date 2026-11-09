@@ -743,8 +743,8 @@ def _write(cwd, entry):
     line = _line(entry)
     if any(c in line for c in "\n\r"):
         raise Refusal("an entry must be one line")
-    with _locked(cwd):
-        _git(cwd, "notes", f"--ref={REF}", "append", "-m", line, anchor(cwd, entry["review_id"]))
+    with _locked(cwd):  # the entry travels on stdin: a large `what` overflows the argument limit (1482)
+        _git(cwd, "notes", f"--ref={REF}", "append", "-F", "-", anchor(cwd, entry["review_id"]), stdin=line)
     return entry
 
 
