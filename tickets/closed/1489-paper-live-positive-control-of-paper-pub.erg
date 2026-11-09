@@ -1,0 +1,48 @@
+%erg 0.1
+Title: paper: live positive control of /paper published on doudou
+Created: 2026-11-09
+Author: haduong
+Label: needs-human
+Closed: autoclosed — PR #2352
+
+--- log ---
+2026-11-09T17:07Z haduong created
+2026-11-09T17:07Z reviewer note created by raid 8d6894 from ticket 1483 criterion 5 under the author's decision A (2026-11-09)
+2026-11-09T21:55Z reviewer needs-human reconsidered under the author's 2026-11-09 night license (close what you can if Astra agrees); GPT-6 Astra (gpt-6-astra, effort high): AGREE-WITH-CONDITIONS, observation-only control needs no human; conditions applied below
+2026-11-09T21:55Z reviewer step 1 on doudou: scripts/sync-local-main.sh fast-forwarded ~/.agents 4c8422ca -> 7f339a9b (checkout clean before and after); merge-base --is-ancestor 01d7c2f4 (PR #2325) OK; idh install: ~/.claude/skills/paper installed and resolving (Skill load printed its heading), submission-event retired and gone
+2026-11-09T21:55Z reviewer control: headless claude -p --model sonnet --effort medium --restricted --strict-mcp-config --tools Read,Grep,Glob,WebFetch on doudou, cwd ~/CNRS/papiers, AGENTS.md read first; no write, edit or shell tool; skill read from paper/SKILL.md since --restricted hides user skills; every write skipped, later rows still inspected
+2026-11-09T21:55Z reviewer rows: 1 release subfolder not done (publisher PDF + mail present, no SHA256SUMS); 2 sent->published done; 3 repo tag not done, STATE line present without DOI; 4 homepage swap + bib done (live hosted PDF sha256 = publisher PDF, bib has vol 10 pp 1-15 DOI); 5 landing metadata vs PDF not done (title drift 'Multi-Source', no page range on landing page)
+2026-11-09T21:55Z reviewer rows: 6 HAL not done publicly: HAL API read 2026-11-09T21:54Z hal-05570600 version_i 2, no DOI/journal/volume, modified 2026-11-06, v3 URL 404 (a PUT in moderation would not show; 1484's v3 not visible); 7 roadmap probably done (DOI present once in the odt, wording not inspected); 8 link check not done (DOI resolves, HAL link lands on preprint)
+2026-11-09T21:55Z reviewer rows author-only: Zotero unknown, co-authors author-only (single author, likely n/a), Zenodo related identifier unknown, release-journal entry unknown. vs PR #2325 padme trace: event date is 2026-09-26 per publisher mail, not 2026-11-09; row 1 hashes absent (trace: unknown); row 3 confirmed no tag; row 4 deploy now confirmed; row 6 'probably done' wrong: public HAL still v2 preprint; row 7 unknown -> probably done; row 8 still to do. Author's 'nothing to do except HAL' does not hold: rows 1, 3, 5, 8 also open
+2026-11-09T21:55Z reviewer missing from published.md: (a) hash-compare the hosted file and landing-page PDF against the mail attachment (AGENTS.md demands it, checklist says only 'hash both'); (b) check the HAL deposit is the version of record, not only that a PUT was sent (moderation); (c) reconcile title and page range across bib, landing page and HAL; (d) reconcile the invoked event date with the publisher mail; (e) recognise a re-run on a partly done event; (f) say how to read the odt roadmap row
+2026-11-09T21:55Z reviewer inspection-only proof: before (21:50Z) and after (21:54Z) snapshots of papiers/sent, papiers/published, html, secretariat (path, type, size, mtime; 34723 entries) byte-identical, sha256 ebbe1856...; both criteria met
+2026-11-09T21:57Z reviewer closed — autoclosed — PR #2352
+
+--- body ---
+## Context
+
+Exit criterion moved out of ticket 1483 by the author's decision A
+(2026-11-09, raid 8d6894): the live positive control of `/paper` needs the
+registers that exist only on doudou (`~/CNRS/papiers/sent|published`,
+`~/CNRS/html`, `~/CNRS/secretariat`), so it runs there after PR #2325 lands.
+The CNRS directory has no ticket store, so the harness carries this ticket:
+the control tests a harness skill. Data paper: RDJHSS 10, 1-15,
+DOI 10.52024/fn48qf66, released 2026-11-09; HAL version PUT already logged by
+ticket 1484 on hal-05570600 v3.
+
+## Steps (on doudou, author's session)
+
+1. Sync the harness to a main that contains PR #2325, then `idh install`:
+   it creates the `paper` projection and prunes the dangling
+   `submission-event` link.
+2. `/paper <data paper> published`, dry run: no outward gate clicked.
+3. Compare the rows with the padme text-trace in the PR #2325 body. Expected
+   by the author: "nothing to do except HAL"; if HAL is also done, "nothing to
+   do". Report the rows as found.
+4. Note any step the agent needed that the checklist lacks: that is the
+   observe-only review 1483's Imagine section planned.
+
+## Exit criteria
+
+- [x] The dry run ran on doudou after `idh install`; its row table is in this ticket's log
+- [x] Any step missing from `skills/paper/references/published.md` is listed here, or "none" is logged
