@@ -726,3 +726,15 @@ def test_answers_latest_matches_stale_head(world):
     none = subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(a), "answers",
                            "--unit", "pr:8", "--latest"], capture_output=True, text=True)
     assert none.returncode == 1 and "no review" in none.stderr
+
+
+def test_a_request_larger_than_the_argument_limit_is_written_and_read_back_whole(world, monkeypatch):
+    # ticket 1482: a 1,085-file PR made the request's `what` (request-pull diffstat) exceed the OS
+    # argument limit when the entry travelled as `git notes append -m <line>`.
+    _, a, _, _ = world
+    big = "x" * 300_000
+    monkeypatch.setattr(rn, "_request_what", lambda *args, **kw: big)
+    rid = rn.open_review(a, "feature", "origin/main", why="w", intent="i")
+    lines = [ln for ln in raw_note(a, rid).split("\n") if ln.strip()]
+    assert len(lines) == 1
+    assert json.loads(lines[0])["what"] == big
