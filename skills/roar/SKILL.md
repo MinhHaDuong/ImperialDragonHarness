@@ -244,7 +244,9 @@ base, once a passing gate record covers the bundle's candidate.
     The `after-exit` command step 9's exit check prints already names the
     worktree and its local branch. Add each actual merged PR's source branch and full head
     OID from its durable merge/review evidence. Record these coordinates before
-    worktree exit. For a task with multiple completed PRs, repeat the options;
+    worktree exit. For a task with multiple completed PRs, repeat the options,
+    `--remove-worktree` included (each tree gets its own removal gate and
+    `WORKTREE:` line; step 9's printed command names one tree, so add the rest);
     do not discover candidates by enumerating refs, matching ticket prefixes,
     or adopting a freshly reread mutable branch tip as approval.
 

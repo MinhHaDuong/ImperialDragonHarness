@@ -676,6 +676,26 @@ run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
 _check_rc "remove already-absent tree: clean" 0 "$rc"
 _check_says "remove already-absent tree: reported" "$out" "WORKTREE: ALREADY-ABSENT"
 
+# Ticket 1476: --remove-worktree repeats; no named tree is silently dropped.
+exit_world "$T/rm-two" task; cd "$W"
+WT2="$T/rm-two/wt2"
+G worktree add -q -b task2 "$WT2" main 2>/dev/null
+run "$SCRIPT" --phase after-exit --remove-worktree "$WT" --remove-worktree "$WT2"
+_check_rc "two removable trees: clean" 0 "$rc"
+_check_true "two removable trees: first gone" test ! -d "$WT"
+_check_true "two removable trees: second gone" test ! -d "$WT2"
+_check_rc "two removable trees: one REMOVED line each" 2 "$(printf '%s\n' "$out" | grep -c 'WORKTREE: REMOVED')"
+
+exit_world "$T/rm-mixed" task; cd "$W"
+WT2="$T/rm-mixed/wt2"
+G worktree add -q -b task2 "$WT2" main 2>/dev/null
+run "$SCRIPT" --phase after-exit --remove-worktree "$W" --remove-worktree "$WT" --remove-worktree "$WT2"
+_check_rc "refused plus removable trees: findings" 1 "$rc"
+_check_says "refused plus removable: refusal reported" "$out" "is the main checkout"
+_check_true "refused plus removable: first removable gone" test ! -d "$WT"
+_check_true "refused plus removable: second removable gone" test ! -d "$WT2"
+_check_rc "refused plus removable: a WORKTREE line per tree" 3 "$(printf '%s\n' "$out" | grep -c 'WORKTREE: ')"
+
 # No forge: compare against the local default branch; nothing to sync.
 mkdir -p "$T/ec-local"; L="$T/ec-local/repo"
 git init -q -b main "$L"; git -C "$L" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
