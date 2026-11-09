@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-09T19:13Z reviewer created
 2026-11-09T19:14Z reviewer Second occurrence, same minute: search-works-for-zotero PR #648 gaze (run gz-20261109T190745214Z-a472) crashed at the same line on the same vanished session tree (.claude/worktrees/t0774-288575-4791) after cleanup had removed the review worktree. Recovery that worked within the 15-minute deadline, as a recipe until the fix lands: gaze_setup.py <pr> again from the primary checkout (recreates review-<pr> with an entry-state whose session tree exists), seat_clock.py plan-write with the same arguments, deterministic check items re-run, seat reports restored from raw/<host>/seat-raw/<raw_id>-<seat>.raw with the launcher header (worker: model=<pin> ...) replacing the seat's self-reported first line plus the .md.status line, then gaze_close.py once more: answer 20261109T191430318Z-padme-0e1fd56f recorded in rv-20261109-pr-648-f9d6, pointer posted, containment clean. The recovery re-files, it does not re-review; the answer text says so.
+2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: non-raising containment() with a 'session worktree gone' flag, no primary substitution, cwd-inside-removed-tree case added by the Blind-Spot pass; exit criteria unchanged
 
 --- body ---
 
@@ -32,3 +33,27 @@ closing call has nothing to record from. The seat's raw output survives in the a
 ## Exit criteria
 - [ ] gaze_close.py records the answer when the entry session tree no longer exists
 - [ ] a test pins it
+
+## Imagine (raid 4afdb3, 2026-11-09)
+- Where: main() line 412 cleanup() removes the review tree; line 423 containment(..., session_tree);
+  line 265 git(..., cwd=session_tree) raises FileNotFoundError (subprocess.run with a missing cwd),
+  so record_answer (line 434) never runs. Note: the cleanup-blocked path returns 1 or 2 (lines
+  414-422); exit 4 is the containment-flagged path (line 440) and is the right code here.
+- Path: no reorder (the answer text embeds the containment line). Make containment() unable to
+  raise: if session_tree is set and not a directory, flag "session worktree gone: <path>", skip
+  the session's status and branch reads and the entry-branch comparison, keep top as the recorded
+  path so the foreign-files-in-primary check still runs. Never substitute the primary (its branch
+  is main: a false "differs from entry branch" flag whose documented repair, cleanup.md
+  § Containment, switches main's checkout). No guard inside git(); session_tree=None still means cwd.
+- Blind-Spot: the close may run with its cwd inside the removed tree (detached gaze pins cwd to
+  the PR worktree = session_tree); Path.cwd().resolve() at line 371 then raises before cleanup.
+  In scope: catch it and treat "here" as outside the review tree; a second test case covers it.
+- Test (tests/test_gaze_close.py, integration tier): caller worktree pattern of lines 242-252,
+  SETUP from the caller, remove it, CLOSE with --comment-file; assert exit 4, "FLAGGED session
+  worktree gone" in stdout, the flag in answer_text() on notes (anti-tautology), pointer posted,
+  no traceback, no "differs from entry branch", a stray primary file still flagged; second case
+  with cwd inside the removed tree. Run red first against the pre-fix script.
+- Known remover: raid_land.py --cleanup removed an adopted session tree during a gaze
+  (journal 2026-10-30-raid-2b69a0). Follow-up question for the author, not this ticket: should
+  cleanup refuse a worktree a live process sits in; post-merge monitor = grep notes answers for
+  "session worktree gone" (the detached-gaze poll never reads the exit status).

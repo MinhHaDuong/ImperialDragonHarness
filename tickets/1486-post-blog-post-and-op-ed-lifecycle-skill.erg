@@ -8,6 +8,7 @@ Author: haduong
 2026-11-09T16:30Z Minh-Ha-Duong haduong boundary validated 2026-11-09: skill = stages, routing, gates (generic, publishable); AGENTS.md in the managed directory = local conventions and places; the skill reads it
 2026-11-09T17:07Z reviewer note blocker 1483 closed — Blocked-by removed.
 2026-11-09T19:46Z reviewer note blocker 1485 closed — Blocked-by removed.
+2026-11-09T20:00Z reviewer raid 4afdb3 Imagine: clone /mission's shape; carnet and missions live on doudou, read over ssh for the dry-run traces; /update-publist has no post or op-ed row (Blind-Spot): posts deposit by the carnet recipe, op-eds via /update-publist OTHER with the gap named; census freed by trimming cards; exit criteria unchanged
 
 --- body ---
 ## Context
@@ -89,3 +90,35 @@ Evidence that a skill is missing: the same landing exists in two copies.
 - [ ] The carnet's AGENTS.md points at `/post` in one line, its recipes
       unchanged
 - [ ] `make check` passes
+
+## Imagine (raid 4afdb3, 2026-11-09)
+- Path: clone /mission's shape (router ~55 lines, local-conventions section with the
+  no-AGENTS.md fallback, "written once" block, three references draft | publish | archive);
+  copy verbatim the outward-acts line, provenance, /update-publist delegation, links-land-on-
+  the-version, evidence-before-a-step with the dry-run argument, author-only asked not dropped,
+  the six sections. New: resolving the post (carnet billets/<date slug>/ or a mission folder),
+  companion PDF from the Markdown source, human validation of it, doctype BLOG vs OTHER,
+  back-link from the live post, sent-vs-published diff for an op-ed, draft as pure delegation.
+  No helper script, no channel registry, no shared trunk file; PDF finishing delegated to
+  /pdf-finish.
+- Hosts: the carnet and ~/CNRS/missions are on doudou, readable over `ssh doudou` (BatchMode).
+  The executor reads the carnet AGENTS.md "Procedure, once per billet" (lines ~193-276: SWORD
+  BLOG deposit, @misc shape) and the Jéco bib entry read-only, and traces both dry runs against
+  the real text before merge; the live runs stay post-merge on doudou.
+- Blind-Spot: /update-publist has no row for a post or an op-ed (its table: @misc for a dataset
+  only; HAL typology COMM "adjust per doctype"); the BLOG recipe lives only in the carnet; the
+  op-ed OTHER deposit has no recipe anywhere (Jéco was a one-off); the two sources name the bib
+  at different paths. archive.md decides per channel: a carnet post deposits by the carnet's own
+  recipe (AGENTS.md authoritative); an op-ed goes through /update-publist with doctype OTHER and
+  its "adjust per doctype" clause, naming the gap. Adding an op-ed row to /update-publist edits
+  another skill's contract: author's call, logged as a follow-up, not done here.
+- Census: tests/test_resident_census.py BUDGETS["skills"]=6300, now 6297; a /post card needs
+  ~95. Free it by trimming existing cards (ingest-decision-letter " Helps streamline
+  Revise-and-Resubmit.", related-work-note ", bibliography with DOI/URL", and if needed the
+  zotero tail "; extract metadata ... local API"); no test or routing hint depends on the cut
+  text. Raising the cap is an author decision, only if trims are refused.
+- Carnet AGENTS.md line (criteria 1 and 6), exact text, at the head of "Procedure, once per
+  billet": "The stages and gates of this procedure (draft, publish, archive) are also run by the
+  harness skill /post, which reads this file for the places and recipes; the recipes below stay
+  authoritative." Landed by the author or a session in the carnet repo (1483/1485 precedent);
+  the executor puts the line in the PR body and the ticket log.
