@@ -250,7 +250,7 @@ Run full repo housekeeping and act on every finding.
 
 5. **Log `skip` items.** One line each, no action.
 
-6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere enable auto-merge so it lands after CI. If no commits were created, skip the merge request; step 7 removes the worktree.
+6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere land it by `skills/merge/SKILL.md` step 6 (a direct merge or `--auto`, by what the repo allows). If no commits were created, skip the merge request; step 7 removes the worktree.
 
 7. **Report and release the worktree.** This step runs on **every** exit after step 1: the normal path, step 2.5's stop-and-report, and a failure in any other step. `worktree-gc.sh` never reclaims a locked worktree on an unpushed branch, so a worktree left without commits hangs until someone removes it by hand. Before reporting:
 

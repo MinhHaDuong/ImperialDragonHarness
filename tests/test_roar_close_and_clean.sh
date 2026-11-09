@@ -584,6 +584,11 @@ wrapped "$ARMED" --phase exit-check --bundle-branch roar-wrap
 _check_rc "exit-check bundle armed: ready" 0 "$rc"
 _check_says "exit-check bundle armed: verdict" "$out" "EXIT: READY"
 _check_lacks "exit-check bundle armed: unmerged branch not handed to cleanup" "$out" "--local-branch roar-wrap"
+# ticket 1473: a bundle merged directly on an ungated base reads `MERGED <head> -`, never queued
+DIRECTMERGED="$T/directmerged"; forge_stub "$DIRECTMERGED" '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"MERGED","autoMergeRequest":null}'
+wrapped "$DIRECTMERGED" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check ungated bundle merged directly: ready" 0 "$rc"
+_check_says "exit-check ungated bundle merged directly: verdict" "$out" "EXIT: READY"
 wrapped "$UNARMED" --phase exit-check --bundle-branch roar-wrap
 _check_rc "exit-check bundle not armed: findings" 1 "$rc"
 _check_says "exit-check bundle not armed: keep pending" "$out" "auto-merge armed"

@@ -2,9 +2,11 @@
 Title: molt step 6: merge directly on a base with no checks instead of arming auto-merge
 Created: 2026-11-09
 Author: claude
+Closed: autoclosed — PR #2296
 
 --- log ---
 2026-11-09T10:43Z claude created
+2026-11-09T12:32Z reviewer closed — autoclosed — PR #2296
 
 --- body ---
 ## Context
