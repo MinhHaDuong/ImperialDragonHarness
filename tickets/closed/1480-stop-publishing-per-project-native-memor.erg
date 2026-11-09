@@ -2,10 +2,12 @@
 Title: Stop publishing per-project native memory under projects/ in the public harness repo
 Created: 2026-11-09
 Author: reviewer
+Closed: autoclosed — PR #2312
 
 --- log ---
 2026-11-09T13:39Z reviewer created
 2026-11-09T14:35Z reviewer note raid 632b19 — Imagine+Blind-Spot annotated; plan written; feasibility PASS
+2026-11-09T15:13Z reviewer closed — autoclosed — PR #2312
 
 --- body ---
 ## Context
