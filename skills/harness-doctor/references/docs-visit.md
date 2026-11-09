@@ -11,7 +11,7 @@ Name the commit (`git rev-parse HEAD`) in the report, then read:
 - the root docs: `README.md`, `INSTALL.md`, `AGENTS.md`, `CONTRIBUTING.md`,
   `ROADMAP.md`, `STATE.md`, `RTK.md`;
 - `rules/`, its `README.md` table included;
-- `conception/README.md`, the index, but not the frozen records it lists;
+- `design/README.md`, the index, but not the frozen records it lists;
 - the skill references, `skills/*/references/*.md`, read against the SKILL.md
   that cites them.
 

@@ -4,7 +4,7 @@
     python3 scripts/trace-stopguard.py [--days N] [--projects-dir DIR] [--json] [--list]
 
 Zero-LLM, standard-library-only measure for ticket 1294, the after-the-fact
-replacement for Stopguard's dry-run hook (conception/2026-10-21-stopguard-design.md,
+replacement for Stopguard's dry-run hook (design/2026-10-21-stopguard-design.md,
 gate G1 of ticket 1164). It reuses trace-wall-time.py's trace walk and counts
 two bad stops per ISO week:
 
@@ -31,7 +31,7 @@ two bad stops per ISO week:
 
 READ: turns, tool calls, notifications, the pending-agent count. Heuristic:
 both vocabularies, the author's-call exclusion, and the advisor test. Precision and recall against a hand-labelled sample:
-conception/2026-10-27-stopguard-measure-labels.md. Codex and Pi traces are
+design/2026-10-27-stopguard-measure-labels.md. Codex and Pi traces are
 another format and are reported unmeasured.
 """
 

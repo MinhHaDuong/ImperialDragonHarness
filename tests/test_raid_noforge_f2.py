@@ -1,5 +1,5 @@
 """Ticket 1276: raid Phases 6-7 end to end on the no-forge route (flow F2 of
-conception/2026-10-27-review-merge-flows.md): review on notes, verify-gate verdict on notes, local
+design/2026-10-27-review-merge-flows.md): review on notes, verify-gate verdict on notes, local
 gated merge by raid_land.py under the main-update guard in enforce mode. Temp repositories only, `gh`
 absent from PATH. The two LLM steps (gaze, verify-gate) are stood in for by the `answer` and `verdict`
 entries they write through review_notes.py; the helpers around them are the real ones."""

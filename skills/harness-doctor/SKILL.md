@@ -48,7 +48,7 @@ not a probe: it is never offered, skipped or priced.
   contradiction that misleads a model into a wrong act first, then a skill
   presuming another's ownership, then mechanical lint, then runtime drift.
 - **Docs visit.** When the author asks for the whole doc set (root docs,
-  `rules/`, the `conception/` index, skill references), the input and
+  `rules/`, the `design/` index, skill references), the input and
   questions are in `references/docs-visit.md`; its journal slug is
   `-docs-visit-`.
 

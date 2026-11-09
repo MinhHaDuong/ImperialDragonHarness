@@ -32,9 +32,9 @@ This is the next design workstream, not yet an implementation ticket.
 
 - **Portable installation:** registration and integration are delivered.
   Native packaging and opt-in host setup remain future design work. See the
-  [installation strategy](conception/idh-install-strategy.md).
+  [installation strategy](design/idh-install-strategy.md).
 - **Runtime portability:** extend measured support rather than presume parity.
   Current evidence is in [pilot-support.json](adapters/pilot-support.json)
-  and the [operations runbook](conception/adapter-operations.md).
+  and the [operations runbook](design/adapter-operations.md).
 - **Review and code:** as agents and runtimes get smarter at doing general work,
   we can remove the non-specialized harness parts.

@@ -34,7 +34,7 @@ confirm-first for irreversible or outward acts, nor forge read-back (`git.md`).
 
 All work follows **Imagine → Plan → Execute → Verify → Celebrate**; cycles nest.
 Label each phase. Imagine opens the problem before Plan:
-with the author: `conception/design-note-template.md`; unattended, use
+with the author: `design/design-note-template.md`; unattended, use
 raid's Imagine phase. Celebrate with merge and roar for tasks, lair for days.
 
 For new autonomous behavior, MOE considers whether a proportionate trial helps

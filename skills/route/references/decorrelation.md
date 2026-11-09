@@ -25,7 +25,7 @@ A failed `plan check:` is for a planned seat that could not run, not for a same-
 
 ## Family is a preference, not a gate
 
-No gate refuses a review for want of another family. The benefit is plausible but unproven: the literature finds strong models' errors correlated across vendors (`conception/research/ensemble-decorrelation-evidence.md`), and our own records show other-family seats adopting a few more findings per seat in mixed panels, confounded with seat angle and risk selection (`conception/research/2026-10-31-cross-family-seat-measure.md`). Weigh family against the other criteria: spend, latency (an interactive session wants a fast answer; a night run can wait), local compute and clearance, the hour and the providers' load.
+No gate refuses a review for want of another family. The benefit is plausible but unproven: the literature finds strong models' errors correlated across vendors (`design/research/ensemble-decorrelation-evidence.md`), and our own records show other-family seats adopting a few more findings per seat in mixed panels, confounded with seat angle and risk selection (`design/research/2026-10-31-cross-family-seat-measure.md`). Weigh family against the other criteria: spend, latency (an interactive session wants a fast answer; a night run can wait), local compute and clearance, the hour and the providers' load.
 
 ## Independent means another family
 

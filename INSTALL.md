@@ -14,7 +14,7 @@ If `~/.agents` already exists, inspect it first. Other checkout locations are
 supported: entry points resolve the checkout from their real location or an
 explicit root argument.
 
-Follow the [installation guide](conception/idh-install-strategy.md) to register
+Follow the [installation guide](design/idh-install-strategy.md) to register
 resources with each runtime. `./bin/idh install` creates manifest links and
 links every `bin/*` command into `~/.local/bin` (a name already taken is
 refused and named; see `bin/README`), edits the shell loader, preserving
@@ -23,7 +23,7 @@ merge into its settings. Review these host-wide actions before running it:
 there is no dry run or runtime selector, and shell integration is not opt-in.
 Scheduling is left to the host.
 
-The [operations runbook](conception/adapter-operations.md) covers verification,
+The [operations runbook](design/adapter-operations.md) covers verification,
 removal and recovery. The [adapter reference](adapters/README.md) records
 loaded-skill paths and measured runtime behavior.
 
@@ -85,7 +85,7 @@ Portability is measured, not presumed: `adapters/` currently has pilot
 evidence for two skills (`perch`, `yawn`) and one guard across Claude
 Code, Codex and Pi. Mistral Vibe has a version and skill-path probe but no
 behavioral port yet. See `adapters/pilot-support.json` and
-`conception/adapter-operations.md` for the current evidence.
+`design/adapter-operations.md` for the current evidence.
 
 ## Transcript archive (ticket 1383)
 
@@ -104,7 +104,7 @@ declares `DATASETS_DIR` there; the data layout is in `<DATASETS_DIR>/README.md` 
 `<root>/README.md`. Path convention:
 `scripts/transcript_spool.py`; store description: `scripts/agent-sessions-README.md`. No encryption: the archive stays on
 the host disk with the permissions of the live tree; encrypt before it leaves
-the host (memo `conception/2026-10-31-monitoring-redesign.md` section 5).
+the host (memo `design/2026-10-31-monitoring-redesign.md` section 5).
 
 Install per host (needs `zstd`; the checkout must be at `~/.agents`):
 

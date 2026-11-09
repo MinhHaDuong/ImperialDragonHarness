@@ -103,7 +103,7 @@ def test_prose_predicate_excludes_process_documents(tmp_path):
     """
     mod = _load_predicate()
     repo = _repo_with_manifest(tmp_path)
-    note = repo / "conception" / "note.md"
+    note = repo / "design" / "note.md"
     note.parent.mkdir()
     note.write_text("# Note de conception\n", encoding="utf-8")
     ticket = repo / "tickets" / "0001-x.erg"
@@ -119,7 +119,7 @@ def test_prose_predicate_excludes_process_documents(tmp_path):
 
 
 def test_mixed_diff_is_prose_by_any(tmp_path):
-    """The audit's MR 139 shape: manuscrit.tex + a conception .md → prose.
+    """The audit's MR 139 shape: manuscrit.tex + a design .md → prose.
 
     Also the known-negative control: a diff of process documents only stays
     code, so the any-rule cannot pass by firing on everything.
@@ -129,7 +129,7 @@ def test_mixed_diff_is_prose_by_any(tmp_path):
     tex = repo / "article-x" / "manuscrit.tex"
     tex.parent.mkdir()
     tex.write_text("\\section{Introduction}\n", encoding="utf-8")
-    checklist = repo / "conception" / "checklist-venue.md"
+    checklist = repo / "design" / "checklist-venue.md"
     checklist.parent.mkdir()
     checklist.write_text("# Checklist\n", encoding="utf-8")
     assert mod.diff_is_prose([str(tex), str(checklist)]), (

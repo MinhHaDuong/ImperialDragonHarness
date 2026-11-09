@@ -48,7 +48,7 @@ def test_cli_prints_prose_then_code(tmp_path):
     tex = repo / "article-x" / "manuscrit.tex"
     tex.parent.mkdir()
     tex.write_text("\\section{Introduction}\n", encoding="utf-8")
-    note = repo / "conception" / "note.md"
+    note = repo / "design" / "note.md"
     note.parent.mkdir()
     note.write_text("# Note\n", encoding="utf-8")
 
@@ -69,7 +69,7 @@ def test_cli_axes_reports_the_declared_rulebooks(tmp_path):
     tex = repo / "article-x" / "manuscrit.tex"
     tex.parent.mkdir()
     tex.write_text("\\section{Introduction}\n", encoding="utf-8")
-    note = repo / "conception" / "note.md"
+    note = repo / "design" / "note.md"
     note.parent.mkdir()
     note.write_text("# Note\n", encoding="utf-8")
 

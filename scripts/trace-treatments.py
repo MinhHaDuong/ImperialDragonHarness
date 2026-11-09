@@ -5,7 +5,7 @@ Zero-LLM, standard-library-only. Reads the daily series of
 scripts/trace-friction.py (its --json output) and the closed tickets that
 declare a treatment, and emits one verdict per treatment.
 
-Convention (conception/trace-treatments.md): a closed ticket names the class it
+Convention (design/trace-treatments.md): a closed ticket names the class it
 treats and its baseline in two body lines, read as declared fields, never
 inferred from prose:
 

@@ -1,8 +1,8 @@
 # Project memory
 
 v8 repository memory, rebuilt by department at each smelt; instructions live
-in the Smelt skill. Provenance: [inventory](../conception/memory-v8/source-inventory.md),
-[revisions](../conception/memory-v8/source-revisions.tsv).
+in the Smelt skill. Provenance: [inventory](../design/memory-v8/source-inventory.md),
+[revisions](../design/memory-v8/source-revisions.tsv).
 
 ## Departments
 

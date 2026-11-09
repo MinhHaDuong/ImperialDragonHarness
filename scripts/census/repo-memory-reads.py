@@ -12,7 +12,7 @@ keyword heuristic for Codex and Pi).
 The maintenance arm doubles as the positive control: its sessions read memory
 by design, so a probe that sees none is blind and the run fails. Grep by
 content is invisible to this probe. Rewritten from the frozen audit scans
-conception/2026-10-29-memory-system-audit/{repo_mem_reads,codex_mem}.py.
+design/2026-10-29-memory-system-audit/{repo_mem_reads,codex_mem}.py.
 
 Usage: repo-memory-reads.py --since 2026-10-15 [--host padme]
 """

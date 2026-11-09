@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The one door to refs/notes/review: review requests, plans, reports, answers and
 verdicts stored in git, no forge needed (ticket 1273; design
-conception/2026-10-27-notes-review-spec.md, accepted 2026-10-27).
+design/2026-10-27-notes-review-spec.md, accepted 2026-10-27).
 
     review_notes.py [-C <repo>] [--remote origin] <command> ...
 

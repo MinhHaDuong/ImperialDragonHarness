@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Where transcripts live, and where headless doors spool the ones the CLI would drop.
 
-One home for the path convention of ticket 1383 (memo conception/2026-10-31-monitoring-redesign.md
+One home for the path convention of ticket 1383 (memo design/2026-10-31-monitoring-redesign.md
 section 4.2). `transcript_archive.py` reads it; the headless doors (gaze_seat.py, the Pi subagent
 link) write into `spool_dir`; ticket 1384 imports it. Stdlib only.
 

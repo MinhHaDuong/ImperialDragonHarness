@@ -352,7 +352,7 @@ once two gate rounds are posted on the PR, that recovery parks the PR and
 escalates to the author instead of sending it back through Phase 6.
 
 **No forge.** A repository with no `origin` remote runs Phases 6-7 on notes
-and the local gated merge (flow F2, `conception/2026-10-27-review-merge-flows.md`),
+and the local gated merge (flow F2, `design/2026-10-27-review-merge-flows.md`),
 the same steps through the helpers, never raw git: the request is
 `review_notes.py open --branch <branch> --base-ref <base>`; gaze takes
 `branch:<branch>` and its `answer` entry is what `review_notes.py coverage|gate <id> HEAD`

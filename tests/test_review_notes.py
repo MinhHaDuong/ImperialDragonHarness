@@ -1,5 +1,5 @@
 """Ticket 1273: scripts/review_notes.py, the one door to refs/notes/review
-(spec conception/2026-10-27-notes-review-spec.md). Temp repos and a local bare
+(spec design/2026-10-27-notes-review-spec.md). Temp repos and a local bare
 remote only; nothing reaches a forge."""
 
 import importlib.util

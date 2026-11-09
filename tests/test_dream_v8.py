@@ -109,7 +109,7 @@ def test_consolidation_detail_lives_in_the_skill_and_is_complete():
 
 
 def test_convention_docs_point_at_the_live_prompt():
-    text = (REPO / "conception" / "memory-v8" / "README.md").read_text(
+    text = (REPO / "design" / "memory-v8" / "README.md").read_text(
         encoding="utf-8"
     )
     assert "skills/smelt/references/consolidation.md" in text, (
@@ -178,8 +178,12 @@ def test_report_journal_ledger_pins_the_untouched_journal():
             f"{rel}: ledger blob does not match the file — journal rewritten?"
         )
     for path in first:
-        # Design history left docs/ for conception/ on 2026-10-27.
-        path = path.replace("docs/", "conception/", 1) if path.startswith("docs/") else path
+        # Design history left docs/ for conception/ on 2026-10-27, then
+        # conception/ for design/ on 2026-11-09 (ticket 1477).
+        for prefix in ("docs/", "conception/"):
+            if path.startswith(prefix):
+                path = "design/" + path[len(prefix):]
+                break
         if path.startswith("memory/topics/") and not (REPO / path).is_file():
             # A later smelt merged the page away; its revision stays in git.
             kind = subprocess.run(
