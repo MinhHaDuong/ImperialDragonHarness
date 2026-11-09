@@ -21,6 +21,7 @@ Author: reviewer
 2026-11-09T12:25Z reviewer JETP-observer DONE (own session): PR #285 merged 6795e309, 310 claims, hooks chained; pending doudou clone pull, its PR #266 (merge main + migrate)
 2026-11-09T12:25Z reviewer quiet wave DONE on dafb1d48: archiveCIRED #71, fuzzy-corpus #66, aedist-technical-report #1184, chemin-de-voix #176, gavard #8, polycentric_activity #210; clones fixed: padme archiveCIRED, doudou Fuzzy Corpus, aedist-technical-report-git, aedist, polycentric_activity
 2026-11-09T12:25Z reviewer left for the author: padme fuzzy-corpus, AEDIST-technical-report, chemin-de-voix primaries dirty with an unfinished memory-v8 deployment (tickets/erg, .erg-assets, AGENTS.md, untracked *-déployer-la-mémoire-v8.erg) and dead core.hooksPath; doudou chemin-de-voix diverged (2 local Release commits); doudou gavard has docs/missing-papers.html modified
+2026-11-09T12:27Z reviewer JETP race: ticket 2127 (harness-filed alignment, PR #284) merged between migrate and merge; fixed by their PR #286; recipe step 8 now re-runs migrate right before merge; JETP doudou clone pulled 6795e309
 
 --- body ---
 ## Context
@@ -42,7 +43,10 @@ git-erg's dry run on scratch copies: all 25 stores migrate, zero blockers.
 4. `tickets/erg migrate --claims tickets`; 5. `tickets/erg init` (a locally edited `.ergrc` is kept; one WARN stays)
 6. `tickets/erg install --hooks` (rewrites an old managed block, so the commit passes; no --no-verify);
    tracked core.hooksPath: stage the hook change in the PR worktree, review the chaining
-7. the repo's own gate; 8. merge by the repo's process.
+7. the repo's own gate; 8. right before merging, merge (or rebase onto) the default branch
+   and re-run `tickets/erg migrate --claims tickets`, commit new claims (JETP race: a ticket
+   merged meanwhile left main failing check, and the pre-commit block then refused every
+   commit); then merge by the repo's process.
 After landing: every other clone pulls; per-clone hooks run `tickets/erg install --hooks`.
 Branch cut before migration: rebase, `tickets/erg migrate --claims tickets`, commit. Duplicate
 number: migrate lists it and writes nothing; renumber one by hand, rerun.
