@@ -195,7 +195,8 @@ def test_unparsable_lines_are_counted(tmp_path):
 def test_cli_missing_projects_dir_is_could_not_look(tmp_path):
     done = subprocess.run(
         [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope"),
-         "--codex-home", str(tmp_path / "nope-codex")],
+         "--codex-home", str(tmp_path / "nope-codex"),
+         "--pi-sessions", str(tmp_path / "nope-pi"), "--pi-spool", str(tmp_path / "nope-spool")],
         capture_output=True, text=True,
     )
     assert done.returncode == 2
@@ -210,7 +211,8 @@ def test_cli_prints_the_note_table(tmp_path):
     _session(tmp_path, "s", rows)
     done = subprocess.run(
         [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path),
-         "--codex-home", str(tmp_path / "nope-codex"), "--since", "2026-11-01"],
+         "--codex-home", str(tmp_path / "nope-codex"),
+         "--pi-sessions", str(tmp_path / "nope-pi"), "--pi-spool", str(tmp_path / "nope-spool"), "--since", "2026-11-01"],
         capture_output=True, text=True,
     )
     assert done.returncode == 0, done.stderr
@@ -276,7 +278,7 @@ def test_codex_session_past_its_ceiling_is_counted_under_codex(tmp_path):
     assert _runtime(out, "Codex")["status"] == "read"
     assert _runtime(out, "Codex")["sessions_with_turns"] == 1
     assert out["runtimes_read"] == ["Claude Code", "Codex"]
-    assert out["runtimes_not_read"] == ["Pi"]
+    assert out["runtimes_not_read"] == ["Pi", "Pi spool"]
     alone = _audit(tmp_path / "claude")["sessions"]
     assert _runtime(out, "Claude Code")["sessions_with_turns"] == alone["with_turns"] == 1
 
@@ -347,11 +349,10 @@ def test_missed_runs_stay_claude_code_only(tmp_path):
     assert out["recoverable_usd_upper_bound"] == 0
 
 
-def test_output_names_pi_as_not_read_and_the_host(tmp_path):
+def test_output_names_the_host_and_every_runtime(tmp_path):
     _codex_session(tmp_path / "codex", "x", [(9, 100_000, 0)])
     out = _both(tmp_path)
-    assert _runtime(out, "Pi")["status"] == "not read"
-    assert "Pi" in out["runtimes_not_read"]
+    assert _runtime(out, "Pi")["status"] == "not read"  # no root given
     assert out["host"]
     table = tca.render_table(out)
     assert out["host"] in table and "Pi" in table
@@ -362,7 +363,8 @@ def test_cli_reads_codex_beside_an_absent_claude_code_corpus(tmp_path):
     _codex_session(tmp_path / "codex", "x", [(9, 500_000, 0)] * 30)
     done = subprocess.run(
         [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope"),
-         "--codex-home", str(tmp_path / "codex"), "--since", "2026-11-01"],
+         "--codex-home", str(tmp_path / "codex"),
+         "--pi-sessions", str(tmp_path / "nope-pi"), "--pi-spool", str(tmp_path / "nope-spool"), "--since", "2026-11-01"],
         capture_output=True, text=True,
     )
     assert done.returncode == 0, done.stderr
@@ -376,3 +378,142 @@ def test_codex_home_with_no_readable_rollout_is_could_not_look(tmp_path):
     assert _runtime(out, "Codex")["status"] == "could not look"
     assert "Codex" in out["runtimes_not_read"]
     assert out["sessions"]["with_turns"] == 1
+
+
+# --- Pi sessions (ticket 1509) --------------------------------------------------
+# Synthetic session logs: a `session` header, then tree entries with id/parentId.
+
+def _pi_entry(eid, parent, day, usage=None, *, model="claude-opus-5-5", rid=None, role="assistant", error=False):
+    msg = {"role": role, "model": model, "content": []}
+    if usage is not None:
+        msg["usage"] = {"input": usage[0], "output": 5, "cacheRead": usage[1], "cacheWrite": usage[2],
+                        "totalTokens": sum(usage) + 5}
+    if error:
+        msg["errorMessage"] = "e"
+    if rid:
+        msg["responseId"] = rid
+    return {"type": "message", "id": eid, "parentId": parent,
+            "timestamp": f"2026-11-{day:02d}T10:00:00.000Z", "message": msg}
+
+
+def _pi_session(root, name, usages, *, day=9, header_day=1, extra=(), parent_session=None, chain_ids=True):
+    """One linear branch of assistant turns; `usages` are (input, cacheRead, cacheWrite)."""
+    head = {"type": "session", "version": 3, "id": name, "cwd": "/work/proj",
+            "timestamp": f"2026-11-{header_day:02d}T00:00:00.000Z"}
+    if parent_session:
+        head["parentSession"] = parent_session
+    rows, parent = [head], None
+    for i, u in enumerate(usages):
+        eid = f"{name}-{i}"
+        rows.append(_pi_entry(eid, parent, day, u, rid=f"r-{eid}"))
+        parent = eid
+    rows += list(extra)
+    d = root / "--work-proj--"
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"2026-11-01T00-00-00-000Z_{name}.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    return path
+
+
+def _pi(tmp_path, **kw):
+    roots = {"Claude Code": tmp_path / "claude", "Pi": tmp_path / "pi", "Pi spool": tmp_path / "spool"}
+    roots.update(kw.pop("roots", {}))
+    return _audit(roots, **kw)
+
+
+def test_pi_session_past_its_ceiling_counts_the_cache_fields(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn("m", 9, cache_read=1)])
+    # input alone is tiny: only input + cacheRead + cacheWrite crosses the Opus ceiling
+    _pi_session(tmp_path / "pi", "p", [(100, 400_000, 100_000)] * 30)
+    out = _pi(tmp_path)
+    over = out["sessions"]["over_own_ceiling"]
+    assert over["by_runtime"] == {"Pi": 1}
+    assert over["rows"][0]["peak"] == 500_100
+    assert _runtime(out, "Pi")["status"] == "read" and _runtime(out, "Pi")["sessions_with_turns"] == 1
+    assert "Pi" in out["runtimes_read"] and "Pi" not in out["runtimes_not_read"]
+    assert out["sessions"]["by_runtime"]["Claude Code"] == 1
+
+
+def test_pi_error_turns_are_not_turns(tmp_path):
+    errs = [_pi_entry(f"e{i}", "p-0", 9, (0, 0, 0), rid=None, error=True) for i in range(40)]
+    _pi_session(tmp_path / "pi", "p", [(10, 0, 0)], extra=errs)
+    out = _pi(tmp_path)
+    assert out["sessions"]["turns_in_window"] == 1
+    assert out["sessions"]["long_sessions"] == 0
+
+
+def test_pi_turns_are_dated_by_the_turn_not_the_header(tmp_path):
+    _pi_session(tmp_path / "pi", "old", [(10, 0, 0)] * 3, day=1, header_day=9)  # header in, turns out
+    _pi_session(tmp_path / "pi", "new", [(10, 0, 0)] * 4, day=9, header_day=1)  # header out, turns in
+    out = _pi(tmp_path, since="2026-11-05")
+    assert out["sessions"]["with_turns"] == 1
+    assert out["sessions"]["turns_in_window"] == 4
+
+
+def test_pi_live_root_takes_the_model_ceiling_spool_the_default(tmp_path):
+    turns = [(100, 300_000, 0)] * 30  # past Opus's ceiling, under the 230K default? no: over default, under Opus
+    _pi_session(tmp_path / "pi", "live", turns)
+    _pi_session(tmp_path / "spool", "seat", turns)
+    out = _pi(tmp_path)
+    ceil = tca.ceiling_for("claude-opus-5-5", tca.load_ceilings())
+    assert ceil > 300_100  # the fixture sits under the model ceiling
+    rows = {r["session_id"]: r for r in out["sessions"]["over_own_ceiling"]["rows"]}
+    assert set(rows) == {"seat"}
+    assert rows["seat"]["runtime"] == "Pi spool" and rows["seat"]["ceiling_rule"] == "default"
+    assert rows["seat"]["role"] == "launched"
+    assert _runtime(out, "Pi spool")["status"] == "read"
+
+
+def test_pi_absent_root_is_could_not_look_and_the_rest_is_counted(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn("m", 9, cache_read=1)])
+    _pi_session(tmp_path / "spool", "seat", [(10, 0, 0)])
+    out = _pi(tmp_path)  # tmp_path/pi was never made
+    assert _runtime(out, "Pi")["status"] == "could not look"
+    assert "Pi" in out["runtimes_not_read"] and "Pi" not in out["sessions"]["by_runtime"]
+    assert _runtime(out, "Pi spool")["status"] == "read"
+    base = _audit({"Claude Code": tmp_path / "claude"})
+    assert out["sessions"]["by_runtime"]["Claude Code"] == base["sessions"]["by_runtime"]["Claude Code"]
+
+
+def test_pi_root_with_no_file_in_the_window_is_read_with_zero_sessions(tmp_path):
+    (tmp_path / "pi").mkdir()
+    _session(tmp_path / "claude", "c", [_turn("m", 9, cache_read=1)])
+    out = _pi(tmp_path)
+    assert _runtime(out, "Pi")["status"] == "read" and _runtime(out, "Pi")["sessions_with_turns"] == 0
+
+
+def test_pi_clone_counts_only_the_new_turns(tmp_path):
+    _pi_session(tmp_path / "pi", "a", [(10, 0, 0)] * 3)
+    # the clone replays a's three entries (same responseIds), then adds two
+    path = _pi_session(tmp_path / "pi", "b", [(10, 0, 0)] * 2, parent_session="a")
+    rows = [json.loads(ln) for ln in path.read_text().splitlines()]
+    replay = [json.loads(ln) for ln in (tmp_path / "pi" / "--work-proj--" / "2026-11-01T00-00-00-000Z_a.jsonl").read_text().splitlines()][1:]
+    new = [_pi_entry("n0", "a-2", 9, (10, 0, 0), rid="r-n0"), _pi_entry("n1", "n0", 9, (10, 0, 0), rid="r-n1")]
+    path.write_text("\n".join(json.dumps(r) for r in [rows[0]] + replay + new) + "\n")
+    out = _pi(tmp_path)
+    assert out["sessions"]["turns_in_window"] == 5
+    assert out["inherited_turns_dropped"] == 3
+
+
+def test_pi_abandoned_branch_is_not_a_turn(tmp_path):
+    # a-0 -> a-1 (continued, last in file) ; a-0 -> x (abandoned, earlier in file)
+    path = _pi_session(tmp_path / "pi", "a", [(10, 0, 0)] * 2)
+    rows = [json.loads(ln) for ln in path.read_text().splitlines()]
+    side = _pi_entry("x", "a-0", 9, (999_999, 0, 0), rid="r-x")
+    path.write_text("\n".join(json.dumps(r) for r in [rows[0], rows[1], side, rows[2]]) + "\n")
+    out = _pi(tmp_path)
+    assert out["sessions"]["turns_in_window"] == 2
+    assert out["sessions"]["levels"]["230000"]["sessions"] == 0
+
+
+@pytest.mark.integration
+def test_cli_reads_pi_roots(tmp_path):
+    _pi_session(tmp_path / "pi", "p", [(100, 400_000, 100_000)] * 30)
+    done = subprocess.run(
+        [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope"),
+         "--codex-home", str(tmp_path / "nope2"), "--pi-sessions", str(tmp_path / "pi"),
+         "--pi-spool", str(tmp_path / "nope3"), "--since", "2026-11-01"],
+        capture_output=True, text=True,
+    )
+    assert done.returncode == 0, done.stderr
+    assert "Read: Pi under" in done.stdout and "COULD NOT LOOK at Pi spool" in done.stdout
