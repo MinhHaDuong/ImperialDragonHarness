@@ -37,10 +37,18 @@ the tree as kept, with the reason.
 
 Nobody resumes in an old tree. A later session makes a fresh one on the
 existing branch (`../SKILL.md` § Worktree); scratch under `.tmp/` and every
-other git-ignored file ends with the session that wrote it. `worktree-gc` is
-the net for sessions that died, not the routine: once a lock's pid is dead it
-reclaims the tree, clean and at its upstream, with the branch kept, merged or
-not (ticket 1495).
+other git-ignored file ends with the session that wrote it. When git refuses
+the new tree because an earlier one still holds the branch, run
+`git fetch --prune` and `"$IDH_ROOT/scripts/worktree-gc.sh"` from the primary
+checkout, then try again. A tree gc keeps is in use or holds something
+unsaved, as far as gc can tell: stop and report it, never move in.
+
+`worktree-gc` is the net for sessions that died, not the routine. A tree whose
+lock names a dead pid goes at the next run when it is clean and at its
+upstream, with the branch kept, merged or not (ticket 1495). A tree whose lock
+names no visible owner waits for a merged branch and 72 idle hours, as the
+next section says. A tree on an unpushed branch is never reclaimed: push it,
+or remove the tree yourself.
 
 ## When worktree-gc reclaims an ownerless tree
 

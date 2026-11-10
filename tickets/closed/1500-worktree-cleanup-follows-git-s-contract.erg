@@ -15,6 +15,7 @@ Closed: autoclosed — PR #2394
 2026-11-10T08:49Z reviewer note author 2026-11-10 — dead-pid reclaim lands as written (option A), on condition the prose does not incite reusing old worktrees; then: prose should incite cleaning up after oneself
 2026-11-10T08:49Z reviewer note fix — prose sweep found 2 incitements and 9 fragile passages; lifecycle owner section 'Clean up after yourself' added; hunt, molt, raid and one memory line reworded (a659fca7)
 2026-11-10T08:51Z reviewer note fix — after the rebase the prose commit is 99a025a7 (a659fca7 above is its pre-rebase id)
+2026-11-10T09:01Z reviewer note fix — gaze findings on 792c151a: molt's closing removal names the preflight and no longer overclaims gc; lifecycle section says what to do when an earlier tree still holds the branch
 
 --- body ---
 ## Context

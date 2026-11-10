@@ -285,7 +285,7 @@ Run full repo housekeeping and act on every finding.
 
    Then summarize what you did, say which case applied, and propose: "Surface remaining nits?"
 
-   Keeping is for this run only. Once the report is written, remove what was kept for it: a tree whose commits are pushed and whose `.tmp/` notes are in the report goes (from the primary checkout, `git worktree unlock <path> && git worktree remove <path>`), its branch staying pending for roar. What stays kept (dirty, blocked, unpushed) is named in the report with its reason. Leave nothing in a tree to come back to: gc reclaims it once this session ends.
+   Keeping lasts until the report is drafted. Before sending it, take each tree that case 1 kept only for its `.tmp/` notes, now in the report, and each tree that case 2 kept whose branch is pushed: run the preflight on it (`"$IDH_ROOT/scripts/worktree-exit-preflight.sh" <path>`) and, on a pass, remove it from the primary checkout (`git worktree unlock <path> && git worktree remove <path>`); a case 1 tree with no commit also takes case 3's branch deletion and run record. A pushed branch stays pending for roar. A tree the preflight refuses, or whose branch is not pushed, stays. The report names each tree as removed, or as kept with its reason, and each pending branch (`skills/hunt/references/worktree-lifecycle.md` § Clean up after yourself).
 
 ## Branch discipline
 
