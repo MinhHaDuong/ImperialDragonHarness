@@ -1,0 +1,48 @@
+%erg 0.1
+Title: Zotero helper: two statements disagree with the code after tickets 1510 and 1511
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T12:06Z reviewer created
+
+--- body ---
+## Context
+
+Author request, 2026-11-10 ("Fix minors"), on the two minors raid 13f6d8
+left after tickets 1510 and 1511 (requests 2414 and 2413).
+
+1. The docstring of `licenses_attach` (`scripts/zotero.py`) says that
+   `check-staging`'s sweep and `suggest-attachments` both decide by it. Its
+   only callers are in `check-staging`; `suggest-attachments` decides by
+   `attach_licence`.
+2. Since 1511, with the hash index skipped, a miss on an embedded title reads
+   `unidentified` where it read `unchecked`. Review flagged the change.
+
+## Decision
+
+1. The docstring names the actual callers.
+2. The behaviour stays, and the two statements that overstate the rule are
+   corrected (advisor model's pick, 2026-11-10; the session first leaned to
+   making every miss under a skipped index `unchecked`). Reasons:
+   - `backfill.md` and `helper-script.md` already say "a file that would read
+     `absent` reads `unchecked`", and the code obeys that. Since 1511 a miss
+     on a title taken from the file is not a would-be `absent`. Only the
+     docstring of `_staging_verdict` and the `unchecked` row of the verdict
+     table say more.
+   - The row label drives no write and no exit code: with the index skipped,
+     `--apply` is refused, the report's verdict is `unchecked` and the exit is
+     74 or 1 whatever the rows say.
+   - Making every miss `unchecked` would not be uniform: a file with no key at
+     all still reads `unidentified` through the first branch of
+     `_staging_verdict`. Restoring `unchecked` for embedded titles only would
+     bring back the container-versus-filename distinction 1511 removed.
+
+   The author may still prefer a behaviour change; it would be a new ticket.
+
+## Exit criteria
+
+- [ ] The docstring of `licenses_attach` names its actual callers
+- [ ] The docstring of `_staging_verdict` and the `unchecked` row of the verdict table in `skills/zotero/references/backfill.md` state the rule the code applies under a skipped hash index
+- [ ] A test shows both cases under a skipped index: a would-be `absent` is `unchecked`, a miss on a hint alone is `unidentified`
+- [ ] `make check` passes
