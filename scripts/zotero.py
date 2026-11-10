@@ -2414,6 +2414,17 @@ def link_bib_entries(root: Path, bib_files: list[Path], errors: list[str],
     return linked, linked_paths, staging_dirs
 
 
+def reconcile_bib_files(root: Path, bib_names: list[str] | None,
+                        errors: list[str]) -> list[Path]:
+    """The bibliographies a sweep of `root` (resolved) reads: the named ones
+    (--bib, `bib_paths`), then those at the root or one directory below."""
+    by_target: dict[Path, Path] = {}
+    for bib in (sorted(named_bib_files(root, bib_names or [], errors))
+                + sorted(root.glob("*.bib")) + sorted(root.glob("*/*.bib"))):
+        by_target.setdefault(bib.resolve(), bib)  # a symlink read once
+    return sorted(by_target.values())
+
+
 def discover_reconcile_files(root: Path, bib_names: list[str] | None = None,
                              skip_underscore: bool = False) -> dict[str, Any]:
     """Find BibTeX-linked staging files and orphans without touching Zotero.
@@ -2427,11 +2438,7 @@ def discover_reconcile_files(root: Path, bib_names: list[str] | None = None,
     """
     root = root.resolve()
     errors: list[str] = []
-    by_target: dict[Path, Path] = {}
-    for bib in (sorted(named_bib_files(root, bib_names or [], errors))
-                + sorted(root.glob("*.bib")) + sorted(root.glob("*/*.bib"))):
-        by_target.setdefault(bib.resolve(), bib)  # a symlink read once
-    bib_files = sorted(by_target.values())
+    bib_files = reconcile_bib_files(root, bib_names, errors)
     linked, linked_paths, staging_dirs = link_bib_entries(
         root, bib_files, errors, None, skip_underscore)
     if not bib_files:
@@ -2558,6 +2565,14 @@ def _staging_verdict(res: dict[str, Any], filename_only: bool,
 # a .bib one) is labelled "doi (hint)" and is in neither role.
 GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle")
 EXHAUSTIVE_KEYS = GIVEN_KEYS
+
+
+def licenses_attach(why: list[str] | None) -> bool:
+    """Whether a lookup's labels license storing the file under the work:
+    only a given identifier does (skills/zotero/references/backfill.md
+    § What licenses an attach). check-staging's sweep and suggest-attachments
+    both decide by it."""
+    return any(label in GIVEN_KEYS for label in why or [])
 
 
 def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
@@ -2775,7 +2790,7 @@ def reconcile_report(root: Path, found: dict[str, Any], rows: list[dict[str, Any
             "suggested_edits": [
                 {"itemKey": row.get("zotero_key"), "field": "attachment",
                  "old": "", "new": row.get("path", row.get("file")),
-                 **({} if any(w in GIVEN_KEYS for w in row.get("why") or [])
+                 **({} if licenses_attach(row.get("why"))
                     else {"caution": TEXT_KEY_ONLY})}
                 for row in rows if row["verdict"] == "work_present_no_file"],
             "rows": rows, "errors": errors}
@@ -3055,6 +3070,183 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
     return report, rc
 
 
+# --- What licenses an attach ------------------------------------------------
+#
+# The one statement, in code, of skills/zotero/references/backfill.md § What
+# licenses an attach. A lookup labelled with a given identifier licenses a
+# write (licenses_attach); suggest-attachments, handed a file and a parent,
+# compares them first (attach_licence). The file's md5 under another item, or
+# a given identifier of a kind the parent holds with another value, refuses;
+# a hint or an identifier read from the pages may refuse, never agrees; a
+# given identifier the parent carries agrees; anything else is `unverified`
+# and attaches (author ruling, 2026-11-10). An identifier of a kind the
+# parent does not hold is nothing to compare: works carry several DOIs and
+# ISBNs (author, 2026-11-10), so a refusal says how to record the second one.
+
+# The Extra label under which IDENTIFIER_KEYS reads a second identifier; a
+# handle is read from the url field alone.
+EXTRA_LABEL = {"doi": "DOI", "isbn": "ISBN", "arxiv": "arXiv"}
+CARRIES = {label: carries for label, _queries, carries in IDENTIFIER_KEYS}
+
+
+def held_identifiers(work: dict[str, Any]) -> dict[str, list[str]]:
+    """The identifiers a work holds, per kind, where IDENTIFIER_KEYS' checks
+    read them. A part of a volume holds no ISBN of its own."""
+    url = work["url"]
+    held = {
+        "doi": [first_token(d) for d in [work["DOI"],
+                                         *extra_lines(work["extra"], "DOI")]
+                if d.strip()],
+        "isbn": [] if work["itemType"] in ISBN_OF_A_VOLUME else [
+            i.strip() for i in [work["ISBN"], *extra_lines(work["extra"],
+                                                           "ISBN")]
+            if i.strip()],
+        "arxiv": [first_token(a) for a in [
+            *extra_lines(work["extra"], "arXiv"), work["archiveID"],
+            url if ARXIV_URL_RE.fullmatch(url) else ""]
+            if a.strip() and normal_arxiv(first_token(a))],
+        "handle": [url] if HANDLE_URL_RE.fullmatch(url) else [],
+    }
+    return {kind: values for kind, values in held.items() if values}
+
+
+def _differs(kind: str, value: str, held: list[str], caution: str = "") -> str:
+    way = (f"add the line `{EXTRA_LABEL[kind]}: {value}` to the item's Extra "
+           f"and rerun" if kind in EXTRA_LABEL
+           else "attach the file by hand")
+    return (f"the file's {kind} {value} differs from the item's "
+            f"({', '.join(held)}){caution}; if both name this work, {way}")
+
+
+def attach_licence(work: dict[str, Any], given: dict[str, str],
+                   weak: list[tuple[str, str, str]],
+                   holders: list[dict[str, Any]],
+                   own: str | None) -> dict[str, Any]:
+    """Whether to store a file under `work` (work_record), from what is
+    known of the file: `given` identifiers (its .bib entry's, an md5-found
+    receipt's), `weak` ones as (kind, value, "hint" or "from text"), the
+    other items already holding its md5 (`holders`), and the key of the
+    parent's own attachment holding it (`own`).
+
+    {"licence": "already stored", "note"}, {"licence": "refused", "error"},
+    {"licence": "agreed", "on": [kinds]} or {"licence": "unverified"}. A
+    weak identifier refuses only when no given one agrees: the curated
+    identity settles what a stale receipt or a cited work's DOI suggests."""
+    if own:
+        return {"licence": "already stored",
+                "note": f"the item already holds this file (attachment "
+                        f"{own}); nothing stored twice"}
+    if holders:
+        names = "; ".join(
+            f"{'standalone attachment ' if h.get('standalone') else ''}"
+            f"{h['key']}" + (f" ({h['title']})" if h.get("title") else "")
+            for h in holders)
+        return {"licence": "refused",
+                "error": f"the file is already stored under another item: "
+                         f"{names}; if that is the wrong home, remove the "
+                         f"copy there first"}
+    held = held_identifiers(work)
+    agreed: list[str] = []
+    for kind, value in given.items():
+        if not value or kind not in held:
+            continue
+        if not CARRIES[kind](work, value):
+            return {"licence": "refused",
+                    "error": _differs(kind, value, held[kind])}
+        agreed.append(kind)
+    if agreed:
+        return {"licence": "agreed", "on": agreed}
+    for kind, value, label in weak:
+        if value and kind in held and not CARRIES[kind](work, value):
+            caution = (" (read from the file's pages: it may be a cited "
+                       "work's; a .bib entry giving the item's identifier "
+                       "settles it)" if label == "from text" else
+                       " (from a receipt found by name or beside a .bib "
+                       "identifier, which may be stale)")
+            return {"licence": "refused",
+                    "error": _differs(kind, value, held[kind], caution)}
+    return {"licence": "unverified"}
+
+
+def file_project_root(path: Path) -> Path | None:
+    """The project a file belongs to: its nearest ancestor holding `.git`
+    or `.zotero-reconcile.json`, never the current directory."""
+    for parent in path.resolve().parents:
+        if (parent / ".git").exists() or (
+                parent / ".zotero-reconcile.json").is_file():
+            return parent
+    return None
+
+
+def bib_entry_of(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    """(the .bib entry linking `path`, None) through check-staging's own
+    discovery from the file's project root, or (None, why it was not read)
+    when no root or the discovery's errors may have hidden it."""
+    root = file_project_root(path)
+    if root is None:
+        return None, ".bib entry (no project root above the file)"
+    errors: list[str] = []
+    try:
+        names = project_bib_paths(root)
+    except (OSError, ValueError) as exc:
+        return None, f".bib entry ({exc})"
+    linked, _, _ = link_bib_entries(root, reconcile_bib_files(root, names,
+                                                              errors), errors)
+    target = path.resolve()
+    entry = next((link["entry"] for link in linked if link["path"] == target),
+                 None)
+    if entry is None and errors:
+        more = f"; {len(errors) - 1} more" if len(errors) > 1 else ""
+        return None, f".bib entry (discovery: {errors[0]}{more})"
+    return entry, None
+
+
+def attach_evidence(path: Path, work: dict[str, Any], z: zotero.Zotero,
+                    lib_id: str, run: dict[str, Any]) -> dict[str, Any]:
+    """What can be known of `path` against the parent `work` of library
+    `lib_id`, and attach_licence's answer, plus what was `skipped`. The md5
+    index of the parent's library is built once per run, in `run`; one that
+    cannot be built skips the md5 comparison and blocks nothing."""
+    skipped: list[str] = []
+    entry, why = bib_entry_of(path)
+    if why:
+        skipped.append(why)
+    claims = file_claims(path, entry)
+    given = {k: str(v) for k, v in claims["given"].items() if v}
+    weak = [(k, str(v), "hint") for k, v in claims["hints"].items() if v]
+    if not given and (path.suffix.lower() == ".pdf" or claims["scraped"]):
+        scraped, text_skip = ((claims["scraped"], None) if claims["scraped"]
+                              else text_identifiers(path))
+        weak += [(k, str(v), "from text") for k, v in scraped.items() if v]
+        if text_skip:
+            skipped.append(text_skip)
+    _, own = file_evidence(z, lib_id, work["key"], file_md5(path))
+    holders: list[dict[str, Any]] = []
+    if own is None:
+        if "index" not in run:
+            run["index"] = hash_index([(lib_id, z)])
+        index = run["index"]
+        if index["status"] == "built":
+            res = find_work([(lib_id, z)], pdf_path=path, md5_index=index)
+            holders = [m for m in res["matches"] if m["key"] != work["key"]]
+        else:
+            skipped.append(f"storageHash (md5 comparison skipped: "
+                           f"{index['reason']})")
+    decision = attach_licence(work, given, weak, holders,
+                              own["key"] if own else None)
+    return {**decision, **({"skipped": skipped} if skipped else {})}
+
+
+def client_library(z: Any, fallback: str) -> str:
+    """The library id of a pyzotero client: "user" or its groupID."""
+    kind = getattr(z, "library_type", None)
+    if kind == "users":
+        return USER_LIBRARY
+    if kind == "groups":
+        return str(z.library_id)
+    return fallback
+
+
 TEXT_KEY_ONLY = ("found only by a key that is no grounds to write (a URL, a "
                  "hint from a receipt found by name or beside a .bib "
                  "identifier, or an identifier read from the file's pages, "
@@ -3076,7 +3268,7 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
                 or not row.get("zotero_key")):
             continue
         edit = {"itemKey": row["zotero_key"], "file": row["path"]}
-        if not any(why in GIVEN_KEYS for why in row.get("why") or []):
+        if not licenses_attach(row.get("why")):
             # Found only by an identifier printed in the file, perhaps a
             # cited work's: never grounds for a write.
             edit.update(status="not attempted", error=TEXT_KEY_ONLY)
@@ -3151,7 +3343,10 @@ def cmd_suggest_attachments(args: argparse.Namespace) -> int:
 
     The repair for `work_present_no_file`. `create-items` cannot do it: it
     only creates items, and creating a second item to carry the file is how
-    duplicates are born.
+    duplicates are born. Each file is first compared with the item
+    (attach_evidence), with or without --edit, and its row says how: a
+    refused row writes nothing. Exit 1 on any refusal, failure, or md5
+    comparison skipped (74 and 75 would say nothing was saved).
     """
     found, rc = with_zotero("suggest-attachments",
                             lambda: find_item(args.parent, args.library))
@@ -3162,29 +3357,64 @@ def cmd_suggest_attachments(args: argparse.Namespace) -> int:
                    "error": "item not found"})
         return 1
     z, item = found
+    lib_id = client_library(z, args.library)
+    parent = work_record({"key": args.parent, **item}, lib_id)
+    run: dict[str, Any] = {}
     rc = 0
     rows = []
     refused = False
-    for f in args.file:
-        p = Path(f)
-        if not p.is_file():
-            rows.append({"file": f, "error": "not found"})
-            rc = 1
-            continue
-        row = {"itemKey": args.parent, "field": "attachment", "old": "",
-               "new": str(p.resolve())}
-        if args.edit and refused:
-            row.update(status="not attempted", error=KEY_NOT_ATTEMPTED)
-        elif args.edit:
+    with contextlib.ExitStack() as stack:
+        if args.edit:
+            # The comparison and the saves under one lock, so two local runs
+            # cannot both store one file on the same pre-lock answer.
             try:
-                row["attachment"] = attach_file(z, args.parent, p)
-                row["status"] = "attached"
-            except (ZoteroUnavailable, ZoteroSlow, LocalAPIError,
-                    KeyNotGranted) as exc:
-                row.update(status="failed", error=str(exc))
+                stack.enter_context(directory_locks([library_lock_dir()]))
+            except OSError as exc:
+                emit_json({"parent": args.parent, "source": LIBRARY_SOURCE,
+                           "error": str(exc)})
+                return 1
+        for f in args.file:
+            p = Path(f)
+            if not p.is_file():
+                rows.append({"file": f, "error": "not found"})
                 rc = 1
-                refused = isinstance(exc, KeyNotGranted)
-        rows.append(row)
+                continue
+            row: dict[str, Any] = {"itemKey": args.parent,
+                                   "field": "attachment", "old": "",
+                                   "new": str(p.resolve())}
+            rows.append(row)
+            if args.edit and refused:
+                row.update(status="not attempted", error=KEY_NOT_ATTEMPTED)
+                continue
+            try:
+                row.update(attach_evidence(p, parent, z, lib_id, run))
+            except (ZoteroUnavailable, ZoteroSlow, LocalAPIError,
+                    OSError) as exc:
+                row.update(licence="unchecked",
+                           error=f"could not compare the file with the "
+                                 f"item, nothing stored: {exc}")
+                if args.edit:
+                    row["status"] = "failed"
+                rc = 1
+                continue
+            if row["licence"] == "refused":
+                rc = 1
+                if args.edit:
+                    row["status"] = "refused"
+            elif row["licence"] == "already stored":
+                if args.edit:
+                    row["status"] = "already stored"
+            elif args.edit:
+                try:
+                    row["attachment"] = attach_file(z, args.parent, p)
+                    row["status"] = "attached"
+                except (ZoteroUnavailable, ZoteroSlow, LocalAPIError,
+                        KeyNotGranted) as exc:
+                    row.update(status="failed", error=str(exc))
+                    rc = 1
+                    refused = isinstance(exc, KeyNotGranted)
+    if run.get("index", {}).get("status") == "skipped":
+        rc = 1
     emit_json({"parent": args.parent, "title": item["data"].get("title"),
                "source": LIBRARY_SOURCE, "edit": args.edit,
                **({} if args.edit else {"apply": EDIT_HINT}),

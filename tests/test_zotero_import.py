@@ -958,13 +958,17 @@ def test_attach_reports_the_step_and_writes_nothing(use_live, tmp_path, capsys):
     key = use_live.save(unique_title(), creators=(unique_surname(),))
     before = use_live.item(key)["version"]
     pdf = tmp_path / "Walley1991.pdf"
-    pdf.write_bytes(b"%PDF")
+    pdf.write_bytes(b"%PDF " + key.encode())  # bytes no other test stores
     args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
                               edit=False)
     assert zi.cmd_suggest_attachments(args) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["suggested"] == [{"itemKey": key, "field": "attachment",
-                                 "old": "", "new": str(pdf.resolve())}]
+    [row] = out["suggested"]
+    assert {k: row[k] for k in ("itemKey", "field", "old", "new")} == {
+        "itemKey": key, "field": "attachment", "old": "",
+        "new": str(pdf.resolve())}
+    # Nothing to compare (ticket 1510): the row says trust was taken.
+    assert row["licence"] == "unverified" and "status" not in row
     assert out["source"] == zi.LIBRARY_SOURCE
     args.parent = ABSENT_KEY
     assert zi.cmd_suggest_attachments(args) == 1
@@ -2594,6 +2598,8 @@ def test_a_refused_key_stops_an_attach_batch(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(zi, "with_zotero", lambda command, read: (
         (None, {"data": {"title": "T"}}), None))
     monkeypatch.setattr(zi, "attach_file", attach_file)
+    monkeypatch.setattr(zi, "attach_evidence", lambda *a: {
+        "licence": "unverified"})
     pdfs = [str(make_pdf(tmp_path / f"f{i}.pdf", [f"p{i}"])) for i in range(3)]
     rc = zi.cmd_suggest_attachments(argparse.Namespace(parent="P1", file=pdfs,
                                           library="user", edit=True))
