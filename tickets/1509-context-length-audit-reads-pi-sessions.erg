@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Context length audit reads Pi sessions
+Created: 2026-11-10
+Author: reviewer
+Blocked-by: 1508
+
+--- log ---
+2026-11-10T08:14Z reviewer created
+
+--- body ---
+## Context
+
+Child of ticket 1507 (tracker). The author split the work on 2026-11-10: the
+Codex part first (ticket 1508), the Pi part by a second raid. Ticket 1508
+builds the per-runtime seam in `scripts/trace-compact-audit.py` (a runtime is
+a corpus root plus a reader) and the per-runtime reporting; this ticket adds
+the Pi reader on that seam. It executes on main after ticket 1508 has merged:
+both edit the same script.
+
+Observed on padme, 2026-11-10 (key names only, no transcript content read):
+78 `*.jsonl` files under `~/.pi/agent/sessions`, the newest dated 2026-11-01.
+Assistant records carry `message.usage` with `input`, `output`, `cacheRead`,
+`cacheWrite` and `totalTokens`; a `model_change` record names the model.
+
+Not established: whether `input` already includes `cacheRead` and
+`cacheWrite`. Settle it on one transcript before summing.
+
+## Scope
+
+- A reader for Pi sessions on the seam ticket 1508 lands, same definition of
+  context length as ticket 1499: the whole prompt of a turn.
+- The audit's table and JSON count Pi sessions under their runtime; Pi leaves
+  the not-read list.
+- An absent or unreadable Pi corpus is reported as could not look, never as
+  zero sessions.
+
+Out of scope: a status line or live display on Pi; compaction and missed-run
+cost on Pi; ceilings for local models served to Pi (they take the default).
+
+## Test
+
+On a Pi fixture transcript: a session past its model's ceiling is counted
+under Pi; a turn outside the window is not counted; an absent Pi corpus is
+reported as could not look while the other runtimes are still counted.
+
+## Exit criteria
+
+- [ ] The audit counts Pi main sessions beside Claude Code's and Codex's,
+  with the whole-prompt definition, and its output names Pi as read
+- [ ] An unreadable or absent Pi corpus is reported as could not look, the
+  other runtimes still counted
+- [ ] Whether Pi's `input` includes its cache fields is answered in the
+  reader's docstring, with the transcript evidence
+- [ ] `make check` passes

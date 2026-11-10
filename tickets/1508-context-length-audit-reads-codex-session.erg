@@ -1,0 +1,82 @@
+%erg 0.1
+Title: Context length audit reads Codex sessions
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T08:14Z reviewer created
+
+--- body ---
+## Context
+
+Child of ticket 1507 (tracker). The author split the work on 2026-11-10: the
+Codex part first, the Pi part by a second raid (ticket 1509, blocked by this
+one). `scripts/trace-compact-audit.py` (ticket 1499, PR 2391) walks
+`~/.claude/projects` and parses Claude Code's transcript format only; the
+shared rules bind Codex to the same ceilings (`skills/route/ceilings.json`
+names Sol and Astra), so its count leaves Codex sessions out.
+
+PR 2397 (open on 2026-11-10, another session's) adds the interim line "Claude
+Code transcripts only" and two constants, `RUNTIMES_READ` and
+`RUNTIMES_NOT_READ`, in the same script. This ticket builds on it once merged
+and replaces the constants with what was actually read.
+
+Observed on padme, 2026-11-10, on the 120 most recent `rollout-*.jsonl` files
+under `~/.codex/sessions` (3561 files in all, 512 modified in ten days; key
+names and numbers only, no transcript content read):
+
+- 2771 `event_msg` records of type `token_count`, none with a null `info`.
+  `payload.info.last_token_usage` carries `input_tokens`,
+  `cached_input_tokens`, `cache_write_input_tokens`, `output_tokens`,
+  `reasoning_output_tokens`, `total_tokens`; `info` also carries
+  `total_token_usage` (cumulative) and `model_context_window` (475000 on 2208
+  records, 258400 on 563).
+- `cached_input_tokens <= input_tokens` on all 2771;
+  `total_tokens == input_tokens + output_tokens` on 2767 (4 other);
+  `cache_write_input_tokens == 0` on all. This points to `input_tokens`
+  already holding the cached part; cause of the 4 exceptions not established.
+- `session_meta.payload.source`: `exec` on 99 files, `cli` on 6, a
+  `subagent` object on 16 (with `parent_thread_id`); one file has
+  `forked_from_id`; 4 `compacted` records.
+- `turn_context.payload.model`: `codex-auto-review` 276, `gpt-6.1-sol` 182,
+  `gpt-6-luna` 27, `gpt-6-astra` 4, `gpt-6-sol` 2, `gpt-6` 1,
+  `openai/gpt-6.1-sol` 1.
+- Largest `input_tokens` per file: 449770, 448158, 244700, 239252; the rest
+  under 230K.
+
+## Scope
+
+- A reader for Codex rollouts behind the audit's existing session trajectory,
+  same definition of context length as ticket 1499: the whole prompt of a turn.
+- The seam the Pi reader (ticket 1509) plugs into: a runtime is a corpus root
+  plus a reader that yields the trajectories the session report already takes.
+  Adding a runtime is then one reader and one entry, with no edit to another
+  runtime's reader.
+- The audit's table and JSON say which runtimes were read and count sessions
+  per runtime. Pi stays named as not read until ticket 1509 lands.
+- A runtime whose corpus is absent or unreadable is reported as could not
+  look, never as zero sessions.
+
+Out of scope: the Pi reader (ticket 1509); a status line or live display on
+Codex; compaction and missed-run cost on Codex (its compaction records and
+prices differ: Codex sessions enter the session counts, not the missed-run
+dollar figures); a plugin framework for readers.
+
+## Test
+
+On fixture transcripts: a Codex session past its model's ceiling is counted
+under Codex; a Codex turn outside the window is not counted; an absent Codex
+corpus is reported as could not look while Claude Code is still counted; no
+readable corpus at all exits non-zero.
+
+## Exit criteria
+
+- [ ] The audit counts Codex main sessions beside Claude Code's, with the
+  whole-prompt definition, and its output names each runtime read and each
+  one not read
+- [ ] A runtime it could not read is reported as such, with a non-zero exit
+  only when no corpus at all is readable
+- [ ] The Codex `input_tokens` question (does it already include
+  `cached_input_tokens`?) is answered in the reader's docstring, with the
+  transcript evidence
+- [ ] `make check` passes
