@@ -87,7 +87,7 @@ with the project.
 One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
 intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
 its attachment, created through the local API) → record the citation. A
-fetcher (`doifetch.sh`, `probe-url.py`) leaves its receipt, the JSON line it
+fetcher (`doifetch.sh --doi/--isbn`, `probe-url.py`) leaves its receipt, the JSON line it
 prints, in `docs/.receipts.jsonl`; `check-staging` and `find-work` read it.
 
 This rule governs *source documents and project bibliographies*. It does not
