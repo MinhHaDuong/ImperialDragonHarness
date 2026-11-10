@@ -194,7 +194,8 @@ def test_unparsable_lines_are_counted(tmp_path):
 @pytest.mark.integration
 def test_cli_missing_projects_dir_is_could_not_look(tmp_path):
     done = subprocess.run(
-        [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope")],
+        [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope"),
+         "--codex-home", str(tmp_path / "nope-codex")],
         capture_output=True, text=True,
     )
     assert done.returncode == 2
@@ -209,7 +210,7 @@ def test_cli_prints_the_note_table(tmp_path):
     _session(tmp_path, "s", rows)
     done = subprocess.run(
         [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path),
-         "--since", "2026-11-01"],
+         "--codex-home", str(tmp_path / "nope-codex"), "--since", "2026-11-01"],
         capture_output=True, text=True,
     )
     assert done.returncode == 0, done.stderr
@@ -218,3 +219,160 @@ def test_cli_prints_the_note_table(tmp_path):
     assert "sessions with at least one turn: 1" in out
     assert "30 or more turns at or above 450K: 1" in out
     assert "30 or more turns at or above 550K: 0" in out
+
+
+# --- Codex sessions (ticket 1508) ---------------------------------------------
+# Synthetic rollouts in the shape the reader parses: a session_meta, a
+# turn_context naming the model, then one token_count event per model request.
+
+def _codex_session(home, name, records, *, source="cli", model="gpt-6.1-sol", sub="sessions", reemit=False):
+    """`records` are (day, input_tokens, cached_input_tokens) per model request."""
+    src = {"subagent": {"thread_spawn": {"parent_thread_id": "p"}}} if source == "subagent" else source
+    rows = [
+        {"timestamp": "2026-11-01T00:00:00.000Z", "type": "session_meta",
+         "payload": {"id": name, "cwd": "/work/proj", "source": src}},
+        {"timestamp": "2026-11-01T00:00:00.000Z", "type": "turn_context", "payload": {"model": model}},
+    ]
+    cumulative = 0
+    for day, inp, cached in records:
+        last = {"input_tokens": inp, "cached_input_tokens": cached, "cache_write_input_tokens": 0,
+                "output_tokens": 10, "reasoning_output_tokens": 0, "total_tokens": inp + 10}
+        cumulative += inp + 10
+        tc = {"timestamp": f"2026-11-{day:02d}T10:00:00.000Z", "type": "event_msg",
+              "payload": {"type": "token_count", "info": {
+                  "last_token_usage": last, "total_token_usage": {"total_tokens": cumulative},
+                  "model_context_window": 475_000}}}
+        rows.append(tc)
+        if reemit:
+            rows.append(tc)  # same cumulative total: a re-emission, not a request
+    d = home / sub / "2026" / "11" / "01"
+    if sub != "sessions":
+        d = home / sub
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f"rollout-2026-11-01T00-00-00-{name}.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    return path
+
+
+def _both(tmp_path, **kw):
+    """Audit a Claude Code root and a Codex home side by side."""
+    roots = {"Claude Code": tmp_path / "claude", "Codex": tmp_path / "codex"}
+    roots.update(kw.pop("roots", {}))
+    return _audit(roots, **kw)
+
+
+def _runtime(out, name):
+    return next(r for r in out["runtimes"] if r["name"] == name)
+
+
+def test_codex_session_past_its_ceiling_is_counted_under_codex(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn(f"m{i}", 9, cache_read=100_000) for i in range(5)])
+    _codex_session(tmp_path / "codex", "x", [(9, 460_000, 400_000)] * 30)
+    out = _both(tmp_path)
+    over = out["sessions"]["over_own_ceiling"]
+    assert over["sessions"] == 1
+    assert over["by_runtime"] == {"Codex": 1}
+    assert over["rows"][0]["runtime"] == "Codex"
+    assert _runtime(out, "Codex")["status"] == "read"
+    assert _runtime(out, "Codex")["sessions_with_turns"] == 1
+    assert out["runtimes_read"] == ["Claude Code", "Codex"]
+    assert out["runtimes_not_read"] == ["Pi"]
+    alone = _audit(tmp_path / "claude")["sessions"]
+    assert _runtime(out, "Claude Code")["sessions_with_turns"] == alone["with_turns"] == 1
+
+
+def test_codex_input_tokens_already_hold_the_cached_part(tmp_path):
+    # 440K input of which 300K cached: adding the cached part again would cross 450K.
+    _codex_session(tmp_path / "codex", "x", [(9, 440_000, 300_000)] * 30)
+    out = _both(tmp_path, roots={"Claude Code": None})
+    assert out["sessions"]["over_own_ceiling"]["sessions"] == 0
+    assert out["sessions"]["levels"]["230000"]["sessions"] == 1
+
+
+def test_codex_exec_is_held_to_the_default_ceiling_cli_to_its_model(tmp_path):
+    _codex_session(tmp_path / "codex", "ex", [(9, 300_000, 0)] * 30, source="exec")
+    _codex_session(tmp_path / "codex", "cl", [(9, 300_000, 0)] * 30, source="cli")
+    over = _both(tmp_path, roots={"Claude Code": None})["sessions"]["over_own_ceiling"]
+    assert {r["session_id"] for r in over["rows"]} == {"ex"}
+    assert over["by_rule"] == {"default": 1}
+
+
+def test_codex_subagent_rollout_is_not_a_session(tmp_path):
+    _codex_session(tmp_path / "codex", "sub", [(9, 300_000, 0)] * 30, source="subagent")
+    out = _both(tmp_path, roots={"Claude Code": None})
+    assert out["sessions"]["with_turns"] == 0
+    assert _runtime(out, "Codex")["roles"] == {"subagent": 1}
+
+
+def test_codex_turn_outside_the_window_is_not_counted(tmp_path):
+    _codex_session(tmp_path / "codex", "x", [(1, 500_000, 0)] * 40 + [(9, 100_000, 0)] * 5)
+    out = _both(tmp_path, roots={"Claude Code": None}, days=3)
+    assert out["sessions"]["turns_in_window"] == 5
+    assert out["sessions"]["levels"]["230000"]["sessions"] == 0
+
+
+def test_codex_reemitted_token_count_is_one_request(tmp_path):
+    _codex_session(tmp_path / "codex", "x", [(9, 300_000, 0)] * 20, reemit=True)
+    out = _both(tmp_path, roots={"Claude Code": None})
+    assert out["sessions"]["turns_in_window"] == 20
+
+
+def test_codex_archive_is_read(tmp_path):
+    _codex_session(tmp_path / "codex", "a", [(9, 100_000, 0)], sub="archived_sessions")
+    out = _both(tmp_path, roots={"Claude Code": None})
+    assert out["sessions"]["with_turns"] == 1
+
+
+def test_absent_codex_corpus_is_could_not_look_and_claude_code_still_counted(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn(f"m{i}", 9, cache_read=500_000) for i in range(30)])
+    out = _both(tmp_path)  # no codex directory was made
+    codex = _runtime(out, "Codex")
+    assert codex["status"] == "could not look"
+    assert "Codex" in out["runtimes_not_read"] and "Codex" not in out["runtimes_read"]
+    assert "Codex" not in out["sessions"]["levels"]["230000"]["by_runtime"]
+    alone = _audit(tmp_path / "claude")
+    assert out["sessions"]["levels"] == alone["sessions"]["levels"]
+    assert out["sessions"]["with_turns"] == alone["sessions"]["with_turns"] == 1
+
+
+def test_no_readable_corpus_at_all_is_could_not_look(tmp_path):
+    with pytest.raises(tca.CouldNotLook):
+        _both(tmp_path)
+
+
+def test_missed_runs_stay_claude_code_only(tmp_path):
+    _codex_session(tmp_path / "codex", "x", [(9, 500_000, 0)] * 40)
+    out = _both(tmp_path, roots={"Claude Code": None})
+    assert out["missed_runs"] == 0
+    assert out["recoverable_usd_upper_bound"] == 0
+
+
+def test_output_names_pi_as_not_read_and_the_host(tmp_path):
+    _codex_session(tmp_path / "codex", "x", [(9, 100_000, 0)])
+    out = _both(tmp_path)
+    assert _runtime(out, "Pi")["status"] == "not read"
+    assert "Pi" in out["runtimes_not_read"]
+    assert out["host"]
+    table = tca.render_table(out)
+    assert out["host"] in table and "Pi" in table
+
+
+@pytest.mark.integration
+def test_cli_reads_codex_beside_an_absent_claude_code_corpus(tmp_path):
+    _codex_session(tmp_path / "codex", "x", [(9, 500_000, 0)] * 30)
+    done = subprocess.run(
+        [sys.executable, str(SCRIPTS / "trace-compact-audit.py"), "--projects-dir", str(tmp_path / "nope"),
+         "--codex-home", str(tmp_path / "codex"), "--since", "2026-11-01"],
+        capture_output=True, text=True,
+    )
+    assert done.returncode == 0, done.stderr
+    assert "COULD NOT LOOK" in done.stdout and "Claude Code" in done.stdout
+
+
+def test_codex_home_with_no_readable_rollout_is_could_not_look(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn("m", 9, cache_read=1)])
+    (tmp_path / "codex" / "sessions" / "rollout-x.jsonl").mkdir(parents=True)  # opening raises OSError
+    out = _both(tmp_path)
+    assert _runtime(out, "Codex")["status"] == "could not look"
+    assert "Codex" in out["runtimes_not_read"]
+    assert out["sessions"]["with_turns"] == 1

@@ -21,9 +21,11 @@ each level, and how many went past the ceiling of their own main model, read
 from skills/route/ceilings.json. Events are restricted to the window turn by
 turn. A transcript it cannot read is counted and reported, never read as zero.
 
-Only Claude Code transcripts are read. Codex and Pi sessions are bound by the
-same ceilings and are not counted (ticket 1507); the table and the JSON say so,
-so a low count is not read as covering them.
+Runtimes (ticket 1508): the session counts cover every runtime in RUNTIMES that
+has a reader, each from its own corpus root on this host only; the output names
+the host, each runtime read, each one not read and each one it could not look
+at. Missed runs and their dollar figures stay Claude Code only. The process
+exits non-zero only when no corpus at all is readable.
 
 Zero LLM/API calls; emits aggregates only, never trace content.
 """
@@ -33,7 +35,9 @@ import csv
 import importlib.util
 import json
 import logging
+import os
 import re
+import socket
 import statistics
 import sys
 from pathlib import Path
@@ -67,14 +71,16 @@ METRIC_LABEL = {
 LEVELS = (230_000, 450_000, 550_000)
 MIN_TURNS_AT_LEVEL = 30
 LONG_SESSION_TURNS = 100
-# The corpus walker parses Claude Code's transcript format only (ticket 1507
-# adds the other runtimes); the output names both lists.
-RUNTIMES_READ = ("Claude Code",)
-RUNTIMES_NOT_READ = ("Codex", "Pi")
 
 
 class CouldNotLook(Exception):
     """The corpus cannot be read at all: not an empty result."""
+
+
+# Ceiling rules a main session is held to: its main model's ceiling, or the
+# default one (an unattended run, by construction not an interface session).
+RULE_MODEL = "model"
+RULE_DEFAULT = "default"
 
 
 def load_ceilings(path: Path = CEILINGS_PATH) -> dict:
@@ -222,6 +228,217 @@ def parse_trajectory(path: Path) -> dict:
     }
 
 
+def read_claude_code(root: Path):
+    """Reader of Claude Code transcripts under `root` (~/.claude/projects)."""
+    if not Path(root).is_dir():
+        raise CouldNotLook(f"no trace corpus at {root}")
+    for project, session_id, agent_id, path in ts.iter_trace_files(root):
+        try:
+            traj = parse_trajectory(path)
+        except OSError as e:
+            yield project, session_id, agent_id, e
+            continue
+        traj.setdefault("ceiling_rule", RULE_MODEL)
+        traj.setdefault("role", "main" if agent_id == "main" else "subagent")
+        yield project, session_id, agent_id, traj
+
+
+# session_meta.payload.source values of an interactive Codex session; `exec` and
+# any unknown string are unattended and take the default ceiling.
+CODEX_INTERACTIVE_SOURCES = ("cli", "vscode")
+
+
+def default_codex_home() -> Path:
+    return Path(os.environ.get("CODEX_HOME") or "~/.codex").expanduser()
+
+
+def parse_codex_rollout(path: Path) -> dict:
+    """Parse one Codex rollout (`rollout-*.jsonl`) into the trajectory shape of
+    `parse_trajectory`, plus "role", "ceiling_rule", "session_id" and "project".
+
+    A turn is one model request: an `event_msg` record of type `token_count`
+    whose `info.total_token_usage.total_tokens` moved since the previous one.
+    A record that leaves the cumulative total unchanged is a re-emission and is
+    dropped; so is one whose `last_token_usage.input_tokens` is 0.
+
+    Whole prompt = `info.last_token_usage.input_tokens`, alone. It ALREADY
+    INCLUDES `cached_input_tokens`; adding the cached part counts it twice.
+    Evidence (padme, 2026-11-10, 2153 rollouts modified in 28 days, key names
+    and numbers only): on all 64993 records with a non-zero cached part,
+    `cached_input_tokens <= input_tokens` and `total_tokens == input_tokens +
+    output_tokens`, never `input + cached + output`; and `input + cached`
+    exceeds the record's own `model_context_window` on 12924 of them, which a
+    prompt cannot, while `input_tokens` alone never does.
+    The records where `total_tokens != input + output` (111 of 112 in that
+    sample) carry a zero `last_token_usage` with only `total_tokens` set and
+    leave the cumulative total unchanged: re-emissions, dropped above.
+
+    The cumulative `total_token_usage` is never a prompt size. The model of a
+    request is that of the latest `turn_context` before it; on the sample the
+    reviewer model `codex-auto-review` appears in subagent rollouts only, so it
+    never becomes a main session's model. A forked rollout repeats its parent's
+    `session_meta` (the first one is the fork's own) but replays none of its
+    `token_count` records: over the 17 forks of the sample, no timestamp or
+    cumulative total is shared with the parent, so nothing is deduplicated.
+    Each turn takes its own record's `timestamp`.
+    """
+    events: list[dict] = []
+    meta: dict | None = None
+    model = ""
+    prev_total = None
+    first_ts = last_ts = None
+    unparsable = 0
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                unparsable += 1
+                continue
+            if not isinstance(rec, dict):
+                unparsable += 1
+                continue
+            tstamp = ts._parse_ts(rec.get("timestamp", ""))
+            if tstamp is not None:
+                last_ts = tstamp
+                if first_ts is None:
+                    first_ts = tstamp
+            rec_type = rec.get("type")
+            payload = rec.get("payload")
+            if not isinstance(payload, dict):
+                continue
+            if rec_type == "session_meta":
+                if meta is None:
+                    meta = payload
+            elif rec_type == "turn_context":
+                model = payload.get("model") or model
+            elif rec_type == "compacted":
+                events.append({"kind": "compact", "ts": tstamp})
+            elif rec_type == "event_msg" and payload.get("type") == "token_count":
+                info = payload.get("info")
+                if not isinstance(info, dict):
+                    continue
+                last = info.get("last_token_usage") or {}
+                total = (info.get("total_token_usage") or {}).get("total_tokens")
+                if total is not None and total == prev_total:
+                    continue
+                prev_total = total
+                prompt = last.get("input_tokens") or 0
+                if prompt <= 0:
+                    continue
+                events.append(
+                    {
+                        "kind": "turn",
+                        "prompt": prompt,
+                        "cache_read": last.get("cached_input_tokens") or 0,
+                        "model": model,
+                        "ts": tstamp,
+                    }
+                )
+    meta = meta or {}
+    source = meta.get("source")
+    if isinstance(source, dict):
+        role = "subagent"
+    elif isinstance(source, str) and source:
+        role = source
+    else:
+        role = "unknown"
+    return {
+        "events": events,
+        "post_compact_reads": [],
+        "post_compact_tokens": [],
+        "entry_skill": None,
+        "first_ts": first_ts,
+        "last_ts": last_ts,
+        "unparsable_lines": unparsable,
+        "role": role,
+        "ceiling_rule": RULE_MODEL if role in CODEX_INTERACTIVE_SOURCES else RULE_DEFAULT,
+        "session_id": meta.get("id") or path.stem,
+        "project": meta.get("cwd") or "",
+    }
+
+
+def read_codex(root: Path):
+    """Reader of Codex rollouts under the Codex home `root` ($CODEX_HOME or
+    ~/.codex): `sessions/` and `archived_sessions/`, both. A subagent rollout
+    (`source` an object) is not a main session."""
+    dirs = [Path(root) / d for d in ("sessions", "archived_sessions")]
+    if not any(d.is_dir() for d in dirs):
+        raise CouldNotLook(f"no Codex sessions under {root}")
+    for d in dirs:
+        if not d.is_dir():
+            continue
+        for path in sorted(d.rglob("rollout-*.jsonl")):
+            try:
+                traj = parse_codex_rollout(path)
+            except OSError as e:
+                yield str(path.parent), path.stem, "unknown", e
+                continue
+            agent_id = "subagent" if traj["role"] == "subagent" else "main"
+            yield traj["project"], traj["session_id"], agent_id, traj
+
+
+# THE SEAM (ticket 1508; the Pi reader of ticket 1509 plugs in here).
+# A runtime is a name, a default corpus root and a reader. Adding one is one
+# reader function and one entry below; no other runtime's reader changes.
+#
+# Reader contract, `reader(root: Path)`, a generator:
+# - raises CouldNotLook (at its first step) when the corpus at `root` is absent
+#   or unreadable as a whole; the runtime is then reported "could not look",
+#   never as zero sessions;
+# - yields one `(project, session_id, agent_id, traj)` per transcript, with
+#   `agent_id == "main"` for a main session and anything else for a subagent;
+#   `traj` is an OSError instance when that one transcript could not be read
+#   (counted as unreadable), else a dict shaped like `parse_trajectory`'s:
+#   "events" in CONVERSATION order, not file order (a reader of a tree-shaped
+#   log keeps the branch that was continued and drops abandoned ones), each turn
+#   {"kind": "turn", "prompt": whole prompt in tokens, "cache_read": int,
+#   "model": model id, matched by word against skills/route/ceilings.json by
+#   ceiling_for (an id no entry names takes the default ceiling), "ts": aware
+#   datetime or None, optional "msg_id"}, one turn per
+#   model request; plus "first_ts", "last_ts", "unparsable_lines",
+#   "post_compact_reads", "post_compact_tokens", "entry_skill" (may be empty),
+#   "role" (shown in the role split) and "ceiling_rule" (RULE_MODEL: held to
+#   its main model's ceiling; RULE_DEFAULT: held to the default ceiling).
+# "role" and "ceiling_rule" may be left out (main, RULE_MODEL); a runtime need
+# not have subagents; "msg_id", when given, dedups turns across that runtime's
+# files (drop_inherited_turns), never across runtimes.
+# `missed_runs` marks the one runtime whose runs and dollar figures are counted.
+# `reader None` names a runtime bound by the ceilings whose corpus is not read.
+# A runtime with several roots, each with its own status, takes one entry per
+# root (e.g. "Pi" and "Pi spool"): an entry has exactly one root, reported as
+# read, not read or could not look on its own, and its reader can set the
+# ceiling rule the root implies. The CLI maps a flag to each entry's root.
+RUNTIMES = (
+    {
+        "name": "Claude Code",
+        "default_root": lambda: Path("~/.claude/projects").expanduser(),
+        "reader": read_claude_code,
+        "missed_runs": True,
+    },
+    {
+        "name": "Codex",
+        "default_root": default_codex_home,
+        "reader": read_codex,
+        "missed_runs": False,
+    },
+    {
+        "name": "Pi",
+        "default_root": lambda: Path("~/.pi/agent/sessions").expanduser(),
+        "reader": None,
+        "not_read_reason": "no reader yet (ticket 1509)",
+        "missed_runs": False,
+    },
+)
+
+
+def default_roots() -> dict:
+    return {rt["name"]: rt["default_root"]() for rt in RUNTIMES}
+
+
 def drop_inherited_turns(trajectories: list[tuple]) -> int:
     """Strip turns a trajectory inherited from an earlier one, corpus-wide.
 
@@ -330,15 +547,24 @@ def main_model(events: list[dict]) -> str:
 def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=LEVELS) -> dict:
     """Counts over main sessions, one row per session however many runs it had."""
     rows = []
-    for project, session_id, traj in main_trajs:
+    for item in main_trajs:
+        runtime, (project, session_id, traj) = (
+            (item[0], item[1:]) if len(item) == 4 else ("Claude Code", item)
+        )
         turns = [e for e in traj["events"] if e["kind"] == "turn"]
         if not turns:
             continue
         model = main_model(traj["events"])
-        ceiling = ceiling_for(model, ceilings)
+        rule = traj.get("ceiling_rule", RULE_MODEL)
+        ceiling = (
+            ceiling_for(model, ceilings) if rule == RULE_MODEL else int(ceilings["default_tokens"])
+        )
         ctx = [_ctx(t, metric) for t in turns]
         rows.append(
             {
+                "runtime": runtime,
+                "role": traj.get("role", "main"),
+                "ceiling_rule": rule,
                 "project": project,
                 "session_id": session_id,
                 "main_model": model,
@@ -350,16 +576,23 @@ def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=
             }
         )
 
-    def by_model(selected):
+    def by(selected, key):
         out: dict[str, int] = {}
         for r in selected:
-            out[r["main_model"]] = out.get(r["main_model"], 0) + 1
+            out[r[key]] = out.get(r[key], 0) + 1
         return dict(sorted(out.items(), key=lambda kv: -kv[1]))
+
+    def by_model(selected):
+        return by(selected, "main_model")
 
     level_rows = {}
     for lv in levels:
         sel = [r for r in rows if r["at_level"][str(lv)] >= MIN_TURNS_AT_LEVEL]
-        level_rows[str(lv)] = {"sessions": len(sel), "by_model": by_model(sel)}
+        level_rows[str(lv)] = {
+            "sessions": len(sel),
+            "by_model": by_model(sel),
+            "by_runtime": by(sel, "runtime"),
+        }
     over = [r for r in rows if r["turns_over_ceiling"] >= MIN_TURNS_AT_LEVEL]
     over.sort(key=lambda r: -r["peak"])
     return {
@@ -370,16 +603,19 @@ def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=
         "long_sessions": sum(1 for r in rows if r["turns"] >= LONG_SESSION_TURNS),
         "min_turns_at_level": MIN_TURNS_AT_LEVEL,
         "levels": level_rows,
+        "by_runtime": by(rows, "runtime"),
         "over_own_ceiling": {
             "sessions": len(over),
             "by_model": by_model(over),
+            "by_runtime": by(over, "runtime"),
+            "by_rule": by(over, "ceiling_rule"),
             "rows": [{k: v for k, v in r.items() if k != "at_level"} for r in over[:20]],
         },
     }
 
 
 def audit_corpus(
-    projects_dir: Path,
+    roots,
     days: int,
     min_run: int,
     threshold: int | None = None,
@@ -389,44 +625,93 @@ def audit_corpus(
     ceilings: dict | None = None,
     metric: str = "prompt",
 ) -> dict:
-    """Audit the corpus. `threshold` None means each agent's own: its main
-    model's ceiling for a main session, the default (230K) for a subagent."""
+    """Audit the corpora. `roots` maps a runtime name of RUNTIMES to its
+    corpus root; a bare path is Claude Code's alone. A runtime absent from
+    `roots` or mapped to None is not read. Raises CouldNotLook only when no
+    runtime's corpus is readable. `threshold` None means each agent's own: its
+    main model's ceiling for a main session, the default (230K) for a
+    subagent."""
     from datetime import datetime, timezone
 
-    if not Path(projects_dir).is_dir():
-        raise CouldNotLook(f"no trace corpus at {projects_dir}")
+    if not isinstance(roots, dict):
+        roots = {"Claude Code": roots}
     now = now or datetime.now(timezone.utc)
     ceilings = ceilings or load_ceilings()
     start = window_start(now, days, since)
 
-    trajectories = []
-    files_seen = unreadable = unparsable = 0
-    for project, session_id, agent_id, path in ts.iter_trace_files(projects_dir):
-        files_seen += 1
-        try:
-            traj = parse_trajectory(path)
-        except OSError as e:
-            log.warning("could not look at %s: %s", path, e)
-            unreadable += 1
+    runtimes = []
+    all_trajs = []  # (runtime, project, session_id, agent_id, traj)
+    files_seen = unreadable = unparsable = undated = duplicate_turns = 0
+    for rt in RUNTIMES:
+        root = roots.get(rt["name"])
+        entry = {"name": rt["name"], "root": str(root) if root else None}
+        runtimes.append(entry)
+        if rt["reader"] is None or root is None:
+            entry["status"] = "not read"
+            entry["reason"] = rt.get("not_read_reason") or "no corpus root given"
             continue
-        unparsable += traj["unparsable_lines"]
-        trajectories.append((project, session_id, agent_id, traj))
+        try:
+            items = list(rt["reader"](Path(root)))
+        except (CouldNotLook, OSError) as e:
+            entry["status"] = "could not look"
+            entry["reason"] = str(e)
+            continue
+        trajs = []
+        rt_seen = rt_unreadable = rt_unparsable = rt_undated = 0
+        for project, session_id, agent_id, traj in items:
+            rt_seen += 1
+            if isinstance(traj, OSError):
+                log.warning("could not look at a %s transcript: %s", rt["name"], traj)
+                rt_unreadable += 1
+                continue
+            rt_unparsable += traj["unparsable_lines"]
+            trajs.append((project, session_id, agent_id, traj))
+        if rt_seen and rt_unreadable == rt_seen:
+            entry["status"] = "could not look"
+            entry["reason"] = f"none of its {rt_seen} transcripts under {root} could be read"
+            unreadable += rt_unreadable
+            files_seen += rt_seen
+            continue
+        entry["status"] = "read"
+        # Inherited turns are dropped on whole transcripts, before the window cut.
+        dropped = drop_inherited_turns(trajs)
+        if dropped:
+            log.info("dropped %d turns inherited by forked/resumed sessions", dropped)
+        roles: dict[str, int] = {}
+        mains = 0
+        for project, session_id, agent_id, traj in trajs:
+            traj["events"], n = restrict_to_window(traj["events"], start)
+            rt_undated += n
+            if not traj["events"]:
+                continue
+            all_trajs.append((rt["name"], project, session_id, agent_id, traj))
+            if any(e["kind"] == "turn" for e in traj["events"]):
+                role = traj.get("role", "main")
+                roles[role] = roles.get(role, 0) + 1
+                mains += agent_id == "main"
+        entry.update(
+            {
+                "files_seen": rt_seen,
+                "unreadable_files": rt_unreadable,
+                "unparsable_lines": rt_unparsable,
+                "sessions_with_turns": mains,
+                "roles": dict(sorted(roles.items(), key=lambda kv: -kv[1])),
+            }
+        )
+        files_seen += rt_seen
+        unreadable += rt_unreadable
+        unparsable += rt_unparsable
+        undated += rt_undated
+        duplicate_turns += dropped
 
-    # Inherited turns are dropped on whole transcripts, before the window cut.
-    duplicate_turns = drop_inherited_turns(trajectories)
-    if duplicate_turns:
-        log.info(
-            "dropped %d turns inherited by forked/resumed sessions", duplicate_turns
+    if not any(r["status"] == "read" for r in runtimes):
+        raise CouldNotLook(
+            "; ".join(f"{r['name']}: {r['reason']}" for r in runtimes)
         )
 
-    undated = 0
-    in_window = []
-    for item in trajectories:
-        item[3]["events"], n = restrict_to_window(item[3]["events"], start)
-        undated += n
-        if item[3]["events"]:
-            in_window.append(item)
-    trajectories = in_window
+    # Missed runs and their dollar figures: the runtimes flagged for them only.
+    runs_runtimes = {rt["name"] for rt in RUNTIMES if rt["missed_runs"]}
+    trajectories = [t[1:] for t in all_trajs if t[0] in runs_runtimes]
 
     post_reads = [r for _, _, _, t in trajectories for r in t["post_compact_reads"]]
     post_tokens = [r for _, _, _, t in trajectories for r in t["post_compact_tokens"]]
@@ -499,7 +784,7 @@ def audit_corpus(
     for s in top_sessions:
         s["recoverable_usd"] = round(s["recoverable_usd"], 2)
 
-    main_trajs = [(p, sid, t) for p, sid, aid, t in trajectories if aid == "main"]
+    main_trajs = [(rt, p, sid, t) for rt, p, sid, aid, t in all_trajs if aid == "main"]
 
     return {
         "window_days": days,
@@ -508,14 +793,16 @@ def audit_corpus(
         "min_run": min_run,
         "threshold_tokens": threshold if threshold is not None else "per model (skills/route/ceilings.json)",
         "metric": metric,
-        "corpus_root": str(projects_dir),
-        "runtimes_read": list(RUNTIMES_READ),
-        "runtimes_not_read": list(RUNTIMES_NOT_READ),
+        "host": socket.gethostname(),
+        "runtimes": runtimes,
+        "runtimes_read": [r["name"] for r in runtimes if r["status"] == "read"],
+        "runtimes_not_read": [r["name"] for r in runtimes if r["status"] != "read"],
+        "missed_runs_runtimes": sorted(runs_runtimes),
         "files_seen": files_seen,
         "unreadable_files": unreadable,
         "unparsable_lines": unparsable,
         "undated_events_dropped": undated,
-        "agents_in_window": len(trajectories),
+        "agents_in_window": len(all_trajs),
         "inherited_turns_dropped": duplicate_turns,
         "compactions_observed": compactions,
         "clears_observed": clears,
@@ -539,8 +826,22 @@ def render_table(summary: dict) -> str:
     lines = [
         f"Context length audit, main sessions, {summary['window_start'][:10]} to {summary['window_end'][:10]}",
         f"Context length counted as: {sr['metric_label']}",
-        f"Read: {', '.join(summary['runtimes_read'])} transcripts under {summary['corpus_root']}. "
-        f"NOT READ: {', '.join(summary['runtimes_not_read'])} sessions; the counts below leave them out",
+        f"Host: {summary['host']} (this host's corpora only; other hosts are not read)",
+    ]
+    for r in summary["runtimes"]:
+        if r["status"] == "read":
+            roles = ", ".join(f"{k} {v}" for k, v in r["roles"].items())
+            lines.append(
+                f"Read: {r['name']} under {r['root']}: {r['sessions_with_turns']} main sessions"
+                + (f" (transcripts by role: {roles})" if roles else "")
+            )
+        elif r["status"] == "could not look":
+            lines.append(
+                f"COULD NOT LOOK at {r['name']}: {r['reason']}; the counts below leave it out"
+            )
+        else:
+            lines.append(f"NOT READ: {r['name']}, {r['reason']}; the counts below leave it out")
+    lines += [
         f"sessions with at least one turn: {sr['with_turns']}",
         f"sessions with {LONG_SESSION_TURNS} or more turns: {sr['long_sessions']}",
     ]
@@ -552,16 +853,20 @@ def render_table(summary: dict) -> str:
         )
     over = sr["over_own_ceiling"]
     models = ", ".join(f"{c} on {m or '(unknown)'}" for m, c in over["by_model"].items())
+    by_rt = ", ".join(f"{c} on {k}" for k, c in over["by_runtime"].items())
+    by_rule = ", ".join(f"{c} by the {k} ceiling" for k, c in over["by_rule"].items())
     lines.append(
-        f"sessions with {n} or more turns past the ceiling of their main model: {over['sessions']}"
-        + (f" ({models})" if models else "")
+        f"sessions with {n} or more turns past their ceiling: {over['sessions']}"
+        + (f" ({models}; {by_rt}; {by_rule})" if models else "")
     )
     lines.append(
-        "A main session is not known to be an interface session: the ceiling is the model's, "
-        "an unattended run is bound by the default."
+        "A Claude Code main session is not known to be an interface session: it takes its model's "
+        "ceiling. A Codex cli session takes its model's ceiling; a Codex exec run is unattended and "
+        "takes the default, as does a rollout with no source; a subagent is not a session."
     )
     lines.append(
-        f"missed runs: {summary['missed_runs']} in {summary['sessions_with_missed_runs']} sessions"
+        f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only): "
+        f"{summary['missed_runs']} in {summary['sessions_with_missed_runs']} sessions"
     )
     if summary["unreadable_files"]:
         lines.append(
@@ -598,7 +903,13 @@ def main() -> int:
         "--projects-dir",
         type=Path,
         default=Path("~/.claude/projects").expanduser(),
-        help="Root of the trace corpus (default: ~/.claude/projects)",
+        help="Root of the Claude Code trace corpus (default: ~/.claude/projects)",
+    )
+    parser.add_argument(
+        "--codex-home",
+        type=Path,
+        default=default_codex_home(),
+        help="Codex home holding sessions/ and archived_sessions/ (default: $CODEX_HOME or ~/.codex)",
     )
     parser.add_argument("--days", type=int, default=28, help="Window in days (default 28)")
     parser.add_argument(
@@ -633,8 +944,10 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     try:
+        roots = default_roots()
+        roots.update({"Claude Code": args.projects_dir, "Codex": args.codex_home})
         summary = audit_corpus(
-            args.projects_dir,
+            roots,
             args.days,
             args.min_run,
             args.threshold,

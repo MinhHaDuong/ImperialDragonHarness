@@ -2,9 +2,13 @@
 Title: Context length audit reads Codex sessions
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2402
 
 --- log ---
 2026-11-10T08:14Z reviewer created
+2026-11-10T08:27Z reviewer base: forked from origin/main 01d52200 without PR 2397 (parked, its owner told the raid to fork without it); this branch does the per-runtime reporting itself and supersedes PR 2397
+2026-11-10T08:27Z reviewer input_tokens answered: it already includes cached_input_tokens (docstring of parse_codex_rollout, 2153 rollouts / 28 days)
+2026-11-10T08:39Z reviewer closed — autoclosed — PR #2402
 
 --- body ---
 ## Context
