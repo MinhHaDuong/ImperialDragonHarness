@@ -285,6 +285,8 @@ Run full repo housekeeping and act on every finding.
 
    Then summarize what you did, say which case applied, and propose: "Surface remaining nits?"
 
+   Keeping is for this run only. Once the report is written, remove what was kept for it: a tree whose commits are pushed and whose `.tmp/` notes are in the report goes (from the primary checkout, `git worktree unlock <path> && git worktree remove <path>`), its branch staying pending for roar. What stays kept (dirty, blocked, unpushed) is named in the report with its reason. Leave nothing in a tree to come back to: gc reclaims it once this session ends.
+
 ## Branch discipline
 
 Step 1 cuts a `housekeeping-<date>` branch from `<base>` in a dedicated worktree before any commits,

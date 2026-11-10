@@ -19,8 +19,9 @@ survives the deletion:
 
 This commits everything on the agent's branch and pushes it. Nothing enforces
 the order, so keep it: salvage first, then run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch <branch> <worktree-path>`. If the guard blocks, retain the tree and surface the reason; otherwise `git worktree unlock` and `git worktree remove` (never
-`--force` over uncommitted changes). Relaunch the finisher on the **existing** branch with
-`git switch <branch>` (NOT `-c`) — if this follows a killed-agent fork, confirm
+`--force` over uncommitted changes). Relaunch the finisher on the **existing** branch
+(NOT `-c` or `-b`), in a fresh worktree (`git worktree add <path> <branch>`), or in the
+retained tree, handed by path, when the guard kept it — if this follows a killed-agent fork, confirm
 the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor across
 a forked-skill boundary); it inspects the salvaged WIP via
 `git show --stat HEAD` before continuing rather than starting from scratch.

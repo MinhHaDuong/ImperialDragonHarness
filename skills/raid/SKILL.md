@@ -54,7 +54,9 @@ a context handoff rule and a broadcast before any shared resource: read
 
 Every phase ends with a git commit. If the session dies, resume by
 reading the ticket logs and git history to determine which phase
-completed last. The checkpoint is the repo, not session state.
+completed last. The checkpoint is the repo, not session state: a resumed
+raid makes fresh worktrees on the pushed branches and never looks for the
+old ones.
 
 If execution stopped with the last outside action's outcome uncertain, read
 its outcome back from the relevant system immediately before retrying that
@@ -281,8 +283,9 @@ instead of the skill.) The agent lands its branch as hunt's Verify phase
 dictates: a merge request on a forge, a ready-to-merge branch without one. An agent that returns its ticket as a likely monster
 brings a proposed decomposition instead: apply the monster checklist to it,
 file the split, and schedule the children in a later wave. A partial branch it
-pushed is named in the split for the child that inherits it; its unlocked
-worktree is removed with the wave's. No later wave left: report the split to
+pushed is named in the split for the child that inherits it, which starts a
+fresh worktree on that branch; the agent removed its own, and one it left
+behind is removed with the wave's. No later wave left: report the split to
 the author instead.
 
 Wait for wave to complete.
