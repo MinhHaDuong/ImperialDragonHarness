@@ -171,14 +171,55 @@ list, and compares the md5 only with the works another key found.
 
 **`work_present_no_file` is repaired by attaching, not by `create-items`.**
 `create-items` only ever creates items, so using it here mints a duplicate of a
-work the library already holds. `suggest-attachments` checks the item and the file and
-reports the attachment; with `--edit` it stores a copy of the file under the
-item through the local API:
+work the library already holds. `suggest-attachments` compares the file with
+the item and reports the attachment with what it compared; with `--edit` it
+stores a copy of the file under the item through the local API, unless the
+comparison refused it:
 
 ```bash
 "$IDH_ROOT/scripts/zotero.py" suggest-attachments --parent <itemKey> docs/Walley1991.pdf          # report
 "$IDH_ROOT/scripts/zotero.py" suggest-attachments --parent <itemKey> docs/Walley1991.pdf --edit   # store
 ```
+
+### What licenses an attach
+
+One statement, read by `check-staging --apply --edit` and
+`suggest-attachments` alike (`licenses_attach` and `attach_licence` in the
+helper). Evidence comes in two strengths:
+
+- **Given**: an identifier from the file's `.bib` entry, or from a receipt
+  found by the file's md5 when the `.bib` entry gives none.
+- **Hint**: an identifier from a receipt found by name only, or beside a
+  `.bib` identifier, and one read from the file's own pages (`(from text)`),
+  which may be a cited work's. A URL match is in neither: it finds a work, it
+  never licenses a write.
+
+The sweep attaches a staged file only when a given identifier or the md5
+found the work; anything else is reported with a caution and left to you. It
+does not refuse on a contradicting identifier, since it found the work by a
+matching one.
+
+`suggest-attachments` is told the parent, so it checks the pair. Its row
+carries `licence`:
+
+- `refused`, nothing written: the file's md5 is already stored under another
+  item (named), or a given identifier is of a kind the item holds with
+  another value. A hint or a page-read identifier may refuse the same way,
+  unless a given one agrees. A work often carries several DOIs or ISBNs; when
+  both values name this work, add the second as an Extra line
+  (`DOI: <value>`, `ISBN: <value>`, `arXiv: <value>`) and rerun.
+- `agreed`, attached: a given identifier the item carries; `on` names the
+  kind.
+- `unverified`, attached: nothing to compare (no identifier, or one of a kind
+  the item does not hold; a chapter holds no ISBN of its own). The row shows
+  where trust was taken.
+- `already stored`, nothing written: the item already holds this file.
+
+The `.bib` entry is found from the file's project root (its nearest ancestor
+holding `.git` or `.zotero-reconcile.json`), never the current directory. A
+comparison that could not run (no root, an md5 listing Zotero did not
+finish) is named in the row's `skipped` and blocks nothing; a skipped md5
+listing still makes the exit 1.
 
 Before trusting a check's negatives, run it against a case you know is
 positive — a guard whose "all clear" is indistinguishable from "I could not
@@ -207,8 +248,9 @@ the DOI or ISBN it was given and the file's md5 in a receipt: the JSON line it
 prints, appended to `<staging folder>/.receipts.jsonl`. `check-staging` and
 `find-work --metadata <receipt>` read it back; nothing is recorded by hand.
 `skipped` means the target file already existed; its origin is unknown, it
-leaves no receipt, and must not be attributed to a source. Verify the file
-belongs to the work before attaching.
+leaves no receipt, and must not be attributed to a source.
+`suggest-attachments` compares the file with the item before attaching it
+(§ What licenses an attach).
 
 On `success`, check the downloaded PDF, then file it with
 `suggest-attachments --parent <itemKey> <file>` and add `--edit` after reading
