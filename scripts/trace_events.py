@@ -645,12 +645,13 @@ def read_opaque(runtime: str, file: str, start: float, end: float, agent: str | 
 def zstd_lines(path: Path) -> list[str]:
     """Decompressed lines of a `.zst` archive copy (the `zstd` CLI, as transcript_archive.py writes it)."""
     out = subprocess.run(["zstd", "-dc", "--", str(path)], capture_output=True, check=True)
-    return out.stdout.decode("utf-8", "replace").splitlines()
+    return out.stdout.decode("utf-8", "replace").split("\n")
 
 
 def open_lines(path: Path) -> list[str]:
-    """Lines of a plain or `.zst` transcript."""
+    """Lines of a plain or `.zst` transcript, split on newlines only: str.splitlines would also
+    cut a record at a U+2028 or U+2029 its JSON strings may hold raw."""
     if path.suffix == ".zst":
         return zstd_lines(path)
-    with path.open(encoding="utf-8", errors="replace") as handle:
-        return handle.read().splitlines()
+    with path.open(encoding="utf-8", errors="replace", newline="") as handle:
+        return handle.read().split("\n")

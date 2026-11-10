@@ -270,3 +270,25 @@ def test_codex_agent_name_is_not_overwritten_by_a_tool_name():
     rows = [{"timestamp": "2026-01-01T00:00:01.000Z", "type": "response_item", "payload": {
         "type": "function_call", "name": "exec_command", "call_id": "c1", "arguments": "{}"}}]
     assert te.read_codex(lines(*rows), "f", name="seat/codex")[0].name == "seat/codex"
+
+
+def _separator_rows(path):
+    """Three records: one holding a raw U+2028 in a string, one ending CRLF, then a blank line."""
+    rows = [{"type": "user", "text": "a b"}, {"type": "assistant"}]
+    body = json.dumps(rows[0], ensure_ascii=False) + "\n" + json.dumps(rows[1]) + "\r\n\n"
+    path.write_text(body, encoding="utf-8")
+    return rows
+
+
+def test_a_line_separator_inside_a_json_string_does_not_split_the_record(tmp_path):
+    rows = _separator_rows(tmp_path / "t.jsonl")
+    assert list(te._rows(te.open_lines(tmp_path / "t.jsonl"))) == rows
+
+
+@pytest.mark.integration
+def test_a_zst_copy_splits_on_newlines_only(tmp_path):
+    import subprocess
+
+    rows = _separator_rows(tmp_path / "t.jsonl")
+    subprocess.run(["zstd", "-q", "-o", str(tmp_path / "t.jsonl.zst"), str(tmp_path / "t.jsonl")], check=True)
+    assert list(te._rows(te.open_lines(tmp_path / "t.jsonl.zst"))) == rows
