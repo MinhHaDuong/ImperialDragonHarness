@@ -219,7 +219,7 @@ def suggest_type(mime: str, host: str, meta: dict, ids: dict) -> str:
 
 
 def file_md5(path: Path) -> str:
-    """Zotero's own file hash (the one scripts/zotero.py's file_md5 computes)."""
+    """Zotero's own file hash (the one $IDH_ROOT/scripts/zotero.py computes)."""
     digest = hashlib.md5()
     with path.open("rb") as fh:
         for block in iter(lambda: fh.read(1 << 20), b""):
@@ -229,7 +229,7 @@ def file_md5(path: Path) -> str:
 
 def leave_receipt(rec: dict, staging: Path) -> None:
     """Append the record, as printed, to the staging folder's receipts file:
-    one line per fetch, read back by scripts/zotero.py by md5 or name."""
+    one line per fetch, read back by $IDH_ROOT/scripts/zotero.py by md5 or name."""
     fd = os.open(staging / RECEIPTS_NAME, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
     with os.fdopen(fd, "a", encoding="utf-8") as stream:
         stream.write(json.dumps(rec, ensure_ascii=False) + "\n")
@@ -268,7 +268,7 @@ def probe_one(url: str, staging: Path, timeout: int) -> dict:
             rec["page_count"] = pi["page_count"]
         text = pi.get("first_text", "")
     rec["meta"] = meta
-    # Receipt keys, shared with scripts/fulltext_cascade.py. Everything read
+    # Receipt keys, shared with $IDH_ROOT/scripts/fulltext_cascade.py. Everything read
     # from the page or the PDF text is scraped: it may be a cited work's.
     rec["identifiers"] = find_identifiers(text or "", meta.get("doi_meta", ""))
     rec["identifiers_scraped"] = sorted(rec["identifiers"])
