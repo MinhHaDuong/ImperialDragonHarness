@@ -2,11 +2,13 @@
 Title: Context length audit reads the other hosts from the archive, not over ssh
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2438
 
 --- log ---
 2026-11-10T13:32Z reviewer created
 2026-11-10T13:34Z reviewer note blocked by 1520 (author, 2026-11-10: ensure the archive covers all surfaces): the audit's archive reader takes each runtime's roots and each file's source root from the one definition 1520 lands
 2026-11-10T13:47Z reviewer note blocker 1520 closed — Blocked-by removed.
+2026-11-10T14:15Z reviewer closed — autoclosed — PR #2438
 
 --- body ---
 ## Context
