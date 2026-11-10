@@ -186,7 +186,10 @@ Commit reimagined tickets. Report scorecard, including the Blind-Spot verdict.
   recommendation. A success outcome, not drift: the agent neither rewrites
   the intent nor closes the ticket; the author decides, and an answer to
   another project goes through its ticket store (`rules/workflow.md`
-  § Cross-project work).
+  § Cross-project work). When a live session can manage the asker (one in
+  the asker's project, or the one that filed the ask), take the pushback up
+  with it in dialogue first, and drop, deny or return the ticket only after
+  that exchange, logged on the ticket.
 
 The what belongs to the author; the how belongs to the agent. An Imagine
 agent never edits intent: no new deliverables, no substituted goals. But
