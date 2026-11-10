@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Context length audit reads the fleet by default
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T12:13Z reviewer created
+
+--- body ---
+## Context
+
+Follow-up to tracker 1507 (closed 2026-11-10). `scripts/trace-compact-audit.py`
+now reads Claude Code, Codex and Pi sessions, on the host it runs on only, and
+says so ("Host: padme (this host's corpora only; other hosts are not read)").
+The ceilings bind every host. Asked whether the count means this host or the
+fleet, the author ruled on 2026-11-10: "Audit the fleet by default, if the
+other machine is up."
+
+Observed on padme, 2026-11-10:
+
+- `ssh -o BatchMode=yes doudou` answers; doudou has `~/.claude/projects`,
+  `~/.codex/sessions`, `~/.pi/agent/sessions` and its own archive root
+  (`~/data/datasets/ours/agent-sessions`).
+- padme's archive holds a compressed copy of doudou's transcripts,
+  `<archive>/raw/doudou/{claude,codex,pi,seat-raw}`: 28272 files, the newest
+  dated 2026-11-08 (`scripts/transcript_archive.py` skips a source touched
+  within a day, hence a lag).
+- No list of fleet hosts was found in `scripts/` or the checks configuration;
+  the archive's `raw/<host>` directories name doudou and padme.
+
+## Scope
+
+- By default the audit covers every host of the fleet, the local one and each
+  other host that is up, and its table and JSON count sessions per host as
+  well as per runtime.
+- A host that is down, unreachable or unreadable is reported as could not
+  look, never as zero sessions; the local counts are still given.
+- An option limits the audit to the local host.
+- Only aggregates cross hosts: no transcript content leaves the host it sits
+  on, as the script's docstring already promises for its own output.
+
+Option not taken, for the record: reading the other host's archive copy on
+this host. It works when the host is down and needs no ssh, but lags (two
+days on 2026-11-10). The author asked for the live reading when the host is
+up.
+
+Out of scope: any other trace script (ticket 1517); a fleet inventory beyond
+what this audit needs; fixing clock or version drift between hosts beyond
+reporting it.
+
+## Test
+
+With the remote reading replaced by a stub: a session past its ceiling on the
+other host is counted under that host; a host that does not answer is named as
+could not look while the local counts stand and the exit code is 0; the
+local-only option reads no other host; an answer from another host that this
+version cannot interpret (an older script there) is reported as could not
+look, not merged.
+
+## Exit criteria
+
+- [ ] Run with no option on a host of the fleet, the audit counts the sessions
+  of every host that is up, per host and per runtime, and names each host
+  read
+- [ ] A host that is down or unreadable is reported as could not look, with a
+  non-zero exit only when no corpus on any host is readable
+- [ ] An option restricts the audit to the local host
+- [ ] No transcript content crosses hosts: the other host returns aggregates
+  only
+- [ ] `make check` passes

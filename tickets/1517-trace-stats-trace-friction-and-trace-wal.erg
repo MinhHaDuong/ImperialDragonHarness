@@ -1,0 +1,59 @@
+%erg 0.1
+Title: trace-stats, trace-friction and trace-wall-time read every runtime by default
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T12:13Z reviewer created
+
+--- body ---
+## Context
+
+Follow-up to tracker 1507 (closed 2026-11-10). The sweep after PR 2402 found
+three sibling scripts that walk `~/.claude/projects` only and do not say so:
+`scripts/trace-stats.py` (the census; `--projects-dir`, 643 lines),
+`scripts/trace-friction.py` (`--projects-dir`, 672 lines) and
+`scripts/trace-wall-time.py` (`DEFAULT_ROOT`, 458 lines). Their counts read as
+covering the harness's sessions while Codex and Pi sessions are left out, the
+defect ticket 1507 fixed in the context audit. The author ruled on
+2026-11-10: "Fix the trace- script: default to all surfaces, say what they
+did."
+
+What exists: `scripts/trace_events.py` has `read_claude`, `read_codex` and
+`read_pi`; `scripts/transcript_spool.py` gives each runtime's live root
+(`live_roots()`) and the spool; `scripts/trace-compact-audit.py` (tickets 1508
+and 1509) has a table of runtimes with one reader per root and a
+read / not read / could not look report. `scripts/trace-compact-audit.py`
+imports `trace-stats.py` (`iter_trace_files`, pricing, timestamp parsing).
+
+## Scope
+
+- Each of the three scripts reads, by default, every runtime it can measure
+  (Claude Code, Codex, Pi and the Pi spool), and its table and JSON name each
+  runtime read, each one not read with the reason, and each one it could not
+  look at.
+- A measure that has no meaning or no data on a runtime (a price table, a
+  tool category, a record type that runtime does not write) is reported as
+  not measured there, never as zero.
+- The three scripts are one change: the same fix in three parallel units.
+
+Out of scope: reading other hosts (ticket 1516 does that for the context
+audit only); new metrics; prices for models that have none in the script
+today, beyond saying they are not priced.
+
+## Test
+
+On fixture transcripts, per script: a Codex session and a Pi session are
+counted under their runtime beside a Claude Code one; an absent corpus for one
+runtime is reported as could not look while the others are counted; a measure
+the runtime cannot supply is reported as not measured, not as zero.
+
+## Exit criteria
+
+- [ ] `trace-stats.py`, `trace-friction.py` and `trace-wall-time.py` each read
+  Claude Code, Codex and Pi sessions by default
+- [ ] Each one's output names every runtime read, not read and could not look
+  at, and marks a measure a runtime cannot supply as not measured
+- [ ] `scripts/trace-compact-audit.py` and its tests still pass unchanged in
+  behaviour
+- [ ] `make check` passes
