@@ -22,6 +22,17 @@ spec.loader.exec_module(tca)
 
 NOW = datetime(2026, 11, 10, 12, 0, tzinfo=timezone.utc)
 
+# The audit's logic is tested against ceilings of its own, which differ from
+# the live file's, so the tests hold when the author changes a ceiling there.
+CEIL = {
+    "default_tokens": 210_000,
+    "interface_session": [
+        {"models": ["sol", "opus"], "tokens": 460_000},
+        {"models": ["astra", "fable"], "tokens": 560_000},
+    ],
+}
+LV = str(CEIL["default_tokens"])  # the lowest level row
+
 
 def _turn(msg_id, day, *, cache_read=0, inp=0, creation=0, model="claude-opus-5-5"):
     return {
@@ -57,6 +68,7 @@ def _audit(root, **kw):
     kw.setdefault("days", 28)
     kw.setdefault("min_run", 30)
     kw.setdefault("now", NOW)
+    kw.setdefault("ceilings", CEIL)
     return tca.audit_corpus(root, **kw)
 
 
@@ -70,13 +82,13 @@ def test_turn_context_is_the_whole_prompt(tmp_path):
 
 
 def test_threshold_applies_to_the_prompt_not_the_cache_read(tmp_path):
-    # cache read alone is below 230K; the whole prompt is above.
+    # cache read alone is below the default ceiling; the whole prompt is above.
     rows = [_turn(f"m{i}", 9, cache_read=200_000, creation=40_000) for i in range(30)]
     _session(tmp_path, "s", rows)
     out = _audit(tmp_path)["sessions"]
-    assert out["levels"]["230000"]["sessions"] == 1
+    assert out["levels"][LV]["sessions"] == 1
     legacy = _audit(tmp_path, metric="cache_read")["sessions"]
-    assert legacy["levels"]["230000"]["sessions"] == 0
+    assert legacy["levels"][LV]["sessions"] == 0
     assert "cache_read" in legacy["metric"] and "cache_read" not in out["metric"]
 
 
@@ -88,7 +100,7 @@ def test_turns_outside_the_window_are_not_counted(tmp_path):
     _session(tmp_path, "s", old + new)
     out = _audit(tmp_path, days=3)
     assert out["sessions"]["with_turns"] == 1
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 0  # the old turns do not count
+    assert out["sessions"]["levels"][LV]["sessions"] == 0  # the old turns do not count
     assert out["sessions"]["turns_in_window"] == 5
 
 
@@ -119,7 +131,7 @@ def test_two_runs_in_one_session_count_once(tmp_path):
     _session(tmp_path, "s", high("a") + [clear] + high("b"))
     out = _audit(tmp_path)
     assert out["missed_runs"] == 2
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 1
+    assert out["sessions"]["levels"][LV]["sessions"] == 1
     assert out["sessions_with_missed_runs"] == 1
 
 
@@ -128,7 +140,7 @@ def test_only_main_transcripts_are_sessions(tmp_path):
     _session(tmp_path, "s", [_turn(f"a{i}", 9, cache_read=300_000) for i in range(30)], agent="a1")
     out = _audit(tmp_path)
     assert out["sessions"]["with_turns"] == 1
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 0
+    assert out["sessions"]["levels"][LV]["sessions"] == 0
 
 
 # --- main model and per-model thresholds -------------------------------------
@@ -138,25 +150,45 @@ def test_main_model_is_the_most_used_and_reported(tmp_path):
     rows += [_turn("h", 9, cache_read=300_000, model="claude-haiku-5-5")]
     _session(tmp_path, "s", rows)
     out = _audit(tmp_path)["sessions"]
-    assert out["levels"]["230000"]["by_model"] == {"claude-opus-5-5": 1}
+    assert out["levels"][LV]["by_model"] == {"claude-opus-5-5": 1}
 
 
 def test_ceiling_comes_from_the_route_data_per_model():
-    c = tca.load_ceilings(CEILINGS)
-    assert tca.ceiling_for("claude-opus-5-5", c) == 450_000
-    assert tca.ceiling_for("gpt-6.1-sol", c) == 450_000
-    assert tca.ceiling_for("claude-fable-5-1", c) == 550_000
-    assert tca.ceiling_for("gpt-6-astra", c) == 550_000
-    assert tca.ceiling_for("claude-haiku-5-5", c) == 230_000
-    assert tca.ceiling_for("", c) == 230_000
-    assert tca.ceiling_for("console-model", c) == 230_000  # a word match, not a substring
+    c = CEIL
+    assert tca.ceiling_for("claude-opus-5-5", c) == 460_000
+    assert tca.ceiling_for("gpt-6.1-sol", c) == 460_000
+    assert tca.ceiling_for("claude-fable-5-1", c) == 560_000
+    assert tca.ceiling_for("gpt-6-astra", c) == 560_000
+    assert tca.ceiling_for("claude-haiku-5-5", c) == 210_000
+    assert tca.ceiling_for("", c) == 210_000
+    assert tca.ceiling_for("console-model", c) == 210_000  # a word match, not a substring
+
+
+def test_level_rows_are_the_distinct_ceilings_of_the_data_in_increasing_order():
+    assert tca.levels_for(CEIL) == (210_000, 460_000, 560_000)
+    other = {"default_tokens": 300_000, "interface_session": [{"models": ["x"], "tokens": 300_000},
+                                                              {"models": ["y"], "tokens": 120_000}]}
+    assert tca.levels_for(other) == (120_000, 300_000)
+
+
+def test_level_rows_follow_the_ceilings_given_not_the_live_file(tmp_path):
+    other = {"default_tokens": 100_000, "interface_session": [{"models": ["opus"], "tokens": 350_000}]}
+    # past the fixture's default, under the live one
+    _session(tmp_path, "s", [_turn(f"m{i}", 9, cache_read=120_000) for i in range(30)])
+    out = _audit(tmp_path, ceilings=other)["sessions"]
+    assert list(out["levels"]) == ["100000", "350000"]
+    assert out["levels"]["100000"]["sessions"] == 1 and out["levels"]["350000"]["sessions"] == 0
+
+
+def test_live_ceilings_file_sets_the_level_rows(tmp_path):
+    live = tca.load_ceilings(CEILINGS)
+    _session(tmp_path, "s", [_turn(f"m{i}", 9, cache_read=live["default_tokens"]) for i in range(30)])
+    out = tca.audit_corpus(tmp_path, days=28, min_run=30, now=NOW)["sessions"]
+    assert list(out["levels"]) == [str(lv) for lv in tca.levels_for(live)]
 
 
 def test_sessions_over_their_own_model_ceiling(tmp_path):
-    ceilings = {
-        "default_tokens": 230_000,
-        "interface_session": [{"models": ["opus"], "tokens": 450_000}, {"models": ["fable"], "tokens": 550_000}],
-    }
+    ceilings = CEIL
     at = lambda n, model: [_turn(f"{model}{i}", 9, cache_read=n, model=model) for i in range(30)]  # noqa: E731
     _session(tmp_path, "opus-under", at(400_000, "claude-opus-5-5"))
     _session(tmp_path, "opus-over", at(460_000, "claude-opus-5-5"))
@@ -171,7 +203,7 @@ def test_sessions_over_their_own_model_ceiling(tmp_path):
 def test_explicit_threshold_overrides_the_per_model_one(tmp_path):
     rows = [_turn(f"m{i}", 9, cache_read=300_000) for i in range(30)]
     _session(tmp_path, "s", rows)
-    assert _audit(tmp_path)["missed_runs"] == 0  # opus ceiling 450K
+    assert _audit(tmp_path)["missed_runs"] == 0  # under the opus ceiling
     assert _audit(tmp_path, threshold=200_000)["missed_runs"] == 1
 
 
@@ -219,8 +251,9 @@ def test_cli_prints_the_note_table(tmp_path):
     out = done.stdout
     assert "whole prompt" in out
     assert "sessions with at least one turn: 1" in out
-    assert "30 or more turns at or above 450K: 1" in out
-    assert "30 or more turns at or above 550K: 0" in out
+    live = tca.load_ceilings(CEILINGS)
+    for lv in tca.levels_for(live):
+        assert f"30 or more turns at or above {tca._fmt_k(lv)}: {int(500_000 >= lv)}" in out
 
 
 # --- Codex sessions (ticket 1508) ---------------------------------------------
@@ -284,11 +317,11 @@ def test_codex_session_past_its_ceiling_is_counted_under_codex(tmp_path):
 
 
 def test_codex_input_tokens_already_hold_the_cached_part(tmp_path):
-    # 440K input of which 300K cached: adding the cached part again would cross 450K.
+    # 440K input of which 300K cached: adding the cached part again would cross the Opus ceiling.
     _codex_session(tmp_path / "codex", "x", [(9, 440_000, 300_000)] * 30)
     out = _both(tmp_path, roots={"Claude Code": None})
     assert out["sessions"]["over_own_ceiling"]["sessions"] == 0
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 1
+    assert out["sessions"]["levels"][LV]["sessions"] == 1
 
 
 def test_codex_exec_is_held_to_the_default_ceiling_cli_to_its_model(tmp_path):
@@ -310,7 +343,7 @@ def test_codex_turn_outside_the_window_is_not_counted(tmp_path):
     _codex_session(tmp_path / "codex", "x", [(1, 500_000, 0)] * 40 + [(9, 100_000, 0)] * 5)
     out = _both(tmp_path, roots={"Claude Code": None}, days=3)
     assert out["sessions"]["turns_in_window"] == 5
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 0
+    assert out["sessions"]["levels"][LV]["sessions"] == 0
 
 
 def test_codex_reemitted_token_count_is_one_request(tmp_path):
@@ -331,7 +364,7 @@ def test_absent_codex_corpus_is_could_not_look_and_claude_code_still_counted(tmp
     codex = _runtime(out, "Codex")
     assert codex["status"] == "could not look"
     assert "Codex" in out["runtimes_not_read"] and "Codex" not in out["runtimes_read"]
-    assert "Codex" not in out["sessions"]["levels"]["230000"]["by_runtime"]
+    assert "Codex" not in out["sessions"]["levels"][LV]["by_runtime"]
     alone = _audit(tmp_path / "claude")
     assert out["sessions"]["levels"] == alone["sessions"]["levels"]
     assert out["sessions"]["with_turns"] == alone["sessions"]["with_turns"] == 1
@@ -451,11 +484,11 @@ def test_pi_turns_are_dated_by_the_turn_not_the_header(tmp_path):
 
 
 def test_pi_live_root_takes_the_model_ceiling_spool_the_default(tmp_path):
-    turns = [(100, 300_000, 0)] * 30  # past Opus's ceiling, under the 230K default? no: over default, under Opus
+    turns = [(100, 300_000, 0)] * 30  # past Opus's ceiling, over the default, under Opus
     _pi_session(tmp_path / "pi", "live", turns)
     _pi_session(tmp_path / "spool", "seat", turns)
     out = _pi(tmp_path)
-    ceil = tca.ceiling_for("claude-opus-5-5", tca.load_ceilings())
+    ceil = tca.ceiling_for("claude-opus-5-5", CEIL)
     assert ceil > 300_100  # the fixture sits under the model ceiling
     rows = {r["session_id"]: r for r in out["sessions"]["over_own_ceiling"]["rows"]}
     assert set(rows) == {"seat"}
@@ -503,7 +536,7 @@ def test_pi_abandoned_branch_is_not_a_turn(tmp_path):
     path.write_text("\n".join(json.dumps(r) for r in [rows[0], rows[1], side, rows[2]]) + "\n")
     out = _pi(tmp_path)
     assert out["sessions"]["turns_in_window"] == 2
-    assert out["sessions"]["levels"]["230000"]["sessions"] == 0
+    assert out["sessions"]["levels"][LV]["sessions"] == 0
 
 
 @pytest.mark.integration
@@ -530,7 +563,7 @@ def _remote_answer(host="doudou", *, over=0, sessions=3, schema=None):
         "turns_in_window": 100, "long_sessions": 1, "min_turns_at_level": 30,
         "levels": {str(lv): {"sessions": over, "by_model": {"claude-opus-5-5": over} if over else {},
                              "by_runtime": {"Claude Code": over} if over else {}}
-                   for lv in tca.LEVELS},
+                   for lv in tca.levels_for(CEIL)},
         "by_runtime": {"Claude Code": sessions},
         "over_own_ceiling": {"sessions": over, "by_model": {"claude-opus-5-5": over} if over else {},
                              "by_runtime": {"Claude Code": over} if over else {},

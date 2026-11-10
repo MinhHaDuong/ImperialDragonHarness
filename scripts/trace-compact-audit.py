@@ -91,9 +91,10 @@ METRIC_LABEL = {
     "prompt": "whole prompt (input + cache read + cache creation)",
     "cache_read": "cache_read tokens only",
 }
-# The levels of the design note's table, and its session floors.
-LEVELS = (230_000, 450_000, 550_000)
-MIN_TURNS_AT_LEVEL = 30
+# The run floor, in turns: the length of a flagged run and the turns a session
+# needs at a level to count there. The levels themselves come from the
+# ceilings data (`levels_for`).
+MIN_RUN = 30
 LONG_SESSION_TURNS = 100
 
 
@@ -109,6 +110,14 @@ RULE_DEFAULT = "default"
 
 def load_ceilings(path: Path = CEILINGS_PATH) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def levels_for(ceilings: dict) -> tuple[int, ...]:
+    """The rows of the level table: the distinct ceilings of the data, the
+    default included, increasing."""
+    values = {int(ceilings["default_tokens"])}
+    values.update(int(e["tokens"]) for e in ceilings.get("interface_session", []))
+    return tuple(sorted(values))
 
 
 def ceiling_for(model: str, ceilings: dict) -> int:
@@ -697,8 +706,9 @@ def main_model(events: list[dict]) -> str:
     return max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0] if counts else ""
 
 
-def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=LEVELS) -> dict:
+def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=None) -> dict:
     """Counts over main sessions, one row per session however many runs it had."""
+    levels = levels_for(ceilings) if levels is None else levels
     rows = []
     for item in main_trajs:
         runtime, (project, session_id, traj) = (
@@ -740,13 +750,13 @@ def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=
 
     level_rows = {}
     for lv in levels:
-        sel = [r for r in rows if r["at_level"][str(lv)] >= MIN_TURNS_AT_LEVEL]
+        sel = [r for r in rows if r["at_level"][str(lv)] >= MIN_RUN]
         level_rows[str(lv)] = {
             "sessions": len(sel),
             "by_model": by_model(sel),
             "by_runtime": by(sel, "runtime"),
         }
-    over = [r for r in rows if r["turns_over_ceiling"] >= MIN_TURNS_AT_LEVEL]
+    over = [r for r in rows if r["turns_over_ceiling"] >= MIN_RUN]
     over.sort(key=lambda r: -r["peak"])
     return {
         "metric": metric,
@@ -754,7 +764,7 @@ def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=
         "with_turns": len(rows),
         "turns_in_window": sum(r["turns"] for r in rows),
         "long_sessions": sum(1 for r in rows if r["turns"] >= LONG_SESSION_TURNS),
-        "min_turns_at_level": MIN_TURNS_AT_LEVEL,
+        "min_turns_at_level": MIN_RUN,
         "levels": level_rows,
         "by_runtime": by(rows, "runtime"),
         "over_own_ceiling": {
@@ -784,7 +794,7 @@ def audit_corpus(
     `roots` or mapped to None is not read. Raises CouldNotLook only when no
     runtime's corpus is readable, unless `require_one` is false (the fleet
     reading, where another host may still be readable). `threshold` None means each agent's own: its
-    main model's ceiling for a main session, the default (230K) for a
+    main model's ceiling for a main session, the default ceiling for a
     subagent."""
     from datetime import datetime, timezone
 
@@ -1287,15 +1297,15 @@ def main() -> int:
     parser.add_argument(
         "--min-run",
         type=int,
-        default=30,
-        help="Minimum consecutive high-context turns to flag (default 30)",
+        default=MIN_RUN,
+        help="Minimum consecutive high-context turns to flag (default %(default)s)",
     )
     parser.add_argument(
         "--threshold",
         type=int,
         default=None,
         help="Per-turn context floor in tokens for every agent "
-        "(default: each main model's ceiling from skills/route/ceilings.json, 230000 for subagents)",
+        "(default: each main model's ceiling from skills/route/ceilings.json, its default for subagents)",
     )
     parser.add_argument(
         "--metric",
