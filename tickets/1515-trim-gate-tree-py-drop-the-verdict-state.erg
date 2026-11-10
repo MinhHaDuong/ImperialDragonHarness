@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Trim gate_tree.py: drop the verdict-state and name checks, keep the stale-tree replace
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T12:09Z reviewer created
+
+--- body ---
+## Context
+
+Author ruling, 2026-11-10 morning, on the weekly ticket audit's
+recommendation: trim `scripts/gate_tree.py` ("2 yes trim"). The session that
+received the ruling ("orphan session audit") had a coder look before writing,
+then held the work because ticket 1500 edited the same script and the same
+passage of `skills/verify-gate/SKILL.md`. Ticket 1500 landed (PR #2394); that
+session had ended by then and nothing was filed. This ticket records what its
+coder found, as relayed to the raid on 1500, with the facts rechecked on
+main after PR #2394.
+
+Facts on main:
+- `scripts/gate_tree.py` is 125 lines; `tests/test_gate_tree.py` is 194.
+- No script calls it. `skills/verify-gate/SKILL.md:117` does, and relies on
+  exit 1 meaning ESCALATE and on the printed tree path.
+- `skills/verify-gate/SKILL.md:125` and
+  `skills/raid/references/circuit-breakers.md:54` relaunch a stalled gate
+  under the same session and rely on the stale same-round tree being replaced.
+
+So the audit's premise holds only in part. The ticket 1490 fix is
+instructions in skill text; a gate can still end with no verdict and leave
+its tree, and the plain replace is still needed. What can go without losing
+a rail:
+- the verdict-state check (`ruled()`, `--gate-state`, `--session`, `--round`:
+  refuse when the round already carries a verdict), about 20 lines;
+- the name check (a tree whose name does not start with `gate-` is a usage
+  error).
+What stays: the lock refusal, the not-a-worktree refusal, the
+unreachable-commit refusal, the residue refusal through the exit preflight
+(which since PR #2394 also covers a nested registered worktree), and the
+replace itself. About 25 lines of script and the tests that covered the two
+checks go; `skills/verify-gate/SKILL.md:117-130` is reworded to match.
+
+Open for the planner: whether a 25-line trim is worth a full-tier review and
+gate of gate machinery, or the ruling is better served by leaving the script
+and closing this ticket as settled. The author ruled "trim" on the audit's
+fuller premise; return it to the author if the reduced scope changes the call.
+
+## Exit criteria
+
+- [ ] `gate_tree.py add` no longer takes `--gate-state`, `--session` or `--round` and no longer checks the tree's name; its callers' text in `skills/verify-gate/SKILL.md` and `skills/raid` is brought in line
+- [ ] A stale same-round gate tree is still replaced, and the lock, not-a-worktree, unreachable-commit and residue refusals still answer exit 1 with nothing removed, by the existing tests
+- [ ] The tests that covered only the two removed checks are deleted; no test asserts wording in the script's or the skill's source
+- [ ] `make check` passes
