@@ -277,7 +277,9 @@ def registered_verdict_roots(worktree: Path, numbers: list[str]) -> list[Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, usage=(
+        "%(prog)s register WORKTREE\n"
+        "       %(prog)s {preflight,removal} REPO WORKTREE [--branch BRANCH]"))
     parser.add_argument("mode", choices=("register", "preflight", "removal"))
     parser.add_argument("repo", type=Path)
     parser.add_argument("worktree", type=Path, nargs="?")
