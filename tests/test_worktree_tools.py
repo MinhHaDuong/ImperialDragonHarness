@@ -182,7 +182,6 @@ def test_hunt_tmp_exclude_registration_uses_shared_git_metadata(origin):
     (wt / ".tmp" / "ignored.txt").write_text("scratch\n")
     assert git(wt, "status", "--porcelain", "--untracked-files=all").stdout.strip() == ""
 
-
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
     return [line[len("worktree "):] for line in out.splitlines() if line.startswith("worktree ")]
