@@ -290,3 +290,19 @@ def test_unavailable_hal_query_stops_before_shadow(tmp_path, monkeypatch, capsys
     )
     assert main() == 3
     assert "Cannot parse author/title" in json.loads(capsys.readouterr().out)["error"]
+
+
+def test_cli_has_no_default_output_directory(monkeypatch, capsys):
+    """The caller names the staging folder; the cascade assumes none."""
+    import sys
+
+    import pytest
+
+    from scripts.fulltext_cascade import main
+
+    monkeypatch.setattr(
+        sys, "argv", ["fulltext_cascade.py", "--phase", "open", "--doi", "10.1/a"]
+    )
+    with pytest.raises(SystemExit) as stop:
+        main()
+    assert stop.value.code == 2
