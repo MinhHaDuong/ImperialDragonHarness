@@ -519,6 +519,17 @@ def test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone(
 
 
 @pytest.mark.integration
+def test_an_embedded_title_that_matches_nothing_is_unidentified_live(
+        lib, tmp_path):
+    """Ticket 1511: a container title is a hint; a .bib title is given."""
+    title = "Wholly Absent Treatise on Turbine Blades"
+    pdf = make_pdf(tmp_path / "scan0001.pdf", ["nothing useful"],
+                   {"Title": title})
+    assert row(pdf)["verdict"] == "unidentified"
+    assert row(pdf, bib_entry={"title": title})["verdict"] == "absent"
+
+
+@pytest.mark.integration
 def test_check_staging_names_every_tied_parent(lib, tmp_path):
     keys, files = lib
     probe = tmp_path / "Tiebreak2020-shared.pdf"
