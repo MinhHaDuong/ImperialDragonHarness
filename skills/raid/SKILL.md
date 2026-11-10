@@ -179,6 +179,14 @@ Commit reimagined tickets. Report scorecard, including the Blind-Spot verdict.
   commit, config, or regime change that voids the ticket's premise) →
   **return to author** with the evidence. A success outcome of this phase,
   not a guard violation.
+- Pushback on the ask (the agent recommends not doing the ask as asked and
+  says what the asker should change instead, e.g. a request for special
+  treatment from the harness where the asker should align, as in ticket
+  1471; `rules/workflow.md` § Posture) → **return to author** with the
+  recommendation. A success outcome, not drift: the agent neither rewrites
+  the intent nor closes the ticket; the author decides, and an answer to
+  another project goes through its ticket store (`rules/workflow.md`
+  § Cross-project work).
 
 The what belongs to the author; the how belongs to the agent. An Imagine
 agent never edits intent: no new deliverables, no substituted goals. But
