@@ -120,9 +120,17 @@ report_wip() {
         skipped_wip=$((skipped_wip + 1))
         return 0
     fi
+    # Another worktree inside this one is work no status line shows (ignored path).
+    local nested
+    if ! nested=$(worktree_nested "$tree"); then
+        echo "worktree-gc: skip $base (could not list nested worktrees)" >&2
+        skipped_wip=$((skipped_wip + 1))
+        return 0
+    fi
     if [ -n "$scratch" ] && [ -n "$status" ]; then
         status=$(printf '%s\n' "$status" | grep -Ev "^\\?\\? ($scratch)(/|\$)" || true)
     fi
+    status="${status}${status:+${nested:+$'\n'}}${nested}"
     [ -z "$status" ] && return 1
     echo "worktree-gc: skip $base (uncommitted WIP)"
     printf 'worktree-gc: WIP in %q: %q\n' "$base" "$status"

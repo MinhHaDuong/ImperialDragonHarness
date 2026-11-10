@@ -28,3 +28,26 @@ ownerless_tree_clean() {
     residue=$(worktree_residue "$1") || return 1
     [ -z "$residue" ]
 }
+
+# worktree_nested <path>: prints "nested worktree: <path>" for every other
+# registered worktree lying inside <path>, dirty or not (no recursion into its
+# state). `/.claude/worktrees/` is ignored (ticket 1495), so status calls the
+# outer tree clean while `git worktree remove` deletes the inner one with its
+# uncommitted work, which is not an ignored file (7eacadd2). Paths are
+# canonical and matched on "<tree>/", so /x/a never matches /x/ab.
+# Returns 1 when git cannot answer.
+worktree_nested() {
+    local tree list line wt
+    tree=$(cd -P "$1" 2>/dev/null && pwd -P) || return 1
+    list=$(git -C "$1" worktree list --porcelain 2>/dev/null) || return 1
+    while IFS= read -r line; do
+        case "$line" in
+            "worktree "*)
+                wt=$(cd -P "${line#worktree }" 2>/dev/null && pwd -P) || continue
+                case "$wt/" in
+                    "$tree/"?*) printf 'nested worktree: %s\n' "$wt" ;;
+                esac ;;
+        esac
+    done <<<"$list"
+    return 0
+}
