@@ -63,8 +63,10 @@ helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
 another loopback port; if something other than Zotero answers there, the
 error says so and names both the variable and the setting. The helper needs
 Zotero 10 or later, reads and writes alike, and refuses an older client by
-name. Lookups ask Zotero's own search for each key; no command but
-`report-duplicates` reads the whole library. A read Zotero does not finish in
+name. Lookups ask Zotero's own search for each key. Only `report-duplicates`
+and `check-staging` list the library's attachments, once per run: Zotero has
+no search by md5, and `check-staging` looks each staged file's md5 up in that
+listing. A read Zotero does not finish in
 time is reported as such (`zotero: "slow"`, verdict `zotero_slow` in
 `check-staging`, exit 74), never as Zotero unavailable.
 
@@ -91,6 +93,11 @@ only the absent items. When Zotero is not running nothing is created, and
 the entries JSON is what to rerun later.
 
 ## A scraped identifier is a hypothesis, not a finding
+
+`check-staging` reads identifiers from a staged PDF's pages only when its
+`.bib` entry gives none, and records them as `doi (from text)` and the like.
+Alone, such an identifier never makes a file `absent` and never lets
+`--apply --edit` attach the file.
 
 `find_identifier` regexes DOIs and arXiv ids out of page text, and page text
 contains the reference list. The id it returns is frequently a **cited work's**,

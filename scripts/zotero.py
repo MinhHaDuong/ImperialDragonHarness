@@ -19,7 +19,8 @@ subcommand talks to the running Zotero.
 Local-only and stateless, on top of pyzotero's local client. Every library
 read goes through the running desktop client's local API (127.0.0.1:23119,
 no key), live, on each call; zotero.sqlite is never opened, and nothing is
-cached, indexed or logged to disk between runs. Writes go through the same
+cached, indexed or logged to disk between runs (check-staging's md5 index
+lives in memory for one run). Writes go through the same
 local API with a local API key the user grants once in Zotero (kept in
 key_file(), mode 600, never printed). `create-items` creates new items with
 their PDFs; `suggest-edits`, `suggest-attachments` and `check-staging
@@ -142,7 +143,8 @@ def find_identifier(front_text: str, back_text: str, subject: str
 # handle, title. The one match it asserts is exact: a normalised identifier
 # equal to the hit's own field, or the hit holding a stored file with the
 # PDF's md5 (`storageHash`). A title search returns candidates for the caller
-# to judge, never a match. No call reads the whole library. Scope defaults to
+# to judge, never a match. No lookup reads the whole library; check-staging
+# lists the attachments once per run for its md5 index. Scope defaults to
 # the user library because create-items writes there: a hit that lives only
 # in a group library must not suppress a creation missing from the
 # destination.
@@ -1169,14 +1171,12 @@ def cmd_create_items(args: argparse.Namespace) -> int:
 
 def entry_query(entry: dict[str, Any]) -> dict[str, Any]:
     """find_work's keys for one create-items entry."""
-    url = str(entry.get("url") or "")
-    arxiv_match = ARXIV_ANY_RE.search(url)
-    handle_match = HDL_ANY_RE.search(url)
-    return {"title": entry.get("title"), "doi": entry.get("doi"),
+    derived = url_identifiers(entry.get("url"))
+    return {"title": entry.get("title"),
+            "doi": entry.get("doi") or derived["doi"],
             "isbn": entry.get("isbn"),
             "item_type": entry.get("type") or ENTRY_TYPE_DEFAULT,
-            "arxiv": arxiv_match.group(1) if arxiv_match else None,
-            "handle": handle_match.group(1) if handle_match else None}
+            "arxiv": derived["arxiv"], "handle": derived["handle"]}
 
 
 def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
@@ -1480,14 +1480,16 @@ def cmd_extract_metadata(args: argparse.Namespace) -> int:
 # The library, as Zotero's own search answers
 #
 # find-work, check-staging and create-items ask Zotero's search for each
-# key; report-duplicates, a report on the whole library, reads the
-# attachments once. Nothing is written to disk, so there is no cache to go
-# stale and nothing to rebuild.
+# key; report-duplicates, a report on the whole library, and check-staging,
+# for its md5 index, list the attachments once per run. Nothing is written
+# to disk, so there is no cache to go stale and nothing to rebuild.
 #
 # Content identity is the strongest key: it survives renaming, re-filing and
-# metadata drift. Zotero 10 reports each stored file's md5, which is compared
-# with the staged file's for every work the search found; Zotero offers no search
-# by md5, so a stored copy under a work no other key finds goes unseen.
+# metadata drift. Zotero 10 reports each stored file's md5 (Zotero's own
+# hash; the harness hashes only the staged file, with the same algorithm).
+# Zotero offers no search by md5, so check-staging looks the staged file's
+# md5 up in that run's listing (hash_index); find-work, for one file, and
+# create-items compare it only with the works another key found.
 # ---------------------------------------------------------------------------
 
 LIBRARY_SOURCE = "zotero local API (live)"
@@ -1591,6 +1593,64 @@ def file_evidence(z: zotero.Zotero, lib_id: str, key: str,
     return ({"has_file": bool(stored),
              "has_pdf": any(a["contentType"] == "application/pdf"
                             for a in stored)}, same)
+
+
+# The whole attachment listing's budget, in seconds. Zotero hashes each
+# stored file it lists, so the listing is slow: measured 2026-11-10 on the
+# author's library, 8,850 hashed attachments in 63 s at PAGE = 100. Each
+# page also has pyzotero's own per-request timeout.
+INDEX_WAIT = 600.0
+
+
+def list_attachments(z: zotero.Zotero, lib_id: str,
+                     deadline: float | None = None) -> list[dict[str, Any]]:
+    """Every attachment of one library, trash excluded, with the md5
+    Zotero reports for its stored file. The local API has no md5 filter
+    (an `md5` parameter is ignored, a quick search for the md5 finds
+    nothing), so the whole list is read. Past `deadline` (time.monotonic),
+    no further page is asked for: ZoteroSlow."""
+    def in_time() -> None:
+        if deadline is not None and time.monotonic() >= deadline:
+            raise ZoteroSlow(f"the attachment listing did not finish within "
+                             f"{INDEX_WAIT:.0f} s")
+
+    with local_api():
+        in_time()
+        items = list(z.items(itemType="attachment", limit=PAGE))
+        while z.links and z.links.get("next"):
+            in_time()
+            items.extend(z.follow())
+    return [_attachment_record(i, lib_id) for i in items
+            if not i.get("data", {}).get("deleted")]
+
+
+def hash_index(libs: list[tuple[str, zotero.Zotero]]) -> dict[str, Any]:
+    """Zotero's own attachment md5s for the libraries looked in, for one
+    run: never computed by the harness over library files, never kept.
+
+    A listing Zotero does not finish in time, or refuses, leaves the index
+    `skipped` with its reason: the run goes on with the other keys and
+    concludes no absence. Zotero going away is the whole run's failure."""
+    by_md5: dict[str, list[dict[str, Any]]] = {}
+    started = time.monotonic()
+    try:
+        for lib_id, z in libs:
+            for att in list_attachments(z, lib_id, started + INDEX_WAIT):
+                if att["md5"]:
+                    by_md5.setdefault(att["md5"], []).append(att)
+    except (ZoteroSlow, LocalAPIError, ze.ResourceNotFoundError) as exc:
+        return {"status": "skipped", "slow": isinstance(exc, ZoteroSlow),
+                "reason": str(exc).splitlines()[0] if str(exc)
+                else type(exc).__name__, "by_md5": {}}
+    return {"status": "built", "libraries": [lib for lib, _ in libs],
+            "hashed_attachments": sum(len(v) for v in by_md5.values()),
+            "seconds": round(time.monotonic() - started, 1),
+            "by_md5": by_md5}
+
+
+def index_summary(index: dict[str, Any]) -> dict[str, Any]:
+    """The index as a report shows it: its status, not its contents."""
+    return {k: v for k, v in index.items() if k != "by_md5"}
 
 
 # A user id no account has: the local API refuses it and names the real one.
@@ -1706,6 +1766,50 @@ def handle_path(raw: str) -> str:
     return (match.group(1) if match else raw).lower().rstrip("/")
 
 
+DOI_HOSTS = {"doi.org", "dx.doi.org", "www.doi.org"}
+
+
+def url_identifiers(url: str | None) -> dict[str, str | None]:
+    """The identifiers a URL's own grammar states: an arXiv id
+    (arxiv.org/abs|pdf/...), a handle (hdl.handle.net/...), a DOI (a
+    doi.org URL, whose path is the DOI). A DOI inside a publisher's path is
+    not taken: where it ends is not stated there, and a wrong DOI that
+    misses would read as a key that looked."""
+    url = str(url or "").strip()
+    arxiv = ARXIV_ANY_RE.search(url)
+    handle = HDL_ANY_RE.search(url)
+    parts = urllib.parse.urlsplit(url)
+    doi = urllib.parse.unquote(parts.path.lstrip("/"))
+    return {"arxiv": arxiv.group(1) if arxiv else None,
+            "handle": handle.group(1) if handle else None,
+            "doi": doi if parts.netloc.lower() in DOI_HOSTS
+            and DOI_BARE_RE.fullmatch(doi) else None}
+
+
+# biblatex `eprinttype` (BibTeX's `archiveprefix`) values naming a scheme
+# the lookup knows; an eprint of another scheme is not looked up.
+EPRINT_ARXIV = {"arxiv"}
+EPRINT_HANDLE = {"hdl", "handle"}
+
+
+def bib_identifiers(entry: dict[str, Any]) -> dict[str, str | None]:
+    """A .bib entry's identifiers: its doi, isbn, arxiv and handle fields,
+    then those its url and eprint state (an eprint with no type is taken as
+    arXiv when it has an arXiv id's form). A field given wins."""
+    ids: dict[str, str | None] = {
+        k: str(entry.get(k) or "").strip() or None
+        for k in ("doi", "isbn", "arxiv", "handle")}
+    derived = url_identifiers(entry.get("url"))
+    eprint = str(entry.get("eprint") or "").strip()
+    scheme = str(entry.get("eprinttype") or entry.get("archiveprefix")
+                 or "").strip().lower()
+    if eprint and scheme in EPRINT_HANDLE:
+        derived["handle"] = derived["handle"] or eprint
+    elif eprint and (scheme in EPRINT_ARXIV or not scheme):
+        derived["arxiv"] = derived["arxiv"] or normal_arxiv(eprint) or None
+    return {k: ids[k] or derived.get(k) for k in ids}
+
+
 def extra_lines(extra: str, label: str) -> list[str]:
     """The values of `label:` lines in an Extra field, the form Zotero (and
     create-items) store an identifier a type has no field for in. A DOI
@@ -1761,7 +1865,9 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               arxiv: str | None = None, handle: str | None = None,
               title: str | None = None, item_type: str | None = None,
               pdf_path: Path | None = None,
-              isbn_unusable: str | None = None) -> dict[str, Any]:
+              isbn_unusable: str | None = None,
+              hash_index: dict[str, Any] | None = None,
+              from_text: bool = False) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
     `matches` are the works whose own field carries a given identifier
@@ -1771,6 +1877,12 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     are never a match unless their stored file is `pdf_path` itself.
     "consulted" and "skipped" keep a clean negative apart from a lookup
     that could not run. `isbn_unusable`, a reason, skips the ISBN.
+
+    With `hash_index` (hash_index()), the file's md5 is looked up among
+    every stored attachment of the libraries, so a copy no other key finds
+    is still seen; without it, only the works another key found are
+    compared. `from_text` labels the identifiers as read from the file's
+    own pages ("doi (from text)"), which may be a cited work's.
     """
     consulted: list[str] = []
     skipped: list[str] = []
@@ -1790,6 +1902,33 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
             "creators": work["creators"], "library": work["library"],
             "attachment": None}
 
+    digest = file_md5(pdf_path) if pdf_path and pdf_path.is_file() else None
+    indexed = hash_index is not None and hash_index["status"] == "built"
+    if digest and indexed:
+        consulted.append("storageHash")
+        hits = hash_index["by_md5"].get(digest, [])
+        for lib in libs:
+            mine = [a for a in hits if a["library"] == lib[0]]
+            parents = {a["parent"] for a in mine if a["parent"]}
+            # Not trashed: works_by_key leaves a trashed parent out.
+            works = works_by_key(lib[1], lib[0], parents) if parents else {}
+            for att in mine:
+                if att["parent"] in works:
+                    emit(works[att["parent"]], "storageHash", lib)
+                    found[att["parent"]]["attachment"] = att
+                elif not att["parent"]:
+                    # A standalone attachment: the file is stored, under
+                    # no work.
+                    emit({"key": att["key"], "title": att["title"],
+                          "date": "", "itemType": "attachment",
+                          "creators": [], "library": lib[0]},
+                         "storageHash", lib)
+                    found[att["key"]].update(
+                        attachment=att, standalone=True, has_file=True,
+                        has_pdf=att["contentType"] == "application/pdf")
+    elif digest and hash_index is not None:
+        skipped.append(f"storageHash (index skipped: {hash_index['reason']})")
+
     for label, queries, carries in IDENTIFIER_KEYS:
         supplied = {"doi": doi, "isbn": isbn, "arxiv": arxiv,
                     "handle": handle}[label]
@@ -1808,12 +1947,13 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
             # Nothing to send (an ISBN with a bad check digit): not looked up.
             skipped.append(f"{label} (not a valid {label}: {supplied})")
             continue
-        consulted.append(label)
+        used = f"{label} (from text)" if from_text else label
+        consulted.append(used)
         for lib in libs:
             for query in sent:
                 for work in search_works(lib[1], lib[0], query):
                     if carries(work, supplied):
-                        emit(work, label, lib)
+                        emit(work, used, lib)
 
     words = re.findall(r"[^\W_]{3,}", title or "")
     if not title:
@@ -1829,18 +1969,21 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
                                      limit=CANDIDATES):
                 emit(work, "title", lib)
 
-    digest = file_md5(pdf_path) if pdf_path and pdf_path.is_file() else None
     if digest is None:
         skipped.append("storageHash (no file on disk)")
+    elif hash_index is not None:
+        pass  # consulted, or skipped with its reason, above
     elif not found:
         skipped.append("storageHash (no work found to compare with)")
     else:
         consulted.append("storageHash")
     for key, hit in found.items():
+        if hit.get("standalone"):
+            continue
         lib_id, z = owner[key]
         evidence, same = file_evidence(z, lib_id, key, digest)
         hit.update(evidence)
-        if same:
+        if same and "storageHash" not in hit["why"]:
             hit.update(why=["storageHash"] + hit["why"], attachment=same)
     matches = [h for h in found.values() if h["why"] != ["title"]]
     candidates = [h for h in found.values() if h["why"] == ["title"]]
@@ -1953,9 +2096,7 @@ def cmd_report_duplicates(args: argparse.Namespace) -> int:
     Zotero writes."""
     def read() -> dict[str, Any]:
         z = local_library()
-        with local_api():
-            items = z.everything(z.items(itemType="attachment", limit=PAGE))
-        attachments = [_attachment_record(i, USER_LIBRARY) for i in items]
+        attachments = list_attachments(z, USER_LIBRARY)
         owners: dict[str, set[str]] = {}
         for att in attachments:
             if att["md5"] and att["parent"]:
@@ -2241,8 +2382,11 @@ def _pdf_info(pdf: Path) -> dict[str, str]:
             "Author": info.get("Author", "") or ""}
 
 
-def _staging_verdict(res: dict[str, Any], filename_only: bool) -> str:
-    """Classify lookup evidence for a staged file."""
+def _staging_verdict(res: dict[str, Any], filename_only: bool,
+                     hash_skipped: bool = False) -> str:
+    """Classify lookup evidence for a staged file. With the hash index
+    skipped, a file nothing found is `unchecked`, never `absent`: a stored
+    copy under a work no other key finds went unseen."""
     top = res["matches"][0] if res["matches"] else None
     if res["verdict"] == "unchecked":
         verdict = "unidentified"
@@ -2253,14 +2397,33 @@ def _staging_verdict(res: dict[str, Any], filename_only: bool) -> str:
                    else "work_present_no_file")
     elif res["candidates"]:
         verdict = "candidates"
+    elif filename_only:
+        verdict = "unidentified"
     else:
-        verdict = "unidentified" if filename_only else "absent"
+        verdict = "unchecked" if hash_skipped else "absent"
     return verdict
 
 
+# The identifier keys a curated source gives; a key read from the page text
+# carries " (from text)" and is not among them.
+GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle")
+
+
+def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
+    """Identifiers printed in a PDF's first and last pages
+    (find_identifier); ({}, why) when the file cannot be read."""
+    try:
+        return extract_one(path)["identifiers"], None
+    except Exception as exc:
+        return {}, f"text identifiers (unreadable: {type(exc).__name__})"
+
+
 def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
-              bib_entry: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Look one staged file up in the libraries."""
+              bib_entry: dict[str, Any] | None = None,
+              hash_index: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Look one staged file up in the libraries: by its md5 (with
+    `hash_index`), by the identifiers its .bib entry gives or, failing
+    those, its own pages print, then by title."""
     bib_entry = bib_entry or {}
     info = (_pdf_info(path) if path.suffix.lower() == ".pdf"
             else {"Title": "", "Author": ""})
@@ -2272,18 +2435,29 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         filename_title = True
     bib_type = str(bib_entry.get("_type", "")).lower()
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
+    ids = bib_identifiers(bib_entry)
+    from_text = False
+    text_skip = None
+    stored = (hash_index is not None and hash_index["status"] == "built"
+              and file_md5(path) in hash_index["by_md5"])
+    if not any(ids.values()) and path.suffix.lower() == ".pdf" and not stored:
+        # Only when no curated key exists: a DOI on the page may be a
+        # cited work's. Its lookups are labelled "(from text)".
+        scraped, text_skip = text_identifiers(path)
+        if any(scraped.values()):
+            ids, from_text = scraped, True
 
     def look(searched: str) -> dict[str, Any]:
-        return find_work(libs, title=searched,
-                         doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
-                         arxiv=bib_entry.get("arxiv"),
-                         handle=bib_entry.get("handle"),
-                         item_type=item_type, pdf_path=path,
-                         # Fail closed: an unplaced type may be a part whose
-                         # ISBN is its volume's.
-                         isbn_unusable=None if item_type else
-                         f"unmapped .bib type @{bib_type}: part or volume "
-                         "unknown")
+        res = find_work(libs, title=searched, **ids,
+                        item_type=item_type, pdf_path=path,
+                        # Fail closed: an unplaced type may be a part whose
+                        # ISBN is its volume's.
+                        isbn_unusable=None if item_type else
+                        f"unmapped .bib type @{bib_type}: part or volume "
+                        "unknown", hash_index=hash_index, from_text=from_text)
+        if text_skip:
+            res["skipped"].append(text_skip)
+        return res
 
     res = look(title)
     if not (res["matches"] or res["candidates"]):
@@ -2305,14 +2479,21 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     # item is minted. Candidates are a document to look at. And a file with
     # no key to look it up by is "unidentified", never "absent": an
     # all-clear indistinguishable from "could not look" is no check.
+    # An identifier read from the page text is not a curated key: alone, it
+    # cannot establish absence.
     filename_only = filename_title and not any(
-        key in res["consulted"] for key in ("doi", "isbn", "arxiv", "handle"))
-    verdict = _staging_verdict(res, filename_only)
+        key in res["consulted"] for key in GIVEN_KEYS)
+    verdict = _staging_verdict(
+        res, filename_only,
+        hash_skipped=hash_index is not None and hash_index["status"] != "built")
     row = {"file": path.name, "verdict": verdict,
            "zotero_key": top.get("key") if top else None,
            "zotero_title": top.get("title") if top else None,
            "why": top.get("why") if top else None,
            "consulted": res["consulted"], "skipped": res["skipped"]}
+    if top and top.get("standalone"):
+        # Stored, but under no work: its attachment key, not a work's.
+        row["standalone"] = True
     if verdict == "candidates":
         row["candidates"] = [{"key": c["key"], "title": c["title"],
                               "date": c["date"], "creators": c["creators"]}
@@ -2479,16 +2660,20 @@ def reconcile_empty_report(root: Path, found: dict[str, Any],
 
 def audit_sources(root: Path, found: dict[str, Any],
                   libs: list[tuple[str, zotero.Zotero]]
-                  ) -> tuple[list[dict[str, Any]], list[str]]:
-    """Look every linked and orphan file up; (rows, errors). A file that
-    cannot be read is an error; Zotero failing is the whole run's."""
+                  ) -> tuple[list[dict[str, Any]], list[str], dict[str, Any]]:
+    """Look every linked and orphan file up; (rows, errors, hash index).
+    The md5 index is built once for the run (a second, locked pass builds
+    its own: the first can predate another sweep). A file that cannot be
+    read is an error; Zotero failing is the whole run's."""
     rows: list[dict[str, Any]] = []
     errors = list(found["errors"])
+    index = hash_index(libs)
     sources = found["linked"] + [{"path": path} for path in found["orphans"]]
     for source in sources:
         path = source["path"]
         try:
-            row = audit_one(path, libs, bib_entry=source.get("entry"))
+            row = audit_one(path, libs, bib_entry=source.get("entry"),
+                            hash_index=index)
         except (ZoteroUnavailable, ZoteroSlow, LocalAPIError):
             raise
         except Exception as exc:
@@ -2502,7 +2687,15 @@ def audit_sources(root: Path, found: dict[str, Any],
             row["source"] = "orphan"
         row["path"] = str(path.relative_to(root))
         rows.append(row)
-    return rows, errors
+    return rows, errors, index
+
+
+def index_refusal(index: dict[str, Any]) -> Exception:
+    """Why an apply writes nothing on a skipped index: ZoteroSlow for a
+    listing not finished in time, ValueError for one refused."""
+    why = (f"storageHash index skipped ({index['reason']}): a stored copy "
+           f"may have gone unseen, so nothing is created or attached")
+    return ZoteroSlow(why) if index.get("slow") else ValueError(why)
 
 
 def cmd_check_staging(args: argparse.Namespace) -> int:
@@ -2539,7 +2732,7 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
     library = getattr(args, "library", USER_LIBRARY)
     try:
         ensure_zotero()
-        rows, errors = audit_sources(root, found, libraries(library))
+        rows, errors, index = audit_sources(root, found, libraries(library))
     except (ZoteroUnavailable, ZoteroSlow) as exc:
         return reconcile_unavailable(root, found, exc, args.out)
     except (LocalAPIError, ValueError) as exc:
@@ -2550,12 +2743,19 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
     report = reconcile_report(root, found, rows, errors)
     report["library"] = {"zotero": zotero_url(), "source": LIBRARY_SOURCE,
                          "library_id": library}
+    report["hash_index"] = index_summary(index)
+    skipped = index["status"] != "built"
+    if skipped:
+        # An incomplete read, whatever each row found.
+        report["verdict"] = "unchecked"
     apply_rc = 0
     if getattr(args, "apply", False):
         try:
             config = reconcile_apply_config(root, local_account())
             if errors:
                 raise ValueError("discovery or check is unchecked")
+            if skipped:
+                raise ValueError(str(index_refusal(index)))
             with directory_locks(found["staging_dirs"] + [library_lock_dir()]):
                 # Look again under the locks and keep them through the
                 # saves, so two local sweeps cannot both act on the same
@@ -2574,7 +2774,10 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
             mark_apply_failed(report, exc)
             apply_rc = 1
     emit_reconcile_report(report, args.out)
-    return 1 if report["errors"] or apply_rc else 0
+    if skipped and index.get("slow"):
+        # The rule for a read Zotero did not finish: never a clean 0.
+        return EXIT_SLOW
+    return 1 if report["errors"] or apply_rc or skipped else 0
 
 
 def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
@@ -2582,9 +2785,11 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
                     ) -> tuple[dict[str, Any], int]:
     """Create the absent PDFs a .bib entry describes, looked up again under
     the lock."""
-    rows, errors = audit_sources(root, found, libraries(target_lib))
+    rows, errors, index = audit_sources(root, found, libraries(target_lib))
     if errors:
         raise ValueError("discovery or check is unchecked")
+    if index["status"] != "built":
+        raise index_refusal(index)
     entries = {item["path"]: item.get("entry") or {} for item in found["linked"]}
     jobs: list[dict[str, Any]] = []
     job_paths: list[str] = []
@@ -2607,6 +2812,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
     report = reconcile_report(root, found, rows, [])
     report["library"] = {"zotero": zotero_url(), "source": LIBRARY_SOURCE,
                          "library_id": target_lib}
+    report["hash_index"] = index_summary(index)
     summary, actions = report["summary"], report["actions"]
     report["deferred"] = deferred
     if deferred:
@@ -2657,6 +2863,11 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
     return report, rc
 
 
+TEXT_KEY_ONLY = ("found only by an identifier read from the file's pages, "
+                 "which may be a cited work's: give it a .bib entry with "
+                 "that identifier, or attach by hand")
+
+
 def attach_present_works(root: Path, rows: list[dict[str, Any]],
                          target_lib: str, report: dict[str, Any]) -> int:
     """--edit: store each staged file under the one existing work that
@@ -2671,6 +2882,12 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
                 or not row.get("zotero_key")):
             continue
         edit = {"itemKey": row["zotero_key"], "file": row["path"]}
+        if not any(why in GIVEN_KEYS for why in row.get("why") or []):
+            # Found only by an identifier printed in the file, perhaps a
+            # cited work's: never grounds for a write.
+            edit.update(status="not attempted", error=TEXT_KEY_ONLY)
+            report["edits"].append(edit)
+            continue
         if refused:
             edit.update(status="not attempted", error=KEY_NOT_ATTEMPTED)
             report["edits"].append(edit)
