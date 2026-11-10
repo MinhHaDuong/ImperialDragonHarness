@@ -6,6 +6,7 @@ Blocked-by: 1508
 
 --- log ---
 2026-11-10T08:14Z reviewer created
+2026-11-10T08:23Z reviewer note raid 626455: Imagine, Blind-Spot (4 findings, folded in), plan and feasibility annotated; Execute waits for ticket 1508 to merge
 
 --- body ---
 ## Context
@@ -83,8 +84,9 @@ checked on padme the same day, key names and numbers only, on all 78
   stamped records, which `ts._parse_ts` already reads.
 - Subagents: Pi's subagent extension spawns children with `--no-session`
   (`~/.pi/agent/extensions/subagent/index.ts`), so no Pi subagent transcript
-  exists. Every Pi file is a main session, and the header has no field that
-  tells an interactive session from a `pi -p` run.
+  exists under this root. Every file here is a main session, and the header
+  has no field that tells an interactive session from a `pi -p` run. (The
+  Blind-Spot pass found the seat spool, below.)
 - Largest whole prompt in any file: 114638 tokens; none reaches 230K. Turns
   are mostly local models (`qwen3.8-27b` 529, `qwen3.8-flash-next-iq3_s`
   180), a few hosted ones (`claude-opus-5-5`, `gpt-5.5`, `gpt-6-sol`). The
@@ -92,7 +94,8 @@ checked on padme the same day, key names and numbers only, on all 78
   come from fixtures, and "read, zero sessions past" must stay distinct from
   "could not look".
 - Corpus root: Pi honours a `sessionDir` setting, the environment variable
-  `PI_CODING_AGENT_SESSION_DIR` and `--session-dir`; padme sets none.
+  `PI_CODING_AGENT_SESSION_DIR` and `--session-dir`; padme sets none. The
+  harness resolves the root through `PI_CODING_AGENT_DIR` (below).
 
 Simplest path: one reader function on the 1508 seam, nothing else.
 Session id from the header `id`, project from the header `cwd`, agent id
@@ -112,6 +115,49 @@ Later review: the tracker's integration review runs the audit on padme's
 live Pi corpus and checks the Pi session count against the file count in
 the window by hand (zero past ceiling expected, see above).
 
+Blind-Spot pass (2026-11-10, one read-only seat): not clean, four findings,
+each checked by the lead on key names and numbers:
+
+1. A second Pi corpus: the archive spool `<archive>/spool/padme/pi`
+   (ticket 1383; `scripts/transcript_spool.py` `spool_dir('pi')`) holds 28
+   files dated 2026-10-31 to 2026-11-02, header ids disjoint from the 78
+   live ones; the same usage identity holds there (634 of 634 turns), peak
+   115032. The Pi seat template (`skills/route/routes.json`) runs
+   `pi --session-dir <spool> -p`, and `scripts/pi-subagent-link` patches
+   the subagent extension to write there; on padme today the extension
+   symlink is the unpatched one, so "Pi subagents leave no transcript" above
+   holds for this host now, not by design. The raw archive (106 files) is a
+   copy of both and is not read.
+2. No role rule: `pi -p` without `--session-dir` also writes to the live
+   root, and no header field tells it from an interactive session.
+3. The harness already resolves the live root with `PI_CODING_AGENT_DIR`
+   (`transcript_spool.live_roots()`), and `scripts/trace_events.py`
+   `read_pi` already parses Pi sessions (model from `model_change`, then
+   `message.model`). Per-turn `message.model` equals the latest
+   `model_change.modelId` on 699 of 699 live and 634 of 634 spool turns.
+4. The live check passes vacuously on the default window (newest file
+   2026-11-02, none past 230K); it needs a positive control.
+
+Decisions taken by default (reversible, inside the ticket's scope):
+
+- The reader reads both roots from `transcript_spool.source_roots('pi')`.
+  Live-root sessions are main sessions held to their model's ceiling, the
+  rule Claude Code main sessions already follow (a main session is not
+  known to be an interface session). Spool sessions are launched seats or
+  workers: counted as Pi sessions held to `default_tokens`, the rule ticket
+  1508 gives Codex `exec`. The output prints which rule each count used.
+  Rejected: naming the spool not read (it would leave out the newest Pi
+  files and every seat run); counting spool files as interface sessions
+  (they are launched by construction).
+- An unknown archive root (`archive_root()` raises) or an absent spool is
+  could not look for the spool only; the live root is still counted.
+- The model of a turn is `message.model` (agreement above); the reader
+  reuses `read_pi` for turns unless its events lack something the audit
+  needs, in which case the docstring says what.
+- Positive control for the live run: `--since 2026-09-16`, Pi peak checked
+  by hand against 115032 (spool) and 114638 (live), session count against
+  78 + 28 files. Sent to the 1507 coordinator for its integration review.
+
 ## Plan (raid 626455)
 
 Written by the raid lead against main at a7a5f202 and the seam as ticket
@@ -128,13 +174,16 @@ Actions:
    the Opus ceiling, beside a Claude Code fixture root; the audit counts one
    Pi session past its ceiling under Pi and leaves the Claude Code counts as
    they are.
-2. The reader: header, assistant turns, error turns skipped, `msg_id`
-   namespaced; the docstring answers the cache question with the evidence
-   above.
-3. The table entry: Pi's default root (`~/.pi/agent/sessions`, or
-   `PI_CODING_AGENT_SESSION_DIR` when set) and a CLI override in the shape
-   1508 gives the Codex root. Pi leaves the not-read list.
-4. Tests for the window cut and could not look (below).
+2. The reader: header, assistant turns (from `trace_events.read_pi` where
+   it fits), error turns skipped, `msg_id` namespaced; the docstring answers
+   the cache question with the evidence above.
+3. The table entry: Pi's roots from `transcript_spool.source_roots('pi')`
+   (live root via `PI_CODING_AGENT_DIR`, then the spool), each with its own
+   status and role rule, and a CLI override in the shape 1508 gives the
+   Codex root. Pi leaves the not-read list.
+4. Tests for the window cut, the role rule (the same turns past 230K and
+   under the Opus ceiling: counted past ceiling from the spool, not from the
+   live root) and could not look per root (below).
 
 Tests that would pass on a wrong implementation, and the fix:
 
@@ -175,8 +224,14 @@ a7a5f202:
   the seam takes the session id and project from the reader (not from the
   path), lets a runtime have no subagents and no role field, accepts a
   per-turn `msg_id` for dedupe without requiring one, and keeps Pi out of the
-  missed-run figures. Each went to the 1508 coordinator in this raid's
-  first report, 2026-11-10.
+  missed-run figures, and lets one runtime have two roots, each with its
+  own status (read or could not look) and its own ceiling rule. Each went
+  to the 1508 coordinator in this raid's first report, 2026-11-10.
+- `scripts/transcript_spool.py`: `live_roots()`, `spool_dir(runtime)` and
+  `source_roots(runtime)` exist; `archive_root()` raises `RuntimeError`
+  when neither `IDH_ARCHIVE_ROOT` nor `DATASETS_DIR` resolves.
+  `scripts/trace_events.py` `read_pi(lines, file, ...)` exists, returns
+  `Event` tuples with epoch-second times and a `(file, entry id)` pointer.
 - WARN, cross-ticket: PR 2397, ticket 1508 and this ticket edit the same
   script, in that order. No shared registry beyond the runtime table 1508
   creates, which this ticket extends by one entry.
