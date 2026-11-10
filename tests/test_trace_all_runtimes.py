@@ -73,6 +73,8 @@ def _codex_rows(model="codex-auto-review"):
         _codex_out("c1", 62, "Process exited with code 0"),
         _codex_call("c2", 63, "false"),
         _codex_out("c2", 64, "Process exited with code 1"),
+        _codex_call("c2b", 64, "false"),  # the same failing command again: a repeat_failing folly
+        _codex_out("c2b", 64, "Process exited with code 1"),
         _codex_call("c3", 65, "ls"),
         _codex_out("c3", 66, "a b"),  # no exit code recorded: outcome unknown
         {"timestamp": _t(67), "type": "response_item",  # the `exec` script tool, its output a block list
@@ -159,14 +161,14 @@ def test_friction_counts_each_runtime_and_reports_the_absent_spool(tmp_path):
     s = tf.run_scan(_roots(tmp_path), 28, now=NOW)
     rt = _by_name(s["runtimes"])
     assert rt["Claude Code"]["status"] == "read" and rt["Claude Code"]["calls"] == 1
-    assert rt["Codex"]["status"] == "read" and rt["Codex"]["calls"] == 4
+    assert rt["Codex"]["status"] == "read" and rt["Codex"]["calls"] == 5
     assert rt["Pi"]["status"] == "read" and rt["Pi"]["calls"] == 1
     assert rt["Pi spool"]["status"] == "could not look"
-    assert s["totals"]["calls"] == 6  # every runtime read is in the series
-    assert rt["Codex"]["errors"] == 2 and rt["Codex"]["slow_calls"] == 1
-    assert rt["Codex"]["bash_calls"] == 4
+    assert s["totals"]["calls"] == 7  # every runtime read is in the series
+    assert rt["Codex"]["errors"] == 3 and rt["Codex"]["slow_calls"] == 1
+    assert rt["Codex"]["bash_calls"] == 5
     assert rt["Codex"]["wait_commands"] == 1
-    assert s["follies"] == {} or all("runtime" in f for f in s["follies"].values())
+    assert s["follies"]["repeat_failing"]["runtime"] == {"codex": 1}
 
 
 def test_friction_codex_call_without_exit_code_is_not_measured_not_a_success(tmp_path):
@@ -184,6 +186,7 @@ def test_friction_codex_exec_script_outcome_is_read_from_its_markers():
     assert tf.codex_outcome('Script completed\n{"exit_code": 0}') is False
     assert tf.codex_outcome("Process exited with code 1") is True
     assert tf.codex_outcome("a b") is None
+    assert tf.codex_outcome("Process exited with code 0\nsee exit code 2 in the log") is False  # prose, not a record
 
 
 def test_friction_bare_path_reads_claude_code_only(tmp_path):
