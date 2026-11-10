@@ -4,15 +4,20 @@ The Imagine phase's deliverable when the author is in the loop
 (`rules/workflow.md` § Cycle). One file per question:
 `design/YYYY-MM-DD-<topic>.md`. Write it with the author, section by
 section; an agent drafting alone marks every judgment as its own.
+Under the title, a status line: `Status: proposed` until the author accepts,
+then `Status: accepted YYYY-MM-DD`. A ticket filed from a proposed note
+carries `needs-human` until the author accepts the note.
 
 ## 1. Problem
 
-What hurts, for whom, and how we know: the observation, not the cause.
+What hurts, for whom, and how we know: the observation, not the cause. The
+note may conclude that the asker should change, not the harness.
 
 ## 2. Situation
 
 What exists now, read from git: the files, scripts and rules involved, the
 history that produced them (commits, tickets, journal), and what was tried.
+Reproduce each number and state its definition before anything is recommended.
 
 ## 3. State of the art
 
