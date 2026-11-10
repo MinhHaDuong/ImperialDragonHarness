@@ -1,0 +1,72 @@
+%erg 0.1
+Title: The transcript archive copies every root the context audit reads
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T13:34Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1519 makes `scripts/trace-compact-audit.py` read the other hosts from
+the transcript archive. The author then ruled, on 2026-11-10: "Then ensure
+archives covers all surfaces." The archive's roots are defined in
+`scripts/transcript_spool.py` (`live_roots`, `source_roots`, the spool); the
+audit's readers define theirs again (`read_codex` walks `sessions/` and
+`archived_sessions/` under the Codex home; `default_pi_sessions`,
+`default_pi_spool`). Two definitions drift.
+
+Counted on 2026-11-10 (paths and counts only):
+
+- padme, files older than a day against archived files: Claude Code 24309
+  eligible, 27610 archived (the archive keeps sessions since deleted); Codex
+  `sessions/` 3504 against 3503; Pi 78 live and 28 spool against 106 (78
+  nested, 28 flat); aider 4 against 4; vibe 78 against 78.
+- doudou: Codex 1335 against 1335; Pi 48 against 48; Claude Code 23406
+  eligible, 26873 archived; no spool directory. padme's copy of `raw/doudou`
+  has the same counts as doudou's own, runtime by runtime.
+- `~/.codex/archived_sessions` is not a source root: `source_roots('codex')`
+  is `sessions/` only. padme has 19 rollouts there, 18 of them in
+  `raw/padme/codex` by file name (copied while still under `sessions/`), 1 in
+  no copy; doudou has 11.
+- Pi live sessions and the Pi spool are both copied under `raw/<host>/pi`.
+  The audit holds a live session to its model's ceiling and a spool session
+  to the default; in the archive the two are told apart only by depth.
+
+## Scope
+
+- Each runtime's roots have one definition, in `scripts/transcript_spool.py`,
+  used by the archive and by the audit's readers: a root the audit reads is
+  by construction a root the archive copies.
+- `archived_sessions/` under the Codex home becomes a source root of the
+  archive. A rollout copied earlier from `sessions/` and again from
+  `archived_sessions/` is one session to any reader of the archive.
+- The archive's own code says, for an archived file, which source root it
+  came from (Pi live or Pi spool, Codex sessions or archived sessions). No
+  existing archived file moves or is rewritten.
+
+Out of scope: the archive's layout, schedule and push; readers for aider and
+vibe in the audit; this host's sessions already deleted from the live trees.
+
+Note for whoever lands it: the nightly run on each host uses that host's
+checkout, so the other host copies `archived_sessions/` from its first
+nightly run after it syncs.
+
+## Test
+
+On temporary roots: a rollout under `archived_sessions/` is archived; the
+same rollout present under both Codex directories resolves to one session;
+an archived Pi spool file and an archived Pi live file are each attributed to
+their source root; a runtime root added to the one definition is walked by
+the archive and offered to the audit without a second edit.
+
+## Exit criteria
+
+- [ ] A rollout under `~/.codex/archived_sessions` is copied by the archive
+  run, and counts once however many copies the archive holds
+- [ ] Every root the audit reads for a runtime comes from the one definition
+  in `scripts/transcript_spool.py` that the archive walks
+- [ ] For an archived file, the archive's code names its source root; no
+  existing archived file moves
+- [ ] `make check` passes
