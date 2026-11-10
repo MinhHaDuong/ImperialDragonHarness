@@ -5,6 +5,8 @@ Author: reviewer
 
 --- log ---
 2026-11-10T09:18Z reviewer created
+2026-11-10T12:14Z reviewer raid fc1083 imagine: per-ticket pass skipped (lead: pin move, premise read back from the remote: v0.3.0 is tag d76db1f on 95efea6). Blind-spot (Sonnet 5.5): upstream diff v0.2.0..v0.3.0 keeps every API fulltext_cascade.py imports, dependencies and extras unchanged; findings minor, none scope-changing: lock refresh for the one package, integration-tier tests are the only ones reaching the real DOIfetch, OPEN_SOURCES does not gain CORE (out of scope)
+2026-11-10T12:14Z reviewer raid fc1083 plan and feasibility: written by the lead (one ticket, simple work, nothing to cross-check). PASS: the four pin sites exist as named (scripts/doifetch.sh:8, pyproject.toml:19-20, uv.lock doifetch entries, STATE.md:13)
 
 --- body ---
 ## Context
@@ -39,3 +41,46 @@ Move both pins to v0.3.0 (tag in `scripts/doifetch.sh`, resolved commit 95efea6�
 
 - [ ] `scripts/doifetch.sh` and the `pyproject.toml` dev dependency name v0.3.0 and its commit
 - [ ] The tests that exercise the DOIfetch wrapper pass on the new pin
+
+## Plan (raid fc1083)
+
+### Relevant files
+
+- `scripts/doifetch.sh` — line 8: `DOIFETCH_REF` and its trailing comment (tag
+  object and commit).
+- `pyproject.toml` — dev group: the "Keep in step" comment and the resolved
+  commit of the `doifetch` requirement.
+- `uv.lock` — the `doifetch` package entry and its requirement line, nothing else.
+- `STATE.md` — the DOIfetch line naming the pinned tag.
+
+### Actions
+
+1. `scripts/doifetch.sh`: `DOIFETCH_REF=v0.3.0`; the comment names the annotated
+   unsigned tag d76db1f on 95efea6 and keeps the 2026-10-29 ruling.
+2. `pyproject.toml`: the comment says v0.3.0; the requirement resolves to
+   95efea63e1ba2f4d7d6c8a6f9176cb8e691dd808.
+3. Refresh the lock for that package only (`uv lock --upgrade-package doifetch`,
+   not a plain `uv lock`); `git diff --stat uv.lock` must show only the two
+   doifetch entries (version 0.2.0 to 0.3.0, the commit twice). Upstream
+   dependencies and extras are unchanged between the tags, so anything else
+   moving in the lock is drift: revert it.
+4. `STATE.md`: the pinned tag reads `v0.3.0`.
+5. Not in scope, say so in the request: `OPEN_SOURCES` in
+   `scripts/fulltext_cascade.py` keeps its six sources, so the harness's
+   `--doi`/`--isbn` path does not use the CORE source v0.3.0 adds upstream; the
+   file-name rebuild that helped HAL's search there stays, harmless.
+
+### Test
+
+- No new test: this is a pin move and no test may assert the pin's wording.
+  Exit criterion 2 is shown by existing tests, run by name on the new pin:
+  `tests/test_doifetch_helper.py`, `tests/test_fulltext_cascade.py`,
+  `tests/test_fetch_receipt.py`, `tests/test_idh_lifecycle.py`.
+- The tests that reach the real DOIfetch are `integration` tier (network, uvx):
+  run them by name with `-m integration` and quote passed and skipped counts.
+  The fast-tier ones stub the cascade and prove only the import surface.
+- Evidence beyond the suite, quoted in the request: `scripts/doifetch.sh --version`
+  answers `doifetch 0.3.0` (the tag resolves through uvx), and one real fetch by
+  DOI through the wrapper into a scratch directory, as ticket 1344 recorded for
+  v0.2.0.
+- `make check` before the request.
