@@ -8,8 +8,8 @@ set -euo pipefail
 # with a live pid or no checkable pid — none, pid 1, several, or past
 # pid_max — stays untouched, with two exceptions: a lock whose single pid
 # > 1 is dead is unlocked so the rails can proceed, and a harness lock
-# naming no owner on a tree with no work in it (ignored files included;
-# regenerable caches and the root .venv/ are disposable) whose git metadata
+# naming no owner on a tree with no work in it (nothing plain status lists;
+# ignored files are disposable, ticket 1500) whose git metadata
 # has sat idle for $WORKTREE_GC_OWNERLESS_IDLE_HOURS (default 72) is
 # lifted just before removal and put back if the removal fails), and no live
 # process has its cwd inside it. If the live-cwd scan reads nothing at all
