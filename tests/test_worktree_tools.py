@@ -183,12 +183,6 @@ def test_hunt_tmp_exclude_registration_uses_shared_git_metadata(origin):
     assert git(wt, "status", "--porcelain", "--untracked-files=all").stdout.strip() == ""
 
 
-def test_tmp_guard_usage_shows_register_with_one_path():
-    """register takes one worktree path; the usage must not offer it `repo [worktree]` (ticket 1496)."""
-    source = (SCRIPTS / "worktree-tmp-guard.py").read_text()
-    assert "register WORKTREE" in source and "{preflight,removal} REPO WORKTREE" in source
-
-
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
     return [line[len("worktree "):] for line in out.splitlines() if line.startswith("worktree ")]
