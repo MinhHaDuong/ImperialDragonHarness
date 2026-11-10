@@ -2,10 +2,13 @@
 Title: Context length audit reads Codex and Pi sessions
 Created: 2026-11-10
 Author: reviewer
+Closed: integration review passed — children 1508 (PR 2402) and 1509 (PR 2407) merged
 
 --- log ---
 2026-11-10T08:05Z reviewer created
 2026-11-10T08:15Z reviewer note split into 1508 (Codex, seam, reporting) and 1509 (Pi, blocked by 1508); tracker closes after the integration review
+2026-11-10T09:25Z reviewer note integration review on main 53719351 (padme): children 1508 (PR 2402) and 1509 (PR 2407) merged; audit reads Claude Code, Codex, Pi and Pi spool; independent hand counts equal the audit (Codex since 2026-11-01: 241 main sessions, 4 with 30+ turns at 230K, 0 past ceiling; Pi since 2026-09-16: 55 sessions peak 114638, spool 27 peak 115032); absent runtime reported could not look with exit 0, no corpus exit 2; after-merge record passes; no stale reference to the interim reporting
+2026-11-10T09:25Z reviewer closed — integration review passed — children 1508 (PR 2402) and 1509 (PR 2407) merged
 
 --- body ---
 ## Tracker
@@ -77,10 +80,10 @@ are still counted.
 
 ## Exit criteria
 
-- [ ] The audit counts Codex and Pi main sessions beside Claude Code's, with
+- [x] The audit counts Codex and Pi main sessions beside Claude Code's, with
   the whole-prompt definition, and its output names each runtime read
-- [ ] A runtime it could not read is reported as such, with a non-zero exit
+- [x] A runtime it could not read is reported as such, with a non-zero exit
   only when no corpus at all is readable
-- [ ] The Codex `input_tokens` question above is answered in the reader's
+- [x] The Codex `input_tokens` question above is answered in the reader's
   docstring, with the transcript evidence
-- [ ] `make check` passes
+- [x] `make check` passes
