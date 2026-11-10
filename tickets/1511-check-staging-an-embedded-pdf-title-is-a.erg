@@ -5,6 +5,11 @@ Author: reviewer
 
 --- log ---
 2026-11-10T08:48Z reviewer created
+2026-11-10T09:07Z reviewer raid 13f6d8 imagine: per-ticket pass skipped (lead: verbatim ruling, one function). Blind-spot: premise holds, live path narrower than stated: audit_one already retries on the filename when the embedded title finds nothing, so an embedded title concludes absent only when the filename gives fewer than TITLE_MIN_WORDS words or equals the title; the red test needs such a filename or it is green before the change. absent leads to a write only through a .bib title, so this changes reports and counts, not writes
+2026-11-10T09:07Z reviewer raid 13f6d8 lead decisions: receipt titles are not wired as given, receipts carry no given/scraped mark for title and probe-url stores the page's own title; only a .bib title is given, the request says so. find-work --metadata reading the pdfinfo Title is outside this ticket: named as residual, queued for the author. Text to change: skills/zotero/references/backfill.md verdict table and lookup order
+2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "Unreliable does not means never use". The embedded title stays a search hint here (a hit or candidates from it count); find-work --metadata keeps using it, no extension and no ticket
+2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, completed, verbatim: "Unreliable does not means never use, but use cautiously. LLM judgement can be made." The code decides nothing on an embedded title alone; the agent reading an unidentified row judges from the title and the file. The reference text says so
+2026-11-10T09:13Z reviewer raid 13f6d8 feasibility: PASS. Every function, constant and test the plan names exists; the find_work seam is already stubbed in tests/test_zotero_check_staging_bib.py (the pdfinfo-stub precedent is in tests/test_zotero_find_work.py)
 
 --- body ---
 ## Context
@@ -43,3 +48,73 @@ came from, not what it looks like.
 - [ ] The existing filename-title behaviour is unchanged
 - [ ] `skills/zotero/references/` text on verdicts agrees with the code
 - [ ] `make check` passes
+
+## Plan (raid 13f6d8)
+
+Line numbers are those of 2026-11-10; anchor by text, 1510 shifts them.
+
+### Relevant files
+
+- `scripts/zotero.py` — `audit_one` only: the `filename_only` assignment and
+  the comment above it. `_staging_verdict`, `EXHAUSTIVE_KEYS`, `find_work`,
+  `_pdf_info`, the filename retry and `RECONCILE_ACTIONS` stay as they are.
+- `tests/test_zotero_check_staging_bib.py` — the red test and its control
+  (fast tier).
+- `tests/test_zotero_find_work.py` — the live twin (`integration`), after
+  `test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone`.
+- `skills/zotero/references/backfill.md` — the `unidentified` row of the
+  verdict table, the paragraph "A filename-derived title is a search hint",
+  and steps 2 and 3 of the lookup order ("a real title, the `.bib` one or the
+  PDF's own").
+- `skills/zotero/references/helper-script.md` — the `check-staging` bullet and
+  the paragraph after it, same two statements.
+
+### Actions
+
+1. In `audit_one`, a title is given only when the `.bib` entry supplies it and
+   it was the title searched: `title_given = bool(bib_entry.get("title")) and
+   not filename_title`; then `filename_only = not title_given and not any(key
+   in res["consulted"] for key in EXHAUSTIVE_KEYS)`. A consulted given
+   identifier still lets a miss say `absent`. Keep the name `filename_only` and
+   the `_staging_verdict` signature (`tests/test_zotero_import.py` calls it by
+   keyword); rewrite the comment to say a title taken from the file, container
+   or filename, is a hint.
+2. Receipt titles are not wired as given; no title is filtered by pattern;
+   `find-work --metadata` is not touched (residual, named in the request).
+3. Reference text as listed above, with one sentence saying a receipt's title
+   is not given either, and why, and one saying what the author ruled: an
+   embedded title is used, cautiously; on a row left `unidentified` by its
+   embedded title the reading agent judges from the title and the file, no
+   pattern does.
+
+### Test
+
+- First, red before the change, in `tests/test_zotero_check_staging_bib.py`:
+  `scan0001.pdf` (a filename giving fewer than `TITLE_MIN_WORDS` words, or the
+  test is green today through the filename retry), an embedded title of five
+  words, `find_work` stubbed at the seam that file already stubs to return no
+  match with `consulted == ["title"]`; `audit_one` must answer `unidentified`.
+  Today it answers `absent`: an AssertionError on the verdict.
+- Control, same file shape: the same title given by a `.bib` entry is `absent`;
+  an embedded title beside a `.bib` DOI that misses is `absent`.
+- Live twin with the real client: `make_pdf(tmp_path / "scan0001.pdf", ...,
+  {"Title": ...})` is `unidentified`, the same title from a `.bib` entry is
+  `absent`.
+- Exit criterion 2 is shown by existing tests left untouched and green:
+  `test_filename_only_no_match_is_unidentified`,
+  `test_check_staging_verdicts_cover_every_answer`,
+  `test_check_staging_retries_with_the_filename_when_the_embedded_title_is_junk`,
+  `test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone`.
+- No test asserts the wording of a reference file.
+- Live tests skip in a shell with no display. By hand:
+  `env -u ZOTERO_NO_LAUNCH -u CI DISPLAY=:0 python3 -m pytest
+  tests/test_zotero_find_work.py -m integration -k "embedded or check_staging"`
+  (the client draws on its own private Xvfb); quote the pass and skip counts in
+  the request.
+
+### Collisions with 1510
+
+1510 extracts the given-versus-hint block of `audit_one` some fifty lines
+above, edits `attach_present_works` and `cmd_suggest_attachments`, adds a
+paragraph further down `backfill.md` and puts its tests in other files. No
+shared hunk; either order merges.
