@@ -2,9 +2,11 @@
 Title: Trim gate_tree.py: drop the verdict-state and name checks, keep the stale-tree replace
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2436
 
 --- log ---
 2026-11-10T12:09Z reviewer created
+2026-11-10T14:02Z reviewer closed — autoclosed — PR #2436
 
 --- body ---
 ## Context
