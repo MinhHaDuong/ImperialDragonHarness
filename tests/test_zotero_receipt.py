@@ -103,6 +103,19 @@ def test_a_given_receipt_identifier_finds_the_work_and_may_say_absent(
 
 
 @pytest.mark.integration
+def test_a_url_miss_never_says_absent(lib, tmp_path):
+    """A URL is positive-only: a hit matches, a miss is `unidentified`.
+    Item url fields vary (landing page, PDF link, resolver), so a miss would
+    mint a duplicate under --apply."""
+    miss = stage(tmp_path, "e.pdf", ["x", "nonce a7"],
+                 {"identifiers": {}, "url": "https://example.org/not/there"})
+    judged = verdict(miss)
+    assert "url" in judged["consulted"]
+    assert judged["zotero_key"] is None
+    assert judged["verdict"] == "unidentified"
+
+
+@pytest.mark.integration
 def test_a_scraped_receipt_identifier_is_not_a_given_key(lib, tmp_path):
     """Marked scraped, it keeps 1502's rule: labelled, and alone never
     `absent`."""

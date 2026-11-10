@@ -19,7 +19,8 @@ zi = zotero_live.helper_module()
 REPO = Path(__file__).resolve().parent.parent
 
 CORE = {"status", "source", "path", "error", "md5", "identifiers",
-        "identifiers_scraped", "url", "final_url", "title"}
+        "identifiers_scraped", "url", "final_url", "title",
+        "retrieved_at", "content_type", "size_bytes", "http_status"}
 ID_KEYS = {"doi", "isbn", "arxiv", "handle"}
 
 
@@ -66,7 +67,7 @@ def probe_fetch(tmp_path, monkeypatch, url, body, ctype="application/pdf",
                 final=None):
     probe = load_probe()
     monkeypatch.setattr(probe, "fetch",
-                        lambda u, t: (body, final or u, ctype))
+                        lambda u, t: (body, final or u, ctype, 200))
     return probe.probe_one(url, tmp_path, 5)
 
 
@@ -78,6 +79,12 @@ def test_both_fetchers_print_the_same_receipt_keys(tmp_path, monkeypatch, capsys
                          b"%PDF-1.4 stub")
     assert set(printed) == CORE
     assert CORE <= set(probed)
+    assert printed["size_bytes"] == len(b"%PDF fetched bytes")
+    assert probed["size_bytes"] == len(b"%PDF-1.4 stub")
+    assert probed["http_status"] == 200 and printed["http_status"] is None
+    assert probed["content_type"] == "application/pdf"
+    for record in (printed, probed):
+        assert record["retrieved_at"].endswith("Z")
     for record in (printed, probed):
         assert set(record["identifiers"]) == ID_KEYS
         assert record["status"] == "success"
