@@ -9,6 +9,7 @@ Author: reviewer
 2026-11-10T07:40Z reviewer note plan — raid 91a35c: two retirement commits, citation gate first; red tests through gc lock path and a failing gh stub
 2026-11-10T07:43Z reviewer note feasibility — raid 91a35c: WARN, references hold within a few lines; --ignored=matching must be dropped explicitly
 2026-11-10T08:14Z reviewer note fix — nested-worktree rail of 7eacadd2 restored as a third commit (advisor agreed: regression repair)
+2026-11-10T08:28Z reviewer note fix — roar after-exit removal passes the nested-worktree rail (gaze finding on 44d09dd7)
 
 --- body ---
 ## Context
