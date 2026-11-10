@@ -1,0 +1,365 @@
+%erg 0.1
+Title: Worktree cleanup follows git's contract: ignored files and .tmp scratch are disposable
+Created: 2026-11-09
+Author: reviewer
+Closed: autoclosed — PR #2394
+
+--- log ---
+2026-11-09T23:10Z reviewer created
+2026-11-10T07:39Z reviewer note imagine — raid 91a35c: premise holds; 4 sites added, lair dropped; blind-spot 4 findings, dead-pid reclaim reach raised to the author
+2026-11-10T07:40Z reviewer note plan — raid 91a35c: two retirement commits, citation gate first; red tests through gc lock path and a failing gh stub
+2026-11-10T07:43Z reviewer note feasibility — raid 91a35c: WARN, references hold within a few lines; --ignored=matching must be dropped explicitly
+2026-11-10T08:14Z reviewer note fix — nested-worktree rail of 7eacadd2 restored as a third commit (advisor agreed: regression repair)
+2026-11-10T08:28Z reviewer note fix — roar after-exit removal passes the nested-worktree rail (gaze finding on 44d09dd7)
+2026-11-10T08:36Z reviewer closed — autoclosed — PR #2394
+2026-11-10T08:49Z reviewer note author 2026-11-10 — dead-pid reclaim lands as written (option A), on condition the prose does not incite reusing old worktrees; then: prose should incite cleaning up after oneself
+2026-11-10T08:49Z reviewer note fix — prose sweep found 2 incitements and 9 fragile passages; lifecycle owner section 'Clean up after yourself' added; hunt, molt, raid and one memory line reworded (a659fca7)
+2026-11-10T08:51Z reviewer note fix — after the rebase the prose commit is 99a025a7 (a659fca7 above is its pre-rebase id)
+2026-11-10T09:01Z reviewer note fix — gaze findings on 792c151a: molt's closing removal names the preflight and no longer overclaims gc; lifecycle section says what to do when an earlier tree still holds the branch
+
+--- body ---
+## Context
+
+Author decision, 2026-11-09, on the weekly ticket audit's recommendation
+("your recommendations as is"). Two worktree-cleanup guards cost more than
+they protect and are retired together, because they share six files.
+
+**1. "Ignored files count as residue" (ticket 1212).** The rule exists
+because the harness's own `.gitignore` is `*` with an allowlist. Every other
+project ignores build products, caches and environments, which is what git
+means by ignored, and pays for the harness's special case:
+
+| Ticket | What the rule blocked | Patch it needed |
+|---|---|---|
+| 1406, 1458 | JETP's seeded data directory | byte-compare against `.worktreeinclude` (`worktree_setup_copy.py`) |
+| 1487 | ignored build output in review copies, three projects in one day | `--ignored-ok`, allowed only on `review-*`/`gate-*` names |
+| 1495 | uv venv internals (`.venv/.lock`) | allowlist of venv entries; three gaze FINDINGS rounds |
+
+**2. The `.tmp` citation gate (ticket 1119).** Before a worktree's `.tmp/`
+is deleted, `worktree-tmp-guard.py` lists forge requests, verdict files and
+branch commits for a citation of `.tmp`, and fails closed when it cannot
+look. It held about 9.8 GB in arena over an id type check (1470). The
+audit's search of journal and tickets found no block for a real citation
+(weak evidence: blocks are not logged). The rule that evidence lives outside
+`.tmp/` already covers the case, and `.tmp/` is git-ignored by registration.
+
+## Decision
+
+- A git-ignored file is disposable in every worktree removal path (gaze,
+  verify-gate, roar, lair, molt, gc): `git status --porcelain` without
+  `--ignored` is the residue rule. Tracked changes, staged changes and
+  untracked files that are not ignored still block, as do the lock, liveness
+  and unpushed-commit rails, which this ticket does not touch.
+- `.tmp/` is ignored scratch like any other: no citation search, no forge
+  call, before removal. `worktree-tmp-guard.py register` (the `/.tmp/` line in
+  `info/exclude`) stays; a size line before removal may stay if it costs
+  nothing.
+- Risk accepted by the author: in the harness, a file outside the allowlist
+  (the root, or a new top-level directory) is ignored, so such a draft is
+  deleted with its worktree. The allowlist un-ignores whole working
+  directories (`scripts/**`, `skills/**`, `tests/**`, `tickets/**`,
+  `design/**`, `rules/**`…), so drafts there stay visible as untracked.
+  No replacement guard.
+
+## Sites (origin/main, 2026-11-09; grep again before starting)
+
+Residue rule: `scripts/worktree-clean-lib.sh` (`worktree_residue`,
+`worktree_scrub`, `_venv_disposable`, `_build_child_*`),
+`scripts/worktree_setup_copy.py` (delete), `scripts/worktree-exit-preflight.sh`
+(`--ignored-ok` and its name check), `scripts/worktree-gc.sh`
+(`ownerless_tree_clean`), `scripts/gaze_close.py`, `scripts/gate_tree.py`,
+`skills/verify-gate/SKILL.md`, `skills/gaze/references/cleanup.md`,
+`tests/test_preflight_ignored_ok.py`, `tests/test_worktree_tools.py`,
+`tests/test_gaze_close.py`, `tests/test_roar_close_and_clean.sh`.
+
+Citation gate: `scripts/worktree-tmp-guard.py` (`preflight` and `removal`
+modes), its callers `scripts/gaze_close.py:145`,
+`scripts/worktree-exit-preflight.sh:62`, `scripts/worktree-gc.sh:259`,
+`skills/gaze/references/cleanup.md`, `skills/molt/SKILL.md`,
+`skills/roar/references/close-and-clean.md`, `skills/lair/SKILL.md`, and
+`tests/test_worktree_tools.py`, `tests/test_forge_status_scripts.py`,
+`tests/test_review_panel_cleanup_contract.py`,
+`tests/test_roar_close_and_clean.sh`.
+
+`.worktreeinclude` itself is the runtime's file and is not removed from any
+project; the harness only stops reading it for cleanup.
+
+## Coordination
+
+Ticket 1496's request (another session's coder) edits
+`scripts/worktree-tmp-guard.py` and `skills/molt/SKILL.md`. Branch this
+ticket only after that request has landed.
+
+## Exit criteria
+
+- [ ] An ignored file never blocks a worktree removal, in any project; a test shows one ignored file passing and one untracked, unignored file blocking, through the preflight and through gc
+- [ ] `worktree_setup_copy.py`, `--ignored-ok` with its name check, the venv and build-output allowlists and their tests are deleted; no caller is left
+- [ ] No removal path calls the forge or searches for `.tmp` citations; `worktree-tmp-guard.py` keeps `register`; a test shows a worktree whose `.tmp/` holds files being removed with no forge available
+- [ ] Skill and reference text that restates either rule is brought in line; the two retirements are separate commits, so either can be reverted alone
+- [ ] The request body states the lines removed and added, by area
+- [ ] `make check` passes
+
+## Imagine (raid 91a35c)
+
+Read on 998cd705, after PR 2367 (ticket 1496) landed: it added only an argparse
+`usage=` string to `worktree-tmp-guard.py` and reworded `skills/molt/SKILL.md`.
+No intent change; exit criteria untouched. Line numbers below are 998cd705's.
+
+**Premise holds.** No hook, installer, Makefile, `bin/`, adapter or CI file
+calls `worktree-tmp-guard`, `--ignored-ok`, `worktree_setup_copy`,
+`worktree-clean-lib` or the preflight: every caller is in `scripts/` or
+`skills/`. No rule file requires the old behaviour. gc's `[gone]` path
+(`worktree-gc.sh:111-125`, `report_wip`) already uses plain status and has
+never blocked on ignored files.
+
+**Two costs the Decision implies and the body did not price** (raised to the
+author, defaults applied meanwhile):
+
+1. `docs/` is git-ignored staging by rule (`rules/zotero.md:23-26`) and holds
+   research notes before they reach Zotero
+   (`skills/reading-note/SKILL.md:78`). Where a project does ignore it, a note
+   staged in a worktree's `docs/` and not yet stored goes with the tree; ticket
+   1212's rule blocked that removal. (DOIfetch, zoteus, JETP-observer and
+   search-works-for-zotero do not ignore `docs/`: there it still blocks as
+   untracked.) In the harness, `docs/` is the only ignored path sessions routinely
+   write deliverables to; the rest (`health/` but its journal, `projects/`,
+   `build/`, `.panel/`, `.tmp/`, `.venv`, `.claude/`, settings files, caches)
+   is scratch or machine state. Default: accept, and say at the rule's owner
+   site (`skills/hunt/SKILL.md:125`) that evidence and deliverables never live
+   in a git-ignored path. No guard.
+2. An untracked, unignored `.venv` or `build/` (a venv without its own
+   `.gitignore`, in a project that does not ignore it: ticket 1357) blocks
+   again, as the Decision says untracked files do. uv, virtualenv and
+   Python 3.13+ venvs ignore themselves and become disposable. Default:
+   execute literally, state it in the request body, and let the affected
+   project add the ignore line through its own tickets. The Blind-Spot seat
+   found no affected project on padme (every venv found ignores itself or is
+   ignored by its project). Ticket 1357 recorded seats answering this block
+   with a forced removal: the rewrite of `skills/verify-gate/SKILL.md:133-139`
+   keeps the no-force rule in words.
+
+### Blind-Spot pass: 4 findings, both defaults above agreed as advisor
+
+1. **The two retirements together give ticket 1495's dead-pid reclaim its full
+   reach (verified).** `worktree-gc.sh:149-161` reclaims a tree on a branch
+   that still exists upstream when its lock pid is dead, the tree is clean and
+   HEAD equals upstream; commit 1242af86 counted on "the later rails (live
+   cwd, .tmp guard, WIP)". The guard's removal mode refuses a branch not
+   merged into the integration branch (`worktree-tmp-guard.py:325-330`), so
+   today such a tree survives whenever it has a `.tmp/`. After this ticket it
+   is removed. On padme, 2026-11-10, climate-finance-het holds three:
+   `t2882-2750729-28445`, `t2880-2750729-32580` (`.tmp/` 72M) and
+   `t0272-2750729-22569`, all on unmerged branches, clean, at upstream, owner
+   pid dead. Committed work is safe on the branch; `.tmp/` and ignored state
+   go. **Raised to the author before the merge**; default is the Decision as
+   written ("worktrees are throwaway, branches hold durable state"). The
+   request body lists, per project on this host, the trees the first gc would
+   reclaim.
+2. **"Every other project ignores build products, caches and environments"
+   is narrower than what projects ignore.** climate-finance-het and
+   JETP-observer ignore research data through DVC-written `.gitignore` files;
+   each worktree's `.dvc/cache` is a symlink to the primary's, and a sample of
+   40 pointer files and 4 directories found no only-copy data. chemin-de-voix
+   ignores weights, checkpoints, runs and logs; AEDIST ignores experiment jobs
+   and outputs: output produced in a worktree there would exist only there
+   (latent: both have only a primary checkout today). Named in the request
+   body; queued for the author with finding 1.
+3. **No signal in the harm direction after merge.** A wrongful deletion
+   leaves no trace, so "reopen on evidence" cannot fire. The seat's
+   suggestion, a non-blocking line listing the tree's top-level ignored
+   entries before removal, is more than the size line the Decision allows:
+   queued for the author, not built.
+4. **JETP-observer's `.worktreeinclude:1-3` restates the retired rule** ("a
+   modified one is kept"). After the merge: a log line in that project's
+   tickets, no edit from here.
+
+Checked clean by the seat: adapters (Codex, Pi), hooks and the after-merge
+runner hold no further caller; no served project has submodules or nested
+worktrees; every removal site uses plain `git worktree remove`.
+
+### Sites, retirement 1: ignored files count as residue
+
+| Site | Change |
+|---|---|
+| `scripts/worktree-clean-lib.sh:1-30` header | rewrite, about 5 lines; **owner site of the residue rule** |
+| `worktree-clean-lib.sh:32-72` `_build_child_regenerable`, `_venv_disposable`, `_build_child_disposable` | delete |
+| `worktree-clean-lib.sh:74-111` `worktree_residue` | one `git --no-optional-locks status --porcelain=v1 --untracked-files=all`, `return 1` on failure kept |
+| `worktree-clean-lib.sh:113-133` `worktree_scrub` | delete |
+| `worktree-clean-lib.sh:135-140` `ownerless_tree_clean` | stays |
+| `scripts/worktree_setup_copy.py` | delete |
+| `scripts/worktree-exit-preflight.sh:11-17, 22-28, 45-51, 109-111` `--ignored-ok`, name check, filter, header | delete |
+| `worktree-exit-preflight.sh:88-99` lib sourced twice (91 and 99) | source once |
+| `worktree-exit-preflight.sh:121-123` `worktree_scrub` call | delete |
+| `worktree-exit-preflight.sh:113` `(\?\?\|!!)` in the `.panel` filter | keep the `??` branch |
+| `worktree-exit-preflight.sh:128` "uncommitted or ignored state" | reword |
+| `scripts/worktree-gc.sh:11-12` header | reword; callers at 160 and 227 follow the lib unchanged |
+| `scripts/gaze_close.py:12-13, 162-165`, `scripts/gate_tree.py:12, 19, 87` | drop `--ignored-ok` |
+| `skills/verify-gate/SKILL.md:133-139`, `skills/gaze/references/cleanup.md:23-25` | rewrite |
+| `skills/hunt/references/worktree-lifecycle.md:33-35` (not in the body's list) | rewrite |
+| `tests/test_preflight_ignored_ok.py` | delete; behaviour of :39/:46 moves to the preflight tests |
+| `tests/test_gaze_close.py:78, 99, 126`, `tests/test_roar_close_and_clean.sh:540-546` | still pass; trim redundancy, fix the comment |
+| `tests/test_verify_fork_contracts.py:499-507` (not in the body's list) | wording pin on the edited verify-gate text: remove |
+
+### Sites, retirement 2: the `.tmp` citation gate
+
+| Site | Change |
+|---|---|
+| `scripts/worktree-tmp-guard.py` | keep `register_tmp_exclude`, `run_git`, `common_dir`, a register-only parser; delete the rest |
+| `worktree-exit-preflight.sh:53-66` guard call; `:55, 59, 84, 104-108` `preserve_panel` | delete |
+| `worktree-gc.sh:253-268`, `gaze_close.py:12, 143-149` guard calls | delete |
+| `skills/roar/close-and-clean.sh:473-483` (not in the body's list) | delete the `.tmp`-conditional preflight block |
+| `skills/roar/SKILL.md:217`, `skills/roar/references/close-and-clean.md:40-50`, `skills/molt/SKILL.md:105-108, 257, 284`, `skills/gaze/references/cleanup.md:21` | rewrite; molt 284 keeps its tree only if molt reads `.tmp` after removal, else drop the clause |
+| `skills/hunt/SKILL.md:122-125` | stays; **owner site of the `.tmp` rule**, add that `.tmp/` goes with the tree |
+| `skills/molt/SKILL.md:87` `register` | stays |
+| `skills/raid/references/circuit-breakers.md:21` `--removal --branch` | stays while the flags are accepted |
+| `skills/lair/SKILL.md` | listed in the body, needs no change (its "citation" is `tmp_report.py` attribution) |
+| `tests/test_forge_status_scripts.py:80-90` | delete |
+| `tests/test_review_panel_cleanup_contract.py` | delete the file (wording pin on `gaze_close.py` source order) |
+| `tests/test_roar_close_and_clean.sh:717-727` | becomes the no-forge removal test |
+| `tests/test_worktree_tools.py` | see Tests |
+
+### Simplest path
+
+After the change the contract is `git status` plus `git worktree remove`
+without `--force`, which refuses untracked and modified files and deletes
+ignored ones. Callers of the guard's `preflight` and `removal` modes are
+removed, not redirected; the size line is dropped. No new abstraction.
+
+Rails a naive edit would weaken:
+- keep `--untracked-files=all` and fail-closed `return 1` (a bare
+  `status --porcelain` folds an untracked directory into one entry; an
+  unreadable tree must not read as clean);
+- keep `--no-optional-locks`, or the status call restarts the tree's idle clock;
+- the guard's `removal` mode also checked HEAD against the branch and the
+  integration branch, but only when `.tmp` existed: not a standing rail. gc's
+  `[gone]` and upstream-equality checks, roar's `merge-base --is-ancestor` and
+  `gate_tree`'s reachability check remain. Say so in the request body.
+
+Commit split: retirement 2 first (pure deletion; `.tmp/*` is already tolerated
+at lib:102), retirement 1 second. Three textually adjacent spots would make a
+revert conflict (`worktree-exit-preflight.sh:104-111`, the `gaze_close.py`
+docstring 12-13, `cleanup.md:21-23`): leave an unchanged line between the two
+commits' edits and prove both `git revert --no-commit` runs on a throwaway
+worktree. Keep the preflight's `--removal` and `--branch` flags accepted in
+both commits (no-ops afterwards), or one commit's revert trips `set -u`; name
+them as debt in the request body.
+
+One request, two commits: mostly deletion, no symbol other tickets depend on.
+
+### Tests
+
+Each new test passes on the new code and fails on 998cd705. No test reads a
+script's or skill's source to assert a string (author, 2026-11-10).
+
+- Criterion 1, preflight: repo with `.gitignore` `*` plus an allowlist, an
+  ignored `draft.md`: `--removal` exits 0 and `git worktree remove` succeeds;
+  beside it an untracked, unignored file exits 1 and stays. Invert
+  `test_worktree_tools.py:779` and `:1583[ignored-draft]`.
+- Criterion 1, gc: through the owner-less or dead-pid lock path; the `[gone]`
+  path already passes on old code and would prove nothing. Invert `:1770`,
+  keep `:1736` as the negative case.
+- Criterion 2: `--ignored-ok` exits 2 as an unknown option; "no caller left"
+  is `make check` plus a grep quoted in the request body.
+- Criterion 3: worktree with `/.tmp/` registered and a file in it, branch
+  merged and gone, a forge-shaped `origin`, a `gh` stub on PATH that exits 1
+  and logs its calls: gc removes the tree and the log is empty (old code
+  retains it as "evidence unavailable"). Same case through close-and-clean
+  after-exit and through `gaze_close`.
+- `test_worktree_tools.py`: the citation-gate tests and the allowlist tests
+  go; keep `:212`, `:1005`, `:1736` and one ignored-venv gc case; `:444` and
+  `:1239` change (a missing exclude now blocks as untracked, exit 1).
+
+### Later review
+
+One week after merge, run gc and molt across projects and count trees still
+skipped as not clean: a skip caused only by an untracked `.venv` or `build/`
+names a project that needs an ignore line.
+
+## Plan (raid 91a35c)
+
+Route: deletion of code and tests, prose brought in line; one request, two
+retirement commits plus the close. Written by the orchestrator from the
+Imagine material; the coder's own Plan phase checks it against the source.
+
+Dependencies: none unmerged (PR 2367 landed as 998cd705). No open request
+touches these files (2378, 2381, 2382, 2383 checked 2026-11-10).
+
+**Commit A, retirement 2 (the `.tmp` citation gate).**
+1. First red test, criterion 3, through gc: a worktree with `/.tmp/`
+   registered and a file in it, branch merged and gone, a forge-shaped
+   `origin`, a `gh` stub on PATH that exits 1 and logs its calls. Expect the
+   tree removed and the log empty. Red on the base for the stated reason:
+   "`.tmp` safety evidence unavailable — retained". Then the same case through
+   close-and-clean after-exit (`tests/test_roar_close_and_clean.sh:717-727`
+   rewritten) and through `gaze_close`.
+2. Delete the guard calls (`worktree-gc.sh:253-268`,
+   `worktree-exit-preflight.sh:53-66` with `preserve_panel`,
+   `gaze_close.py:143-149`, `skills/roar/close-and-clean.sh:473-483`).
+3. Shrink `worktree-tmp-guard.py` to `register`.
+4. Delete the citation-gate tests (`test_worktree_tools.py`,
+   `test_forge_status_scripts.py:80-90`,
+   `test_review_panel_cleanup_contract.py`).
+5. Prose: `skills/roar/SKILL.md:217`, `roar/references/close-and-clean.md:40-50`,
+   `skills/molt/SKILL.md:105-108, 257, 284`, `gaze/references/cleanup.md:21`,
+   the `.tmp` half of `hunt/references/worktree-lifecycle.md:33-35`, and the
+   owner sentence at `skills/hunt/SKILL.md:122-125` (`.tmp/` goes with the tree).
+
+**Commit B, retirement 1 (ignored files as residue).**
+6. First red tests, criterion 1: the preflight pair (ignored `draft.md`
+   passes and the tree is removed; an untracked, unignored file exits 1 and
+   stays), and gc through the owner-less or dead-pid lock path.
+7. Shrink `worktree-clean-lib.sh` to `worktree_residue` and
+   `ownerless_tree_clean`; delete `worktree_setup_copy.py`; drop
+   `--ignored-ok` from the preflight, `gaze_close.py` and `gate_tree.py`; keep
+   the preflight's `--removal` and `--branch` accepted as no-ops.
+8. Criterion 2: `--ignored-ok` exits 2 as an unknown option.
+9. Delete `test_preflight_ignored_ok.py` and the allowlist tests; remove the
+   wording pin `test_verify_fork_contracts.py:499-507`.
+10. Prose: `skills/verify-gate/SKILL.md:133-139` (the no-force rule stays in
+    words), `gaze/references/cleanup.md:23-25`, the rest of
+    `worktree-lifecycle.md:33-35`, the gc header, and at the owner site in
+    `skills/hunt/SKILL.md` one sentence: evidence and deliverables never live
+    in a git-ignored path.
+
+**Before the request.**
+11. Revert proof: in a throwaway worktree, `git revert --no-commit` of each
+    retirement commit alone applies without conflict and the touched scripts
+    still parse; quote both runs.
+12. Read-only list, per project on this host, of the trees the first gc
+    would reclaim that the base would have kept; in the request body.
+13. Request body: lines removed and added by area; the costs named in
+    Imagine (docs staging, untracked `.venv` and `build/`, the dead-pid
+    reclaim's reach, ignored data and weights in other projects); the no-op
+    flags as debt; the ancestry check that lived in the guard and the rails
+    that remain.
+14. `make check`.
+
+Tautology scan: the gc test for criterion 1 on the `[gone]` path passes on
+the base and proves nothing, hence the lock path; the criterion 3 test
+without a forge-shaped `origin` and a failing `gh` may pass on the base,
+hence both. No test asserts a string in a script's or skill's source.
+
+## Feasibility (raid 91a35c): WARN, workable
+
+Mechanical check of every reference above against 998cd705: all files,
+functions and tests exist; line ranges are right to within a few lines
+(comments precede `worktree_scrub` at 113-115 and the gc guard call at
+253-256). No caller in `profiles/`, `agents/`, `commands/`, `Makefile`,
+`.github/`, `bin/`, `ci-local/` or hooks. For the coder:
+
+- `worktree-clean-lib.sh:77-78` calls status with `--ignored=matching`:
+  the rewrite drops that flag explicitly; a copied call keeps the old rule.
+- Inverted tests take names that say the new outcome:
+  `test_preflight_blocks_on_ignored_draft_under_star_ignore` (779), the
+  `ignored-draft` case of `test_uv_venv_does_not_mask_real_work` (1583),
+  `test_gc_keeps_idle_ownerless_tree_holding_ignored_files` (1770).
+- Not classified above, in `tests/test_worktree_tools.py`: 169
+  `test_hunt_tmp_exclude_registration_uses_shared_git_metadata` (register:
+  keep), 1319 `test_removal_preflight_refused_by_residue_keeps_panel` (read
+  it against the `preserve_panel` deletion), 1392 and 1408 (preflight
+  argument handling: keep).
+- `skills/roar/close-and-clean.sh:219` and `skills/lair/SKILL.md:52` call the
+  plain preflight and stay; lair's "uncommitted/untracked" wording becomes
+  exact once ignored entries stop blocking.
+- Other projects (JETP-observer's `.worktreeinclude`, the climate-finance
+  trees) were checked by the orchestrator and the Blind-Spot seat, not here.

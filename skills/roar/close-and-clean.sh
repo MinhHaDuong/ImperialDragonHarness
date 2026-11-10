@@ -451,7 +451,7 @@ remove_worktree() {
 
 # One tree; every refusal returns so the loop above still reaches the others.
 remove_one_worktree() {
-    local path listing p primary="" registered=0 here RM_TREE="$1"
+    local path listing p primary="" registered=0 here nested RM_TREE="$1"
     [ -n "$RM_TREE" ] || return 0
     path=$(real "$RM_TREE") || { note "WORKTREE: ALREADY-ABSENT $RM_TREE"; return 0; }
     listing=$(git worktree list --porcelain) || { note "WORKTREE: COULD-NOT-LOOK cannot list worktrees"; bump 2; return 0; }
@@ -467,20 +467,16 @@ remove_one_worktree() {
     if [ "$path" = "$primary" ]; then
         note "WORKTREE: REFUSED $path is the main checkout"; bump 1; return 0
     fi
+    # Another registered worktree inside this one is work no status shows (its
+    # path is ignored) and `git worktree remove` deletes: keep the outer tree.
+    . "$IDH_ROOT/scripts/worktree-clean-lib.sh"
+    nested=$(worktree_nested "$path") || { note "WORKTREE: COULD-NOT-LOOK cannot list nested worktrees of $path"; bump 2; return 0; }
+    if [ -n "$nested" ]; then
+        note "WORKTREE: REFUSED $path holds another registered worktree; kept"
+        printf '%s\n' "$nested" | while IFS= read -r p; do note "$p"; done; bump 1; return 0
+    fi
     if [ "$path" = "$here" ]; then
         note "WORKTREE: REFUSED $path is the current checkout — cd to the main checkout first"; bump 1; return 0
-    fi
-    if [ -e "$path/.tmp" ] || [ -L "$path/.tmp" ]; then
-        local branch tmp_rc=0 tmp_report
-        branch=$(git -C "$path" symbolic-ref --quiet --short HEAD) || branch=""
-        local tmp_args=(--removal)
-        [ -z "$branch" ] || tmp_args+=(--branch "$branch")
-        tmp_report=$("$IDH_ROOT/scripts/worktree-exit-preflight.sh" "${tmp_args[@]}" "$path") || tmp_rc=$?
-        [ -z "$tmp_report" ] || while IFS= read -r line; do note "WORKTREE-TMP: $line"; done <<< "$tmp_report"
-        if [ "$tmp_rc" -ne 0 ]; then
-            note "WORKTREE: KEEP-PENDING .tmp safety gate did not pass; worktree retained"
-            bump 1; return 0
-        fi
     fi
     git worktree unlock "$path" >/dev/null 2>&1 || true   # hunt locks its tree
     if git worktree remove -- "$path" >/dev/null 2>&1; then

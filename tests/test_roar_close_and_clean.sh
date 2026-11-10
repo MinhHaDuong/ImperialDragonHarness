@@ -537,9 +537,8 @@ NOFORGE="$T/noforge"; mkdir -p "$NOFORGE"
 printf '#!/usr/bin/env bash\nexit 1\n' > "$NOFORGE/gh"; chmod +x "$NOFORGE/gh"
 
 exit_world "$T/ec-merged" task; merge_elsewhere task; cd "$WT"
-# The checkout's ignored setup copies must not block the exit check.
-printf '\n.env\n.worktreeinclude\n.dvc/\n.venv\n' >> "$W/.git/info/exclude"
-printf '.env\n.dvc/config.local\n' > "$W/.worktreeinclude"
+# Ignored files in the checkout (ticket 1500) must not block the exit check.
+printf '\n.env\n.dvc/\n.venv\n' >> "$W/.git/info/exclude"
 mkdir -p "$W/.dvc/cache" "$W/.venv" "$WT/.dvc"
 printf 'fake config\n' > "$W/.env"; cp "$W/.env" "$WT/.env"
 printf 'fake dvc config\n' > "$W/.dvc/config.local"; cp "$W/.dvc/config.local" "$WT/.dvc/config.local"
@@ -701,6 +700,23 @@ _check_true "refused plus removable: first removable gone" test ! -d "$WT"
 _check_true "refused plus removable: second removable gone" test ! -d "$WT2"
 _check_rc "refused plus removable: a WORKTREE line per tree" 3 "$(printf '%s\n' "$out" | grep -c 'WORKTREE: ')"
 
+# Gaze finding on 44d09dd7: an outer tree holding a registered worktree, whose
+# path is ignored (info/exclude), shows a clean status; removing it deletes the
+# inner tree's uncommitted work. Without and with .tmp/ in the outer tree.
+for variant in plain tmp; do
+    exit_world "$T/rm-nested-$variant" task; cd "$W"
+    printf '/.claude/worktrees/\n/.tmp/\n' >> "$(G rev-parse --path-format=absolute --git-common-dir)/info/exclude"
+    [ "$variant" = tmp ] && { mkdir -p "$WT/.tmp"; echo scratch > "$WT/.tmp/note"; }
+    INNER="$WT/.claude/worktrees/inner"
+    G worktree add -q -b "inner-$variant" "$INNER" main 2>/dev/null
+    echo precious > "$INNER/precious.txt"
+    run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+    _check_rc "remove tree holding a nested worktree ($variant): refused" 1 "$rc"
+    _check_says "remove tree holding a nested worktree ($variant): names it" "$out" "nested worktree: $INNER"
+    _check_true "remove tree holding a nested worktree ($variant): outer kept" test -d "$WT"
+    _check_true "remove tree holding a nested worktree ($variant): inner file kept" test -f "$INNER/precious.txt"
+done
+
 # No forge: compare against the local default branch; nothing to sync.
 mkdir -p "$T/ec-local"; L="$T/ec-local/repo"
 git init -q -b main "$L"; git -C "$L" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
@@ -714,17 +730,23 @@ run "$SCRIPT" --phase exit-check
 _check_rc "exit-check no forge, merged: ready" 0 "$rc"
 _check_says "exit-check no forge, merged: verdict" "$out" "EXIT: READY"
 
-# Actual removal uses the same fail-closed .tmp disposal gate as GC.
+# Ticket 1500: .tmp/ is ignored scratch. With an origin remote and a gh that
+# fails, the removal neither calls gh nor keeps the tree.
 git -C "$T/ec-local/repo" worktree add -q -b tmp-task "$T/ec-local/tmp-wt" main 2>/dev/null
 git -C "$T/ec-local/tmp-wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m "tmp-task clean"
 git -C "$T/ec-local/repo" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge tmp-task" tmp-task
-python3 "$REPO/scripts/worktree-tmp-guard.py" register "$T/ec-local/tmp-wt"
+git init -q --bare -b main "$T/ec-local/o.git"
+git -C "$T/ec-local/repo" remote add origin "$T/ec-local/o.git"
+git -C "$T/ec-local/repo" push -q origin main
+python3 "$REPO/scripts/worktree-tmp-guard.py" register "$T/ec-local/tmp-wt" >/dev/null
 mkdir -p "$T/ec-local/tmp-wt/.tmp"; echo cache > "$T/ec-local/tmp-wt/.tmp/cache.bin"
+FAILGH="$T/failgh"; mkdir -p "$FAILGH"
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "%s"\nexit 1\n' "$T/failgh.log" > "$FAILGH/gh"; chmod +x "$FAILGH/gh"
 cd "$T/ec-local/repo"
-run "$SCRIPT" --phase after-exit --remove-worktree "$T/ec-local/tmp-wt"
-_check_rc "close-and-clean removes integrated .tmp only after citation gate" 0 "$rc"
-_check_says "close-and-clean prints .tmp size before removal" "$out" "1 files"
+wrapped "$FAILGH" --phase after-exit --remove-worktree "$T/ec-local/tmp-wt"
+_check_rc "close-and-clean removes a tree holding .tmp with no forge readable" 0 "$rc"
 _check_true "close-and-clean removal removes worktree-owned .tmp" test ! -d "$T/ec-local/tmp-wt"
+_check_true "close-and-clean removal calls no gh" test ! -s "$T/failgh.log"
 
 # Author decision (ticket 1098): a main checkout parked on another branch does
 # not block the exit. The tree goes; branch -d then keeps the branch, reported.

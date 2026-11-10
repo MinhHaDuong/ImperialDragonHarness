@@ -8,24 +8,19 @@ set -euo pipefail
 # `git worktree remove` refuses too, but without the salvage route below.
 #
 # This is a skill-level gate, called from /roar step 9 (through
-# skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged, untracked AND
-# ignored entries (minus regenerable caches), via scripts/worktree-clean-lib.sh.
+# skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged
+# and untracked entries; ignored files are disposable (scripts/worktree-clean-lib.sh, ticket 1500).
 #
-# --ignored-ok (ticket 1487): drop ignored (`!!`) records from the residue, for
-# the throwaway review-*/gate-* checkouts of a pushed head that gaze and the
-# gate remove; a project's check target leaves ignored build products there.
-# Refused (exit 2) on any other tree, where ticket 1212's rule stands.
+# --removal and --branch are accepted and ignored (kept so callers need no edit).
 #
 # Arg: worktree path (default: current directory).
 # Exit 0 silently when clean. Exit 1 with a listing on stderr when dirty.
 
 removal=0
-ignored_ok=0
 branch=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --removal) removal=1; shift ;;
-        --ignored-ok) ignored_ok=1; shift ;;
         --branch) [ "$#" -ge 2 ] || exit 2; branch="$2"; shift 2 ;;
         --) shift; break ;;
         -*) echo "worktree-exit-preflight: unknown option: $1" >&2; exit 2 ;;
@@ -34,6 +29,14 @@ while [ "$#" -gt 0 ]; do
 done
 path="${1:-.}"
 [ -d "$path" ] || { echo "worktree-exit-preflight: not a directory: $path" >&2; exit 2; }
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
+# Another registered worktree inside this one: its work is no status line (the
+# path is ignored), yet removing this tree deletes it.
+nested=$(worktree_nested "$path" 2>/dev/null || true)
+if [ -n "$nested" ]; then
+    printf "Blocked: worktree '%s' holds another registered worktree; removing it would destroy that tree.\n\n%s\n" "$path" "$nested" >&2
+    exit 1
+fi
 root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
     echo "worktree-exit-preflight: not a Git worktree: $path" >&2
     exit 2
@@ -41,28 +44,6 @@ root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
 if [ "$(realpath "$path")" != "$(realpath "$root")" ]; then
     echo "worktree-exit-preflight: expected worktree root: $path" >&2
     exit 2
-fi
-if [ "$ignored_ok" -eq 1 ]; then
-    case "$(basename "$root")" in
-        review-*|gate-*) ;;
-        *) echo "worktree-exit-preflight: --ignored-ok applies only to review-* or gate-* trees: $path" >&2
-           exit 2 ;;
-    esac
-fi
-
-# `.tmp/` is ignored by common Git metadata, so status alone cannot protect it.
-# Inspect it before any legacy review-scratch cleanup; never delete it here.
-preserve_panel=0
-if [ -e "$root/.tmp" ] || [ -L "$root/.tmp" ]; then
-    mode=preflight
-    [ "$removal" -eq 0 ] || mode=removal
-    [ "$removal" -eq 1 ] || preserve_panel=1
-    args=()
-    [ -z "$branch" ] || args+=(--branch "$branch")
-    if ! python3 "$(dirname "$0")/worktree-tmp-guard.py" "$mode" "$root" "$root" "${args[@]}"; then
-        echo "worktree-exit-preflight: .tmp safety check failed — leaving the worktree in place" >&2
-        exit 2
-    fi
 fi
 
 # Inspect both pathspecs successfully before deleting either one. A failed
@@ -77,55 +58,37 @@ tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
 }
 
 # Review reports and the temporary base checkout are command-owned scratch:
-# the status gate below ignores their untracked (??) and ignored (!!) records, never a
+# the status gate below ignores their untracked (??) records, never a
 # staged move or deletion, and they are deleted only once it passes.
 # A refused exit keeps them, since a review may have left its only evidence there.
 purge_panel=0
-if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then purge_panel=1; fi
+if [ -z "$tracked_panel" ]; then purge_panel=1; fi
 purge_base=0
 if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then purge_base=1; fi
 
-# The removal also scrubs regenerable state git would refuse to remove (the
-# unignored root .venv a touched-tests step leaves, setuptools build output),
-# but only after the residue check below passes: a refused removal deletes nothing.
-. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
-
-# Same residue definition as worktree-gc.sh (shared lib): uncommitted entries
-# plus ignored files, which `git worktree remove` deletes too (a repo whose
-# .gitignore is `*` hides drafts from plain status; ticket 1212). Regenerable
-# caches, the root .venv/ and .tmp/ (checked above) are tolerated. Untracked
-# directories are expanded so each lost file is named in the message (the
-# 0174 failure was one .erg file inside an otherwise-untracked dir).
+# Same residue definition as worktree-gc.sh (shared lib): what plain status
+# lists, never ignored files. Untracked directories are expanded so each lost
+# file is named in the message (the 0174 failure was one .erg file inside an
+# otherwise-untracked dir).
 . "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
 status=$(worktree_residue "$path") || {
     echo "worktree-exit-preflight: cannot inspect worktree status: $path" >&2
     exit 2
 }
-# Without --removal a present .tmp/ keeps .panel/ (cited review scratch, only
-# the removal gate deletes it); ignored, it is preserved, not uncommitted work.
-if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
-fi
-if [ "$ignored_ok" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -v '^!! ' || true)
-fi
 if [ "$purge_panel" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -Ev '^(\?\?|!!) \.panel(/|$)' || true)
+    status=$(printf '%s\n' "$status" | grep -Ev '^\?\? \.panel(/|$)' || true)
 fi
 if [ "$purge_base" -eq 1 ] && [ -n "$status" ]; then
-    status=$(printf '%s\n' "$status" | grep -Ev '^(\?\?|!!) build/panel-head(/|$)' || true)
+    status=$(printf '%s\n' "$status" | grep -Ev '^\?\? build/panel-head(/|$)' || true)
 fi
 if [ -z "$status" ]; then
     if [ "$purge_panel" -eq 1 ]; then rm -rf -- "$path/.panel"; fi
     if [ "$purge_base" -eq 1 ]; then rm -rf -- "$path/build/panel-head"; fi
-    if [ "$removal" -eq 1 ]; then
-        worktree_scrub "$path"
-    fi
     exit 0
 fi
 
 cat >&2 <<EOF
-Blocked: worktree '$path' has uncommitted or ignored state — removing the worktree would destroy it.
+Blocked: worktree '$path' has uncommitted or untracked state — removing the worktree would destroy it.
 
 $status
 

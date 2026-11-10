@@ -9,7 +9,7 @@ Scope: checkouts, cleanup and shared refs. Authority: `rules/git.md`,
 - Isolation uses plain worktrees: add && lock, then `cd`; `$PPID-$RANDOM` distinguishes children. An unchained failed add locked the spawner's tree [adoption]. `EnterWorktree` is retired [isolation]. A restart resets cwd to primary; another tree's restore/checkout still has no guard.
 - rtk excludes git on both hosts (1078); SHA reads still follow `rules/git.md`. The 1373/1366 exception is limited to `<oid>:<ref>` pushes: their exit code answers. Ref-name pushes can send nothing after a rewind and still exit 0 [push]. Sync local main after each merge: primary helpers otherwise rerun old bugs.
 - `branch -d` refuses patch-equivalent branches; `-D` needed author authority (1644). `update-ref -d` bypasses worktree occupancy where `branch -D` refuses (1374). Narrow allow rules fixed observed classifier refusals; a new denial follows `rules/claude-code.md`, never a verbatim retry.
-- GC lazily reads live cwds; owner-less locks expire after 72 h idle, with ignored files checked. Dissent: a live sandboxed session idle 72 h can lose its tree; a pid in a name proves no liveness (1096, 1638/1640). `worktree-tmp-guard.py` keeps commits citing `.tmp/`.
+- GC lazily reads live cwds; owner-less locks expire after 72 h idle. Dissent: a live sandboxed session idle 72 h can lose its tree; a pid in a name proves no liveness (1096, 1638/1640). Ignored files and `.tmp/` go with the tree (1500); a dead-pid tree, clean and at its upstream, is reclaimed with its branch kept (1495). Remove your own tree when its work ends; nobody resumes in an old one.
 
 ## Hazards
 

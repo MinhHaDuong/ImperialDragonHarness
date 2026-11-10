@@ -92,12 +92,6 @@ def make_branch_gone(remote, primary, name):
     git(primary, "fetch", "--prune", "origin")
 
 
-def delete_branch_without_merge(remote, primary, name):
-    """Produce `[gone]` without integration, the fail-closed control."""
-    git(remote, "update-ref", "-d", f"refs/heads/{name}")
-    git(primary, "fetch", "--prune", "origin")
-
-
 def _ignore_worktree_tmp(primary):
     common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
     exclude = common / "info" / "exclude"
@@ -106,20 +100,22 @@ def _ignore_worktree_tmp(primary):
         stream.write("\n/.tmp/\n")
 
 
-def _gc(primary, *, gh_response="[]", gh_exit=0, extra_env=None):
+def _gc(primary, *, gh_exit=0, extra_env=None):
     fake_bin = primary.parent / "fake-bin"
     fake_bin.mkdir(exist_ok=True)
     gh = fake_bin / "gh"
     gh.write_text(
         f"#!{sys.executable}\n"
         "import os, sys\n"
-        "sys.stdout.write(os.environ.get('TEST_GH_RESPONSE', '[]'))\n"
+        "log = os.environ.get('TEST_GH_LOG')\n"
+        "if log:\n"
+        "    open(log, 'a').write(' '.join(sys.argv[1:]) + '\\n')\n"
+        "sys.stdout.write('[]')\n"
         "sys.exit(int(os.environ.get('TEST_GH_EXIT', '0')))\n"
     )
     gh.chmod(0o755)
     env = child_env()
     env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
-    env["TEST_GH_RESPONSE"] = gh_response
     env["TEST_GH_EXIT"] = str(gh_exit)
     env.pop("WORKTREE_GC_OWNERLESS_IDLE_HOURS", None)
     env.update(extra_env or {})
@@ -224,221 +220,21 @@ def test_gc_keeps_excluded_tmp_when_other_wip_exists(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
-def test_gc_keeps_tmp_cited_by_pr_body(origin):
+def test_gc_removes_tree_holding_tmp_without_calling_the_forge(origin):
+    """Ticket 1500: `.tmp/` is ignored scratch like any other. With an origin
+    remote and a gh that fails, gc still removes the tree and never calls gh."""
     remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tmp-pr-citation")
+    wt = make_agent_worktree(primary, "agent-tmp-no-forge")
     _ignore_worktree_tmp(primary)
     (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "audit.json").write_text("evidence\n")
-    make_branch_gone(remote, primary, "agent-tmp-pr-citation")
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    make_branch_gone(remote, primary, "agent-tmp-no-forge")
+    log = primary.parent / "gh-calls.log"
 
-    body = [{"number": 42, "title": "work", "body": "Review evidence: `.tmp/audit.json`"}]
-    res = _gc(primary, gh_response=__import__("json").dumps(body))
-    assert "citation" in res.stdout.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_keeps_tmp_cited_by_candidate_verdict(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tmp-verdict-citation")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "audit.json").write_text("evidence\n")
-    (wt / ".panel" / "42").mkdir(parents=True)
-    (wt / ".panel" / "42" / "gate.md").write_text("Reviewed `.tmp/audit.json`.\n")
-    make_branch_gone(remote, primary, "agent-tmp-verdict-citation")
-
-    res = _gc(primary, gh_response="[]")
-    assert "citation" in res.stdout.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert (wt / ".panel" / "42" / "gate.md").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-PNG_HEAD = b"\x89PNG\r\n\x1a\n"  # not UTF-8: a figure a review left beside its verdict
-
-
-def _gc_with_binary_verdict(origin, name, payload):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, name)
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "audit.json").write_text("evidence\n")
-    (wt / ".panel" / "42").mkdir(parents=True)
-    (wt / ".panel" / "42" / "figure.png").write_bytes(payload)
-    make_branch_gone(remote, primary, name)
-    return primary, wt, _gc(primary, gh_response="[]")
-
-
-def test_gc_reads_past_a_binary_verdict_file(origin):
-    primary, wt, res = _gc_with_binary_verdict(origin, "agent-binary-verdict", PNG_HEAD + b"\xff\xfe pixels")
-    assert "could not read verdict file" not in res.stderr.lower()
-    assert res.returncode == 0
+    res = _gc(primary, gh_exit=1, extra_env={"TEST_GH_LOG": str(log)})
+    assert "removed agent-tmp-no-forge" in res.stdout, res.stdout + res.stderr
     assert str(wt) not in _worktree_paths(primary)
-
-
-def test_gc_keeps_tmp_cited_inside_a_binary_verdict_file(origin):
-    primary, wt, res = _gc_with_binary_verdict(origin, "agent-binary-verdict-cited",
-                                               PNG_HEAD + b"\xff source: .tmp/audit.json \xfe")
-    assert "citation" in res.stdout.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_blocks_unreadable_registered_verdict_parent(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tmp-cross-verdict")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-    (primary / ".panel").symlink_to(primary / "missing-panel-target")
-    make_branch_gone(remote, primary, "agent-tmp-cross-verdict")
-
-    response = [{"number": 42, "title": "work", "body": "No scratch citation."}]
-    res = _gc(primary, gh_response=__import__("json").dumps(response))
-    assert "verdict directory is unavailable" in res.stderr.lower()
-    assert (wt / ".tmp" / "cache.bin").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_removal_guard_rejects_branch_mismatch(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-branch-mismatch")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-
-    res = run([
-        sys.executable, str(SCRIPTS / "worktree-tmp-guard.py"), "removal",
-        str(primary), str(wt), "--branch", "main",
-    ], check=False)
-    assert res.returncode == 2
-    assert "does not match" in res.stderr
-    assert (wt / ".tmp" / "cache.bin").exists()
-
-
-def test_gc_keeps_tmp_cited_by_topic_commit(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tmp-commit-citation")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "audit.json").write_text("evidence\n")
-    git(wt, "commit", "--allow-empty", "-m", "preserve .tmp/audit.json evidence")
-    git(wt, "push", "origin", "agent-tmp-commit-citation")
-    make_branch_gone(remote, primary, "agent-tmp-commit-citation")
-
-    res = _gc(primary)
-    assert "citation" in res.stdout.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-LOCAL_FORGE_ID = "rv-20261101-t1211-retained-accounting-9284"  # forge.py: none backend ids are opaque strings
-
-
-def _gc_with_string_id_record(origin, name, record):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, name)
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "audit.json").write_text("evidence\n")
-    make_branch_gone(remote, primary, name)
-    res = _gc(primary, gh_response=__import__("json").dumps([record]))
-    return primary, wt, res
-
-
-def test_gc_accepts_local_forge_string_id_without_citation(origin):
-    record = {"number": LOCAL_FORGE_ID, "title": "work", "body": "No scratch citation."}
-    primary, wt, res = _gc_with_string_id_record(origin, "agent-string-id-clear", record)
-    assert "malformed" not in res.stderr.lower()
-    assert res.returncode == 0
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_gc_keeps_tmp_cited_by_local_forge_string_id_record(origin):
-    record = {"number": LOCAL_FORGE_ID, "title": "work", "body": "Evidence: `.tmp/audit.json`"}
-    primary, wt, res = _gc_with_string_id_record(origin, "agent-string-id-cited", record)
-    assert "citation" in res.stdout.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-@pytest.mark.parametrize("record", [
-    {"number": LOCAL_FORGE_ID, "title": "work", "body": 5},  # the adapter fills a missing body with ""
-    {"number": LOCAL_FORGE_ID, "title": 5, "body": "x"},
-    {"number": "a/b", "title": "work", "body": "x"},
-    {"number": "..", "title": "work", "body": "x"},
-    {"number": "../x", "title": "work", "body": "x"},
-    {"number": "", "title": "work", "body": "x"},
-    {"number": 1.5, "title": "work", "body": "x"},
-])
-def test_gc_blocks_malformed_request_record(origin, record):
-    primary, wt, res = _gc_with_string_id_record(origin, "agent-malformed-record", record)
-    assert "malformed" in res.stderr.lower()
-    assert (wt / ".tmp" / "audit.json").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_keeps_tmp_if_citation_source_is_unavailable(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tmp-source-unavailable")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-    make_branch_gone(remote, primary, "agent-tmp-source-unavailable")
-
-    res = _gc(primary, gh_exit=1)
-    assert "could not inspect citation sources" in res.stderr.lower()
-    assert (wt / ".tmp" / "cache.bin").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_keeps_gone_branch_without_integration_ancestry(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-gone-unmerged")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-    delete_branch_without_merge(remote, primary, "agent-gone-unmerged")
-
-    res = _gc(primary)
-    assert "not proven integrated" in (res.stdout + res.stderr).lower()
-    assert (wt / ".tmp" / "cache.bin").exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_counts_and_reports_tmp_before_eligible_removal(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-gone-with-tmp")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "one.bin").write_bytes(b"12345")
-    make_branch_gone(remote, primary, "agent-gone-with-tmp")
-
-    res = _gc(primary)
-    assert res.returncode == 0
-    line = next(line for line in res.stdout.splitlines() if ".tmp/" in line)
-    assert "1 files" in line and "bytes" in line
-    assert res.stdout.index(line) < res.stdout.index("removed agent-gone-with-tmp")
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_gc_treats_tracked_tmp_as_wip_even_when_clean(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-tracked-tmp")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "tracked.txt").write_text("retained\n")
-    git(wt, "add", "-f", ".tmp/tracked.txt")
-    git(wt, "commit", "-m", "track temp output")
-    git(wt, "push", "origin", "agent-tracked-tmp")
-    make_branch_gone(remote, primary, "agent-tracked-tmp")
-
-    res = _gc(primary)
-    assert "tracked .tmp content" in res.stderr.lower() or "uncommitted wip" in res.stdout.lower()
-    assert (wt / ".tmp" / "tracked.txt").exists()
-    assert str(wt) in _worktree_paths(primary)
+    assert not log.exists() or log.read_text() == ""
 
 
 def test_gc_keeps_tmp_as_wip_when_common_exclude_is_missing(origin):
@@ -449,7 +245,7 @@ def test_gc_keeps_tmp_as_wip_when_common_exclude_is_missing(origin):
     make_branch_gone(remote, primary, "agent-unexcluded-tmp")
 
     res = _gc(primary)
-    assert "common info/exclude lacks" in res.stderr
+    assert "skip agent-unexcluded-tmp (uncommitted WIP)" in res.stdout
     assert (wt / ".tmp" / "cache.bin").exists()
     assert str(wt) in _worktree_paths(primary)
 
@@ -775,67 +571,56 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+def _star_ignore_with_allowlist(primary):
+    """Mimic the harness: a committed `.gitignore` of `*` with an allowlist."""
+    (primary / ".gitignore").write_text("*\n!.gitignore\n!README\n!work.txt\n!tickets/\n!tickets/**\n")
+    git(primary, "add", ".gitignore")
+    git(primary, "commit", "-m", "ignore all but the allowlist")
+
+
 @pytest.mark.parametrize("scratch", ["draft.md", "notes/plan.md"])
-def test_preflight_blocks_on_ignored_draft_under_star_ignore(origin, scratch):
-    """Ticket 1212: under a `*` ignore rule plain status reads clean, yet
-    `git worktree remove` deletes the ignored draft. The preflight refuses."""
+def test_removal_deletes_ignored_draft_under_star_ignore(origin, scratch):
+    """Ticket 1500: a git-ignored file is disposable, as `git worktree remove`
+    treats it; the removal preflight passes and the tree goes."""
     _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-draft", dirty=False)
-    _ignore_everything(primary)
+    _star_ignore_with_allowlist(primary)
+    wt = make_agent_worktree(primary, "agent-ign-draft", push=False)
     target = wt / scratch
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("in progress\n")
 
-    res = _preflight(wt)
+    res = _removal(wt)
+    assert res.returncode == 0, res.stderr
+    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
+    assert not wt.exists()
+
+
+def test_removal_blocks_untracked_unignored_file_under_star_ignore(origin):
+    """Negative control: a file the allowlist un-ignores is untracked work."""
+    _, primary = origin
+    _star_ignore_with_allowlist(primary)
+    wt = make_agent_worktree(primary, "agent-unign-draft", push=False)
+    (wt / "draft.md").write_text("ignored\n")
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0999-new.erg").write_text("%erg 0.1\n")
+
+    res = _removal(wt)
     assert res.returncode == 1
-    assert scratch.split("/")[0] in res.stderr
-    assert target.exists()
+    assert "tickets/0999-new.erg" in res.stderr and "draft.md" not in res.stderr
+    assert (wt / "tickets" / "0999-new.erg").exists()
 
 
-def test_preflight_passes_on_ignored_caches_only(origin):
-    """Regenerable caches and the root .venv are not work: same list as gc."""
+@pytest.mark.parametrize("name", ["review-7", "gate-7-s-r1", "agent-x"])
+def test_preflight_rejects_retired_ignored_ok_flag(origin, name):
+    """Ticket 1500: `--ignored-ok` is gone; it is an unknown option on any tree."""
     _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-cache", dirty=False)
-    _ignore_everything(primary)
-    (wt / "__pycache__").mkdir()
-    (wt / "__pycache__" / "m.pyc").write_bytes(b"\0")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize("egg", ["pkg.egg-info", "src/pkg.egg-info"])
-def test_preflight_passes_on_uv_run_build_output(origin, egg):
-    """Ticket 1345: `uv run` in a packaged project leaves an egg-info beside
-    the .venv and caches; setuptools rebuilds it, so it is not work. The
-    ignore list is a package's own (DOIfetch's), not `*`: under `*` an
-    untracked src/ collapses to one entry and rightly blocks."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-egg", dirty=False)
-    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
-    exclude.parent.mkdir(parents=True, exist_ok=True)
-    with exclude.open("a") as stream:
-        stream.write("\n.venv/\n*.egg-info/\n.pytest_cache/\n")
-    (wt / egg).mkdir(parents=True)
-    (wt / egg / "PKG-INFO").write_text("Name: pkg\n")
-    (wt / ".pytest_cache").mkdir()
-    (wt / ".pytest_cache" / "README.md").write_text("")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-def _exclude(primary, text):
-    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
-    exclude.parent.mkdir(parents=True, exist_ok=True)
-    with exclude.open("a") as stream:
-        stream.write(f"\n{text}\n")
+    wt = make_agent_worktree(primary, name, push=False)
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal", "--ignored-ok", str(wt)],
+        capture_output=True, text=True, env=child_env(),
+    )
+    assert res.returncode == 2
+    assert "unknown option" in res.stderr
 
 
 def _removal(path):
@@ -845,165 +630,8 @@ def _removal(path):
     )
 
 
-def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-setup-copies", dirty=False)
-    _exclude(primary, ".env\n.dvc/\n.venv\nnotes.txt")
-    (primary / ".worktreeinclude").write_text(".env\n.dvc/config.local\n")
-    (primary / ".env").write_text("fake configuration\n")
-    (primary / ".dvc").mkdir()
-    (primary / ".dvc" / "config.local").write_text("fake dvc config\n")
-    (primary / ".dvc" / "cache").mkdir()
-    (primary / ".venv").mkdir()
-    (wt / ".env").write_text("fake configuration\n")
-    (wt / ".dvc").mkdir()
-    (wt / ".dvc" / "config.local").write_text("fake dvc config\n")
-    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
-    (wt / ".venv").symlink_to(primary / ".venv")
-
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-
-    (primary / ".env").unlink()
-    (primary / ".env").symlink_to(wt / ".env")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".env" in result.stderr
-    assert (wt / ".env").read_text() == "fake configuration\n"
-    (primary / ".env").unlink()
-    (primary / ".env").write_text("fake configuration\n")
-
-    (wt / "notes.txt").write_text("keep this\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert "notes.txt" in result.stderr
-    assert (wt / "notes.txt").exists()
-
-    (wt / "notes.txt").unlink()
-    (wt / ".env").write_text("local changes\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".env" in result.stderr
-    assert (wt / ".env").read_text() == "local changes\n"
-
-    (wt / ".env").unlink()
-    (wt / ".env").symlink_to(primary / ".env")
-    assert _preflight(wt).returncode == 0
-    (wt / ".dvc" / "draft.txt").write_text("keep this too\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    assert (wt / ".dvc" / "draft.txt").exists()
-
-    (wt / ".dvc" / "draft.txt").unlink()
-    (wt / ".dvc" / "cache").unlink()
-    (wt / ".dvc" / "cache").symlink_to(wt)
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    (wt / ".dvc" / "cache").unlink()
-    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
-    result = _removal(wt)
-    assert result.returncode == 0, result.stderr
-    git(primary, "worktree", "remove", str(wt))
-    assert not wt.exists()
-    assert (primary / ".dvc" / "cache").is_dir()
-
-
-@pytest.mark.parametrize("included", ["docs", "docs/"])
-def test_preflight_allows_included_directory_copies_and_keeps_residue(origin, included):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-included-directory", dirty=False)
-    _exclude(primary, "docs/\n.worktreeinclude")
-    (primary / ".worktreeinclude").write_text(included + "\n")
-    for tree in (primary, wt):
-        (tree / "docs" / "nested").mkdir(parents=True)
-        (tree / "docs" / "a").write_text("original a\n")
-        (tree / "docs" / "nested" / "b").write_text("original b\n")
-
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-
-    (wt / "docs" / "nested" / "b").write_text("hand edit\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert "docs/" in result.stderr
-    assert (wt / "docs" / "nested" / "b").read_text() == "hand edit\n"
-    (wt / "docs" / "nested" / "b").write_text("original b\n")
-
-    (wt / "docs" / "extra").write_text("worktree only\n")
-    assert _preflight(wt).returncode == 1
-    assert (wt / "docs" / "extra").exists()
-    (wt / "docs" / "extra").unlink()
-
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").symlink_to(primary / "docs" / "nested" / "b")
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").symlink_to(wt / "docs" / "a")
-    assert _preflight(wt).returncode == 1
-
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").write_text("original b\n")
-    (primary / "docs" / "nested" / "b").unlink()
-    (primary / "docs" / "nested" / "b").symlink_to(wt / "docs" / "nested" / "b")
-    assert _preflight(wt).returncode == 1
-
-
-def test_preflight_keeps_copy_when_primary_parent_links_into_worktree(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-linked-parent", dirty=False)
-    _exclude(primary, ".dvc/\n.worktreeinclude")
-    (primary / ".worktreeinclude").write_text(".dvc/config.local\n")
-    (wt / ".dvc").mkdir()
-    (wt / ".dvc" / "config.local").write_text("only copy\n")
-    (primary / ".dvc").symlink_to(wt / ".dvc")
-
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    assert (wt / ".dvc" / "config.local").read_text() == "only copy\n"
-
-
-def test_preflight_passes_on_ignored_setuptools_build(origin):
-    """Ticket 1357: git prints the ignored directory as `!! build/`; only
-    lib*, bdist.* and temp.* inside it are regenerable."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build", dirty=False)
-    _exclude(primary, "build/")
-    for p, data in (("build/lib/pkg/work.txt", "first\n"), ("build/lib/pkg/m.pyc", "x\n"),
-                    ("build/bdist.linux-x86_64/work.txt", "first\n"), ("build/temp.linux-x86_64/o.o", "x\n")):
-        (wt / p).parent.mkdir(parents=True, exist_ok=True)
-        (wt / p).write_text(data)
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-def test_preflight_blocks_on_extensionless_bdist_metadata(origin):
-    """Control: extensionless bdist/temp files match no tracked blob and no build extension."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-meta", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "bdist.linux-x86_64").mkdir(parents=True)
-    (wt / "build" / "bdist.linux-x86_64" / "x").write_text("x\n")
-    res = _preflight(wt)
-    assert res.returncode == 1 and "build/bdist.linux-x86_64" in res.stderr
-
-
-def test_preflight_blocks_on_hand_made_file_under_ignored_build(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-notes", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "build" / "notes.txt").write_text("keep me\n")
-    res = _preflight(wt)
-    assert res.returncode == 1 and "build/" in res.stderr
-
-
 def test_removal_keeps_unignored_build_output(origin):
-    """The scrub only deletes what the repository ignores: an unignored build/lib is work."""
+    """Build output the repository does not ignore is untracked work."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-build-unignored", dirty=False)
     (wt / "build" / "lib").mkdir(parents=True)
@@ -1013,149 +641,26 @@ def test_removal_keeps_unignored_build_output(origin):
     assert (wt / "build" / "lib" / "draft.txt").exists()
 
 
-def test_preflight_blocks_on_symlinked_build(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-link", dirty=False)
-    _exclude(primary, "build")
-    (primary.parent / "elsewhere" / "lib").mkdir(parents=True)
-    (wt / "build").symlink_to(primary.parent / "elsewhere")
-    assert _preflight(wt).returncode == 1
-
-
 def _plain_venv(wt):
     (wt / ".venv" / "bin").mkdir(parents=True)
     (wt / ".venv" / "bin" / "python").write_text("")
     (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
 
-def test_gate_sequence_removes_tree_with_unignored_venv_without_force(origin):
-    """Ticket 1357: a venv without its own .gitignore (not uv's) is untracked,
-    so a plain `git worktree remove` refuses; the removal preflight scrubs it first."""
+def test_removal_blocks_unignored_venv_as_git_does(origin):
+    """Ticket 1500: a venv that neither the project nor the venv itself ignores
+    is untracked; the preflight refuses it, as plain `git worktree remove` does,
+    and the project adds the ignore line (cost accepted by the author)."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-venv", dirty=False)
     _plain_venv(wt)
     assert git(primary, "worktree", "remove", str(wt), check=False).returncode != 0
     res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
-    assert not wt.exists()
-
-
-def test_preflight_keeps_venv_without_pyvenv_cfg_as_residue(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-hand", dirty=False)
-    (wt / ".venv").mkdir()
-    (wt / ".venv" / "mine.txt").write_text("hand made\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and ".venv" in res.stderr
-    assert (wt / ".venv" / "mine.txt").exists()
-
-
-def test_removal_keeps_venv_holding_hand_made_top_level_file(origin):
-    """Review 7a1a: a real venv with a hand-made .venv/notes.txt is work, not disposable."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-notes", dirty=False)
-    _plain_venv(wt)
-    (wt / ".venv" / "notes.txt").write_text("keep me\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and ".venv/notes.txt" in res.stderr
-    assert (wt / ".venv" / "notes.txt").exists()
-
-
-def test_removal_keeps_hand_made_file_inside_ignored_build_lib(origin):
-    """Review 7a1a: build/lib is disposable only while every file looks like build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-notes", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "build" / "lib" / "notes.txt").write_text("keep me\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "notes.txt").exists()
-
-
-def test_removal_keeps_hand_made_py_inside_ignored_build_lib(origin):
-    """A hand-made .py is not build output: only tracked-blob copies and .pyc .so .pyd .o are."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-py", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "notes.py").write_text("my work\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "notes.py").exists()
-
-
-def test_removal_keeps_basename_twin_inside_ignored_build_lib(origin):
-    """A file sharing a tracked basename but not its bytes is hand-made."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-twin", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("different words\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "README").exists()
-
-
-def test_removal_scrubs_byte_copy_and_pyc_inside_ignored_build_lib(origin):
-    """Positive control: a byte-copy of a tracked file plus a .pyc is disposable build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-copy", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib" / "pkg").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("hi\n")
-    (wt / "build" / "lib" / "pkg" / "m.pyc").write_bytes(b"\x00pyc")
-    res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert not (wt / "build").exists()
-
-
-def test_removal_keeps_file_equal_to_tracked_blob_only_after_clean_filter(origin):
-    """Byte identity means raw bytes: a clean filter must not make a hand-made file match."""
-    _, primary = origin
-    (primary / ".gitattributes").write_text("build/** filter=strip\n")
-    git(primary, "add", ".gitattributes")
-    git(primary, "commit", "-m", "attributes")
-    git(primary, "config", "filter.strip.clean", "grep -v ^OUT")
-    wt = make_agent_worktree(primary, "agent-build-filter", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("hi\nOUT kept output\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "README").exists()
-
-
-def test_refused_removal_scrubs_nothing(origin):
-    """A removal blocked by other residue deletes neither the venv nor build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-refused-scrub", dirty=False)
-    _exclude(primary, "build/")
-    _plain_venv(wt)
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "draft.txt").write_text("mine\n")
-    res = _removal(wt)
-    assert res.returncode == 1
+    assert res.returncode == 1 and ".venv/pyvenv.cfg" in res.stderr
     assert (wt / ".venv" / "pyvenv.cfg").exists()
-    assert (wt / "build" / "lib" / "m.py").exists()
 
 
-def test_preflight_keeps_symlinked_venv_as_residue(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-link", dirty=False)
-    target = primary.parent / "shared-venv"
-    target.mkdir()
-    (target / "pyvenv.cfg").write_text("home = /usr/bin\n")
-    (wt / ".venv").symlink_to(target)
-    res = _removal(wt)
-    assert res.returncode == 1
-    assert (target / "pyvenv.cfg").exists()
-
-
-def test_preflight_reports_ignored_tmp_without_purging_it(origin):
+def test_preflight_passes_ignored_tmp_without_purging_it(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
     _ignore_worktree_tmp(primary)
@@ -1163,77 +668,8 @@ def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
 
     res = _preflight(wt)
-    assert res.returncode == 0
-    assert ".tmp/" in res.stdout and "1 files" in res.stdout and "bytes" in res.stdout
-    assert (wt / ".tmp" / "cache.bin").exists()
-
-
-def test_preflight_tolerates_ignored_panel_beside_tmp_before_removal(origin):
-    """With a .tmp/ present the non-removal run keeps .panel/ (cited review
-    scratch, removed only at the removal gate). Ignored, it must not block."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-panel-tmp", dirty=False)
-    _ignore_worktree_tmp(primary)
-    exclude = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()) / "info" / "exclude"
-    with exclude.open("a") as stream:
-        stream.write("\n/.panel/\n")
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-    (wt / ".panel" / "1").mkdir(parents=True)
-    (wt / ".panel" / "1" / "review.md").write_text("report\n")
-
-    res = _preflight(wt)
     assert res.returncode == 0, res.stderr
-    assert (wt / ".panel" / "1" / "review.md").exists()
-
-
-def test_preflight_preserves_cited_panel_until_removal_gate(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-preflight-cited-panel")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "evidence.txt").write_text("evidence\n")
-    verdict = wt / ".panel" / "manual" / "review.md"
-    verdict.parent.mkdir(parents=True)
-    verdict.write_text("This review cites `.tmp/evidence.txt`.\n")
-    make_branch_gone(remote, primary, "agent-preflight-cited-panel")
-
-    preflight = _preflight(wt)
-    assert preflight.returncode != 0
-    assert verdict.exists()
-
-    fake_bin = primary.parent / "fake-gh-bin"
-    fake_bin.mkdir()
-    gh = fake_bin / "gh"
-    gh.write_text("#!/bin/sh\nprintf '%s\\n' '[]'\n")
-    gh.chmod(0o755)
-    env = child_env()
-    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
-    removal = subprocess.run(
-        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal",
-         "--branch", "agent-preflight-cited-panel", str(wt)],
-        capture_output=True, text=True, env=env,
-    )
-
-    assert removal.returncode != 0
-    assert "citation found" in removal.stdout.lower()
-    assert verdict.exists()
-    assert (wt / ".tmp" / "evidence.txt").exists()
-
-
-def test_preflight_blocks_tracked_tmp_even_if_worktree_is_clean(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-preflight-tracked-tmp", dirty=False)
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "retained.txt").write_text("tracked\n")
-    git(wt, "add", "-f", ".tmp/retained.txt")
-    git(wt, "commit", "-m", "track temporary path")
-
-    res = _preflight(wt)
-    assert res.returncode != 0
-    assert "tracked .tmp content" in res.stderr.lower()
-    assert (wt / ".tmp" / "retained.txt").exists()
+    assert (wt / ".tmp" / "cache.bin").exists()
 
 
 def test_preflight_missing_common_exclude_keeps_tmp_as_wip(origin):
@@ -1243,8 +679,8 @@ def test_preflight_missing_common_exclude_keeps_tmp_as_wip(origin):
     (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
 
     res = _preflight(wt)
-    assert res.returncode != 0
-    assert "common info/exclude lacks the /.tmp/ rule" in res.stderr
+    assert res.returncode == 1
+    assert ".tmp/cache.bin" in res.stderr
     assert (wt / ".tmp" / "cache.bin").exists()
 
 
@@ -1314,37 +750,6 @@ def test_gc_scratch_filter_keeps_staged_moves_as_residue(origin, scratch):
     res = _gc(primary)
     assert f"skip {name} (uncommitted WIP" in res.stdout
     assert (wt / "notes.txt").read_text() == "unsaved edit\n"
-
-
-def test_removal_preflight_refused_by_residue_keeps_panel(origin):
-    """The .tmp guard passing is not the removal passing: a residue refusal later
-    in the same run must leave .panel/ in place (arena t1210, 2026-11-08)."""
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-removal-residue-panel")
-    _ignore_worktree_tmp(primary)
-    (wt / ".tmp").mkdir()
-    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
-    (wt / ".panel" / "7").mkdir(parents=True)
-    (wt / ".panel" / "7" / "evidence.md").write_text("sole copy of the review evidence\n")
-    (wt / "draft.txt").write_text("not committed\n")
-    make_branch_gone(remote, primary, "agent-removal-residue-panel")
-
-    fake_bin = primary.parent / "fake-gh-bin"
-    fake_bin.mkdir()
-    gh = fake_bin / "gh"
-    gh.write_text("#!/bin/sh\nprintf '%s\\n' '[]'\n")
-    gh.chmod(0o755)
-    env = child_env()
-    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
-    res = subprocess.run(
-        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal",
-         "--branch", "agent-removal-residue-panel", str(wt)],
-        capture_output=True, text=True, env=env,
-    )
-    assert "citation coverage clear" in res.stdout.lower(), res.stderr
-    assert res.returncode == 1
-    assert "draft.txt" in res.stderr and ".panel" not in res.stderr
-    assert (wt / ".panel" / "7" / "evidence.md").exists()
 
 
 def test_preflight_does_not_follow_build_symlink_outside_worktree(origin, tmp_path):
@@ -1479,11 +884,13 @@ def _ignored_venv(wt):
     (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
 
-def test_gc_reclaims_dead_pid_locked_worktree_with_disposable_ignored_venv(origin):
-    """Positive control: a venv holding only usual entries is regenerable."""
+def test_gc_reclaims_dead_pid_locked_worktree_holding_ignored_files(origin):
+    """Ticket 1500, through the dead-pid lock path: everything under an ignored
+    .venv, a hand-made file included, is disposable; the tree goes."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-dead-venv")
     _ignored_venv(wt)
+    (wt / ".venv" / "notes.txt").write_text("ignored, so disposable\n")
     git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
 
     res = _gc(primary)
@@ -1491,7 +898,7 @@ def test_gc_reclaims_dead_pid_locked_worktree_with_disposable_ignored_venv(origi
     assert str(wt) not in _worktree_paths(primary)
 
 
-@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream", "ignored-file", "nested-worktree", "ignored-venv-handmade"])
+@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream"])
 def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     _, primary = origin
     name = f"agent-keep-{case}"
@@ -1499,22 +906,6 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     pid = os.getpid() if case == "live-pid" else _dead_pid()
     if case != "unlocked":
         git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {pid})")
-    if case == "ignored-file":
-        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
-        git(wt, "add", "-f", ".gitignore")
-        git(wt, "commit", "-m", "ignore all")
-        git(wt, "push")
-        (wt / "draft.md").write_text("precious\n")
-    if case == "ignored-venv-handmade":
-        _ignored_venv(wt)
-        (wt / ".venv" / "notes.txt").write_text("precious\n")
-    if case == "nested-worktree":
-        _ignore_worktree_tmp(primary)
-        common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
-        with (common / "info" / "exclude").open("a") as stream:
-            stream.write("/.claude/worktrees/\n")
-        (wt / ".claude" / "worktrees").mkdir(parents=True)
-        (wt / ".claude" / "worktrees" / "inner.txt").write_text("live\n")
     if case == "ahead":
         (wt / "more.txt").write_text("x\n")
         git(wt, "add", "-A")
@@ -1523,83 +914,6 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     res = _gc(primary)
     assert f"removed {name}" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
-    if case == "ignored-file":
-        assert (wt / "draft.md").read_text() == "precious\n"
-    if case == "ignored-venv-handmade":
-        assert (wt / ".venv" / "notes.txt").read_text() == "precious\n"
-
-
-def _uv_venv(wt):
-    """The root .venv as `uv venv` 0.12 lays it out (copied from a real one on
-    padme): its own `*` .gitignore, an empty .lock, CACHEDIR.TAG, pyvenv.cfg,
-    bin, lib and a lib64 -> lib symlink."""
-    v = wt / ".venv"
-    (v / "bin").mkdir(parents=True)
-    (v / "bin" / "python").write_text("")
-    (v / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
-    (v / "lib64").symlink_to("lib")
-    (v / ".gitignore").write_text("*")
-    (v / ".lock").write_text("")
-    (v / "CACHEDIR.TAG").write_text("Signature: 8a477f597d28d172789f06886806bc55")
-    (v / "pyvenv.cfg").write_text("home = /usr/bin\nimplementation = CPython\nuv = 0.12.7\n")
-
-
-def test_gc_reclaims_dead_pid_locked_worktree_with_uv_venv(origin):
-    """Review rv-20261109-pr-2348-4758: uv writes .venv/.lock; a tree that ran
-    uv is still reclaimed at its upstream."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-dead-uv")
-    _uv_venv(wt)
-    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
-
-    res = _gc(primary)
-    assert "removed agent-dead-uv (dead-pid lock" in res.stdout, res.stdout + res.stderr
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_gc_reclaims_idle_ownerless_tree_holding_uv_venv(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-ownerless-uv", dirty=False)
-    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
-    make_branch_gone(remote, primary, "agent-ownerless-uv")
-    _uv_venv(wt)
-    _age_worktree_metadata(wt, 100)
-
-    res = _gc(primary)
-    assert "removed agent-ownerless-uv" in res.stdout, res.stdout + res.stderr
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_preflight_passes_on_uv_venv(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-preflight-uv", dirty=False)
-    _uv_venv(wt)
-    res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
-
-
-@pytest.mark.parametrize("case", ["dirty", "ignored-draft"])
-def test_uv_venv_does_not_mask_real_work(origin, case):
-    """Negative controls: beside a disposable uv venv, uncommitted work and an
-    ignored file outside the venv still block gc and the preflight."""
-    _, primary = origin
-    name = f"agent-uv-keep-{case}"
-    wt = make_agent_worktree(primary, name, dirty=(case == "dirty"))
-    if case == "ignored-draft":
-        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
-        git(wt, "add", "-f", ".gitignore")
-        git(wt, "commit", "-m", "ignore all")
-        git(wt, "push")
-        (wt / "draft.md").write_text("precious\n")
-    _uv_venv(wt)
-    assert _removal(wt).returncode == 1
-    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
-    res = _gc(primary)
-    assert f"removed {name}" not in res.stdout
-    assert str(wt) in _worktree_paths(primary)
-    if case == "ignored-draft":
-        assert (wt / "draft.md").read_text() == "precious\n"
 
 
 def test_gc_keeps_pid_1_locked_worktree(origin):
@@ -1767,9 +1081,10 @@ def _ignore_everything(primary):
 
 
 @pytest.mark.parametrize("scratch", ["draft.md", ".panel/1/review.md"])
-def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
-    """`git worktree remove` deletes ignored files, and a repo may ignore `*`:
-    an ignored draft or review scratch keeps an owner-less tree and its lock."""
+def test_gc_reclaims_idle_ownerless_tree_holding_ignored_files(origin, scratch):
+    """Ticket 1500: ignored files are disposable, even under a `*` ignore; an
+    idle owner-less tree holding only those is reclaimed (the untracked case
+    above keeps it)."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-ownerless-ign", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason", "hunt t9 (owner pid not visible)")
@@ -1782,30 +1097,7 @@ def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "skip agent-ownerless-ign (locked, no visible owner, idle 100h, tree not clean" in res.stdout
-    assert target.exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
-    """Regenerable caches are not work: an owner-less tree holding only an
-    ignored __pycache__ and a root .venv (rebuilt from the lock) is still
-    reclaimed once idle."""
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-ownerless-cache", dirty=False)
-    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
-    make_branch_gone(remote, primary, "agent-ownerless-cache")
-    _ignore_everything(primary)
-    (wt / "__pycache__").mkdir()
-    (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-    _age_worktree_metadata(wt, 100)
-
-    res = _gc(primary)
-    assert res.returncode == 0
-    assert "removed agent-ownerless-cache" in res.stdout
+    assert "removed agent-ownerless-ign" in res.stdout, res.stdout + res.stderr
     assert str(wt) not in _worktree_paths(primary)
 
 
@@ -1964,3 +1256,73 @@ def test_hunt_recipe_redraws_when_path_exists(origin):
     assert again != taken
     assert git(again, "branch", "--show-current").stdout.strip() == "t8-second"
     assert git(taken, "branch", "--show-current").stdout.strip() == "t8-first"
+
+
+# --------------------------------------------------------------------------- #
+# A tree holding another registered worktree (ticket 1500, regression repair)
+#
+# `/.claude/worktrees/` is ignored through info/exclude (ticket 1495), so plain
+# status calls the outer tree clean while `git worktree remove` deletes the
+# inner worktree with its uncommitted work. Restores the nested-worktree case
+# of 7eacadd2: another worktree's work is not an ignored file.
+# --------------------------------------------------------------------------- #
+
+def _nest_worktree(primary, outer, name="inner"):
+    """A registered worktree at <outer>/.claude/worktrees/<name> holding one
+    uncommitted file; the outer tree's own status stays clean."""
+    common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    with (common / "info" / "exclude").open("a") as stream:
+        stream.write("\n/.claude/worktrees/\n")
+    inner = outer / ".claude" / "worktrees" / name
+    git(primary, "worktree", "add", "-b", f"nested-{name}", str(inner))
+    (inner / "precious.txt").write_text("uncommitted\n")
+    assert git(outer, "status", "--porcelain").stdout.strip() == ""
+    return inner
+
+
+def test_gc_keeps_gone_worktree_holding_a_nested_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-gone-outer", dirty=False)
+    make_branch_gone(remote, primary, "agent-gone-outer")
+    inner = _nest_worktree(primary, wt)
+
+    res = _gc(primary)
+    assert "removed agent-gone-outer" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert "nested" in res.stdout and "worktrees/inner" in res.stdout
+    assert (inner / "precious.txt").read_text() == "uncommitted\n"
+
+
+def test_gc_keeps_dead_pid_worktree_holding_a_nested_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-keep-nested-worktree")
+    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
+    inner = _nest_worktree(primary, wt)
+
+    res = _gc(primary)
+    assert "removed agent-keep-nested-worktree" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert (inner / "precious.txt").read_text() == "uncommitted\n"
+
+
+def test_removal_preflight_blocks_a_tree_holding_a_nested_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-outer-removal", dirty=False)
+    inner = _nest_worktree(primary, wt)
+
+    res = _removal(wt)
+    assert res.returncode == 1, res.stderr
+    assert f"nested worktree: {inner.resolve()}" in res.stderr
+    assert (wt / ".git").exists() and (inner / "precious.txt").exists()
+
+
+def test_gc_removes_gone_worktree_whose_name_prefixes_a_sibling(origin):
+    """Prefix matching is on "<tree>/": a sibling `agent-ab` is not inside `agent-a`."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-a", dirty=False)
+    make_agent_worktree(primary, "agent-ab", dirty=False)
+    make_branch_gone(remote, primary, "agent-a")
+
+    res = _gc(primary)
+    assert "removed agent-a " in res.stdout
+    assert str(wt) not in _worktree_paths(primary)

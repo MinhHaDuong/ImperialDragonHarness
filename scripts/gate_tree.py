@@ -9,14 +9,15 @@ records no verdict and leaves its tree behind; the relaunch under the same
 session derives the same round and so the same path. When that path is
 already a worktree of the repository, it is a detached checkout of a pushed
 head with nothing to salvage: it is removed through
-`worktree-exit-preflight.sh --removal --ignored-ok` and recreated at `--ref`.
+`worktree-exit-preflight.sh --removal` and recreated at `--ref`.
 
 Refused (exit 1, nothing removed; the gate rules ESCALATE, Missing Data):
 - `--gate-state` (the JSON `review_notes.py gate` printed) records a verdict
   for this session and round: that round is ruled, its tree is not stale;
 - the tree is locked, or the path exists but is not a worktree of `--repo`;
 - the tree's HEAD holds a commit no branch, remote or tag reaches;
-- the preflight finds residue other than regenerable or git-ignored output.
+- the preflight finds residue: a modified, staged or untracked file (ignored
+  files are disposable, ticket 1500).
 Exit 2: usage, including a tree whose name does not start with `gate-`.
 Prints the tree path on success.
 """
@@ -84,7 +85,7 @@ def add(a: argparse.Namespace) -> int:
             return refuse(f"stale {a.tree} holds a commit not reachable from any "
                           f"branch, remote or tag; left in place")
         if a.tree.is_dir():
-            check = subprocess.run([str(PREFLIGHT), "--removal", "--ignored-ok", str(a.tree)],
+            check = subprocess.run([str(PREFLIGHT), "--removal", str(a.tree)],
                                    capture_output=True, text=True)
             if check.returncode != 0:
                 sys.stderr.write(check.stderr)
