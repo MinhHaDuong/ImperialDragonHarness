@@ -4,6 +4,7 @@ Fixtures are hand-written rows, not excerpts of real transcripts.
 """
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -287,8 +288,6 @@ def test_a_line_separator_inside_a_json_string_does_not_split_the_record(tmp_pat
 
 @pytest.mark.integration
 def test_a_zst_copy_splits_on_newlines_only(tmp_path):
-    import subprocess
-
     rows = _separator_rows(tmp_path / "t.jsonl")
     subprocess.run(["zstd", "-q", "-o", str(tmp_path / "t.jsonl.zst"), str(tmp_path / "t.jsonl")], check=True)
     assert list(te._rows(te.open_lines(tmp_path / "t.jsonl.zst"))) == rows
