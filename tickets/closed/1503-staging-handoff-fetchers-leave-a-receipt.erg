@@ -2,6 +2,7 @@
 Title: Staging handoff: fetchers leave a receipt that recognition reads
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2399
 
 --- log ---
 2026-11-10T07:09Z reviewer created
@@ -15,6 +16,7 @@ Author: reviewer
 2026-11-10T08:13Z reviewer raid f7aac3: URL is a positive-only key: a hit matches, a miss never licenses absent (rejected: URL as an exhaustive given key; item url fields vary and --apply would mint duplicates)
 2026-11-10T08:13Z reviewer design answer after the author's corpus survey (interface session, 2026-11-10; author may overrule): JSON Lines in <staging>/.receipts.jsonl keyed by Zotero MD5; JETP-observer retrieval vocabulary where meanings match: retrieved_at, final_url, content_type, size_bytes, http_status; source kept; no ledger structure, no sha256/sha1
 2026-11-10T08:29Z reviewer raid f7aac3 gaze FINDINGS fix: name-fallback receipt ids are hints only (no absent, no write); URL match never licenses a write; any .bib identifier outranks all receipt identifiers
+2026-11-10T08:37Z reviewer closed — autoclosed — PR #2399
 
 --- body ---
 ## Context
