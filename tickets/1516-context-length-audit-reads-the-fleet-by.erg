@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-10T12:13Z reviewer created
+2026-11-10T12:17Z reviewer note raid 45e130 Imagine: premise holds (ticket filed today). Live path: ssh -o BatchMode=yes -o ConnectTimeout=<s> <host> python3 ~/.agents/scripts/trace-compact-audit.py <local-only> --json <same window flags>, under a subprocess timeout; the answer must carry a schema marker this version reads, else could not look. Hosts: a --hosts option, default a constant naming padme and doudou, the local host dropped; a remote whose reported host equals the local one is skipped (no double count). Explicit corpus-root flags and all tests read no other host: CI never ssh-es. Cross-host dedup is not attempted; output says so. Remote window echoed so skew is visible. doudou's checkout predates THE SEAM (observed 2026-11-10): it reads could not look until it syncs. trace-doctor SKILL.md left to 1517. Blind-Spot: 4 findings folded in; feasibility PASS.
 
 --- body ---
 ## Context

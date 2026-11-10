@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-11-10T12:13Z reviewer created
+2026-11-10T12:17Z reviewer note raid 45e130 Imagine: premise holds. Blind-Spot findings: trace-wall-time.py parses through scripts/gate_traces.py (Claude-only structure); gate_traces.py is off-limits unless justified, a wall-time measure with no Codex/Pi meaning is reported not measured. trace-stats.py is imported by trace-compact-audit.py, trace-digest.py, trace-hypotheses.py, trace_timeline.py and tests: CSV_COLUMNS, iter_trace_files, pricing and _parse_ts keep their behaviour; JSON keys are added, never renamed. skills/trace-doctor/SKILL.md (memo lines saying needs ~/.claude/projects) is this ticket's to update; no new flag that the shared ARGUMENTS pool would break. Feasibility WARN: three separable units, about 6-8 files, not a monster; split wall-time into a child only if it turns out mostly not measured.
 
 --- body ---
 ## Context
