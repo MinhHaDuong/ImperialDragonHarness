@@ -21,9 +21,10 @@ resident-budget:
 # Fast gate (coding-python.md): unit tests only — excludes the integration
 # (subprocess/sleep), slow (network/real-data), and adherence (mechanical
 # gate) tiers. Includes the static AST marker-hygiene check (ticket 0229),
-# which dogfoods that very exclusion.
+# which dogfoods that very exclusion. Workers come from the same rule as
+# check-tests (below): the tier outgrew the collection floor.
 check-fast:
-	$(RUN) python3 -m pytest tests/ -m "not integration and not slow and not adherence"
+	$(RUN) python3 -m pytest tests/ -m "not integration and not slow and not adherence" $(shell $(RUN) python3 scripts/pytest_workers.py)
 
 # Adherence gate (coding-python.md): the mechanical tier only — grep/AST
 # ratchets and hygiene checks. Run apart from the logic loop so check-fast
@@ -53,8 +54,8 @@ check-agnostic-rules:
 # Parallelism comes from one rule, scripts/pytest_workers.py (ticket 1215): it
 # prints `-n N` for this host, or nothing for serial (pytest-xdist missing, or
 # IDH_TEST_WORKERS=0). Measurements and the reasoning live in that ticket and
-# the script's docstring, not here. check-fast and lint are deliberately serial
-# (both sit at the pytest boot+collection floor).
+# the script's docstring, not here. check-fast uses the same rule; lint stays
+# serial, near the pytest boot+collection floor (test-doctor, 2026-11-10).
 check-tests:
 	$(RUN) python3 -m pytest tests/ $(shell $(RUN) python3 scripts/pytest_workers.py)
 
