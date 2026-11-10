@@ -2,10 +2,11 @@
 Title: Staging handoff: fetchers leave a receipt that recognition reads
 Created: 2026-11-10
 Author: reviewer
-Blocked-by: 1502
 
 --- log ---
 2026-11-10T07:09Z reviewer created
+2026-11-10T07:23Z reviewer author ruling 2026-11-10 (relayed): "Do Zotero has attachment hashes already ? Use the same then." — library side = Zotero's own attachment md5 via local API; staged side = file_md5; no harness hash store; the receipt key is that same MD5
+2026-11-10T07:46Z reviewer note blocker 1502 closed — Blocked-by removed.
 
 --- body ---
 ## Context

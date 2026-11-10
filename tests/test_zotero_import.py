@@ -1744,7 +1744,8 @@ def test_a_slow_create_items_inside_check_staging_apply_is_slow(
 
     monkeypatch.setattr(zi, "cmd_create_items", slow)
     monkeypatch.setattr(zi, "audit_sources", lambda root, found, libs: (
-        [{"verdict": "absent", "path": "docs/a.pdf"}], []))
+        [{"verdict": "absent", "path": "docs/a.pdf"}], [],
+        {"status": "built", "by_md5": {}}))
     monkeypatch.setattr(zi, "bib_to_inject_entry", lambda bib, path: {
         "title": "T", "authors": ["A, B"], "year": "2020", "pdf": str(path)})
     found = {"linked": [], "orphans": [], "errors": [], "bib_files": [],
@@ -2164,9 +2165,12 @@ def test_check_staging_apply_defers_an_orphan_however_complete_its_pdfinfo(
     assert use_live.titled(title) == []
 
 
-def test_check_staging_apply_defers_orphan_without_metadata(tmp_path, monkeypatch):
-    """Nothing to look it up by: unidentified, never absent, so nothing is
-    created; with no key, the lookup asks Zotero nothing (down here)."""
+@pytest.mark.integration
+def test_check_staging_apply_defers_orphan_without_metadata(use_live, tmp_path,
+                                                            monkeypatch):
+    """Nothing to look it up by but its md5, which no stored file has:
+    unidentified, never absent, so nothing is created (ticket 1502: the
+    md5 is a key, so Zotero is asked, once, for the attachment index)."""
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "orphan.pdf").write_bytes(b"unreadable scan")
@@ -2630,7 +2634,7 @@ def test_a_refused_key_stops_the_reconcile_attach_edits(tmp_path, monkeypatch):
     monkeypatch.setattr(zi, "local_library", lambda library_id=None: None)
     monkeypatch.setattr(zi, "attach_file", attach_file)
     rows = [{"verdict": "work_present_no_file", "zotero_key": k,
-             "path": f"{k}.pdf"} for k in ("A", "B", "C")]
+             "why": ["doi"], "path": f"{k}.pdf"} for k in ("A", "B", "C")]
     report = {"summary": {"work_present_no_file": 3}, "actions": {},
               "suggested_edits": []}
     rc = zi.attach_present_works(tmp_path, rows, "user", report)

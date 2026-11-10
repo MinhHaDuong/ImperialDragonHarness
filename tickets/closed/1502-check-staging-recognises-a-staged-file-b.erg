@@ -2,9 +2,23 @@
 Title: check-staging recognises a staged file by hash, then identifiers, title last
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2382
 
 --- log ---
 2026-11-10T07:09Z reviewer created
+2026-11-10T07:18Z reviewer raid f7aac3: Imagine + Blind-Spot + feasibility annotation follows.
+2026-11-10T07:18Z reviewer raid f7aac3: Premise holds: nothing on main since edbe9488 touches the cited surfaces. Line numbers checked: audit_one 2261, find_work 1759, _staging_verdict 2244, audit_sources ~2480, reconcile_apply ~2580, cmd_report_duplicates 1951, extract_one 229, find_identifier 124, entry_query 1170, PAGE 530.
+2026-11-10T07:18Z reviewer raid f7aac3: MEASURED (raid lead, 2026-11-10T07:13:50Z, read-only, once): report-duplicates = full attachment listing at PAGE=100 plus works_by_key for 253 duplicate clusters: 63.3 s wall, 8,850 hashed attachments, 0.76 s CPU on our side (the time is Zotero hashing), Zotero desktop already running, load average 3.7 (1-min) / 4.7 (5-min) on 64 threads. The listing alone is at most 63 s; numbers go in the PR body.
+2026-11-10T07:18Z reviewer raid f7aac3: Index design (raid default, change only with a stated reason): one md5 index per run, built by a small function shared with cmd_report_duplicates, scoped to the libraries --library names (user by default; groups only under all or a groupID). Single-file find-work keeps its present behaviour (~1 min is not cheap enough to share for one file).
+2026-11-10T07:18Z reviewer raid f7aac3: --apply: the locked second pass in reconcile_apply rebuilds the index under the lock (the earlier pass can predate another sweep; LOCK_WAIT is 600 s). Rejected: reusing the first pass's index (stale).
+2026-11-10T07:18Z reviewer raid f7aac3: Index skipped (ZoteroSlow or any listing failure): run completes on identifiers and title, says 'storageHash (index skipped: <why>)' in skipped, and no file reads absent (would-be absent becomes unchecked), so --apply creates and attaches nothing. Exit follows the existing incomplete-read rule (EXIT_SLOW for ZoteroSlow); state the chosen exit in the PR.
+2026-11-10T07:18Z reviewer raid f7aac3: Hash hits: identical with storageHash in consulted; several parents sharing the md5 -> the others in also_matches; standalone attachment -> report its key and say standalone; parent in trash -> not identical; linked files carry no md5 and miss.
+2026-11-10T07:18Z reviewer raid f7aac3: Text identifiers: extract_one only when no given identifier exists; scraped ids recorded distinctly in consulted (e.g. 'doi (from text)'); scraped-only lookup that finds nothing is unidentified, never absent; absent still requires a given identifier (.bib) or a non-filename title search. A hash miss alone never means absent.
+2026-11-10T07:18Z reviewer raid f7aac3: url/eprint: derive through entry_query's URL -> arXiv/handle code, extended to DOI-in-URL and eprint -> arXiv. Identifier grammar on URLs is fine; any pattern list on filenames or titles is forbidden (PR #2370): if a criterion seems to need one, stop and report.
+2026-11-10T07:18Z reviewer raid f7aac3: Whether the local API filters attachments by md5: test on the isolated fixture only, answer in the PR.
+2026-11-10T07:18Z reviewer raid f7aac3: Feasibility: PASS. The fixture can hold a stored attachment with a known md5 (tests/zotero_live.py LiveZotero.save(..., pdf=...); see test_a_renamed_copy_is_found_by_its_content).
+2026-11-10T07:23Z reviewer author ruling 2026-11-10 (relayed): "Do Zotero has attachment hashes already ? Use the same then." — library side = Zotero's own attachment md5 via local API; staged side = file_md5; no harness hash store
+2026-11-10T07:46Z reviewer closed — autoclosed — PR #2382
 
 --- body ---
 ## Context
