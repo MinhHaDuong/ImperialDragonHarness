@@ -62,6 +62,28 @@ Out of scope: reading this host's own archive copy (sessions deleted from the
 live trees stay out, as today); changing the archive's schedule or its push;
 `seat-raw` and `launches.jsonl`; any other trace script.
 
+## Raid 075fa8 annotations (Imagine, Plan, Feasibility)
+
+Blind-spot pass (opus, 2026-11-10): exit criteria unchanged; the route below.
+Executes after 1520 merges, on what it lands.
+
+- Hosts: the directories under `raw/` minus `transcript_spool.host()`;
+  within a host only runtime directories are read (`seat-raw`,
+  `launches.jsonl` skipped). Per host, name each surface (Claude Code, Codex,
+  Codex archived sessions, Pi, Pi spool) found in its copy, and say which ones
+  the copy does not hold.
+- Reader: walk `raw/<host>/<runtime>`, root and ceiling rule per file from
+  1520's `source_of`, Codex copies collapsed by 1520's dedup helper. Parsers
+  take a line iterator (the existing `trace_events.zstd_lines` / `open_lines`
+  pattern, in memory, nothing written); do not write a second archive reader
+  beside trace_events/trace_timeline.
+- Cost: about 28,000 files on doudou's copy; `zstd -dc` per file. Prefilter by
+  mtime (archive copies carry the source mtime) against the window start
+  before decompressing. Time a default run, and a `--local` run before and
+  after.
+- Date per host: the newest archived file's mtime (rsync -a keeps it).
+- Feasibility: PASS, conditional on 1520's helpers landing as named there.
+
 ## Test
 
 On a fixture archive built in a temporary directory, with a compressed
