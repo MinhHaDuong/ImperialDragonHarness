@@ -456,7 +456,8 @@ def parse_pi_session(path: Path, role: str, rule: str) -> dict:
     for rec in reversed(branch):
         msg = rec.get("message")
         usage = msg.get("usage") if isinstance(msg, dict) else None
-        if rec.get("type") != "message" or msg.get("role") != "assistant" or not isinstance(usage, dict):
+        if (rec.get("type") != "message" or not isinstance(msg, dict)
+                or msg.get("role") != "assistant" or not isinstance(usage, dict)):
             continue
         cache_read = usage.get("cacheRead") or 0
         prompt = (usage.get("input") or 0) + cache_read + (usage.get("cacheWrite") or 0)
