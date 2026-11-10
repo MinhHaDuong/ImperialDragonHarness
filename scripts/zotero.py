@@ -2537,8 +2537,10 @@ def _pdf_info(pdf: Path) -> dict[str, str]:
 def _staging_verdict(res: dict[str, Any], filename_only: bool,
                      hash_skipped: bool = False) -> str:
     """Classify lookup evidence for a staged file. With the hash index
-    skipped, a file nothing found is `unchecked`, never `absent`: a stored
-    copy under a work no other key finds went unseen."""
+    skipped, a would-be `absent` is `unchecked`: a stored copy under a work
+    no other key finds went unseen. A miss on a hint alone (`filename_only`)
+    stays `unidentified`, listing or not: it was never a would-be `absent`,
+    and the report's own verdict already says the listing was skipped."""
     top = res["matches"][0] if res["matches"] else None
     if res["verdict"] == "unchecked":
         verdict = "unidentified"
@@ -2572,8 +2574,9 @@ EXHAUSTIVE_KEYS = GIVEN_KEYS
 def licenses_attach(why: list[str] | None) -> bool:
     """Whether a lookup's labels license storing the file under the work:
     only a given identifier does (skills/zotero/references/backfill.md
-    § What licenses an attach). check-staging's sweep and suggest-attachments
-    both decide by it."""
+    § What licenses an attach). check-staging decides by it, for the caution
+    on a suggested edit and for its sweep; suggest-attachments is handed the
+    parent, so it compares the file with it instead (attach_licence)."""
     return any(label in GIVEN_KEYS for label in why or [])
 
 
