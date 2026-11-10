@@ -1,0 +1,39 @@
+%erg 0.1
+Title: raid_land cleanup keeps a merged worktree that holds another registered worktree
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T09:16Z reviewer created
+
+--- body ---
+## Context
+
+Found during the raid on ticket 1500 (PR #2394, raid 91a35c), by gaze and by
+the orchestrator's list of every direct `git worktree remove` site.
+
+Since PR #2394 a git-ignored file no longer blocks a worktree removal, and
+`/.claude/worktrees/` is ignored through `info/exclude` (ticket 1495). An
+outer worktree holding a registered inner worktree therefore shows a clean
+status, and plain `git worktree remove <outer>` deletes the inner tree with
+its uncommitted files (reproduced in a fixture). PR #2394 added
+`worktree_nested` (`scripts/worktree-clean-lib.sh`) and wired it into
+`worktree-gc.sh`, `worktree-exit-preflight.sh` and
+`skills/roar/close-and-clean.sh`.
+
+`scripts/raid_land.py` `cleanup()` (about line 227) is the one harness removal
+of an agent's tree left without it: after the merge it runs
+`git worktree unlock` and `git worktree remove` on the merged request's
+worktree with no preflight. The behaviour is the same as before PR #2394, so
+that request left it alone. No nested worktree exists on padme today.
+
+`scripts/forge.py:615`, `scripts/merge-gate.py:623, 1030, 1049` and
+`scripts/test_target_probe.py:112` remove throwaway trees they created
+themselves and are out of scope.
+
+## Exit criteria
+
+- [ ] `raid_land.py --cleanup` keeps a merged worktree that holds another registered worktree, names the nested path in its answer, and still reports the merge as landed; a test shows it with a real nested `git worktree add` holding an uncommitted file, red before the change
+- [ ] A merged worktree holding nothing but ignored files is still removed, by test
+- [ ] The check reuses `worktree_nested` or the exit preflight; no second implementation of the path match
+- [ ] `make check` passes
