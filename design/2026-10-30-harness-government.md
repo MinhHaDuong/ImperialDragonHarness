@@ -1,5 +1,42 @@
 # How the harness is governed: norms, powers and roles
 
+> **Note, 2026-11-10: cooldown review done.** Three reviews and an advisor
+> check are in `design/2026-11-09-harness-government-cooldown-review.md`
+> (ticket 1369). The author's triage of the follow-ups, 2026-11-10: AGENTS.md
+> as constitution, `rules/guards.md` named ordre public, the memory court and
+> ticket 1350 taking §4–5 as frame are dropped; the enforcement column of §3
+> is a want, not now; dated facts with a probe are a want, for host facts
+> only, without a review chamber. Nothing else here is to be implemented.
+> The text below is kept as written; the reviews found these claims stale or
+> superseded:
+>
+> - Status line ("binds nothing until the author says so"): the author
+>   accepted the memo on 2026-10-30, then put it through this cooldown; this
+>   note now states its standing.
+> - AGENTS.md as constitution binding every agent and runtime (§1, §2, §7):
+>   AGENTS.md is the harness repository's own bylaws (ticket 1412); law for
+>   every project lives in `rules/`, and the project and memory boundaries
+>   live in `rules/guards.md`.
+> - `conception/` (§1): the directory is `design/` (ticket 1477).
+> - "A `seats: self-only` gaze record counts as no review" (§2): reversed by
+>   the author's ruling of 2026-11-01; a self-only record is a review like
+>   any other (`skills/merge/SKILL.md`, `skills/gaze/SKILL.md`).
+> - A high-risk change "needs" another model family (§2): `rules/workflow.md`
+>   says such a change *prefers* a panel with an other-family seat.
+> - "~256K tokens" (§3): `rules/guards.md` says 230K.
+> - Three guards prohibitions (§3): `rules/guards.md` has four; the memory
+>   boundary is missing from the table.
+> - `guard-destructive-bash.sh` listed with hooks (§3): it lives in
+>   `scripts/`; `hooks/` holds git hooks.
+> - The main-update guard's coverage (§3): `hooks/reference-transaction`
+>   documents a `core.hooksPath` bypass and a deletion it cannot refuse.
+> - The 1366 worked example (§1): memory exempts no push from read-back;
+>   `rules/git.md` requires forge read-back without exception.
+> - Ticket 1350 as the place to price and frame §4–5: it closed on
+>   2026-11-01 (PR #2170) on another question.
+> - "Merge is the réception" (§6, §7): the reviews flag that it conflates
+>   landing with the author's acceptance; the triage made no ruling on it.
+
 Status: doctrine, proposed 2026-10-30 for the author's review. It describes; it
 binds nothing until the author says so.
 Asked 2026-10-30 in the session that settled ticket 1366: rules carry no
