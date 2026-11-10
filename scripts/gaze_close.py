@@ -152,9 +152,8 @@ def cleanup(primary, pr, branch):
         (tree / ".panel").rmdir()
     except OSError:
         pass
-    # --ignored-ok: a project's check target leaves ignored build products in the
-    # review copy of a pushed head; only unignored files are WIP here (ticket 1487).
-    r = subprocess.run([str(HERE / "worktree-exit-preflight.sh"), "--removal", "--ignored-ok",
+    # Ignored files (a check target's build products) are not WIP (ticket 1500).
+    r = subprocess.run([str(HERE / "worktree-exit-preflight.sh"), "--removal",
                         "--branch", branch, str(tree)], capture_output=True, text=True)
     if r.returncode:
         return False, f"real WIP remains in {tree}: " + (r.stderr or r.stdout).strip()

@@ -571,67 +571,56 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+def _star_ignore_with_allowlist(primary):
+    """Mimic the harness: a committed `.gitignore` of `*` with an allowlist."""
+    (primary / ".gitignore").write_text("*\n!.gitignore\n!README\n!work.txt\n!tickets/\n!tickets/**\n")
+    git(primary, "add", ".gitignore")
+    git(primary, "commit", "-m", "ignore all but the allowlist")
+
+
 @pytest.mark.parametrize("scratch", ["draft.md", "notes/plan.md"])
-def test_preflight_blocks_on_ignored_draft_under_star_ignore(origin, scratch):
-    """Ticket 1212: under a `*` ignore rule plain status reads clean, yet
-    `git worktree remove` deletes the ignored draft. The preflight refuses."""
+def test_removal_deletes_ignored_draft_under_star_ignore(origin, scratch):
+    """Ticket 1500: a git-ignored file is disposable, as `git worktree remove`
+    treats it; the removal preflight passes and the tree goes."""
     _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-draft", dirty=False)
-    _ignore_everything(primary)
+    _star_ignore_with_allowlist(primary)
+    wt = make_agent_worktree(primary, "agent-ign-draft", push=False)
     target = wt / scratch
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("in progress\n")
 
-    res = _preflight(wt)
+    res = _removal(wt)
+    assert res.returncode == 0, res.stderr
+    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
+    assert not wt.exists()
+
+
+def test_removal_blocks_untracked_unignored_file_under_star_ignore(origin):
+    """Negative control: a file the allowlist un-ignores is untracked work."""
+    _, primary = origin
+    _star_ignore_with_allowlist(primary)
+    wt = make_agent_worktree(primary, "agent-unign-draft", push=False)
+    (wt / "draft.md").write_text("ignored\n")
+    (wt / "tickets").mkdir()
+    (wt / "tickets" / "0999-new.erg").write_text("%erg 0.1\n")
+
+    res = _removal(wt)
     assert res.returncode == 1
-    assert scratch.split("/")[0] in res.stderr
-    assert target.exists()
+    assert "tickets/0999-new.erg" in res.stderr and "draft.md" not in res.stderr
+    assert (wt / "tickets" / "0999-new.erg").exists()
 
 
-def test_preflight_passes_on_ignored_caches_only(origin):
-    """Regenerable caches and the root .venv are not work: same list as gc."""
+@pytest.mark.parametrize("name", ["review-7", "gate-7-s-r1", "agent-x"])
+def test_preflight_rejects_retired_ignored_ok_flag(origin, name):
+    """Ticket 1500: `--ignored-ok` is gone; it is an unknown option on any tree."""
     _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-cache", dirty=False)
-    _ignore_everything(primary)
-    (wt / "__pycache__").mkdir()
-    (wt / "__pycache__" / "m.pyc").write_bytes(b"\0")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize("egg", ["pkg.egg-info", "src/pkg.egg-info"])
-def test_preflight_passes_on_uv_run_build_output(origin, egg):
-    """Ticket 1345: `uv run` in a packaged project leaves an egg-info beside
-    the .venv and caches; setuptools rebuilds it, so it is not work. The
-    ignore list is a package's own (DOIfetch's), not `*`: under `*` an
-    untracked src/ collapses to one entry and rightly blocks."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-ign-egg", dirty=False)
-    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
-    exclude.parent.mkdir(parents=True, exist_ok=True)
-    with exclude.open("a") as stream:
-        stream.write("\n.venv/\n*.egg-info/\n.pytest_cache/\n")
-    (wt / egg).mkdir(parents=True)
-    (wt / egg / "PKG-INFO").write_text("Name: pkg\n")
-    (wt / ".pytest_cache").mkdir()
-    (wt / ".pytest_cache" / "README.md").write_text("")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-def _exclude(primary, text):
-    exclude = Path(git(primary, "rev-parse", "--absolute-git-dir").stdout.strip()) / "info" / "exclude"
-    exclude.parent.mkdir(parents=True, exist_ok=True)
-    with exclude.open("a") as stream:
-        stream.write(f"\n{text}\n")
+    wt = make_agent_worktree(primary, name, push=False)
+    res = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal", "--ignored-ok", str(wt)],
+        capture_output=True, text=True, env=child_env(),
+    )
+    assert res.returncode == 2
+    assert "unknown option" in res.stderr
 
 
 def _removal(path):
@@ -641,165 +630,8 @@ def _removal(path):
     )
 
 
-def test_preflight_allows_setup_copies_but_keeps_other_ignored_work(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-setup-copies", dirty=False)
-    _exclude(primary, ".env\n.dvc/\n.venv\nnotes.txt")
-    (primary / ".worktreeinclude").write_text(".env\n.dvc/config.local\n")
-    (primary / ".env").write_text("fake configuration\n")
-    (primary / ".dvc").mkdir()
-    (primary / ".dvc" / "config.local").write_text("fake dvc config\n")
-    (primary / ".dvc" / "cache").mkdir()
-    (primary / ".venv").mkdir()
-    (wt / ".env").write_text("fake configuration\n")
-    (wt / ".dvc").mkdir()
-    (wt / ".dvc" / "config.local").write_text("fake dvc config\n")
-    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
-    (wt / ".venv").symlink_to(primary / ".venv")
-
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-
-    (primary / ".env").unlink()
-    (primary / ".env").symlink_to(wt / ".env")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".env" in result.stderr
-    assert (wt / ".env").read_text() == "fake configuration\n"
-    (primary / ".env").unlink()
-    (primary / ".env").write_text("fake configuration\n")
-
-    (wt / "notes.txt").write_text("keep this\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert "notes.txt" in result.stderr
-    assert (wt / "notes.txt").exists()
-
-    (wt / "notes.txt").unlink()
-    (wt / ".env").write_text("local changes\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".env" in result.stderr
-    assert (wt / ".env").read_text() == "local changes\n"
-
-    (wt / ".env").unlink()
-    (wt / ".env").symlink_to(primary / ".env")
-    assert _preflight(wt).returncode == 0
-    (wt / ".dvc" / "draft.txt").write_text("keep this too\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    assert (wt / ".dvc" / "draft.txt").exists()
-
-    (wt / ".dvc" / "draft.txt").unlink()
-    (wt / ".dvc" / "cache").unlink()
-    (wt / ".dvc" / "cache").symlink_to(wt)
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    (wt / ".dvc" / "cache").unlink()
-    (wt / ".dvc" / "cache").symlink_to(primary / ".dvc" / "cache")
-    result = _removal(wt)
-    assert result.returncode == 0, result.stderr
-    git(primary, "worktree", "remove", str(wt))
-    assert not wt.exists()
-    assert (primary / ".dvc" / "cache").is_dir()
-
-
-@pytest.mark.parametrize("included", ["docs", "docs/"])
-def test_preflight_allows_included_directory_copies_and_keeps_residue(origin, included):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-included-directory", dirty=False)
-    _exclude(primary, "docs/\n.worktreeinclude")
-    (primary / ".worktreeinclude").write_text(included + "\n")
-    for tree in (primary, wt):
-        (tree / "docs" / "nested").mkdir(parents=True)
-        (tree / "docs" / "a").write_text("original a\n")
-        (tree / "docs" / "nested" / "b").write_text("original b\n")
-
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-
-    (wt / "docs" / "nested" / "b").write_text("hand edit\n")
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert "docs/" in result.stderr
-    assert (wt / "docs" / "nested" / "b").read_text() == "hand edit\n"
-    (wt / "docs" / "nested" / "b").write_text("original b\n")
-
-    (wt / "docs" / "extra").write_text("worktree only\n")
-    assert _preflight(wt).returncode == 1
-    assert (wt / "docs" / "extra").exists()
-    (wt / "docs" / "extra").unlink()
-
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").symlink_to(primary / "docs" / "nested" / "b")
-    result = _preflight(wt)
-    assert result.returncode == 0, result.stderr
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").symlink_to(wt / "docs" / "a")
-    assert _preflight(wt).returncode == 1
-
-    (wt / "docs" / "nested" / "b").unlink()
-    (wt / "docs" / "nested" / "b").write_text("original b\n")
-    (primary / "docs" / "nested" / "b").unlink()
-    (primary / "docs" / "nested" / "b").symlink_to(wt / "docs" / "nested" / "b")
-    assert _preflight(wt).returncode == 1
-
-
-def test_preflight_keeps_copy_when_primary_parent_links_into_worktree(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-linked-parent", dirty=False)
-    _exclude(primary, ".dvc/\n.worktreeinclude")
-    (primary / ".worktreeinclude").write_text(".dvc/config.local\n")
-    (wt / ".dvc").mkdir()
-    (wt / ".dvc" / "config.local").write_text("only copy\n")
-    (primary / ".dvc").symlink_to(wt / ".dvc")
-
-    result = _preflight(wt)
-    assert result.returncode == 1
-    assert ".dvc/" in result.stderr
-    assert (wt / ".dvc" / "config.local").read_text() == "only copy\n"
-
-
-def test_preflight_passes_on_ignored_setuptools_build(origin):
-    """Ticket 1357: git prints the ignored directory as `!! build/`; only
-    lib*, bdist.* and temp.* inside it are regenerable."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build", dirty=False)
-    _exclude(primary, "build/")
-    for p, data in (("build/lib/pkg/work.txt", "first\n"), ("build/lib/pkg/m.pyc", "x\n"),
-                    ("build/bdist.linux-x86_64/work.txt", "first\n"), ("build/temp.linux-x86_64/o.o", "x\n")):
-        (wt / p).parent.mkdir(parents=True, exist_ok=True)
-        (wt / p).write_text(data)
-    res = _preflight(wt)
-    assert res.returncode == 0, res.stderr
-
-
-def test_preflight_blocks_on_extensionless_bdist_metadata(origin):
-    """Control: extensionless bdist/temp files match no tracked blob and no build extension."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-meta", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "bdist.linux-x86_64").mkdir(parents=True)
-    (wt / "build" / "bdist.linux-x86_64" / "x").write_text("x\n")
-    res = _preflight(wt)
-    assert res.returncode == 1 and "build/bdist.linux-x86_64" in res.stderr
-
-
-def test_preflight_blocks_on_hand_made_file_under_ignored_build(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-notes", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "build" / "notes.txt").write_text("keep me\n")
-    res = _preflight(wt)
-    assert res.returncode == 1 and "build/" in res.stderr
-
-
 def test_removal_keeps_unignored_build_output(origin):
-    """The scrub only deletes what the repository ignores: an unignored build/lib is work."""
+    """Build output the repository does not ignore is untracked work."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-build-unignored", dirty=False)
     (wt / "build" / "lib").mkdir(parents=True)
@@ -809,146 +641,23 @@ def test_removal_keeps_unignored_build_output(origin):
     assert (wt / "build" / "lib" / "draft.txt").exists()
 
 
-def test_preflight_blocks_on_symlinked_build(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-link", dirty=False)
-    _exclude(primary, "build")
-    (primary.parent / "elsewhere" / "lib").mkdir(parents=True)
-    (wt / "build").symlink_to(primary.parent / "elsewhere")
-    assert _preflight(wt).returncode == 1
-
-
 def _plain_venv(wt):
     (wt / ".venv" / "bin").mkdir(parents=True)
     (wt / ".venv" / "bin" / "python").write_text("")
     (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
 
-def test_gate_sequence_removes_tree_with_unignored_venv_without_force(origin):
-    """Ticket 1357: a venv without its own .gitignore (not uv's) is untracked,
-    so a plain `git worktree remove` refuses; the removal preflight scrubs it first."""
+def test_removal_blocks_unignored_venv_as_git_does(origin):
+    """Ticket 1500: a venv that neither the project nor the venv itself ignores
+    is untracked; the preflight refuses it, as plain `git worktree remove` does,
+    and the project adds the ignore line (cost accepted by the author)."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-venv", dirty=False)
     _plain_venv(wt)
     assert git(primary, "worktree", "remove", str(wt), check=False).returncode != 0
     res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
-    assert not wt.exists()
-
-
-def test_preflight_keeps_venv_without_pyvenv_cfg_as_residue(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-hand", dirty=False)
-    (wt / ".venv").mkdir()
-    (wt / ".venv" / "mine.txt").write_text("hand made\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and ".venv" in res.stderr
-    assert (wt / ".venv" / "mine.txt").exists()
-
-
-def test_removal_keeps_venv_holding_hand_made_top_level_file(origin):
-    """Review 7a1a: a real venv with a hand-made .venv/notes.txt is work, not disposable."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-notes", dirty=False)
-    _plain_venv(wt)
-    (wt / ".venv" / "notes.txt").write_text("keep me\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and ".venv/notes.txt" in res.stderr
-    assert (wt / ".venv" / "notes.txt").exists()
-
-
-def test_removal_keeps_hand_made_file_inside_ignored_build_lib(origin):
-    """Review 7a1a: build/lib is disposable only while every file looks like build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-notes", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "build" / "lib" / "notes.txt").write_text("keep me\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "notes.txt").exists()
-
-
-def test_removal_keeps_hand_made_py_inside_ignored_build_lib(origin):
-    """A hand-made .py is not build output: only tracked-blob copies and .pyc .so .pyd .o are."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-py", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "notes.py").write_text("my work\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "notes.py").exists()
-
-
-def test_removal_keeps_basename_twin_inside_ignored_build_lib(origin):
-    """A file sharing a tracked basename but not its bytes is hand-made."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-twin", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("different words\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "README").exists()
-
-
-def test_removal_scrubs_byte_copy_and_pyc_inside_ignored_build_lib(origin):
-    """Positive control: a byte-copy of a tracked file plus a .pyc is disposable build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-build-lib-copy", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib" / "pkg").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("hi\n")
-    (wt / "build" / "lib" / "pkg" / "m.pyc").write_bytes(b"\x00pyc")
-    res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert not (wt / "build").exists()
-
-
-def test_removal_keeps_file_equal_to_tracked_blob_only_after_clean_filter(origin):
-    """Byte identity means raw bytes: a clean filter must not make a hand-made file match."""
-    _, primary = origin
-    (primary / ".gitattributes").write_text("build/** filter=strip\n")
-    git(primary, "add", ".gitattributes")
-    git(primary, "commit", "-m", "attributes")
-    git(primary, "config", "filter.strip.clean", "grep -v ^OUT")
-    wt = make_agent_worktree(primary, "agent-build-filter", dirty=False)
-    _exclude(primary, "build/")
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "README").write_text("hi\nOUT kept output\n")
-    res = _removal(wt)
-    assert res.returncode == 1 and "build/lib" in res.stderr
-    assert (wt / "build" / "lib" / "README").exists()
-
-
-def test_refused_removal_scrubs_nothing(origin):
-    """A removal blocked by other residue deletes neither the venv nor build output."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-refused-scrub", dirty=False)
-    _exclude(primary, "build/")
-    _plain_venv(wt)
-    (wt / "build" / "lib").mkdir(parents=True)
-    (wt / "build" / "lib" / "m.py").write_text("x\n")
-    (wt / "draft.txt").write_text("mine\n")
-    res = _removal(wt)
-    assert res.returncode == 1
+    assert res.returncode == 1 and ".venv/pyvenv.cfg" in res.stderr
     assert (wt / ".venv" / "pyvenv.cfg").exists()
-    assert (wt / "build" / "lib" / "m.py").exists()
-
-
-def test_preflight_keeps_symlinked_venv_as_residue(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-venv-link", dirty=False)
-    target = primary.parent / "shared-venv"
-    target.mkdir()
-    (target / "pyvenv.cfg").write_text("home = /usr/bin\n")
-    (wt / ".venv").symlink_to(target)
-    res = _removal(wt)
-    assert res.returncode == 1
-    assert (target / "pyvenv.cfg").exists()
 
 
 def test_preflight_passes_ignored_tmp_without_purging_it(origin):
@@ -1175,11 +884,13 @@ def _ignored_venv(wt):
     (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
 
 
-def test_gc_reclaims_dead_pid_locked_worktree_with_disposable_ignored_venv(origin):
-    """Positive control: a venv holding only usual entries is regenerable."""
+def test_gc_reclaims_dead_pid_locked_worktree_holding_ignored_files(origin):
+    """Ticket 1500, through the dead-pid lock path: everything under an ignored
+    .venv, a hand-made file included, is disposable; the tree goes."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-dead-venv")
     _ignored_venv(wt)
+    (wt / ".venv" / "notes.txt").write_text("ignored, so disposable\n")
     git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
 
     res = _gc(primary)
@@ -1187,7 +898,7 @@ def test_gc_reclaims_dead_pid_locked_worktree_with_disposable_ignored_venv(origi
     assert str(wt) not in _worktree_paths(primary)
 
 
-@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream", "ignored-file", "nested-worktree", "ignored-venv-handmade"])
+@pytest.mark.parametrize("case", ["live-pid", "dirty", "ahead", "unlocked", "no-upstream"])
 def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     _, primary = origin
     name = f"agent-keep-{case}"
@@ -1195,22 +906,6 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     pid = os.getpid() if case == "live-pid" else _dead_pid()
     if case != "unlocked":
         git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {pid})")
-    if case == "ignored-file":
-        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
-        git(wt, "add", "-f", ".gitignore")
-        git(wt, "commit", "-m", "ignore all")
-        git(wt, "push")
-        (wt / "draft.md").write_text("precious\n")
-    if case == "ignored-venv-handmade":
-        _ignored_venv(wt)
-        (wt / ".venv" / "notes.txt").write_text("precious\n")
-    if case == "nested-worktree":
-        _ignore_worktree_tmp(primary)
-        common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
-        with (common / "info" / "exclude").open("a") as stream:
-            stream.write("/.claude/worktrees/\n")
-        (wt / ".claude" / "worktrees").mkdir(parents=True)
-        (wt / ".claude" / "worktrees" / "inner.txt").write_text("live\n")
     if case == "ahead":
         (wt / "more.txt").write_text("x\n")
         git(wt, "add", "-A")
@@ -1219,83 +914,6 @@ def test_gc_keeps_live_branch_worktree_unless_all_three_hold(origin, case):
     res = _gc(primary)
     assert f"removed {name}" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
-    if case == "ignored-file":
-        assert (wt / "draft.md").read_text() == "precious\n"
-    if case == "ignored-venv-handmade":
-        assert (wt / ".venv" / "notes.txt").read_text() == "precious\n"
-
-
-def _uv_venv(wt):
-    """The root .venv as `uv venv` 0.12 lays it out (copied from a real one on
-    padme): its own `*` .gitignore, an empty .lock, CACHEDIR.TAG, pyvenv.cfg,
-    bin, lib and a lib64 -> lib symlink."""
-    v = wt / ".venv"
-    (v / "bin").mkdir(parents=True)
-    (v / "bin" / "python").write_text("")
-    (v / "lib" / "python3.12" / "site-packages").mkdir(parents=True)
-    (v / "lib64").symlink_to("lib")
-    (v / ".gitignore").write_text("*")
-    (v / ".lock").write_text("")
-    (v / "CACHEDIR.TAG").write_text("Signature: 8a477f597d28d172789f06886806bc55")
-    (v / "pyvenv.cfg").write_text("home = /usr/bin\nimplementation = CPython\nuv = 0.12.7\n")
-
-
-def test_gc_reclaims_dead_pid_locked_worktree_with_uv_venv(origin):
-    """Review rv-20261109-pr-2348-4758: uv writes .venv/.lock; a tree that ran
-    uv is still reclaimed at its upstream."""
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-dead-uv")
-    _uv_venv(wt)
-    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
-
-    res = _gc(primary)
-    assert "removed agent-dead-uv (dead-pid lock" in res.stdout, res.stdout + res.stderr
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_gc_reclaims_idle_ownerless_tree_holding_uv_venv(origin):
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-ownerless-uv", dirty=False)
-    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
-    make_branch_gone(remote, primary, "agent-ownerless-uv")
-    _uv_venv(wt)
-    _age_worktree_metadata(wt, 100)
-
-    res = _gc(primary)
-    assert "removed agent-ownerless-uv" in res.stdout, res.stdout + res.stderr
-    assert str(wt) not in _worktree_paths(primary)
-
-
-def test_preflight_passes_on_uv_venv(origin):
-    _, primary = origin
-    wt = make_agent_worktree(primary, "agent-preflight-uv", dirty=False)
-    _uv_venv(wt)
-    res = _removal(wt)
-    assert res.returncode == 0, res.stderr
-    assert git(primary, "worktree", "remove", str(wt), check=False).returncode == 0
-
-
-@pytest.mark.parametrize("case", ["dirty", "ignored-draft"])
-def test_uv_venv_does_not_mask_real_work(origin, case):
-    """Negative controls: beside a disposable uv venv, uncommitted work and an
-    ignored file outside the venv still block gc and the preflight."""
-    _, primary = origin
-    name = f"agent-uv-keep-{case}"
-    wt = make_agent_worktree(primary, name, dirty=(case == "dirty"))
-    if case == "ignored-draft":
-        (wt / ".gitignore").write_text("*\n!work.txt\n!.gitignore\n")
-        git(wt, "add", "-f", ".gitignore")
-        git(wt, "commit", "-m", "ignore all")
-        git(wt, "push")
-        (wt / "draft.md").write_text("precious\n")
-    _uv_venv(wt)
-    assert _removal(wt).returncode == 1
-    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
-    res = _gc(primary)
-    assert f"removed {name}" not in res.stdout
-    assert str(wt) in _worktree_paths(primary)
-    if case == "ignored-draft":
-        assert (wt / "draft.md").read_text() == "precious\n"
 
 
 def test_gc_keeps_pid_1_locked_worktree(origin):
@@ -1463,9 +1081,10 @@ def _ignore_everything(primary):
 
 
 @pytest.mark.parametrize("scratch", ["draft.md", ".panel/1/review.md"])
-def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
-    """`git worktree remove` deletes ignored files, and a repo may ignore `*`:
-    an ignored draft or review scratch keeps an owner-less tree and its lock."""
+def test_gc_reclaims_idle_ownerless_tree_holding_ignored_files(origin, scratch):
+    """Ticket 1500: ignored files are disposable, even under a `*` ignore; an
+    idle owner-less tree holding only those is reclaimed (the untracked case
+    above keeps it)."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-ownerless-ign", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason", "hunt t9 (owner pid not visible)")
@@ -1478,30 +1097,7 @@ def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "skip agent-ownerless-ign (locked, no visible owner, idle 100h, tree not clean" in res.stdout
-    assert target.exists()
-    assert str(wt) in _worktree_paths(primary)
-
-
-def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
-    """Regenerable caches are not work: an owner-less tree holding only an
-    ignored __pycache__ and a root .venv (rebuilt from the lock) is still
-    reclaimed once idle."""
-    remote, primary = origin
-    wt = make_agent_worktree(primary, "agent-ownerless-cache", dirty=False)
-    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
-    make_branch_gone(remote, primary, "agent-ownerless-cache")
-    _ignore_everything(primary)
-    (wt / "__pycache__").mkdir()
-    (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
-    (wt / ".venv" / "bin").mkdir(parents=True)
-    (wt / ".venv" / "bin" / "python").write_text("")
-    (wt / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
-    _age_worktree_metadata(wt, 100)
-
-    res = _gc(primary)
-    assert res.returncode == 0
-    assert "removed agent-ownerless-cache" in res.stdout
+    assert "removed agent-ownerless-ign" in res.stdout, res.stdout + res.stderr
     assert str(wt) not in _worktree_paths(primary)
 
 
