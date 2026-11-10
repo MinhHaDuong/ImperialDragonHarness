@@ -1,26 +1,24 @@
 # Architecture: the memory system
 
-Scope: repository memory and runtime access, checked 2026-11-08.
+Scope: repository memory and runtime access, checked 2026-11-10.
 Authority: the Smelt skill and `rules/guards.md`.
 
 ## Current guidance
 
-- The append-only source is `memory/journal/YYYY/`; corrections link the original. Topics are department guides (4 KB excluding Sources, at most eight); index cap 40 lines. Attribution telemetry lives in `memory/evidence/attribution/`, outside consolidation [census]. Uncleared material is repository age ciphertext, key untracked [pilot]; this pass found none.
-- Roar captures facts, then gives its `/clear` verdict [survey]. Smelt rebuilds by department from previous pages and source revisions; only accepted reports count as processing. Fifth accepted PR #2049 closed 1349 [accepted]; sixth accepted PR #2197 is this pass's size baseline. Interrupted trial pass 3 and unmerged hoard PR #1975 remain unaccepted.
-- There is no project prompt. Ticket 1451 moved the generic text into `skills/smelt/references/consolidation.md`; its revision is the skill's. Migration refuses an untracked or edited prompt; size comparison resolves refs in the selected repo [prompt]. A retirement citation is intentionally still listed on rerun [followup].
-- Case notes (`memory/skills/<skill>.md`) have 1–4 dated, sourced cases with `Use:` lines, around 400 words. Smelt re-selects them. Claude's Skill PostToolUse plus UserPromptSubmit cover both tool and typed-slash loads; Pi wiring landed in PR 2150 [cases].
-- Native auto-memory stays by author choice (1350 option b); Smelt lists it read-only. Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [User rulings][source1] register preserves contextual decisions and author edits; Brood integrates and retires integrated rulings.
-- Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention/provenance landed as 1464; 1377 closed by author disposition in favor of 1465 (closed 2026-11-10 by the author's ruling, to be re-filed when a consumer needs it), without claiming structured constraints implemented [brood].
+- The as-built description of the system (stores, lifecycle, budgets, delivery per runtime, gaps, open design questions) is [the blueprint](../../design/memory-v8/README.md); this page keeps only what a session acts on beyond it.
+- Fifth accepted smelt PR #2049 closed 1349 [accepted]; sixth accepted PR #2197 is the size baseline. Interrupted trial pass 3 and unmerged hoard PR #1975 remain unaccepted. A retirement citation is intentionally still listed on rerun [followup]; migration refuses an untracked or edited prompt [prompt].
+- Native auto-memory stays by author choice (1350 option b). Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [User rulings][source1] register preserves contextual decisions and author edits.
+- Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention landed as 1464; 1465 closed by the author's ruling 2026-11-10, to be re-filed when a consumer needs it [brood].
 
 ## Hazards
 
-- The controlled 1346 census observed Claude reading repo memory in 1/148 padme and 0/5 doudou sessions; Codex 142/570. Index injection is absent; naming a path is not reading it (77% became 25%) [census].
-- A planted contradicting native note reached every probed runtime: Claude flagged it, Codex adopted it. Pi loads only the first AGENTS variant per directory plus home [trial]. Native-store figures (41% working rules, 52% uncaptured knowledge) are dated audit results, not current measurements. Journal size exceeds one context: read by department.
+- Naming a path is not reading it: the 1346 census corrected 77% to 25% for Codex; Claude reads repo memory in 1/148 padme and 0/5 doudou sessions [census].
+- A planted contradicting native note reached every probed runtime: Claude flagged it, Codex adopted it [trial]. Native-store figures (41% working rules, 52% uncaptured knowledge) are dated audit results.
 - Capture has refused duplicate findings at one anchor, fact order and ticket-only PRs; script-only seats yield no record. PR 2217 could not recover a writer identity [identity]. Missing evidence stays unknown.
 
 ## Open questions
 
-- Memory redesign 1443 is deferred, with no implementation authority. The verbatim-journal comparison (DreamBench-SWE 95/180 vs 89/180, p=.52) remains inconclusive; 1354 was closed by the author, monitor instead. Append-in-place remains unresolved.
+- Ticket 1443 (explicit versus automatic memories, injection) closed 2026-11-10; its questions live in the blueprint's Open design questions, deferred until the author reopens the design. The verbatim-journal comparison (DreamBench-SWE 95/180 vs 89/180, p=.52) remains inconclusive; monitor instead (1354). Append-in-place remains unresolved.
 
 ## Sources
 
@@ -41,7 +39,7 @@ Authority: the Smelt skill and `rules/guards.md`.
 [brood]: ../journal/2026/2026-11-07-raid-d35fb4.md
 [trial]: ../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md
 [identity]: ../journal/2026/2026-11-05-pr2217-attribution-capture.md
-- Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/closed/1465-evidence-structured-review-constraints-a.erg).
+- Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/closed/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/closed/1465-evidence-structured-review-constraints-a.erg).
 
 [source1]: user-rulings.md#on-memory-and-rules
 

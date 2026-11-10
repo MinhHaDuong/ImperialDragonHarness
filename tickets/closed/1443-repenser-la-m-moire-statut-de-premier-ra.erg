@@ -3,11 +3,13 @@ Title: Repenser la mémoire : statut de premier rang des mémoires explicitement
 Created: 2026-11-02
 Author: codex
 Label: deferred
+Closed: content folded into design/memory-v8/README.md § Open design questions (as-built blueprint); deferred design input preserved there, by author decision 2026-11-10
 
 --- log ---
 2026-11-02T10:03Z codex created
 2026-11-07T12:15Z reviewer ticket 1451 (fold the per-project SMELT.md prompt into the smelt skill, PR #2225) is a bounded step inside this redesign: generic consolidation text now lives in skills/smelt/references/consolidation.md; no per-project prompt
 2026-11-08T10:50Z reviewer Author: rulings are a separate memory class; explicit/implicit provenance is independent of topic classification. Injection remains open: merge both in pre-skill injectors? Mimic Claude Code pre-skill/file-type hook patterns? Deferred design input, no implementation.
+2026-11-10T16:03Z reviewer closed — content folded into design/memory-v8/README.md § Open design questions (as-built blueprint); deferred design input preserved there, by author decision 2026-11-10
 
 --- body ---
 ## Demande de l’auteur
