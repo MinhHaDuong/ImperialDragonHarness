@@ -56,7 +56,7 @@ SCRATCH=$(mktemp -d)
 # trace-stats: token and dollar cost per agent and session; reads Claude Code, Codex, and Pi; the CSV is Claude Code's.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
-# trace-compact-audit: missed compact or clear points and sessions past their model's context ceiling; needs the traces.
+# trace-compact-audit: missed compact or clear points and sessions past their model's context ceiling; reads Claude Code, Codex, and Pi on this host and, over ssh, on each other fleet host that is up (a corpus-root flag reads this host alone).
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
 # trace-friction: velocity losses (retries, slow tools, idle waits); reads Claude Code, Codex, and Pi.
