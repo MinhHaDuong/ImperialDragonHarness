@@ -106,7 +106,7 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
 | `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
-| `unidentified` | no reliable identification: too little metadata, or an unsuccessful filename-only or text-identifier-only search | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
+| `unidentified` | no reliable identification: too little metadata, or a search by filename words, or by an identifier read from the pages plus filename words, that finds nothing | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
 | `unchecked` | not looked up in full: the hash index was skipped, so a stored copy may have gone unseen | rerun when Zotero lists in time; never an import |
 
 
@@ -143,7 +143,10 @@ used.
    entry gives none, the identifiers printed in the PDF's first and last
    pages, consulted as `doi (from text)` and the like. A page can print a
    cited work's DOI, so a text identifier alone never makes a file
-   `absent` and never lets `--apply --edit` attach it.
+   `absent` (a file reads `absent` only when a curated identifier or a
+   real title, the `.bib` one or the PDF's own, was searched too) and never
+   lets `--apply --edit` attach it; its `suggested_edits` entry carries a
+   `caution`.
 3. **Title** (the `.bib` title, else the PDF's container Title, else the
    filename): a search that yields candidates, never a match.
 

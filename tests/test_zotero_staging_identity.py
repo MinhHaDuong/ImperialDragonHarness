@@ -232,6 +232,8 @@ def test_a_text_identifier_never_authorises_an_attach(lib, tmp_path):
                                                        edit=True))
     (edit,) = report["edits"]
     assert edit["status"] == "not attempted"
+    (suggested,) = report["suggested_edits"]
+    assert suggested["itemKey"] == keys["text_doi"] and "caution" in suggested
     assert report["rows"][0]["why"] == ["doi (from text)"]
     assert zi.local_library().children(keys["text_doi"]) == []
 
