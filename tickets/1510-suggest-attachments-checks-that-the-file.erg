@@ -1,0 +1,62 @@
+%erg 0.1
+Title: suggest-attachments checks that the file belongs to the item before attaching
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T08:48Z reviewer created
+
+--- body ---
+## Context
+
+Author request, 2026-11-10 ("ticket suggest-attachments"), on a finding of
+the documentary-chain survey and of raid f7aac3 (tickets 1502 and 1503).
+
+`zotero.py suggest-attachments --parent K file [--edit]`
+(`cmd_suggest_attachments`, ~line 3134 on 2026-11-10; grep again) checks
+that item `K` exists and that the file is readable, then, with `--edit`,
+stores the file under `K`. Nothing compares the file with the item. The
+caller is trusted to have the right pair: `references/backfill.md` tells the
+agent to "verify the file belongs to the work before attaching", by hand.
+
+A wrong attachment corrupts the library, and quietly: the item then carries
+another work's full text, later lookups by hash point at the wrong item, and
+nothing reports it.
+
+The evidence needed is now at hand. Since 1502 and 1503, the helper can read
+a file's MD5 against Zotero's own attachment hashes, the identifiers given
+in a fetch receipt (`docs/.receipts.jsonl`), the identifiers of a `.bib`
+entry, and those printed in the file's pages. `check-staging --apply --edit`
+(`attach_present_works`, ~3050) already follows rules about which of these
+may license a write (raid f7aac3: a receipt matched only by name gives
+hints; a URL match never licenses an attach; a text-scraped identifier never
+does). `suggest-attachments` should not be the door that skips them.
+
+## Decision
+
+Before attaching, `suggest-attachments` compares what it can know about the
+file with the parent item, and its output row says what it compared:
+
+- **Contradiction refuses.** A given identifier (receipt, `.bib`) that
+  differs from the item's own, or the file's MD5 already stored under a
+  different item, stops the attach and names both sides.
+- **Agreement attaches**, as today, and the row says on which key.
+- **Nothing to compare**: the default proposed here is to attach as today
+  and mark the row `unverified`, with no new flag, so that the hand-file
+  flow keeps working and the report shows where trust was taken. The
+  alternative, refusing without an explicit override, is safer and adds a
+  step to every hand-supplied file. The author picks; the implementer builds
+  the default unless told otherwise.
+- The same rules as `attach_present_works` for hints: a text-scraped
+  identifier or a name-matched receipt can contradict (and so refuse) but
+  cannot, alone, count as agreement.
+
+## Exit criteria
+
+- [ ] A file whose given identifier contradicts the parent item's is refused with `--edit`; a test shows the refusal and that the library is unchanged
+- [ ] A file whose MD5 is already stored under another item is refused, naming that item; a test shows it
+- [ ] A file whose given identifier agrees with the parent attaches, and the row names the key; a test shows it
+- [ ] A file with nothing to compare follows the chosen default, and the row says `unverified` (or the refusal says how to override); a test shows it
+- [ ] `suggest-attachments` and `check-staging --apply --edit` share one statement of which evidence licenses an attach, in code and in `skills/zotero/references/`
+- [ ] The tests that exercise library writes run in the project's gate, or the request says plainly where they are skipped (raid f7aac3 found they skip without a display)
+- [ ] `make check` passes

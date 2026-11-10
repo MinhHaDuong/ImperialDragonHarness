@@ -1,0 +1,45 @@
+%erg 0.1
+Title: check-staging: an embedded PDF title is a hint, never grounds for absent
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T08:48Z reviewer created
+
+--- body ---
+## Context
+
+Author ruling, 2026-11-10, verbatim: "The embedded PDF titles are
+unreliable". It answers a finding gaze raised twice, non-blocking, in the
+reviews of tickets 1502 and 1503: `check-staging` can still call a file
+`absent` from a title search alone, when the PDF has a real-looking embedded
+title and its identifiers miss.
+
+Today (`audit_one`, ~line 2572 on 2026-11-10; `_staging_verdict`, ~2528) a
+title built from the **filename** that finds nothing is `unidentified`,
+never `absent` (ticket 1456). A title read from the PDF **container**
+(`_pdf_info`, ~2511) is trusted more: a miss on it can conclude `absent`,
+and the report's action for `absent` is to create an item. Container titles
+are whatever the producing tool wrote: a publisher's template string, the
+title of another document, a truncated or mis-encoded line. Ticket 0081 of
+sen-causal-reading was exactly this: a publisher string in /Title killed the
+search for 15 files.
+
+## Decision
+
+A title taken from the file itself, whether from the container or from the
+filename, is a search hint. A search on it may return candidates; a miss on
+it alone is `unidentified`, never `absent`. Only a title someone **gave**
+(a `.bib` entry, a receipt's given metadata) can, with no hit, conclude
+`absent`. This is the same line 1502 and 1503 drew for identifiers: given
+versus scraped.
+
+No filtering of "junk" titles by pattern: the rule is about where the title
+came from, not what it looks like.
+
+## Exit criteria
+
+- [ ] A PDF with a plausible embedded title that matches nothing, and no given metadata, is `unidentified`; a test shows it, with a control where a `.bib` title that matches nothing is still `absent`
+- [ ] The existing filename-title behaviour is unchanged
+- [ ] `skills/zotero/references/` text on verdicts agrees with the code
+- [ ] `make check` passes
