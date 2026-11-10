@@ -27,6 +27,15 @@ the host, each runtime read, each one not read and each one it could not look
 at. Missed runs and their dollar figures stay Claude Code only. The process
 exits non-zero only when no corpus at all is readable.
 
+Fleet (ticket 1516): by default the audit also reads each other host of
+FLEET_HOSTS over ssh (BatchMode, a connect timeout and a run timeout), by
+running this script there with `--local --json --aggregates-only`; only counts
+come back. A host that does not answer, answers with a version this one cannot
+interpret (no matching `schema`), or reports the local host is named as such,
+never read as zero sessions. `--local`, or an explicit corpus-root flag, reads
+this host alone. Sessions are not deduplicated across hosts. Missed runs and
+their dollar figures stay this host's.
+
 Zero LLM/API calls; emits aggregates only, never trace content.
 """
 
@@ -37,8 +46,10 @@ import json
 import logging
 import os
 import re
+import shlex
 import socket
 import statistics
+import subprocess
 import sys
 from pathlib import Path
 
@@ -62,6 +73,14 @@ _SPOOL_SPEC.loader.exec_module(transcript_spool)
 CLEAR_RE = re.compile(
     r"<command-name>/?clear</command-name>\s*\n\s*<command-message>clear</command-message>"
 )
+
+# Fleet reading (ticket 1516). The hosts are ssh aliases; the local one is dropped.
+FLEET_HOSTS = ("padme", "doudou")
+REMOTE_SCRIPT = "~/.agents/scripts/trace-compact-audit.py"
+REMOTE_CONNECT_TIMEOUT_S = 5
+REMOTE_RUN_TIMEOUT_S = 300
+# Version of the JSON a host answers with; a remote answer must carry the same.
+SCHEMA_VERSION = 1
 
 # Used only if the corpus contains no compaction to take a median from.
 DEFAULT_POST_COMPACT_TOKENS = 20_000
@@ -758,11 +777,13 @@ def audit_corpus(
     now=None,
     ceilings: dict | None = None,
     metric: str = "prompt",
+    require_one: bool = True,
 ) -> dict:
     """Audit the corpora. `roots` maps a runtime name of RUNTIMES to its
     corpus root; a bare path is Claude Code's alone. A runtime absent from
     `roots` or mapped to None is not read. Raises CouldNotLook only when no
-    runtime's corpus is readable. `threshold` None means each agent's own: its
+    runtime's corpus is readable, unless `require_one` is false (the fleet
+    reading, where another host may still be readable). `threshold` None means each agent's own: its
     main model's ceiling for a main session, the default (230K) for a
     subagent."""
     from datetime import datetime, timezone
@@ -838,7 +859,7 @@ def audit_corpus(
         undated += rt_undated
         duplicate_turns += dropped
 
-    if not any(r["status"] == "read" for r in runtimes):
+    if require_one and not any(r["status"] == "read" for r in runtimes):
         raise CouldNotLook(
             "; ".join(f"{r['name']}: {r['reason']}" for r in runtimes)
         )
@@ -921,6 +942,7 @@ def audit_corpus(
     main_trajs = [(rt, p, sid, t) for rt, p, sid, aid, t in all_trajs if aid == "main"]
 
     return {
+        "schema": SCHEMA_VERSION,
         "window_days": days,
         "window_start": start.isoformat(),
         "window_end": now.isoformat(),
@@ -953,6 +975,212 @@ def audit_corpus(
     }
 
 
+def local_host() -> str:
+    return socket.gethostname()
+
+
+def _short(host: str) -> str:
+    return host.split(".")[0].lower()
+
+
+def aggregates_only(summary: dict) -> dict:
+    """The summary without anything that names a project, a session or a run."""
+    out = {k: v for k, v in summary.items()
+           if k not in ("run_rows", "by_project", "by_entry_skill", "top_sessions")}
+    sessions = dict(out["sessions"])
+    over = dict(sessions["over_own_ceiling"])
+    over.pop("rows", None)
+    sessions["over_own_ceiling"] = over
+    out["sessions"] = sessions
+    return out
+
+
+def remote_args(days: int, since: str | None, min_run: int, threshold: int | None, metric: str) -> list[str]:
+    args = ["--local", "--json", "--aggregates-only", "--min-run", str(min_run), "--metric", metric]
+    args += ["--since", since] if since else ["--days", str(days)]
+    if threshold is not None:
+        args += ["--threshold", str(threshold)]
+    return args
+
+
+def read_remote_host(host: str, args: list[str]) -> dict:
+    """Run this script on `host` over ssh and return its parsed aggregate answer.
+    Raises CouldNotLook when the host does not answer, fails, or answers with
+    something this version does not interpret. Read-only on the remote."""
+    cmd = f"python3 {REMOTE_SCRIPT} " + " ".join(shlex.quote(a) for a in args)
+    try:
+        done = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", "-o", f"ConnectTimeout={REMOTE_CONNECT_TIMEOUT_S}", host, cmd],
+            capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=REMOTE_RUN_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired:
+        raise CouldNotLook(f"no answer from {host} within {REMOTE_RUN_TIMEOUT_S}s") from None
+    except OSError as e:
+        raise CouldNotLook(f"cannot run ssh: {e}") from None
+    if done.returncode != 0:
+        last = (done.stderr.strip().splitlines() or ["no message"])[-1][:200]
+        raise CouldNotLook(f"{host} answered with exit {done.returncode}: {last}")
+    return _check_remote_answer(host, done.stdout)
+
+
+def _check_remote_answer(host: str, text: str) -> dict:
+    try:
+        data = json.loads(text)
+    except ValueError:
+        raise CouldNotLook(f"{host} did not answer with JSON") from None
+    if not isinstance(data, dict) or data.get("schema") != SCHEMA_VERSION:
+        got = data.get("schema") if isinstance(data, dict) else None
+        raise CouldNotLook(
+            f"{host} answers with a version this one cannot read (schema {got!r}, expected {SCHEMA_VERSION})"
+        )
+    if not (isinstance(data.get("host"), str) and isinstance(data.get("runtimes"), list)
+            and isinstance(data.get("sessions"), dict)):
+        raise CouldNotLook(f"{host} answered without the expected fields")
+    return data
+
+
+def _host_entry(host: str, summary: dict, *, is_local: bool) -> dict:
+    return {
+        "host": host,
+        "ssh_alias": None if is_local else host,
+        "status": "read" if summary["runtimes_read"] else "could not look",
+        "reason": None if summary["runtimes_read"] else "no corpus readable",
+        "window_start": summary["window_start"],
+        "window_end": summary["window_end"],
+        "runtimes": summary["runtimes"],
+        "files_seen": summary["files_seen"],
+        "unreadable_files": summary["unreadable_files"],
+        "sessions": summary["sessions"],
+    }
+
+
+def merge_session_reports(reports: list[dict]) -> dict:
+    """Sum the counts of several hosts' session reports (rows are dropped)."""
+    def add(dicts):
+        out: dict[str, int] = {}
+        for d in dicts:
+            for k, v in d.items():
+                out[k] = out.get(k, 0) + v
+        return dict(sorted(out.items(), key=lambda kv: -kv[1]))
+
+    base = reports[0]
+    levels = {}
+    for lv in dict.fromkeys(k for r in reports for k in r["levels"]):
+        rows = [r["levels"][lv] for r in reports if lv in r["levels"]]
+        levels[lv] = {
+            "sessions": sum(x["sessions"] for x in rows),
+            "by_model": add(x["by_model"] for x in rows),
+            "by_runtime": add(x["by_runtime"] for x in rows),
+        }
+    overs = [r["over_own_ceiling"] for r in reports]
+    return {
+        "metric": base["metric"],
+        "metric_label": base["metric_label"],
+        "with_turns": sum(r["with_turns"] for r in reports),
+        "turns_in_window": sum(r["turns_in_window"] for r in reports),
+        "long_sessions": sum(r["long_sessions"] for r in reports),
+        "min_turns_at_level": base["min_turns_at_level"],
+        "levels": levels,
+        "by_runtime": add(r["by_runtime"] for r in reports),
+        "over_own_ceiling": {
+            "sessions": sum(o["sessions"] for o in overs),
+            "by_model": add(o["by_model"] for o in overs),
+            "by_runtime": add(o["by_runtime"] for o in overs),
+            "by_rule": add(o["by_rule"] for o in overs),
+            "rows": [r for o in overs for r in o.get("rows", [])][:20],
+        },
+    }
+
+
+def audit_fleet(local: dict, hosts, args: list[str], reader=None) -> dict:
+    """Fold the other hosts' aggregate answers into the local summary: adds
+    `fleet`, `hosts` (one entry per host asked, the local one first) and makes
+    `sessions` the sum over the hosts read. `reader(host, args)` returns a
+    remote answer or raises CouldNotLook."""
+    reader = reader or read_remote_host
+    me = local["host"]
+    entries = [_host_entry(me, local, is_local=True)]
+    seen = {_short(me)}
+    for host in hosts:
+        if _short(host) == _short(me):
+            continue
+        try:
+            ans = reader(host, args)
+        except CouldNotLook as e:
+            entries.append({"host": host, "ssh_alias": host, "status": "could not look", "reason": str(e)})
+            continue
+        if _short(ans["host"]) in seen:
+            entries.append({"host": ans["host"], "ssh_alias": host, "status": "skipped",
+                            "reason": f"{host} reports a host already read ({ans['host']})"})
+            continue
+        seen.add(_short(ans["host"]))
+        entries.append({
+            "host": ans["host"], "ssh_alias": host,
+            "status": "read" if ans.get("runtimes_read") else "could not look",
+            "reason": None if ans.get("runtimes_read") else "no corpus readable there",
+            "window_start": ans.get("window_start"), "window_end": ans.get("window_end"),
+            "runtimes": ans["runtimes"], "files_seen": ans.get("files_seen", 0),
+            "unreadable_files": ans.get("unreadable_files", 0), "sessions": ans["sessions"],
+        })
+    read = [e for e in entries if e["status"] == "read"]
+    if not read:
+        raise CouldNotLook("; ".join(f"{e['host']}: {e['reason']}" for e in entries))
+    out = dict(local)
+    out["fleet"] = True
+    out["hosts"] = entries
+    out["sessions"] = merge_session_reports([e["sessions"] for e in read])
+    out["files_seen"] = sum(e.get("files_seen", 0) for e in read)
+    out["unreadable_files"] = sum(e.get("unreadable_files", 0) for e in read)
+    return out
+
+
+def _runtime_lines(runtimes: list[dict], prefix: str = "") -> list[str]:
+    lines = []
+    for r in runtimes:
+        if r["status"] == "read":
+            roles = ", ".join(f"{k} {v}" for k, v in r["roles"].items())
+            lines.append(
+                f"{prefix}Read: {r['name']} under {r['root']}: {r['sessions_with_turns']} main sessions"
+                + (f" (transcripts by role: {roles})" if roles else "")
+            )
+        elif r["status"] == "could not look":
+            lines.append(
+                f"{prefix}COULD NOT LOOK at {r['name']}: {r['reason']}; the counts below leave it out"
+            )
+        else:
+            lines.append(f"{prefix}NOT READ: {r['name']}, {r['reason']}; the counts below leave it out")
+    return lines
+
+
+def _fleet_lines(summary: dict) -> list[str]:
+    hosts = summary["hosts"]
+    lines = [
+        "Fleet: " + ", ".join(h["host"] for h in hosts)
+        + ". Counts below sum the hosts read; a session seen on two hosts counts on both "
+        "(no cross-host deduplication). Missed runs are this host's only."
+    ]
+    local_start = summary["window_start"][:10]
+    for i, h in enumerate(hosts):
+        tag = f"Host {h['host']}" + (" (this host)" if i == 0 else "")
+        if h["status"] == "read":
+            win = f"window {h['window_start'][:10]} to {h['window_end'][:10]}"
+            skew = " (differs from this host's window)" if h["window_start"][:10] != local_start else ""
+            lines.append(f"{tag}: read, {win}{skew}")
+            lines += _runtime_lines(h["runtimes"], prefix="  ")
+        else:
+            lines.append(f"{tag}: COULD NOT LOOK ({h['reason']}); the counts below leave it out")
+    read = [h for h in hosts if h["status"] == "read"]
+    lines.append(
+        "sessions with at least one turn, by host: "
+        + ", ".join(f"{h['host']} {h['sessions']['with_turns']}" for h in read)
+    )
+    lines.append(
+        "sessions past their ceiling, by host: "
+        + ", ".join(f"{h['host']} {h['sessions']['over_own_ceiling']['sessions']}" for h in read)
+    )
+    return lines
+
+
 def render_table(summary: dict) -> str:
     """The design note's section 1 table, as text."""
     sr = summary["sessions"]
@@ -960,21 +1188,12 @@ def render_table(summary: dict) -> str:
     lines = [
         f"Context length audit, main sessions, {summary['window_start'][:10]} to {summary['window_end'][:10]}",
         f"Context length counted as: {sr['metric_label']}",
-        f"Host: {summary['host']} (this host's corpora only; other hosts are not read)",
     ]
-    for r in summary["runtimes"]:
-        if r["status"] == "read":
-            roles = ", ".join(f"{k} {v}" for k, v in r["roles"].items())
-            lines.append(
-                f"Read: {r['name']} under {r['root']}: {r['sessions_with_turns']} main sessions"
-                + (f" (transcripts by role: {roles})" if roles else "")
-            )
-        elif r["status"] == "could not look":
-            lines.append(
-                f"COULD NOT LOOK at {r['name']}: {r['reason']}; the counts below leave it out"
-            )
-        else:
-            lines.append(f"NOT READ: {r['name']}, {r['reason']}; the counts below leave it out")
+    if summary.get("fleet"):
+        lines += _fleet_lines(summary)
+    else:
+        lines.append(f"Host: {summary['host']} (this host's corpora only; other hosts are not read)")
+        lines += _runtime_lines(summary["runtimes"])
     lines += [
         f"sessions with at least one turn: {sr['with_turns']}",
         f"sessions with {LONG_SESSION_TURNS} or more turns: {sr['long_sessions']}",
@@ -1000,7 +1219,9 @@ def render_table(summary: dict) -> str:
         "A Pi live-root session takes its model's ceiling; a Pi spool session (a launched seat) takes the default."
     )
     lines.append(
-        f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only): "
+        f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only"
+        + (", this host" if summary.get("fleet") else "")
+        + "): "
         f"{summary['missed_runs']} in {summary['sessions_with_missed_runs']} sessions"
     )
     if summary["unreadable_files"]:
@@ -1037,25 +1258,25 @@ def main() -> int:
     parser.add_argument(
         "--projects-dir",
         type=Path,
-        default=Path("~/.claude/projects").expanduser(),
-        help="Root of the Claude Code trace corpus (default: ~/.claude/projects)",
+        default=None,
+        help="Root of the Claude Code trace corpus (default: ~/.claude/projects; given, reads this host alone)",
     )
     parser.add_argument(
         "--codex-home",
         type=Path,
-        default=default_codex_home(),
+        default=None,
         help="Codex home holding sessions/ and archived_sessions/ (default: $CODEX_HOME or ~/.codex)",
     )
     parser.add_argument(
         "--pi-sessions",
         type=Path,
-        default=default_pi_sessions(),
+        default=None,
         help="Pi live session root (default: $PI_CODING_AGENT_DIR/sessions or ~/.pi/agent/sessions)",
     )
     parser.add_argument(
         "--pi-spool",
         type=Path,
-        default=default_pi_spool(),
+        default=None,
         help="Pi archive spool of launched seats (default: <archive>/spool/<host>/pi)",
     )
     parser.add_argument("--days", type=int, default=28, help="Window in days (default 28)")
@@ -1083,6 +1304,22 @@ def main() -> int:
         help="prompt: input + cache read + cache creation (default); "
         "cache_read: the June 2026 audit's quantity",
     )
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Read this host alone (default: this host and the other hosts of the fleet over ssh; "
+        "an explicit corpus-root flag also reads this host alone)",
+    )
+    parser.add_argument(
+        "--hosts",
+        help="Comma-separated ssh aliases of the hosts to read besides this one "
+        f"(default: {','.join(FLEET_HOSTS)}, this host dropped)",
+    )
+    parser.add_argument(
+        "--aggregates-only",
+        action="store_true",
+        help="Drop project and session names from the JSON (what a remote host answers with)",
+    )
     parser.add_argument("--output", type=Path, help="Write per-run rows to this CSV")
     parser.add_argument(
         "--json", action="store_true", help="Print the summary as JSON to stdout"
@@ -1090,10 +1327,18 @@ def main() -> int:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
+    roots = default_roots()
+    explicit = {
+        name: getattr(args, attr)
+        for name, attr in (("Claude Code", "projects_dir"), ("Codex", "codex_home"),
+                           ("Pi", "pi_sessions"), ("Pi spool", "pi_spool"))
+        if getattr(args, attr) is not None
+    }
+    roots.update(explicit)
+    fleet = not args.local and (args.hosts is not None or not explicit)
+    hosts = [h.strip() for h in (args.hosts if args.hosts is not None else ",".join(FLEET_HOSTS)).split(",")
+             if h.strip()]
     try:
-        roots = default_roots()
-        roots.update({"Claude Code": args.projects_dir, "Codex": args.codex_home,
-                      "Pi": args.pi_sessions, "Pi spool": args.pi_spool})
         summary = audit_corpus(
             roots,
             args.days,
@@ -1101,7 +1346,14 @@ def main() -> int:
             args.threshold,
             since=args.since,
             metric=args.metric,
+            require_one=not fleet,
         )
+        if fleet:
+            summary = audit_fleet(
+                summary, hosts,
+                remote_args(args.days, args.since, args.min_run, args.threshold, args.metric),
+                reader=read_remote_host,
+            )
     except (CouldNotLook, OSError, ValueError) as e:
         print(f"could not look: {e}", file=sys.stderr)
         return 2
@@ -1114,6 +1366,8 @@ def main() -> int:
             writer.writerows(run_rows)
         log.info("wrote %d runs to %s", len(run_rows), args.output)
 
+    if args.aggregates_only:
+        summary = aggregates_only(summary)
     if args.json:
         json.dump(summary, sys.stdout, indent=2, default=str)
         print()
