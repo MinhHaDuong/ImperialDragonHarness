@@ -8,6 +8,7 @@ Author: reviewer
 2026-11-10T07:39Z reviewer note imagine — raid 91a35c: premise holds; 4 sites added, lair dropped; blind-spot 4 findings, dead-pid reclaim reach raised to the author
 2026-11-10T07:40Z reviewer note plan — raid 91a35c: two retirement commits, citation gate first; red tests through gc lock path and a failing gh stub
 2026-11-10T07:43Z reviewer note feasibility — raid 91a35c: WARN, references hold within a few lines; --ignored=matching must be dropped explicitly
+2026-11-10T08:14Z reviewer note fix — nested-worktree rail of 7eacadd2 restored as a third commit (advisor agreed: regression repair)
 
 --- body ---
 ## Context

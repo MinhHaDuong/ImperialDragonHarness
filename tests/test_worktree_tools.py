@@ -1256,3 +1256,73 @@ def test_hunt_recipe_redraws_when_path_exists(origin):
     assert again != taken
     assert git(again, "branch", "--show-current").stdout.strip() == "t8-second"
     assert git(taken, "branch", "--show-current").stdout.strip() == "t8-first"
+
+
+# --------------------------------------------------------------------------- #
+# A tree holding another registered worktree (ticket 1500, regression repair)
+#
+# `/.claude/worktrees/` is ignored through info/exclude (ticket 1495), so plain
+# status calls the outer tree clean while `git worktree remove` deletes the
+# inner worktree with its uncommitted work. Restores the nested-worktree case
+# of 7eacadd2: another worktree's work is not an ignored file.
+# --------------------------------------------------------------------------- #
+
+def _nest_worktree(primary, outer, name="inner"):
+    """A registered worktree at <outer>/.claude/worktrees/<name> holding one
+    uncommitted file; the outer tree's own status stays clean."""
+    common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    with (common / "info" / "exclude").open("a") as stream:
+        stream.write("\n/.claude/worktrees/\n")
+    inner = outer / ".claude" / "worktrees" / name
+    git(primary, "worktree", "add", "-b", f"nested-{name}", str(inner))
+    (inner / "precious.txt").write_text("uncommitted\n")
+    assert git(outer, "status", "--porcelain").stdout.strip() == ""
+    return inner
+
+
+def test_gc_keeps_gone_worktree_holding_a_nested_worktree(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-gone-outer", dirty=False)
+    make_branch_gone(remote, primary, "agent-gone-outer")
+    inner = _nest_worktree(primary, wt)
+
+    res = _gc(primary)
+    assert "removed agent-gone-outer" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert "nested" in res.stdout and "worktrees/inner" in res.stdout
+    assert (inner / "precious.txt").read_text() == "uncommitted\n"
+
+
+def test_gc_keeps_dead_pid_worktree_holding_a_nested_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-keep-nested-worktree")
+    git(primary, "worktree", "lock", str(wt), "--reason", f"hunt t1 (pid {_dead_pid()})")
+    inner = _nest_worktree(primary, wt)
+
+    res = _gc(primary)
+    assert "removed agent-keep-nested-worktree" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert (inner / "precious.txt").read_text() == "uncommitted\n"
+
+
+def test_removal_preflight_blocks_a_tree_holding_a_nested_worktree(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-outer-removal", dirty=False)
+    inner = _nest_worktree(primary, wt)
+
+    res = _removal(wt)
+    assert res.returncode == 1, res.stderr
+    assert f"nested worktree: {inner.resolve()}" in res.stderr
+    assert (wt / ".git").exists() and (inner / "precious.txt").exists()
+
+
+def test_gc_removes_gone_worktree_whose_name_prefixes_a_sibling(origin):
+    """Prefix matching is on "<tree>/": a sibling `agent-ab` is not inside `agent-a`."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-a", dirty=False)
+    make_agent_worktree(primary, "agent-ab", dirty=False)
+    make_branch_gone(remote, primary, "agent-a")
+
+    res = _gc(primary)
+    assert "removed agent-a " in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
