@@ -5,8 +5,24 @@ Author: reviewer
 
 --- log ---
 2026-11-10T08:05Z reviewer created
+2026-11-10T08:15Z reviewer note split into 1508 (Codex, seam, reporting) and 1509 (Pi, blocked by 1508); tracker closes after the integration review
 
 --- body ---
+## Tracker
+
+Split by the author on 2026-11-10 into two merge requests, one raid each:
+
+- Ticket 1508: the Codex reader, the per-runtime seam and the per-runtime
+  reporting (first wave).
+- Ticket 1509: the Pi reader on that seam, blocked by 1508 (second raid,
+  executes after 1508 merges: both edit `scripts/trace-compact-audit.py`).
+
+Partition boundary: 1508 owns everything the two runtimes share (the seam,
+the runtimes-read report, could-not-look and the exit code); 1509 adds one
+reader and its entry. This tracker closes after both children have merged and
+the integration review has run the audit on the three live corpora; the exit
+criteria below are that review's checklist.
+
 ## Context
 
 Ticket 1499 (PR 2391, merged 2026-11-10) made `scripts/trace-compact-audit.py`
