@@ -1,0 +1,47 @@
+%erg 0.1
+Title: paper: finish the RDJHSS data paper's open published rows on doudou
+Created: 2026-11-10
+Author: haduong
+Closed: rows 1, 3, 8 done locally, row 5 publisher-side, HAL read; outward acts listed for the author
+
+--- log ---
+2026-11-10T07:40Z haduong created
+2026-11-10T07:48Z reviewer sessions on doudou: claude -p --model sonnet --effort medium, cwd ~/CNRS/papiers, --restricted, tools Read,Grep,Glob,WebFetch,Write,Bash with Bash allowed only for sha256sum; and cwd ~/CNRS/projets/actifs/climate-finance-het under its rules, git push/fetch/remote, gh, curl, make, WebFetch denied; a haiku session there corrected the tag message. Two Write(path) deny rules were ignored by the CLI (only Edit(path) rules bind); the after-snapshot shows no write outside the release subfolder
+2026-11-10T07:48Z reviewer row 1 done: SHA256SUMS written in release/2026-09-26 published/ (eml 97f14b9a..., RDJ20260005_def.pdf e38ec34e...); sha256sum -c OK on both
+2026-11-10T07:48Z reviewer row 3 done locally in climate-finance-het: annotated tag rdj26561-published on 29932bab (revision1 + 0274 keywords/DOCX commits, merge of PR #1307); STATE line carries DOI, pages, date, tag on local branch t1505-published-state (f58e0069, a09b1ce1), that repo's ticket 2987 closed on the branch; nothing pushed (ls-remote: no tag, no branch). Retarget the tag before pushing if the publisher PDF differs from the 29932bab text
+2026-11-10T07:48Z reviewer row 5 reason: drift is on the publisher's landing page (researchdatajournal.org/article/view/26951): title lacks 'Multi-Source', no page range (PDF: 10 (2026) 1-15); authors match; abstract matched by content, not verbatim. No local source holds it; writing to the journal is the author's call. Homepage bib and index entry carry the full title and pp 1-15
+2026-11-10T07:48Z reviewer row 8 done: DOI 302 -> publisher landing page; hosted PDF minh.haduong.com/files/HaDuong-2026-ClimateFinanceCorpus.pdf 200, sha256 = publisher PDF (re-fetched from padme); HAL eprint link does not land on the version of record (API: v2, no DOI); hal.science web pages answer a bot challenge from doudou and padme alike, so per-version URLs could not be read
+2026-11-10T07:48Z reviewer HAL as read 2026-11-10T07:46Z (api.archives-ouvertes.fr): hal-05570600 version_i 2, uri_s .../hal-05570600v2, docType_s UNDEFINED, no DOI/journal/volume, page_s '10 p.', modifiedDate 2026-11-06T03:25:48Z, submitted 2026-07-29. Whether a v3 sits in moderation is for the author to say
+2026-11-10T07:48Z reviewer outward acts for the author: (1) HAL: /update-publist --hal-only on hal-05570600, a SWORD PUT adding the version of record (publisher PDF, DOI 10.52024/fn48qf66, RDJHSS 10, 1-15), only if the author confirms no v3 is already in moderation; (2) climate-finance-het: git -C ~/CNRS/projets/actifs/climate-finance-het push origin rdj26561-published (publishes the tag) and git -C ~/CNRS/projets/actifs/climate-finance-het/.claude/worktrees/t1505-published-state push -u origin t1505-published-state then a PR (STATE line + ticket 2987); (3) journal: mail to RDJHSS asking to add 'Multi-Source' and pp 1-15 to the landing page, if the author wants; (4) no make sync needed: hosted PDF and bib already live
+2026-11-10T07:48Z reviewer snapshots of papiers/sent, papiers/published, html, secretariat: 34723 -> 34724 entries; changed: the release subfolder (+SHA256SUMS, dir mtime) and html/.git dir mtime only (07:43Z, from the team lead's read-only git status; no file under it changed); secretariat unchanged; snapshots deleted
+2026-11-10T07:48Z reviewer closed — rows 1, 3, 8 done locally, row 5 publisher-side, HAL read; outward acts listed for the author
+
+--- body ---
+## Context
+
+Ticket 1489 (closed, PR #2352) found these `/paper published` rows open for
+the RDJHSS data paper (vol 10, pp 1-15, DOI 10.52024/fn48qf66) on host
+doudou: 1 release subfolder has no `SHA256SUMS`; 3 the paper repo has no tag
+and its STATE line no DOI; 5 the landing-page title drops "Multi-Source" and
+shows no page range; 6 HAL's public record hal-05570600 is still the v2
+preprint, v3 URL 404; 8 link check not run. The publisher's date is
+2026-09-26, not 2026-11-09.
+
+The author ruled on 2026-11-10 (decision A): a session on doudou finishes
+the local rows and reads HAL, stopping before any outward act. `~/CNRS` has
+no ticket store, so the harness carries this ticket; work inside the paper's
+own repository goes through a session launched there, under its rules.
+
+Allowed: local writes on doudou the open rows call for, the link check, a
+read of HAL's public record. Not allowed, prepared and listed for the author
+instead: any HAL deposit, PUT or SWORD call; `make sync` or any homepage
+deploy; any push of commits or tags; any mail; any Zenodo or Zotero write.
+
+## Exit criteria
+
+- [x] Each open row (1, 3, 5, 8) done, or carries a one-line reason
+- [x] HAL's public state recorded (version, DOI, last modification); whether
+  the deposit sits in moderation is the author's to say, not inferred
+- [x] Each outward act listed here with its exact command and effect
+- [x] Before/after snapshots of papiers/sent, papiers/published, html,
+  secretariat compared; only the entries the rows call for changed
