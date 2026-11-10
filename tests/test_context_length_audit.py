@@ -6,6 +6,7 @@ audit script alone.
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -552,194 +553,206 @@ def test_cli_reads_pi_roots(tmp_path):
     assert "Read: Pi under" in done.stdout and "COULD NOT LOOK at Pi spool" in done.stdout
 
 
-# --- the fleet (ticket 1516) ---------------------------------------------------
-# The remote reading is always stubbed: no test below runs ssh.
-
-def _remote_answer(host="doudou", *, over=0, sessions=3, schema=None):
-    """A synthetic aggregate answer, in the shape another host's
-    `--local --json --aggregates-only` prints."""
-    sr = {
-        "metric": "prompt", "metric_label": "whole prompt", "with_turns": sessions,
-        "turns_in_window": 100, "long_sessions": 1, "min_turns_at_level": 30,
-        "levels": {str(lv): {"sessions": over, "by_model": {"claude-opus-5-5": over} if over else {},
-                             "by_runtime": {"Claude Code": over} if over else {}}
-                   for lv in tca.levels_for(CEIL)},
-        "by_runtime": {"Claude Code": sessions},
-        "over_own_ceiling": {"sessions": over, "by_model": {"claude-opus-5-5": over} if over else {},
-                             "by_runtime": {"Claude Code": over} if over else {},
-                             "by_rule": {"model": over} if over else {}},
-    }
-    return {
-        "schema": tca.SCHEMA_VERSION if schema is None else schema,
-        "host": host, "window_start": "2026-10-13T00:00:00+00:00", "window_end": "2026-11-10T12:00:00+00:00",
-        "runtimes": [{"name": "Claude Code", "root": "/r", "status": "read", "sessions_with_turns": sessions,
-                      "roles": {"main": sessions}}],
-        "runtimes_read": ["Claude Code"], "files_seen": 4, "unreadable_files": 0, "sessions": sr,
-    }
 
 
-def _fleet(tmp_path, hosts, reader):
-    rows = [_turn(f"m{i}", 9, cache_read=500_000) for i in range(30)]
-    _session(tmp_path / "claude", "s", rows)
-    local = _audit({"Claude Code": tmp_path / "claude"}, require_one=False)
-    return tca.audit_fleet(local, hosts, [], reader=reader)
+# --- the other hosts, from this host's archive (ticket 1519) -------------------
+# A fixture archive in a temporary directory: synthetic transcripts compressed with
+# the zstd CLI under raw/<host>/<runtime>/, as transcript_archive.py lays them out.
+
+ARCHIVED_AT = datetime(2026, 11, 8, 12, 0, tzinfo=timezone.utc).timestamp()
 
 
-def test_session_past_its_ceiling_on_the_other_host_counts_under_that_host(tmp_path):
-    out = _fleet(tmp_path, ["doudou"], lambda h, a: _remote_answer("doudou", over=2, sessions=5))
-    by_host = {h["host"]: h for h in out["hosts"]}
-    assert by_host["doudou"]["sessions"]["over_own_ceiling"]["sessions"] == 2
-    assert out["sessions"]["over_own_ceiling"]["sessions"] == 3  # 1 here + 2 there
-    assert out["sessions"]["with_turns"] == 6
-    assert out["sessions"]["by_runtime"] == {"Claude Code": 6}
-    table = tca.render_table(out)
-    assert "doudou 5" in table and "no cross-host deduplication" in table
+def _archive(src: Path, archive: Path, host: str, runtime: str, rel: str, *, mtime=ARCHIVED_AT, raw=None):
+    """Compress `src` (or the bytes `raw`) to raw/<host>/<runtime>/<rel>.zst, stamped `mtime`."""
+    dest = archive / "raw" / host / runtime / f"{rel}.zst"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if raw is not None:
+        dest.write_bytes(raw)
+    else:
+        subprocess.run(["zstd", "-q", "-f", "-o", str(dest), str(src)], check=True)
+    os.utime(dest, (mtime, mtime))
+    return dest
 
 
-def test_a_host_that_does_not_answer_is_named_and_local_counts_stand(tmp_path):
-    def down(host, args):
-        raise tca.CouldNotLook(f"no answer from {host}")
-    out = _fleet(tmp_path, ["doudou"], down)
-    doudou = next(h for h in out["hosts"] if h["host"] == "doudou")
-    assert doudou["status"] == "could not look"
+@pytest.fixture
+def world(tmp_path, monkeypatch):
+    """This host is `here`; its archive is tmp/archive; the local corpus is one Claude Code session."""
+    monkeypatch.setattr(tca.transcript_spool, "host", lambda: "here")
+    monkeypatch.setenv("IDH_ARCHIVE_ROOT", str(tmp_path / "archive"))
+    (tmp_path / "archive" / "raw" / "here").mkdir(parents=True)
+    _session(tmp_path / "claude", "s", [_turn(f"m{i}", 9, cache_read=500_000) for i in range(30)])
+    return tmp_path
+
+
+def _local(root, **kw):
+    return _audit({"Claude Code": root / "claude"} if root else {}, require_one=False, **kw)
+
+
+def _fleet(root, local=None):
+    local = local or _local(root)
+    return tca.audit_fleet(local, lambda roots: _audit(roots, require_one=False))
+
+
+def _other_host_corpus(world, host="doudou"):
+    """One session past its ceiling per runtime, archived for `host`."""
+    src = world / "src"
+    over = [_turn(f"d{i}", 9, cache_read=500_000) for i in range(30)]
+    claude = _session(src / "claude", "ds", over)
+    codex = _codex_session(src / "codex", "dx", [(9, 480_000, 400_000)] * 30, model="claude-opus-5-5")
+    pi = _pi_session(src / "pi", "dp", [(100, 400_000, 100_000)] * 30)
+    a = world / "archive"
+    _archive(claude, a, host, "claude", "-proj/ds.jsonl")
+    _archive(codex, a, host, "codex", f"2026/11/01/{codex.name}")
+    _archive(pi, a, host, "pi", f"--work-proj--/{pi.name}")
+    return src
+
+
+def _host(out, name):
+    return next(h for h in out["hosts"] if h["host"] == name)
+
+
+@pytest.mark.integration
+def test_session_past_its_ceiling_on_the_other_host_counts_under_that_host_and_runtime(world):
+    _other_host_corpus(world)
+    out = _fleet(world)
+    doudou = _host(out, "doudou")
+    assert doudou["source"] == "archive" and doudou["status"] == "read"
+    assert doudou["sessions"]["over_own_ceiling"]["by_runtime"] == {"Claude Code": 1, "Codex": 1, "Pi": 1}
+    assert out["sessions"]["over_own_ceiling"]["sessions"] == 4  # 1 here + 3 there
+    assert out["sessions"]["by_runtime"] == {"Claude Code": 2, "Codex": 1, "Pi": 1}
+    assert [h["host"] for h in out["hosts"]] == ["here", "doudou"]
+
+
+@pytest.mark.integration
+def test_the_host_names_its_newest_file_and_the_surfaces_its_copy_holds(world):
+    _other_host_corpus(world)
+    doudou = _host(_fleet(world), "doudou")
+    assert doudou["newest_file"] == "2026-11-08"
+    assert doudou["surfaces"] == {"Claude Code": 1, "Codex sessions": 1, "Pi": 1}
+    assert doudou["surfaces_missing"] == ["Codex archived sessions", "Pi spool"]
+    pi_spool = next(r for r in doudou["runtimes"] if r["name"] == "Pi spool")
+    assert pi_spool["status"] == "not read"
+    table = tca.render_table(_fleet(world))
+    assert "2026-11-08" in table
+
+
+@pytest.mark.integration
+def test_a_rollout_archived_from_both_codex_roots_is_one_session(world):
+    src = _other_host_corpus(world)
+    rollout = next((src / "codex").rglob("rollout-*.jsonl"))
+    _archive(rollout, world / "archive", "doudou", "codex", rollout.name)  # archived_sessions copy
+    doudou = _host(_fleet(world), "doudou")
+    assert doudou["sessions"]["by_runtime"]["Codex"] == 1
+    assert doudou["surfaces"]["Codex archived sessions"] == 1
+
+
+@pytest.mark.integration
+def test_a_corrupt_archived_file_is_could_not_look_not_an_empty_session(world):
+    _other_host_corpus(world)
+    _archive(None, world / "archive", "doudou", "claude", "-proj/broken.jsonl", raw=b"not zstd at all")
+    doudou = _host(_fleet(world), "doudou")
+    assert doudou["unreadable_files"] == 1
+    claude = next(r for r in doudou["runtimes"] if r["name"] == "Claude Code")
+    assert claude["unreadable_files"] == 1 and claude["sessions_with_turns"] == 1
+
+
+@pytest.mark.integration
+def test_an_archived_file_older_than_the_window_is_not_decompressed(world):
+    _other_host_corpus(world)
+    old = datetime(2026, 9, 1, tzinfo=timezone.utc).timestamp()
+    _archive(None, world / "archive", "doudou", "claude", "-proj/old.jsonl", raw=b"corrupt", mtime=old)
+    doudou = _host(_fleet(world), "doudou")
+    assert doudou["unreadable_files"] == 0
+    assert doudou["surfaces"]["Claude Code"] == 2  # held, not read
+
+
+def test_a_live_file_older_than_the_window_is_not_read(tmp_path):
+    path = _session(tmp_path / "claude", "s", [_turn("m", 1, cache_read=1)])
+    old = datetime(2026, 9, 1, tzinfo=timezone.utc).timestamp()
+    os.utime(path, (old, old))
+    _session(tmp_path / "claude", "t", [_turn("n", 9, cache_read=1)])
+    assert _audit(tmp_path / "claude")["files_seen"] == 1
+
+
+def test_a_host_whose_copy_holds_no_transcript_is_could_not_look(world):
+    (world / "archive" / "raw" / "doudou" / "seat-raw").mkdir(parents=True)
+    out = _fleet(world)
+    doudou = _host(out, "doudou")
+    assert doudou["status"] == "could not look" and "sessions" not in doudou
     assert out["sessions"]["with_turns"] == 1
-    assert "Host doudou: COULD NOT LOOK" in tca.render_table(out)
 
 
-def test_an_answer_this_version_cannot_interpret_is_could_not_look():
-    with pytest.raises(tca.CouldNotLook, match="cannot read"):
-        tca._check_remote_answer("doudou", json.dumps({"host": "doudou", "runtimes": []}))
-    with pytest.raises(tca.CouldNotLook, match="cannot read"):
-        tca._check_remote_answer("doudou", json.dumps(_remote_answer(schema=0)))
-    with pytest.raises(tca.CouldNotLook, match="JSON"):
-        tca._check_remote_answer("doudou", "usage: error")
-
-
-def test_a_remote_reporting_the_local_host_is_skipped_not_double_counted(tmp_path):
-    here = tca.local_host()
-    out = _fleet(tmp_path, ["alias-of-here"], lambda h, a: _remote_answer(here, sessions=9))
-    assert [h["status"] for h in out["hosts"]] == ["read", "skipped"]
+def test_an_archive_with_no_other_host_names_the_fleet_not_available(world):
+    out = _fleet(world)
+    assert out["fleet"]["available"] is False
     assert out["sessions"]["with_turns"] == 1
 
 
-def test_the_local_host_is_not_asked_over_ssh(tmp_path):
-    asked = []
-    _fleet(tmp_path, [tca.local_host(), "doudou"], lambda h, a: asked.append(h) or _remote_answer())
-    assert asked == ["doudou"]
+def test_an_unresolvable_archive_root_names_the_fleet_not_available(world, monkeypatch):
+    monkeypatch.delenv("IDH_ARCHIVE_ROOT")
+    monkeypatch.delenv("DATASETS_DIR", raising=False)
+    monkeypatch.setattr(tca.transcript_spool, "ENV_FILE", world / "no-such-file")
+    out = _fleet(world)
+    assert out["fleet"]["available"] is False
+    assert out["sessions"]["with_turns"] == 1
 
 
-def test_remote_window_is_echoed_and_skew_flagged(tmp_path):
-    ans = _remote_answer()
-    ans["window_start"] = "2026-10-01T00:00:00+00:00"
-    table = tca.render_table(_fleet(tmp_path, ["doudou"], lambda h, a: ans))
-    assert "window 2026-10-01 to 2026-11-10 (differs from this host's window)" in table
-
-
-def test_local_unreadable_but_remote_readable_is_not_a_failure(tmp_path):
-    local = _audit({"Claude Code": tmp_path / "nope"}, require_one=False)
-    out = tca.audit_fleet(local, ["doudou"], [], reader=lambda h, a: _remote_answer())
+@pytest.mark.integration
+def test_local_unreadable_but_an_archived_host_readable_is_not_a_failure(world):
+    _other_host_corpus(world)
+    out = _fleet(None, local=_local(world / "nope"))
     assert out["hosts"][0]["status"] == "could not look"
     assert out["sessions"]["with_turns"] == 3
 
 
-def test_nothing_readable_on_any_host_raises(tmp_path):
-    local = _audit({"Claude Code": tmp_path / "nope"}, require_one=False)
-    def down(host, args):
-        raise tca.CouldNotLook("down")
+def test_nothing_readable_here_nor_in_the_archive_raises(world):
     with pytest.raises(tca.CouldNotLook):
-        tca.audit_fleet(local, ["doudou"], [], reader=down)
+        _fleet(None, local=_local(world / "nope"))
 
 
-def test_aggregates_only_drops_names():
-    summary = {"run_rows": [1], "by_project": {"p": 1}, "by_entry_skill": {}, "top_sessions": [1],
-               "sessions": {"over_own_ceiling": {"sessions": 1, "rows": [{"project": "p"}]}}}
-    out = tca.aggregates_only(summary)
-    assert "by_project" not in out and "top_sessions" not in out
-    assert "rows" not in out["sessions"]["over_own_ceiling"]
-
-
-def test_remote_command_is_read_only_json_and_bounded(monkeypatch):
-    seen = {}
-
-    def fake_run(cmd, **kw):
-        seen["cmd"], seen["kw"] = cmd, kw
-        return subprocess.CompletedProcess(cmd, 0, json.dumps(_remote_answer()), "")
-
-    monkeypatch.setattr(tca.subprocess, "run", fake_run)
-    tca.read_remote_host("doudou", tca.remote_args(28, None, 30, None, "prompt"))
-    cmd, kw = seen["cmd"], seen["kw"]
-    assert cmd[0] == "ssh" and "BatchMode=yes" in cmd and "doudou" in cmd
-    assert any(c.startswith("ConnectTimeout=") for c in cmd)
-    assert "--local" in cmd[-1] and "--json" in cmd[-1] and "--aggregates-only" in cmd[-1]
-    assert kw["stdin"] == subprocess.DEVNULL and kw["timeout"] == tca.REMOTE_RUN_TIMEOUT_S
-
-
-def test_remote_timeout_and_failure_are_could_not_look(monkeypatch):
-    def hang(cmd, **kw):
-        raise subprocess.TimeoutExpired(cmd, 1)
-    monkeypatch.setattr(tca.subprocess, "run", hang)
-    with pytest.raises(tca.CouldNotLook, match="no answer"):
-        tca.read_remote_host("doudou", [])
-    monkeypatch.setattr(tca.subprocess, "run",
-                        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 2, "", "error: unrecognized arguments"))
-    with pytest.raises(tca.CouldNotLook, match="unrecognized"):
-        tca.read_remote_host("doudou", [])
-
-
-def _main(monkeypatch, capsys, argv, reader):
-    monkeypatch.setattr(tca, "read_remote_host", reader)
+def _main(monkeypatch, capsys, argv):
     monkeypatch.setattr(sys, "argv", ["trace-compact-audit.py", *argv])
     code = tca.main()
     return code, capsys.readouterr().out
 
 
-def _roots_argv(tmp_path):
-    return ["--projects-dir", str(tmp_path / "claude"), "--codex-home", str(tmp_path / "nope-c"),
-            "--pi-sessions", str(tmp_path / "nope-p"), "--pi-spool", str(tmp_path / "nope-s"),
-            "--since", "2026-11-01"]
+def _live_env(world, monkeypatch):
+    """Default roots of this host point into the fixture world."""
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(world))  # projects = world/projects
+    (world / "claude").rename(world / "projects")
+    monkeypatch.setenv("CODEX_HOME", str(world / "nope-codex"))
+    monkeypatch.setenv("PI_CODING_AGENT_DIR", str(world / "nope-pi"))
 
 
-def test_cli_local_option_reads_no_other_host(tmp_path, monkeypatch, capsys):
-    _session(tmp_path / "claude", "s", [_turn("m", 9, cache_read=1)])
-    def boom(host, args):
-        raise AssertionError("another host was read")
-    code, out = _main(monkeypatch, capsys, ["--local", "--hosts", "doudou", *_roots_argv(tmp_path)], boom)
-    assert code == 0 and "this host's corpora only" in out
+def _no_archive(*a, **k):
+    raise AssertionError("the archive was read")
 
 
-def test_cli_explicit_corpus_roots_read_no_other_host(tmp_path, monkeypatch, capsys):
-    _session(tmp_path / "claude", "s", [_turn("m", 9, cache_read=1)])
-    def boom(host, args):
-        raise AssertionError("another host was read")
-    code, out = _main(monkeypatch, capsys, _roots_argv(tmp_path), boom)
+def test_cli_local_reads_no_archive(world, monkeypatch, capsys):
+    _live_env(world, monkeypatch)
+    monkeypatch.setattr(tca, "archive_host_entries", _no_archive)
+    code, out = _main(monkeypatch, capsys, ["--local", "--since", "2026-11-01"])
     assert code == 0 and "Fleet:" not in out
 
 
-def test_cli_hosts_option_reads_the_named_hosts_and_a_down_one_exits_zero(tmp_path, monkeypatch, capsys):
-    _session(tmp_path / "claude", "s", [_turn("m", 9, cache_read=1)])
-    asked = []
-    def reader(host, args):
-        asked.append(host)
-        if host == "down":
-            raise tca.CouldNotLook("no answer")
-        return _remote_answer(host)
-    code, out = _main(monkeypatch, capsys, ["--hosts", "other,down", *_roots_argv(tmp_path)], reader)
-    assert code == 0 and asked == ["other", "down"]
-    assert "Host other: read" in out and "Host down: COULD NOT LOOK" in out
+def test_cli_explicit_corpus_roots_read_no_archive(world, monkeypatch, capsys):
+    monkeypatch.setattr(tca, "archive_host_entries", _no_archive)
+    code, _ = _main(monkeypatch, capsys, ["--projects-dir", str(world / "claude"), "--since", "2026-11-01"])
+    assert code == 0
 
 
-def test_cli_exit_is_nonzero_only_when_no_host_is_readable(tmp_path, monkeypatch, capsys):
-    def down(host, args):
-        raise tca.CouldNotLook("no answer")
-    code, _ = _main(monkeypatch, capsys, ["--hosts", "down", *_roots_argv(tmp_path)], down)
+def test_cli_default_run_without_other_hosts_exits_zero(world, monkeypatch, capsys):
+    _live_env(world, monkeypatch)
+    code, out = _main(monkeypatch, capsys, ["--since", "2026-11-01"])
+    assert code == 0 and "sessions with at least one turn: 1" in out
+
+
+def test_cli_exit_is_nonzero_only_when_nothing_is_readable(world, monkeypatch, capsys):
+    _live_env(world, monkeypatch)
+    for d in (world / "projects").iterdir():
+        for f in d.iterdir():
+            f.unlink()
+        d.rmdir()
+    (world / "projects").rmdir()
+    code, _ = _main(monkeypatch, capsys, ["--since", "2026-11-01"])
     assert code == 2
-
-
-def test_cli_aggregates_only_json_carries_schema_and_no_rows(tmp_path, monkeypatch, capsys):
-    rows = [_turn(f"m{i}", 9, cache_read=500_000) for i in range(30)]
-    _session(tmp_path / "claude", "s", rows)
-    code, out = _main(monkeypatch, capsys, ["--local", "--json", "--aggregates-only", *_roots_argv(tmp_path)],
-                      lambda h, a: None)
-    data = json.loads(out)
-    assert code == 0 and data["schema"] == tca.SCHEMA_VERSION
-    assert "top_sessions" not in data and "rows" not in data["sessions"]["over_own_ceiling"]
