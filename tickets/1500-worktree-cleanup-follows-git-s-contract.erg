@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-09T23:10Z reviewer created
 2026-11-10T07:39Z reviewer note imagine — raid 91a35c: premise holds; 4 sites added, lair dropped; blind-spot 4 findings, dead-pid reclaim reach raised to the author
+2026-11-10T07:40Z reviewer note plan — raid 91a35c: two retirement commits, citation gate first; red tests through gc lock path and a failing gh stub
 
 --- body ---
 ## Context
@@ -264,3 +265,67 @@ script's or skill's source to assert a string (author, 2026-11-10).
 One week after merge, run gc and molt across projects and count trees still
 skipped as not clean: a skip caused only by an untracked `.venv` or `build/`
 names a project that needs an ignore line.
+
+## Plan (raid 91a35c)
+
+Route: deletion of code and tests, prose brought in line; one request, two
+retirement commits plus the close. Written by the orchestrator from the
+Imagine material; the coder's own Plan phase checks it against the source.
+
+Dependencies: none unmerged (PR 2367 landed as 998cd705). No open request
+touches these files (2378, 2381, 2382, 2383 checked 2026-11-10).
+
+**Commit A, retirement 2 (the `.tmp` citation gate).**
+1. First red test, criterion 3, through gc: a worktree with `/.tmp/`
+   registered and a file in it, branch merged and gone, a forge-shaped
+   `origin`, a `gh` stub on PATH that exits 1 and logs its calls. Expect the
+   tree removed and the log empty. Red on the base for the stated reason:
+   "`.tmp` safety evidence unavailable — retained". Then the same case through
+   close-and-clean after-exit (`tests/test_roar_close_and_clean.sh:717-727`
+   rewritten) and through `gaze_close`.
+2. Delete the guard calls (`worktree-gc.sh:253-268`,
+   `worktree-exit-preflight.sh:53-66` with `preserve_panel`,
+   `gaze_close.py:143-149`, `skills/roar/close-and-clean.sh:473-483`).
+3. Shrink `worktree-tmp-guard.py` to `register`.
+4. Delete the citation-gate tests (`test_worktree_tools.py`,
+   `test_forge_status_scripts.py:80-90`,
+   `test_review_panel_cleanup_contract.py`).
+5. Prose: `skills/roar/SKILL.md:217`, `roar/references/close-and-clean.md:40-50`,
+   `skills/molt/SKILL.md:105-108, 257, 284`, `gaze/references/cleanup.md:21`,
+   the `.tmp` half of `hunt/references/worktree-lifecycle.md:33-35`, and the
+   owner sentence at `skills/hunt/SKILL.md:122-125` (`.tmp/` goes with the tree).
+
+**Commit B, retirement 1 (ignored files as residue).**
+6. First red tests, criterion 1: the preflight pair (ignored `draft.md`
+   passes and the tree is removed; an untracked, unignored file exits 1 and
+   stays), and gc through the owner-less or dead-pid lock path.
+7. Shrink `worktree-clean-lib.sh` to `worktree_residue` and
+   `ownerless_tree_clean`; delete `worktree_setup_copy.py`; drop
+   `--ignored-ok` from the preflight, `gaze_close.py` and `gate_tree.py`; keep
+   the preflight's `--removal` and `--branch` accepted as no-ops.
+8. Criterion 2: `--ignored-ok` exits 2 as an unknown option.
+9. Delete `test_preflight_ignored_ok.py` and the allowlist tests; remove the
+   wording pin `test_verify_fork_contracts.py:499-507`.
+10. Prose: `skills/verify-gate/SKILL.md:133-139` (the no-force rule stays in
+    words), `gaze/references/cleanup.md:23-25`, the rest of
+    `worktree-lifecycle.md:33-35`, the gc header, and at the owner site in
+    `skills/hunt/SKILL.md` one sentence: evidence and deliverables never live
+    in a git-ignored path.
+
+**Before the request.**
+11. Revert proof: in a throwaway worktree, `git revert --no-commit` of each
+    retirement commit alone applies without conflict and the touched scripts
+    still parse; quote both runs.
+12. Read-only list, per project on this host, of the trees the first gc
+    would reclaim that the base would have kept; in the request body.
+13. Request body: lines removed and added by area; the costs named in
+    Imagine (docs staging, untracked `.venv` and `build/`, the dead-pid
+    reclaim's reach, ignored data and weights in other projects); the no-op
+    flags as debt; the ancestry check that lived in the guard and the rails
+    that remain.
+14. `make check`.
+
+Tautology scan: the gc test for criterion 1 on the `[gone]` path passes on
+the base and proves nothing, hence the lock path; the criterion 3 test
+without a forge-shaped `origin` and a failing `gh` may pass on the base,
+hence both. No test asserts a string in a script's or skill's source.
