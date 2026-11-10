@@ -2,7 +2,7 @@
 """Create verify-gate's detached gate worktree, replacing a stale same-round one.
 
     gate_tree.py add --repo <primary root> --tree <.../gate-<unit>-<session>-r<round>>
-                     --ref <commit-ish> --session <uuid> --round <n> [--gate-state <file>]
+                     --ref <commit-ish>
 
 A gate round that stalls (its fork ended while a check ran, ticket 1490)
 records no verdict and leaves its tree behind; the relaunch under the same
@@ -12,18 +12,16 @@ head with nothing to salvage: it is removed through
 `worktree-exit-preflight.sh --removal` and recreated at `--ref`.
 
 Refused (exit 1, nothing removed; the gate rules ESCALATE, Missing Data):
-- `--gate-state` (the JSON `review_notes.py gate` printed) records a verdict
-  for this session and round: that round is ruled, its tree is not stale;
-- the tree is locked, or the path exists but is not a worktree of `--repo`;
+- the tree is locked, attached to a branch (a gate tree is always detached),
+  or the path exists but is not a worktree of `--repo`;
 - the tree's HEAD holds a commit no branch, remote or tag reaches;
 - the preflight finds residue: a modified, staged or untracked file (ignored
   files are disposable, ticket 1500).
-Exit 2: usage, including a tree whose name does not start with `gate-`.
+Exit 2: usage.
 Prints the tree path on success.
 """
 
 import argparse
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -48,32 +46,15 @@ def registered(repo: Path, tree: Path) -> dict | None:
     return None
 
 
-def ruled(state_file: Path | None, session: str, rnd: int) -> bool:
-    """True when the gate state records a verdict for this session and round.
-    An unreadable state raises ValueError: no proof that the round is unruled."""
-    if state_file is None:
-        return False
-    try:
-        verdicts = json.loads(state_file.read_text()).get("verdicts") or []
-        return any(v.get("session") == session and v.get("round") == rnd for v in verdicts)
-    except (OSError, ValueError, AttributeError) as error:
-        raise ValueError(f"unreadable gate state {state_file}: {error}") from error
-
-
 def add(a: argparse.Namespace) -> int:
-    try:
-        done_round = ruled(a.gate_state, a.session, a.round)
-    except ValueError as error:
-        return refuse(str(error))
-    if done_round:
-        return refuse(f"a verdict is already recorded for session {a.session} round {a.round}; "
-                      f"not replacing {a.tree}")
     record = registered(a.repo, a.tree)
     if record is None and (a.tree.exists() or a.tree.is_symlink()):
         return refuse(f"{a.tree} exists and is not a worktree of {a.repo}")
     if record is not None:
         if "locked" in record:
             return refuse(f"{a.tree} is locked ({record['locked'] or 'no reason'}); a live run may own it")
+        if "detached" not in record:
+            return refuse(f"{a.tree} is attached to a branch, not a detached gate tree; left in place")
         # The preflight sees uncommitted state only; a commit made on the detached
         # tree that no branch, remote or tag reaches dies with it. The registered
         # HEAD is read through the repository, so a deleted directory is checked too.
@@ -112,12 +93,7 @@ def main() -> int:
     p.add_argument("--repo", type=Path, required=True, help="the primary checkout")
     p.add_argument("--tree", type=Path, required=True)
     p.add_argument("--ref", required=True, help="the head to check out, detached")
-    p.add_argument("--session", required=True, help="the gate session UUID")
-    p.add_argument("--round", type=int, required=True)
-    p.add_argument("--gate-state", type=Path, help="JSON printed by review_notes.py gate")
     a = parser.parse_args()
-    if not a.tree.name.startswith("gate-"):
-        parser.error(f"not a gate tree name: {a.tree.name}")
     return add(a)
 
 

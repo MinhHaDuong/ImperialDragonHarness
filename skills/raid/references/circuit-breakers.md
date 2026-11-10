@@ -52,8 +52,8 @@ A verify-gate tree (`gate-<unit>-<session>-r<round>`) is the exception: it is a
 detached checkout of a pushed head, with no branch to salvage onto. Relaunch
 the gate under the same session (as a `gate-seat` agent, `SKILL.md` § Phase 6);
 `gate_tree.py` replaces the stale tree through the removal preflight, and
-refuses, so the gate escalates, when that round already carries a verdict or
-the tree holds residue or an unreachable commit.
+refuses, so the gate escalates, when the tree is locked or branch-attached or
+holds residue or an unreachable commit.
 A WIP push after the red test improves salvage but does not exempt the later
 gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
