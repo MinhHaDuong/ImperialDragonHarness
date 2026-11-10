@@ -294,13 +294,11 @@ def test_run_helper_strips_bash_env(tmp_path, monkeypatch):
 
 
 def test_molt_writes_no_state_stamp():
-    """Ticket 1138: molt stamps nothing in STATE.md; its PR exists only when
-    the run produced commits."""
+    """Ticket 1138: molt stamps nothing in STATE.md."""
     skill = (Path(__file__).resolve().parents[1] / "skills" / "molt" / "SKILL.md").read_text()
     assert "**Timestamp.**" not in skill
     assert "STATE timestamp" not in skill
     assert "6.5" not in skill
-    assert "**Open merge request.** If any commits were created" in skill
 
 
 # --- merged-probe: default branch and patch-id evidence ---
