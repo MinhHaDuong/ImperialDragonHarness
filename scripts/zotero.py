@@ -19,13 +19,15 @@ subcommand talks to the running Zotero.
 Local-only and stateless, on top of pyzotero's local client. Every library
 read goes through the running desktop client's local API (127.0.0.1:23119,
 no key), live, on each call; zotero.sqlite is never opened, and nothing is
-cached, indexed or logged to disk between runs (check-staging's md5 index
-lives in memory for one run). Writes go through the same
+cached, indexed or logged to disk between runs (the md5 index of
+check-staging and suggest-attachments lives in memory for one run). Writes go through the same
 local API with a local API key the user grants once in Zotero (kept in
 key_file(), mode 600, never printed). `create-items` creates new items with
 their PDFs; `suggest-edits`, `suggest-attachments` and `check-staging
 --apply` edit existing items only with --edit, and otherwise report the
-edit.
+edit. `suggest-attachments` first compares each file with its parent and
+refuses a contradiction (skills/zotero/references/backfill.md § What
+licenses an attach).
 
 Zotero must be running. When it is not, the helper launches it (never in a
 container) and waits; when it still does not answer, the command does
@@ -3506,8 +3508,11 @@ def main() -> int:
 
     pt = sub.add_parser("suggest-attachments",
                         help="report how to file documents onto an EXISTING "
-                             "item (the present-no-file case); writes only "
-                             "with --edit")
+                             "item (the present-no-file case), each compared "
+                             "with it first: a file stored under another "
+                             "item, or whose .bib or receipt identifier "
+                             "differs from the item's, is refused; writes "
+                             "only with --edit")
     pt.add_argument("--parent", required=True, help="parent item key")
     pt.add_argument("file", nargs="+")
     add_edit_arg(pt, "store the files under the item (default: report)")

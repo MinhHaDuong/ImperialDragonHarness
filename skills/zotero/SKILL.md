@@ -27,7 +27,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
 | `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir`, with `.bib` files named by `--bib`, skipping `_` directories on request; PDF, HTML, image, DjVu and EPUB files only, not Markdown — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
 | `report-duplicates` | hash-dedup JSON report, library against itself | `design/zotero-report-duplicates.md` |
-| `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`); fetch missing fulltexts through DOIfetch, using open and institutional sources first, then shadow sources | `references/backfill.md` |
+| `suggest-attachments` | file a document onto an item that already exists, once compared with it (reports by default; stores it with `--edit`); fetch missing fulltexts through DOIfetch, using open and institutional sources first, then shadow sources | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and enrichment
 map to the `import` and `suggest-edits` verbs, and the backfill mode is
@@ -63,10 +63,10 @@ helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
 another loopback port; if something other than Zotero answers there, the
 error says so and names both the variable and the setting. The helper needs
 Zotero 10 or later, reads and writes alike, and refuses an older client by
-name. Lookups ask Zotero's own search for each key. Only `report-duplicates`
-and `check-staging` list the library's attachments, once per run: Zotero has
-no search by md5, and `check-staging` looks each staged file's md5 up in that
-listing. A read Zotero does not finish in
+name. Lookups ask Zotero's own search for each key. Only `report-duplicates`,
+`check-staging` and `suggest-attachments` list the library's attachments, once
+per run: Zotero has no search by md5, and the last two look each file's md5
+up in that listing. A read Zotero does not finish in
 time is reported as such (`zotero: "slow"`, verdict `zotero_slow` in
 `check-staging`, exit 74), never as Zotero unavailable.
 
@@ -96,8 +96,8 @@ the entries JSON is what to rerun later.
 
 `check-staging` reads identifiers from a staged PDF's pages only when its
 `.bib` entry gives none, and records them as `doi (from text)` and the like.
-Alone, such an identifier never makes a file `absent` and never lets
-`--apply --edit` attach the file.
+Alone, such an identifier never makes a file `absent` and never licenses an
+attach (`references/backfill.md` § What licenses an attach).
 
 `find_identifier` regexes DOIs and arXiv ids out of page text, and page text
 contains the reference list. The id it returns is frequently a **cited work's**,
