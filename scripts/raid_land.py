@@ -233,6 +233,16 @@ def cleanup(cwd: Path, branch: str, head: str, base: str, base_ref: str | None =
     git(primary, "fetch", "-q", "--prune", "origin")
     if git(primary, "merge-base", "--is-ancestor", head, base_ref).returncode != 0:
         return f"cleanup skipped: {head[:12]} not in {base_ref}"
+    # Ticket 1512: status calls a tree holding an ignored inner worktree clean, and the removal
+    # below would delete it with its uncommitted work. The path match lives in the lib.
+    lib = ROOT / "scripts" / "worktree-clean-lib.sh"
+    nested = subprocess.run(["bash", "-c", 'source "$1" && worktree_nested "$2"', "_", str(lib), str(cwd)],
+                            capture_output=True, text=True)
+    if nested.returncode != 0:
+        return f"cleanup skipped: cannot list nested worktrees of {cwd}"
+    if nested.stdout.strip():
+        paths = ", ".join(line.removeprefix("nested worktree: ") for line in nested.stdout.splitlines())
+        return f"cleanup skipped: {cwd} holds another worktree ({paths})"
     git(primary, "worktree", "unlock", str(cwd))
     if git(primary, "worktree", "remove", str(cwd)).returncode != 0:
         return f"cleanup skipped: worktree {cwd} not removed"
