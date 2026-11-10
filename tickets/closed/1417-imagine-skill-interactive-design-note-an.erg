@@ -12,6 +12,7 @@ Closed: autoclosed — PR #2383
 2026-11-10T07:34Z reviewer author ruling 2026-11-10 recorded: no skill; raid Phase 2 option (d) on this branch; criterion 3 accepted; criteria 1, 2, 4, 5 dropped by the author
 2026-11-10T07:36Z reviewer safeguard result and author's pushback addition recorded; template gains two lines and one clause, raid drift guard a pushback outcome
 2026-11-10T07:37Z reviewer closed — autoclosed — PR #2383
+2026-11-10T07:37Z reviewer author's reserve on the pushback outcome recorded and written into raid's drift guard
 
 --- body ---
 Parent: 1415
@@ -148,3 +149,8 @@ skill is built; design/design-note-template.md suffices.
   objection (precedent: ticket 1471, closed denied), and the template's
   § 1 Problem one clause: the note may conclude that the asker should
   change, not the harness.
+- The author's reserve on the pushback outcome, 2026-11-10: "Agreed, with
+  a reserve: if a live session can manage the asker, resolve by dialogue
+  before dropping a ticket". Written into the outcome: a reachable session
+  of the asker is taken up in dialogue first, the result logged on the
+  ticket (a peer's message never replaces the ticket record).
