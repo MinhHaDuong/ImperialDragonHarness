@@ -50,6 +50,11 @@ _TS_SPEC = importlib.util.spec_from_file_location(
 )
 ts = importlib.util.module_from_spec(_TS_SPEC)
 _TS_SPEC.loader.exec_module(ts)
+_SPOOL_SPEC = importlib.util.spec_from_file_location(
+    "transcript_spool", Path(__file__).resolve().parent / "transcript_spool.py"
+)
+transcript_spool = importlib.util.module_from_spec(_SPOOL_SPEC)
+_SPOOL_SPEC.loader.exec_module(transcript_spool)
 
 # A real /clear record pairs the two tags across an actual newline; trace
 # text *quoted* inside a session (e.g. trace-doctor work) keeps the JSON
@@ -381,6 +386,129 @@ def read_codex(root: Path):
             yield traj["project"], traj["session_id"], agent_id, traj
 
 
+def default_pi_sessions() -> Path:
+    return transcript_spool.live_roots()["pi"]
+
+
+def default_pi_spool() -> Path:
+    try:
+        return transcript_spool.spool_dir("pi")
+    except RuntimeError:  # archive root unknown: the reader reports could not look
+        return Path("(archive root unknown)")
+
+
+def parse_pi_session(path: Path, role: str, rule: str) -> dict:
+    """Parse one Pi session log (`<iso>_<uuid>.jsonl`) into the trajectory shape of
+    `parse_trajectory`, plus "role", "ceiling_rule", "session_id" and "project".
+
+    Whole prompt = `usage.input + usage.cacheRead + usage.cacheWrite`. `input`
+    EXCLUDES both cache fields. Evidence (padme, 2026-11-10, key names and
+    numbers only): `totalTokens == input + output + cacheRead + cacheWrite` on
+    763 of 763 assistant turns in the live root and 634 of 634 in the spool,
+    and `cacheRead > input` on 632 of the live ones, which cannot hold if
+    `input` contained it. `cacheWrite1h` is a split of `cacheWrite`, not an
+    addend. An assistant record with all-zero usage carries `errorMessage` and
+    is not a turn.
+
+    The log is a tree (`id`, `parentId`). Conversation order is the branch that
+    was continued: from the file's last entry, walk `parentId` back to the root
+    and keep the assistant turns on that path; abandoned branches are dropped.
+    `msg_id` is "pi:" + `responseId`, so a `/fork` or `/clone` file that replays
+    its parent's entries is not counted twice by `drop_inherited_turns`. Each
+    turn takes its own entry's `timestamp`; the model is `message.model`.
+    """
+    header: dict = {}
+    entries: dict[str, dict] = {}
+    last_id = None
+    first_ts = last_ts = None
+    unparsable = 0
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                unparsable += 1
+                continue
+            if not isinstance(rec, dict):
+                unparsable += 1
+                continue
+            tstamp = ts._parse_ts(rec.get("timestamp", ""))
+            if tstamp is not None:
+                last_ts = tstamp
+                if first_ts is None:
+                    first_ts = tstamp
+            if rec.get("type") == "session":
+                header = header or rec
+            elif rec.get("id") is not None:
+                entries[rec["id"]] = rec
+                last_id = rec["id"]
+    branch = []
+    seen = set()
+    eid = last_id
+    while eid in entries and eid not in seen:
+        seen.add(eid)
+        branch.append(entries[eid])
+        eid = entries[eid].get("parentId")
+    events = []
+    for rec in reversed(branch):
+        msg = rec.get("message")
+        usage = msg.get("usage") if isinstance(msg, dict) else None
+        if rec.get("type") != "message" or msg.get("role") != "assistant" or not isinstance(usage, dict):
+            continue
+        cache_read = usage.get("cacheRead") or 0
+        prompt = (usage.get("input") or 0) + cache_read + (usage.get("cacheWrite") or 0)
+        if prompt <= 0:
+            continue
+        ev = {
+            "kind": "turn",
+            "prompt": prompt,
+            "cache_read": cache_read,
+            "model": msg.get("model") or "",
+            "ts": ts._parse_ts(rec.get("timestamp", "")),
+        }
+        if msg.get("responseId"):
+            ev["msg_id"] = "pi:" + msg["responseId"]
+        events.append(ev)
+    return {
+        "events": events,
+        "post_compact_reads": [],
+        "post_compact_tokens": [],
+        "entry_skill": None,
+        "first_ts": first_ts,
+        "last_ts": last_ts,
+        "unparsable_lines": unparsable,
+        "role": role,
+        "ceiling_rule": rule,
+        "session_id": header.get("id") or path.stem,
+        "project": header.get("cwd") or "",
+    }
+
+
+def _read_pi(root: Path, role: str, rule: str):
+    if not Path(root).is_dir():
+        raise CouldNotLook(f"no Pi sessions at {root}")
+    for path in sorted(Path(root).rglob("*.jsonl")):
+        try:
+            traj = parse_pi_session(path, role, rule)
+        except OSError as e:
+            yield str(path.parent), path.stem, "unknown", e
+            continue
+        yield traj["project"], traj["session_id"], "main", traj
+
+
+def read_pi_live(root: Path):
+    """Pi's live session root: sessions of unknown role, held to their model's ceiling."""
+    return _read_pi(root, "main", RULE_MODEL)
+
+
+def read_pi_spool(root: Path):
+    """Pi's archive spool: seats and workers launched with `--session-dir`, held to the default."""
+    return _read_pi(root, "launched", RULE_DEFAULT)
+
+
 # THE SEAM (ticket 1508; the Pi reader of ticket 1509 plugs in here).
 # A runtime is a name, a default corpus root and a reader. Adding one is one
 # reader function and one entry below; no other runtime's reader changes.
@@ -427,9 +555,14 @@ RUNTIMES = (
     },
     {
         "name": "Pi",
-        "default_root": lambda: Path("~/.pi/agent/sessions").expanduser(),
-        "reader": None,
-        "not_read_reason": "no reader yet (ticket 1509)",
+        "default_root": default_pi_sessions,
+        "reader": read_pi_live,
+        "missed_runs": False,
+    },
+    {
+        "name": "Pi spool",
+        "default_root": default_pi_spool,
+        "reader": read_pi_spool,
         "missed_runs": False,
     },
 )
@@ -862,7 +995,8 @@ def render_table(summary: dict) -> str:
     lines.append(
         "A Claude Code main session is not known to be an interface session: it takes its model's "
         "ceiling. A Codex cli session takes its model's ceiling; a Codex exec run is unattended and "
-        "takes the default, as does a rollout with no source; a subagent is not a session."
+        "takes the default, as does a rollout with no source; a subagent is not a session. "
+        "A Pi live-root session takes its model's ceiling; a Pi spool session (a launched seat) takes the default."
     )
     lines.append(
         f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only): "
@@ -911,6 +1045,18 @@ def main() -> int:
         default=default_codex_home(),
         help="Codex home holding sessions/ and archived_sessions/ (default: $CODEX_HOME or ~/.codex)",
     )
+    parser.add_argument(
+        "--pi-sessions",
+        type=Path,
+        default=default_pi_sessions(),
+        help="Pi live session root (default: $PI_CODING_AGENT_DIR/sessions or ~/.pi/agent/sessions)",
+    )
+    parser.add_argument(
+        "--pi-spool",
+        type=Path,
+        default=default_pi_spool(),
+        help="Pi archive spool of launched seats (default: <archive>/spool/<host>/pi)",
+    )
     parser.add_argument("--days", type=int, default=28, help="Window in days (default 28)")
     parser.add_argument(
         "--since",
@@ -945,7 +1091,8 @@ def main() -> int:
 
     try:
         roots = default_roots()
-        roots.update({"Claude Code": args.projects_dir, "Codex": args.codex_home})
+        roots.update({"Claude Code": args.projects_dir, "Codex": args.codex_home,
+                      "Pi": args.pi_sessions, "Pi spool": args.pi_spool})
         summary = audit_corpus(
             roots,
             args.days,
