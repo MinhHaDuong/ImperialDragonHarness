@@ -2,7 +2,7 @@
 Title: Cooldown review of the harness-government memo before any implementation
 Created: 2026-10-30
 Author: reviewer
-Label: needs-human
+Closed: author's triage logged 2026-11-10; criteria met
 
 --- log ---
 2026-10-30T11:43Z reviewer created
@@ -13,6 +13,16 @@ Label: needs-human
 2026-11-09T21:53Z reviewer step 3 KISS seat (observed claude-opus-5-5, Anthropic; same family as Fable and the coder): VOCABULARY ONLY
 2026-11-09T21:53Z reviewer step 4 prepared, not decided: draft triage table + Astra row-by-row check (AGREE F1 F2 F3 F5 F6, DISAGREE F4 -> DROP) in design/2026-11-09-harness-government-cooldown-review.md
 2026-11-09T22:38Z reviewer note verify-reroll — round 1: PR body close-claim line not canonical
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F1 (AGENTS.md is the constitution) DROP
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F2 (guards.md named ordre public) DROP
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F3 (guards.md enforcement column) WANT, not now
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F4 (memory court on every smelt MR) DROP
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F5 (registry facts with date and probe) WANT, limited to host facts, without the review chamber
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: F6 (1350 takes memo sections 4-5 as frame) DROP: 1350 closed 2026-11-01, premise expired
+2026-11-10T07:30Z reviewer note triage by the author 2026-11-10, answering "defaults" to the session's proposal: added row from the Astra advisor check, correct or supersede the memo's stale claims, NEED: one dated note at the top of the memo (separate merge request)
+2026-11-10T07:30Z reviewer note the two WANT rows stay recorded wants; no implementation ticket is filed for them
+2026-11-10T07:30Z reviewer unlabel needs-human
+2026-11-10T07:30Z reviewer closed — author's triage logged 2026-11-10; criteria met
 
 --- body ---
 ## Context
@@ -41,7 +51,7 @@ The cooldown is a review process. Precedent: the fifth consolidation (PR
 ## Exit criteria
 
 - [x] The two independent reviews and the KISS review are recorded (in `design/` or on this ticket)
-- [ ] The author's triage is logged here: each follow-up marked need, want or drop
+- [x] The author's triage is logged here: each follow-up marked need, want or drop
 
 No implementation ticket is filed from the memo before this ticket closes.
 Ticket 1350 (memory stores) does not take the memo as its frame until then.
