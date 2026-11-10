@@ -275,6 +275,8 @@ def test_codex_session_past_its_ceiling_is_counted_under_codex(tmp_path):
     assert over["rows"][0]["runtime"] == "Codex"
     assert _runtime(out, "Codex")["status"] == "read"
     assert _runtime(out, "Codex")["sessions_with_turns"] == 1
+    assert out["runtimes_read"] == ["Claude Code", "Codex"]
+    assert out["runtimes_not_read"] == ["Pi"]
     alone = _audit(tmp_path / "claude")["sessions"]
     assert _runtime(out, "Claude Code")["sessions_with_turns"] == alone["with_turns"] == 1
 

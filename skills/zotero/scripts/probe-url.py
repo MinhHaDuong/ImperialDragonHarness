@@ -14,12 +14,15 @@ former index-source skill, absorbed 2026-10-03, ticket 1018); it implements
 the Zotero-management workflow (docs/ staging -> Zotero)."""
 
 import argparse
+import hashlib
 import json
 import logging
+import os
 import re
 import subprocess
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
@@ -34,6 +37,7 @@ DOI_BARE_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", re.I)
 DOI_ANCHORED_RE = re.compile(r"(?:doi\.org/|doi[:\s]+)(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)", re.I)
 ARXIV_RE = re.compile(r"\barXiv:\s*(\d{4}\.\d{4,5}(v\d+)?)\b", re.I)
 ISBN_RE = re.compile(r"\b97[89][-– ]?(?:\d[-– ]?){9}\d\b")
+RECEIPTS_NAME = ".receipts.jsonl"
 
 
 class MetaParser(HTMLParser):
@@ -79,14 +83,14 @@ class MetaParser(HTMLParser):
             self.ld[-1] += data
 
 
-def fetch(url: str, timeout: int) -> tuple[bytes, str, str]:
+def fetch(url: str, timeout: int) -> tuple[bytes, str, str, int]:
     if urlparse(url).scheme not in ("http", "https"):
         raise ValueError(f"unsupported URL scheme (http/https only): {url}")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         if urlparse(r.geturl()).scheme not in ("http", "https"):
             raise ValueError(f"redirected to unsupported URL scheme: {r.geturl()}")
-        return r.read(), r.geturl(), r.headers.get("Content-Type", "")
+        return r.read(), r.geturl(), r.headers.get("Content-Type", ""), r.status
 
 
 def slugify(text: str, maxlen: int = 50) -> str:
@@ -215,10 +219,27 @@ def suggest_type(mime: str, host: str, meta: dict, ids: dict) -> str:
     return "webpage"
 
 
+def file_md5(path: Path) -> str:
+    """Zotero's own file hash (the one $IDH_ROOT/scripts/zotero.py computes)."""
+    digest = hashlib.md5()
+    with path.open("rb") as fh:
+        for block in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def leave_receipt(rec: dict, staging: Path) -> None:
+    """Append the record, as printed, to the staging folder's receipts file:
+    one line per fetch, read back by $IDH_ROOT/scripts/zotero.py by md5 or name."""
+    fd = os.open(staging / RECEIPTS_NAME, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+    with os.fdopen(fd, "a", encoding="utf-8") as stream:
+        stream.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
 def probe_one(url: str, staging: Path, timeout: int) -> dict:
     rec: dict = {"url": url}
     try:
-        body, final_url, ctype = fetch(url, timeout)
+        body, final_url, ctype, http_status = fetch(url, timeout)
     except urllib.error.HTTPError as e:
         rec["error"] = f"HTTP {e.code} — {e.reason} (try an alternate source/mirror)"
         return rec
@@ -248,10 +269,21 @@ def probe_one(url: str, staging: Path, timeout: int) -> dict:
             rec["page_count"] = pi["page_count"]
         text = pi.get("first_text", "")
     rec["meta"] = meta
+    # Receipt keys, shared with $IDH_ROOT/scripts/fulltext_cascade.py. Everything read
+    # from the page or the PDF text is scraped: it may be a cited work's.
     rec["identifiers"] = find_identifiers(text or "", meta.get("doi_meta", ""))
+    rec["identifiers_scraped"] = sorted(rec["identifiers"])
+    for key in ("doi", "isbn", "arxiv", "handle"):
+        rec["identifiers"].setdefault(key, None)
+    rec.update(status="success", source="url", path=str(path), error=None,
+               md5=file_md5(path), title=meta.get("title") or None,
+               retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               content_type=ctype or None, size_bytes=len(body),
+               http_status=http_status)
     rec["suggested_type"] = suggest_type(rec["mime"], host, meta, rec["identifiers"])
     if meta.get("pdf_url") and not is_pdf:
         rec["full_pdf_url"] = meta["pdf_url"]
+    leave_receipt(rec, staging)
     return rec
 
 

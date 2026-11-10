@@ -2,11 +2,21 @@
 Title: Staging handoff: fetchers leave a receipt that recognition reads
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2399
 
 --- log ---
 2026-11-10T07:09Z reviewer created
 2026-11-10T07:23Z reviewer author ruling 2026-11-10 (relayed): "Do Zotero has attachment hashes already ? Use the same then." — library side = Zotero's own attachment md5 via local API; staged side = file_md5; no harness hash store; the receipt key is that same MD5
 2026-11-10T07:46Z reviewer note blocker 1502 closed — Blocked-by removed.
+2026-11-10T07:53Z reviewer raid f7aac3: Author ruling 2026-11-10 (relayed): "Okay to change DOIfetch output to docs/".
+2026-11-10T07:53Z reviewer raid f7aac3: Author ruling 2026-11-10 (relayed), supersedes reliance on defaults: "Yes, that was the permission to change DOIfetch defaults. But don't rely on it, use explicit --output-dir". Harness passes --output-dir explicitly on every DOIfetch launch (docs when the caller gave none); DOIfetch own default is that repository work.
+2026-11-10T07:53Z reviewer raid f7aac3: receipt format (interface session): JSON Lines, no new format. The fetcher stdout JSON line appended verbatim to <staging dir>/.receipts.jsonl, one line per fetch, looked up by scanning for md5. Keys: today keys plus md5, identifiers{doi,isbn,arxiv,handle}, url/final_url/source/title; reuse extract-metadata names. No RIS/biblatex, no shared dataclass/module, probe-url stays stdlib-only.
+2026-11-10T07:53Z reviewer raid f7aac3: md5 is Zotero algorithm via file_md5. Defaults: given identifiers vs scraped marked; lookup md5 then recorded path if file exists; receipt written after final name; skipped fetch claims no identifiers; URL match after trivial normalisation.
+2026-11-10T08:08Z reviewer raid f7aac3: receipt format and key names provisional, pending author's survey of corpus repos (2026-11-10)
+2026-11-10T08:13Z reviewer raid f7aac3: URL is a positive-only key: a hit matches, a miss never licenses absent (rejected: URL as an exhaustive given key; item url fields vary and --apply would mint duplicates)
+2026-11-10T08:13Z reviewer design answer after the author's corpus survey (interface session, 2026-11-10; author may overrule): JSON Lines in <staging>/.receipts.jsonl keyed by Zotero MD5; JETP-observer retrieval vocabulary where meanings match: retrieved_at, final_url, content_type, size_bytes, http_status; source kept; no ledger structure, no sha256/sha1
+2026-11-10T08:29Z reviewer raid f7aac3 gaze FINDINGS fix: name-fallback receipt ids are hints only (no absent, no write); URL match never licenses a write; any .bib identifier outranks all receipt identifiers
+2026-11-10T08:37Z reviewer closed — autoclosed — PR #2399
 
 --- body ---
 ## Context

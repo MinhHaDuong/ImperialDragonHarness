@@ -48,7 +48,35 @@ def test_helper_pins_a_commit_and_forwards_arguments(tmp_path):
         "10.1000/a b",
         "--title",
         "T",
+        "--output-dir",
+        "docs",
     ]
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--source", "crossref", "--doi", "10.1000/a"),
+        ("--url", "https://example.org/a.pdf", "--title", "T"),
+        ("--title", "T", "--source", "all"),
+        (),
+    ],
+)
+def test_every_passthrough_mode_names_its_output_directory(tmp_path, args):
+    done, log = _run(tmp_path, *args)
+    assert done.returncode == 0, done.stderr
+    argv = log.read_text().splitlines()
+    assert argv.count("--output-dir") == 1
+    assert argv[argv.index("--output-dir") + 1] == "docs"
+
+
+@pytest.mark.parametrize("given", [["--output-dir", "elsewhere"], ["--output-dir=elsewhere"]])
+def test_a_callers_output_directory_is_kept_not_doubled(tmp_path, given):
+    done, log = _run(tmp_path, "--url", "https://example.org/a.pdf", *given)
+    assert done.returncode == 0, done.stderr
+    argv = log.read_text().splitlines()
+    assert [a for a in argv if a.startswith("--output-dir")] == given[:1]
+    assert "docs" not in argv
 
 
 def test_helper_without_uvx_names_the_prerequisite(tmp_path):
@@ -174,3 +202,39 @@ def test_isbn_lookup_error_does_not_try_shadow(tmp_path):
     assert result.returncode == 3
     assert "Crossref unavailable" in result.stdout
     assert "[shadow]" not in log.read_text()
+
+
+def _fulltext_run(tmp_path, *args):
+    """Run the --doi/--isbn mode with uvx stubbed; the cascade's argv lines."""
+    path = tmp_path / "bin"
+    path.mkdir()
+    log = tmp_path / "args"
+    stub = path / "uvx"
+    stub.write_text(
+        "#!/bin/sh\n"
+        '[ "$5" = -c ] && exit 0\n'
+        f'printf "%s\\n" "$*" >> "{log}"\n'
+        'printf \'%s\\n\' \'{"status":"success","source":"hal"}\'\n'
+    )
+    stub.chmod(0o755)
+    env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
+    done = subprocess.run(
+        ["bash", str(HELPER), *args], env=env, capture_output=True, text=True
+    )
+    assert done.returncode == 0, done.stderr
+    return log.read_text().splitlines()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mode", [("--doi", "10.1000/a"), ("--isbn", "9780674009691")])
+def test_the_cascade_is_launched_with_an_explicit_output_directory(tmp_path, mode):
+    (line,) = _fulltext_run(tmp_path, *mode, "--title", "T")
+    words = line.split()
+    assert words[words.index("--output-dir") + 1] == "docs"
+
+
+@pytest.mark.integration
+def test_the_cascades_own_output_directory_wins(tmp_path):
+    (line,) = _fulltext_run(tmp_path, "--doi", "10.1000/a", "--output-dir", "x")
+    assert line.split().count("--output-dir") == 1
+    assert "--output-dir x" in line
