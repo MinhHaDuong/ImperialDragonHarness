@@ -29,6 +29,14 @@ while [ "$#" -gt 0 ]; do
 done
 path="${1:-.}"
 [ -d "$path" ] || { echo "worktree-exit-preflight: not a directory: $path" >&2; exit 2; }
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
+# Another registered worktree inside this one: its work is no status line (the
+# path is ignored), yet removing this tree deletes it.
+nested=$(worktree_nested "$path" 2>/dev/null || true)
+if [ -n "$nested" ]; then
+    printf "Blocked: worktree '%s' holds another registered worktree; removing it would destroy that tree.\n\n%s\n" "$path" "$nested" >&2
+    exit 1
+fi
 root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
     echo "worktree-exit-preflight: not a Git worktree: $path" >&2
     exit 2
