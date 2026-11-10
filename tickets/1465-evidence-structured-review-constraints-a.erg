@@ -8,6 +8,7 @@ Label: deferred
 --- log ---
 2026-11-07T22:01Z reviewer created
 2026-11-08T07:36Z reviewer Author closed parent1377 in favor of this ticket; this is the sole remaining structured-constraints request. Deferred status and scope unchanged.
+2026-11-10T07:09Z reviewer evidence 2026-11-10 (padme, --help only, behaviour untested): codex-cli 0.167.0 lists 'codex exec --output-schema <FILE>'; Claude Code 2.1.322 lists '--json-schema <schema>' with --print; vibe and pi list an output wrapper mode (json) and no schema option. Consumer need: ticket 1501, a seat report discarded on the form of its reach line.
 
 --- body ---
 Parent: 1377
