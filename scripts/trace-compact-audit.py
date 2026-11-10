@@ -401,8 +401,15 @@ def read_codex(root: Path):
 #   "post_compact_reads", "post_compact_tokens", "entry_skill" (may be empty),
 #   "role" (shown in the role split) and "ceiling_rule" (RULE_MODEL: held to
 #   its main model's ceiling; RULE_DEFAULT: held to the default ceiling).
+# "role" and "ceiling_rule" may be left out (main, RULE_MODEL); a runtime need
+# not have subagents; "msg_id", when given, dedups turns across that runtime's
+# files (drop_inherited_turns), never across runtimes.
 # `missed_runs` marks the one runtime whose runs and dollar figures are counted.
 # `reader None` names a runtime bound by the ceilings whose corpus is not read.
+# A runtime with several roots, each with its own status, takes one entry per
+# root (e.g. "Pi" and "Pi spool"): an entry has exactly one root, reported as
+# read, not read or could not look on its own, and its reader can set the
+# ceiling rule the root implies. The CLI maps a flag to each entry's root.
 RUNTIMES = (
     {
         "name": "Claude Code",
