@@ -1,0 +1,39 @@
+%erg 0.1
+Title: paper: published checklist gains the six steps found on doudou
+Created: 2026-11-10
+Author: haduong
+
+--- log ---
+2026-11-10T07:40Z haduong created
+
+--- body ---
+## Context
+
+Ticket 1489 (closed, PR #2352) ran `/paper <data paper> published` on host
+doudou, inspection only, for the RDJHSS data paper (DOI 10.52024/fn48qf66).
+Its log lists six steps the agent needed that
+`skills/paper/references/published.md` lacks. The author ruled on 2026-11-10
+(decision A, relayed by the interface session): a ticket for the six steps,
+worked by a coder; the paper's own open rows are ticket 1505.
+
+The six, from the 1489 log (21:55Z):
+
+- (a) hash-compare the hosted file and the landing-page PDF against the mail
+  attachment (the papers directory's `AGENTS.md` demands it; the checklist
+  says only "hash both");
+- (b) check the HAL deposit is the version of record publicly, not only that
+  a PUT was sent (a PUT in moderation does not show);
+- (c) reconcile title and page range across bib, landing page and HAL;
+- (d) the event date is the publisher's (publication mail / landing page),
+  not the day `/paper` is invoked: reconcile it before writing any register;
+- (e) recognise a re-run on a partly done event: inspect each row's state
+  first, redo only what is not done;
+- (f) say how to read the roadmap row when the roadmap is an odt.
+
+## Exit criteria
+
+- [ ] `skills/paper/references/published.md` carries (a)-(f), each placed at
+  the step it belongs to; `skills/paper/SKILL.md` changes only for a step
+  that cannot live in the reference, with the reason in the commit message
+- [ ] No test asserts the wording of skill text
+- [ ] gaze REVIEWED on the branch head; the author lands the request
