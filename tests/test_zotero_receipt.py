@@ -6,7 +6,6 @@ tests are `integration` and skip where the client cannot run.
 
 import argparse
 import json
-import shutil
 
 import pytest
 
