@@ -126,13 +126,6 @@ def entry(name: str, root, status: str, reason: str | None = None, **measures) -
     return out
 
 
-def not_read(name: str, roots: dict) -> dict | None:
-    """The `not read` entry of a corpus with no root given, else None."""
-    if roots.get(name) is None:
-        return entry(name, None, "not read", "no corpus root given")
-    return None
-
-
 def report_keys(entries: list[dict]) -> dict:
     """The JSON keys every trace script adds: host, entries, and the names read and not read."""
     return {

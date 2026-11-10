@@ -482,18 +482,21 @@ def _pi_calls(path: Path, skipped: list) -> "Iterator[dict]":
 
 CODEX_SHELLS = {"exec", "local_shell_call"} | _te.SHELL_TOOLS
 CODEX_SCRIPT = re.compile(r"\AScript (completed|failed)\b")
-CODEX_EXIT_ANY = re.compile(r"(?:exit_code\W{0,4}|exited with code\s*|exit code:?\s*)(-?\d+)", re.I)
+# Where an exit code is a record, not prose: the JSON key the `exec` tool's command results carry,
+# or a line that opens with the shell tool's own status. Free text ("see exit code 2") never counts.
+CODEX_EXIT_RECORD = re.compile(r'"exit_code"\s*:\s*(-?\d+)|^(?:Process exited with code|Exit code:?)\s*(-?\d+)', re.M)
 
 
 def codex_outcome(text: str) -> bool | None:
     """Error (True), success (False) or unknown (None) of one Codex call output.
 
     The `exec` tool runs a script: its output opens with `Script completed` or `Script failed`,
-    and the commands it ran record `exit_code`. An error is a failed script or any non-zero exit
-    code, so a completed script whose command failed counts as an error, as a failed Bash call does
-    on Claude Code. An output with neither marker has an unknown outcome."""
+    and the commands it ran carry an `"exit_code"` key. An error is a failed script or any non-zero
+    recorded exit code, so a completed script whose command failed counts as an error, as a failed
+    Bash call does on Claude Code. Residual: a printed JSON document holding an `"exit_code"` key
+    is read as a record. An output with neither marker has an unknown outcome."""
     script = CODEX_SCRIPT.match(text)
-    codes = [int(c) for c in CODEX_EXIT_ANY.findall(text)]
+    codes = [int(a or b) for a, b in CODEX_EXIT_RECORD.findall(text)]
     if (script and script.group(1) == "failed") or any(codes):
         return True
     if script or codes:

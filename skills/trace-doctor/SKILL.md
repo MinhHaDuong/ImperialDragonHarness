@@ -53,13 +53,13 @@ SCRATCH=$(mktemp -d)
 
 # The five walks below are independent (none consumes another's output): run them
 # concurrently. Memo, one line per tool: what it diagnoses; what it needs.
-# trace-stats: token and dollar cost per agent and session; reads Claude Code, Codex and Pi; the CSV is Claude Code's.
+# trace-stats: token and dollar cost per agent and session; reads Claude Code, Codex, and Pi; the CSV is Claude Code's.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
 # trace-compact-audit: missed compact or clear points and sessions past their model's context ceiling; needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
-# trace-friction: velocity losses (retries, slow tools, idle waits); reads Claude Code, Codex and Pi.
+# trace-friction: velocity losses (retries, slow tools, idle waits); reads Claude Code, Codex, and Pi.
 python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
   --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
 # trace-wall-time: where raid, hunt and gaze runs spend wall time; runs measured on Claude Code only.
