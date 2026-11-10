@@ -500,8 +500,8 @@ wheels = [
 
 [[package]]
 name = "doifetch"
-version = "0.2.0"
-source = { git = "https://github.com/MinhHaDuong/DOIfetch?rev=fc85d31b4c87e687c54accd918f6c1d5e541ff64#fc85d31b4c87e687c54accd918f6c1d5e541ff64" }
+version = "0.3.0"
+source = { git = "https://github.com/MinhHaDuong/DOIfetch?rev=95efea63e1ba2f4d7d6c8a6f9176cb8e691dd808#95efea63e1ba2f4d7d6c8a6f9176cb8e691dd808" }
 
 [[package]]
 name = "execnet"
@@ -691,7 +691,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "bibtexparser", specifier = ">=1.4,<2" },
-    { name = "doifetch", git = "https://github.com/MinhHaDuong/DOIfetch?rev=fc85d31b4c87e687c54accd918f6c1d5e541ff64" },
+    { name = "doifetch", git = "https://github.com/MinhHaDuong/DOIfetch?rev=95efea63e1ba2f4d7d6c8a6f9176cb8e691dd808" },
     { name = "httpx2", specifier = ">=2.13,<3" },
     { name = "isbnlib", specifier = ">=3.10,<4" },
     { name = "jsonschema", specifier = ">=4.10,<5" },
