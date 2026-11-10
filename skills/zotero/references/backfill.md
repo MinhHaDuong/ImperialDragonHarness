@@ -107,7 +107,7 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
 | `unidentified` | no reliable identification: too little metadata, or a search by a title taken from the file (embedded Title or filename words), alone or with an identifier read from the pages, that finds nothing | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
-| `unchecked` | not looked up in full: the hash index was skipped, so a stored copy may have gone unseen | rerun when Zotero lists in time; never an import |
+| `unchecked` | a file that would read `absent`, not looked up in full: the hash index was skipped, so a stored copy may have gone unseen | rerun when Zotero lists in time; never an import |
 
 
 A title taken from the file itself, the PDF container's or the filename's, is

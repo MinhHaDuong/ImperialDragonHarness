@@ -2717,3 +2717,14 @@ def test_filename_only_no_match_is_unidentified():
     assert zi._staging_verdict(result, filename_only=True) == "candidates"
     result["matches"] = [{"why": ["storageHash"]}]
     assert zi._staging_verdict(result, filename_only=True) == "identical"
+
+
+def test_a_skipped_hash_index_turns_only_a_would_be_absent_into_unchecked():
+    """With the listing skipped, a miss on a given key or title reads
+    `unchecked` (rerun); a miss on a hint alone was never a would-be `absent`
+    and stays `unidentified`."""
+    result = {"verdict": "none", "matches": [], "candidates": []}
+    assert zi._staging_verdict(result, filename_only=False,
+                               hash_skipped=True) == "unchecked"
+    assert zi._staging_verdict(result, filename_only=True,
+                               hash_skipped=True) == "unidentified"
