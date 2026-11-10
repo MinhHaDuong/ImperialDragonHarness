@@ -52,3 +52,131 @@ reported as could not look while the other runtimes are still counted.
 - [ ] Whether Pi's `input` includes its cache fields is answered in the
   reader's docstring, with the transcript evidence
 - [ ] `make check` passes
+
+## Imagine (raid 626455)
+
+Why now: unchanged since the author opened 1507 on 2026-11-10. Premise
+checked on padme the same day, key names and numbers only, on all 78
+`*.jsonl` files under `~/.pi/agent/sessions` (mtime 2026-09-16 to
+2026-11-01):
+
+- Layout: `<encoded cwd>/<iso time>_<uuid>.jsonl`, 14 directories, depth 2.
+  The first line is a `session` header with `id` (the uuid of the file name),
+  `timestamp`, `cwd` and `version` (3 on all 78). No header carries
+  `parentSession`, which Pi's `docs/session-format.md` says `/fork` and
+  `/clone` set.
+- Records: `message` 1699, `model_change` 79, `thinking_level_change` 78,
+  `context_edit` 30, `custom_message` 17, `compaction` 7. Every entry has
+  `id` and `parentId` (a tree); no entry has two children in this corpus.
+- 763 assistant messages carry `message.model`, `message.provider` and
+  `message.usage` with `input`, `output`, `cacheRead`, `cacheWrite`,
+  `totalTokens` (`cacheWrite1h` on 13, zero on all 13). `responseId` is on
+  715, unique within its file.
+- The cache question: `totalTokens == input + output + cacheRead +
+  cacheWrite` on 763 of 763, and `cacheRead > input` on 632. So `input`
+  excludes both cache fields, and the whole prompt is `input + cacheRead +
+  cacheWrite`. Pi's own `dist/core/usage-totals.js` treats `cacheWrite1h` as
+  a split of `cacheWrite`, not an addend.
+- 64 assistant messages carry `errorMessage` and an all-zero usage: not
+  turns. The 48 without a `responseId` are all among them.
+- Record `timestamp` is ISO 8601 with milliseconds and `Z` on all 1988
+  stamped records, which `ts._parse_ts` already reads.
+- Subagents: Pi's subagent extension spawns children with `--no-session`
+  (`~/.pi/agent/extensions/subagent/index.ts`), so no Pi subagent transcript
+  exists. Every Pi file is a main session, and the header has no field that
+  tells an interactive session from a `pi -p` run.
+- Largest whole prompt in any file: 114638 tokens; none reaches 230K. Turns
+  are mostly local models (`qwen3.8-27b` 529, `qwen3.8-flash-next-iq3_s`
+  180), a few hosted ones (`claude-opus-5-5`, `gpt-5.5`, `gpt-6-sol`). The
+  live Pi count past any ceiling will be zero: the positive control must
+  come from fixtures, and "read, zero sessions past" must stay distinct from
+  "could not look".
+- Corpus root: Pi honours a `sessionDir` setting, the environment variable
+  `PI_CODING_AGENT_SESSION_DIR` and `--session-dir`; padme sets none.
+
+Simplest path: one reader function on the 1508 seam, nothing else.
+Session id from the header `id`, project from the header `cwd`, agent id
+always `main`, model per turn from `message.model`, date from the record
+`timestamp`, whole prompt as above, error turns skipped, `msg_id` set to
+`pi:` plus `responseId` so a `/fork` or `/clone` copy is not counted twice by
+`drop_inherited_turns`. Pi enters the session counts only, like Codex: no
+compaction events, no missed-run dollars. An absent root is could not look; a
+root that holds no file in the window is read, with zero sessions. Not used:
+`model_change` (the model is on each turn), the tree (each turn's usage
+already measures the prompt of the branch it was sent on), `context_edit`.
+
+No library parses Pi sessions in Python; Pi's own reader is TypeScript. No
+YAGNI or abstraction hit: the reader is one function and one table entry.
+
+Later review: the tracker's integration review runs the audit on padme's
+live Pi corpus and checks the Pi session count against the file count in
+the window by hand (zero past ceiling expected, see above).
+
+## Plan (raid 626455)
+
+Written by the raid lead against main at a7a5f202 and the seam as ticket
+1508's plan describes it; to be re-checked against the merged seam before
+Execute. Hunt's Plan phase owns the detail.
+
+Base: main with ticket 1508 merged.
+
+Actions:
+
+1. First test, red for the targeted reason: a Pi fixture root with one
+   session on `claude-opus-5-5` holding 30 or more in-window assistant turns
+   whose `input` is small and whose `cacheRead` puts the whole prompt past
+   the Opus ceiling, beside a Claude Code fixture root; the audit counts one
+   Pi session past its ceiling under Pi and leaves the Claude Code counts as
+   they are.
+2. The reader: header, assistant turns, error turns skipped, `msg_id`
+   namespaced; the docstring answers the cache question with the evidence
+   above.
+3. The table entry: Pi's default root (`~/.pi/agent/sessions`, or
+   `PI_CODING_AGENT_SESSION_DIR` when set) and a CLI override in the shape
+   1508 gives the Codex root. Pi leaves the not-read list.
+4. Tests for the window cut and could not look (below).
+
+Tests that would pass on a wrong implementation, and the fix:
+
+- A fixture with `cacheRead == 0` passes whether or not the reader adds
+  the cache fields. The past-ceiling fixture puts most of the prompt in
+  `cacheRead` and `cacheWrite`, so reading `input` alone stays under.
+- A fixture whose turns all carry usage cannot catch counting error turns.
+  Add zero-usage `errorMessage` turns to an otherwise short session, enough
+  to cross `LONG_SESSION_TURNS` if they were counted; assert they are not.
+- A window test whose session lies wholly outside passes if the reader
+  dates turns from the header. Put the header inside the window and the
+  turns outside (and the reverse) and assert on the turn count.
+- A could-not-look test on the exit code alone passes if Pi is silently
+  dropped. Assert Pi is named could not look, absent from the counts, and
+  the other runtimes' counts equal a run without the Pi root.
+- A `/clone` fixture (second file, `parentSession` header, same entries and
+  `responseId`s plus new turns) checks only the new turns are counted.
+
+Dependencies: ticket 1508 merged.
+
+## Feasibility (raid 626455)
+
+PASS on the current tree, WARN on the seam, read by the raid lead at
+a7a5f202:
+
+- `scripts/trace-compact-audit.py`: `parse_trajectory` events are
+  `{"kind", "cache_read", "prompt", "model", "msg_id", "ts"}`;
+  `drop_inherited_turns` dedups on `msg_id` corpus-wide and skips turns
+  whose `msg_id` is None; `restrict_to_window` drops undated events;
+  `ceiling_for` maps `claude-opus-5-5` to the Opus entry and every local
+  Qwen id to `default_tokens` (230000).
+- `ts._parse_ts` (`scripts/trace-stats.py`) reads `...Z` stamps.
+- `tests/test_context_length_audit.py` builds fixtures with `_turn` and
+  `_session`; the Pi fixture writes the header and message records the same
+  way.
+- No API key, no network, no transcript content read.
+- WARN, seam: 1509 cannot be written until 1508 merges. The reader assumes
+  the seam takes the session id and project from the reader (not from the
+  path), lets a runtime have no subagents and no role field, accepts a
+  per-turn `msg_id` for dedupe without requiring one, and keeps Pi out of the
+  missed-run figures. Each went to the 1508 coordinator in this raid's
+  first report, 2026-11-10.
+- WARN, cross-ticket: PR 2397, ticket 1508 and this ticket edit the same
+  script, in that order. No shared registry beyond the runtime table 1508
+  creates, which this ticket extends by one entry.
