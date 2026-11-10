@@ -19,6 +19,7 @@ Closed: autoclosed — PR #2367
 2026-11-09T22:55Z reviewer note 8 (molt 7 case 1 keeps a worktree for the sweep's own .tmp/) dropped: by design; molt 7 keeps .tmp/ whatever the preflight says and .tmp/ is never purged on its own (ticket 1119), so reversing that is a design call, not a tidy
 2026-11-09T22:55Z reviewer note 9 (raid_land.py armed auto-merge on an ungated base) dropped: by design; merge step 6 prescribes --auto on an ungated base and raid_land documents exit 5 'queued on an ungated base' (6e092f3f); no code change
 2026-11-09T23:02Z reviewer closed — autoclosed — PR #2367
+2026-11-10T07:16Z reviewer at the author's request (PR #2367): removed the wording pins test_tmp_guard_usage_shows_register_with_one_path (tests/test_worktree_tools.py) and, in test_ticket_sweep.py::test_molt_writes_no_state_stamp, the assertion '**Open merge request.** If any commits were created' in molt; step 6 prose unbent
 
 --- body ---
 ## Context
