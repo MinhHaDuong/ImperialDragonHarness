@@ -700,6 +700,23 @@ _check_true "refused plus removable: first removable gone" test ! -d "$WT"
 _check_true "refused plus removable: second removable gone" test ! -d "$WT2"
 _check_rc "refused plus removable: a WORKTREE line per tree" 3 "$(printf '%s\n' "$out" | grep -c 'WORKTREE: ')"
 
+# Gaze finding on 44d09dd7: an outer tree holding a registered worktree, whose
+# path is ignored (info/exclude), shows a clean status; removing it deletes the
+# inner tree's uncommitted work. Without and with .tmp/ in the outer tree.
+for variant in plain tmp; do
+    exit_world "$T/rm-nested-$variant" task; cd "$W"
+    printf '/.claude/worktrees/\n/.tmp/\n' >> "$(G rev-parse --path-format=absolute --git-common-dir)/info/exclude"
+    [ "$variant" = tmp ] && { mkdir -p "$WT/.tmp"; echo scratch > "$WT/.tmp/note"; }
+    INNER="$WT/.claude/worktrees/inner"
+    G worktree add -q -b "inner-$variant" "$INNER" main 2>/dev/null
+    echo precious > "$INNER/precious.txt"
+    run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+    _check_rc "remove tree holding a nested worktree ($variant): refused" 1 "$rc"
+    _check_says "remove tree holding a nested worktree ($variant): names it" "$out" "nested worktree: $INNER"
+    _check_true "remove tree holding a nested worktree ($variant): outer kept" test -d "$WT"
+    _check_true "remove tree holding a nested worktree ($variant): inner file kept" test -f "$INNER/precious.txt"
+done
+
 # No forge: compare against the local default branch; nothing to sync.
 mkdir -p "$T/ec-local"; L="$T/ec-local/repo"
 git init -q -b main "$L"; git -C "$L" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
