@@ -12,6 +12,8 @@ Closed: autoclosed — PR #2394
 2026-11-10T08:14Z reviewer note fix — nested-worktree rail of 7eacadd2 restored as a third commit (advisor agreed: regression repair)
 2026-11-10T08:28Z reviewer note fix — roar after-exit removal passes the nested-worktree rail (gaze finding on 44d09dd7)
 2026-11-10T08:36Z reviewer closed — autoclosed — PR #2394
+2026-11-10T08:49Z reviewer note author 2026-11-10 — dead-pid reclaim lands as written (option A), on condition the prose does not incite reusing old worktrees; then: prose should incite cleaning up after oneself
+2026-11-10T08:49Z reviewer note fix — prose sweep found 2 incitements and 9 fragile passages; lifecycle owner section 'Clean up after yourself' added; hunt, molt, raid and one memory line reworded (a659fca7)
 
 --- body ---
 ## Context
