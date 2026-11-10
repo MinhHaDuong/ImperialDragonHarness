@@ -1866,7 +1866,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               title: str | None = None, item_type: str | None = None,
               pdf_path: Path | None = None,
               isbn_unusable: str | None = None,
-              hash_index: dict[str, Any] | None = None,
+              md5_index: dict[str, Any] | None = None,
               from_text: bool = False) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
@@ -1878,7 +1878,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     "consulted" and "skipped" keep a clean negative apart from a lookup
     that could not run. `isbn_unusable`, a reason, skips the ISBN.
 
-    With `hash_index` (hash_index()), the file's md5 is looked up among
+    With `md5_index` (hash_index()), the file's md5 is looked up among
     every stored attachment of the libraries, so a copy no other key finds
     is still seen; without it, only the works another key found are
     compared. `from_text` labels the identifiers as read from the file's
@@ -1903,10 +1903,10 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
             "attachment": None}
 
     digest = file_md5(pdf_path) if pdf_path and pdf_path.is_file() else None
-    indexed = hash_index is not None and hash_index["status"] == "built"
+    indexed = md5_index is not None and md5_index["status"] == "built"
     if digest and indexed:
         consulted.append("storageHash")
-        hits = hash_index["by_md5"].get(digest, [])
+        hits = md5_index["by_md5"].get(digest, [])
         for lib in libs:
             mine = [a for a in hits if a["library"] == lib[0]]
             parents = {a["parent"] for a in mine if a["parent"]}
@@ -1926,8 +1926,8 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
                     found[att["key"]].update(
                         attachment=att, standalone=True, has_file=True,
                         has_pdf=att["contentType"] == "application/pdf")
-    elif digest and hash_index is not None:
-        skipped.append(f"storageHash (index skipped: {hash_index['reason']})")
+    elif digest and md5_index is not None:
+        skipped.append(f"storageHash (index skipped: {md5_index['reason']})")
 
     for label, queries, carries in IDENTIFIER_KEYS:
         supplied = {"doi": doi, "isbn": isbn, "arxiv": arxiv,
@@ -1971,7 +1971,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
 
     if digest is None:
         skipped.append("storageHash (no file on disk)")
-    elif hash_index is not None:
+    elif md5_index is not None:
         pass  # consulted, or skipped with its reason, above
     elif not found:
         skipped.append("storageHash (no work found to compare with)")
@@ -2420,9 +2420,9 @@ def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
 
 def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
               bib_entry: dict[str, Any] | None = None,
-              hash_index: dict[str, Any] | None = None) -> dict[str, Any]:
+              md5_index: dict[str, Any] | None = None) -> dict[str, Any]:
     """Look one staged file up in the libraries: by its md5 (with
-    `hash_index`), by the identifiers its .bib entry gives or, failing
+    `md5_index`), by the identifiers its .bib entry gives or, failing
     those, its own pages print, then by title."""
     bib_entry = bib_entry or {}
     info = (_pdf_info(path) if path.suffix.lower() == ".pdf"
@@ -2438,8 +2438,8 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     ids = bib_identifiers(bib_entry)
     from_text = False
     text_skip = None
-    stored = (hash_index is not None and hash_index["status"] == "built"
-              and file_md5(path) in hash_index["by_md5"])
+    stored = (md5_index is not None and md5_index["status"] == "built"
+              and file_md5(path) in md5_index["by_md5"])
     if not any(ids.values()) and path.suffix.lower() == ".pdf" and not stored:
         # Only when no curated key exists: a DOI on the page may be a
         # cited work's. Its lookups are labelled "(from text)".
@@ -2454,7 +2454,7 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
                         # ISBN is its volume's.
                         isbn_unusable=None if item_type else
                         f"unmapped .bib type @{bib_type}: part or volume "
-                        "unknown", hash_index=hash_index, from_text=from_text)
+                        "unknown", md5_index=md5_index, from_text=from_text)
         if text_skip:
             res["skipped"].append(text_skip)
         return res
@@ -2485,7 +2485,7 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         key in res["consulted"] for key in GIVEN_KEYS)
     verdict = _staging_verdict(
         res, filename_only,
-        hash_skipped=hash_index is not None and hash_index["status"] != "built")
+        hash_skipped=md5_index is not None and md5_index["status"] != "built")
     row = {"file": path.name, "verdict": verdict,
            "zotero_key": top.get("key") if top else None,
            "zotero_title": top.get("title") if top else None,
@@ -2673,7 +2673,7 @@ def audit_sources(root: Path, found: dict[str, Any],
         path = source["path"]
         try:
             row = audit_one(path, libs, bib_entry=source.get("entry"),
-                            hash_index=index)
+                            md5_index=index)
         except (ZoteroUnavailable, ZoteroSlow, LocalAPIError):
             raise
         except Exception as exc:
@@ -2751,11 +2751,11 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
     apply_rc = 0
     if getattr(args, "apply", False):
         try:
+            if skipped:
+                raise ValueError(str(index_refusal(index)))
             config = reconcile_apply_config(root, local_account())
             if errors:
                 raise ValueError("discovery or check is unchecked")
-            if skipped:
-                raise ValueError(str(index_refusal(index)))
             with directory_locks(found["staging_dirs"] + [library_lock_dir()]):
                 # Look again under the locks and keep them through the
                 # saves, so two local sweeps cannot both act on the same

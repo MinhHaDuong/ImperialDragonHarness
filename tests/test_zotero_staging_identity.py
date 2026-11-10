@@ -124,7 +124,7 @@ def lib(library, monkeypatch):
 def row(path, bib_entry=None):
     libs = zi.libraries()
     return zi.audit_one(path, libs, bib_entry=bib_entry,
-                        hash_index=zi.hash_index(libs))
+                        md5_index=zi.hash_index(libs))
 
 
 def check(root, **over):
@@ -306,4 +306,28 @@ def test_a_skipped_index_creates_and_attaches_nothing(lib, tmp_path,
     with pytest.raises(zi.ZoteroSlow):
         zi.reconcile_apply(tmp_path, found, "user", {"apply": True},
                            argparse.Namespace(library="user", edit=True))
+    assert zi.local_library().children(keys["text_doi"]) == []
+
+
+@pytest.mark.integration
+def test_check_staging_apply_on_a_skipped_index_is_slow_and_writes_nothing(
+        lib, tmp_path, monkeypatch, capsys):
+    """End to end: check-staging --apply --edit on a slow listing exits
+    EXIT_SLOW, reports the apply refused, and stores no file."""
+    keys, _ = lib
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    make_pdf(docs / "present.pdf", ["nothing useful", "nonce 1502h"])
+    (tmp_path / "sources.bib").write_text(
+        "@article{present, title={Found By Its Printed DOI Here}, "
+        f"author={{Doe, Jane}}, year={{2020}}, doi={{{TEXT_DOI}}}, "
+        "file={docs/present.pdf}}\n")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    monkeypatch.setattr(zi, "INDEX_WAIT", 0.0)
+    assert check(tmp_path, apply=True, edit=True) == zi.EXIT_SLOW
+    report = json.loads(capsys.readouterr().out)
+    assert report["apply_status"] == "failed"
+    assert "storageHash index skipped" in report["apply_error"]
+    assert "applied" not in report and "edits" not in report
     assert zi.local_library().children(keys["text_doi"]) == []
