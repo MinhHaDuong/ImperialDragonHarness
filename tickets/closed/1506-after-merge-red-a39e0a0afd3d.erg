@@ -2,9 +2,11 @@
 Title: After-merge red on main a39e0a0afd3d: pytest-guard
 Created: 2026-11-10
 Author: merge-gate
+Closed: autoclosed — PR #2390
 
 --- log ---
 2026-11-10T07:44Z merge-gate created
+2026-11-10T07:49Z reviewer closed — autoclosed — PR #2390
 
 --- body ---
 ## Context
