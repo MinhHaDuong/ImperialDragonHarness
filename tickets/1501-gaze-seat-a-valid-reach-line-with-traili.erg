@@ -69,3 +69,78 @@ In `tests/test_gaze_seat.py`, with the fake seat:
 - [ ] The launch rails show one literal example line and no wording that
   invites a gloss
 - [ ] `make check` passes
+
+## Imagine (raid 6ee79f)
+
+- **Premise check: holds.** `reach: read=yes shell=yes tests=not-run (read
+  code only)` fails `REACH.fullmatch`, whose pattern ends `\s*$`
+  (`scripts/gaze_seat.py:456`); the line starts `reach:`, so `reach_refusal`
+  returns "invalid reach declaration" (`:467-468`) and the caller answers "no
+  report" (`:501-502`). Nothing on main voids it.
+- **Must keep** (`tests/test_gaze_seat.py`). A reader that ignored everything
+  after `tests=` would accept `tests=ran=no` (case `fenced-ranno`, `:71`,
+  expected refusal at `:996`). `read=maybe` (`:78`, `:997`) stays refused: the
+  values stay exact. The late, missing, repeated, quoted, and example cases do
+  not depend on trailing text. Rule: a tail starts only at whitespace or at
+  the end of the line.
+- **Simplest path.** Change the end of the one pattern at `:456` so that
+  `tests=(ran|not-run)` may be followed by whitespace and any text. Both
+  `fullmatch` calls (`:464`, `:470`) then behave as before, and the filed
+  report keeps the seat's line. No helper, no second pattern.
+- **Sites.** Rails (`scripts/gaze_seat.py:122-124`),
+  `profiles/code-reviewer/PROFILE.md:29`,
+  `profiles/prose-reviewer/PROFILE.md:25`,
+  `skills/gaze/references/panel.md:54-56`. No copy under `adapters/`. For
+  exit criterion 3 the rails must change; the two profiles repeat the same
+  wording and reach the seat too, so align them in the same commit. The
+  panel reference describes the meaning and can stay.
+- **Verification without wording pins.** The behaviour tests of the Test
+  section. Criterion 3 is read from the diff at review. No test pins the
+  rails' wording today; add none.
+- **Antipatterns.** None with the one-pattern change. Avoid: a second pattern
+  for other noise, a tolerance helper, parsing the tail for meaning.
+- **Later review.** Count "seat reach: invalid reach declaration" in
+  `refs/notes/review` over the 7 days after the merge, against 9 before. A
+  doctor journal revisit, no wait ticket.
+- **Risk and coder.** Low; the one risk is a pattern that loosens
+  `tests=ran=no`.
+
+## Blind-spot pass (raid 6ee79f)
+
+- `BLIND-SPOT: CLEAN` (gpt-6.1-sol, `codex exec`, read-only; id from the
+  session header).
+- Orchestrator check, not raised by either agent: the forms of the other
+  refused lines. Of 342 raw seat outputs retained since 2026-11-07, 337 have
+  a valid reach line, 3 a valid line followed by a parenthetical gloss, 2 no
+  reach line in their first 12 lines, none any other malformed form. The
+  one-pattern change covers every observed case.
+
+## Plan (raid 6ee79f, written by the orchestrator)
+
+- **Actions.** (1) `scripts/gaze_seat.py:456`: let `tests=(ran|not-run)` be
+  followed by whitespace and any text, to the end of the line; update the
+  docstring at `:460` if it no longer describes the rule. (2) Launch rails,
+  `:122-124`: one literal example line; drop "ran tests or read code only".
+  (3) `profiles/code-reviewer/PROFILE.md:29` and
+  `profiles/prose-reviewer/PROFILE.md:25`: the same wording as the rails.
+- **First test** (`tests/test_gaze_seat.py`, red first): a fake-seat mode
+  whose second line is `reach: read=yes shell=yes tests=not-run (read code
+  only)` followed by a clear; assert exit 0, the report filed, and the reach
+  line present with its tail. Today it fails with "invalid reach
+  declaration". Companion: `read=no` with a tail is still exit 1 with
+  `read=no`. The parametrized refusals (`fenced-ranno`, `fenced-unknown`,
+  repeated and late lines) stay as they are and must stay green: they are
+  what catches a pattern loosened too far.
+- **Not a test:** the wording of the rails and profiles (a wording pin).
+- **Files.** `scripts/gaze_seat.py`, `tests/test_gaze_seat.py`, the two
+  profiles. No registry, no `routes.json`.
+- **Dependencies.** None. Open merge requests 2367 and 2370 touch none of
+  these files (checked 2026-11-10).
+- **Exit criteria map.** 1: action 1 and the first test. 2: the companion
+  and the unchanged refusals. 3: actions 2 and 3, read at review. 4: the
+  coder runs the gate.
+
+## Feasibility (raid 6ee79f)
+
+PASS. Paths and lines read on a747682f. One wave, one ticket, no
+cross-ticket conflict, no shared registry.
