@@ -77,18 +77,6 @@ def test_tmp_report_references_unknown_without_forge(repo):
     assert ref["/x/.tmp/a"]["pull_requests"] == "unknown"
 
 
-def test_tmp_guard_without_forge_reads_commits_only_and_refuses_unreadable_forge(repo, tmp_path):
-    guard = load("guard_t1319", "worktree-tmp-guard.py")
-    git(repo, "switch", "-q", "-c", "feat")
-    sources = guard.citation_sources(repo, repo, "feat")
-    assert not any(label.startswith("PR #") for label, _ in sources)
-    git(repo, "remote", "add", "origin", "https://example.invalid/r.git")  # a forge, but no gh on PATH
-    with pytest.MonkeyPatch.context() as mp:
-        mp.setenv("PATH", no_gh_path(tmp_path))
-        with pytest.raises(guard.Blocked, match="could not inspect"):
-            guard.citation_sources(repo, repo, "feat")
-
-
 def test_project_state_no_forge_is_not_zero(repo):
     ps = load("ps_t1319", "project-state.py")
     out = ps.pr_state(repo)
