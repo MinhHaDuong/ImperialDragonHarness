@@ -53,7 +53,7 @@ SCRATCH=$(mktemp -d)
 # trace-stats: token and dollar cost per agent and session; needs ~/.claude/projects.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
-# trace-compact-audit: missed compact or clear points (context growth); needs the traces.
+# trace-compact-audit: missed compact or clear points and sessions past their model's context ceiling; needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
 # trace-friction: velocity losses (retries, slow tools, idle waits); needs the traces.

@@ -1,0 +1,8 @@
+{
+  "_comment": "Context ceilings in tokens, one source (author ruling 2026-11-09, ticket 1497; the context audit reads it). Context length is the whole prompt of a turn: input, cache read and cache creation tokens. An interface session may run to its model's ceiling; launched workers, team leads and unattended runs keep default_tokens whatever their model. A model id matches an entry when one of its dash-, dot- or underscore-separated words equals a name in `models` (case-insensitive); the first entry that matches wins.",
+  "default_tokens": 230000,
+  "interface_session": [
+    {"models": ["sol", "opus"], "tokens": 450000},
+    {"models": ["astra", "fable"], "tokens": 550000}
+  ]
+}

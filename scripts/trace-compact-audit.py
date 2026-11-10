@@ -14,6 +14,13 @@ read the post-compact median context (observed across sessions that DID
 compact) instead of its actual cache_read. Context re-growth after the
 hypothetical compaction is ignored — hence upper bound.
 
+Context length is the whole prompt of a turn: input, cache-read and
+cache-creation tokens (ticket 1499; `--metric cache_read` gives the June audit's
+older quantity). Besides runs, the audit counts main sessions: how many reached
+each level, and how many went past the ceiling of their own main model, read
+from skills/route/ceilings.json. Events are restricted to the window turn by
+turn. A transcript it cannot read is counted and reported, never read as zero.
+
 Zero LLM/API calls; emits aggregates only, never trace content.
 """
 
@@ -45,6 +52,45 @@ CLEAR_RE = re.compile(
 
 # Used only if the corpus contains no compaction to take a median from.
 DEFAULT_POST_COMPACT_TOKENS = 20_000
+
+CEILINGS_PATH = Path(__file__).resolve().parent.parent / "skills" / "route" / "ceilings.json"
+METRICS = ("prompt", "cache_read")
+METRIC_LABEL = {
+    "prompt": "whole prompt (input + cache read + cache creation)",
+    "cache_read": "cache_read tokens only",
+}
+# The levels of the design note's table, and its session floors.
+LEVELS = (230_000, 450_000, 550_000)
+MIN_TURNS_AT_LEVEL = 30
+LONG_SESSION_TURNS = 100
+
+
+class CouldNotLook(Exception):
+    """The corpus cannot be read at all: not an empty result."""
+
+
+def load_ceilings(path: Path = CEILINGS_PATH) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def ceiling_for(model: str, ceilings: dict) -> int:
+    """Interface-session ceiling of a model id: the first entry that shares a
+    whole word with it, else the default."""
+    words = set(re.split(r"[-._/:\s]+", (model or "").lower()))
+    for entry in ceilings.get("interface_session", []):
+        if words & {m.lower() for m in entry["models"]}:
+            return int(entry["tokens"])
+    return int(ceilings["default_tokens"])
+
+
+def _ctx(ev: dict, metric: str = "prompt") -> int:
+    if metric == "prompt" and "prompt" in ev:
+        return ev["prompt"]
+    return ev["cache_read"]
+
+
+def _fmt_k(n: int) -> str:
+    return f"{n // 1000}K"
 
 
 def _user_text_parts(content) -> list[str]:
@@ -79,6 +125,7 @@ def parse_trajectory(path: Path) -> dict:
     entry_skill = None
     last_ts = None
     first_ts = None
+    unparsable = 0
 
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -88,8 +135,10 @@ def parse_trajectory(path: Path) -> dict:
             try:
                 rec = json.loads(line)
             except json.JSONDecodeError:
+                unparsable += 1
                 continue
             if not isinstance(rec, dict):
+                unparsable += 1
                 continue
 
             tstamp = ts._parse_ts(rec.get("timestamp", ""))
@@ -100,7 +149,7 @@ def parse_trajectory(path: Path) -> dict:
 
             rec_type = rec.get("type")
             if rec_type == "system" and rec.get("subtype") == "compact_boundary":
-                events.append({"kind": "compact"})
+                events.append({"kind": "compact", "ts": tstamp})
                 meta = rec.get("compactMetadata") or {}
                 if isinstance(meta.get("postTokens"), int):
                     post_compact_tokens.append(meta["postTokens"])
@@ -124,12 +173,19 @@ def parse_trajectory(path: Path) -> dict:
                 ):
                     seen_ids.add(msg_id)
                     cache_read = usage.get("cache_read_input_tokens", 0) or 0
+                    prompt = (
+                        (usage.get("input_tokens", 0) or 0)
+                        + cache_read
+                        + (usage.get("cache_creation_input_tokens", 0) or 0)
+                    )
                     events.append(
                         {
                             "kind": "turn",
                             "cache_read": cache_read,
+                            "prompt": prompt,
                             "model": model,
                             "msg_id": msg_id,
+                            "ts": tstamp,
                         }
                     )
                     if awaiting_post_read:
@@ -138,7 +194,7 @@ def parse_trajectory(path: Path) -> dict:
             elif rec_type == "user":
                 for text in _user_text_parts(content):
                     if CLEAR_RE.search(text):
-                        events.append({"kind": "clear"})
+                        events.append({"kind": "clear", "ts": tstamp})
                     elif entry_skill is None:
                         for m in re.finditer(
                             r"<command-name>/?([\w-]+)</command-name>", text
@@ -154,6 +210,7 @@ def parse_trajectory(path: Path) -> dict:
         "entry_skill": entry_skill,
         "last_ts": last_ts,
         "first_ts": first_ts,
+        "unparsable_lines": unparsable,
     }
 
 
@@ -196,15 +253,17 @@ def drop_inherited_turns(trajectories: list[tuple]) -> int:
     return dropped
 
 
-def find_missed_runs(events: list[dict], min_run: int, threshold: int) -> list[dict]:
-    """Maximal runs of consecutive turns with cache_read >= threshold,
+def find_missed_runs(
+    events: list[dict], min_run: int, threshold: int, metric: str = "prompt"
+) -> list[dict]:
+    """Maximal runs of consecutive turns with context >= threshold,
     broken by any compact/clear event or below-threshold turn. Returns the
     runs of length >= min_run."""
     runs = []
     current: list[dict] = []
     start = 0
     for i, ev in enumerate(events):
-        if ev["kind"] == "turn" and ev["cache_read"] >= threshold:
+        if ev["kind"] == "turn" and _ctx(ev, metric) >= threshold:
             if not current:
                 start = i
             current.append(ev)
@@ -230,28 +289,136 @@ def run_recoverable_usd(turns: list[dict], median_post: int) -> float:
     return usd
 
 
-def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) -> dict:
+def window_start(now, days: int, since: str | None):
+    """Start of the window: `since` (YYYY-MM-DD, UTC midnight) or `days` before now."""
     from datetime import datetime, timedelta, timezone
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    if since:
+        return datetime.fromisoformat(since).replace(tzinfo=timezone.utc)
+    return now - timedelta(days=days)
+
+
+def restrict_to_window(events: list[dict], start) -> tuple[list[dict], int]:
+    """Events stamped at or after `start`; an unstamped event cannot be placed
+    and is dropped, counted in the second value."""
+    kept, undated = [], 0
+    for ev in events:
+        if ev.get("ts") is None:
+            undated += 1
+        elif ev["ts"] >= start:
+            kept.append(ev)
+    return kept, undated
+
+
+def main_model(events: list[dict]) -> str:
+    """The model that served most turns of a trajectory."""
+    counts: dict[str, int] = {}
+    for ev in events:
+        if ev["kind"] == "turn":
+            counts[ev["model"]] = counts.get(ev["model"], 0) + 1
+    return max(counts.items(), key=lambda kv: (kv[1], kv[0]))[0] if counts else ""
+
+
+def session_report(main_trajs: list[tuple], ceilings: dict, metric: str, levels=LEVELS) -> dict:
+    """Counts over main sessions, one row per session however many runs it had."""
+    rows = []
+    for project, session_id, traj in main_trajs:
+        turns = [e for e in traj["events"] if e["kind"] == "turn"]
+        if not turns:
+            continue
+        model = main_model(traj["events"])
+        ceiling = ceiling_for(model, ceilings)
+        ctx = [_ctx(t, metric) for t in turns]
+        rows.append(
+            {
+                "project": project,
+                "session_id": session_id,
+                "main_model": model,
+                "turns": len(turns),
+                "peak": max(ctx),
+                "ceiling": ceiling,
+                "turns_over_ceiling": sum(1 for c in ctx if c >= ceiling),
+                "at_level": {str(lv): sum(1 for c in ctx if c >= lv) for lv in levels},
+            }
+        )
+
+    def by_model(selected):
+        out: dict[str, int] = {}
+        for r in selected:
+            out[r["main_model"]] = out.get(r["main_model"], 0) + 1
+        return dict(sorted(out.items(), key=lambda kv: -kv[1]))
+
+    level_rows = {}
+    for lv in levels:
+        sel = [r for r in rows if r["at_level"][str(lv)] >= MIN_TURNS_AT_LEVEL]
+        level_rows[str(lv)] = {"sessions": len(sel), "by_model": by_model(sel)}
+    over = [r for r in rows if r["turns_over_ceiling"] >= MIN_TURNS_AT_LEVEL]
+    over.sort(key=lambda r: -r["peak"])
+    return {
+        "metric": metric,
+        "metric_label": METRIC_LABEL[metric],
+        "with_turns": len(rows),
+        "turns_in_window": sum(r["turns"] for r in rows),
+        "long_sessions": sum(1 for r in rows if r["turns"] >= LONG_SESSION_TURNS),
+        "min_turns_at_level": MIN_TURNS_AT_LEVEL,
+        "levels": level_rows,
+        "over_own_ceiling": {
+            "sessions": len(over),
+            "by_model": by_model(over),
+            "rows": [{k: v for k, v in r.items() if k != "at_level"} for r in over[:20]],
+        },
+    }
+
+
+def audit_corpus(
+    projects_dir: Path,
+    days: int,
+    min_run: int,
+    threshold: int | None = None,
+    *,
+    since: str | None = None,
+    now=None,
+    ceilings: dict | None = None,
+    metric: str = "prompt",
+) -> dict:
+    """Audit the corpus. `threshold` None means each agent's own: its main
+    model's ceiling for a main session, the default (230K) for a subagent."""
+    from datetime import datetime, timezone
+
+    if not Path(projects_dir).is_dir():
+        raise CouldNotLook(f"no trace corpus at {projects_dir}")
+    now = now or datetime.now(timezone.utc)
+    ceilings = ceilings or load_ceilings()
+    start = window_start(now, days, since)
+
     trajectories = []
-    files_seen = 0
+    files_seen = unreadable = unparsable = 0
     for project, session_id, agent_id, path in ts.iter_trace_files(projects_dir):
         files_seen += 1
         try:
             traj = parse_trajectory(path)
         except OSError as e:
-            log.warning("unreadable %s: %s", path, e)
+            log.warning("could not look at %s: %s", path, e)
+            unreadable += 1
             continue
-        if traj["last_ts"] is None or traj["last_ts"] < cutoff:
-            continue
+        unparsable += traj["unparsable_lines"]
         trajectories.append((project, session_id, agent_id, traj))
 
+    # Inherited turns are dropped on whole transcripts, before the window cut.
     duplicate_turns = drop_inherited_turns(trajectories)
     if duplicate_turns:
         log.info(
             "dropped %d turns inherited by forked/resumed sessions", duplicate_turns
         )
+
+    undated = 0
+    in_window = []
+    for item in trajectories:
+        item[3]["events"], n = restrict_to_window(item[3]["events"], start)
+        undated += n
+        if item[3]["events"]:
+            in_window.append(item)
+    trajectories = in_window
 
     post_reads = [r for _, _, _, t in trajectories for r in t["post_compact_reads"]]
     post_tokens = [r for _, _, _, t in trajectories for r in t["post_compact_tokens"]]
@@ -267,19 +434,28 @@ def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) ->
     for project, session_id, agent_id, traj in trajectories:
         compactions += sum(1 for e in traj["events"] if e["kind"] == "compact")
         clears += sum(1 for e in traj["events"] if e["kind"] == "clear")
-        for run in find_missed_runs(traj["events"], min_run, threshold):
+        model = main_model(traj["events"])
+        if threshold is not None:
+            agent_threshold = threshold
+        elif agent_id == "main":
+            agent_threshold = ceiling_for(model, ceilings)
+        else:
+            agent_threshold = int(ceilings["default_tokens"])
+        for run in find_missed_runs(traj["events"], min_run, agent_threshold, metric):
             usd = run_recoverable_usd(run["turns"], median_post)
-            reads = [t["cache_read"] for t in run["turns"]]
+            reads = [_ctx(t, metric) for t in run["turns"]]
             run_rows.append(
                 {
                     "project": project,
                     "session_id": session_id,
                     "agent_id": agent_id,
+                    "main_model": model,
+                    "threshold": agent_threshold,
                     "entry_skill": traj["entry_skill"] or "",
                     "run_start_event": run["start"],
                     "run_turns": run["length"],
-                    "mean_cache_read": sum(reads) // len(reads),
-                    "max_cache_read": max(reads),
+                    "mean_context": sum(reads) // len(reads),
+                    "max_context": max(reads),
                     "recoverable_usd": round(usd, 4),
                 }
             )
@@ -315,11 +491,19 @@ def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) ->
     for s in top_sessions:
         s["recoverable_usd"] = round(s["recoverable_usd"], 2)
 
+    main_trajs = [(p, sid, t) for p, sid, aid, t in trajectories if aid == "main"]
+
     return {
         "window_days": days,
+        "window_start": start.isoformat(),
+        "window_end": now.isoformat(),
         "min_run": min_run,
-        "threshold_tokens": threshold,
+        "threshold_tokens": threshold if threshold is not None else "per model (skills/route/ceilings.json)",
+        "metric": metric,
         "files_seen": files_seen,
+        "unreadable_files": unreadable,
+        "unparsable_lines": unparsable,
+        "undated_events_dropped": undated,
         "agents_in_window": len(trajectories),
         "inherited_turns_dropped": duplicate_turns,
         "compactions_observed": compactions,
@@ -327,30 +511,75 @@ def audit_corpus(projects_dir: Path, days: int, min_run: int, threshold: int) ->
         "post_compact_median_tokens": median_post,
         "post_compact_median_source": median_source,
         "missed_runs": len(run_rows),
+        "sessions_with_missed_runs": len(sessions),
         "recoverable_usd_upper_bound": round(sum(r["recoverable_usd"] for r in run_rows), 2),
         "by_project": _agg("project"),
         "by_entry_skill": _agg("entry_skill"),
         "top_sessions": top_sessions,
+        "sessions": session_report(main_trajs, ceilings, metric),
         "run_rows": run_rows,
     }
+
+
+def render_table(summary: dict) -> str:
+    """The design note's section 1 table, as text."""
+    sr = summary["sessions"]
+    n = sr["min_turns_at_level"]
+    lines = [
+        f"Context length audit, main sessions, {summary['window_start'][:10]} to {summary['window_end'][:10]}",
+        f"Context length counted as: {sr['metric_label']}",
+        f"sessions with at least one turn: {sr['with_turns']}",
+        f"sessions with {LONG_SESSION_TURNS} or more turns: {sr['long_sessions']}",
+    ]
+    for lv, row in sr["levels"].items():
+        models = ", ".join(f"{c} on {m or '(unknown)'}" for m, c in row["by_model"].items())
+        lines.append(
+            f"sessions with {n} or more turns at or above {_fmt_k(int(lv))}: {row['sessions']}"
+            + (f" ({models})" if models else "")
+        )
+    over = sr["over_own_ceiling"]
+    models = ", ".join(f"{c} on {m or '(unknown)'}" for m, c in over["by_model"].items())
+    lines.append(
+        f"sessions with {n} or more turns past the ceiling of their main model: {over['sessions']}"
+        + (f" ({models})" if models else "")
+    )
+    lines.append(
+        "A main session is not known to be an interface session: the ceiling is the model's, "
+        "an unattended run is bound by the default."
+    )
+    lines.append(
+        f"missed runs: {summary['missed_runs']} in {summary['sessions_with_missed_runs']} sessions"
+    )
+    if summary["unreadable_files"]:
+        lines.append(
+            f"COULD NOT LOOK at {summary['unreadable_files']} of {summary['files_seen']} "
+            "transcripts: the counts above leave them out"
+        )
+    if summary["unparsable_lines"]:
+        lines.append(f"{summary['unparsable_lines']} transcript lines could not be parsed")
+    return "\n".join(lines)
 
 
 CSV_COLUMNS = [
     "project",
     "session_id",
     "agent_id",
+    "main_model",
+    "threshold",
     "entry_skill",
     "run_start_event",
     "run_turns",
-    "mean_cache_read",
-    "max_cache_read",
+    "mean_context",
+    "max_context",
     "recoverable_usd",
 ]
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Detect missed compact/clear opportunities in session traces."
+        description="Which sessions overran their context ceiling, and what missed "
+        "compact/clear runs cost. Context length is the whole prompt per turn "
+        "(input + cache read + cache creation) unless --metric says otherwise."
     )
     parser.add_argument(
         "--projects-dir",
@@ -360,6 +589,10 @@ def main() -> None:
     )
     parser.add_argument("--days", type=int, default=28, help="Window in days (default 28)")
     parser.add_argument(
+        "--since",
+        help="Window start as YYYY-MM-DD (UTC), instead of --days; the design note's table uses 2026-11-01",
+    )
+    parser.add_argument(
         "--min-run",
         type=int,
         default=30,
@@ -368,8 +601,16 @@ def main() -> None:
     parser.add_argument(
         "--threshold",
         type=int,
-        default=300_000,
-        help="Per-turn cache_read floor in tokens (default 300000)",
+        default=None,
+        help="Per-turn context floor in tokens for every agent "
+        "(default: each main model's ceiling from skills/route/ceilings.json, 230000 for subagents)",
+    )
+    parser.add_argument(
+        "--metric",
+        choices=METRICS,
+        default="prompt",
+        help="prompt: input + cache read + cache creation (default); "
+        "cache_read: the June 2026 audit's quantity",
     )
     parser.add_argument("--output", type=Path, help="Write per-run rows to this CSV")
     parser.add_argument(
@@ -378,7 +619,18 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-    summary = audit_corpus(args.projects_dir, args.days, args.min_run, args.threshold)
+    try:
+        summary = audit_corpus(
+            args.projects_dir,
+            args.days,
+            args.min_run,
+            args.threshold,
+            since=args.since,
+            metric=args.metric,
+        )
+    except (CouldNotLook, OSError, ValueError) as e:
+        print(f"could not look: {e}", file=sys.stderr)
+        return 2
     run_rows = summary.pop("run_rows")
 
     if args.output:
@@ -392,6 +644,7 @@ def main() -> None:
         json.dump(summary, sys.stdout, indent=2, default=str)
         print()
     else:
+        print(render_table(summary))
         log.info(
             "agents=%d missed_runs=%d recoverable<=$%s (median_post=%d from %s)",
             summary["agents_in_window"],
@@ -400,7 +653,8 @@ def main() -> None:
             summary["post_compact_median_tokens"],
             summary["post_compact_median_source"],
         )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
