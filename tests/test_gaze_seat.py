@@ -64,6 +64,8 @@ case "$STUB_MODE" in
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
   noread) printf 'reach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
   lateread) printf 'Looking.\\nreach: read=yes shell=no tests=not-run\\nverdict: clear\\n' ;;
+  tail) printf 'reach: read=yes shell=yes tests=not-run (read code only)\nfinding: none\nverdict: clear\n' ;;
+  tail-noread) printf 'reach: read=no shell=no tests=not-run (could not open it)\nverdict: clear\n' ;;
   noreach) printf 'finding: none\nverdict: clear\n' ;;
   fenced) printf '```text\nworker: model=fixture-qwen · family=Qwen\nreach: read=yes shell=no tests=not-run\n```\n\nfinding: none\nverdict: clear\n' ;;
   fenced-bare) printf '\n```\nreach: read=yes shell=no tests=not-run\n```\nfinding: none\nverdict: clear\n' ;;
@@ -203,6 +205,22 @@ def test_seat_that_cannot_read_is_no_report(rig):
     assert result.returncode == 1
     assert result.stdout.startswith('correctness: no report (seat reach: read=no;')
     assert (rig['panel'] / 'correctness.md.status').read_text().strip() == result.stdout.strip()
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_reach_line_with_trailing_text_is_filed_intact(rig):
+    result = launch(rig, mode='tail')
+    assert result.returncode == 0, result.stdout
+    filed = (rig['panel'] / 'correctness.md').read_text()
+    assert 'reach: read=yes shell=yes tests=not-run (read code only)' in filed
+
+
+@pytest.mark.integration
+def test_unread_tree_with_trailing_text_is_still_no_report(rig):
+    result = launch(rig, mode='tail-noread')
+    assert result.returncode == 1
+    assert 'seat reach: read=no' in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
 
 

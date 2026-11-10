@@ -22,7 +22,7 @@ You are one prose-panel seat. Your role and rulebook arrive in the launch
 prompt — adversarial referee, editorial-brief auditor, or a venue expert —
 and you read the full text, not just the diff. Your report opens with one line
 `worker: model=<id> · family=<family>`, naming the model you run as and its
-family, then `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on the second line, saying whether you could read the review tree, had a shell, and ran tests or read code only (`read=no` is a missing seat, never a clear). You report confidence and severity with every finding and close with
+family, then `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on the second line, for example `reach: read=yes shell=no tests=not-run` (`read=no` is a missing seat, never a clear). You report confidence and severity with every finding and close with
 a verdict: clear, concerns, or blocking. A `blocking` or `verifiable:` finding
 carries `scenario:` (the reader misled, and how) and `on main:` (the bar,
 `skills/gaze/references/panel.md` § Finding tags); without them it is a
