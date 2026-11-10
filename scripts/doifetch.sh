@@ -16,10 +16,14 @@ spec="git+https://github.com/MinhHaDuong/DOIfetch@${DOIFETCH_REF}"
 # source selections and other DOIfetch modes as upstream pass-throughs.
 fulltext=false
 explicit_source=false
+has_output_dir=false
+informational=false
 for arg in "$@"; do
     case "$arg" in
         --doi|--doi=*|--isbn|--isbn=*) fulltext=true ;;
-        --source|--source=*|--help|--version) explicit_source=true ;;
+        --source|--source=*) explicit_source=true ;;
+        --help|--version) explicit_source=true; informational=true ;;
+        --output-dir|--output-dir=*) has_output_dir=true ;;
     esac
 done
 if [[ "${1:-}" == "--fulltext" ]]; then
@@ -27,6 +31,12 @@ if [[ "${1:-}" == "--fulltext" ]]; then
     fulltext=true
 elif [[ "$explicit_source" == true ]]; then
     fulltext=false
+fi
+# Every fetch names its staging folder: docs/ unless the caller gave one.
+# Neither DOIfetch's own default nor this script's is relied on (ticket 1503,
+# author ruling 2026-11-10).
+if [[ "$has_output_dir" == false && "$informational" == false ]]; then
+    set -- "$@" --output-dir docs
 fi
 if [[ "$fulltext" == true ]]; then
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"

@@ -1786,6 +1786,94 @@ def url_identifiers(url: str | None) -> dict[str, str | None]:
             and DOI_BARE_RE.fullmatch(doi) else None}
 
 
+# ---------------------------------------------------------------------------
+# Fetch receipts (ticket 1503)
+#
+# A fetcher (scripts/fulltext_cascade.py, skills/zotero/scripts/probe-url.py)
+# appends the JSON line it prints to `.receipts.jsonl` beside the file it
+# fetched: its identifiers as given or found, its URL, its md5. This side only
+# reads. Losing the file loses nothing but these keys.
+# ---------------------------------------------------------------------------
+
+RECEIPTS_NAME = ".receipts.jsonl"
+RECEIPT_IDS = ("doi", "isbn", "arxiv", "handle")
+
+
+def normal_url(raw: str | None) -> str:
+    """A URL as compared with an item's `url` field: scheme and host in
+    lower case, no fragment, no trailing slash on the path. The query string
+    and the rest of the path are kept as they are."""
+    parts = urllib.parse.urlsplit(str(raw or "").strip())
+    if not (parts.scheme and parts.netloc):
+        return ""
+    host = parts.netloc.rpartition("@")
+    netloc = host[0] + host[1] + host[2].lower()
+    return urllib.parse.urlunsplit((parts.scheme.lower(), netloc,
+                                    parts.path.rstrip("/"), parts.query, ""))
+
+
+def read_receipts(directory: Path) -> list[dict[str, Any]]:
+    """The receipts of one staging folder, oldest first; a line that is not
+    a JSON object is passed over."""
+    rows: list[dict[str, Any]] = []
+    try:
+        lines = (directory / RECEIPTS_NAME).read_text(
+            encoding="utf-8").splitlines()
+    except OSError:
+        return rows
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def find_receipt(path: Path) -> dict[str, Any] | None:
+    """The newest receipt of `path`: the one holding its md5, so that a
+    rename does not lose it; else the one recording its name, so that an
+    edit (OCR, page cuts) does not either. A file both renamed and edited
+    has none."""
+    rows = read_receipts(path.parent)
+    if not rows or not path.is_file():
+        return None
+    digest = file_md5(path)
+    for row in reversed(rows):
+        if row.get("md5") == digest:
+            return row
+    for row in reversed(rows):
+        if isinstance(row.get("path"), str) and Path(row["path"]).name == path.name:
+            return row
+    return None
+
+
+def receipt_keys(receipt: dict[str, Any] | None
+                 ) -> tuple[dict[str, str], dict[str, str], list[str]]:
+    """(given identifiers, scraped identifiers, URLs) a receipt states.
+    Scraped ones were read from page text by the fetcher
+    (`identifiers_scraped` names them): a cited work's may be among them.
+    An identifier the URL's own grammar states is given."""
+    receipt = receipt or {}
+    ids = receipt.get("identifiers")
+    ids = ids if isinstance(ids, dict) else {}
+    marked = receipt.get("identifiers_scraped")
+    marked = set(marked) if isinstance(marked, list) else set()
+    urls = list(dict.fromkeys(
+        normal_url(u) for u in (receipt.get("url"), receipt.get("final_url"))
+        if isinstance(u, str) and normal_url(u)))
+    given = {k: str(ids[k]) for k in RECEIPT_IDS
+             if ids.get(k) and k not in marked}
+    for url in urls:
+        for key, value in url_identifiers(url).items():
+            if value and key not in given:
+                given[key] = value
+    scraped = {k: str(ids[k]) for k in RECEIPT_IDS
+               if ids.get(k) and k in marked and k not in given}
+    return given, scraped, urls
+
+
 # biblatex `eprinttype` (BibTeX's `archiveprefix`) values naming a scheme
 # the lookup knows; an eprint of another scheme is not looked up.
 EPRINT_ARXIV = {"arxiv"}
@@ -1867,7 +1955,8 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               pdf_path: Path | None = None,
               isbn_unusable: str | None = None,
               md5_index: dict[str, Any] | None = None,
-              from_text: bool = False) -> dict[str, Any]:
+              from_text: bool = False,
+              urls: list[str] | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
     `matches` are the works whose own field carries a given identifier
@@ -1882,7 +1971,9 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     every stored attachment of the libraries, so a copy no other key finds
     is still seen; without it, only the works another key found are
     compared. `from_text` labels the identifiers as read from the file's
-    own pages ("doi (from text)"), which may be a cited work's.
+    own pages ("doi (from text)"), which may be a cited work's. `urls`
+    (a fetch receipt's) are matched against a work's `url` field, equal
+    after `normal_url`.
     """
     consulted: list[str] = []
     skipped: list[str] = []
@@ -1955,6 +2046,18 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
                     if carries(work, supplied):
                         emit(work, used, lib)
 
+    for url in dict.fromkeys(normal_url(u) for u in urls or []):
+        if not url:
+            continue
+        if "url" not in consulted:
+            consulted.append("url")
+        # Without the scheme, so http and https spellings both come back;
+        # `normal_url` then decides.
+        for lib in libs:
+            for work in search_works(lib[1], lib[0], url.partition("://")[2]):
+                if normal_url(work["url"]) == url:
+                    emit(work, "url", lib)
+
     words = re.findall(r"[^\W_]{3,}", title or "")
     if not title:
         skipped.append("title (none supplied)")
@@ -1999,22 +2102,39 @@ class BadQuery(ValueError):
     """find-work's input cannot say which works to look up."""
 
 
+def metadata_items(text: str) -> list[Any]:
+    """The rows of a --metadata input: extract-metadata's `{"items": [...]}`,
+    a fetch receipt (one JSON object, or the lines of `.receipts.jsonl`), or
+    probe-url's list of records. ValueError/KeyError/TypeError when it is
+    none of them."""
+    try:
+        data = json.loads(text)
+    except ValueError:
+        data = [json.loads(line) for line in text.splitlines() if line.strip()]
+    if isinstance(data, dict):
+        data = data["items"] if "items" in data else (
+            [data] if "md5" in data else data["items"])
+    return data
+
+
 def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
-    """The works to look up: each item of extract-metadata's output
-    (--metadata, a file or - for stdin), else one work from the flags. A
+    """The works to look up: each item of extract-metadata's output or each
+    fetch receipt (--metadata, a file or - for stdin), else one work from
+    the flags. A
     flag overrides the extracted value, so a refined title replaces the
     pdfinfo one; that needs a metadata file of one work, since flags
     applied to several would describe them all as one. An extraction row
     with an error stays in the results, as an error."""
     flags = {"title": args.title, "doi": args.doi, "isbn": args.isbn,
              "arxiv": args.arxiv, "handle": args.handle, "pdf": args.pdf,
-             "type": getattr(args, "type", None)}
+             "type": getattr(args, "type", None),
+             "url": getattr(args, "url", None)}
     if not args.metadata:
         return [flags]
     try:
         text = (sys.stdin.read() if args.metadata == "-"
                 else Path(args.metadata).read_text(encoding="utf-8"))
-        items = json.loads(text)["items"]
+        items = metadata_items(text)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         raise BadQuery(f"--metadata {args.metadata}: not extract-metadata "
                        f"output ({type(exc).__name__}: {exc})") from exc
@@ -2030,8 +2150,9 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             raise BadQuery(f"--metadata {args.metadata}: an item is not an "
                            f"object")
-        if "error" in item:
-            works.append({"error": item["error"], "pdf": item.get("pdf")})
+        if item.get("error"):
+            works.append({"error": item["error"],
+                          "pdf": item.get("pdf") or item.get("path")})
             continue
         ids = item.get("identifiers") or {}
         pdfinfo_fields = item.get("pdfinfo") or {}
@@ -2041,6 +2162,14 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
         work = {"title": pdfinfo_fields.get("Title"), "pdf": item.get("pdf"),
                 "type": None,
                 **{k: ids.get(k) for k in ("doi", "isbn", "arxiv", "handle")}}
+        if "md5" in item:
+            # A fetch receipt: its path, title and URLs; the scraped
+            # identifiers are as extract-metadata's, looked up unlabelled.
+            given, scraped, urls = receipt_keys(item)
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+            work.update(title=item.get("title") or meta.get("title"),
+                        pdf=item.get("path"), urls=urls,
+                        **{k: (given | scraped).get(k) for k in RECEIPT_IDS})
         work.update({k: v for k, v in flags.items() if v})
         works.append(work)
     return works
@@ -2069,7 +2198,9 @@ def cmd_find_work(args: argparse.Namespace) -> int:
                 **find_work(libs, doi=work["doi"], isbn=work["isbn"],
                             arxiv=work["arxiv"], handle=work["handle"],
                             title=work["title"], item_type=work["type"],
-                            pdf_path=Path(work["pdf"]) if work["pdf"] else None)}
+                            pdf_path=Path(work["pdf"]) if work["pdf"] else None,
+                            urls=[u for u in [work.get("url"),
+                                              *work.get("urls", [])] if u])}
 
     def look() -> list[dict[str, Any]]:
         libs = libraries(args.library)
@@ -2406,7 +2537,7 @@ def _staging_verdict(res: dict[str, Any], filename_only: bool,
 
 # The identifier keys a curated source gives; a key read from the page text
 # carries " (from text)" and is not among them.
-GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle")
+GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle", "url")
 
 
 def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
@@ -2436,28 +2567,38 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     bib_type = str(bib_entry.get("_type", "")).lower()
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
     ids = bib_identifiers(bib_entry)
+    # The fetcher's receipt, found by the file's md5 or name: what it was
+    # fetched by. The .bib entry's own keys win; the receipt fills the gaps.
+    r_given, r_scraped, r_urls = receipt_keys(find_receipt(path))
+    ids = {k: ids[k] or r_given.get(k) for k in ids}
+    # A fetched ISBN names the whole volume being sought, not a part.
+    whole_volume = bool(r_given.get("isbn")) and not bib_entry
     from_text = False
     text_skip = None
 
     def look(searched: str) -> dict[str, Any]:
         res = find_work(libs, title=searched, **ids,
-                        item_type=item_type, pdf_path=path,
+                        item_type=item_type, pdf_path=path, urls=r_urls,
                         # Fail closed: an unplaced type may be a part whose
                         # ISBN is its volume's.
-                        isbn_unusable=None if item_type else
-                        f"unmapped .bib type @{bib_type}: part or volume "
-                        "unknown", md5_index=md5_index, from_text=from_text)
+                        isbn_unusable=None if item_type or (
+                            whole_volume and ids["isbn"] == r_given["isbn"])
+                        else f"unmapped .bib type @{bib_type}: part or "
+                        "volume unknown",
+                        md5_index=md5_index, from_text=from_text)
         if text_skip:
             res["skipped"].append(text_skip)
         return res
 
     res = look(title)
-    hashed = any("storageHash" in m["why"] for m in res["matches"])
-    if not any(ids.values()) and path.suffix.lower() == ".pdf" and not hashed:
-        # Only when no curated key exists and no stored copy answered: a
-        # DOI on the page may be a cited work's. Its lookups are labelled
-        # "(from text)".
-        scraped, text_skip = text_identifiers(path)
+    if (not any(ids.values()) and not res["matches"]
+            and (path.suffix.lower() == ".pdf" or r_scraped)):
+        # Only when no curated key exists and no stored copy or URL
+        # answered: a DOI on the page may be a cited work's. Its lookups are
+        # labelled "(from text)". The fetcher's own scrape stands in for
+        # reading the file (an HTML snapshot has no PDF text).
+        scraped, text_skip = ((r_scraped, None) if r_scraped
+                              else text_identifiers(path))
         if any(scraped.values()):
             ids, from_text = scraped, True
             res = look(title)
@@ -3029,8 +3170,10 @@ def main() -> int:
                         help="is this work already in the library? Zotero's "
                              "local API only; reads extract-metadata output "
                              "or the flags")
-    pf.add_argument("--metadata", help="extract-metadata JSON: a file, or - "
-                                       "for stdin; the flags override it")
+    pf.add_argument("--metadata", help="extract-metadata JSON or a fetch "
+                                       "receipt (.receipts.jsonl): a file, "
+                                       "or - for stdin; the flags override "
+                                       "it")
     pf.add_argument("--title", help="title to search: its hits are "
                                     "candidates to judge, never a match")
     pf.add_argument("--doi", help="DOI to exact-match")
@@ -3042,6 +3185,10 @@ def main() -> int:
                                    "looked up by its volume's ISBN")
     pf.add_argument("--pdf", help="PDF path: its content hash is compared "
                                   "with the files of each work found")
+    pf.add_argument("--url", help="URL to match against a work's url field "
+                                  "(equal after lower-casing scheme and "
+                                  "host, dropping the fragment and a "
+                                  "trailing slash)")
     add_library_args(pf, scope)
     pf.set_defaults(func=cmd_find_work)
 
