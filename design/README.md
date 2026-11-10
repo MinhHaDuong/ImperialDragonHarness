@@ -36,7 +36,7 @@ drafts* below.
 | `2026-09-11-memory-systems-comparison.md` | Architectural comparison with MemU, Letta, Mem0 and Graphiti; review amendments and licence-aware reuse |
 | `2026-09-11-memory-implementation-plan.md` | V8 delivery plan: Markdown pilot, factual capture, separately invoked dreaming and four-runtime evidence |
 | `2026-09-24-rules-coherence-audit.md` | Harness ↔ project directive coherence audit of eleven repos: findings, in-flight PR check, ranked preconisations (tracker 0956) |
-| `2026-09-10-dragon-memory-design.md` | **Authoritative** design for the harness memory system — always the current version, v8 today |
+| `2026-09-10-dragon-memory-design.md` | The v8 design note (2026-10-01), frozen; the running system is described by [`memory-v8/README.md`](./memory-v8/README.md) |
 | `2026-09-10-dragon-memory-design-v7.md` | Frozen v7 before the Markdown-first v8 |
 | `2026-09-11-memory-implementation-plan-v7.md` | Frozen v7 implementation train |
 | `2026-09-10-dragon-memory-design-v6.md` | Frozen v6 — historical predecessor |
