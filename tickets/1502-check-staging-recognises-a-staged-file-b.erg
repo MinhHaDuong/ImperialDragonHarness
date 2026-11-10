@@ -16,6 +16,7 @@ Author: reviewer
 2026-11-10T07:18Z reviewer raid f7aac3: url/eprint: derive through entry_query's URL -> arXiv/handle code, extended to DOI-in-URL and eprint -> arXiv. Identifier grammar on URLs is fine; any pattern list on filenames or titles is forbidden (PR #2370): if a criterion seems to need one, stop and report.
 2026-11-10T07:18Z reviewer raid f7aac3: Whether the local API filters attachments by md5: test on the isolated fixture only, answer in the PR.
 2026-11-10T07:18Z reviewer raid f7aac3: Feasibility: PASS. The fixture can hold a stored attachment with a known md5 (tests/zotero_live.py LiveZotero.save(..., pdf=...); see test_a_renamed_copy_is_found_by_its_content).
+2026-11-10T07:23Z reviewer author ruling 2026-11-10 (relayed): "Do Zotero has attachment hashes already ? Use the same then." — library side = Zotero's own attachment md5 via local API; staged side = file_md5; no harness hash store
 
 --- body ---
 ## Context
