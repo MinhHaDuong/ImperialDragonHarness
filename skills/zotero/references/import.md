@@ -24,8 +24,13 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 1. **Probe.** `python3 "$IDH_ROOT/skills/zotero/scripts/probe-url.py" <url>...`
    stages each document in `docs/` and prints a JSON record per URL:
    `staged_path`, `mime`, `page_count` (PDFs), `meta` (title/date/authors/
-   publication/publisher), `identifiers` (doi/arxiv/isbn), `suggested_type`,
+   publication/publisher), `identifiers` (doi/arxiv/isbn, read from the page,
+   so scraped and listed in `identifiers_scraped`), `suggested_type`,
    and `full_pdf_url` when an HTML landing page advertises a downloadable PDF.
+   Each record is also its receipt (`path`, `md5`, `url`, `final_url`,
+   `source`, `title`, same keys as `doifetch.sh`): the line is appended to
+   `docs/.receipts.jsonl`, where `check-staging` finds it by md5 or name and
+   matches `url` against an item's `url` field.
 2. **Prefer the real document.** If `full_pdf_url` is present (institutional
    landing page → PDF), probe that too and attach the PDF, not the HTML overview.
 3. Resolve identifiers and refine the metadata as for a PDF (identifier

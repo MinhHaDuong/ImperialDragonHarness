@@ -193,9 +193,14 @@ then obtains the `shadow` extra and tries Sci-Hub; for an ISBN, it first resolve
 tries the open cascade for each, and then obtains the extra and tries LibGen. If ISBN lookup fails,
 the helper reports that failure and stops: it cannot establish that the open
 route was exhausted. A `source` in the result names the channel that actually
-supplied a PDF. Record that source for each successful download. `skipped`
-means the target file already existed; its origin is unknown and must not be
-attributed to a source. Verify the file belongs to the work before attaching.
+supplied a PDF. The helper stages the file in `docs/` (or the folder named by
+`--output-dir`; it always passes one to DOIfetch) and records that source,
+the DOI or ISBN it was given and the file's md5 in a receipt: the JSON line it
+prints, appended to `<staging folder>/.receipts.jsonl`. `check-staging` and
+`find-work --metadata <receipt>` read it back; nothing is recorded by hand.
+`skipped` means the target file already existed; its origin is unknown, it
+leaves no receipt, and must not be attributed to a source. Verify the file
+belongs to the work before attaching.
 
 On `success`, check the downloaded PDF, then file it with
 `suggest-attachments --parent <itemKey> <file>` and add `--edit` after reading
@@ -206,6 +211,7 @@ its `shadow` extra could not be obtained. The open cascade is still attempted
 before obtaining the extra. Name the failure; do not report an
 unattempted source as unavailable. No per-project opt-in is required.
 
-The helper's other modes forward their options to DOIfetch unchanged; its own
-upstream default remains open and institutional sources only. Check the pinned
+The helper's other modes forward their options to DOIfetch, adding
+`--output-dir docs` when the caller gave none; its own upstream default
+remains open and institutional sources only. Check the pinned
 release with `"$IDH_ROOT/scripts/doifetch.sh" --version`.
