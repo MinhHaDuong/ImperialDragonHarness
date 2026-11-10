@@ -4,16 +4,17 @@ Design history of the Imperial Dragon Harness: memos, audits and review records.
 This index lists the current guides and a table of references and records, not every file;
 `ls design/` lists them all.
 
-**Dragon memory design — the authoritative document is
-[`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md),
-currently v8.** Everything else in that family is a frozen record: the
-predecessors v6 and v7, the reviews, the provider study notes and the measurement
-notes. Drafts v0 through v5 were retired from the tree; see *Superseded
+**Memory system — the authoritative document is the as-built blueprint
+[`memory-v8/README.md`](./memory-v8/README.md).** The v8 design note
+[`2026-09-10-dragon-memory-design.md`](./2026-09-10-dragon-memory-design.md) and
+everything else in that family are frozen records: the predecessors v6 and v7,
+the reviews, the provider study notes, the measurement notes and the 2026-10-29
+audit. Drafts v0 through v5 were retired from the tree; see *Superseded
 drafts* below.
 
 ## Current guides
 
-- [Memory v8 templates and source inventory](memory-v8/README.md): documentary foundation; no runtime activation.
+- [Memory system, as built](memory-v8/README.md): stores, lifecycle, delivery per runtime, gaps and open design questions.
 - [Installation](idh-install-strategy.md): portable checkout and runtime registration.
 - [Operations](adapter-operations.md): existing pilot verification and recovery.
 - [Main-update guard](2026-10-21-main-update-guard.md): the journal and refusal hook on `main`, its enforce switch, and the daily audit of gate receipts.
