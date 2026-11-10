@@ -2,10 +2,12 @@
 Title: raid_land cleanup keeps a merged worktree that holds another registered worktree
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2428
 
 --- log ---
 2026-11-10T09:16Z reviewer created
 2026-11-10T13:13Z reviewer note feasibility — raid ce1c5a: PASS, cleanup() at scripts/raid_land.py:227, worktree_nested at scripts/worktree-clean-lib.sh:39, fixture make_repo at tests/test_raid_land_local.py:42; no cross-ticket conflict (single ticket), no shared registry
+2026-11-10T13:25Z reviewer closed — autoclosed — PR #2428
 
 --- body ---
 ## Context
