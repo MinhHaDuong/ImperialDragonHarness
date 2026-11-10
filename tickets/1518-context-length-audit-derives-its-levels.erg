@@ -1,0 +1,68 @@
+%erg 0.1
+Title: Context length audit derives its levels from ceilings.json
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T13:15Z reviewer created
+
+--- body ---
+## Context
+
+`scripts/trace-compact-audit.py` reads each session's ceiling from
+`skills/route/ceilings.json`, but the three rows "sessions with 30 or more
+turns at or above N" come from a literal, `LEVELS = (230_000, 450_000,
+550_000)`, a copy of the three values that file holds today. Change a ceiling
+in `ceilings.json` and the over-ceiling count follows while those rows keep
+the old values. The author ruled on 2026-11-10: "Derive numbers. Drift is
+certain otherwise."
+
+Read on main at 8326edd1:
+
+- `LEVELS` at line 95 is the only code copy of a ceiling value under
+  `scripts/`, `hooks/` and `skills/` (grep of 230000, 450000, 550000 with and
+  without underscore, `ceilings.json` and tests set aside).
+- The same file writes the default ceiling as text twice: "230000 for
+  subagents" in the `--threshold` help and "the default (230K)" in the
+  `audit_corpus` docstring.
+- The run floor is written twice: `MIN_TURNS_AT_LEVEL = 30` and the
+  `--min-run` default of 30.
+- `tests/test_context_length_audit.py` asserts 230000, 450000 and 550000
+  against the live `ceilings.json`, so a ruling that changes a ceiling turns
+  those tests red for no defect.
+
+Not in this ticket: `FLEET_HOSTS = ("padme", "doudou")` in the same script.
+Whether the fleet is read from the archive, which would name the hosts by its
+own directories, is an open question with the author.
+
+## Scope
+
+- The level rows of the table and of the JSON are the distinct ceilings of the
+  ceilings data the run uses, the default included, in increasing order.
+- No ceiling value is written in the script, its help or its docstrings; text
+  that names one takes it from the data.
+- The run floor has one definition.
+- The tests of the audit's logic use ceilings of their own, so they hold when
+  the author changes a ceiling; one test reads the live file to show the audit
+  follows it.
+
+Out of scope: the prose of rules and skills that states 230K to workers; the
+30-turn and 100-turn floors themselves, which are this audit's own
+definitions and stay.
+
+## Test
+
+With a ceilings fixture that differs from the live file (another default,
+another model ceiling, a third value): the level rows are that fixture's
+values, and a session past the fixture's ceiling and under the live one is
+counted past its ceiling.
+
+## Exit criteria
+
+- [ ] The audit's level rows come from the ceilings data: a ceiling changed in
+  `skills/route/ceilings.json` changes the rows with no edit to the script
+- [ ] No ceiling value is written in `scripts/trace-compact-audit.py`, code,
+  help or docstring
+- [ ] The run floor of 30 turns has one definition in the script
+- [ ] The audit's tests do not fail when a ceiling changes in the live file
+- [ ] `make check` passes
