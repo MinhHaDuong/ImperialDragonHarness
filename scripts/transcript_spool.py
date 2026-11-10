@@ -15,6 +15,25 @@ is scripts/agent-sessions-README.md. `archive_root()` and `live_roots()` read th
 sets IDH_ARCHIVE_ROOT / CLAUDE_CONFIG_DIR / CODEX_HOME / PI_CODING_AGENT_DIR afterwards is honoured;
 `LIVE_ROOTS` is the import-time snapshot; the archive root has none, since it may be unknown.
 
+One definition of the roots (ticket 1520). `NAMED_ROOTS` lists, per runtime, each root by name; the
+archive, the timeline and the audit's readers all take their roots from it, so a root one of them reads is
+a root the archive copies:
+
+    claude   projects
+    codex    sessions, archived_sessions   (both under the Codex home; the second is flat)
+    pi       live, spool                   (the spool is flat: Pi's spool is `per_seat: false` in routes.json)
+    aider    spool
+    vibe     spool
+
+`named_roots(runtime, codex_home=None)` returns `[(name, Path | RuntimeError)]`, each root resolved on its
+own: an unknown archive root fails the spool entries only, never a live root. `named_root(runtime, name)`
+returns one Path or raises RuntimeError. `source_roots(runtime)` is the resolved paths, errors skipped.
+`codex_home()` is the Codex home. `source_of(runtime, relpath)` is the pure inverse for an archived file:
+the name of the root a relative path (below `raw/<host>/<runtime>/`, `.zst` optional) was copied from.
+`one_per_rollout(paths)` keeps one path per Codex rollout file name (`.zst` ignored), the one with the
+greatest mtime, then size, since the same rollout can sit in `sessions/` as a frozen prefix and in
+`archived_sessions/`, and in the archive under both; callers that count sessions apply it to Codex.
+
 CLI (for shell callers): `transcript_spool.py root` prints the root; `transcript_spool.py spool <runtime> [--seat]` prints, and creates, the dir.
 """
 from __future__ import annotations
@@ -23,6 +42,7 @@ import os
 import socket
 import sys
 from datetime import datetime, timezone
+from collections.abc import Callable
 from pathlib import Path
 
 SPOOL_RUNTIMES = ('pi', 'aider', 'vibe')  # doors whose CLI keeps no session file of its own
@@ -61,13 +81,21 @@ def archive_root() -> Path:
     return Path(datasets) / STORE
 
 
+def claude_home() -> Path:
+    return Path(os.environ.get('CLAUDE_CONFIG_DIR') or Path.home() / '.claude')
+
+
+def codex_home() -> Path:
+    return Path(os.environ.get('CODEX_HOME') or Path.home() / '.codex')
+
+
+def pi_home() -> Path:
+    return Path(os.environ.get('PI_CODING_AGENT_DIR') or Path.home() / '.pi' / 'agent')
+
+
 def live_roots() -> dict[str, Path]:
-    home = Path.home()
-    claude = os.environ.get('CLAUDE_CONFIG_DIR') or home / '.claude'
-    codex = os.environ.get('CODEX_HOME') or home / '.codex'
-    pi = os.environ.get('PI_CODING_AGENT_DIR') or home / '.pi' / 'agent'
-    return {'claude': Path(claude) / 'projects', 'codex': Path(codex) / 'sessions',
-            'pi': Path(pi) / 'sessions'}
+    return {'claude': claude_home() / 'projects', 'codex': codex_home() / 'sessions',
+            'pi': pi_home() / 'sessions'}
 
 
 LIVE_ROOTS = live_roots()
@@ -107,12 +135,68 @@ def seat_id() -> str:
     return datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + f'-{os.getpid()}'
 
 
+# Every root the archive copies and the audit reads: runtime -> root name -> resolver. Add a root here only.
+NAMED_ROOTS: dict[str, dict[str, Callable[[], Path]]] = {
+    'claude': {'projects': lambda: claude_home() / 'projects'},
+    'codex': {'sessions': lambda: codex_home() / 'sessions',
+              'archived_sessions': lambda: codex_home() / 'archived_sessions'},
+    'pi': {'live': lambda: pi_home() / 'sessions', 'spool': lambda: spool_dir('pi')},
+    'aider': {'spool': lambda: spool_dir('aider')},
+    'vibe': {'spool': lambda: spool_dir('vibe')},
+}
+
+
+def named_roots(runtime: str, codex_home: Path | str | None = None) -> list[tuple[str, Path | RuntimeError]]:
+    """Each root of `runtime` by name, resolved on its own. `codex_home` replaces the Codex home."""
+    out: list[tuple[str, Path | RuntimeError]] = []
+    for name, resolve in NAMED_ROOTS.get(runtime, {}).items():
+        try:
+            out.append((name, Path(codex_home) / name if codex_home and runtime == 'codex' else resolve()))
+        except RuntimeError as error:  # archive root unknown: this root only
+            out.append((name, error))
+    return out
+
+
+def named_root(runtime: str, name: str) -> Path:
+    """One root; raises RuntimeError when it cannot be resolved, KeyError for an unknown name."""
+    root = dict(named_roots(runtime))[name]
+    if isinstance(root, RuntimeError):
+        raise root
+    return root
+
+
 def source_roots(runtime: str) -> list[Path]:
     """Every directory whose files the archive copies for `runtime`."""
-    roots = [live_roots()[runtime]] if runtime in live_roots() else []
-    if runtime in SPOOL_RUNTIMES:
-        roots.append(spool_dir(runtime))
-    return roots
+    return [root for _, root in named_roots(runtime) if isinstance(root, Path)]
+
+
+def source_of(runtime: str, relpath: str | Path) -> str:
+    """The name of the root an archived file came from, from its path below raw/<host>/<runtime>/."""
+    depth = len(Path(str(relpath).removesuffix('.zst')).parts)
+    if runtime == 'codex':
+        return 'archived_sessions' if depth == 1 else 'sessions'
+    if runtime == 'pi':
+        return 'spool' if depth == 1 else 'live'
+    names = list(NAMED_ROOTS[runtime])
+    if len(names) != 1:
+        raise ValueError(f'{runtime}: roots cannot be told apart by path')
+    return names[0]
+
+
+def one_per_rollout(paths) -> list[Path]:
+    """One path per Codex rollout file name (a `.zst` suffix ignored): greatest mtime, then size."""
+    best: dict[str, tuple[tuple[int, int], Path]] = {}
+    for path in paths:
+        path = Path(path)
+        try:
+            st = path.stat()
+        except OSError:
+            continue
+        rank = (st.st_mtime_ns, st.st_size)
+        key = path.name.removesuffix('.zst')
+        if key not in best or rank > best[key][0]:
+            best[key] = (rank, path)
+    return sorted(path for _, path in best.values())
 
 
 def main(argv: list[str]) -> int:

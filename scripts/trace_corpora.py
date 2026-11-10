@@ -17,7 +17,6 @@ as a zero. This host only; other hosts are not read. Stdlib only, no CLI.
 import importlib.util
 import json
 import logging
-import os
 import socket
 from pathlib import Path
 
@@ -39,19 +38,20 @@ class CouldNotLook(Exception):
 
 
 def default_codex_home() -> Path:
-    return Path(os.environ.get("CODEX_HOME") or "~/.codex").expanduser()
+    return transcript_spool.codex_home()
 
 
 def default_pi_spool() -> Path:
     try:
-        return transcript_spool.spool_dir("pi")
+        return transcript_spool.named_root("pi", "spool")
     except RuntimeError:  # archive root unknown: the corpus is then reported could not look
         return UNKNOWN_SPOOL
 
 
 def default_roots() -> dict:
-    live = transcript_spool.live_roots()
-    return {CLAUDE: live["claude"], CODEX: default_codex_home(), PI: live["pi"], PI_SPOOL: default_pi_spool()}
+    named = transcript_spool.named_root
+    return {CLAUDE: named("claude", "projects"), CODEX: default_codex_home(), PI: named("pi", "live"),
+            PI_SPOOL: default_pi_spool()}
 
 
 def add_root_flags(parser, claude_help: str = "Root of the Claude Code trace corpus") -> None:
@@ -82,10 +82,10 @@ def corpus_files(name: str, root: Path) -> list[Path]:
     """Transcript files of the Codex or Pi corpus at `root`; raises CouldNotLook when it is absent."""
     root = Path(root)
     if name == CODEX:
-        dirs = [root / d for d in ("sessions", "archived_sessions")]
+        dirs = [d for _, d in transcript_spool.named_roots("codex", codex_home=root)]
         if not any(d.is_dir() for d in dirs):
             raise CouldNotLook(f"no Codex sessions under {root}")
-        return [p for d in dirs if d.is_dir() for p in sorted(d.rglob("rollout-*.jsonl"))]
+        return transcript_spool.one_per_rollout(p for d in dirs if d.is_dir() for p in sorted(d.rglob("rollout-*.jsonl")))
     if name in (PI, PI_SPOOL):
         if not root.is_dir():
             raise CouldNotLook(f"no Pi sessions at {root}")
