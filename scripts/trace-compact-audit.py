@@ -21,6 +21,10 @@ each level, and how many went past the ceiling of their own main model, read
 from skills/route/ceilings.json. Events are restricted to the window turn by
 turn. A transcript it cannot read is counted and reported, never read as zero.
 
+Only Claude Code transcripts are read. Codex and Pi sessions are bound by the
+same ceilings and are not counted (ticket 1507); the table and the JSON say so,
+so a low count is not read as covering them.
+
 Zero LLM/API calls; emits aggregates only, never trace content.
 """
 
@@ -63,6 +67,10 @@ METRIC_LABEL = {
 LEVELS = (230_000, 450_000, 550_000)
 MIN_TURNS_AT_LEVEL = 30
 LONG_SESSION_TURNS = 100
+# The corpus walker parses Claude Code's transcript format only (ticket 1507
+# adds the other runtimes); the output names both lists.
+RUNTIMES_READ = ("Claude Code",)
+RUNTIMES_NOT_READ = ("Codex", "Pi")
 
 
 class CouldNotLook(Exception):
@@ -500,6 +508,9 @@ def audit_corpus(
         "min_run": min_run,
         "threshold_tokens": threshold if threshold is not None else "per model (skills/route/ceilings.json)",
         "metric": metric,
+        "corpus_root": str(projects_dir),
+        "runtimes_read": list(RUNTIMES_READ),
+        "runtimes_not_read": list(RUNTIMES_NOT_READ),
         "files_seen": files_seen,
         "unreadable_files": unreadable,
         "unparsable_lines": unparsable,
@@ -528,6 +539,8 @@ def render_table(summary: dict) -> str:
     lines = [
         f"Context length audit, main sessions, {summary['window_start'][:10]} to {summary['window_end'][:10]}",
         f"Context length counted as: {sr['metric_label']}",
+        f"Read: {', '.join(summary['runtimes_read'])} transcripts under {summary['corpus_root']}. "
+        f"NOT READ: {', '.join(summary['runtimes_not_read'])} sessions; the counts below leave them out",
         f"sessions with at least one turn: {sr['with_turns']}",
         f"sessions with {LONG_SESSION_TURNS} or more turns: {sr['long_sessions']}",
     ]
