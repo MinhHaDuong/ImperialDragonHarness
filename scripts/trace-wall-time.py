@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Where raid, hunt and gaze runs spend their wall time, from Claude Code traces.
 
-    python3 scripts/trace-wall-time.py [--days N] [--projects-dir DIR] [--json]
+    python3 scripts/trace-wall-time.py [--days N] [--projects-dir DIR] [--codex-home DIR]
+        [--pi-sessions DIR] [--pi-spool DIR] [--json]
 
 Zero-LLM, standard-library-only companion to trace-friction.py (which bounds
 slow tools) and gaze_wall_time.py (which splits gaze into seats). This one
@@ -31,6 +32,14 @@ same gate class already ran in the same worktree with no mutation in between
 (an Edit/Write there, or a mutating git or shell command there). Split by the
 earlier run's outcome. Worktree attribution follows a leading `cd` or `-C`,
 else the record's cwd: a heuristic, so a rerun is an estimate, not a proof.
+
+Runtimes (ticket 1517): by default it also looks at this host's Codex rollouts,
+Pi sessions and Pi spool (scripts/trace_corpora.py) and counts their sessions in
+the window. The run decomposition is not measured there: what opens a run here
+(a `Skill` call, a `<command-name>` prompt, a forked-skill agent and its
+`.meta.json` link) has no Codex or Pi record, and every Codex rollout names
+every skill file in its instructions. The JSON adds `host`, `runtimes`,
+`runtimes_read` and `runtimes_not_read` beside the per-skill blocks.
 """
 
 import argparse
@@ -50,8 +59,13 @@ _spec = importlib.util.spec_from_file_location(
 )
 gt = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gt)
+_cspec = importlib.util.spec_from_file_location(
+    "trace_corpora", Path(__file__).resolve().parent / "trace_corpora.py"
+)
+corpora = importlib.util.module_from_spec(_cspec)
+_cspec.loader.exec_module(corpora)
 
-DEFAULT_ROOT = Path.home() / ".claude/projects"
+DEFAULT_ROOT = corpora.default_roots()[corpora.CLAUDE]
 SKILLS = ("raid", "hunt", "gaze")
 POLL = re.compile(r"\bsleep\b|\bidle(\.sh)?\b|\buntil\b|\bwhile\b|\bwait\b|for \w+ in .*(seq|\{1\.\.)")
 GIT = re.compile(r"^\s*(git|gh|glab|erg-pr\S*|tickets/erg)\b|raid-merge|sync-local-main")
@@ -411,6 +425,39 @@ def survey(traces, since, top=20):
     return report
 
 
+RUNS_NOT_MEASURED = {
+    "raid, hunt and gaze runs (wall, orchestrator and tree splits, tests, blockers)":
+        "no record of this runtime marks a skill run or links a spawned agent to it",
+}
+
+
+def survey_runtimes(roots, since, top=20):
+    """The per-skill report over the Claude Code corpus, plus one entry per corpus of `roots`
+    (runtime name -> root; a bare path is Claude Code's alone): read, not read or could not look."""
+    roots = corpora.normalize_roots(roots)
+    entries, traces = [], []
+    for name in corpora.CORPORA:
+        root = roots.get(name)
+        if root is None:
+            entries.append(corpora.entry(name, None, "not read", "no corpus root given"))
+            continue
+        try:
+            if name == corpora.CLAUDE:
+                if not Path(root).is_dir():
+                    raise corpora.CouldNotLook(f"no trace corpus at {root}")
+                traces = load_traces(Path(root), since)
+                mains = {t.path for t in traces if t.path.parent.name != "subagents"}
+                entries.append(corpora.entry(name, root, "read", sessions_in_window=len(mains),
+                                             traces_in_window=len(traces)))
+            else:
+                recent = corpora.recent_files(name, Path(root), since.timestamp())
+                entries.append(corpora.entry(name, root, "read", sessions_in_window=len(recent),
+                                             not_measured=dict(RUNS_NOT_MEASURED)))
+        except (corpora.CouldNotLook, OSError) as e:
+            entries.append(corpora.entry(name, root, "could not look", str(e)))
+    return {**survey(traces, since, top), **corpora.report_keys(entries)}
+
+
 def _fmt(d):
     total = sum(d.values()) or 1
     return ", ".join(f"{k} {v / 3600:.1f}h ({100 * v / total:.0f}%)" for k, v in d.items() if v >= 36)
@@ -418,7 +465,10 @@ def _fmt(d):
 
 def print_report(report, days):
     print(f"trace-wall-time: last {days:g} days. READ: record gaps; heuristic: categories.")
-    for skill, r in report.items():
+    for line in corpora.render(report.get("runtimes", []), "{sessions_in_window} sessions in window"):
+        print(line)
+    for skill in SKILLS:
+        r = report[skill]
         print(
             f"\n## {skill}: {r['runs']} runs ({r['nested_in_raid']} inside a raid), {r['agents']} agents, "
             f"wall median {r['wall_median_s'] / 60:.1f} min, p90 {r['wall_p90_s'] / 60:.1f}, "
@@ -440,12 +490,14 @@ def print_report(report, days):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--days", type=float, default=28)
-    ap.add_argument("--projects-dir", type=Path, default=DEFAULT_ROOT)
+    corpora.add_root_flags(ap)
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     since = datetime.now(timezone.utc) - timedelta(days=a.days)
-    report = survey(load_traces(a.projects_dir, since), since, a.top)
+    report = survey_runtimes(corpora.roots_from_args(a), since, a.top)
+    if corpora.none_read(report["runtimes"]):
+        return 1
     if a.json:
         json.dump(report, sys.stdout, indent=1)
         print()

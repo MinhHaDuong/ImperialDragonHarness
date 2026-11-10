@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
@@ -173,11 +174,21 @@ def test_worktree_suffix_stripped():
     assert ts.strip_worktree("-home-haduong--claude") == "-home-haduong--claude"
 
 
-def test_cli_flags_present():
-    src = (SCRIPTS / "trace-stats.py").read_text()
-    for flag in ("--projects-dir", "--days", "--output", "--json"):
-        assert flag in src, f"missing CLI flag {flag}"
-    assert "ArgumentParser" in src
+def test_cli_flags_select_corpora_window_and_outputs(tmp_path, monkeypatch, capsys):
+    (tmp_path / "projects" / "p").mkdir(parents=True)
+    _write_fixture(tmp_path / "projects" / "p")
+    out = tmp_path / "rows.csv"
+    monkeypatch.setattr(sys, "argv", [
+        "trace-stats.py", "--projects-dir", str(tmp_path / "projects"),
+        "--codex-home", str(tmp_path / "no-codex"), "--pi-sessions", str(tmp_path / "no-pi"),
+        "--pi-spool", str(tmp_path / "no-spool"), "--days", "100000", "--output", str(out), "--json",
+    ])
+    ts.main()
+    summary = json.loads(capsys.readouterr().out)
+    assert summary["window_days"] == 100000 and summary["files_in_window"] == 1
+    assert summary["runtimes_read"] == ["Claude Code"]
+    assert summary["runtimes_not_read"] == ["Codex", "Pi", "Pi spool"]
+    assert out.read_text().splitlines()[0].split(",") == ts.CSV_COLUMNS
 
 
 # --- ticket 0243 detector columns (H10/H11/H13) ---

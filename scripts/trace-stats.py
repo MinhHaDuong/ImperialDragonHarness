@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
-"""Trace-stats census — deterministic, zero-LLM-token accounting of Claude Code session traces.
+"""Trace-stats census — deterministic, zero-LLM-token accounting of agent session traces.
 
 Walks ~/.claude/projects/, parses every main-session and subagent JSONL trace
 in the window, and emits one CSV row per agent plus a session-level rollup.
+
+Runtimes (ticket 1517): by default it also reads the Codex rollouts, the Pi
+sessions and the Pi spool of this host (scripts/trace_corpora.py), and the JSON
+names each runtime read, not read and could not look at (`runtimes`), with
+agents, sessions, turns, tokens and shadow dollars per runtime. The CSV rows,
+`totals` and `rollup` stay Claude Code's (`totals_scope`): the per-agent columns
+are Claude Code measures and trace-hypotheses reads them as such. A measure a
+runtime cannot supply is listed in its `not_measured`, never given as 0; a
+Codex model with no price row leaves `cost_usd` null (cost unknown).
 
 CRITICAL accounting rule (ticket 0237 / 0236): one assistant message spans
 multiple JSONL rows — one per content block — each repeating the same
@@ -40,6 +49,9 @@ sys.modules.setdefault("trace_events", _te)
 _spec.loader.exec_module(_te)
 PRICING = _te.PRICING
 resolve_pricing = _te.resolve_pricing
+_cspec = importlib.util.spec_from_file_location("trace_corpora", Path(__file__).resolve().parent / "trace_corpora.py")
+corpora = importlib.util.module_from_spec(_cspec)
+_cspec.loader.exec_module(corpora)
 
 WRITE_TOOLS = {"Edit", "Write", "NotebookEdit"}
 
@@ -543,37 +555,136 @@ def session_rollup(rows: list[dict]) -> list[dict]:
     return out
 
 
-def run_census(projects_dir: Path, days: int) -> tuple[list[dict], dict]:
+def run_census(roots, days: int) -> tuple[list[dict], dict]:
+    """Census of every corpus in `roots` (runtime name -> root; a bare path is Claude Code's alone).
+
+    Returns the Claude Code per-agent rows and the meta, whose `runtimes` entry per corpus says
+    read, not read or could not look."""
+    roots = corpora.normalize_roots(roots)
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    rows = []
-    files_seen = 0
-    files_skipped_old = 0
-    files_unreadable = 0
-    corpus_skipped_lines = 0
-    corpus_total_lines = 0
+    rows: list[dict] = []
+    meta = {
+        "files_seen": 0,
+        "files_in_window": 0,
+        "files_skipped_old_or_undated": 0,
+        "files_unreadable": 0,
+        "corpus_skipped_lines": 0,
+        "corpus_total_lines": 0,
+    }
+    entries = []
+    for name in corpora.CORPORA:
+        root = roots.get(name)
+        if root is None:
+            entries.append(corpora.entry(name, None, "not read", "no corpus root given"))
+            continue
+        try:
+            if name == corpora.CLAUDE:
+                entries.append(_census_claude(Path(root), cutoff, rows, meta))
+            else:
+                entries.append(_census_events(name, Path(root), cutoff))
+        except (corpora.CouldNotLook, OSError) as e:
+            entries.append(corpora.entry(name, root, "could not look", str(e)))
+    meta["files_in_window"] = len(rows)
+    meta.update(corpora.report_keys(entries))
+    meta["totals_scope"] = [corpora.CLAUDE]
+    return rows, meta
+
+
+def _census_claude(projects_dir: Path, cutoff: datetime, rows: list, meta: dict) -> dict:
+    if not projects_dir.is_dir():
+        raise corpora.CouldNotLook(f"no trace corpus at {projects_dir}")
+    seen = unreadable = 0
+    first = len(rows)
     for project, session_id, agent_id, path in iter_trace_files(projects_dir):
-        files_seen += 1
+        seen += 1
         try:
             stats = parse_trace_file(path)
         except OSError as e:
             log.warning("unreadable %s: %s", path, e)
-            files_unreadable += 1
+            unreadable += 1
             continue
-        corpus_skipped_lines += stats["skipped_lines"]
-        corpus_total_lines += stats["total_lines"]
+        meta["corpus_skipped_lines"] += stats["skipped_lines"]
+        meta["corpus_total_lines"] += stats["total_lines"]
         if stats["last_ts"] is None or stats["last_ts"] < cutoff:
-            files_skipped_old += 1
+            meta["files_skipped_old_or_undated"] += 1
             continue
         rows.append(build_row(project, session_id, agent_id, path, stats))
-    meta = {
-        "files_seen": files_seen,
-        "files_in_window": len(rows),
-        "files_skipped_old_or_undated": files_skipped_old,
-        "files_unreadable": files_unreadable,
-        "corpus_skipped_lines": corpus_skipped_lines,
-        "corpus_total_lines": corpus_total_lines,
-    }
-    return rows, meta
+    meta["files_seen"] += seen
+    meta["files_unreadable"] += unreadable
+    mine = rows[first:]
+    if seen and unreadable == seen:
+        raise corpora.CouldNotLook(f"none of its {seen} transcripts under {projects_dir} could be read")
+    return corpora.entry(
+        corpora.CLAUDE, projects_dir, "read",
+        files_seen=seen, files_unreadable=unreadable, agents=len(mine),
+        sessions=len({(r["project"], r["session_id"]) for r in mine}),
+        turns=sum(r["turns"] for r in mine),
+        tokens={"input": sum(r["input_tokens"] for r in mine), "output": sum(r["output_tokens"] for r in mine),
+                "cache_read": sum(r["cache_read_input_tokens"] for r in mine),
+                "cache_write": sum(r["cache_creation_input_tokens"] for r in mine)},
+        cost_usd=round(sum(r["cost_usd"] for r in mine), 2),
+        unpriced_turns=sum(r["unknown_model_messages"] for r in mine),
+        cost_source="price-table",
+    )
+
+
+# Per-agent columns the Claude Code parser computes and no other runtime's record supplies.
+NOT_MEASURED_ELSEWHERE = {
+    "synthetic_messages": "the runtime writes no harness-injected model records",
+    "tool categories (cat_* columns)": "the six-way taxonomy is defined over Claude Code tool names",
+    "turn buckets, merge markers, verify/gaze counts": "computed by the Claude Code parser only",
+    "entry_skill": "no record of this runtime marks the skill a session opened with",
+    "per-agent CSV rows and totals": "they hold Claude Code agents only (totals_scope)",
+}
+
+
+def _census_events(name: str, root: Path, cutoff: datetime) -> dict:
+    """Agents, sessions, turns, tokens and shadow dollars of one Codex or Pi corpus."""
+    reader = {"codex": _te.read_codex, "pi": _te.read_pi}[corpora.RUNTIME[name]]
+    files = corpora.corpus_files(name, root)
+    seen = unreadable = old = agents = sessions = turns = tools = unpriced = 0
+    tokens = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0}
+    cost = 0.0
+    sources = set()
+    for path in files:
+        seen += 1
+        try:
+            lines = _te.open_lines(path)
+        except OSError as e:
+            log.warning("unreadable %s: %s", path, e)
+            unreadable += 1
+            continue
+        events = reader(lines, str(path.relative_to(root)))
+        span = events[0]
+        if not span.end or span.end < cutoff.timestamp():
+            old += 1
+            continue
+        agents += 1
+        sessions += not (name == corpora.CODEX and corpora.codex_is_subagent(lines))
+        for ev in events[1:]:
+            if ev.kind == "tool":
+                tools += 1
+            elif ev.kind == "turn":
+                turns += 1
+                for k in tokens:
+                    tokens[k] += (ev.tokens or {}).get(k, 0)
+                if ev.shadow_usd is None:
+                    unpriced += 1
+                else:
+                    cost += ev.shadow_usd
+                    sources.add(ev.cost_source)
+    if seen and unreadable == seen:
+        raise corpora.CouldNotLook(f"none of its {seen} transcripts under {root} could be read")
+    priced = turns - unpriced
+    return corpora.entry(
+        name, root, "read",
+        files_seen=seen, files_unreadable=unreadable, files_skipped_old_or_undated=old,
+        agents=agents, sessions=sessions, turns=turns, tokens=tokens, tool_calls=tools,
+        cost_usd=round(cost, 4) if priced else None,
+        unpriced_turns=unpriced,
+        cost_source=(sources.pop() if len(sources) == 1 else "mixed") if sources else "unpriced",
+        not_measured=dict(NOT_MEASURED_ELSEWHERE),
+    )
 
 
 def summarize(rows: list[dict], meta: dict, days: int) -> dict:
@@ -600,14 +711,10 @@ def summarize(rows: list[dict], meta: dict, days: int) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Census of Claude Code session traces: one CSV row per agent."
+        description="Census of session traces: one CSV row per Claude Code agent, and per-runtime "
+        "totals for Codex and Pi in the JSON."
     )
-    parser.add_argument(
-        "--projects-dir",
-        type=Path,
-        default=Path("~/.claude/projects").expanduser(),
-        help="Root of the trace corpus (default: ~/.claude/projects)",
-    )
+    corpora.add_root_flags(parser)
     parser.add_argument("--days", type=int, default=28, help="Window in days (default 28)")
     parser.add_argument("--output", type=Path, help="Write per-agent rows to this CSV")
     parser.add_argument(
@@ -616,7 +723,9 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-    rows, meta = run_census(args.projects_dir, args.days)
+    rows, meta = run_census(corpora.roots_from_args(args), args.days)
+    if corpora.none_read(meta["runtimes"]):
+        sys.exit(1)
 
     if args.output:
         with open(args.output, "w", newline="", encoding="utf-8") as fh:
@@ -630,8 +739,10 @@ def main() -> None:
         json.dump(summary, sys.stdout, indent=2, default=str)
         print()
     else:
+        for line in corpora.render(summary["runtimes"], "{agents} agents, {sessions} sessions, {turns} turns ({unpriced_turns} unpriced)"):
+            log.info("%s", line)
         log.info(
-            "files=%d sessions=%d cost=$%s skipped_lines=%s%%",
+            "Claude Code: files=%d sessions=%d cost=$%s skipped_lines=%s%%",
             summary["files_in_window"],
             summary["sessions"],
             summary["totals"]["cost_usd"],
