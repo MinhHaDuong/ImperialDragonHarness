@@ -634,7 +634,7 @@ NOT_MEASURED_ELSEWHERE = {
     "tool categories (cat_* columns)": "the six-way taxonomy is defined over Claude Code tool names",
     "turn buckets, merge markers, verify/gaze counts": "computed by the Claude Code parser only",
     "entry_skill": "no record of this runtime marks the skill a session opened with",
-    "per-agent CSV rows and totals": "they hold Claude Code agents only (totals_scope)",
+    "per-agent CSV rows and totals": "they hold Claude Code agents only; see totals_scope",
 }
 
 
