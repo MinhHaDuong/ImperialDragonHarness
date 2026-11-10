@@ -2569,6 +2569,31 @@ def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
         return {}, f"text identifiers (unreadable: {type(exc).__name__})"
 
 
+def file_claims(path: Path, bib_entry: dict[str, Any] | None
+                ) -> dict[str, Any]:
+    """What a file's curated sources say it is: `given` identifiers (its
+    .bib entry's; else those of a receipt found by md5), `hints`, the
+    receipt's `scraped` identifiers and `urls`; `receipt_given` is the part
+    of `given` the receipt supplied.
+
+    The fetcher's receipt, found by the file's md5 or name, says what it was
+    fetched by. Its identifiers count as given only when found by md5 and the
+    .bib entry gives none: the .bib is the curated identity, and a name-only
+    receipt may be stale. Otherwise they are hints, looked up and reported
+    but never licensing `absent` or a write."""
+    ids = bib_identifiers(bib_entry or {})
+    receipt, exact = find_receipt(path)
+    r_given, r_scraped, r_urls = receipt_keys(receipt)
+    hints: dict[str, str | None] = {}
+    if exact and not any(ids.values()):
+        ids = {k: ids[k] or r_given.get(k) for k in ids}
+    else:
+        hints = dict(r_given)
+        r_given = {}
+    return {"given": ids, "hints": hints, "receipt_given": r_given,
+            "scraped": r_scraped, "urls": r_urls}
+
+
 def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
               bib_entry: dict[str, Any] | None = None,
               md5_index: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -2586,20 +2611,10 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         filename_title = True
     bib_type = str(bib_entry.get("_type", "")).lower()
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
-    ids = bib_identifiers(bib_entry)
-    # The fetcher's receipt, found by the file's md5 or name: what it was
-    # fetched by. Its identifiers count as given only when found by md5 and
-    # the .bib entry gives none: the .bib is the curated identity, and a
-    # name-only receipt may be stale. Otherwise they are hints, looked up and
-    # reported but never licensing `absent` or a write.
-    receipt, exact = find_receipt(path)
-    r_given, r_scraped, r_urls = receipt_keys(receipt)
-    hints: dict[str, str | None] = {}
-    if exact and not any(ids.values()):
-        ids = {k: ids[k] or r_given.get(k) for k in ids}
-    else:
-        hints = dict(r_given)
-        r_given = {}
+    claims = file_claims(path, bib_entry)
+    ids, hints = claims["given"], claims["hints"]
+    r_given, r_scraped, r_urls = (claims["receipt_given"], claims["scraped"],
+                                  claims["urls"])
     # A fetched ISBN names the whole volume being sought, not a part.
     whole_volume = bool(r_given.get("isbn")) and not bib_entry
     from_text = False
