@@ -37,17 +37,13 @@ MERGED; a gated bundle not yet MERGED stays pending in step 11. It then syncs lo
 `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
 and re-run; the preflight refuses every uncommitted file, including an
 uncommitted ticket draft, other than untracked `.panel/` and
-`build/panel-head/` review scratch, and removes that scratch only when no
-`.tmp/` exists and nothing else blocks: a refused run deletes nothing. If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
-until the citation-aware removal check has run.
+`build/panel-head/` review scratch, and removes that scratch only when
+nothing else blocks: a refused run deletes nothing.
 
 ## Step 9b
 
-The gate requires merged ancestry and clear, readable citation coverage
-across PR bodies, branch commits, and verdicts. A citation, unreadable
-source, or uncertain ancestry retains `.tmp/` and the worktree; report
-`KEEP-PENDING` with the reason. A clear gate prints `.tmp/` size before
-removal. Git refuses a tree with modified or untracked files, and the
+`.tmp/` is ignored scratch and goes with the tree; nothing searches it or
+the forge first. Git refuses a tree with modified or untracked files, and the
 branch survives removal, so no commit is lost; ignored files are deleted
 with the tree. Never `--force`.
 

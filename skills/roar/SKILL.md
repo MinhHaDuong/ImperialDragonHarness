@@ -214,9 +214,9 @@ on a gated base, once a passing gate record covers the bundle's candidate.
     b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
        command the report prints (run as `"$ROAR_DIR/close-and-clean.sh" …`;
        the READY line prints it bare), adding step 10's remote target.
-       `after-exit --remove-worktree` runs the removal-mode `.tmp/` gate before
-       unlocking the tree (hunt locks it) and running `git worktree remove`.
-       The removal gate's rules (step 9b): `references/close-and-clean.md`. Never `--force`.
+       `after-exit --remove-worktree` unlocks the tree (hunt locks it) and runs
+       `git worktree remove`, which takes `.tmp/` scratch with the tree.
+       The removal rules (step 9b): `references/close-and-clean.md`. Never `--force`.
        A bundle merged directly reads MERGED and is done; an auto-merge-armed
        one is named in step 11 as pending forge
        integration and does not block the `/clear` verdict; nothing re-checks
