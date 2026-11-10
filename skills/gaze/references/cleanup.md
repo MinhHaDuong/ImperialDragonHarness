@@ -19,9 +19,9 @@ terminal result.
 `"$IDH_ROOT/scripts/gaze_close.py"` runs these steps in order (`.tmp/` is
 ignored scratch and goes with the tree, ticket 1500): removal of
 `.panel/<pr-number>` and `build/panel-head` when untracked;
-`worktree-exit-preflight.sh --removal --ignored-ok --branch <branch>` (git-ignored
-build products of the project's check target are not WIP in a review copy; the gate's
-removal uses the same flag); plain `git worktree remove`, never `--force`. A blocked step exits 1 and leaves the
+`worktree-exit-preflight.sh --removal --branch <branch>` (git-ignored files, such
+as the build products of the project's check target, are never WIP); plain
+`git worktree remove`, never `--force`. A blocked step exits 1 and leaves the
 review worktree registered; the script records an ESCALATE answer on notes and
 posts its pointer: return ESCALATE naming the files. Attribution was appended
 before cleanup, so the review is recorded either way, and the ESCALATE answer

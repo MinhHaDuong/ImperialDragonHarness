@@ -121,6 +121,7 @@ worktree name, phase and opening line: `references/session-start.md`.
   `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.
 - **Register and enter.** `python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"`,
   then `cd "$W"`. Work only there: absolute paths under it, `git -C "$W"` for git.
+  Evidence and deliverables never live in a git-ignored path: removal deletes ignored files.
   Scratch files go in `$W/.tmp/`: set `TMPDIR="$W/.tmp"` per command, never for
   the whole session. Evidence and deliverables stay outside `.tmp/`, which goes with the tree.
 

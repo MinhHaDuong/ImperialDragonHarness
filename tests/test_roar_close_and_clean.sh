@@ -537,9 +537,8 @@ NOFORGE="$T/noforge"; mkdir -p "$NOFORGE"
 printf '#!/usr/bin/env bash\nexit 1\n' > "$NOFORGE/gh"; chmod +x "$NOFORGE/gh"
 
 exit_world "$T/ec-merged" task; merge_elsewhere task; cd "$WT"
-# The checkout's ignored setup copies must not block the exit check.
-printf '\n.env\n.worktreeinclude\n.dvc/\n.venv\n' >> "$W/.git/info/exclude"
-printf '.env\n.dvc/config.local\n' > "$W/.worktreeinclude"
+# Ignored files in the checkout (ticket 1500) must not block the exit check.
+printf '\n.env\n.dvc/\n.venv\n' >> "$W/.git/info/exclude"
 mkdir -p "$W/.dvc/cache" "$W/.venv" "$WT/.dvc"
 printf 'fake config\n' > "$W/.env"; cp "$W/.env" "$WT/.env"
 printf 'fake dvc config\n' > "$W/.dvc/config.local"; cp "$W/.dvc/config.local" "$WT/.dvc/config.local"
