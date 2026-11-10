@@ -1,0 +1,107 @@
+%erg 0.1
+Title: check-staging recognises a staged file by hash, then identifiers, title last
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T07:09Z reviewer created
+
+--- body ---
+## Context
+
+Author decision, 2026-11-10: "Yes to the principle" (identify a staged file
+by what it is, not by what it is called), after the weekly ticket audit
+removed the filename-suffix list that ticket 1456 had added (PR #2370). The
+author asked for the whole documentary chain to be read before this ticket;
+the survey's facts are below, with `scripts/zotero.py` line numbers as of
+2026-11-10 (grep again before starting).
+
+**The chain, and where identity is lost.** A source enters a project's
+git-ignored `docs/` staging folder three ways, then `check-staging` asks
+Zotero whether the library already holds it:
+
+| Entry | What knows the identity | What is kept |
+|---|---|---|
+| `scripts/doifetch.sh --doi/--isbn` (harness cascade `fulltext_cascade.py`) | the DOI or ISBN argument, the winning source | stdout JSON `{status, source, path, error}`, no identifier; file lands in `papers/`, named `Author Year - Title.pdf` |
+| `skills/zotero/scripts/probe-url.py <url>` | the URL, the final URL, HTML meta, identifiers found in the text | stdout JSON only; file lands in `docs/<slug>` |
+| a file dropped by hand | nobody | a `.bib` entry if someone wrote one |
+
+So the identity known at fetch time lives in one agent's context and nowhere
+else (ticket 1503 handles that side). This ticket is the recognition side.
+
+**How recognition works today** (`audit_one`, ~line 2261). It looks a file
+up by: the `.bib` entry's literal `doi`/`isbn`/`arxiv`/`handle` and title;
+else the PDF container Title; else words from the filename. Three gaps:
+
+1. **No hash lookup.** `find_work` (~1759) compares the file's md5 only with
+   works another key already found, and otherwise records `storageHash (no
+   work found to compare with)`. In ticket 1456's table, 11 of 14 files
+   called `absent` had a byte-identical copy in the library. The code to list
+   every attachment with its md5 exists (`cmd_report_duplicates`, ~1951,
+   `z.everything(z.items(itemType="attachment", limit=PAGE))`).
+2. **The file is never opened.** `extract_one` (~229) reads the first and
+   last pages and `find_identifier` pulls DOI, ISBN, handle and arXiv id from
+   the text, but only the `extract-metadata` subcommand calls it.
+3. **The `.bib` reader route is not read.** `url` and `eprint` are ignored,
+   although `rules/zotero.md` (ticket 1457) asks each entry for a DOI or a
+   URL, and `entry_query` (~1170) already derives arXiv ids and handles from
+   a URL for `create-items`.
+
+sen-causal-reading wrote the rule this ticket adopts in its design note
+`design/2026-11-07-citation-index.md` § 3.4: match by identifier or hash,
+never by title alone.
+
+## Decision
+
+`check-staging` identifies a staged file in this order, and says in
+`consulted` which keys it used:
+
+1. **Hash**: the file's md5 against an index of the library's attachment
+   md5s, built once per run. A hit is `identical`, whatever the file is
+   called and whether or not it has a text layer.
+2. **Identifiers**: from the `.bib` entry (`doi`, `isbn`, `arxiv`, `handle`,
+   and those derivable from `url` and `eprint`), then from the file's own
+   text through the existing `find_identifier`.
+3. **Title** (container, then filename): a search hint that yields
+   candidates, as today.
+
+An identifier scraped from page text may belong to a cited work
+(`skills/zotero/SKILL.md` already warns of it): alone, it never yields
+`absent`, and it never authorises `--apply` to create or attach.
+
+No new persistent state in the harness; the index lives for one run.
+
+## Not known, measure first
+
+- Cost of listing every attachment on the author's library. Counts on
+  record: 8,697 hashed attachments (design/zotero-report-duplicates.md:57);
+  `PAGE = 100` because the client hashes each stored file it lists
+  (~line 527); "not measured on the author's library yet"
+  (design/zotero-integration.md:87). Measure it before choosing how the
+  index is built, and report the time. If the listing is slow or times out
+  (`ZoteroSlow`), the run still completes on steps 2 and 3 and says the hash
+  index was skipped; it never reads as "not in the library".
+- Whether the local API can filter attachments by md5: untested.
+
+## Out of scope, noted
+
+- `find-work` for a single file keeps its present behaviour unless the index
+  is cheap enough to share; say which in the request.
+- `suggest-attachments --parent K file` checks only that the item exists and
+  the file is readable (~2738); nothing compares the file with the item. A
+  wrong attachment corrupts the library. Not fixed here; the author decides
+  whether it gets its own ticket.
+- DOIfetch's pin (v0.2.0) searches HAL by a filename-shaped name; its main
+  searches by DOI. Moving the pin is the author's decision.
+
+## Exit criteria
+
+- [ ] The time of a full attachment listing on the author's live library is measured and stated in the request, with the index design it led to
+- [ ] A staged file byte-identical to a stored attachment is `identical` with `storageHash` in `consulted`, in a test where its filename and container Title match nothing
+- [ ] A staged file carrying a DOI in its first pages, with no `.bib` entry, is looked up by that DOI; a test shows it, and a control shows a text-scraped identifier that finds nothing is not `absent`
+- [ ] A `.bib` entry whose only route is `url` or `eprint` yields an identifier key where one is derivable (arXiv, handle, DOI in the URL); a test shows it
+- [ ] A slow or failed attachment listing is reported as skipped and the run completes on the other keys; a test shows it
+- [ ] Rerun, read-only (no `--apply`), on sen-causal-reading `docs/`: counts by verdict before and after are in the request; the eleven suffixed files of ticket 1456's table are `identical` again, or each remaining one is explained
+- [ ] `skills/zotero` text that describes the lookup order (SKILL.md, references/backfill.md, references/import.md) agrees with the code
+- [ ] sen-causal-reading is told by a log line on its ticket 0114 once that ticket is on its main (its PR 172); otherwise the pending hand-off is reported
+- [ ] `make check` passes
