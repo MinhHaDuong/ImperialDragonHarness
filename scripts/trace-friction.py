@@ -544,6 +544,10 @@ NOT_MEASURED = {
         "outcome of calls whose output records no script status or exit code (agent and message "
         "tools)": "counted in calls_outcome_unknown, neither as an error nor as a success",
         "sleep_poll_to_cap on condition loops": "a rollout records no call timeout, so an uncounted loop has no known cap",
+        "waits through Codex's own sleep, wait and wait_agent tools": "wait_commands counts shell waits only; "
+        "those calls appear under slow_by_tool",
+        "outcome and duration of an exec script still running when it returned": "they belong to a later wait "
+        "call; the script's own call ends at its early return",
     },
     corpora.PI: {"sleep_poll_to_cap on condition loops": "Pi records no default call timeout; only a call's own timeout caps a loop"},
 }
