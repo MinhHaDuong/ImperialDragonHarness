@@ -486,8 +486,8 @@ def test_pi_clone_counts_only_the_new_turns(tmp_path):
     _pi_session(tmp_path / "pi", "a", [(10, 0, 0)] * 3)
     # the clone replays a's three entries (same responseIds), then adds two
     path = _pi_session(tmp_path / "pi", "b", [(10, 0, 0)] * 2, parent_session="a")
-    rows = [json.loads(l) for l in path.read_text().splitlines()]
-    replay = [json.loads(l) for l in (tmp_path / "pi" / "--work-proj--" / "2026-11-01T00-00-00-000Z_a.jsonl").read_text().splitlines()][1:]
+    rows = [json.loads(ln) for ln in path.read_text().splitlines()]
+    replay = [json.loads(ln) for ln in (tmp_path / "pi" / "--work-proj--" / "2026-11-01T00-00-00-000Z_a.jsonl").read_text().splitlines()][1:]
     new = [_pi_entry("n0", "a-2", 9, (10, 0, 0), rid="r-n0"), _pi_entry("n1", "n0", 9, (10, 0, 0), rid="r-n1")]
     path.write_text("\n".join(json.dumps(r) for r in [rows[0]] + replay + new) + "\n")
     out = _pi(tmp_path)
@@ -497,9 +497,8 @@ def test_pi_clone_counts_only_the_new_turns(tmp_path):
 
 def test_pi_abandoned_branch_is_not_a_turn(tmp_path):
     # a-0 -> a-1 (continued, last in file) ; a-0 -> x (abandoned, earlier in file)
-    extra = []
     path = _pi_session(tmp_path / "pi", "a", [(10, 0, 0)] * 2)
-    rows = [json.loads(l) for l in path.read_text().splitlines()]
+    rows = [json.loads(ln) for ln in path.read_text().splitlines()]
     side = _pi_entry("x", "a-0", 9, (999_999, 0, 0), rid="r-x")
     path.write_text("\n".join(json.dumps(r) for r in [rows[0], rows[1], side, rows[2]]) + "\n")
     out = _pi(tmp_path)
