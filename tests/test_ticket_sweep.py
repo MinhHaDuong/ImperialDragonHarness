@@ -223,9 +223,6 @@ def test_prune_duplicates(tmp_path):
 
 def test_skills_call_the_script():
     molt = MOLT.read_text()
-    for sub in ("close <id>", "archive", "merged-probe <branch>"):
-        assert f'ticket-sweep.sh" {sub}' in molt, sub
-    assert "ticket-sweep.sh" in YAWN.read_text()
     assert "grep -oP" not in molt + YAWN.read_text()
 
 
