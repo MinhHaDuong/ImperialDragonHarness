@@ -106,13 +106,20 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
 | `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
-| `unidentified` | no reliable identification: too little metadata, or a search by filename words, or by an identifier read from the pages plus filename words, that finds nothing | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
+| `unidentified` | no reliable identification: too little metadata, or a search by a title taken from the file (embedded Title or filename words), alone or with an identifier read from the pages, that finds nothing | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
 | `unchecked` | not looked up in full: the hash index was skipped, so a stored copy may have gone unseen | rerun when Zotero lists in time; never an import |
 
 
-A filename-derived title is a search hint. A filename-only search that finds
-nothing is `unidentified`, never `absent`, even when `consulted` includes
-`title`. Supply bibliographic metadata before proposing an import.
+A title taken from the file itself, the PDF container's or the filename's, is
+a search hint. A search on it may return a hit or candidates; a miss on it
+alone is `unidentified`, never `absent`, even when `consulted` includes
+`title`. Only a `.bib` title, or a consulted given identifier, lets a miss say
+`absent`. A receipt's title is not given either: receipts do not mark it as
+given or scraped, and `probe-url` stores the page's own title. The embedded
+title is unreliable, not unusable: it is used, cautiously, and the code decides
+nothing on it alone. On a row it leaves `unidentified`, the reading agent
+judges from the title and the file; no pattern filters titles. Supply
+bibliographic metadata before proposing an import.
 
 **`candidates` is a real answer, not a tuning failure.** The helper asserts
 a match only on an exact identifier (DOI, ISBN, arXiv id or handle equal to
@@ -144,11 +151,12 @@ used.
    pages, consulted as `doi (from text)` and the like. A page can print a
    cited work's DOI, so a text identifier alone never makes a file
    `absent` (a file reads `absent` only when a curated identifier or a
-   real title, the `.bib` one or the PDF's own, was searched too) and never
+   given title, the `.bib` one, was searched too) and never
    lets `--apply --edit` attach it; its `suggested_edits` entry carries a
    `caution`.
 3. **Title** (the `.bib` title, else the PDF's container Title, else the
-   filename): a search that yields candidates, never a match.
+   filename): a search that yields candidates, never a match. Only the
+   `.bib` title is given; the other two are hints.
 
 A hash miss alone never means `absent`: a file with nothing else to look it
 up by is `unidentified`. When the attachment listing does not finish in time

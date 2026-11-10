@@ -177,3 +177,53 @@ def test_the_bib_title_reaches_the_lookup_and_an_undescribed_key_is_unidentified
     assert rows["michaelowa2011.pdf"] == "absent", "negative control shape"
     assert rows["ghost2020.pdf"] == "unidentified"
     assert "old2001.pdf" not in asked
+
+
+def _audit(tmp_path, monkeypatch, name, embedded, bib_entry=None):
+    """audit_one with the library lookup stubbed at its seam: no match,
+    only the title consulted."""
+    path = tmp_path / name
+    path.write_bytes(b"%PDF-1.4\n")
+    monkeypatch.setattr(zi, "_pdf_info",
+                        lambda p: {"Title": embedded, "Author": ""})
+    monkeypatch.setattr(zi, "text_identifiers",
+                        lambda p: ({}, "no text"))
+
+    def fake_find_work(libs, **kw):
+        return {"verdict": "none", "matches": [], "candidates": [],
+                "consulted": ["title"], "skipped": []}
+
+    monkeypatch.setattr(zi, "find_work", fake_find_work)
+    return zi.audit_one(path, [], bib_entry)["verdict"]
+
+
+EMBEDDED = "Carbon pricing and household welfare effects"
+
+
+def test_an_embedded_title_that_matches_nothing_is_unidentified(
+        tmp_path, monkeypatch):
+    """A title read from the PDF container is a hint: a miss is never
+    absent."""
+    assert _audit(tmp_path, monkeypatch, "scan0001.pdf",
+                  EMBEDDED) == "unidentified"
+
+
+def test_a_bib_title_that_matches_nothing_is_still_absent(
+        tmp_path, monkeypatch):
+    """Control: the same title given by a .bib entry may conclude absent."""
+    assert _audit(tmp_path, monkeypatch, "scan0001.pdf", "",
+                  {"title": EMBEDDED, "_type": "article"}) == "absent"
+
+
+def test_an_embedded_title_beside_a_missed_bib_doi_is_absent(
+        tmp_path, monkeypatch):
+    """Control: a consulted given identifier still lets a miss say absent."""
+    path = tmp_path / "scan0001.pdf"
+    path.write_bytes(b"%PDF-1.4\n")
+    monkeypatch.setattr(zi, "_pdf_info",
+                        lambda p: {"Title": EMBEDDED, "Author": ""})
+    monkeypatch.setattr(zi, "find_work", lambda libs, **kw: {
+        "verdict": "none", "matches": [], "candidates": [],
+        "consulted": ["doi", "title"], "skipped": []})
+    row = zi.audit_one(path, [], {"doi": "10.1234/x", "_type": "article"})
+    assert row["verdict"] == "absent"

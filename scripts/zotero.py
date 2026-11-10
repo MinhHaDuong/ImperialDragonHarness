@@ -2654,8 +2654,11 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     # no key to look it up by is "unidentified", never "absent": an
     # all-clear indistinguishable from "could not look" is no check.
     # An identifier read from the page text is not a curated key: alone, it
-    # cannot establish absence.
-    filename_only = filename_title and not any(
+    # cannot establish absence. Nor is a title taken from the file itself,
+    # container or filename: it is a search hint. Only a .bib title, when it
+    # was the one searched, is given.
+    title_given = bool(bib_entry.get("title")) and not filename_title
+    filename_only = not title_given and not any(
         key in res["consulted"] for key in EXHAUSTIVE_KEYS)
     verdict = _staging_verdict(
         res, filename_only,
