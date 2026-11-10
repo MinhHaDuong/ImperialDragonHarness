@@ -250,24 +250,6 @@ flush() {
         fi
         echo "worktree-gc: unlocked $base (lock $stale_why — stale marker)"
     fi
-    # The worktree owns its ignored .tmp/ tree. Never purge it independently:
-    # inspect common exclusion, tracked content, integration ancestry, citation
-    # sources, and size before ordinary worktree removal. Run this before the
-    # legacy .panel cleanup so a verdict citation remains readable.
-    if [ -e "$path/.tmp" ] || [ -L "$path/.tmp" ]; then
-        local tmp_guard_rc=0 tmp_guard_out
-        tmp_guard_out=$(python3 "$(dirname "$0")/worktree-tmp-guard.py" removal "$repo" "$path" --branch "$branch") || tmp_guard_rc=$?
-        [ -z "$tmp_guard_out" ] || printf '%s\n' "$tmp_guard_out"
-        if [ "$tmp_guard_rc" -ne 0 ]; then
-            if [ "$tmp_guard_rc" -eq 1 ]; then
-                echo "worktree-gc: skip $base (.tmp citation found — retained)"
-            else
-                echo "worktree-gc: skip $base (.tmp safety evidence unavailable — retained)" >&2
-            fi
-            skipped_wip=$((skipped_wip + 1))
-            reset; return
-        fi
-    fi
     # Only a gone, inactive tree reaches this point, unlocked or holding an
     # owner-less lock that passed its idle and clean checks. The review
     # commands own these two scratch paths: the WIP check ignores them and

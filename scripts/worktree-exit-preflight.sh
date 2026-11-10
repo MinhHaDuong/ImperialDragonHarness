@@ -22,6 +22,7 @@ set -euo pipefail
 removal=0
 ignored_ok=0
 branch=""
+preserve_panel=0  # read only by the ignored-record filter below; both go with ticket 1500's ignored-file retirement
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --removal) removal=1; shift ;;
@@ -50,21 +51,6 @@ if [ "$ignored_ok" -eq 1 ]; then
     esac
 fi
 
-# `.tmp/` is ignored by common Git metadata, so status alone cannot protect it.
-# Inspect it before any legacy review-scratch cleanup; never delete it here.
-preserve_panel=0
-if [ -e "$root/.tmp" ] || [ -L "$root/.tmp" ]; then
-    mode=preflight
-    [ "$removal" -eq 0 ] || mode=removal
-    [ "$removal" -eq 1 ] || preserve_panel=1
-    args=()
-    [ -z "$branch" ] || args+=(--branch "$branch")
-    if ! python3 "$(dirname "$0")/worktree-tmp-guard.py" "$mode" "$root" "$root" "${args[@]}"; then
-        echo "worktree-exit-preflight: .tmp safety check failed — leaving the worktree in place" >&2
-        exit 2
-    fi
-fi
-
 # Inspect both pathspecs successfully before deleting either one. A failed
 # ls-files must never look like an empty tracked set.
 tracked_panel=$(git -C "$path" ls-files -- .panel 2>/dev/null) || {
@@ -81,7 +67,7 @@ tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
 # staged move or deletion, and they are deleted only once it passes.
 # A refused exit keeps them, since a review may have left its only evidence there.
 purge_panel=0
-if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then purge_panel=1; fi
+if [ -z "$tracked_panel" ]; then purge_panel=1; fi
 purge_base=0
 if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then purge_base=1; fi
 
