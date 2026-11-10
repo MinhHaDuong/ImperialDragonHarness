@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Zotero is the record for reading notes too: publish-notes and pull-notes verbs, lair offer, rule narrowed
+Created: 2026-11-10
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-10T16:11Z HDMX-coding-agent created
+
+--- body ---
+
+## Context
+
+Request from project climate-finance-het (author decisions of 2026-11-10,
+interactive). Reading notes for the REL literature review, the HET paper and
+the book (about 160 notes) are drafted mostly by agents. The author decided:
+
+- Zotero is the primary store of reading notes, as HTML child notes under the
+  work's item; the author reads and corrects them in Zotero's note editor.
+- Git is the draft-review lane: agents draft the HTML note on a branch, it is
+  reviewed and merged, then published to Zotero.
+- Project wikis rebuild their reading-note pages from Zotero inside a thin
+  generated .qmd envelope (title plus the note as a raw HTML block).
+- Nothing records the acquisition channel of a document.
+
+Today `rules/zotero.md` and `skills/reading-note/SKILL.md` §4 say notes never
+live in a repo and file a note as a standalone Document with an .md
+attachment. That stays compatible in spirit (Zotero is the record) but the
+note becomes an HTML child note, and repos hold generated snapshots.
+
+Measured 2026-11-10: a test note written through the web API and edited in
+Zotero's editor kept tables (adds <tbody>, wraps cells in <p>), heading id
+attributes, blockquotes, math (span/pre class="math") and links; it dropped
+custom class and data-* attributes. The web key `ZOTERO_RW_API_KEY` in
+~/.config/keys/zotero.env has write access (an empty POST answered 200;
+the read key answered 403), so publishing needs no running desktop.
+
+## Choices (MOE-recommended unless marked)
+
+- `rules/zotero.md`: narrow to "Zotero is the record for works and reading
+  notes; repositories hold drafts under review and generated snapshots".
+- zotero skill: verb `publish-notes` (merged HTML drafts -> child notes under
+  `zotero_item`, idempotent by a `wiki_slug` + `project` key in the note's
+  field table, update in place, never duplicate; reports Zotero unreachable
+  as unavailable, never as in sync) and verb `pull-notes` (child notes of a
+  project -> envelope pages). Web API with the read-write key.
+- lair: beside step 11, offer "N merged notes not yet published: publish?"
+  when merged drafts are ahead of Zotero; proposal only, as for check-staging.
+- reading-note skill: template and filing switched to the HTML child note;
+  caps 700 words deep / 250 skim (author-decided for climate-finance-het).
+
+## Consumers
+
+climate-finance-het ticket 3019 (wiki-pull, 61 pages to migrate);
+sen-causal-reading (73 reading pages with 103 anchor links; ticket there).
+
+## Exit criteria
+
+- [ ] rules/zotero.md and the reading-note skill state the narrowed rule
+- [ ] zotero publish-notes and pull-notes verbs with tests (idempotence,
+      editor wrapping of the field table, unavailable != in sync)
+- [ ] lair offer for unpublished merged notes
+- [ ] climate-finance-het 3019 consumes the verbs
