@@ -9,6 +9,7 @@ Author: reviewer
 2026-11-01T16:15Z reviewer Blocked-by 1416 removed: 1416 closed moot (author ruling 2026-11-01); the catalog entry fits the existing listing
 2026-11-09T19:02Z reviewer de-risk section added; audit now at design/2026-11-01-raid-phase2-imagine-audit.md (conception/ renamed, 1477); author decision pending: raid Phase 2 per-ticket reimagine, options a-d, session default d; recommend the 1443 note on the bare template before any skill
 2026-11-10T07:34Z reviewer author ruling 2026-11-10 recorded: no skill; raid Phase 2 option (d) on this branch; criterion 3 accepted; criteria 1, 2, 4, 5 dropped by the author
+2026-11-10T07:36Z reviewer safeguard result and author's pushback addition recorded; template gains two lines and one clause, raid drift guard a pushback outcome
 
 --- body ---
 Parent: 1415
@@ -128,3 +129,20 @@ skill is built; design/design-note-template.md suffices.
 - Criteria 1, 2, 4 and 5 are dropped by the author 2026-11-10, not met: design/2026-11-09-context-length-strategy.md followed design/design-note-template.md section for section with two advisor reviews and no skill, and raid's lead on 1484, 1487 and 1490 folded Imagine into a per-ticket premise check plus one Blind-Spot pass, which corrected two premises.
 - 1417 and 1415 close together, as 1415's de-risk note foresees for a
   tracker with one live child. Item 8 (name) is moot.
+- Safeguard run 2026-11-10 with the session named "Context management
+  strategy" (the one that wrote design/2026-11-09-context-length-strategy.md
+  on the bare template). Verdict: "only the effort, not the result; nothing
+  here needs a skill". It showed two lines missing, added to
+  design/design-note-template.md on this branch: reproduce each number and
+  state its definition before recommending (§ 2 Situation); a status line,
+  proposed until the author accepts then accepted with the date, and a
+  ticket filed from a proposed note carries `needs-human` until acceptance.
+  Its other points (launching the reviews, how the author accepts, pricing
+  data) are gaps of data or effort, not of guidance, and are left out.
+- The author added, 2026-11-10: "Include the permission to pushback at
+  imagine stage, Example: if the ask for special treatment from the harness
+  , when it would make more sense to align the asker". Raid § Phase 2's
+  drift guard gains a "pushback on the ask" outcome beside the premise
+  objection (precedent: ticket 1471, closed denied), and the template's
+  § 1 Problem one clause: the note may conclude that the asker should
+  change, not the harness.
