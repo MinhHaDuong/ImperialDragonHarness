@@ -120,9 +120,9 @@ Launch rails (they override the profile where it names a file to write):
   `NOT-RUN: <reason>` and stop; never fall back to another directory.
 - Write no file, post nothing, commit and push nothing, read no credentials.
 - Open your report with `worker: ...`, then a second line
-  `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>`: whether you
-  could read the tree, had a shell, and ran tests or read code only. If you
-  could not read the tree, say `read=no`; never write a clear.
+  `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>`, for example
+  `reach: read=yes shell=no tests=not-run`. If you could not read the tree,
+  say `read=no`; never write a clear.
 - Your final message is your report; the launcher files it, so write no
   report file yourself. An empty changed-file list never yields `clear`.
 
@@ -453,11 +453,11 @@ def refusal(report: str) -> str | None:
     return next((line for line in header_lines(report) if line.upper().startswith('NOT-RUN')), None)
 
 
-REACH = re.compile(r'reach:\s*read=(yes|no)\s+shell=(yes|no)\s+tests=(ran|not-run)\s*$', re.I)
+REACH = re.compile(r'reach:\s*read=(yes|no)\s+shell=(yes|no)\s+tests=(ran|not-run)(?:\s.*)?$', re.I)  # a tail starts at whitespace and is ignored
 
 
 def reach_refusal(report: str) -> str | None:
-    """Why the seat's declared reach rules out a report: no valid `reach:` line, a repeated one, or `read=no`."""
+    """Why the seat's declared reach rules out a report: no valid `reach:` line, a repeated one, or `read=no`; text after `tests=` is ignored."""
     raw = [line.strip() for line in report.splitlines() if line.strip()]
     lines = [line.strip('*`').strip() for line in raw]
     line = lines[1] if len(lines) > 1 else ''  # the launcher's worker line is first
