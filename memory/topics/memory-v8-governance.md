@@ -41,7 +41,7 @@ Authority: the Smelt skill and `rules/guards.md`.
 [brood]: ../journal/2026/2026-11-07-raid-d35fb4.md
 [trial]: ../journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md
 [identity]: ../journal/2026/2026-11-05-pr2217-attribution-capture.md
-- Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/1465-evidence-structured-review-constraints-a.erg).
+- Current dispositions: [1350](../../tickets/closed/1350-settle-the-two-memory-stores-in-claude-c.erg), [1354](../../tickets/closed/1354-memory-outcome-trial-on-dreambench-swe-a.erg), [1377](../../tickets/closed/1377-forward-structured-review-constraints-th.erg), [1443](../../tickets/1443-repenser-la-m-moire-statut-de-premier-ra.erg), [1465](../../tickets/closed/1465-evidence-structured-review-constraints-a.erg).
 
 [source1]: user-rulings.md#on-memory-and-rules
 
