@@ -1,0 +1,96 @@
+%erg 0.1
+Title: raid_land cleanup keeps a merged worktree that holds another registered worktree
+Created: 2026-11-10
+Author: reviewer
+Closed: autoclosed — PR #2428
+
+--- log ---
+2026-11-10T09:16Z reviewer created
+2026-11-10T13:13Z reviewer note feasibility — raid ce1c5a: PASS, cleanup() at scripts/raid_land.py:227, worktree_nested at scripts/worktree-clean-lib.sh:39, fixture make_repo at tests/test_raid_land_local.py:42; no cross-ticket conflict (single ticket), no shared registry
+2026-11-10T13:25Z reviewer closed — autoclosed — PR #2428
+
+--- body ---
+## Context
+
+Found during the raid on ticket 1500 (PR #2394, raid 91a35c), by gaze and by
+the orchestrator's list of every direct `git worktree remove` site.
+
+Since PR #2394 a git-ignored file no longer blocks a worktree removal, and
+`/.claude/worktrees/` is ignored through `info/exclude` (ticket 1495). An
+outer worktree holding a registered inner worktree therefore shows a clean
+status, and plain `git worktree remove <outer>` deletes the inner tree with
+its uncommitted files (reproduced in a fixture). PR #2394 added
+`worktree_nested` (`scripts/worktree-clean-lib.sh`) and wired it into
+`worktree-gc.sh`, `worktree-exit-preflight.sh` and
+`skills/roar/close-and-clean.sh`.
+
+`scripts/raid_land.py` `cleanup()` (about line 227) is the one harness removal
+of an agent's tree left without it: after the merge it runs
+`git worktree unlock` and `git worktree remove` on the merged request's
+worktree with no preflight. The behaviour is the same as before PR #2394, so
+that request left it alone. No nested worktree exists on padme today.
+
+`scripts/forge.py:615`, `scripts/merge-gate.py:623, 1030, 1049` and
+`scripts/test_target_probe.py:112` remove throwaway trees they created
+themselves and are out of scope.
+
+## Exit criteria
+
+- [ ] `raid_land.py --cleanup` keeps a merged worktree that holds another registered worktree, names the nested path in its answer, and still reports the merge as landed; a test shows it with a real nested `git worktree add` holding an uncommitted file, red before the change
+- [ ] A merged worktree holding nothing but ignored files is still removed, by test
+- [ ] The check reuses `worktree_nested` or the exit preflight; no second implementation of the path match
+- [ ] `make check` passes
+
+## Imagine (raid ce1c5a)
+
+Premise checked on origin/main 2ecc71337: `cleanup()` (`scripts/raid_land.py:227`)
+still unlocks and removes with no preflight; nothing touched it or
+`scripts/worktree-clean-lib.sh` since the ticket was filed; no open request
+touches either file. Per-ticket reimagine skipped (one bounded fix).
+
+### Blind-Spot pass: 3 findings, none needing new intent
+
+1. No flow that nests a registered worktree inside a request's worktree was
+   identified: hunt, gaze and the session recipe all create siblings under the
+   primary checkout. The fix is defence in depth, like the three sites PR #2394
+   wired. A hand-made `git worktree add <outer>/.claude/worktrees/x` is a fair
+   fixture, since `worktree_nested` matches on path alone.
+2. Nothing parses `cleanup()`'s answer (it is printed, `raid_land.py:431`) and
+   the exit code stays OK. The kept-tree answer reuses the `cleanup skipped:`
+   prefix so a reader of the raid output sees it beside the other retained
+   cases; roar's `close-and-clean.sh` refuses the same tree later, which is the
+   intended hand-off to a human.
+3. The direct `worktree_nested` call is the fail-closed route:
+   `worktree-exit-preflight.sh:35` swallows its failure with `|| true`, and the
+   preflight also purges `.panel` and re-checks what `git worktree remove`
+   already refuses.
+
+## Plan (raid ce1c5a)
+
+Route: code, one function and two tests.
+
+1. Tests first, in `tests/test_raid_land_local.py` (no-forge fixture
+   `make_repo(remote=False)`, real linked worktrees; `land()` there gains a
+   way to pass `do_cleanup=True`):
+   - kept: add `/.claude/worktrees/` to the fixture's `info/exclude`, then
+     `git worktree add -b inner <wt>/.claude/worktrees/inner main` with one
+     uncommitted file in it. Without the exclude line git refuses the removal
+     for an untracked directory and the test is green before the change for the
+     wrong reason. Assert: exit OK, the inner file and the outer tree still
+     exist, the output has a `cleanup skipped:` line naming the inner tree's
+     resolved path, branch `feat` survives. Red before the change on the
+     deleted inner file.
+   - removed: a merged worktree holding one git-ignored file and nothing else
+     is removed and its branch deleted.
+2. `cleanup()`: after the ancestry check and before `git worktree unlock`
+   (a kept tree keeps its lock), call `worktree_nested` from the lib through
+   bash with the path as an argument, never interpolated. Non-zero exit: keep
+   the tree, `cleanup skipped: cannot list nested worktrees of <cwd>`
+   ("retain on any doubt"). Non-empty output: keep the tree and name each
+   nested path. The path match stays in the lib.
+3. No documentation restates the answer strings (`grep 'cleanup skipped'`
+   outside `raid_land.py`: none), so none changes.
+
+Antipattern scan: a test that only asserted the message would pass on an
+implementation that prints it and removes anyway; both tests assert the file
+system state.

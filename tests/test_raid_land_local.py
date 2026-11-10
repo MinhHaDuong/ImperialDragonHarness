@@ -73,11 +73,11 @@ def make_repo(tmp_path, monkeypatch, remote: bool, check_argv=("true",)):
     return work, wt, origin
 
 
-def land(wt, ruled=None, claims=(), out=None):
+def land(wt, ruled=None, claims=(), out=None, do_cleanup=False):
     out = [] if out is None else out
     fg = forge.NoneForge(str(wt))
     code = rl.land(fg, "branch:feat base=main", ruled or git(wt, "rev-parse", "HEAD"), "main", wt,
-                   out=out.append, ruled_claims=list(claims))
+                   do_cleanup=do_cleanup, out=out.append, ruled_claims=list(claims))
     return code, out
 
 
@@ -366,3 +366,42 @@ def test_f2_landing_without_a_review_reads_missing_and_still_lands(tmp_path, mon
     assert code == 0, out
     assert "attribution: not derivable: review (none on notes)" in out
     assert out.count("attribution: not derivable: review (none on notes)") == 1
+
+
+# --- ticket 1512: --cleanup keeps a merged worktree that holds another registered worktree ------
+
+def _ignore_worktrees(work):
+    """As ticket 1495 does in a real clone: /.claude/worktrees/ is ignored through info/exclude."""
+    exclude = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    with exclude.open("a") as f:
+        f.write("/.claude/worktrees/\n")
+
+
+def test_cleanup_keeps_a_merged_worktree_holding_another_worktree(tmp_path, monkeypatch):
+    work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
+    _ignore_worktrees(work)
+    inner = wt / ".claude" / "worktrees" / "inner"
+    git(wt, "worktree", "add", "-q", "-b", "inner", str(inner), "main")
+    (inner / "wip.txt").write_text("uncommitted\n")
+    code, out = land(wt, do_cleanup=True)
+    assert code == 0, out
+    assert git(work, "rev-parse", "main^2")  # the merge still landed
+    assert (inner / "wip.txt").read_text() == "uncommitted\n"
+    assert wt.is_dir()
+    assert git(work, "rev-parse", "--verify", "-q", "feat", check=False)
+    kept = [line for line in out if line.startswith("cleanup skipped:")]
+    assert len(kept) == 1 and str(inner.resolve()) in kept[0], out
+
+
+def test_cleanup_removes_a_merged_worktree_holding_only_ignored_files(tmp_path, monkeypatch):
+    work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
+    exclude = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "info" / "exclude"
+    exclude.parent.mkdir(exist_ok=True)
+    exclude.write_text("*.cache\n")
+    (wt / "x.cache").write_text("disposable\n")
+    code, out = land(wt, do_cleanup=True)
+    assert code == 0, out
+    assert not wt.exists()
+    assert git(work, "rev-parse", "--verify", "-q", "feat", check=False) == ""
+    assert any(line.startswith("cleaned ") for line in out), out
