@@ -5,6 +5,8 @@ Author: reviewer
 
 --- log ---
 2026-11-10T08:48Z reviewer created
+2026-11-10T09:07Z reviewer raid 13f6d8 imagine: per-ticket pass skipped (lead: verbatim ruling, one function). Blind-spot: premise holds, live path narrower than stated: audit_one already retries on the filename when the embedded title finds nothing, so an embedded title concludes absent only when the filename gives fewer than TITLE_MIN_WORDS words or equals the title; the red test needs such a filename or it is green before the change. absent leads to a write only through a .bib title, so this changes reports and counts, not writes
+2026-11-10T09:07Z reviewer raid 13f6d8 lead decisions: receipt titles are not wired as given, receipts carry no given/scraped mark for title and probe-url stores the page's own title; only a .bib title is given, the request says so. find-work --metadata reading the pdfinfo Title is outside this ticket: named as residual, queued for the author. Text to change: skills/zotero/references/backfill.md verdict table and lookup order
 
 --- body ---
 ## Context

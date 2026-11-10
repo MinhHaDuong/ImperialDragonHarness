@@ -5,6 +5,9 @@ Author: reviewer
 
 --- log ---
 2026-11-10T08:48Z reviewer created
+2026-11-10T09:07Z reviewer raid 13f6d8 imagine: premise holds (cmd_suggest_attachments compares nothing). Path: reuse find_receipt, the .bib discovery of check-staging, IDENTIFIER_KEYS, hash_index and file_evidence; one licensing function beside GIVEN_KEYS, called by both commands; no new flag; the comparison also runs without --edit and shows in the suggested rows
+2026-11-10T09:07Z reviewer raid 13f6d8 lead decisions (reversible; advisor model agreed): criterion 6 is met by its second branch, the request states which tests skip and why and quotes one run with a display, the gate is not widened here (test-doctor work). An index that cannot be built is could-not-look, not a contradiction: attach, the row says the md5 comparison was skipped and why, exit code by the helper's house rule. A file already stored under the parent itself is not stored twice, the row says so (design/zotero-integration.md: idempotent on md5), checked without the index. A given identifier the parent lacks is nothing to compare. The project root comes from the file, not from cwd. The library lock covers index plus attach under --edit. The index covers the parent's own library
+2026-11-10T09:07Z reviewer raid 13f6d8 blind-spot: identifiers become negative evidence for the first time: another edition's ISBN, a volume's ISBN on a chapter, or a second DOI of one work are not another work; a refusal names both sides and a way out that is not the GUI (record the second identifier on the item). The sweep keeps today's behaviour and shares the licensing function; refusing a contradiction inside the sweep is not built, the request names the asymmetry (queued for the author). Sites: tests/test_zotero_import.py:963-966 and :2590-2603 pin the row and run on z=None; restatements in skills/zotero/SKILL.md:65-69 and :95-100, backfill.md:160-161, design/zotero-integration.md:139 and :164
 
 --- body ---
 ## Context
