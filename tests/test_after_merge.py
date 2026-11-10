@@ -665,6 +665,15 @@ def test_the_runner_clears_an_inherited_virtual_env(tmp_path, monkeypatch, modul
     assert run_after_in_process(module, None) == module.PASS
 
 
+def test_the_runner_clears_an_inherited_tmpdir(tmp_path, monkeypatch, module):
+    """Ticket 1498: the detached run outlives the session that moved main, so that
+    session's worktree-scoped TMPDIR must not reach the checks."""
+    work = env_repo(tmp_path, monkeypatch, ["sh", "-c", 'test -z "$TMPDIR"'])
+    monkeypatch.setenv("TMPDIR", str(tmp_path / "removed-worktree" / ".tmp"))
+    merge_branch(work, "later")
+    assert run_after_in_process(module, None) == module.PASS
+
+
 def test_a_real_test_failure_in_the_same_check_stays_red(tmp_path, monkeypatch, module):
     script = f"echo 'FAILED tests/t.py::test_real - assert 0'; python3 -c 'import {LOCKED_MODULE}'"
     work = env_repo(tmp_path, monkeypatch, ["sh", "-c", script])
