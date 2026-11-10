@@ -28,6 +28,15 @@ on the copy.
 claude (Claude Code, with `subagents/` and `tool-results/`), codex, pi, aider,
 vibe. The last three write through the spool.
 
+Each runtime's source roots are defined once, in `transcript_spool.py`
+(`NAMED_ROOTS`). Two runtimes have two roots, told apart by depth below
+`raw/<host>/<runtime>/` (`source_of`): codex copies `sessions/` (dated
+`YYYY/MM/DD/` tree) and, since 2026-11-10, `archived_sessions/` (flat, depth 1);
+pi copies its live sessions (one directory per working directory) and its spool
+(flat, depth 1). A Codex rollout copied from both roots is held twice; a reader
+counts it once, keeping the copy with the greatest mtime, then size
+(`one_per_rollout`).
+
 ## Retention
 
 The runtimes prune their live trees by age. The archive keeps everything and
