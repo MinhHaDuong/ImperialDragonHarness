@@ -80,3 +80,128 @@ readable corpus at all exits non-zero.
   `cached_input_tokens`?) is answered in the reader's docstring, with the
   transcript evidence
 - [ ] `make check` passes
+
+## Imagine (raid 3429da)
+
+Why now: the author opened the deferred item on 2026-11-10; the ceilings bind
+every runtime, and the audit's own table already says a main session is not
+known to be an interface session. Codex transcripts say which it is.
+
+Simplest path: leave the Claude Code path and its missed-run dollar figures
+as they are. Add a small table of runtimes (name, default corpus root, reader
+yielding the `(project, session_id, agent_id, trajectory)` tuples the session
+report already takes). The session report runs over the main trajectories of
+every readable runtime, each row carrying its runtime. The summary gains, per
+runtime, a status (read or could not look), its root and its session counts,
+and replaces the two constants of PR 2397. No reader class hierarchy, no
+plugin framework, no third-party package: a table of functions.
+
+Points the plan must settle, with the evidence in the code or its docstring:
+
+1. Whole prompt on Codex: `last_token_usage.input_tokens` alone on the probe
+   evidence, never the cumulative `total_token_usage`; explain the 4 records
+   where `total_tokens != input_tokens + output_tokens`.
+2. Session role, from `session_meta.payload.source`: a `subagent` is not a
+   main session; `exec` is an unattended run by construction, so it is counted
+   as a session and held to the default ceiling; `cli` takes its model's
+   ceiling. The output says which rule each count used.
+3. Main model: `codex-auto-review` is the most frequent `turn_context` model
+   in the sample. The model of a prompt is the one whose request produced
+   that `token_count`, or the report names the reviewer as the main model.
+4. Forks and resumes (`forked_from_id`, `subagent_history_start_ordinal`,
+   `history_mode`): replayed history is not counted twice. Codex token counts
+   carry no message id to dedupe on; establish whether a fork's rollout
+   replays them.
+5. A turn: several `token_count` records per user turn, one per model
+   request, and possible re-emissions; a `token_usage_record` line type exists
+   in nearly the same number (2764 against 2771). The "30 turns at a level"
+   floor counts model requests on Claude Code; count the same thing here.
+6. Codex sessions enter the session counts only. Missed runs and their dollar
+   figures stay Claude Code only, and the table says so.
+7. The window uses each record's own `timestamp`.
+
+8. Corpus root: `~/.codex/archived_sessions/` holds rollouts dated inside
+   the window (19 on 2026-11-10), and `$CODEX_HOME` moves the whole tree. The
+   reader walks both directories under the Codex home, or the output names
+   the archive as not read.
+9. Role split: over the 512 rollouts of the last ten days, `source` is `exec`
+   on 265, `subagent` on 222 and `cli` on 25. The Codex corpus is mostly
+   launched workers, so the table shows the split by role beside the count.
+10. The seam's contract, for the Pi reader: a reader yields a session's
+    events in conversation order, not file order. Pi records form a tree
+    (`id`, `parentId`) with abandoned branches.
+11. The output names the host it read: the audit reads the local home only,
+    and the harness runs on more than one host.
+
+Blind-Spot pass (2026-11-10, one read-only seat): not clean; points 8 to 11
+are its findings. It also found the two downstream readers
+(`scripts/trace-hypotheses.py`, `skills/trace-doctor/SKILL.md`) safe as long
+as `missed_runs` and `recoverable_usd_upper_bound` keep their Claude Code
+meaning, and Codex `cli_version` 0.165.0 to 0.167.0 inside the window, the
+`token_count` shape unchecked on the 6 files of 0.165.0. For the author:
+whether the count means this host or the fleet (queued in the raid report).
+
+Later review: the tracker's integration review runs the audit on the live
+corpora and checks the Codex count by hand against the four files the probe
+found above 230K.
+
+## Plan (raid 3429da)
+
+Written by the raid lead from the source; hunt's Plan phase owns the detail.
+
+Base: main with PR 2397 merged (it adds `RUNTIMES_READ`, `RUNTIMES_NOT_READ`
+and the JSON keys `corpus_root`, `runtimes_read`, `runtimes_not_read`).
+
+Actions:
+
+1. First test, red for the targeted reason: a Codex fixture root with one
+   `cli` session on `gpt-6.1-sol` holding 30 or more in-window `token_count`
+   records past 450K, beside a Claude Code fixture root; the audit must count
+   one Codex session past its ceiling and leave the Claude Code counts as
+   they are.
+2. The Codex reader and its corpus walk (sessions and archive, `$CODEX_HOME`).
+3. The runtime table and the per-runtime session report; `runtimes_read` and
+   `runtimes_not_read` become what was read, Pi staying not read.
+4. Could not look per runtime; exit code non-zero only when no corpus is
+   readable.
+5. The table: runtimes read, sessions per runtime, role split, host, and the
+   line that missed runs are Claude Code only.
+6. Docstring: the `input_tokens` answer with its evidence.
+
+Tests that would pass on a wrong implementation, and the fix:
+
+- A whole-prompt test whose fixture has `cached_input_tokens == 0` passes
+  whether or not the reader adds the cached part. The fixture carries a
+  non-zero cached part inside `input_tokens`, sized so that adding it again
+  crosses the ceiling and the right reading does not.
+- A could-not-look test that only checks the exit code passes if the absent
+  runtime is silently dropped. It asserts the runtime is named as not read
+  and absent from the session counts, and that the Claude Code counts equal
+  those of a run without the Codex root.
+- An `exec` session past 230K and under its model's ceiling is counted past
+  its ceiling; the same turns in a `cli` session are not. One test, both
+  sessions, or the role rule is untested.
+- A subagent rollout past the default ceiling is not a session.
+
+Dependencies: PR 2397 merged; none on ticket 1509, which depends on this.
+
+## Feasibility (raid 3429da)
+
+PASS, read on main at a7a5f202 by the raid lead:
+
+- `scripts/trace-compact-audit.py`: `audit_corpus(projects_dir, days,
+  min_run, threshold=None, *, since, now, ceilings, metric)` raises
+  `CouldNotLook` when the projects dir is absent; `session_report(main_trajs,
+  ceilings, metric)` takes `(project, session_id, traj)` 3-tuples filtered
+  from the 4-tuples by `agent_id == "main"`; `ceiling_for(model, ceilings)`
+  matches a model id by word, so `gpt-6.1-sol` and `openai/gpt-6.1-sol` both
+  take the Sol ceiling; `main()` returns 2 on `CouldNotLook`.
+- `tests/test_context_length_audit.py` loads the script by path and builds
+  fixture transcripts with `_turn` and `_session`; the Codex fixtures follow
+  that pattern. `test_cli_missing_projects_dir_is_could_not_look` pins the
+  current exit code and changes meaning: an absent Claude Code corpus beside a
+  readable Codex one no longer exits non-zero.
+- No API key, no network. Corpora are read for key names and numbers only.
+- WARN, cross-ticket: PR 2397, this ticket and ticket 1509 edit the same
+  script. Order: 2397, then 1508, then 1509; no shared registry beyond the
+  runtime table this ticket creates.
