@@ -1448,7 +1448,7 @@ def test_filename_title_gives_surnames_and_slug_words():
     assert zi._filename_title(Path("Afriat1967-MethodOfLimits.pdf")) == \
         "Afriat Method Of Limits"
     assert zi._filename_title(Path("BeraudNuma2024-Cournot-ch4.pdf")) == \
-        "Beraud Numa Cournot"
+        "Beraud Numa Cournot ch4"
     assert zi._filename_title(Path("scan0001.pdf")) == "scan0001"
 
 
@@ -2677,17 +2677,6 @@ def test_a_second_client_on_a_taken_port_retries_and_both_write(
             second.stop()
     finally:
         first.stop()
-
-
-@pytest.mark.parametrize("filename, expected", [
-    ("Bareinboim-2022-On-Pearls-Hierarchy-R60.pdf", "Bareinboim On Pearls Hierarchy"),
-    ("Kehoe-Polo-Sancho-1995-Evaluation-Performance-WP480.pdf", "Kehoe Polo Sancho Evaluation Performance"),
-    ("Marglin-1984-Growth-Distribution-and-Prices-scan.pdf", "Marglin Growth Distribution and Prices"),
-    ("Valenzuela-2007-Assessing-Global-CGE-Model-Validity-AJAE.pdf",
-     "Valenzuela Assessing Global CGE Model Validity"),
-])
-def test_filename_search_drops_observed_trailing_noise(filename, expected):
-    assert zi._filename_title(Path(filename)) == expected
 
 
 def test_filename_only_no_match_is_unidentified():

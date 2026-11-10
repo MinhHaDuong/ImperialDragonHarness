@@ -1,0 +1,71 @@
+%erg 0.1
+Title: Gaze seat: a valid reach line with trailing text discards the report
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T07:09Z reviewer created
+
+--- body ---
+## Context
+
+On PR 2365 (2026-11-09) gaze planned one other-family seat (codex,
+gpt-6-luna). The seat read the tree and answered "No findings ... Verdict:
+clear". Its second line was
+
+    reach: read=yes shell=yes tests=not-run (read code only)
+
+`scripts/gaze_seat.py:456` matches the reach line whole and allows nothing
+after `tests=`, so `reach_refusal` answered "invalid reach declaration", the
+report was discarded, the plan check failed, and the review was recorded
+`seats: self-only` (raw id 20261109T225531Z-3921936; the report text was read
+back from the codex session file).
+
+How often: the history of `refs/notes/review` over the 7 days to 2026-11-10
+holds 9 lines with "seat reach: invalid reach declaration", 6 on the codex
+door with gpt-6-luna and 3 on the claude-code door with sonnet. One report
+may appear in several lines; at least 2 are distinct by raw id, and raw ids
+exist only since 2026-11-07.
+
+The launch rails state the format and, in the same sentence, "ran tests or
+read code only" (`scripts/gaze_seat.py:122-124`). The gloss the seat added
+repeats those words.
+
+History. Ticket 1290 (2026-10-27) introduced the line to refuse a seat that
+could not read and to record whether tests ran. Commit 57343040 (2026-10-31)
+already added one tolerance, for a header wrapped in a Markdown block. This
+is the second round of format noise on the same check.
+
+Why not a grammar: ticket 1378 put "a grammar on seat reports" out of scope
+by author ruling, and ticket 1465 holds it, deferred until there is a
+consumer need and evidence that each CLI door accepts a schema. A format
+stated in the prompt is a request, which is what failed here. Probe of
+2026-11-10, logged on 1465.
+
+## Decisions for the plan
+
+- Read the three fields from the reach line and ignore what follows them.
+  Refuse what 1290 meant to refuse: no reach line, `read=no`, a repeated
+  declaration. Do not add a second pattern for the next kind of noise.
+- Keep the seat's line intact in the filed report.
+- Show the seat one literal example line, and drop the wording that invites
+  a gloss.
+- Out of scope: passing a schema to the doors (ticket 1465).
+
+## Test
+
+In `tests/test_gaze_seat.py`, with the fake seat:
+- a clear whose reach line ends with extra text is filed, line intact
+  (red first: today it is "invalid reach declaration");
+- `read=no` followed by extra text is still no report;
+- the existing cases for a missing line and a repeated line pass unchanged.
+
+## Exit criteria
+
+- [ ] A report whose second line declares read, shell, and tests and then
+  carries extra text is filed, with that line intact
+- [ ] `read=no`, a missing reach line, and a repeated declaration are still
+  no report
+- [ ] The launch rails show one literal example line and no wording that
+  invites a gloss
+- [ ] `make check` passes

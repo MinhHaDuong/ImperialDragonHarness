@@ -2,9 +2,13 @@
 Title: After-merge red on main 822b9bf2c360: pytest-guard
 Created: 2026-11-09
 Author: merge-gate
+Closed: after-merge record passes on main 4e300663 (2026-11-10T06:54Z, pytest-guard 29.9 s) after PR #2362; the red was environmental, an inherited TMPDIR
 
 --- log ---
 2026-11-09T22:06Z merge-gate created
+2026-11-09T23:00Z reviewer note verify-reroll — round 1: no after-merge record on main passes pytest-guard yet; 1498's only criterion is observable after the merge that would close it
+2026-11-09T23:00Z reviewer note PR #2362 repairs the cause (runner_env drops an inherited TMPDIR) and references this ticket without closing it. Cause: the detached runner (pid 594908, started 2026-11-09T22:05Z) inherited TMPDIR from the roar session's worktree; main is sound, the five tests pass with the default TMPDIR. Close this ticket when a tip of main carries a passing after-merge record, which needs that runner to have ended.
+2026-11-10T06:55Z reviewer closed — after-merge record passes on main 4e300663 (2026-11-10T06:54Z, pytest-guard 29.9 s) after PR #2362; the red was environmental, an inherited TMPDIR
 
 --- body ---
 ## Context

@@ -1,0 +1,76 @@
+%erg 0.1
+Title: Staging handoff: fetchers leave a receipt that recognition reads
+Created: 2026-11-10
+Author: reviewer
+Blocked-by: 1502
+
+--- log ---
+2026-11-10T07:09Z reviewer created
+
+--- body ---
+## Context
+
+Second half of the author's decision of 2026-11-10 on the documentary chain;
+ticket 1502 carries the survey and the recognition side. Read it first.
+
+At the moment a file is fetched, its identity is known and then dropped:
+
+- `scripts/doifetch.sh --doi X` (harness cascade `scripts/fulltext_cascade.py`)
+  prints `{"status", "source", "path", "error"}`. The DOI or ISBN it was
+  given is not in that line. `skills/zotero/references/backfill.md:166-173`
+  tells the agent to "record that source", naming no place. The file lands
+  in `papers/` by default, while `rules/zotero.md` describes the chain as
+  fetch, stage in `docs/`, archive in Zotero.
+- `skills/zotero/scripts/probe-url.py` prints the URL, the final URL, the
+  HTML meta and the identifiers it found, writes the file to `docs/<slug>`,
+  and keeps nothing beside it.
+
+After ticket 1502, a later run can still recognise a file by hash (if the
+library holds it) or by an identifier printed in its pages. What no later
+run can recover is the **URL of a document that has no other identifier**:
+working papers, reports, HTML snapshots. That is the class the 1456 suffix
+list was patching around (`GTAP-WP54`, `R60`, `WP480`), and a Zotero item's
+`url` field is an exact key for it.
+
+## Decision
+
+- **One receipt shape** for both fetchers, printed as today's JSON line and
+  carrying at least: `path`, `md5`, `identifiers` (`doi`, `isbn`, `arxiv`,
+  `handle`, as given or found), `url` and `final_url` where there is one,
+  `source`, `title`. Keys that exist today keep their names.
+- **The receipt is also left in the staging folder**, keyed by the file's
+  md5 so that a rename does not orphan it (sen-causal-reading renamed its
+  whole `docs/` on 2026-10-20). One append-only file per staging folder;
+  the name and format are the implementer's, inside the git-ignored folder.
+  It is disposable project staging, not harness state: losing it degrades
+  recognition to ticket 1502's order, nothing breaks.
+- **Recognition reads it.** `check-staging` takes a receipt's identifiers
+  and URL, ranked with the `.bib` entry's (given, not scraped), and
+  `find-work --metadata` accepts the receipt as it accepts
+  `extract-metadata` output, so the agent retypes nothing.
+- **The DOI/ISBN fetcher stages into `docs/` by default**; `--output-dir`
+  still wins.
+
+Alternatives set aside: a sidecar per file (orphaned by renames, doubles the
+folder); writing the identifier into the PDF (changes the bytes, so the hash
+no longer equals a copy fetched elsewhere); a `.bib` entry at fetch time (a
+fetched file is not yet a cited one, and the tracked `.bib` is the
+project's).
+
+## Out of scope
+
+- Changing DOIfetch itself (another repository): the harness cascade owns
+  the JSON line, so no upstream change is needed. A wish for upstream goes
+  there as a ticket, not as an edit.
+- A manifest of what a project cites (sen-causal-reading's `copies.csv`):
+  that is the project's.
+
+## Exit criteria
+
+- [ ] `fulltext_cascade.py` and `probe-url.py` print the same receipt keys; a test pins the shared shape on both
+- [ ] Each fetch leaves its receipt in the staging folder, keyed by md5; a test shows the receipt found after the file is renamed
+- [ ] A file fetched by URL with no DOI, staged in one run, is recognised in a later run by its URL against an item's `url` field; a test shows it, with a control file that has no receipt
+- [ ] `find-work --metadata <receipt>` works without hand editing; a test shows it
+- [ ] `doifetch.sh --doi` with no `--output-dir` writes under `docs/`; `skills/zotero/references/backfill.md` says where the source is recorded instead of "record that source"
+- [ ] `rules/zotero.md` states the handoff in one sentence (who writes the receipt, where), within the resident-rules budget
+- [ ] `make check` passes
