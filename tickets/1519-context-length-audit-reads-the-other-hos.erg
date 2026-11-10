@@ -1,0 +1,84 @@
+%erg 0.1
+Title: Context length audit reads the other hosts from the archive, not over ssh
+Created: 2026-11-10
+Author: reviewer
+
+--- log ---
+2026-11-10T13:32Z reviewer created
+
+--- body ---
+## Context
+
+Ticket 1516 (PR 2423, merged 2026-11-10) made `scripts/trace-compact-audit.py`
+read the fleet by running the other host's own copy of the script over ssh.
+The same day a default run on padme printed `Host doudou: COULD NOT LOOK`:
+doudou's checkout predated the change and rejected the new flags. That will
+recur after every change to the script until the other host syncs. The ssh
+version also introduced a hardcoded host list, `FLEET_HOSTS = ("padme",
+"doudou")`. Asked "Why not use the archive? Do we commit to run the audit
+only on padme anyway?", and given the comparison, the author ruled on
+2026-11-10: "Switch to archive".
+
+Read on padme, 2026-11-10 (paths and counts only):
+
+- The archive (`scripts/transcript_spool.py`, `scripts/agent-sessions-README.md`)
+  is written nightly by `scripts/transcript_archive.py` (systemd user timer
+  `transcript-archive`, 03:33); doudou pushes its `raw/doudou/` to padme over
+  ssh. A source touched within the last day is skipped.
+- padme's archive holds `raw/doudou/{claude,codex,pi,seat-raw}` and
+  `launches.jsonl`: 28272 files, the newest dated 2026-11-08. One zstd file
+  per source file, the original relative path kept:
+  `raw/<host>/claude/<project>/<session>.jsonl.zst`,
+  `raw/<host>/codex/YYYY/MM/DD/rollout-….jsonl.zst`,
+  `raw/<host>/pi/<dir>/<file>.jsonl.zst`. `transcript_archive.py` reads a
+  copy back with `zstd -dc`.
+- doudou's own archive holds `raw/doudou` only. The fleet's transcripts sit
+  together on padme alone.
+- `spool/` on padme holds `spool/padme` only.
+
+## Scope
+
+- This host is read live, as today. Every other host is read from this
+  host's archive, `raw/<host>/<runtime>`; the hosts are the directories the
+  archive holds, no list in the script.
+- Each host read from the archive is named with the date of its newest
+  archived file, and the output says that a transcript touched within the
+  last day is not in the archive yet.
+- The ssh path goes: `FLEET_HOSTS`, the remote run, the flags that exist only
+  for it, their tests and every statement of them (docstrings, help,
+  `skills/trace-doctor/SKILL.md`). `--local` stays and reads this host alone.
+- A host whose archive copy is absent or unreadable, an archive root that
+  cannot be resolved, or an archive that holds no other host is reported as
+  such, never as zero sessions: on a host that does not receive the others'
+  archives the audit reads that host and says the fleet view is not available
+  there.
+- Archived transcripts are decompressed in memory or as a stream. No
+  decompressed copy is written to disk, and the script opens no network
+  connection.
+
+Out of scope: reading this host's own archive copy (sessions deleted from the
+live trees stay out, as today); changing the archive's schedule or its push;
+`seat-raw` and `launches.jsonl`; any other trace script.
+
+## Test
+
+On a fixture archive built in a temporary directory, with a compressed
+Claude Code, Codex and Pi transcript under `raw/<other>/`: a session past its
+ceiling on the other host is counted under that host and runtime; the host's
+line carries the date of its newest file; an archive with no other host, and
+an archive root that cannot be resolved, each give the local counts with the
+fleet named as not available and exit 0; a corrupt archived file is counted
+as could not look, not as an empty session; `--local` reads no archive.
+
+## Exit criteria
+
+- [ ] A default run on a host whose archive holds other hosts counts their
+  sessions per host and per runtime from the archive, and names each host
+  with the date of its newest archived file
+- [ ] The script opens no ssh connection: `FLEET_HOSTS`, the remote run and
+  its flags are gone, with their tests and every statement of them
+- [ ] An absent, unreadable or unresolvable archive, and an archive with no
+  other host, are reported as such, with a non-zero exit only when no corpus
+  at all is readable
+- [ ] No decompressed transcript is written to disk
+- [ ] `make check` passes
