@@ -145,6 +145,38 @@ def test_tree_holding_setuptools_build_is_removed(tmp_path):
     assert not tree.exists()
 
 
+def test_tree_holding_tmp_is_removed_without_a_forge_listing(tmp_path):
+    """Ticket 1500: `.tmp/` is ignored scratch. A review tree holding files there
+    is removed with no request listing, even when such a listing would fail."""
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    exclude = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n/.tmp/\n")
+    (tree / ".tmp").mkdir()
+    (tree / ".tmp" / "seat-notes.txt").write_text("scratch\n")
+    real = Path(env["PATH"].split(":", 1)[0]) / "gh"
+    wrap = tmp_path / "wrap-bin"
+    wrap.mkdir()
+    calls = tmp_path / "gh-calls.log"
+    (wrap / "gh").write_text(
+        "#!/bin/sh\n"
+        f'printf \'%s\\n\' "$*" >> "{calls}"\n'
+        'case "$2" in list) exit 1 ;; esac\n'
+        f'exec "{real}" "$@"\n')
+    (wrap / "gh").chmod(0o755)
+    env = dict(env, PATH=f"{wrap}:{env['PATH']}")
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
+            primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not tree.exists()
+    listed = calls.read_text().splitlines() if calls.exists() else []
+    assert not [c for c in listed if c.split()[1:2] == ["list"]], listed
+
+
 def test_refused_close_leaves_the_closed_marker(tmp_path):
     """Ticket 1357: the marker lives in the worktree's git dir, so it survives a refused close."""
     primary, env, f = opened(tmp_path)
