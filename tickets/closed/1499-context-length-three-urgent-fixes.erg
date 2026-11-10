@@ -2,12 +2,14 @@
 Title: Context length: three urgent fixes
 Created: 2026-11-09
 Author: reviewer
+Closed: pain points 1 and 2 done; point 3 cut by the author 2026-11-10
 
 --- log ---
 2026-11-09T22:46Z reviewer created
 2026-11-09T22:57Z reviewer label needs-human
 2026-11-10T07:31Z reviewer unlabel needs-human
 2026-11-10T07:31Z reviewer author ruling 2026-11-10: note accepted for points 1-2; whole-prompt definition; thresholds from route data; point 3 and its two exit criteria cut (not met)
+2026-11-10T07:52Z reviewer closed — pain points 1 and 2 done; point 3 cut by the author 2026-11-10
 
 --- body ---
 ## Context
@@ -79,8 +81,8 @@ interface session; what an interface session may do at its ceiling.
 
 ## Exit criteria
 
-- [ ] The status line shows the context in tokens
-- [ ] The audit counts sessions as well as runs, restricts events to its
+- [x] The status line shows the context in tokens
+- [x] The audit counts sessions as well as runs, restricts events to its
   window, reports the main model, and takes a threshold per model; one
   command reproduces the table of section 1 of the design note
 - ~~[ ] One command prints the current session's context in tokens on Claude
@@ -88,4 +90,4 @@ interface session; what an interface session may do at its ceiling.
   session it cannot read~~ Cut by the author, 2026-11-10; not met.
 - ~~[ ] Raid's wave loop and lair's metrics call that command where they now
   estimate or say nothing~~ Cut by the author, 2026-11-10; not met.
-- [ ] `make check` passes
+- [x] `make check` passes

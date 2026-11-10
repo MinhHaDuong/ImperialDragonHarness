@@ -72,11 +72,10 @@ concrete fixes and trivial swaps are not.
 An interface session is the one the author converses with. It may run past
 230K, up to its model's ceiling (author ruling 2026-11-09):
 
-| Model | Ceiling |
-|---|---|
-| Sol, Opus | 450K |
-| Astra, Fable | 550K |
-| any other | 230K |
+[`ceilings.json`](ceilings.json) holds the numbers, the one source the audit
+reads: one ceiling for Sol and Opus, a higher one for Astra and Fable, and
+230K for any other model. Context length means the whole prompt: input, cache
+read and cache creation tokens.
 
 At the ceiling the guard applies as written: stop and hand the author a
 proposed split. Launched workers, team leads and unattended runs keep 230K
