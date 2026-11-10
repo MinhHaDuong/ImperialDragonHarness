@@ -10,7 +10,7 @@ Authority: the Smelt skill and `rules/guards.md`.
 - There is no project prompt. Ticket 1451 moved the generic text into `skills/smelt/references/consolidation.md`; its revision is the skill's. Migration refuses an untracked or edited prompt; size comparison resolves refs in the selected repo [prompt]. A retirement citation is intentionally still listed on rerun [followup].
 - Case notes (`memory/skills/<skill>.md`) have 1–4 dated, sourced cases with `Use:` lines, around 400 words. Smelt re-selects them. Claude's Skill PostToolUse plus UserPromptSubmit cover both tool and typed-slash loads; Pi wiring landed in PR 2150 [cases].
 - Native auto-memory stays by author choice (1350 option b); Smelt lists it read-only. Nomination is for Brood, without destination, section or wording; promotion discussion needs a separate explicit request (1461/PR 2259) [brood]. The [User rulings][source1] register preserves contextual decisions and author edits; Brood integrates and retires integrated rulings.
-- Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention/provenance landed as 1464; 1377 closed by author disposition in favor of deferred 1465, without claiming structured constraints implemented [brood].
+- Attribution capture is `attribution_record.py --capture-pr N`; merge-commit capture was closed by the author [capture]. Failed-output retention/provenance landed as 1464; 1377 closed by author disposition in favor of 1465 (closed 2026-11-10 by the author's ruling, to be re-filed when a consumer needs it), without claiming structured constraints implemented [brood].
 
 ## Hazards
 
