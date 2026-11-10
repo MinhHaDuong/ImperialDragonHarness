@@ -396,7 +396,9 @@ def read_codex(root: Path):
 #   "events" in CONVERSATION order, not file order (a reader of a tree-shaped
 #   log keeps the branch that was continued and drops abandoned ones), each turn
 #   {"kind": "turn", "prompt": whole prompt in tokens, "cache_read": int,
-#   "model": str, "ts": aware datetime or None, optional "msg_id"}, one turn per
+#   "model": model id, matched by word against skills/route/ceilings.json by
+#   ceiling_for (an id no entry names takes the default ceiling), "ts": aware
+#   datetime or None, optional "msg_id"}, one turn per
 #   model request; plus "first_ts", "last_ts", "unparsable_lines",
 #   "post_compact_reads", "post_compact_tokens", "entry_skill" (may be empty),
 #   "role" (shown in the role split) and "ceiling_rule" (RULE_MODEL: held to
@@ -654,7 +656,6 @@ def audit_corpus(
             entry["status"] = "could not look"
             entry["reason"] = str(e)
             continue
-        entry["status"] = "read"
         trajs = []
         rt_seen = rt_unreadable = rt_unparsable = rt_undated = 0
         for project, session_id, agent_id, traj in items:
@@ -665,6 +666,13 @@ def audit_corpus(
                 continue
             rt_unparsable += traj["unparsable_lines"]
             trajs.append((project, session_id, agent_id, traj))
+        if rt_seen and rt_unreadable == rt_seen:
+            entry["status"] = "could not look"
+            entry["reason"] = f"none of its {rt_seen} transcripts under {root} could be read"
+            unreadable += rt_unreadable
+            files_seen += rt_seen
+            continue
+        entry["status"] = "read"
         # Inherited turns are dropped on whole transcripts, before the window cut.
         dropped = drop_inherited_turns(trajs)
         if dropped:
@@ -854,7 +862,7 @@ def render_table(summary: dict) -> str:
     lines.append(
         "A Claude Code main session is not known to be an interface session: it takes its model's "
         "ceiling. A Codex cli session takes its model's ceiling; a Codex exec run is unattended and "
-        "takes the default; a subagent is not a session."
+        "takes the default, as does a rollout with no source; a subagent is not a session."
     )
     lines.append(
         f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only): "

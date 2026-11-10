@@ -365,3 +365,12 @@ def test_cli_reads_codex_beside_an_absent_claude_code_corpus(tmp_path):
     )
     assert done.returncode == 0, done.stderr
     assert "COULD NOT LOOK" in done.stdout and "Claude Code" in done.stdout
+
+
+def test_codex_home_with_no_readable_rollout_is_could_not_look(tmp_path):
+    _session(tmp_path / "claude", "c", [_turn("m", 9, cache_read=1)])
+    (tmp_path / "codex" / "sessions" / "rollout-x.jsonl").mkdir(parents=True)  # opening raises OSError
+    out = _both(tmp_path)
+    assert _runtime(out, "Codex")["status"] == "could not look"
+    assert "Codex" in out["runtimes_not_read"]
+    assert out["sessions"]["with_turns"] == 1
