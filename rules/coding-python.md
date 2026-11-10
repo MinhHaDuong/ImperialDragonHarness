@@ -55,7 +55,7 @@ Test tiers, by **cost**:
 | adherence | `@pytest.mark.adherence` | ruff / mypy / hygiene / contracts | `make lint` |
 
 When writing new tests:
-- CLI flag presence: check via source inspection (`open().read()` + string match), not subprocess `--help`.
+- CLI flags: test what the flag does, or the call's exit status (an unknown option exits 2); a test that spawns the command belongs to the integration tier. Never assert that a string appears in a script's or skill's source: that pins wording, not behaviour.
 - Tests needing heavy modules only for `inspect.getsource()`: read the file directly instead.
 
 Two patterns keep the fast tier honest — generalizable, adopt per project:
