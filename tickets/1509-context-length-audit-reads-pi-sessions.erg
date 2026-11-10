@@ -2,11 +2,11 @@
 Title: Context length audit reads Pi sessions
 Created: 2026-11-10
 Author: reviewer
-Blocked-by: 1508
 
 --- log ---
 2026-11-10T08:14Z reviewer created
 2026-11-10T08:23Z reviewer note raid 626455: Imagine, Blind-Spot (4 findings, folded in), plan and feasibility annotated; Execute waits for ticket 1508 to merge
+2026-11-10T08:39Z reviewer note blocker 1508 closed — Blocked-by removed.
 
 --- body ---
 ## Context
