@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Transcript readers split lines on newlines only
+Created: 2026-11-10
+Author: reviewer
+Closed: landed in PR #2438 (scope step of ticket 1519)
+
+--- log ---
+2026-11-10T14:20Z reviewer created
+2026-11-10T14:20Z reviewer closed — landed in PR #2438 (scope step of ticket 1519)
+
+--- body ---
+## Context
+
+Scope step of PR 2438 (ticket 1519), filed by raid 075fa8 so that the
+verify-gate's scope-overflow entry has its ticket. `trace_events.zstd_lines`
+and `open_lines` split with `str.splitlines()`, which also cuts a JSONL record
+at a raw U+2028 or U+2029 inside a JSON string. Measured by the 1519 executor
+on 2026-11-10 (counts only): 84 unparsable lines on doudou's archive copy in
+the audit window split that way, 0 when split on `\n`; 49 live padme
+transcripts hold the character. trace-stats and trace_timeline read through
+these helpers.
+
+## Scope
+
+The two helpers split on `\n` only (plain files opened with `newline=""`).
+Readers of seat reports and other non-JSONL text keep `splitlines()`.
+
+## Exit criteria
+
+- [x] `zstd_lines` and `open_lines` split on newlines only, with tests for a
+  U+2028 inside a record, CRLF and blank lines (PR 2438)
