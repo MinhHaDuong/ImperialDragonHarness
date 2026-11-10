@@ -41,7 +41,10 @@ Run the seven committed, standard-library-only scripts with the harness's
 All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
 straight through to each script's own `--days` argparse flag (default 28) —
-there is no shell-side day parsing to keep in sync.
+there is no shell-side day parsing to keep in sync. The corpus flags
+(`--codex-home`, `--pi-sessions`, `--pi-spool`) are not for `$ARGUMENTS`:
+trace-stopguard has none. Report each script's `runtimes` lines (read, not
+read, could not look, not measured) with its numbers, never a bare total.
 
 ```bash
 HARNESS_DIR="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
@@ -50,16 +53,16 @@ SCRATCH=$(mktemp -d)
 
 # The five walks below are independent (none consumes another's output): run them
 # concurrently. Memo, one line per tool: what it diagnoses; what it needs.
-# trace-stats: token and dollar cost per agent and session; needs ~/.claude/projects.
+# trace-stats: token and dollar cost per agent and session; reads Claude Code, Codex, and Pi; the CSV is Claude Code's.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
 # trace-compact-audit: missed compact or clear points and sessions past their model's context ceiling; needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
-# trace-friction: velocity losses (retries, slow tools, idle waits); needs the traces.
+# trace-friction: velocity losses (retries, slow tools, idle waits); reads Claude Code, Codex, and Pi.
 python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
   --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
-# trace-wall-time: where raid, hunt and gaze runs spend wall time; needs the traces.
+# trace-wall-time: where raid, hunt and gaze runs spend wall time; runs measured on Claude Code only.
 python3 "$HARNESS_DIR/scripts/trace-wall-time.py" $ARGUMENTS \
   --json > "$SCRATCH/wall-time.json" &
 # trace-stopguard: bad stops (ask without ask-up, wait without wake); needs the traces.
@@ -197,8 +200,9 @@ From `wall-time.json` (method and limits: the docstring of
 5. **Blockers**: the longest summed waits by command or tool. A hand-rolled
    idle or poll loop near the top is a follies candidate.
 
-Every gap is READ; every category is a heuristic. A finding enters step 3 like
-any lever; this section never applies a fix.
+Every gap is READ; every category is a heuristic. Codex and Pi sessions are
+counted but their runs are reported not measured, never as zero. A finding
+enters step 3 like any lever; this section never applies a fix.
 
 ### Bad stops
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Trace-friction scan (ticket 1169): velocity losses in Claude Code transcripts.
+"""Trace-friction scan (ticket 1169): velocity losses in agent transcripts.
 
 Zero-LLM, standard-library-only companion to trace-stats.py: that measures
 cost, this measures friction. Method: design/2026-10-21-velocity-friction-scan.md.
@@ -17,6 +17,13 @@ with its tool_result, and reports per day:
 * barrier denials: how often each worktree guard refused a call (counts only;
   a verdict on a barrier belongs to /test-doctor).
 
+Runtimes (ticket 1517): by default it reads, besides Claude Code, this host's
+Codex rollouts, Pi sessions and Pi spool (scripts/trace_corpora.py). The daily
+series and totals sum every runtime read; `runtimes` names each one read, not
+read and could not look at, with its own counts and `not_measured` map. A Codex
+call whose output records no script status and no exit code is counted in
+`calls_outcome_unknown`, neither as an error nor as a success.
+
 `--pi-runs DIR` reads the arena's Pi sessions instead and never emits a
 command text.
 
@@ -32,6 +39,7 @@ message-text heuristics; "other" is the residual.
 
 import argparse
 import csv
+import importlib.util
 import json
 import logging
 import os
@@ -44,6 +52,19 @@ from pathlib import Path
 from typing import Iterator
 
 log = logging.getLogger("trace-friction")
+
+_HERE = Path(__file__).resolve().parent
+
+
+def _sibling(name: str, file: str):
+    spec = importlib.util.spec_from_file_location(name, _HERE / file)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+corpora = _sibling("trace_corpora", "trace_corpora.py")
+_te = _sibling("trace_events", "trace_events.py")
 
 SLOW_SECONDS = 30.0
 WRITE_TOOLS = {"Write", "Edit", "NotebookEdit"}
@@ -187,8 +208,26 @@ def new_day() -> dict:
         "wait_commands": 0,
         "wait_seconds": 0.0,
         "error_seconds": 0.0,
+        "calls_outcome_unknown": 0,
         "denials": Counter(),
     }
+
+
+def merge_day(into: dict, day: dict) -> None:
+    """Add one runtime's day into the all-runtime day."""
+    for k, v in day.items():
+        if k == "errors_by_cause":
+            for c, n in v.items():
+                into[k][c] += n
+        elif k == "slow_by_tool":
+            for tool, e in v.items():
+                t = into[k].setdefault(tool, {"calls": 0, "seconds": 0.0})
+                t["calls"] += e["calls"]
+                t["seconds"] += e["seconds"]
+        elif k == "denials":
+            into[k].update(v)
+        else:
+            into[k] += v
 
 
 # --- follies (ticket 1217) ---------------------------------------------------
@@ -441,20 +480,96 @@ def _pi_calls(path: Path, skipped: list) -> "Iterator[dict]":
                 }  # fmt: skip
 
 
+CODEX_SHELLS = {"exec", "local_shell_call"} | _te.SHELL_TOOLS
+CODEX_SCRIPT = re.compile(r"\AScript (completed|failed)\b")
+# Where an exit code is a record, not prose: the JSON key the `exec` tool's command results carry,
+# or a line that opens with the shell tool's own status. Free text ("see exit code 2") never counts.
+CODEX_EXIT_RECORD = re.compile(r'"exit_code"\s*:\s*(-?\d+)|^(?:Process exited with code|Exit code:?)\s*(-?\d+)', re.M)
+
+
+def codex_outcome(text: str) -> bool | None:
+    """Error (True), success (False) or unknown (None) of one Codex call output.
+
+    The `exec` tool runs a script: its output opens with `Script completed` or `Script failed`,
+    and the commands it ran carry an `"exit_code"` key. An error is a failed script or any non-zero
+    recorded exit code, so a completed script whose command failed counts as an error, as a failed
+    Bash call does on Claude Code. Residual: a printed JSON document holding an `"exit_code"` key
+    is read as a record. An output with neither marker has an unknown outcome."""
+    script = CODEX_SCRIPT.match(text)
+    codes = [int(a or b) for a, b in CODEX_EXIT_RECORD.findall(text)]
+    if (script and script.group(1) == "failed") or any(codes):
+        return True
+    if script or codes:
+        return False
+    return None
+
+
+def _codex_calls(path: Path, skipped: list) -> "Iterator[dict]":
+    """Yield paired calls of one Codex rollout. A shell call is named Bash; its outcome is
+    codex_outcome of its output text."""
+    pending: dict[str, tuple[datetime, str, str]] = {}
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except ValueError:
+                skipped[0] += 1
+                continue
+            payload = row.get("payload") if isinstance(row, dict) else None
+            ts = _parse_ts(row.get("timestamp")) if isinstance(row, dict) else None
+            if row.get("type") != "response_item" or not isinstance(payload, dict) or ts is None:
+                continue
+            ptype = payload.get("type") or ""
+            if ptype in _te.CODEX_CALLS:
+                cid = payload.get("call_id") or payload.get("id")
+                name = str(payload.get("name") or ptype)
+                cmd = _te.codex_command(payload) or ""
+                tool = "Bash" if name in CODEX_SHELLS or ptype == "local_shell_call" else name
+                if isinstance(cid, str):
+                    pending[cid] = (ts, tool, cmd)
+            elif ptype.endswith("_output") and payload.get("call_id") in pending:
+                start, tool, cmd = pending.pop(payload["call_id"])
+                text = _te._result_text(payload.get("output"))  # Codex blocks are `input_text`
+                yield {
+                    "id": payload["call_id"], "start": start, "end": ts, "tool": tool, "cmd": cmd,
+                    "is_error": codex_outcome(text),
+                    "text": text, "timeout_s": None,
+                }  # fmt: skip
+
+
+READERS = {"claude-code": _calls, "pi": _pi_calls, "codex": _codex_calls}
+FOLLY_RUNTIME = {corpora.CLAUDE: "claude-code", corpora.CODEX: "codex", corpora.PI: "pi", corpora.PI_SPOOL: "pi"}
+NOT_MEASURED = {
+    corpora.CODEX: {
+        "outcome of calls whose output records no script status or exit code (agent and message "
+        "tools)": "counted in calls_outcome_unknown, neither as an error nor as a success",
+        "sleep_poll_to_cap on condition loops": "a rollout records no call timeout, so an uncounted loop has no known cap",
+        "waits through Codex's own sleep, wait and wait_agent tools": "wait_commands counts shell waits only; "
+        "those calls appear under slow_by_tool",
+        "outcome and duration of an exec script still running when it returned": "they belong to a later wait "
+        "call; the script's own call ends at its early return",
+    },
+    corpora.PI: {"sleep_poll_to_cap on condition loops": "Pi records no default call timeout; only a call's own timeout caps a loop"},
+}
+NOT_MEASURED[corpora.PI_SPOOL] = NOT_MEASURED[corpora.PI]
+
+
 def scan_file(path: Path, cutoff: datetime, seen: set, days: dict,
-              follies: Follies | None = None, pi: bool = False) -> int:  # fmt: skip
+              follies: Follies | None = None, pi: bool = False,
+              runtime: str | None = None) -> int:  # fmt: skip
     """Fold one transcript into the per-day table; return skipped line count."""
+    runtime = runtime or ("pi" if pi else "claude-code")
     skipped = [0]
     kept = []
-    for call in (_pi_calls if pi else _calls)(path, skipped):
-        key = (str(path), call["id"]) if pi else call["id"]
+    for call in READERS[runtime](path, skipped):
+        key = call["id"] if runtime == "claude-code" else (str(path), call["id"])
         if key in seen or call["start"] < cutoff:
             continue  # resumed sessions replay parent rows
         seen.add(key)
         kept.append(call)
         _record(days, call)
     if follies is not None:
-        follies.scan(kept, path.stem, "pi" if pi else "claude-code")
+        follies.scan(kept, path.stem, runtime)
     return skipped[0]
 
 
@@ -463,6 +578,8 @@ def _record(days: dict, call: dict) -> None:
     day = days[start.date().isoformat()]
     secs = max((end - start).total_seconds(), 0.0)
     day["calls"] += 1
+    if call["is_error"] is None:
+        day["calls_outcome_unknown"] += 1
     if tool == "Bash":
         day["bash_calls"] += 1
         if is_wait_command(cmd):
@@ -485,23 +602,60 @@ def _record(days: dict, call: dict) -> None:
         entry["seconds"] += secs
 
 
-def run_scan(projects_dir: Path, days: int, now: datetime | None = None,
+def run_scan(roots, days: int, now: datetime | None = None,
              min_seconds: float = 0.0) -> dict:  # fmt: skip
+    """Scan every corpus in `roots` (runtime name -> root; a bare path is Claude Code's alone)."""
+    roots = corpora.normalize_roots(roots)
     now = now or datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
     table: dict[str, dict] = defaultdict(new_day)
-    seen: set = set()
     follies = Follies(min_seconds)
     files = skipped = 0
-    for path in iter_trace_files(projects_dir, cutoff.timestamp()):
-        try:
-            skipped += scan_file(path, cutoff, seen, table, follies)
-        except OSError as e:
-            log.warning("unreadable %s: %s", path, e)
+    entries = []
+    for name in corpora.CORPORA:
+        root = roots.get(name)
+        if root is None:
+            entries.append(corpora.entry(name, None, "not read", "no corpus root given"))
             continue
-        files += 1
+        rt_table: dict[str, dict] = defaultdict(new_day)
+        try:
+            if name == corpora.CLAUDE:
+                if not Path(root).is_dir():
+                    raise corpora.CouldNotLook(f"no trace corpus at {root}")
+                paths = list(iter_trace_files(Path(root), cutoff.timestamp()))
+            else:
+                paths = corpora.recent_files(name, Path(root), cutoff.timestamp())
+        except (corpora.CouldNotLook, OSError) as e:
+            entries.append(corpora.entry(name, root, "could not look", str(e)))
+            continue
+        seen: set = set()
+        rt_files = rt_skipped = unreadable = 0
+        for path in paths:
+            try:
+                rt_skipped += scan_file(path, cutoff, seen, rt_table, follies, runtime=FOLLY_RUNTIME[name])
+            except OSError as e:
+                log.warning("unreadable %s: %s", path, e)
+                unreadable += 1
+                continue
+            rt_files += 1
+        if paths and unreadable == len(paths):
+            entries.append(corpora.entry(name, root, "could not look",
+                                         f"none of its {len(paths)} transcripts under {root} could be read"))
+            continue
+        for d, day in rt_table.items():
+            merge_day(table[d], day)
+        files += rt_files
+        skipped += rt_skipped
+        days_ = rt_table.values()
+        measures = {k: sum(d[k] for d in days_) for k in
+                    ("calls", "bash_calls", "errors", "calls_outcome_unknown", "slow_calls", "wait_commands")}
+        entries.append(corpora.entry(name, root, "read", files=rt_files, unreadable_files=unreadable,
+                                     skipped_lines=rt_skipped, **measures,
+                                     **({"not_measured": NOT_MEASURED[name]} if name in NOT_MEASURED else {})))
     series = [{"date": d, **table[d]} for d in sorted(table)]
-    return summarize(series, days, files, skipped, follies)
+    out = summarize(series, days, files, skipped, follies)
+    out.update(corpora.report_keys(entries))
+    return out
 
 
 def iter_pi_files(runs_dir: Path):
@@ -581,6 +735,7 @@ def summarize(series: list[dict], days: int, files: int, skipped: int,
             "wait_hours_upper_bound": round(
                 sum(d["wait_seconds"] for d in series) / 3600, 2
             ),
+            "calls_outcome_unknown": sum(d.get("calls_outcome_unknown", 0) for d in series),
         },
         "slow_by_tool_hours_upper_bound": [
             {"tool": t, "calls": e["calls"], "hours": round(e["seconds"] / 3600, 2)}
@@ -618,14 +773,10 @@ def write_csv(path: Path, summary: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Daily friction series and follies from Claude Code traces, or Pi sessions with --pi-runs."
+        description="Daily friction series and follies from Claude Code, Codex and Pi traces, "
+        "or the arena's Pi sessions with --pi-runs."
     )
-    parser.add_argument(
-        "--projects-dir",
-        type=Path,
-        default=Path("~/.claude/projects").expanduser(),
-        help="Root of the trace corpus (default: ~/.claude/projects)",
-    )
+    corpora.add_root_flags(parser)
     parser.add_argument(
         "--days", type=int, default=28, help="Window in days (default 28)"
     )
@@ -636,7 +787,7 @@ def main() -> None:
         "--pi-runs",
         type=Path,
         help="Arena run directory (or its parent) holding Pi sessions "
-        "(*/attempts/*/sessions/*.jsonl); replaces the Claude Code scan",
+        "(*/attempts/*/sessions/*.jsonl); replaces the scan of this host's corpora",
     )
     parser.add_argument(
         "--folly-min-seconds", type=float, default=0.0,
@@ -649,7 +800,9 @@ def main() -> None:
     if args.pi_runs:
         summary = run_pi_scan(args.pi_runs, min_seconds=args.folly_min_seconds)
     else:
-        summary = run_scan(args.projects_dir, args.days, min_seconds=args.folly_min_seconds)
+        summary = run_scan(corpora.roots_from_args(args), args.days, min_seconds=args.folly_min_seconds)
+        if corpora.none_read(summary["runtimes"]):
+            sys.exit(1)
     if args.output:
         write_csv(args.output, summary)
         log.info("wrote %d days to %s", len(summary["daily"]), args.output)
@@ -657,6 +810,8 @@ def main() -> None:
         json.dump(summary, sys.stdout, indent=2)
         print()
         return
+    for line in corpora.render(summary.get("runtimes", []), "{files} transcripts, {calls} calls"):
+        print(line)
     print("date        calls  errors  guard  notool  wr-out  other  slow>30s  waits")
     for d in summary["daily"]:
         c = d["errors_by_cause"]
