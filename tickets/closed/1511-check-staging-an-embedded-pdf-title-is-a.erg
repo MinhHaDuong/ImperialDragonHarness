@@ -2,6 +2,7 @@
 Title: check-staging: an embedded PDF title is a hint, never grounds for absent
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2413
 
 --- log ---
 2026-11-10T08:48Z reviewer created
@@ -10,6 +11,7 @@ Author: reviewer
 2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "Unreliable does not means never use". The embedded title stays a search hint here (a hit or candidates from it count); find-work --metadata keeps using it, no extension and no ticket
 2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, completed, verbatim: "Unreliable does not means never use, but use cautiously. LLM judgement can be made." The code decides nothing on an embedded title alone; the agent reading an unidentified row judges from the title and the file. The reference text says so
 2026-11-10T09:13Z reviewer raid 13f6d8 feasibility: PASS. Every function, constant and test the plan names exists; the find_work seam is already stubbed in tests/test_zotero_check_staging_bib.py (the pdfinfo-stub precedent is in tests/test_zotero_find_work.py)
+2026-11-10T09:44Z reviewer closed — autoclosed — PR #2413
 
 --- body ---
 ## Context
