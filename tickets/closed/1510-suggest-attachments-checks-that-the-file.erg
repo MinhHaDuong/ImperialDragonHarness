@@ -2,6 +2,7 @@
 Title: suggest-attachments checks that the file belongs to the item before attaching
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2414
 
 --- log ---
 2026-11-10T08:48Z reviewer created
@@ -11,6 +12,7 @@ Author: reviewer
 2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "Default. Multiple DOI and multiple ISBN is the norm." The sweep (check-staging --apply --edit) keeps today's behaviour, no contradiction refusal there. Consequence for this ticket (lead's reading, not the author's words): an identifier that differs from the item's is often the same work, so a refusal on it names both values and says how to proceed without the GUI (record the second identifier on the item, rerun)
 2026-11-10T09:13Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "A good", on the question refuse (A, ticket as written) or attach marked unverified (B) when a given identifier differs from the item's. Exit criterion 1 stands: refuse, name both values, say to record the second identifier on the item and rerun
 2026-11-10T09:13Z reviewer raid 13f6d8 feasibility: PASS, one WARN. Every helper the plan names exists. WARN: the pyzotero attributes giving the parent's library id are unverified, fallback is find_item returning it. Cross-ticket: 1511 edits the same file on disjoint hunks, the second to land rebases; no registry shared by three requests, no coordination change
+2026-11-10T09:31Z reviewer closed — autoclosed — PR #2414
 
 --- body ---
 ## Context
