@@ -2438,14 +2438,6 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     ids = bib_identifiers(bib_entry)
     from_text = False
     text_skip = None
-    stored = (md5_index is not None and md5_index["status"] == "built"
-              and file_md5(path) in md5_index["by_md5"])
-    if not any(ids.values()) and path.suffix.lower() == ".pdf" and not stored:
-        # Only when no curated key exists: a DOI on the page may be a
-        # cited work's. Its lookups are labelled "(from text)".
-        scraped, text_skip = text_identifiers(path)
-        if any(scraped.values()):
-            ids, from_text = scraped, True
 
     def look(searched: str) -> dict[str, Any]:
         res = find_work(libs, title=searched, **ids,
@@ -2460,6 +2452,17 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         return res
 
     res = look(title)
+    hashed = any("storageHash" in m["why"] for m in res["matches"])
+    if not any(ids.values()) and path.suffix.lower() == ".pdf" and not hashed:
+        # Only when no curated key exists and no stored copy answered: a
+        # DOI on the page may be a cited work's. Its lookups are labelled
+        # "(from text)".
+        scraped, text_skip = text_identifiers(path)
+        if any(scraped.values()):
+            ids, from_text = scraped, True
+            res = look(title)
+        elif text_skip:
+            res["skipped"].append(text_skip)
     if not (res["matches"] or res["candidates"]):
         # A junk or garbled embedded /Title (publisher tool strings) matches
         # no item and so never reaches the hash comparison; the filename
@@ -2537,7 +2540,8 @@ RECONCILE_ACTIONS = {
                     "it Author1999-title",
     "absent": "create-items, or --apply with the project opt-in",
     "error": "inspect unreadable file",
-    "unchecked": "resolve discovery or check error",
+    "unchecked": "resolve discovery or check error; with the hash index "
+                 "skipped, rerun once Zotero lists the attachments in time",
     "tied_parents": TIED_ACTION,
     "deferred": "give it a .bib entry with title, author and year, or "
                 "create-items",
@@ -2574,7 +2578,7 @@ def reconcile_report(root: Path, found: dict[str, Any], rows: list[dict[str, Any
     """The one report shape every check-staging exit writes, early or not."""
     summary = count_verdicts(rows)
     if errors:
-        summary["unchecked"] = len(errors)
+        summary["unchecked"] = summary.get("unchecked", 0) + len(errors)
     return {"verdict": verdict or ("unchecked" if errors else "checked"),
             "root": str(root),
             "bib_files": [str(p.relative_to(root)) for p in found["bib_files"]],
@@ -2584,7 +2588,9 @@ def reconcile_report(root: Path, found: dict[str, Any], rows: list[dict[str, Any
             "actions": {k: RECONCILE_ACTIONS[k] for k in summary},
             "suggested_edits": [
                 {"itemKey": row.get("zotero_key"), "field": "attachment",
-                 "old": "", "new": row.get("path", row.get("file"))}
+                 "old": "", "new": row.get("path", row.get("file")),
+                 **({} if any(w in GIVEN_KEYS for w in row.get("why") or [])
+                    else {"caution": TEXT_KEY_ONLY})}
                 for row in rows if row["verdict"] == "work_present_no_file"],
             "rows": rows, "errors": errors}
 
