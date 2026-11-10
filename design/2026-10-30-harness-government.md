@@ -17,7 +17,7 @@
 >   AGENTS.md is the harness repository's own bylaws (ticket 1412); law for
 >   every project lives in `rules/`, and the project and memory boundaries
 >   live in `rules/guards.md`.
-> - `conception/` (§1, §7): the directory is `design/` (ticket 1477).
+> - `conception/` (§1): the directory is `design/` (ticket 1477).
 > - "A `seats: self-only` gaze record counts as no review" (§2): reversed by
 >   the author's ruling of 2026-11-01; a self-only record is a review like
 >   any other (`skills/merge/SKILL.md`, `skills/gaze/SKILL.md`).
