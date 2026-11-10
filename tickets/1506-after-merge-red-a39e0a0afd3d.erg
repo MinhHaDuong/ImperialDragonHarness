@@ -1,0 +1,30 @@
+%erg 0.1
+Title: After-merge red on main a39e0a0afd3d: pytest-guard
+Created: 2026-11-10
+Author: merge-gate
+
+--- log ---
+2026-11-10T07:44Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: a39e0a0afd3d44c16c16ad3d075b57522714be02
+Failing checks: pytest-guard
+Last green after-merge tip: d3d884d86b58dced683f6acc0b12ba7f8961566d
+Merges since (first parent, newest first):
+- a39e0a0afd3d Merge pull request #2385 from MinhHaDuong/t1465-close-deferred
+
+Failed tests (check, test id):
+- pytest-guard tests/test_memory_v8_pilot.py::test_v8_surface_links_journal_and_resolves
+- pytest-guard tests/test_memory_v8_pilot.py::test_relocated_clone_remains_readable
+
+## Exit criteria
+
+- [ ] The checks named above pass on the repairing request's candidate, or the
+      red is shown to be environmental, its cause quoted from the after-merge log.
+
+Monitor, not a criterion: the after-merge record on the tip that lands the repair.
