@@ -37,7 +37,7 @@ BibTeX key (`michaelowa2011.pdf`: no title words to look up), names it with
 `--bib PATH` (repeatable) or a `bib_paths` list in `.zotero-reconcile.json`;
 the default discovery still runs beside it. Under `--dir`, a named `.bib`
 describes the files its `file=` fields link inside that directory, and the
-entry's title, DOI and type are what the lookup uses. A keyed file that no
+entry's identifiers, title and type are what the lookup uses. A keyed file that no
 `.bib` describes stays `unidentified`; it is never guessed from its name.
 `--skip-underscore-dirs` leaves out files below a directory whose name
 starts with `_` (`_superseded/`); without it every directory is checked.
@@ -106,7 +106,8 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
 | `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
-| `unidentified` | no reliable identification: too little metadata, or an unsuccessful filename-only search | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
+| `unidentified` | no reliable identification: too little metadata, or an unsuccessful filename-only or text-identifier-only search | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
+| `unchecked` | not looked up in full: the hash index was skipped, so a stored copy may have gone unseen | rerun when Zotero lists in time; never an import |
 
 
 A filename-derived title is a search hint. A filename-only search that finds
@@ -125,13 +126,37 @@ called absent, a duplicate item is minted. Five ordinary words such as
 Hoffman 1960 paper as a different Hoffman paper; a candidate list puts that
 call in front of the reader instead.
 
-**Content hash is the strongest key available** (`storageHash`, the md5
-Zotero 10 reports for each stored file): it survives renaming, re-filing and
-metadata drift, and it answers the question a staging directory actually
-asks — *is this exact file already stored?* Zotero has no search by md5, so
-the hash is compared with the files of each work another key found: a stored
-copy under a work nothing else finds goes unseen, and a file with nothing to
-look it up by is `unidentified`, never `absent`.
+**The lookup order: hash, identifiers, title.** `consulted` names each key
+used.
+
+1. **Hash** (`storageHash`): the staged file's md5 against the md5 Zotero 10
+   reports for every stored attachment of the libraries `--library` names,
+   listed once per run (Zotero has no search by md5). A hit is `identical`,
+   whatever the file is called and whether or not it has a text layer. A
+   hit under several items names the others in `also_matches`; a standalone
+   attachment is reported by its attachment key with `standalone: true`; a
+   copy under a trashed item does not count, and a linked file has no md5
+   to match.
+2. **Identifiers**: the `.bib` entry's `doi`, `isbn`, `arxiv` and `handle`,
+   plus those its `url` states (an arxiv.org, hdl.handle.net or doi.org URL)
+   and its `eprint` (arXiv, or a handle with `eprinttype = {hdl}`). When the
+   entry gives none, the identifiers printed in the PDF's first and last
+   pages, consulted as `doi (from text)` and the like. A page can print a
+   cited work's DOI, so a text identifier alone never makes a file
+   `absent` and never lets `--apply --edit` attach it.
+3. **Title** (the `.bib` title, else the PDF's container Title, else the
+   filename): a search that yields candidates, never a match.
+
+A hash miss alone never means `absent`: a file with nothing else to look it
+up by is `unidentified`. When the attachment listing does not finish in time
+or is refused, the run still completes on the identifiers and the title;
+`hash_index` says `skipped`, each row's `skipped` says
+`storageHash (index skipped: <why>)`, a file that would read `absent` reads
+`unchecked`, the report's verdict is `unchecked`, `--apply` creates and
+attaches nothing, and the exit is 74 for a slow listing, 1 for a refused
+one. The listing costs about a minute on a library of 9,000 stored files
+(Zotero hashes each file it lists); `find-work`, for one file, does not
+list, and compares the md5 only with the works another key found.
 
 **`work_present_no_file` is repaired by attaching, not by `create-items`.**
 `create-items` only ever creates items, so using it here mints a duplicate of a

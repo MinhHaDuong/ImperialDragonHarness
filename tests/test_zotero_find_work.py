@@ -636,9 +636,11 @@ def test_a_named_bib_identifies_files_named_by_bibkey(lib, tmp_path,
 @pytest.mark.integration
 def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
                                                        monkeypatch, capsys):
-    """No whole-library read per call: every items request a check-staging
+    """No whole-library read per file: every items request a check-staging
     run sends carries a search (`q`), an item key, or asks for one item's
-    children."""
+    children, except the one attachment listing per run behind the md5
+    index (ticket 1502), whose first page is asked for once whatever the
+    number of files. find-work, for one file, does not list."""
     sent = []
     real = zi.http_client
 
@@ -659,16 +661,29 @@ def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
     assert zi.cmd_check_staging(args) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"candidates": 1, "unidentified": 1}
+
+    def listing(url):
+        return (url.params.get("itemType") == "attachment"
+                and "q" not in url.params and "itemKey" not in url.params)
+
+    def a_search(url):
+        return ("q" in url.params or "itemKey" in url.params
+                or url.path.endswith("/children"))
+
+    first_pages = [u for u in sent if listing(u) and "start" not in u.params]
+    assert len(first_pages) == 1, "one attachment listing for two files"
+    for url in (u for u in sent if "/items" in u.path):
+        assert listing(url) or a_search(url), str(url)
+    sent.clear()
     find_args = argparse.Namespace(doi="10.5555/Deep.X", isbn=None, arxiv=None,
                                    handle=None, title=HOFFMAN, pdf=None,
                                    library="user", metadata=None)
     assert zi.cmd_find_work(find_args) == 0
     capsys.readouterr()
     items = [u for u in sent if "/items" in u.path]
-    assert items, "positive control: the runs did read items"
+    assert items, "positive control: find-work did read items"
     for url in items:
-        assert ("q" in url.params or "itemKey" in url.params
-                or url.path.endswith("/children")), str(url)
+        assert a_search(url), str(url)
 
 
 # ── live: a slow read is a visible failure ───────────────────────────────────
