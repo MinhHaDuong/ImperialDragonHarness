@@ -22,19 +22,25 @@ from skills/route/ceilings.json. Events are restricted to the window turn by
 turn. A transcript it cannot read is counted and reported, never read as zero.
 
 Runtimes (ticket 1508): the session counts cover every runtime in RUNTIMES that
-has a reader, each from its own corpus root on this host only; the output names
-the host, each runtime read, each one not read and each one it could not look
-at. Missed runs and their dollar figures stay Claude Code only. The process
-exits non-zero only when no corpus at all is readable.
+has a reader, each from its own corpus root; the output names the host, each
+runtime read, each one not read and each one it could not look at. Missed runs
+and their dollar figures stay Claude Code only. The process exits non-zero only
+when no corpus at all is readable. A transcript last modified before the window
+start holds no event in it and is not opened (`files_seen` counts the others).
 
-Fleet (ticket 1516): by default the audit also reads each other host of
-FLEET_HOSTS over ssh (BatchMode, a connect timeout and a run timeout), by
-running this script there with `--local --json --aggregates-only`; only counts
-come back. A host that does not answer, answers with a version this one cannot
-interpret (no matching `schema`), or reports the local host is named as such,
-never read as zero sessions. `--local`, or an explicit corpus-root flag, reads
-this host alone. Sessions are not deduplicated across hosts. Missed runs and
-their dollar figures stay this host's.
+Other hosts (ticket 1519): this host is read live; by default every other host
+is read from this host's transcript archive (scripts/transcript_spool.py), one
+per directory of `raw/` besides this host's own, from `raw/<host>/<runtime>/`.
+Each file's root comes from `transcript_spool.source_of`, Codex copies are
+collapsed by `transcript_spool.one_per_rollout`, and a `.zst` copy is
+decompressed in memory (trace_events.zstd_lines), never to disk. Each host is
+named with the date of its newest archived file and the surfaces its copy holds
+and lacks; a transcript touched within the last day is not archived yet. An
+absent or unreadable copy is "could not look"; an archive root that cannot be
+resolved, or an archive that holds no other host, leaves this host's counts and
+names the fleet view as not available. `--local`, or an explicit corpus-root
+flag, reads this host alone. Sessions are not deduplicated across hosts. Missed
+runs and their dollar figures stay this host's.
 
 Zero LLM/API calls; emits aggregates only, never trace content.
 """
@@ -45,11 +51,11 @@ import importlib.util
 import json
 import logging
 import re
-import shlex
-import socket
 import statistics
 import subprocess
 import sys
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 log = logging.getLogger("trace-compact-audit")
@@ -65,6 +71,7 @@ _SPOOL_SPEC = importlib.util.spec_from_file_location(
 )
 transcript_spool = importlib.util.module_from_spec(_SPOOL_SPEC)
 _SPOOL_SPEC.loader.exec_module(transcript_spool)
+te = ts._te  # trace_events, loaded by trace-stats: the archive's reader (zstd_lines)
 
 # A real /clear record pairs the two tags across an actual newline; trace
 # text *quoted* inside a session (e.g. trace-doctor work) keeps the JSON
@@ -72,14 +79,6 @@ _SPOOL_SPEC.loader.exec_module(transcript_spool)
 CLEAR_RE = re.compile(
     r"<command-name>/?clear</command-name>\s*\n\s*<command-message>clear</command-message>"
 )
-
-# Fleet reading (ticket 1516). The hosts are ssh aliases; the local one is dropped.
-FLEET_HOSTS = ("padme", "doudou")
-REMOTE_SCRIPT = "~/.agents/scripts/trace-compact-audit.py"
-REMOTE_CONNECT_TIMEOUT_S = 5
-REMOTE_RUN_TIMEOUT_S = 300
-# Version of the JSON a host answers with; a remote answer must carry the same.
-SCHEMA_VERSION = 1
 
 # Used only if the corpus contains no compaction to take a median from.
 DEFAULT_POST_COMPACT_TOKENS = 20_000
@@ -99,6 +98,35 @@ LONG_SESSION_TURNS = 100
 
 class CouldNotLook(Exception):
     """The corpus cannot be read at all: not an empty result."""
+
+
+class FleetUnavailable(Exception):
+    """This host's archive cannot give the other hosts: no root, no archive, or no other host in it."""
+
+
+def _lines(path: Path):
+    """Lines of one transcript: a plain file streamed, a `.zst` archive copy decompressed in memory
+    by trace_events.zstd_lines (nothing written). A copy zstd cannot decompress raises OSError."""
+    path = Path(path)
+    if path.suffix == ".zst":
+        try:
+            yield from te.zstd_lines(path)
+        except subprocess.CalledProcessError as e:
+            raise OSError(f"cannot decompress {path.name}: zstd exit {e.returncode}") from None
+        return
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        yield from fh
+
+
+def _touched(path: Path, since) -> bool:
+    """Whether `path` was modified at or after `since` (None: always); a file that cannot be
+    stat'ed is kept, so its reader reports it."""
+    if since is None:
+        return True
+    try:
+        return path.stat().st_mtime >= since.timestamp()
+    except OSError:
+        return True
 
 
 # Ceiling rules a main session is held to: its main model's ceiling, or the
@@ -173,81 +201,80 @@ def parse_trajectory(path: Path) -> dict:
     first_ts = None
     unparsable = 0
 
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                unparsable += 1
-                continue
-            if not isinstance(rec, dict):
-                unparsable += 1
-                continue
+    for line in _lines(path):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            unparsable += 1
+            continue
+        if not isinstance(rec, dict):
+            unparsable += 1
+            continue
 
-            tstamp = ts._parse_ts(rec.get("timestamp", ""))
-            if tstamp is not None:
-                last_ts = tstamp
-                if first_ts is None:
-                    first_ts = tstamp
+        tstamp = ts._parse_ts(rec.get("timestamp", ""))
+        if tstamp is not None:
+            last_ts = tstamp
+            if first_ts is None:
+                first_ts = tstamp
 
-            rec_type = rec.get("type")
-            if rec_type == "system" and rec.get("subtype") == "compact_boundary":
-                events.append({"kind": "compact", "ts": tstamp})
-                meta = rec.get("compactMetadata") or {}
-                if isinstance(meta.get("postTokens"), int):
-                    post_compact_tokens.append(meta["postTokens"])
-                awaiting_post_read = True
-                continue
+        rec_type = rec.get("type")
+        if rec_type == "system" and rec.get("subtype") == "compact_boundary":
+            events.append({"kind": "compact", "ts": tstamp})
+            meta = rec.get("compactMetadata") or {}
+            if isinstance(meta.get("postTokens"), int):
+                post_compact_tokens.append(meta["postTokens"])
+            awaiting_post_read = True
+            continue
 
-            msg = rec.get("message")
-            if not isinstance(msg, dict):
-                continue
-            content = msg.get("content")
+        msg = rec.get("message")
+        if not isinstance(msg, dict):
+            continue
+        content = msg.get("content")
 
-            if rec_type == "assistant":
-                msg_id = msg.get("id")
-                usage = msg.get("usage")
-                model = msg.get("model") or ""
-                if (
-                    msg_id
-                    and msg_id not in seen_ids
-                    and isinstance(usage, dict)
-                    and model != "<synthetic>"
-                ):
-                    seen_ids.add(msg_id)
-                    cache_read = usage.get("cache_read_input_tokens", 0) or 0
-                    prompt = (
-                        (usage.get("input_tokens", 0) or 0)
-                        + cache_read
-                        + (usage.get("cache_creation_input_tokens", 0) or 0)
-                    )
-                    events.append(
-                        {
-                            "kind": "turn",
-                            "cache_read": cache_read,
-                            "prompt": prompt,
-                            "model": model,
-                            "msg_id": msg_id,
-                            "ts": tstamp,
-                        }
-                    )
-                    if awaiting_post_read:
-                        post_compact_reads.append(cache_read)
-                        awaiting_post_read = False
-            elif rec_type == "user":
-                for text in _user_text_parts(content):
-                    if CLEAR_RE.search(text):
-                        events.append({"kind": "clear", "ts": tstamp})
-                    elif entry_skill is None:
-                        for m in re.finditer(
-                            r"<command-name>/?([\w-]+)</command-name>", text
-                        ):
-                            if m.group(1) not in ts.BUILTIN_COMMANDS:
-                                entry_skill = m.group(1)
-                                break
+        if rec_type == "assistant":
+            msg_id = msg.get("id")
+            usage = msg.get("usage")
+            model = msg.get("model") or ""
+            if (
+                msg_id
+                and msg_id not in seen_ids
+                and isinstance(usage, dict)
+                and model != "<synthetic>"
+            ):
+                seen_ids.add(msg_id)
+                cache_read = usage.get("cache_read_input_tokens", 0) or 0
+                prompt = (
+                    (usage.get("input_tokens", 0) or 0)
+                    + cache_read
+                    + (usage.get("cache_creation_input_tokens", 0) or 0)
+                )
+                events.append(
+                    {
+                        "kind": "turn",
+                        "cache_read": cache_read,
+                        "prompt": prompt,
+                        "model": model,
+                        "msg_id": msg_id,
+                        "ts": tstamp,
+                    }
+                )
+                if awaiting_post_read:
+                    post_compact_reads.append(cache_read)
+                    awaiting_post_read = False
+        elif rec_type == "user":
+            for text in _user_text_parts(content):
+                if CLEAR_RE.search(text):
+                    events.append({"kind": "clear", "ts": tstamp})
+                elif entry_skill is None:
+                    for m in re.finditer(
+                        r"<command-name>/?([\w-]+)</command-name>", text
+                    ):
+                        if m.group(1) not in ts.BUILTIN_COMMANDS:
+                            entry_skill = m.group(1)
+                            break
 
     return {
         "events": events,
@@ -260,11 +287,28 @@ def parse_trajectory(path: Path) -> dict:
     }
 
 
-def read_claude_code(root: Path):
+def read_claude_code(root: Path, since=None):
     """Reader of Claude Code transcripts under `root` (~/.claude/projects)."""
     if not Path(root).is_dir():
         raise CouldNotLook(f"no trace corpus at {root}")
-    for project, session_id, agent_id, path in ts.iter_trace_files(root):
+    yield from read_claude_files(f for f in ts.iter_trace_files(root) if _touched(f[3], since))
+
+
+def claude_archived(files):
+    """(project, session_id, agent_id, path) of archived Claude Code copies, from their paths below
+    raw/<host>/claude/: the layout of ts.iter_trace_files with `.zst` appended."""
+    for rel, path in files:
+        parts = rel.parts
+        stem = path.name.removesuffix(".jsonl.zst")
+        if len(parts) == 2 and path.name.endswith(".jsonl.zst"):
+            yield ts.strip_worktree(parts[0]), stem, "main", path
+        elif len(parts) == 4 and parts[2] == "subagents" and stem.startswith("agent-"):
+            yield ts.strip_worktree(parts[0]), parts[1], stem, path
+
+
+def read_claude_files(files):
+    """Parse Claude Code transcripts given as (project, session_id, agent_id, path)."""
+    for project, session_id, agent_id, path in files:
         try:
             traj = parse_trajectory(path)
         except OSError as e:
@@ -320,56 +364,55 @@ def parse_codex_rollout(path: Path) -> dict:
     prev_total = None
     first_ts = last_ts = None
     unparsable = 0
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
+    for line in _lines(path):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            unparsable += 1
+            continue
+        if not isinstance(rec, dict):
+            unparsable += 1
+            continue
+        tstamp = ts._parse_ts(rec.get("timestamp", ""))
+        if tstamp is not None:
+            last_ts = tstamp
+            if first_ts is None:
+                first_ts = tstamp
+        rec_type = rec.get("type")
+        payload = rec.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        if rec_type == "session_meta":
+            if meta is None:
+                meta = payload
+        elif rec_type == "turn_context":
+            model = payload.get("model") or model
+        elif rec_type == "compacted":
+            events.append({"kind": "compact", "ts": tstamp})
+        elif rec_type == "event_msg" and payload.get("type") == "token_count":
+            info = payload.get("info")
+            if not isinstance(info, dict):
                 continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                unparsable += 1
+            last = info.get("last_token_usage") or {}
+            total = (info.get("total_token_usage") or {}).get("total_tokens")
+            if total is not None and total == prev_total:
                 continue
-            if not isinstance(rec, dict):
-                unparsable += 1
+            prev_total = total
+            prompt = last.get("input_tokens") or 0
+            if prompt <= 0:
                 continue
-            tstamp = ts._parse_ts(rec.get("timestamp", ""))
-            if tstamp is not None:
-                last_ts = tstamp
-                if first_ts is None:
-                    first_ts = tstamp
-            rec_type = rec.get("type")
-            payload = rec.get("payload")
-            if not isinstance(payload, dict):
-                continue
-            if rec_type == "session_meta":
-                if meta is None:
-                    meta = payload
-            elif rec_type == "turn_context":
-                model = payload.get("model") or model
-            elif rec_type == "compacted":
-                events.append({"kind": "compact", "ts": tstamp})
-            elif rec_type == "event_msg" and payload.get("type") == "token_count":
-                info = payload.get("info")
-                if not isinstance(info, dict):
-                    continue
-                last = info.get("last_token_usage") or {}
-                total = (info.get("total_token_usage") or {}).get("total_tokens")
-                if total is not None and total == prev_total:
-                    continue
-                prev_total = total
-                prompt = last.get("input_tokens") or 0
-                if prompt <= 0:
-                    continue
-                events.append(
-                    {
-                        "kind": "turn",
-                        "prompt": prompt,
-                        "cache_read": last.get("cached_input_tokens") or 0,
-                        "model": model,
-                        "ts": tstamp,
-                    }
-                )
+            events.append(
+                {
+                    "kind": "turn",
+                    "prompt": prompt,
+                    "cache_read": last.get("cached_input_tokens") or 0,
+                    "model": model,
+                    "ts": tstamp,
+                }
+            )
     meta = meta or {}
     source = meta.get("source")
     if isinstance(source, dict):
@@ -393,16 +436,21 @@ def parse_codex_rollout(path: Path) -> dict:
     }
 
 
-def read_codex(root: Path):
+def read_codex(root: Path, since=None):
     """Reader of Codex rollouts under the Codex home `root` ($CODEX_HOME or
     ~/.codex): `sessions/` and `archived_sessions/`, both. A subagent rollout
     (`source` an object) is not a main session."""
     dirs = [d for _, d in transcript_spool.named_roots("codex", codex_home=root)]
     if not any(d.is_dir() for d in dirs):
         raise CouldNotLook(f"no Codex sessions under {root}")
-    # one session per rollout name, however many roots hold a copy
-    paths = transcript_spool.one_per_rollout(p for d in dirs if d.is_dir() for p in sorted(d.rglob("rollout-*.jsonl")))
-    for path in paths:
+    yield from read_codex_files(
+        p for d in dirs if d.is_dir() for p in sorted(d.rglob("rollout-*.jsonl")) if _touched(p, since)
+    )
+
+
+def read_codex_files(paths):
+    """Parse Codex rollouts, plain or `.zst`: one session per rollout name, however many roots hold a copy."""
+    for path in transcript_spool.one_per_rollout(paths):
         try:
             traj = parse_codex_rollout(path)
         except OSError as e:
@@ -448,29 +496,28 @@ def parse_pi_session(path: Path, role: str, rule: str) -> dict:
     last_id = None
     first_ts = last_ts = None
     unparsable = 0
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                unparsable += 1
-                continue
-            if not isinstance(rec, dict):
-                unparsable += 1
-                continue
-            tstamp = ts._parse_ts(rec.get("timestamp", ""))
-            if tstamp is not None:
-                last_ts = tstamp
-                if first_ts is None:
-                    first_ts = tstamp
-            if rec.get("type") == "session":
-                header = header or rec
-            elif rec.get("id") is not None:
-                entries[rec["id"]] = rec
-                last_id = rec["id"]
+    for line in _lines(path):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            unparsable += 1
+            continue
+        if not isinstance(rec, dict):
+            unparsable += 1
+            continue
+        tstamp = ts._parse_ts(rec.get("timestamp", ""))
+        if tstamp is not None:
+            last_ts = tstamp
+            if first_ts is None:
+                first_ts = tstamp
+        if rec.get("type") == "session":
+            header = header or rec
+        elif rec.get("id") is not None:
+            entries[rec["id"]] = rec
+            last_id = rec["id"]
     branch = []
     seen = set()
     eid = last_id
@@ -514,10 +561,14 @@ def parse_pi_session(path: Path, role: str, rule: str) -> dict:
     }
 
 
-def _read_pi(root: Path, role: str, rule: str):
+def _read_pi(root: Path, role: str, rule: str, since=None):
     if not Path(root).is_dir():
         raise CouldNotLook(f"no Pi sessions at {root}")
-    for path in sorted(Path(root).rglob("*.jsonl")):
+    yield from _read_pi_files((p for p in sorted(Path(root).rglob("*.jsonl")) if _touched(p, since)), role, rule)
+
+
+def _read_pi_files(paths, role: str, rule: str):
+    for path in paths:
         try:
             traj = parse_pi_session(path, role, rule)
         except OSError as e:
@@ -526,21 +577,26 @@ def _read_pi(root: Path, role: str, rule: str):
         yield traj["project"], traj["session_id"], "main", traj
 
 
-def read_pi_live(root: Path):
+def read_pi_live(root: Path, since=None):
     """Pi's live session root: sessions of unknown role, held to their model's ceiling."""
-    return _read_pi(root, "main", RULE_MODEL)
+    return _read_pi(root, "main", RULE_MODEL, since)
 
 
-def read_pi_spool(root: Path):
+def read_pi_spool(root: Path, since=None):
     """Pi's archive spool: seats and workers launched with `--session-dir`, held to the default."""
-    return _read_pi(root, "launched", RULE_DEFAULT)
+    return _read_pi(root, "launched", RULE_DEFAULT, since)
+
+
+def _archived(files, suffix: str):
+    return [path for _, path in files if path.name.endswith(suffix)]
 
 
 # THE SEAM (ticket 1508; the Pi reader of ticket 1509 plugs in here).
 # A runtime is a name, a default corpus root and a reader. Adding one is one
 # reader function and one entry below; no other runtime's reader changes.
 #
-# Reader contract, `reader(root: Path)`, a generator:
+# Reader contract, `reader(root: Path, since=None)`, a generator (a file last
+# modified before `since` is not opened):
 # - raises CouldNotLook (at its first step) when the corpus at `root` is absent
 #   or unreadable as a whole; the runtime is then reported "could not look",
 #   never as zero sessions;
@@ -567,32 +623,58 @@ def read_pi_spool(root: Path):
 # root (e.g. "Pi" and "Pi spool"): an entry has exactly one root, reported as
 # read, not read or could not look on its own, and its reader can set the
 # ceiling rule the root implies. The CLI maps a flag to each entry's root.
+# `store` names the entry's roots in transcript_spool.NAMED_ROOTS, (runtime,
+# root names): the archive copy of another host is split by
+# transcript_spool.source_of among the entries, and `read_files(files)` reads
+# an entry's share, `files` being (path below raw/<host>/<runtime>/, path).
 RUNTIMES = (
     {
         "name": "Claude Code",
         "default_root": lambda: transcript_spool.named_root("claude", "projects"),
         "reader": read_claude_code,
+        "store": ("claude", ("projects",)),
+        "read_files": lambda files: read_claude_files(claude_archived(files)),
         "missed_runs": True,
     },
     {
         "name": "Codex",
         "default_root": default_codex_home,
         "reader": read_codex,
+        "store": ("codex", ("sessions", "archived_sessions")),
+        "read_files": lambda files: read_codex_files(
+            p for p in _archived(files, ".jsonl.zst") if p.name.startswith("rollout-")
+        ),
         "missed_runs": False,
     },
     {
         "name": "Pi",
         "default_root": default_pi_sessions,
         "reader": read_pi_live,
+        "store": ("pi", ("live",)),
+        "read_files": lambda files: _read_pi_files(_archived(files, ".jsonl.zst"), "main", RULE_MODEL),
         "missed_runs": False,
     },
     {
         "name": "Pi spool",
         "default_root": default_pi_spool,
         "reader": read_pi_spool,
+        "store": ("pi", ("spool",)),
+        "read_files": lambda files: _read_pi_files(_archived(files, ".jsonl.zst"), "launched", RULE_DEFAULT),
         "missed_runs": False,
     },
 )
+
+
+@dataclass
+class ArchiveCopy:
+    """One RUNTIMES entry's share of another host's archive copy: `files` are those touched in the
+    window; `held` says whether the copy holds any file of the entry's roots at all."""
+    where: Path
+    files: list = field(default_factory=list)
+    held: bool = False
+
+    def __str__(self) -> str:
+        return str(self.where)
 
 
 def default_roots() -> dict:
@@ -788,14 +870,13 @@ def audit_corpus(
     require_one: bool = True,
 ) -> dict:
     """Audit the corpora. `roots` maps a runtime name of RUNTIMES to its
-    corpus root; a bare path is Claude Code's alone. A runtime absent from
-    `roots` or mapped to None is not read. Raises CouldNotLook only when no
+    corpus root, or to an ArchiveCopy (another host's share, read by the
+    entry's `read_files`); a bare path is Claude Code's alone. A runtime absent
+    from `roots` or mapped to None is not read. Raises CouldNotLook only when no
     runtime's corpus is readable, unless `require_one` is false (the fleet
     reading, where another host may still be readable). `threshold` None means each agent's own: its
     main model's ceiling for a main session, the default ceiling for a
     subagent."""
-    from datetime import datetime, timezone
-
     if not isinstance(roots, dict):
         roots = {"Claude Code": roots}
     now = now or datetime.now(timezone.utc)
@@ -813,8 +894,15 @@ def audit_corpus(
             entry["status"] = "not read"
             entry["reason"] = rt.get("not_read_reason") or "no corpus root given"
             continue
+        if isinstance(root, ArchiveCopy) and not root.held:
+            entry["status"] = "not read"
+            entry["reason"] = "not in this host's archive copy"
+            continue
         try:
-            items = list(rt["reader"](Path(root)))
+            if isinstance(root, ArchiveCopy):
+                items = list(rt["read_files"](root.files))
+            else:
+                items = list(rt["reader"](Path(root), since=start))
         except (CouldNotLook, OSError) as e:
             entry["status"] = "could not look"
             entry["reason"] = str(e)
@@ -950,14 +1038,13 @@ def audit_corpus(
     main_trajs = [(rt, p, sid, t) for rt, p, sid, aid, t in all_trajs if aid == "main"]
 
     return {
-        "schema": SCHEMA_VERSION,
         "window_days": days,
         "window_start": start.isoformat(),
         "window_end": now.isoformat(),
         "min_run": min_run,
         "threshold_tokens": threshold if threshold is not None else "per model (skills/route/ceilings.json)",
         "metric": metric,
-        "host": socket.gethostname(),
+        "host": transcript_spool.host(),
         "runtimes": runtimes,
         "runtimes_read": [r["name"] for r in runtimes if r["status"] == "read"],
         "runtimes_not_read": [r["name"] for r in runtimes if r["status"] != "read"],
@@ -983,81 +1070,91 @@ def audit_corpus(
     }
 
 
-def local_host() -> str:
-    return socket.gethostname()
-
-
-def _short(host: str) -> str:
-    return host.split(".")[0].lower()
-
-
-def aggregates_only(summary: dict) -> dict:
-    """The summary without anything that names a project, a session or a run."""
-    out = {k: v for k, v in summary.items()
-           if k not in ("run_rows", "by_project", "by_entry_skill", "top_sessions")}
-    sessions = dict(out["sessions"])
-    over = dict(sessions["over_own_ceiling"])
-    over.pop("rows", None)
-    sessions["over_own_ceiling"] = over
-    out["sessions"] = sessions
+def surfaces() -> list[tuple[dict, str, str, str]]:
+    """(RUNTIMES entry, runtime, root name, label) of every root the audit reads: the label is the
+    entry's name, followed by the root's name when the entry has several (Codex)."""
+    out = []
+    for rt in RUNTIMES:
+        runtime, names = rt["store"]
+        for name in names:
+            label = rt["name"] if len(names) == 1 else f"{rt['name']} {name.replace('_', ' ')}"
+            out.append((rt, runtime, name, label))
     return out
 
 
-def remote_args(days: int, since: str | None, min_run: int, threshold: int | None, metric: str) -> list[str]:
-    args = ["--local", "--json", "--aggregates-only", "--min-run", str(min_run), "--metric", metric]
-    args += ["--since", since] if since else ["--days", str(days)]
-    if threshold is not None:
-        args += ["--threshold", str(threshold)]
-    return args
+def archive_copy(host_dir: Path, start) -> tuple[dict, dict, float | None]:
+    """Split one host's archive copy among the RUNTIMES entries. Returns the roots for
+    audit_corpus (entry name -> ArchiveCopy), the files held per surface label, and the newest
+    file's mtime. Files modified before `start` are counted as held but not handed to a reader."""
+    owner = {(runtime, name): (rt, label) for rt, runtime, name, label in surfaces()}
+    roots = {rt["name"]: ArchiveCopy(host_dir / rt["store"][0]) for rt in RUNTIMES}
+    held: dict[str, int] = {}
+    newest = None
+    for runtime in dict.fromkeys(runtime for _, runtime, _, _ in surfaces()):
+        base = host_dir / runtime
+        for path in sorted(base.rglob("*.zst")) if base.is_dir() else ():
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
+            rel = path.relative_to(base)
+            rt, label = owner[(runtime, transcript_spool.source_of(runtime, rel))]
+            newest = mtime if newest is None else max(newest, mtime)
+            held[label] = held.get(label, 0) + 1
+            copy = roots[rt["name"]]
+            copy.held = True
+            if mtime >= start.timestamp():
+                copy.files.append((rel, path))
+    return roots, held, newest
 
 
-def read_remote_host(host: str, args: list[str]) -> dict:
-    """Run this script on `host` over ssh and return its parsed aggregate answer.
-    Raises CouldNotLook when the host does not answer, fails, or answers with
-    something this version does not interpret. Read-only on the remote."""
-    cmd = f"python3 {REMOTE_SCRIPT} " + " ".join(shlex.quote(a) for a in args)
+def archive_host_entries(start, audit) -> list[dict]:
+    """One entry per other host of this host's archive. `audit(roots)` runs audit_corpus on a
+    host's roots. Raises FleetUnavailable when the archive gives no other host."""
     try:
-        done = subprocess.run(
-            ["ssh", "-o", "BatchMode=yes", "-o", f"ConnectTimeout={REMOTE_CONNECT_TIMEOUT_S}", host, cmd],
-            capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=REMOTE_RUN_TIMEOUT_S,
-        )
-    except subprocess.TimeoutExpired:
-        raise CouldNotLook(f"no answer from {host} within {REMOTE_RUN_TIMEOUT_S}s") from None
+        raw = transcript_spool.raw_dir().parent
+    except RuntimeError as e:
+        raise FleetUnavailable(str(e)) from None
+    try:
+        hosts = sorted(d.name for d in raw.iterdir() if d.is_dir() and d.name != transcript_spool.host())
     except OSError as e:
-        raise CouldNotLook(f"cannot run ssh: {e}") from None
-    if done.returncode != 0:
-        last = (done.stderr.strip().splitlines() or ["no message"])[-1][:200]
-        raise CouldNotLook(f"{host} answered with exit {done.returncode}: {last}")
-    return _check_remote_answer(host, done.stdout)
+        raise FleetUnavailable(f"cannot read the archive at {raw}: {e.strerror or e}") from None
+    if not hosts:
+        raise FleetUnavailable(f"the archive at {raw} holds no other host")
+    labels = [label for *_, label in surfaces()]
+    entries = []
+    for name in hosts:
+        roots, held, newest = archive_copy(raw / name, start)
+        entry = {
+            "host": name,
+            "source": "archive",
+            "copy": str(raw / name),
+            "newest_file": datetime.fromtimestamp(newest, timezone.utc).date().isoformat() if newest else None,
+            "surfaces": held,
+            "surfaces_missing": [label for label in labels if label not in held],
+        }
+        if not held:
+            entry.update(status="could not look",
+                         reason=f"its archive copy {raw / name} holds no transcript this audit reads, "
+                         "or cannot be read")
+            entries.append(entry)
+            continue
+        summary = audit(roots)
+        entry.update(_host_entry(name, summary, source="archive"))
+        entries.append(entry)
+    return entries
 
 
-def _check_remote_answer(host: str, text: str) -> dict:
-    try:
-        data = json.loads(text)
-    except ValueError:
-        raise CouldNotLook(f"{host} did not answer with JSON") from None
-    if not isinstance(data, dict) or data.get("schema") != SCHEMA_VERSION:
-        got = data.get("schema") if isinstance(data, dict) else None
-        raise CouldNotLook(
-            f"{host} answers with a version this one cannot read (schema {got!r}, expected {SCHEMA_VERSION})"
-        )
-    if not (isinstance(data.get("host"), str) and isinstance(data.get("runtimes"), list)
-            and isinstance(data.get("sessions"), dict)):
-        raise CouldNotLook(f"{host} answered without the expected fields")
-    return data
-
-
-def _host_entry(host: str, summary: dict, *, is_local: bool) -> dict:
+def _host_entry(host: str, summary: dict, *, source: str) -> dict:
     return {
         "host": host,
-        "ssh_alias": None if is_local else host,
+        "source": source,
         "status": "read" if summary["runtimes_read"] else "could not look",
         "reason": None if summary["runtimes_read"] else "no corpus readable",
-        "window_start": summary["window_start"],
-        "window_end": summary["window_end"],
         "runtimes": summary["runtimes"],
         "files_seen": summary["files_seen"],
         "unreadable_files": summary["unreadable_files"],
+        "unparsable_lines": summary["unparsable_lines"],
         "sessions": summary["sessions"],
     }
 
@@ -1100,45 +1197,29 @@ def merge_session_reports(reports: list[dict]) -> dict:
     }
 
 
-def audit_fleet(local: dict, hosts, args: list[str], reader=None) -> dict:
-    """Fold the other hosts' aggregate answers into the local summary: adds
-    `fleet`, `hosts` (one entry per host asked, the local one first) and makes
-    `sessions` the sum over the hosts read. `reader(host, args)` returns a
-    remote answer or raises CouldNotLook."""
-    reader = reader or read_remote_host
-    me = local["host"]
-    entries = [_host_entry(me, local, is_local=True)]
-    seen = {_short(me)}
-    for host in hosts:
-        if _short(host) == _short(me):
-            continue
-        try:
-            ans = reader(host, args)
-        except CouldNotLook as e:
-            entries.append({"host": host, "ssh_alias": host, "status": "could not look", "reason": str(e)})
-            continue
-        if _short(ans["host"]) in seen:
-            entries.append({"host": ans["host"], "ssh_alias": host, "status": "skipped",
-                            "reason": f"{host} reports a host already read ({ans['host']})"})
-            continue
-        seen.add(_short(ans["host"]))
-        entries.append({
-            "host": ans["host"], "ssh_alias": host,
-            "status": "read" if ans.get("runtimes_read") else "could not look",
-            "reason": None if ans.get("runtimes_read") else "no corpus readable there",
-            "window_start": ans.get("window_start"), "window_end": ans.get("window_end"),
-            "runtimes": ans["runtimes"], "files_seen": ans.get("files_seen", 0),
-            "unreadable_files": ans.get("unreadable_files", 0), "sessions": ans["sessions"],
-        })
+def audit_fleet(local: dict, audit) -> dict:
+    """Add the other hosts, read from this host's archive, to the local summary: `fleet` says
+    whether the archive gave them, `hosts` holds one entry per host (this one first), and
+    `sessions` becomes the sum over the hosts read. `audit(roots)` runs audit_corpus on a host's
+    roots. Raises CouldNotLook when no host at all is readable."""
+    start = datetime.fromisoformat(local["window_start"])
+    entries = [_host_entry(local["host"], local, source="live")]
+    out = dict(local)
+    try:
+        entries += archive_host_entries(start, audit)
+    except FleetUnavailable as e:
+        if not local["runtimes_read"]:
+            raise CouldNotLook(f"{local['host']}: no corpus readable; other hosts: {e}") from None
+        out["fleet"] = {"available": False, "reason": str(e)}
+        return out
     read = [e for e in entries if e["status"] == "read"]
     if not read:
         raise CouldNotLook("; ".join(f"{e['host']}: {e['reason']}" for e in entries))
-    out = dict(local)
-    out["fleet"] = True
+    out["fleet"] = {"available": True}
     out["hosts"] = entries
     out["sessions"] = merge_session_reports([e["sessions"] for e in read])
-    out["files_seen"] = sum(e.get("files_seen", 0) for e in read)
-    out["unreadable_files"] = sum(e.get("unreadable_files", 0) for e in read)
+    for key in ("files_seen", "unreadable_files", "unparsable_lines"):
+        out[key] = sum(e.get(key, 0) for e in read)
     return out
 
 
@@ -1163,20 +1244,26 @@ def _runtime_lines(runtimes: list[dict], prefix: str = "") -> list[str]:
 def _fleet_lines(summary: dict) -> list[str]:
     hosts = summary["hosts"]
     lines = [
-        "Fleet: " + ", ".join(h["host"] for h in hosts)
+        "Fleet: " + ", ".join(f"{h['host']} ({h['source']})" for h in hosts)
         + ". Counts below sum the hosts read; a session seen on two hosts counts on both "
-        "(no cross-host deduplication). Missed runs are this host's only."
+        "(no cross-host deduplication). Missed runs are this host's only. The other hosts are read "
+        "from this host's archive: a transcript touched within the last day is not archived yet."
     ]
-    local_start = summary["window_start"][:10]
     for i, h in enumerate(hosts):
-        tag = f"Host {h['host']}" + (" (this host)" if i == 0 else "")
+        if i == 0:
+            tag = f"Host {h['host']} (this host, live)"
+        else:
+            tag = f"Host {h['host']} (archive copy, newest file {h['newest_file'] or 'none'})"
         if h["status"] == "read":
-            win = f"window {h['window_start'][:10]} to {h['window_end'][:10]}"
-            skew = " (differs from this host's window)" if h["window_start"][:10] != local_start else ""
-            lines.append(f"{tag}: read, {win}{skew}")
-            lines += _runtime_lines(h["runtimes"], prefix="  ")
+            lines.append(f"{tag}: read")
         else:
             lines.append(f"{tag}: COULD NOT LOOK ({h['reason']}); the counts below leave it out")
+        if i:
+            held = ", ".join(f"{label} {n} files" for label, n in h["surfaces"].items()) or "none"
+            missing = ", ".join(h["surfaces_missing"]) or "none"
+            lines.append(f"  In the copy: {held}; not in the copy: {missing}")
+        if h["status"] == "read":
+            lines += _runtime_lines(h["runtimes"], prefix="  ")
     read = [h for h in hosts if h["status"] == "read"]
     lines.append(
         "sessions with at least one turn, by host: "
@@ -1197,10 +1284,12 @@ def render_table(summary: dict) -> str:
         f"Context length audit, main sessions, {summary['window_start'][:10]} to {summary['window_end'][:10]}",
         f"Context length counted as: {sr['metric_label']}",
     ]
-    if summary.get("fleet"):
+    fleet = summary.get("fleet") or {}
+    if fleet.get("available"):
         lines += _fleet_lines(summary)
     else:
-        lines.append(f"Host: {summary['host']} (this host's corpora only; other hosts are not read)")
+        why = f"fleet view not available here: {fleet['reason']}" if fleet else "other hosts are not read"
+        lines.append(f"Host: {summary['host']} (this host's corpora only; {why})")
         lines += _runtime_lines(summary["runtimes"])
     lines += [
         f"sessions with at least one turn: {sr['with_turns']}",
@@ -1228,7 +1317,7 @@ def render_table(summary: dict) -> str:
     )
     lines.append(
         f"missed runs ({', '.join(summary['missed_runs_runtimes'])} only"
-        + (", this host" if summary.get("fleet") else "")
+        + (", this host" if fleet.get("available") else "")
         + "): "
         f"{summary['missed_runs']} in {summary['sessions_with_missed_runs']} sessions"
     )
@@ -1315,18 +1404,8 @@ def main() -> int:
     parser.add_argument(
         "--local",
         action="store_true",
-        help="Read this host alone (default: this host and the other hosts of the fleet over ssh; "
-        "an explicit corpus-root flag also reads this host alone)",
-    )
-    parser.add_argument(
-        "--hosts",
-        help="Comma-separated ssh aliases of the hosts to read besides this one "
-        f"(default: {','.join(FLEET_HOSTS)}, this host dropped)",
-    )
-    parser.add_argument(
-        "--aggregates-only",
-        action="store_true",
-        help="Drop project and session names from the JSON (what a remote host answers with)",
+        help="Read this host alone (default: this host live, and every other host its transcript "
+        "archive holds; an explicit corpus-root flag also reads this host alone)",
     )
     parser.add_argument("--output", type=Path, help="Write per-run rows to this CSV")
     parser.add_argument(
@@ -1343,25 +1422,17 @@ def main() -> int:
         if getattr(args, attr) is not None
     }
     roots.update(explicit)
-    fleet = not args.local and (args.hosts is not None or not explicit)
-    hosts = [h.strip() for h in (args.hosts if args.hosts is not None else ",".join(FLEET_HOSTS)).split(",")
-             if h.strip()]
+    fleet = not args.local and not explicit
+    now = datetime.now(timezone.utc)
+
+    def audit(corpus_roots, require_one=False):
+        return audit_corpus(corpus_roots, args.days, args.min_run, args.threshold, since=args.since,
+                            now=now, metric=args.metric, require_one=require_one)
+
     try:
-        summary = audit_corpus(
-            roots,
-            args.days,
-            args.min_run,
-            args.threshold,
-            since=args.since,
-            metric=args.metric,
-            require_one=not fleet,
-        )
+        summary = audit(roots, require_one=not fleet)
         if fleet:
-            summary = audit_fleet(
-                summary, hosts,
-                remote_args(args.days, args.since, args.min_run, args.threshold, args.metric),
-                reader=read_remote_host,
-            )
+            summary = audit_fleet(summary, audit)
     except (CouldNotLook, OSError, ValueError) as e:
         print(f"could not look: {e}", file=sys.stderr)
         return 2
@@ -1374,8 +1445,6 @@ def main() -> int:
             writer.writerows(run_rows)
         log.info("wrote %d runs to %s", len(run_rows), args.output)
 
-    if args.aggregates_only:
-        summary = aggregates_only(summary)
     if args.json:
         json.dump(summary, sys.stdout, indent=2, default=str)
         print()
