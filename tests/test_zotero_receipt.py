@@ -165,6 +165,72 @@ def test_a_receipt_never_authorises_an_attach_on_a_scraped_key_alone(
     assert zi.local_library().children(lib["doi"]) == []
 
 
+def apply_edit(tmp_path, name, lines, receipt, *, rewrite=None):
+    """Stage one file under docs/ with its receipt and run
+    `check-staging --apply --edit`; the edits the run made or refused."""
+    docs = tmp_path / "docs"
+    docs.mkdir(exist_ok=True)
+    path = stage(docs, name, lines, receipt)
+    if rewrite:
+        path.write_bytes(rewrite)
+    found = zi.discover_reconcile_files(tmp_path)
+    report, _ = zi.reconcile_apply(
+        tmp_path, found, "user", {"apply": True},
+        argparse.Namespace(library="user", edit=True))
+    return report["edits"]
+
+
+@pytest.mark.integration
+def test_a_stale_receipt_found_by_name_never_licenses_a_write(lib, tmp_path):
+    """The file was replaced by an unrelated one under the same name: the old
+    receipt's DOI may be looked up but is no grounds to attach the new bytes
+    to the old work."""
+    edits = apply_edit(tmp_path, "stale.pdf", ["x", "nonce c1"],
+                       {"identifiers": {"doi": RECEIPT_DOI}},
+                       rewrite=b"%PDF-1.4 an unrelated document")
+    (edit,) = edits
+    assert edit["status"] == "not attempted"
+    assert zi.local_library().children(lib["doi"]) == []
+    path = tmp_path / "docs" / "stale.pdf"
+    judged = verdict(path)
+    assert judged["zotero_key"] == lib["doi"]
+    assert not any(w in zi.GIVEN_KEYS for w in judged["why"])
+
+
+@pytest.mark.integration
+def test_a_name_only_receipt_identifier_never_says_absent(lib, tmp_path):
+    path = stage(tmp_path, "n.pdf", ["x", "nonce c2"],
+                 {"identifiers": {"doi": "10.5555/not.there"}})
+    path.write_bytes(b"%PDF-1.4 edited after the fetch")
+    assert verdict(path)["verdict"] != "absent"
+
+
+@pytest.mark.integration
+def test_a_url_match_alone_never_licenses_an_attach(lib, tmp_path):
+    """Reported (the URL finds the work), not written: a page URL is a weaker
+    identity than a DOI, an ISBN or an md5."""
+    (edit,) = apply_edit(tmp_path, "u.pdf", ["x", "nonce c3"],
+                         {"identifiers": {}, "url": URL})
+    assert edit["itemKey"] == lib["wp"]
+    assert edit["status"] == "not attempted"
+    assert zi.local_library().children(lib["wp"]) == []
+
+
+@pytest.mark.integration
+def test_a_bib_doi_that_misses_leaves_the_receipt_isbn_a_hint(lib, tmp_path):
+    """Any .bib identifier outranks every receipt identifier: the receipt's
+    ISBN hit is reported but is not the attach target."""
+    path = stage(tmp_path, "i.pdf", ["x", "nonce c4"],
+                 {"identifiers": {"isbn": "9780674009691"}})
+    libs = zi.libraries()
+    judged = zi.audit_one(path, libs, md5_index=zi.hash_index(libs),
+                          bib_entry={"_type": "article",
+                                     "doi": "10.5555/not.there"})
+    assert judged["zotero_key"] == lib["isbn"]
+    assert not any(w in zi.GIVEN_KEYS for w in judged["why"])
+    assert judged["verdict"] != "absent"
+
+
 @pytest.mark.integration
 def test_find_work_metadata_takes_the_receipt_the_fetcher_printed(
         lib, tmp_path, capsys):

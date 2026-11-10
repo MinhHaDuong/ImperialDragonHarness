@@ -29,8 +29,9 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
    and `full_pdf_url` when an HTML landing page advertises a downloadable PDF.
    Each record is also its receipt (`path`, `md5`, `url`, `final_url`,
    `source`, `title`, same keys as `doifetch.sh`): the line is appended to
-   `docs/.receipts.jsonl`, where `check-staging` finds it by md5 or name and
-   matches `url` against an item's `url` field.
+   `docs/.receipts.jsonl`, where `check-staging` finds it by md5 (its identifiers then count as
+   given) or by name (they are hints only, never grounds to write) and
+   matches `url` against an item's `url` field (reported, never grounds to write).
 2. **Prefer the real document.** If `full_pdf_url` is present (institutional
    landing page → PDF), probe that too and attach the PDF, not the HTML overview.
 3. Resolve identifiers and refine the metadata as for a PDF (identifier

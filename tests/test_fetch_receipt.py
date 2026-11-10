@@ -157,7 +157,7 @@ def test_a_receipt_is_found_after_the_file_is_renamed(tmp_path):
     path = stage(tmp_path, "Author 2020 - Title.pdf", b"bytes one",
                  url="https://example.org/wp/1")
     renamed = path.rename(tmp_path / "scan0001.pdf")
-    assert zi.find_receipt(renamed)["url"] == "https://example.org/wp/1"
+    assert zi.find_receipt(renamed)[0]["url"] == "https://example.org/wp/1"
 
 
 def test_a_receipt_is_found_after_the_file_is_edited(tmp_path):
@@ -165,21 +165,21 @@ def test_a_receipt_is_found_after_the_file_is_edited(tmp_path):
     path = stage(tmp_path, "Report.pdf", b"bytes before",
                  url="https://example.org/wp/2")
     path.write_bytes(b"bytes after ocr")
-    assert zi.find_receipt(path)["url"] == "https://example.org/wp/2"
+    assert zi.find_receipt(path)[0]["url"] == "https://example.org/wp/2"
 
 
 def test_a_file_both_renamed_and_edited_has_no_receipt(tmp_path):
     path = stage(tmp_path, "Report.pdf", b"bytes before")
     path.write_bytes(b"bytes after ocr")
-    assert zi.find_receipt(path.rename(tmp_path / "other.pdf")) is None
+    assert zi.find_receipt(path.rename(tmp_path / "other.pdf")) == (None, False)
 
 
 def test_a_file_with_no_receipt_and_a_damaged_log_are_survived(tmp_path):
     lone = tmp_path / "lone.pdf"
     lone.write_bytes(b"x")
-    assert zi.find_receipt(lone) is None
+    assert zi.find_receipt(lone) == (None, False)
     (tmp_path / ".receipts.jsonl").write_text('not json\n[1]\n')
-    assert zi.find_receipt(lone) is None
+    assert zi.find_receipt(lone) == (None, False)
 
 
 def test_the_receipt_log_is_not_a_staged_file(tmp_path):

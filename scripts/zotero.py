@@ -1831,22 +1831,24 @@ def read_receipts(directory: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def find_receipt(path: Path) -> dict[str, Any] | None:
-    """The newest receipt of `path`: the one holding its md5, so that a
-    rename does not lose it; else the one recording its name, so that an
-    edit (OCR, page cuts) does not either. A file both renamed and edited
-    has none."""
+def find_receipt(path: Path) -> tuple[dict[str, Any] | None, bool]:
+    """(receipt, exact): the newest receipt of `path`, the one holding its
+    md5 (exact), so that a rename does not lose it; else the one recording
+    its name (not exact), so that an edit (OCR, page cuts) does not either.
+    A name-only receipt may be stale (the file replaced by another under the
+    same name), so its keys are hints, never grounds to write. A file both
+    renamed and edited has none."""
     rows = read_receipts(path.parent)
     if not rows or not path.is_file():
-        return None
+        return None, False
     digest = file_md5(path)
     for row in reversed(rows):
         if row.get("md5") == digest:
-            return row
+            return row, True
     for row in reversed(rows):
         if isinstance(row.get("path"), str) and Path(row["path"]).name == path.name:
-            return row
-    return None
+            return row, False
+    return None, False
 
 
 def receipt_keys(receipt: dict[str, Any] | None
@@ -1956,6 +1958,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               isbn_unusable: str | None = None,
               md5_index: dict[str, Any] | None = None,
               from_text: bool = False,
+              hints: dict[str, str | None] | None = None,
               urls: list[str] | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
@@ -1973,7 +1976,9 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     compared. `from_text` labels the identifiers as read from the file's
     own pages ("doi (from text)"), which may be a cited work's. `urls`
     (a fetch receipt's) are matched against a work's `url` field, equal
-    after `normal_url`.
+    after `normal_url`. `hints` are identifiers of the same kinds that are
+    looked up and reported as "doi (hint)" but license neither `absent` nor a
+    write.
     """
     consulted: list[str] = []
     skipped: list[str] = []
@@ -2020,11 +2025,18 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     elif digest and md5_index is not None:
         skipped.append(f"storageHash (index skipped: {md5_index['reason']})")
 
-    for label, queries, carries in IDENTIFIER_KEYS:
-        supplied = {"doi": doi, "isbn": isbn, "arxiv": arxiv,
-                    "handle": handle}[label]
+    given_ids = {"doi": doi, "isbn": isbn, "arxiv": arxiv, "handle": handle}
+    passes = [("", given_ids)]
+    if hints:
+        passes.append((" (hint)", {k: v for k, v in hints.items()
+                                   if v and v != given_ids.get(k)}))
+    for suffix, source, label, queries, carries in (
+            (sfx, src, *key) for sfx, src in passes
+            for key in IDENTIFIER_KEYS):
+        supplied = source.get(label)
         if not supplied:
-            skipped.append(f"{label} (none supplied)")
+            if not suffix:
+                skipped.append(f"{label} (none supplied)")
             continue
         if label == "isbn" and item_type in ISBN_OF_A_VOLUME:
             # A chapter's ISBN is its book's: the book is not this work.
@@ -2038,7 +2050,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
             # Nothing to send (an ISBN with a bad check digit): not looked up.
             skipped.append(f"{label} (not a valid {label}: {supplied})")
             continue
-        used = f"{label} (from text)" if from_text else label
+        used = (f"{label} (from text)" if from_text else label) + suffix
         consulted.append(used)
         for lib in libs:
             for query in sent:
@@ -2537,12 +2549,15 @@ def _staging_verdict(res: dict[str, Any], filename_only: bool,
 
 # The identifier keys a curated source gives; a key read from the page text
 # carries " (from text)" and is not among them.
-GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle", "url")
-# The keys whose miss licenses `absent`. A URL is positive-only (ticket 1503):
-# a hit on an item's url field matches, a miss says nothing, since that field
-# holds a landing page, a PDF link or a DOI resolver at the cataloguer's whim,
-# and under --apply a miss would mint a duplicate.
-EXHAUSTIVE_KEYS = tuple(key for key in GIVEN_KEYS if key != "url")
+# The keys whose hit licenses a library write and whose miss licenses
+# `absent`: exact identifiers. A URL is positive-only (ticket 1503): a hit on
+# an item's url field matches and is reported, a miss says nothing, since that
+# field holds a landing page, a PDF link or a DOI resolver at the
+# cataloguer's whim; a page URL is also too weak an identity to write on.
+# A hint (a name-only receipt's identifier, or any receipt identifier beside
+# a .bib one) is labelled "doi (hint)" and is in neither role.
+GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle")
+EXHAUSTIVE_KEYS = GIVEN_KEYS
 
 
 def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
@@ -2573,9 +2588,18 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
     ids = bib_identifiers(bib_entry)
     # The fetcher's receipt, found by the file's md5 or name: what it was
-    # fetched by. The .bib entry's own keys win; the receipt fills the gaps.
-    r_given, r_scraped, r_urls = receipt_keys(find_receipt(path))
-    ids = {k: ids[k] or r_given.get(k) for k in ids}
+    # fetched by. Its identifiers count as given only when found by md5 and
+    # the .bib entry gives none: the .bib is the curated identity, and a
+    # name-only receipt may be stale. Otherwise they are hints, looked up and
+    # reported but never licensing `absent` or a write.
+    receipt, exact = find_receipt(path)
+    r_given, r_scraped, r_urls = receipt_keys(receipt)
+    hints: dict[str, str | None] = {}
+    if exact and not any(ids.values()):
+        ids = {k: ids[k] or r_given.get(k) for k in ids}
+    else:
+        hints = dict(r_given)
+        r_given = {}
     # A fetched ISBN names the whole volume being sought, not a part.
     whole_volume = bool(r_given.get("isbn")) and not bib_entry
     from_text = False
@@ -2584,6 +2608,7 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     def look(searched: str) -> dict[str, Any]:
         res = find_work(libs, title=searched, **ids,
                         item_type=item_type, pdf_path=path, urls=r_urls,
+                        hints=hints,
                         # Fail closed: an unplaced type may be a part whose
                         # ISBN is its volume's.
                         isbn_unusable=None if item_type or (
@@ -3015,9 +3040,11 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
     return report, rc
 
 
-TEXT_KEY_ONLY = ("found only by an identifier read from the file's pages, "
-                 "which may be a cited work's: give it a .bib entry with "
-                 "that identifier, or attach by hand")
+TEXT_KEY_ONLY = ("found only by a key that is no grounds to write (a URL, a "
+                 "hint from a receipt found by name or beside a .bib "
+                 "identifier, or an identifier read from the file's pages, "
+                 "which may be a cited work's): give it a .bib entry with "
+                 "the identifier, or attach by hand")
 
 
 def attach_present_works(root: Path, rows: list[dict[str, Any]],
