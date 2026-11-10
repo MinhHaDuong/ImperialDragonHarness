@@ -8,6 +8,9 @@ Author: reviewer
 2026-11-10T09:07Z reviewer raid 13f6d8 imagine: premise holds (cmd_suggest_attachments compares nothing). Path: reuse find_receipt, the .bib discovery of check-staging, IDENTIFIER_KEYS, hash_index and file_evidence; one licensing function beside GIVEN_KEYS, called by both commands; no new flag; the comparison also runs without --edit and shows in the suggested rows
 2026-11-10T09:07Z reviewer raid 13f6d8 lead decisions (reversible; advisor model agreed): criterion 6 is met by its second branch, the request states which tests skip and why and quotes one run with a display, the gate is not widened here (test-doctor work). An index that cannot be built is could-not-look, not a contradiction: attach, the row says the md5 comparison was skipped and why, exit code by the helper's house rule. A file already stored under the parent itself is not stored twice, the row says so (design/zotero-integration.md: idempotent on md5), checked without the index. A given identifier the parent lacks is nothing to compare. The project root comes from the file, not from cwd. The library lock covers index plus attach under --edit. The index covers the parent's own library
 2026-11-10T09:07Z reviewer raid 13f6d8 blind-spot: identifiers become negative evidence for the first time: another edition's ISBN, a volume's ISBN on a chapter, or a second DOI of one work are not another work; a refusal names both sides and a way out that is not the GUI (record the second identifier on the item). The sweep keeps today's behaviour and shares the licensing function; refusing a contradiction inside the sweep is not built, the request names the asymmetry (queued for the author). Sites: tests/test_zotero_import.py:963-966 and :2590-2603 pin the row and run on z=None; restatements in skills/zotero/SKILL.md:65-69 and :95-100, backfill.md:160-161, design/zotero-integration.md:139 and :164
+2026-11-10T09:11Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "Default. Multiple DOI and multiple ISBN is the norm." The sweep (check-staging --apply --edit) keeps today's behaviour, no contradiction refusal there. Consequence for this ticket (lead's reading, not the author's words): an identifier that differs from the item's is often the same work, so a refusal on it names both values and says how to proceed without the GUI (record the second identifier on the item, rerun)
+2026-11-10T09:13Z reviewer raid 13f6d8: Author ruling 2026-11-10, verbatim: "A good", on the question refuse (A, ticket as written) or attach marked unverified (B) when a given identifier differs from the item's. Exit criterion 1 stands: refuse, name both values, say to record the second identifier on the item and rerun
+2026-11-10T09:13Z reviewer raid 13f6d8 feasibility: PASS, one WARN. Every helper the plan names exists. WARN: the pyzotero attributes giving the parent's library id are unverified, fallback is find_item returning it. Cross-ticket: 1511 edits the same file on disjoint hunks, the second to land rebases; no registry shared by three requests, no coordination change
 
 --- body ---
 ## Context
@@ -63,3 +66,112 @@ file with the parent item, and its output row says what it compared:
 - [ ] `suggest-attachments` and `check-staging --apply --edit` share one statement of which evidence licenses an attach, in code and in `skills/zotero/references/`
 - [ ] The tests that exercise library writes run in the project's gate, or the request says plainly where they are skipped (raid f7aac3 found they skip without a display)
 - [ ] `make check` passes
+
+## Plan (raid 13f6d8)
+
+Line numbers are those of 2026-11-10; anchor by text, 1511 shifts them.
+The design calls are in the log lines of raid 13f6d8.
+
+### Relevant files
+
+- `scripts/zotero.py`
+  - `audit_one`: only the receipt/.bib given-versus-hint block, replaced by a
+    call to one extracted helper. The title lines and `filename_only` are
+    1511's.
+  - A new block just above `TEXT_KEY_ONLY`, the one statement of what licenses
+    an attach.
+  - `attach_present_works`: its inline `GIVEN_KEYS` test calls that statement;
+    behaviour unchanged, no contradiction refusal in the sweep (author ruling).
+  - `cmd_suggest_attachments`: comparison on every row with or without
+    `--edit`, a refused status, the library lock around index plus attach
+    under `--edit`, the exit code.
+  - The argparse help of `suggest-attachments` and the module docstring.
+- `tests/test_zotero_attach_licence.py` (new): every test of this ticket.
+- `tests/test_zotero_import.py`: the test that pins the suggested row, and the
+  one that runs the command on a patched `with_zotero` with no client.
+- `skills/zotero/references/backfill.md`: a new section on what licenses an
+  attach, after "work_present_no_file is repaired by attaching", and the
+  "verify the file belongs to the work" sentence. The verdict table and the
+  lookup order are 1511's.
+- `skills/zotero/SKILL.md`, `skills/zotero/references/helper-script.md`,
+  `design/zotero-integration.md` (the `suggest-attachments` and "Upload PDF"
+  rows): each points to that section instead of restating it.
+
+### Actions
+
+1. Extract the given-versus-hint block of `audit_one` into a helper both
+   commands call (.bib identifiers are given; a receipt's count as given only
+   when it was found by md5 and the .bib gives none; otherwise hints). Pure
+   refactor: the existing receipt, staging-identity and check-staging tests
+   pass unchanged. One commit.
+2. The licensing test on a row's `why` labels becomes one function beside
+   `GIVEN_KEYS`; `attach_present_works` calls it.
+3. What the parent holds, per identifier kind, read as the `carries` lambdas
+   of `IDENTIFIER_KEYS` read it (DOI field and Extra `DOI:` lines; ISBN field
+   and Extra, never for a parent type in `ISBN_OF_A_VOLUME`; arXiv; handle).
+   A kind the parent does not hold is nothing to compare. Do not change the
+   shape of `IDENTIFIER_KEYS`.
+4. A pure decision function: another holder of the file's md5 refuses and
+   names that item; a given identifier whose kind the parent holds with a
+   different value refuses, names both values and says how to proceed
+   (record the second identifier on the item, rerun); a hint or a
+   text-scraped identifier may refuse the same way, its message saying it may
+   be a cited work's, and never counts as agreement; a given identifier that
+   agrees attaches and the row names the key; anything else is `unverified`.
+5. The .bib entry of a file: the project root is the nearest ancestor of the
+   file holding `.git` or `.zotero-reconcile.json`, never cwd; then the
+   discovery `check-staging` uses. No root or a discovery error goes into the
+   row's `skipped` and blocks nothing.
+6. The evidence of one file against one parent: the parent's `work_record`,
+   the claims of step 1 (text identifiers only when no given one exists), the
+   parent's own copy through `file_evidence` (no index: `already stored`,
+   nothing written), other holders through `find_work(pdf_path=,
+   md5_index=)` on an index of the parent's own library, built once per run.
+   An index that cannot be built: the row says the md5 comparison was skipped
+   and why, the attach proceeds, the exit code is 1 (74 and 75 mean "nothing
+   was saved" and would lie).
+7. Reference text and help.
+8. The request states which tests are live (`integration`), that they skip
+   with "no display" under `make check`, that the gate is not widened here,
+   and quotes one run with a display.
+
+### Test
+
+- First, red before any code, in `tests/test_zotero_attach_licence.py`
+  (`integration`, the live fixture as `tests/test_zotero_receipt.py` uses it):
+  a parent with one DOI, a PDF whose md5-matched receipt gives another DOI,
+  `suggest-attachments --edit`. Asserts: exit 1, row refused, both DOIs in the
+  error, the parent has no child, every item version unchanged. Today: exit 0
+  and the file attached, an AssertionError on behaviour.
+- Each case with a control differing by one fact:
+  - Criterion 1: the same file attaches once the parent's Extra carries the
+    second DOI.
+  - Criterion 2: the file stored under item X and aimed at another parent is
+    refused naming X, the parent's children unchanged; different bytes attach.
+    Also: already stored under the parent itself writes nothing; a report-only
+    run shows the refusal and writes nothing.
+  - Criterion 3: an agreeing receipt DOI attaches, the row names `doi`; a
+    receipt matched by name only with the same DOI is `unverified`; with a
+    different DOI it refuses; a `.bib` entry found from the file with cwd
+    elsewhere refuses on a differing DOI.
+  - Criterion 4: no receipt, no .bib, a parent with no identifier attaches
+    `unverified`; a skipped index attaches and the row says so.
+- "Library unchanged" is read back from the client (item versions, children),
+  never from the exit code or the row.
+- Fast tier, same file: a truth table of the decision function on literal
+  identifiers (second DOI in Extra, volume ISBN on a chapter, hint only,
+  scraped mismatch), and the licensing labels.
+- Existing tests that change: the pinned suggested row gains the comparison;
+  the no-client test patches the one evidence seam and keeps its
+  batch-stops-on-refused-key assertions.
+- By hand, since live tests skip with no display:
+  `DISPLAY=:0 uv run --frozen python3 -m pytest
+  tests/test_zotero_attach_licence.py -m integration -v -rs` (the client draws
+  on its own private Xvfb); a SKIPPED line means the run proved nothing.
+
+### Collisions with 1511
+
+1511 edits the title lines and `filename_only` in `audit_one`,
+`backfill.md`'s verdict table and lookup order, and tests in
+`test_zotero_check_staging_bib.py` and `test_zotero_find_work.py`. No shared
+hunk; whoever lands second rebases.
