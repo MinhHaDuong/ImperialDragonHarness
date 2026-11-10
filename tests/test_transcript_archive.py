@@ -202,3 +202,13 @@ def test_push_script_derives_both_ends_from_the_declared_root(tmp_path):
                          f"padme:/remote/datasets/ours/agent-sessions/raw/{host}/"]
     unit = (ROOT / "scripts/systemd/push-padme.conf").read_text()
     assert "/data/" not in unit and "ExecStartPost=-%h/.agents/scripts/transcript-push-padme" in unit
+
+
+def test_a_rollout_under_archived_sessions_is_archived_flat(world):
+    path = world["home"] / ".codex/archived_sessions/rollout-9.jsonl"
+    path.parent.mkdir(parents=True)
+    path.write_text("archived line\n" * 5)
+    os.utime(path, (NOW - 2 * 86400, NOW - 2 * 86400))
+    result = archive(world)
+    assert result.returncode == 0, result.stderr
+    assert zstd_text(target(world, "codex", "rollout-9.jsonl")) == path.read_bytes()

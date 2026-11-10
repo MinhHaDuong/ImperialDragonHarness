@@ -2,9 +2,11 @@
 Title: The transcript archive copies every root the context audit reads
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2434
 
 --- log ---
 2026-11-10T13:34Z reviewer created
+2026-11-10T13:47Z reviewer closed — autoclosed — PR #2434
 
 --- body ---
 ## Context
@@ -52,6 +54,39 @@ vibe in the audit; this host's sessions already deleted from the live trees.
 Note for whoever lands it: the nightly run on each host uses that host's
 checkout, so the other host copies `archived_sessions/` from its first
 nightly run after it syncs.
+
+## Raid 075fa8 annotations (Imagine, Plan, Feasibility)
+
+Blind-spot pass (opus, 2026-11-10): exit criteria unchanged; the route below.
+
+- Third and fourth copies of the roots: `scripts/trace_corpora.py`
+  (`default_roots`, `corpus_files`, used by trace-stats, trace-friction,
+  trace-wall-time) restates Codex `sessions/`+`archived_sessions/` and the Pi
+  spool; the audit's Claude Code root ignores `CLAUDE_CONFIG_DIR`. Both move
+  onto the one definition in this request (the author's "derive, drift is
+  certain otherwise"); if that proves more than a small edit, a follow-up
+  ticket named in the PR instead.
+- Named roots, resolved one by one: e.g. `named_roots(runtime, codex_home=None)`
+  returning `(name, Path | error)` per root (`projects`; `sessions`,
+  `archived_sessions`; Pi `live`, `spool`; aider/vibe `spool`). An unknown
+  archive root fails the spool entry only, never the live Pi root.
+  `source_roots()` keeps its signature (archive and timeline need no edit).
+  `--codex-home X` keeps meaning X/sessions + X/archived_sessions.
+- Source root of an archived file: a pure function of the relative path, e.g.
+  `source_of(runtime, relpath)`; Codex depth 1 = `archived_sessions` (that
+  directory is flat; dated paths = `sessions`); Pi depth 1 = spool (pi spool is
+  `per_seat: false` in routes.json; pin that assumption in a test). Layout
+  unchanged; nothing moves.
+- One session per rollout: key = file name (`rollout-<iso>-<uuid>.jsonl`); keep
+  the copy with the greatest mtime, then size (the `sessions/` copy may be a
+  frozen, shorter prefix). Codex turns carry no msg_id, so
+  `drop_inherited_turns` does not dedup them. Expose the helper from
+  transcript_spool for 1519 and use it in `trace_timeline.Tree.find` for Codex
+  (today sorted order would return the stale dated copy first).
+- Test cases to add: same rollout name in both places with different lengths
+  resolves to the longer/newer one; `source_roots('pi')` with the archive root
+  unset still yields the live root.
+- Feasibility: PASS. No open PR touches these files (checked 2026-11-10).
 
 ## Test
 

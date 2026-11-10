@@ -44,7 +44,6 @@ import csv
 import importlib.util
 import json
 import logging
-import os
 import re
 import shlex
 import socket
@@ -282,7 +281,7 @@ CODEX_INTERACTIVE_SOURCES = ("cli", "vscode")
 
 
 def default_codex_home() -> Path:
-    return Path(os.environ.get("CODEX_HOME") or "~/.codex").expanduser()
+    return transcript_spool.codex_home()
 
 
 def parse_codex_rollout(path: Path) -> dict:
@@ -398,29 +397,28 @@ def read_codex(root: Path):
     """Reader of Codex rollouts under the Codex home `root` ($CODEX_HOME or
     ~/.codex): `sessions/` and `archived_sessions/`, both. A subagent rollout
     (`source` an object) is not a main session."""
-    dirs = [Path(root) / d for d in ("sessions", "archived_sessions")]
+    dirs = [d for _, d in transcript_spool.named_roots("codex", codex_home=root)]
     if not any(d.is_dir() for d in dirs):
         raise CouldNotLook(f"no Codex sessions under {root}")
-    for d in dirs:
-        if not d.is_dir():
+    # one session per rollout name, however many roots hold a copy
+    paths = transcript_spool.one_per_rollout(p for d in dirs if d.is_dir() for p in sorted(d.rglob("rollout-*.jsonl")))
+    for path in paths:
+        try:
+            traj = parse_codex_rollout(path)
+        except OSError as e:
+            yield str(path.parent), path.stem, "unknown", e
             continue
-        for path in sorted(d.rglob("rollout-*.jsonl")):
-            try:
-                traj = parse_codex_rollout(path)
-            except OSError as e:
-                yield str(path.parent), path.stem, "unknown", e
-                continue
-            agent_id = "subagent" if traj["role"] == "subagent" else "main"
-            yield traj["project"], traj["session_id"], agent_id, traj
+        agent_id = "subagent" if traj["role"] == "subagent" else "main"
+        yield traj["project"], traj["session_id"], agent_id, traj
 
 
 def default_pi_sessions() -> Path:
-    return transcript_spool.live_roots()["pi"]
+    return transcript_spool.named_root("pi", "live")
 
 
 def default_pi_spool() -> Path:
     try:
-        return transcript_spool.spool_dir("pi")
+        return transcript_spool.named_root("pi", "spool")
     except RuntimeError:  # archive root unknown: the reader reports could not look
         return Path("(archive root unknown)")
 
@@ -572,7 +570,7 @@ def read_pi_spool(root: Path):
 RUNTIMES = (
     {
         "name": "Claude Code",
-        "default_root": lambda: Path("~/.claude/projects").expanduser(),
+        "default_root": lambda: transcript_spool.named_root("claude", "projects"),
         "reader": read_claude_code,
         "missed_runs": True,
     },

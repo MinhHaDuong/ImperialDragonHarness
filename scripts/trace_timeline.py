@@ -69,14 +69,19 @@ class Tree:
         return cls(live, spool.raw_dir())
 
     def find(self, runtime: str, pattern: str) -> tuple[str, Path] | None:
-        """(relative path, readable path) of the first match: live roots first, then the archive."""
+        """(relative path, readable path) of the first match: live roots first, then the archive.
+
+        A Codex rollout can sit under both `sessions/` and `archived_sessions/`, live and archived:
+        the copy with the greatest mtime, then size, wins (`transcript_spool.one_per_rollout`)."""
+        hits: list[tuple[str, Path]] = []
         for root in self.live.get(runtime, []):
-            for hit in sorted(root.glob(pattern)):
-                return hit.relative_to(root).as_posix(), hit
+            hits += [(hit.relative_to(root).as_posix(), hit) for hit in sorted(root.glob(pattern))]
         base = self.archive / runtime
-        for hit in sorted(base.glob(pattern + ".zst")):
-            return hit.relative_to(base).as_posix().removesuffix(".zst"), hit
-        return None
+        hits += [(hit.relative_to(base).as_posix().removesuffix(".zst"), hit) for hit in sorted(base.glob(pattern + ".zst"))]
+        if runtime == "codex" and hits:
+            best = _load("transcript_spool").one_per_rollout(path for _, path in hits)
+            hits = [hit for hit in hits if hit[1] in best]
+        return hits[0] if hits else None
 
     def session_ids(self, prefix: str) -> list[str]:
         """Claude session ids starting with `prefix`, live tree and archive together, sorted."""
