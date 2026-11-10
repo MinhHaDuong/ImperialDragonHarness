@@ -22,6 +22,7 @@ import re
 import subprocess
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlparse
@@ -82,14 +83,14 @@ class MetaParser(HTMLParser):
             self.ld[-1] += data
 
 
-def fetch(url: str, timeout: int) -> tuple[bytes, str, str]:
+def fetch(url: str, timeout: int) -> tuple[bytes, str, str, int]:
     if urlparse(url).scheme not in ("http", "https"):
         raise ValueError(f"unsupported URL scheme (http/https only): {url}")
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         if urlparse(r.geturl()).scheme not in ("http", "https"):
             raise ValueError(f"redirected to unsupported URL scheme: {r.geturl()}")
-        return r.read(), r.geturl(), r.headers.get("Content-Type", "")
+        return r.read(), r.geturl(), r.headers.get("Content-Type", ""), r.status
 
 
 def slugify(text: str, maxlen: int = 50) -> str:
@@ -238,7 +239,7 @@ def leave_receipt(rec: dict, staging: Path) -> None:
 def probe_one(url: str, staging: Path, timeout: int) -> dict:
     rec: dict = {"url": url}
     try:
-        body, final_url, ctype = fetch(url, timeout)
+        body, final_url, ctype, http_status = fetch(url, timeout)
     except urllib.error.HTTPError as e:
         rec["error"] = f"HTTP {e.code} — {e.reason} (try an alternate source/mirror)"
         return rec
@@ -275,7 +276,10 @@ def probe_one(url: str, staging: Path, timeout: int) -> dict:
     for key in ("doi", "isbn", "arxiv", "handle"):
         rec["identifiers"].setdefault(key, None)
     rec.update(status="success", source="url", path=str(path), error=None,
-               md5=file_md5(path), title=meta.get("title") or None)
+               md5=file_md5(path), title=meta.get("title") or None,
+               retrieved_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               content_type=ctype or None, size_bytes=len(body),
+               http_status=http_status)
     rec["suggested_type"] = suggest_type(rec["mime"], host, meta, rec["identifiers"])
     if meta.get("pdf_url") and not is_pdf:
         rec["full_pdf_url"] = meta["pdf_url"]

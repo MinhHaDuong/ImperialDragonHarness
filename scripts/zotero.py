@@ -2538,6 +2538,11 @@ def _staging_verdict(res: dict[str, Any], filename_only: bool,
 # The identifier keys a curated source gives; a key read from the page text
 # carries " (from text)" and is not among them.
 GIVEN_KEYS = ("doi", "isbn", "arxiv", "handle", "url")
+# The keys whose miss licenses `absent`. A URL is positive-only (ticket 1503):
+# a hit on an item's url field matches, a miss says nothing, since that field
+# holds a landing page, a PDF link or a DOI resolver at the cataloguer's whim,
+# and under --apply a miss would mint a duplicate.
+EXHAUSTIVE_KEYS = tuple(key for key in GIVEN_KEYS if key != "url")
 
 
 def text_identifiers(path: Path) -> tuple[dict[str, str | None], str | None]:
@@ -2626,7 +2631,7 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     # An identifier read from the page text is not a curated key: alone, it
     # cannot establish absence.
     filename_only = filename_title and not any(
-        key in res["consulted"] for key in GIVEN_KEYS)
+        key in res["consulted"] for key in EXHAUSTIVE_KEYS)
     verdict = _staging_verdict(
         res, filename_only,
         hash_skipped=md5_index is not None and md5_index["status"] != "built")

@@ -7,6 +7,7 @@ import json
 import os
 import re
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -41,6 +42,14 @@ def receipt(status, source, path, error, kind, identifier, title, fetched):
         "url": None,
         "final_url": None,
         "title": title or None,
+        # JETP-observer retrieval vocabulary. The cascade's sources return a
+        # file, not an HTTP exchange: no status to report (null).
+        "retrieved_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if fetched
+        else None,
+        "content_type": "application/pdf" if fetched else None,
+        "size_bytes": os.path.getsize(path) if fetched and os.path.isfile(path) else None,
+        "http_status": None,
     }
 
 

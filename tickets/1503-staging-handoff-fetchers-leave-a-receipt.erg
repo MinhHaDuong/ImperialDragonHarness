@@ -12,6 +12,8 @@ Author: reviewer
 2026-11-10T07:53Z reviewer raid f7aac3: receipt format (interface session): JSON Lines, no new format. The fetcher stdout JSON line appended verbatim to <staging dir>/.receipts.jsonl, one line per fetch, looked up by scanning for md5. Keys: today keys plus md5, identifiers{doi,isbn,arxiv,handle}, url/final_url/source/title; reuse extract-metadata names. No RIS/biblatex, no shared dataclass/module, probe-url stays stdlib-only.
 2026-11-10T07:53Z reviewer raid f7aac3: md5 is Zotero algorithm via file_md5. Defaults: given identifiers vs scraped marked; lookup md5 then recorded path if file exists; receipt written after final name; skipped fetch claims no identifiers; URL match after trivial normalisation.
 2026-11-10T08:08Z reviewer raid f7aac3: receipt format and key names provisional, pending author's survey of corpus repos (2026-11-10)
+2026-11-10T08:13Z reviewer raid f7aac3: URL is a positive-only key: a hit matches, a miss never licenses absent (rejected: URL as an exhaustive given key; item url fields vary and --apply would mint duplicates)
+2026-11-10T08:13Z reviewer design answer after the author's corpus survey (interface session, 2026-11-10; author may overrule): JSON Lines in <staging>/.receipts.jsonl keyed by Zotero MD5; JETP-observer retrieval vocabulary where meanings match: retrieved_at, final_url, content_type, size_bytes, http_status; source kept; no ledger structure, no sha256/sha1
 
 --- body ---
 ## Context
