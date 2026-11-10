@@ -2148,16 +2148,36 @@ def test_check_staging_apply_imports_an_absent_pdf_its_bib_describes(
 
 
 @pytest.mark.integration
-def test_check_staging_apply_defers_an_orphan_however_complete_its_pdfinfo(
+def test_check_staging_apply_leaves_an_orphan_unidentified_however_complete_its_pdfinfo(
         use_live, tmp_path):
     """Only the author's .bib is trusted to create an item unattended:
-    pdfinfo and page text are what a cited work's metadata slips in by."""
+    pdfinfo and page text are what a cited work's metadata slips in by.
+    A miss on the embedded title is not even `absent` (ticket 1511)."""
     title, surname = unique_title(), unique_surname()
     docs = tmp_path / "docs"
     docs.mkdir()
     paper_pdf(docs, title, f"Jane {surname}", info={
         "Title": title, "Author": f"Jane {surname}",
         "CreationDate": "D:20200101000000Z"})
+    report, rc = _apply(tmp_path)
+    assert rc == 0
+    assert report["summary"] == {"unidentified": 1}
+    assert report["apply_status"] == "nothing" and report["applied"] == []
+    assert use_live.titled(title) == []
+
+
+@pytest.mark.integration
+def test_check_staging_apply_defers_an_absent_pdf_its_bib_half_describes(
+        use_live, tmp_path):
+    """A .bib title that finds nothing is `absent`, but an entry with no
+    author cannot create the item: deferred, nothing written."""
+    title = unique_title()
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    pdf = paper_pdf(docs, title, f"Jane {unique_surname()}")
+    (tmp_path / "sources.bib").write_text(
+        f"@article{{one, title={{{title}}}, year={{2020}}, "
+        f"file={{docs/{pdf.name}}}}}\n")
     report, rc = _apply(tmp_path)
     assert rc == 0
     assert report["summary"] == {"deferred": 1}

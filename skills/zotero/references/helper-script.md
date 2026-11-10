@@ -14,8 +14,8 @@ alone is `unidentified`, never `absent`, even when `consulted` includes
 `title`. Only a `.bib` title, or a consulted given identifier, lets a miss say
 `absent`. A receipt's title is not given either: receipts do not mark it as
 given or scraped, and `probe-url` stores the page's own title. The embedded
-title is unreliable, not unusable: it is used, cautiously, and the code decides
-nothing on it alone. On a row it leaves `unidentified`, the reading agent
+title is unreliable and still used, cautiously: the code decides nothing on
+it alone. On a row it leaves `unidentified`, the reading agent
 judges from the title and the file; no pattern filters titles. Supply
 bibliographic metadata before proposing an import.
 
