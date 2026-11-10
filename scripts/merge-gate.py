@@ -945,7 +945,10 @@ def red_ticket_text(report, results):
         "",
         "## Exit criteria",
         "",
-        "- [ ] An after-merge record on main passes the checks named above.",
+        "- [ ] The checks named above pass on the repairing request's candidate, or the",
+        "      red is shown to be environmental, its cause quoted from the after-merge log.",
+        "",
+        "Monitor, not a criterion: the after-merge record on the tip that lands the repair.",
         "",
     ]
     return "\n".join(
