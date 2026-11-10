@@ -2,11 +2,12 @@
 Title: Context length: three urgent fixes
 Created: 2026-11-09
 Author: reviewer
-Label: needs-human
 
 --- log ---
 2026-11-09T22:46Z reviewer created
 2026-11-09T22:57Z reviewer label needs-human
+2026-11-10T07:31Z reviewer unlabel needs-human
+2026-11-10T07:31Z reviewer author ruling 2026-11-10: note accepted for points 1-2; whole-prompt definition; thresholds from route data; point 3 and its two exit criteria cut (not met)
 
 --- body ---
 ## Context
@@ -41,6 +42,19 @@ first. The wider strategy is in the note and is out of scope here.
    runtime; the audit already parses it. Both reviewers would diagnose
    before building this one; the author may cut it.
 
+## Author decisions (2026-11-10)
+
+1. The design note is accepted for pain points 1 and 2.
+2. "Context length" means the whole prompt (input, cache read, and cache
+   creation), not cache reads only, in every tool; each tool says so where it
+   prints a figure.
+3. The audit's per-model thresholds are read from the route skill's data
+   (`skills/route/`), one source.
+4. Pain point 3 (a command for a session to read its own length) and the two
+   exit criteria that depend on it (that command; raid's wave loop and lair's
+   metrics calling it) are cut from this ticket, to be revisited once points
+   1 and 2 show whether overruns persist.
+
 ## Decisions for the plan
 
 - One definition of "context length" for the status line, the audit, and
@@ -69,9 +83,9 @@ interface session; what an interface session may do at its ceiling.
 - [ ] The audit counts sessions as well as runs, restricts events to its
   window, reports the main model, and takes a threshold per model; one
   command reproduces the table of section 1 of the design note
-- [ ] One command prints the current session's context in tokens on Claude
+- ~~[ ] One command prints the current session's context in tokens on Claude
   Code, and answers "could not look" with its own exit code on a runtime or
-  session it cannot read
-- [ ] Raid's wave loop and lair's metrics call that command where they now
-  estimate or say nothing
+  session it cannot read~~ Cut by the author, 2026-11-10; not met.
+- ~~[ ] Raid's wave loop and lair's metrics call that command where they now
+  estimate or say nothing~~ Cut by the author, 2026-11-10; not met.
 - [ ] `make check` passes
