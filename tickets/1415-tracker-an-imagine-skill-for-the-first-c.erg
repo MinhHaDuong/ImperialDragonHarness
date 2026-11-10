@@ -7,6 +7,7 @@ Author: reviewer
 2026-11-01T11:25Z reviewer created
 2026-11-01T16:15Z reviewer 1416 closed moot by recount (author ruling 2026-11-01); 1417 unblocked
 2026-11-09T19:02Z reviewer de-risk section added; one live child since 1416 moot; a second child only after the author's Phase 2 ruling (1417 De-risk item 3)
+2026-11-10T07:34Z reviewer author ruling 2026-11-10 recorded: no Imagine skill; closes with 1417, no second child
 
 --- body ---
 ## Context
@@ -23,7 +24,7 @@ to make room for it in the always-listed skill catalog.
 - 1417 the Imagine skill, Blocked-by 1416
 
 ## Exit criteria
-- [ ] Both children closed; integration review per roar step 8
+- [x] Both children closed (1416 moot, 1417 closed in the same event); integration review per roar step 8: nothing to unite with one live child, see Author decisions
 
 ## De-risk (2026-11-09)
 
@@ -38,3 +39,15 @@ to make room for it in the always-listed skill catalog.
   closed (moot).
 - Do not open the second child before the author's ruling (1417 De-risk
   item 3): a ticket for a decision not taken is a wait ticket.
+
+## Author decisions (2026-11-10)
+
+The author ruled that no Imagine skill is built: design/design-note-template.md
+suffices. Raid § Phase 2 writes down current practice (1417 De-risk item 3,
+option (d)): the Blind-Spot pass always, the per-ticket reimagine at the
+lead's judgment with a stronger worker when it runs. 1417's criterion 3 (the
+audit) is accepted; its criteria 1, 2, 4 and 5 are dropped by the author on
+the evidence of design/2026-11-09-context-length-strategy.md (written on the
+bare template with two advisor reviews) and the 1484/1487/1490 raid, whose
+premise check plus Blind-Spot pass corrected two premises. No second child is
+opened; 1415 closes in the same event as 1417, as its de-risk note foresees.
