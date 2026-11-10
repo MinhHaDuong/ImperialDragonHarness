@@ -2,6 +2,7 @@
 Title: check-staging recognises a staged file by hash, then identifiers, title last
 Created: 2026-11-10
 Author: reviewer
+Closed: autoclosed — PR #2382
 
 --- log ---
 2026-11-10T07:09Z reviewer created
@@ -17,6 +18,7 @@ Author: reviewer
 2026-11-10T07:18Z reviewer raid f7aac3: Whether the local API filters attachments by md5: test on the isolated fixture only, answer in the PR.
 2026-11-10T07:18Z reviewer raid f7aac3: Feasibility: PASS. The fixture can hold a stored attachment with a known md5 (tests/zotero_live.py LiveZotero.save(..., pdf=...); see test_a_renamed_copy_is_found_by_its_content).
 2026-11-10T07:23Z reviewer author ruling 2026-11-10 (relayed): "Do Zotero has attachment hashes already ? Use the same then." — library side = Zotero's own attachment md5 via local API; staged side = file_md5; no harness hash store
+2026-11-10T07:46Z reviewer closed — autoclosed — PR #2382
 
 --- body ---
 ## Context
