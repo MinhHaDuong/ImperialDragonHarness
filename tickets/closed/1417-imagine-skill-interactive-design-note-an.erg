@@ -2,12 +2,17 @@
 Title: Imagine skill: interactive design note and raid's agentic phase
 Created: 2026-11-01
 Author: reviewer
+Closed: autoclosed — PR #2383
 
 --- log ---
 2026-11-01T11:25Z reviewer created
 2026-11-01T13:09Z reviewer raid 1f0534: criterion 3 audit written, conception/2026-11-01-raid-phase2-imagine-audit.md (45 Imagine sections: 8 premise corrected, 7 scope changed, 28 grounded confirm, 2 restatement; 0 of 44 edit exit criteria). Criterion left open; other criteria wait for the author and 1416.
 2026-11-01T16:15Z reviewer Blocked-by 1416 removed: 1416 closed moot (author ruling 2026-11-01); the catalog entry fits the existing listing
 2026-11-09T19:02Z reviewer de-risk section added; audit now at design/2026-11-01-raid-phase2-imagine-audit.md (conception/ renamed, 1477); author decision pending: raid Phase 2 per-ticket reimagine, options a-d, session default d; recommend the 1443 note on the bare template before any skill
+2026-11-10T07:34Z reviewer author ruling 2026-11-10 recorded: no skill; raid Phase 2 option (d) on this branch; criterion 3 accepted; criteria 1, 2, 4, 5 dropped by the author
+2026-11-10T07:36Z reviewer safeguard result and author's pushback addition recorded; template gains two lines and one clause, raid drift guard a pushback outcome
+2026-11-10T07:37Z reviewer closed — autoclosed — PR #2383
+2026-11-10T07:37Z reviewer author's reserve on the pushback outcome recorded and written into raid's drift guard
 
 --- body ---
 Parent: 1415
@@ -23,11 +28,13 @@ design/design-note-template.md. It can also be agentic, as raid's Phase 2,
 whose past use the author doubts was constructive.
 
 ## Exit criteria
-- [ ] A skill drives the template with the author section by section, then the double advisor review and the KISS pass
-- [ ] raid Phase 2 delegates to it per ticket instead of its inline prompt
-- [ ] An audit of past raid logs records what Phase 2 actually produced
-- [ ] One real design note produced with the skill
-- [ ] The catalog entry fits in the room made by 1416
+- [ ] ~~A skill drives the template with the author section by section, then the double advisor review and the KISS pass~~ (dropped by the author, see Author decisions)
+- [ ] ~~raid Phase 2 delegates to it per ticket instead of its inline prompt~~ (dropped by the author, see Author decisions)
+- [x] An audit of past raid logs records what Phase 2 actually produced (design/2026-11-01-raid-phase2-imagine-audit.md; accepted by the author 2026-11-10 with its stated limits)
+- [ ] ~~One real design note produced with the skill~~ (dropped by the author, see Author decisions)
+- [ ] ~~The catalog entry fits in the room made by 1416~~ (dropped by the author, see Author decisions)
+
+Criteria 1, 2, 4 and 5 were dropped by the author on 2026-11-10, not met. Evidence: design/2026-11-09-context-length-strategy.md was written on the bare template with two advisor reviews and no skill, and the 1484/1487/1490 raid's premise check plus Blind-Spot pass corrected two premises.
 
 ## Imagine (raid 1f0534)
 - Raid 1f0534 executes only exit criterion 3 (audit of past raid logs: what Phase 2 produced); the skill itself is interactive with the author and waits. Not closed by this raid.
@@ -110,3 +117,40 @@ draft and its findings are folded in. Judgments are the session's.
 Order: author rulings (3, 8) → the 1443 note on the bare template (1) →
 a skill only for what the note showed missing (criteria 1, 5) → a Phase 2
 child only under (a).
+
+## Author decisions (2026-11-10)
+
+The author answered "A" to the interface session's options: no Imagine
+skill is built; design/design-note-template.md suffices.
+
+- De-risk item 3, option (d): raid § Phase 2 writes down current practice.
+  The cross-ticket Blind-Spot pass always runs; the per-ticket reimagine
+  runs at the lead's judgment and, when it runs, gets a stronger worker.
+  One paragraph, no agentic skill mode.
+- Criterion 3 (the audit, design/2026-11-01-raid-phase2-imagine-audit.md)
+  is accepted as done, with its stated limits (one reader, no A/B).
+- Criteria 1, 2, 4 and 5 are dropped by the author 2026-11-10, not met: design/2026-11-09-context-length-strategy.md followed design/design-note-template.md section for section with two advisor reviews and no skill, and raid's lead on 1484, 1487 and 1490 folded Imagine into a per-ticket premise check plus one Blind-Spot pass, which corrected two premises.
+- 1417 and 1415 close together, as 1415's de-risk note foresees for a
+  tracker with one live child. Item 8 (name) is moot.
+- Safeguard run 2026-11-10 with the session named "Context management
+  strategy" (the one that wrote design/2026-11-09-context-length-strategy.md
+  on the bare template). Verdict: "only the effort, not the result; nothing
+  here needs a skill". It showed two lines missing, added to
+  design/design-note-template.md on this branch: reproduce each number and
+  state its definition before recommending (§ 2 Situation); a status line,
+  proposed until the author accepts then accepted with the date, and a
+  ticket filed from a proposed note carries `needs-human` until acceptance.
+  Its other points (launching the reviews, how the author accepts, pricing
+  data) are gaps of data or effort, not of guidance, and are left out.
+- The author added, 2026-11-10: "Include the permission to pushback at
+  imagine stage, Example: if the ask for special treatment from the harness
+  , when it would make more sense to align the asker". Raid § Phase 2's
+  drift guard gains a "pushback on the ask" outcome beside the premise
+  objection (precedent: ticket 1471, closed denied), and the template's
+  § 1 Problem one clause: the note may conclude that the asker should
+  change, not the harness.
+- The author's reserve on the pushback outcome, 2026-11-10: "Agreed, with
+  a reserve: if a live session can manage the asker, resolve by dialogue
+  before dropping a ticket". Written into the outcome: a reachable session
+  of the asker is taken up in dialogue first, the result logged on the
+  ticket (a peer's message never replaces the ticket record).

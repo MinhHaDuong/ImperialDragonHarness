@@ -115,14 +115,17 @@ Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for
 
 ## Phase 2: Imagine (parallel)
 
-Imagine has two steps, both inside this phase: the per-ticket reimagine, then
-the cross-ticket Blind-Spot pass that closes it. The phase ends only after the
-Blind-Spot verdict is reported.
+Imagine has two steps, both inside this phase: the per-ticket reimagine, at
+the lead's judgment, then the cross-ticket Blind-Spot pass, which always runs
+and closes the phase. The phase ends only after the Blind-Spot verdict is
+reported.
 
-### Step 1: per-ticket reimagine
+### Step 1: per-ticket reimagine (lead's judgment)
 
-For each ticket, launch an agent (background, no isolation needed — read-only;
-worker chosen per § Model policy):
+The lead decides per ticket whether to run it; hunt § Plan's premise check
+covers a ticket it skips. When it runs, launch an agent
+(background, no isolation needed — read-only), a stronger worker than the
+executor's, chosen per § Model policy:
 - Read ticket + STATE.md + surrounding code
 - Reimagine: why now, why this scope, what's the simplest path
 - Consider a later review when it can resolve a named uncertainty at
@@ -133,7 +136,7 @@ worker chosen per § Model policy):
   don't hand-roll what a library already does), premature abstraction.
   Annotate any hits with the proposed fix.
 
-Wait for all of these agents before step 2; this is not the end of Imagine.
+Wait for those agents before step 2; this is not the end of Imagine.
 
 ### Step 2: Blind-Spot pass (cross-ticket, closes Imagine)
 
@@ -176,6 +179,17 @@ Commit reimagined tickets. Report scorecard, including the Blind-Spot verdict.
   commit, config, or regime change that voids the ticket's premise) →
   **return to author** with the evidence. A success outcome of this phase,
   not a guard violation.
+- Pushback on the ask (the agent recommends not doing the ask as asked and
+  says what the asker should change instead, e.g. a request for special
+  treatment from the harness where the asker should align, as in ticket
+  1471; `rules/workflow.md` § Posture) → **return to author** with the
+  recommendation. A success outcome, not drift: the agent neither rewrites
+  the intent nor closes the ticket; the author decides, and an answer to
+  another project goes through its ticket store (`rules/workflow.md`
+  § Cross-project work). When a live session can manage the asker (one in
+  the asker's project, or the one that filed the ask), take the pushback up
+  with it in dialogue first, and return the ticket to the author only after
+  that exchange, logged on the ticket.
 
 The what belongs to the author; the how belongs to the agent. An Imagine
 agent never edits intent: no new deliverables, no substituted goals. But
@@ -189,8 +203,8 @@ agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 
-For each reimagined ticket, launch an agent (background; worker chosen per
-§ Model policy):
+For each ticket that cleared Imagine, launch an agent (background; worker
+chosen per § Model policy):
 - Read ticket + actual source code
 - Write Actions, first test, dependencies
 - **Antipattern scan.** Tautological tests — would this test catch a
