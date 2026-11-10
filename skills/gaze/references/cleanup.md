@@ -16,9 +16,8 @@ the review worktree registered and return ESCALATE naming those files. Never for
 preflight or normal worktree removal is a cleanup failure, not a successful
 terminal result.
 
-`"$IDH_ROOT/scripts/gaze_close.py"` runs these steps in order (its source is the
-contract that `tests/test_review_panel_cleanup_contract.py` pins): the
-`.tmp` guard (`worktree-tmp-guard.py removal`) before any deletion; removal of
+`"$IDH_ROOT/scripts/gaze_close.py"` runs these steps in order (`.tmp/` is
+ignored scratch and goes with the tree, ticket 1500): removal of
 `.panel/<pr-number>` and `build/panel-head` when untracked;
 `worktree-exit-preflight.sh --removal --ignored-ok --branch <branch>` (git-ignored
 build products of the project's check target are not WIP in a review copy; the gate's

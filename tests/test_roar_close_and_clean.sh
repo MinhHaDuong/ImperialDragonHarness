@@ -714,17 +714,23 @@ run "$SCRIPT" --phase exit-check
 _check_rc "exit-check no forge, merged: ready" 0 "$rc"
 _check_says "exit-check no forge, merged: verdict" "$out" "EXIT: READY"
 
-# Actual removal uses the same fail-closed .tmp disposal gate as GC.
+# Ticket 1500: .tmp/ is ignored scratch. With an origin remote and a gh that
+# fails, the removal neither calls gh nor keeps the tree.
 git -C "$T/ec-local/repo" worktree add -q -b tmp-task "$T/ec-local/tmp-wt" main 2>/dev/null
 git -C "$T/ec-local/tmp-wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m "tmp-task clean"
 git -C "$T/ec-local/repo" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge tmp-task" tmp-task
-python3 "$REPO/scripts/worktree-tmp-guard.py" register "$T/ec-local/tmp-wt"
+git init -q --bare -b main "$T/ec-local/o.git"
+git -C "$T/ec-local/repo" remote add origin "$T/ec-local/o.git"
+git -C "$T/ec-local/repo" push -q origin main
+python3 "$REPO/scripts/worktree-tmp-guard.py" register "$T/ec-local/tmp-wt" >/dev/null
 mkdir -p "$T/ec-local/tmp-wt/.tmp"; echo cache > "$T/ec-local/tmp-wt/.tmp/cache.bin"
+FAILGH="$T/failgh"; mkdir -p "$FAILGH"
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$*" >> "%s"\nexit 1\n' "$T/failgh.log" > "$FAILGH/gh"; chmod +x "$FAILGH/gh"
 cd "$T/ec-local/repo"
-run "$SCRIPT" --phase after-exit --remove-worktree "$T/ec-local/tmp-wt"
-_check_rc "close-and-clean removes integrated .tmp only after citation gate" 0 "$rc"
-_check_says "close-and-clean prints .tmp size before removal" "$out" "1 files"
+wrapped "$FAILGH" --phase after-exit --remove-worktree "$T/ec-local/tmp-wt"
+_check_rc "close-and-clean removes a tree holding .tmp with no forge readable" 0 "$rc"
 _check_true "close-and-clean removal removes worktree-owned .tmp" test ! -d "$T/ec-local/tmp-wt"
+_check_true "close-and-clean removal calls no gh" test ! -s "$T/failgh.log"
 
 # Author decision (ticket 1098): a main checkout parked on another branch does
 # not block the exit. The tree goes; branch -d then keeps the branch, reported.

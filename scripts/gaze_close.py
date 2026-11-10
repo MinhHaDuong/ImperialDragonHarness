@@ -6,11 +6,11 @@ for a PR, a one-line pointer comment.
     gaze_close.py <pr> --branch <pr-branch> [--repo <primary>] [--token T] [--entry-branch B]
                   --attribution-file F [--comment-file F]
 
-Review scratch contract (ticket 0948, pinned by tests/test_review_panel_cleanup_contract.py):
+Review scratch contract (ticket 0948):
 every exit path runs this after the panel has consumed its artifacts; the
-scratch `.panel/<pr>` and `build/panel-head` are removed only when untracked,
-after `worktree-tmp-guard.py removal`; `worktree-exit-preflight.sh --removal
---ignored-ok --branch` must pass, else the review worktree stays registered (cleanup blocked,
+scratch `.panel/<pr>` and `build/panel-head` are removed only when untracked;
+the removal preflight (`worktree-exit-preflight.sh --removal`) must pass, and
+`.tmp/` goes with the tree like any ignored file (ticket 1500); else the review worktree stays registered (cleanup blocked,
 exit 1) and the result is ESCALATE naming the files; the attribution lines are built
 before cleanup so a blocked cleanup still records the review, as an ESCALATE answer
 on notes carrying them, with its pointer on the PR. A tree with real uncommitted files is never force-removed.
@@ -140,13 +140,6 @@ def cleanup(primary, pr, branch):
     marker = closed_marker(tree)  # the run that held the liveness lock has ended
     if marker is not None:
         marker.write_text("closed\n")
-    tmp = tree / ".tmp"
-    if tmp.exists() or tmp.is_symlink():
-        r = subprocess.run([sys.executable, str(HERE / "worktree-tmp-guard.py"), "removal",
-                            str(primary), str(tree), "--branch", branch],
-                           capture_output=True, text=True)
-        if r.returncode:
-            return False, (r.stderr or r.stdout).strip() or "tmp guard blocked"
     rc1, tracked_panel = git("ls-files", "--", f".panel/{key}", cwd=tree)
     rc2, tracked_base = git("ls-files", "--", "build/panel-head", cwd=tree)
     if rc1 or rc2:
