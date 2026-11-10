@@ -7,6 +7,7 @@ Author: reviewer
 2026-11-09T23:10Z reviewer created
 2026-11-10T07:39Z reviewer note imagine — raid 91a35c: premise holds; 4 sites added, lair dropped; blind-spot 4 findings, dead-pid reclaim reach raised to the author
 2026-11-10T07:40Z reviewer note plan — raid 91a35c: two retirement commits, citation gate first; red tests through gc lock path and a failing gh stub
+2026-11-10T07:43Z reviewer note feasibility — raid 91a35c: WARN, references hold within a few lines; --ignored=matching must be dropped explicitly
 
 --- body ---
 ## Context
@@ -329,3 +330,28 @@ Tautology scan: the gc test for criterion 1 on the `[gone]` path passes on
 the base and proves nothing, hence the lock path; the criterion 3 test
 without a forge-shaped `origin` and a failing `gh` may pass on the base,
 hence both. No test asserts a string in a script's or skill's source.
+
+## Feasibility (raid 91a35c): WARN, workable
+
+Mechanical check of every reference above against 998cd705: all files,
+functions and tests exist; line ranges are right to within a few lines
+(comments precede `worktree_scrub` at 113-115 and the gc guard call at
+253-256). No caller in `profiles/`, `agents/`, `commands/`, `Makefile`,
+`.github/`, `bin/`, `ci-local/` or hooks. For the coder:
+
+- `worktree-clean-lib.sh:77-78` calls status with `--ignored=matching`:
+  the rewrite drops that flag explicitly; a copied call keeps the old rule.
+- Inverted tests take names that say the new outcome:
+  `test_preflight_blocks_on_ignored_draft_under_star_ignore` (779), the
+  `ignored-draft` case of `test_uv_venv_does_not_mask_real_work` (1583),
+  `test_gc_keeps_idle_ownerless_tree_holding_ignored_files` (1770).
+- Not classified above, in `tests/test_worktree_tools.py`: 169
+  `test_hunt_tmp_exclude_registration_uses_shared_git_metadata` (register:
+  keep), 1319 `test_removal_preflight_refused_by_residue_keeps_panel` (read
+  it against the `preserve_panel` deletion), 1392 and 1408 (preflight
+  argument handling: keep).
+- `skills/roar/close-and-clean.sh:219` and `skills/lair/SKILL.md:52` call the
+  plain preflight and stay; lair's "uncommitted/untracked" wording becomes
+  exact once ignored entries stop blocking.
+- Other projects (JETP-observer's `.worktreeinclude`, the climate-finance
+  trees) were checked by the orchestrator and the Blind-Spot seat, not here.
