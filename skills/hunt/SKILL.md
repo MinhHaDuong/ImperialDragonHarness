@@ -65,8 +65,8 @@ its **Relevant files**, then decide what the ticket is and what it takes:
 - **Too big or multipart** (`rules/workflow.md` § Ticket discipline for
   multi-request work; drafting: `references/decomposition.md`): return it, unsplit, to whoever launched the hunt with a
   proposed decomposition; execute only on "go as one". Found mid-Execute:
-  commit the partial branch (push it where there is a forge), name it in the proposal, unlock the
-  worktree and leave it for the caller.
+  commit the partial branch (push it where there is a forge), name it in the proposal, then remove
+  your worktree (`references/worktree-lifecycle.md` § Clean up after yourself): the branch carries the work.
 - **Otherwise**: choose the route. Name the deliverable's kind (code, prose,
   data, configuration, documentation), the work it takes, and the evidence that
   will show each exit criterion met. Code earns tests; prose, data and
@@ -102,6 +102,7 @@ worktree name, phase and opening line: `references/session-start.md`.
   create and no brief named is never adopted, clean or not: stop and report it.
   A shared or `explore-*` worktree may host a live session: never
   rebase, branch, or leave files in it.
+  A tree an earlier session left is not yours to resume: make a fresh one on the existing branch.
 - **Otherwise create one** under the primary checkout. `$PPID`, the
   long-lived runtime process, owns the lock; a spawner and its subagents
   share it, so `$RANDOM` makes the path yours, redrawn while it exists.

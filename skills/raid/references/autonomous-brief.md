@@ -26,7 +26,7 @@ verbatim-retry ban (`merge-permission-denial.md`), the advisor model
    run continues on everything else, and the queue is delivered in the
    final report, not as a mid-run question.
 3. **Context rule.** At about 75% of the 230K context limit
-   (`rules/guards.md`), stop growing the window: write a handoff note on the
+   (`rules/guards.md`), stop growing the window: commit and push a handoff note on the
    branch (state, next step, open PRs, ledger), and hand any bounded risky
    window still ahead (a rebase series, a long gate) to a fresh agent with
    that note as its brief. Never answer the ceiling by compacting.

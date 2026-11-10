@@ -24,6 +24,24 @@ not a discriminator: a spawner and its subagents share one runtime process, so
 tree (ticket 1328). The lock reason keeps the bare pid, which `worktree-gc`
 parses; the path is never recomputed from it.
 
+## Clean up after yourself
+
+Whoever makes a worktree removes it when the work with it ends, or hands it by
+path to a named owner who will: a raid keeps a request's tree through gating
+and removes it at landing; roar removes a hunt's tree after the merge. Push the
+branch first: the branch holds what lasts. Then `cd` to the primary checkout,
+run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" <path>`, and on a pass
+`git worktree unlock <path> && git worktree remove <path>`, never `--force`.
+A refusal names what is still in the tree: commit it, move it out, or report
+the tree as kept, with the reason.
+
+Nobody resumes in an old tree. A later session makes a fresh one on the
+existing branch (`../SKILL.md` § Worktree); scratch under `.tmp/` and every
+other git-ignored file ends with the session that wrote it. `worktree-gc` is
+the net for sessions that died, not the routine: once a lock's pid is dead it
+reclaims the tree, clean and at its upstream, with the branch kept, merged or
+not (ticket 1495).
+
 ## When worktree-gc reclaims an ownerless tree
 
 Roar removes the tree when its integration is ready. If the session dies
