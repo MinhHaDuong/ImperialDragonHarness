@@ -451,7 +451,7 @@ remove_worktree() {
 
 # One tree; every refusal returns so the loop above still reaches the others.
 remove_one_worktree() {
-    local path listing p primary="" registered=0 here RM_TREE="$1"
+    local path listing p primary="" registered=0 here nested RM_TREE="$1"
     [ -n "$RM_TREE" ] || return 0
     path=$(real "$RM_TREE") || { note "WORKTREE: ALREADY-ABSENT $RM_TREE"; return 0; }
     listing=$(git worktree list --porcelain) || { note "WORKTREE: COULD-NOT-LOOK cannot list worktrees"; bump 2; return 0; }
@@ -466,6 +466,14 @@ remove_one_worktree() {
     fi
     if [ "$path" = "$primary" ]; then
         note "WORKTREE: REFUSED $path is the main checkout"; bump 1; return 0
+    fi
+    # Another registered worktree inside this one is work no status shows (its
+    # path is ignored) and `git worktree remove` deletes: keep the outer tree.
+    . "$IDH_ROOT/scripts/worktree-clean-lib.sh"
+    nested=$(worktree_nested "$path") || { note "WORKTREE: COULD-NOT-LOOK cannot list nested worktrees of $path"; bump 2; return 0; }
+    if [ -n "$nested" ]; then
+        note "WORKTREE: REFUSED $path holds another registered worktree; kept"
+        printf '%s\n' "$nested" | while IFS= read -r p; do note "$p"; done; bump 1; return 0
     fi
     if [ "$path" = "$here" ]; then
         note "WORKTREE: REFUSED $path is the current checkout — cd to the main checkout first"; bump 1; return 0
