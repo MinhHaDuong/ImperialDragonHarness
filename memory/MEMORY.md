@@ -18,8 +18,8 @@ in the Smelt skill. Provenance: [inventory](../design/memory-v8/source-inventory
   Zotero exact identity remains distinct from filename candidates.
 - [Runtimes and models](topics/runtime-observations.md) — launch pins do not
   establish a masked served identity; runtime observations are dated.
-- [Memory system](topics/memory-v8-governance.md) — append-only journal;
-  Smelt nominates, separately authorized Brood discusses promotion.
+- [Memory system](topics/memory-v8-governance.md) — blueprint in
+  design/memory-v8/README.md; Smelt nominates, Brood promotes on request.
 - [Skills, docs, hooks](topics/skills-docs-and-hooks.md) — generated catalog;
   a contract is cited rather than paraphrased.
 
