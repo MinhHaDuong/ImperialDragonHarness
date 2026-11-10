@@ -108,14 +108,13 @@ and add the tree at its `head`. A refusal (never mapped) is ESCALATE, `Missing D
 ```bash
 PR_BRANCH=<head branch resolved from the forge for <pr-number>>
 # <session-id>: the caller's session=, else the standalone UUID generated now;
-# <round>: derived by `review_notes.py gate` (§ Notes review) before the tree exists;
-# <gate-state>: a file holding the JSON that call printed.
+# <round>: derived by `review_notes.py gate` (§ Notes review) before the tree exists.
 primary_root=$(git -C "<repo-path>" rev-parse --show-toplevel) || exit 1
 primary_root="${primary_root%%/.claude/worktrees/*}"
 gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"
 git -C "$primary_root" fetch origin "$PR_BRANCH" || exit 1
 if ! python3 "$IDH_ROOT/scripts/gate_tree.py" add --repo "$primary_root" --tree "$gate_tree" \
-        --ref origin/"$PR_BRANCH" --session <session-id> --round <round> --gate-state <gate-state>; then
+        --ref origin/"$PR_BRANCH"; then
     echo "verify-gate: cannot create isolated gate worktree for PR <pr-number>" >&2
     exit 1   # verdict ESCALATE, root_cause_class: Missing Data
 fi
@@ -125,9 +124,9 @@ A round that stalled before its verdict leaves its tree behind, and the
 relaunch under the same session derives the same round and path. `gate_tree.py`
 then removes that stale tree through the removal preflight below and recreates
 it: a gate tree is a detached checkout of a pushed head, so there is nothing to
-salvage. It refuses, and the gate rules ESCALATE, when that session and round
-already carry a verdict, when the tree is locked, or when it holds residue
-or a commit no branch, remote or tag reaches.
+salvage. It refuses, and the gate rules ESCALATE, when the tree is locked or
+attached to a branch, or when it holds residue or a commit no branch, remote or
+tag reaches.
 
 On every exit path, after the verdict is recorded:
 `$IDH_ROOT/scripts/worktree-exit-preflight.sh --removal "$gate_tree"`, then
