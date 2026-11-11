@@ -130,7 +130,10 @@ tag reaches.
 
 On every exit path, after the verdict is recorded:
 `$IDH_ROOT/scripts/worktree-exit-preflight.sh --removal "$gate_tree"`, then
-`git -C "$primary_root" worktree remove "$gate_tree"`. Git-ignored files, such
+`git -C "$primary_root" worktree remove "$gate_tree"`, then `rm -r "$out"` when
+the run below made one. Scratch made outside the tree, such as a mutation
+copy or a log, goes under that `$out` (one `mktemp -d`), so this one removal
+takes it. Git-ignored files, such
 as the build products of the project's check target or a self-ignoring uv
 `.venv`, go with the tree; a modified or untracked file, a `.venv` or `build/`
 the project does not ignore included, makes the preflight refuse. Never answer
