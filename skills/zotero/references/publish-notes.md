@@ -13,12 +13,17 @@ record, and the author corrects it in Zotero's note editor.
 
 ## What a draft must carry
 
-- **The work's item key** in the draft's field table: the row whose first
-  cell reads `zotero_item`, its second cell the key. The row is found by its
-  cell text, whatever markup wraps it (`<th>`, `<td>`, a `<tbody>`, a `<p>`
-  inside the cell), so a table the editor rewrote still reads. A draft with
-  no such row is refused: the key is never guessed from a title or a file
-  name.
+The draft is the reading-note template's file (`skills/reading-note/references/template.md`):
+a YAML frontmatter block, then the HTML body. Only the body is published;
+the frontmatter stays in the repository, and a change to it alone (a
+`status` field, say) is no new version of the note.
+
+- **The work's item key**: `zotero_item` in the frontmatter (top-level
+  scalars only are read). Failing that, the body's field table: the row whose
+  first cell reads `zotero_item`, found by its cell text whatever markup
+  wraps it (`<th>`, `<td>`, a `<tbody>`, a `<p>` inside the cell), so a table
+  the editor rewrote still reads. A draft with neither is refused: the key is
+  never guessed from a title or a file name.
 - **Its slug**: the file name without `.html`, no whitespace.
 
 `--project` (one word, no `/`) and the slug make the note's tag,
@@ -34,7 +39,7 @@ the editor rewrites the HTML on its first save.
 | the tagged note, at the version recorded | changed | `updated` | the note's HTML, in place |
 | the tagged note, at another version | unchanged | `edited in zotero` | none: the author's edit stands |
 | the tagged note, at another version | changed | `refused` | none: "edited in Zotero since last publish" |
-| a tagged note with no record on this machine | — | `in sync` if its HTML equals the draft (recorded), else `refused` | none |
+| a tagged note with no record on this machine | — | `in sync` if its HTML equals the draft's body (recorded), else `refused` | none |
 | several tagged notes | — | `refused` | none |
 
 A refused note is reconciled by hand: carry Zotero's edits into the draft, or
@@ -47,7 +52,7 @@ Zotero too.
 
 ## The state file
 
-After each write the note's key, its new version and the draft's sha256 are
+After each write the note's key, its new version and the sha256 of the draft's body are
 recorded under `<project>/<slug>` in a JSON file outside git:
 `$XDG_STATE_HOME/idh/zotero/publish-notes.json` (default
 `~/.local/state/idh/zotero/publish-notes.json`), or `--state-file`. It holds

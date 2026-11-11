@@ -58,6 +58,18 @@ def write_draft(directory, slug: str, item_key: str, body: str, *,
     return path
 
 
+def write_frontmatter_draft(directory, slug: str, item_key: str, body: str):
+    """The reading-note template's shape: YAML frontmatter, then the HTML
+    body; only the body is published."""
+    path = directory / f"{slug}.html"
+    path.write_text(f'---\ntitle: "Reading note: an invented work"\n'
+                    f'zotero_item: "{item_key}"  # the work\n'
+                    f'status: "draft"\n---\n'
+                    f"<h1>Reading note: an invented work</h1>\n<p>{body}</p>\n",
+                    encoding="utf-8")
+    return path
+
+
 def publish(capsys, project: str, *drafts, dry_run: bool = False,
             state_file=None) -> tuple[int, dict]:
     args = argparse.Namespace(drafts=[str(d) for d in drafts], project=project,
@@ -105,6 +117,15 @@ def test_unavailable_is_not_in_sync(tmp_path, capsys):
     assert "results" not in out or not any(
         r.get("status") == "in sync" for r in out["results"])
     assert not state.exists()
+
+
+def test_the_frontmatter_names_the_item_and_stays_out_of_the_body():
+    text = ('---\ntitle: "x"\nzotero_item: "ABCD2345"  # the work\n'
+            'coding:\n  zotero_item: "NOTTHIS1"\n---\n<p>Body.</p>\n')
+    meta, body = zi.split_draft(text)
+    assert meta["zotero_item"] == "ABCD2345"
+    assert body == "<p>Body.</p>\n"
+    assert zi.split_draft("<p>No frontmatter.</p>") == ({}, "<p>No frontmatter.</p>")
 
 
 # --- live --------------------------------------------------------------------
@@ -248,3 +269,24 @@ def test_dry_run_reads_only(use_live, tmp_path, capsys):
     assert out["results"][0]["status"] == "would update"
     assert use_live.versions() == before
     assert state.read_text() == recorded
+
+
+@pytest.mark.integration
+def test_a_frontmatter_draft_publishes_its_body_only(use_live, tmp_path, capsys):
+    """The template's draft: the frontmatter names the item and stays in the
+    repository; a frontmatter-only change (status) is not a new version."""
+    item = use_live.save(unique_title())
+    project, slug = unique("proj").replace(" ", "-"), "Invented2026_Note"
+    state = tmp_path / "state.json"
+    draft = write_frontmatter_draft(tmp_path, slug, item, "Invented body.")
+    status, out = publish(capsys, project, draft, state_file=state)
+    assert status == 0, out
+    assert out["results"][0]["status"] == "created"
+    (note,) = tagged_notes(use_live, item, f"wiki:{project}/{slug}")
+    assert "Invented body." in note["data"]["note"]
+    assert "zotero_item" not in note["data"]["note"]
+
+    draft.write_text(draft.read_text().replace('status: "draft"',
+                                               'status: "author revised"'))
+    status, out = publish(capsys, project, draft, state_file=state)
+    assert out["results"][0]["status"] == "in sync", out

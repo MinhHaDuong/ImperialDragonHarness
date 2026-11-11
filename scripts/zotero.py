@@ -1443,9 +1443,12 @@ def enrich_status(results: list[dict[str, Any]]) -> int:
 
 
 # --- publish-notes: merged HTML drafts become child notes --------------------
-# A reading-note draft is an HTML file reviewed in a project's repository.
-# Once merged, publish-notes files it as a child note under the work its
-# field table names (the row whose first cell reads "zotero_item"). The note
+# A reading-note draft is an HTML file reviewed in a project's repository:
+# a YAML frontmatter block, which stays in the repository, then the HTML
+# body, which becomes the note. Once merged, publish-notes files the body
+# as a child note under the work the frontmatter names (`zotero_item`), or
+# failing that the body's field table (the row whose first cell reads
+# "zotero_item"). The note
 # is found again by a Zotero tag, wiki:<project>/<slug>, the slug being the
 # draft's file name without extension: never by the note's HTML, which
 # Zotero's editor rewrites (a <tbody>, each cell wrapped in a <p>). A note
@@ -1497,6 +1500,27 @@ def draft_field(text: str, name: str) -> str | None:
         if len(row) >= 2 and row[0] == name and row[1]:
             return row[1]
     return None
+
+
+def split_draft(text: str) -> tuple[dict[str, str], str]:
+    """(frontmatter scalars, HTML body) of a draft. The reading-note
+    template opens with a YAML block between `---` lines; only its top-level
+    `key: value` scalars are read (no YAML library), quotes and a trailing
+    `# comment` dropped. A draft without one is all body."""
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].rstrip() != "---":
+        return {}, text
+    for end in range(1, len(lines)):
+        if lines[end].rstrip() == "---":
+            break
+    else:
+        return {}, text
+    meta: dict[str, str] = {}
+    for line in lines[1:end]:
+        match = re.match(r'([A-Za-z_][\w-]*):\s*("[^"]*"|\'[^\']*\'|[^#]*)', line)
+        if match:
+            meta[match.group(1)] = match.group(2).strip().strip("\"'")
+    return meta, "".join(lines[end + 1:])
 
 
 def publish_state_file(given: str | None = None) -> Path:
@@ -1552,11 +1576,13 @@ def plan_note(z: zotero.Zotero, project: str, draft: Path,
     if any(c.isspace() for c in slug):
         return {**row, "status": "refused",
                 "reason": "the draft's file name holds whitespace; a tag key cannot"}
-    parent = draft_field(text, "zotero_item")
+    meta, text = split_draft(text)
+    parent = meta.get("zotero_item") or draft_field(text, "zotero_item")
     row["item"] = parent
     if not parent:
         return {**row, "status": "refused",
-                "reason": "no zotero_item row in the draft's field table"}
+                "reason": "no zotero_item in the draft's frontmatter or "
+                          "field table"}
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     try:
         with local_api():
