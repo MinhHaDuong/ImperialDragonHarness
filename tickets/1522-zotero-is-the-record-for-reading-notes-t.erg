@@ -6,6 +6,7 @@ Author: HDMX-coding-agent
 --- log ---
 2026-11-10T16:11Z HDMX-coding-agent created
 2026-11-11T16:45Z reviewer note decomposed into 1524-1527 (raid af737d); transport ruled local API by the author 2026-11-11
+2026-11-11T17:18Z reviewer note integration review (raid af737d): children 1524-1527 merged (PRs 2452-2455); union sweep found no stale filing references; tracker stays open on the climate-finance-het 3019 criterion
 
 --- body ---
 
@@ -55,10 +56,10 @@ climate-finance-het ticket 3019 (wiki-pull, 61 pages to migrate);
 sen-causal-reading (73 reading pages with 103 anchor links; ticket there).
 
 ## Children (decomposed by raid af737d, 2026-11-11)
-- 1524 rule and reading-note skill narrowed: open
-- 1525 zotero publish-notes (local API): open
-- 1526 zotero pull-notes (Blocked-by 1525): open
-- 1527 lair offer (Blocked-by 1525): open
+- 1524 rule and reading-note skill narrowed: closed, PR #2452, 2026-11-11
+- 1525 zotero publish-notes (local API): closed, PR #2453, 2026-11-11
+- 1526 zotero pull-notes: closed, PR #2454, 2026-11-11
+- 1527 lair offer: closed, PR #2455, 2026-11-11
 - climate-finance-het 3019 consumes the verbs (other repository; its wiki-pull
   moves to the local API per the 2026-11-11 ruling)
 
@@ -68,8 +69,8 @@ ticket's "Web API with the read-write key" choice is superseded.
 
 ## Exit criteria
 
-- [ ] rules/zotero.md and the reading-note skill state the narrowed rule
-- [ ] zotero publish-notes and pull-notes verbs with tests (idempotence,
+- [x] rules/zotero.md and the reading-note skill state the narrowed rule
+- [x] zotero publish-notes and pull-notes verbs with tests (idempotence,
       editor wrapping of the field table, unavailable != in sync)
-- [ ] lair offer for unpublished merged notes
+- [x] lair offer for unpublished merged notes
 - [ ] climate-finance-het 3019 consumes the verbs
