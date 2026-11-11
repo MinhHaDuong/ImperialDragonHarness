@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from child_env import child_env
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,6 +94,7 @@ def test_no_drafts_is_silent(tmp_path):
     assert run(proj, tmp_path / "state") == ""
 
 
+@pytest.mark.integration
 def test_only_merged_drafts_count_in_a_git_repo(tmp_path):
     proj = tmp_path / "proj"
     draft(proj, "wiki/works/merged.html")
