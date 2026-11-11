@@ -4,7 +4,8 @@
     runtime.py wake disarm
     runtime.py wake send --session ID --message TEXT
 
-`arm` sleeps S seconds, runs CMD under bash, then delivers `<cmd> exited <rc>: <output|(no output)>`
+`arm` sleeps S seconds, runs CMD under bash from the primary checkout of the repository it was
+armed in (the arming directory outside a repository), then delivers `<cmd> exited <rc>: <output|(no output)>`
 to the session. A bounded poll is `--after 0` with a poller CMD that exits when the
 awaited status changes (merge's queued-merge wait, raid-breaker.py --wait): its exit is
 the wake, whatever its exit code.
@@ -69,6 +70,7 @@ def register(sub) -> None:
     fire.add_argument("--thread")
     fire.add_argument("--codex")
     fire.add_argument("--inbox")
+    fire.add_argument("--cwd")
 
 
 def can(rt: str, mode: str, env) -> str | None:
@@ -102,11 +104,27 @@ def message(cmd: str, rc: int, output: str) -> str:
     return f"{cmd} exited {rc}: {out or '(no output)'}"
 
 
-def run_cmd(cmd: str) -> str:
+def stable_cwd() -> str:
+    """Where CMD will run: the primary checkout, which outlives the worktree the session armed
+    from (raid_land --cleanup removes that one, raid 4b0d13); the arming directory otherwise
+    (no repository, or a bare common dir)."""
+    here = os.getcwd()
+    git = shutil.which("git")
+    if not git:
+        return here
+    done = subprocess.run([git, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                          capture_output=True, text=True, stdin=subprocess.DEVNULL, cwd=here)
+    common = done.stdout.strip()
+    if done.returncode == 0 and os.path.basename(common) == ".git":
+        return os.path.dirname(common)
+    return here
+
+
+def run_cmd(cmd: str, cwd: str | None = None) -> str:
     """CMD runs under bash, the shell the skills' poll commands are written for ($SECONDS)."""
     shell = shutil.which("bash") or "/bin/bash"
     done = subprocess.run([shell, "-c", cmd], capture_output=True, text=True,
-                          stdin=subprocess.DEVNULL)
+                          stdin=subprocess.DEVNULL, cwd=cwd if cwd and os.path.isdir(cwd) else None)
     return message(cmd, done.returncode, done.stdout + done.stderr)
 
 
@@ -137,7 +155,7 @@ def fire(a) -> int:
     the session; its exit, with the message on stdout, is the wake."""
     if a.after > 0:
         time.sleep(a.after)
-    text = run_cmd(a.cmd)
+    text = run_cmd(a.cmd, a.cwd)
     if a.codex and a.thread:
         return codex_queue(a.codex, a.thread, text)
     if a.inbox:
@@ -152,7 +170,8 @@ def fire(a) -> int:
 
 
 def fire_argv(rt: str, after: float, cmd: str, *extra: str) -> list:
-    return [sys.executable, SELF, "--runtime", rt, NAME, "fire", "--after", f"{after:g}", "--cmd", cmd, *extra]
+    return [sys.executable, SELF, "--runtime", rt, NAME, "fire", "--after", f"{after:g}", "--cmd", cmd,
+            "--cwd", stable_cwd(), *extra]
 
 
 def arm(a, rt: str, env) -> int:
@@ -165,7 +184,7 @@ def arm(a, rt: str, env) -> int:
         unit = f"{unit_stem(thread)}{secrets.token_hex(4)}"
         argv = [shutil.which("systemd-run", path=env.get("PATH")), "--user", "--quiet", "--collect",
                 "--expand-environment=no", "--timer-property=AccuracySec=1s",
-                f"--on-active={max(a.after, 1):g}", f"--unit={unit}", f"--working-directory={os.getcwd()}",
+                f"--on-active={max(a.after, 1):g}", f"--unit={unit}", f"--working-directory={stable_cwd()}",
                 f"--setenv=PATH={env.get('PATH', '')}",
                 *fire_argv(rt, 0, a.cmd, "--thread", thread, "--codex", codex)]
         done = subprocess.run(argv, capture_output=True, text=True, stdin=subprocess.DEVNULL)
