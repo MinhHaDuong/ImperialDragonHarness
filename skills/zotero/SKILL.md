@@ -5,7 +5,7 @@ name: zotero
 description: "Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, report duplicate files, or publish merged reading-note drafts as child notes."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] [--bib <file>] [--skip-underscore-dirs] | report-duplicates | suggest-attachments | publish-notes --project <p> <draft.html>..."
+argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] [--bib <file>] [--skip-underscore-dirs] | report-duplicates | suggest-attachments | publish-notes --project <p> <draft.html>... | pull-notes --project <p> [--out-dir <dir>]"
 ---
 
 Discipline: `rules/zotero.md` — Zotero is the record; `docs/` is git-ignored staging, while project `.bib` files may be tracked with DOI or open-access/archived URL reader routes. `file=` remains a local hint. Read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
@@ -28,6 +28,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir`, with `.bib` files named by `--bib`, skipping `_` directories on request; PDF, HTML, image, DjVu and EPUB files only, not Markdown — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
 | `report-duplicates` | hash-dedup JSON report, library against itself | `design/zotero-report-duplicates.md` |
 | `publish-notes` | merged HTML reading-note drafts → child notes (the body) under the item each draft's frontmatter names (`zotero_item`), found again by the tag `wiki:<project>/<slug>`; updates in place only a note not edited in Zotero since its last publish; `--dry-run` reads only | `references/publish-notes.md` |
+| `pull-notes` | the notes tagged `wiki:<project>/*` → one HTML snapshot per note with item, slug, version and date modified (stdout JSON, or `--out-dir`); reads only; unavailable (75) is never an empty project | `references/publish-notes.md` § pull-notes |
 | `suggest-attachments` | file a document onto an item that already exists, once compared with it (reports by default; stores it with `--edit`); fetch missing fulltexts through DOIfetch, using open and institutional sources first, then shadow sources | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and enrichment
