@@ -27,7 +27,7 @@ tracked in git; source documents stay outside it.
   child note under its work's item, not a standalone Document. A repository
   holds only a draft under review (on a branch, until merged) and generated
   snapshots of published notes; after merge the draft is published to Zotero
-  (`zotero publish-notes`, local API only) and Zotero's note is authoritative.
+  through the local API only, and Zotero's note is authoritative.
   A Document with a stored `.md` attachment filed before this rule stays as it
   is; a re-filed note supersedes it (reading-note skill § 4).
 - **`docs/` is staging, not a home.** Source documents (including PDFs, HTML snapshots, and OCR output) *and* the author's own
