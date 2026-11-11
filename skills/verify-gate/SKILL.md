@@ -221,7 +221,7 @@ out=$(mktemp -d) && echo "$out"
     python3 "$IDH_ROOT/scripts/touched-tests.py" --base origin/<base-branch> \
     >"$out/log" 2>&1; echo $? >"$out/rc") </dev/null >/dev/null 2>&1 &
 # one bounded wait; exit 124 means still running: run it again
-timeout 540 sh -c 'until [ -s "$1/rc" ]; do sleep 10; done; cat "$1/rc"' _ "$out"
+timeout 540 env out="$out" sh -c 'until [ -s "$out/rc" ]; do sleep 10; done; cat "$out/rc"'
 ```
 
 `<budget>` is the caller's gate allowance in seconds (raid's
