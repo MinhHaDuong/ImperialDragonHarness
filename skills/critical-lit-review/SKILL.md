@@ -64,7 +64,10 @@ agreement on it before searching. It states:
   justification, access_status, access_attempts, zotero_item, note_item`.
   `found_by` links to the search log; `access_status` distinguishes full text,
   abstract only, inaccessible and not attempted; item columns hold library/key
-  and stay empty until stored. The justification is short and names the scoping criterion
+  and stay empty until stored; `note_item` is the key of the HTML child note
+  under the work's `zotero_item`, filed by the reading-note skill (draft on a
+  branch, published after merge by `zotero publish-notes`), never a standalone
+  Document. The justification is short and names the scoping criterion
   it applies.
 - **Full text** for kept sources follows the `rules/zotero.md` chain (`docs/` →
   Zotero → ISTEX → open web → author). A source is not inaccessible until that
@@ -93,7 +96,7 @@ runtime's capacity; choose workers through `route`. With one slot, invoke the
 same reading-note contract sequentially in the coordinating session. These
 notes are independent; steps 4 to 6 are **sequential-blocking**, starting when
 the selected notes have returned or their missing evidence is explicitly
-recorded. Update `consultation.csv` with read status and archived note item /
+recorded. Update `consultation.csv` with read status and published note item /
 receipt; inaccessible full text remains a coverage limit, never a fabricated
 reading note.
 

@@ -3,27 +3,38 @@ paths:
   - "**/*.bib"
   - "**/*.ris"
   - "**/docs/**"
-last-reviewed: 2026-11-07
+  - "**/wiki/works/*.qmd"
+  - "**/wiki/references/*.qmd"
+  - "**/reading-notes/**"
+last-reviewed: 2026-11-11
 ---
 # Zotero management
 
-Loaded when you touch a bibliography or a staging directory. The other half of
+Loaded when you touch a bibliography, a staging directory or a reading-note
+draft. The other half of
 its trigger is a task, which no glob reaches: the zotero skill names this file, and a
 session doing Zotero management by hand
 should read it.
 
 Discipline for source documents and bibliography across writing and research
-projects. Zotero is the system of record. Project bibliographies may be tracked
-in git; source documents stay outside it.
+projects. Zotero is the record for works and reading notes; repositories hold
+drafts under review and generated snapshots. Project bibliographies may be
+tracked in git; source documents stay outside it.
 
-- **Zotero is the system of record** for source documents and bibliography.
-  Every source — PDF, HTML snapshot, or the author's own research notes — lives
-  there with the correct item type, real author/date/pagination, and the file
-  attached.
+- **Zotero is the record for works and reading notes.** Every source — PDF,
+  HTML snapshot — lives there with the correct item type, real
+  author/date/pagination, and the file attached. A reading note is an HTML
+  child note under its work's item, not a standalone Document. A repository
+  holds only a draft under review (on a branch, until merged) and generated
+  snapshots of published notes; after merge the draft is published to Zotero
+  through the local API only, and Zotero's note is authoritative.
+  A Document with a stored `.md` attachment filed before this rule stays as it
+  is; a re-filed note supersedes it (reading-note skill § 4).
 - **`docs/` is staging, not a home.** Source documents (including PDFs, HTML snapshots, and OCR output) *and* the author's own
-  `*.md` research notes are staged in a project-local `docs/`, then stored in
+  `*.md` research material are staged in a project-local `docs/`, then stored in
   Zotero. `docs/` is git-ignored in full (`*.pdf`, `*.html`, `*.md`) — never
-  tracked. Neither binaries nor notes belong in the repo.
+  tracked. Binaries never belong in the repo; reading-note drafts live outside
+  `docs/`, where review can see them.
 - **Check `docs/` staging *and* Zotero before declaring a source
   inaccessible.** A source-verification agent lists `docs/` (author-name
   variants included) and queries the Zotero library before any web search,
@@ -81,8 +92,8 @@ in git; source documents stay outside it.
 
 Why: git repos stay lean (no binary bloat, no report PDFs in history) and
 durable provenance is centralized in Zotero, where it persists and syncs.
-Source-document staging is transient by design; a tracked bibliography remains
-with the project.
+Source-document staging is transient by design; a tracked bibliography and
+reading-note drafts under review remain with the project.
 
 One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
 intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
@@ -90,7 +101,7 @@ its attachment, created through the local API) → record the citation. A
 fetcher (`doifetch.sh --doi/--isbn`, `probe-url.py`) leaves its receipt, the JSON line it
 prints, in `docs/.receipts.jsonl`; `check-staging` and `find-work` read it.
 
-This rule governs *source documents and project bibliographies*. It does not
+This rule governs *source documents, reading notes and project bibliographies*. It does not
 touch [prose/workpackages.md](./prose/workpackages.md)'s "Don't gitignore handoff artifacts" rule: generated files a
 downstream workpackage consumes (figures, tables, `\input`ed macros) are
 durable state and stay tracked. No contradiction — different object classes.

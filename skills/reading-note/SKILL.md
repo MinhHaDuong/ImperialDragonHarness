@@ -16,7 +16,7 @@ the author's manuscript against a referee; a reading note serves the work, not
 a paragraph. `critical-lit-review` fans out to this skill for the works it
 selects.
 
-Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is staging.
+Discipline: `rules/zotero.md`. Zotero is the record for works and reading notes; `docs/` is staging; the repository holds drafts under review.
 
 ## 1. Get the work and its metadata
 
@@ -69,27 +69,40 @@ template cannot enforce:
   record whether it was accessed, and what verification was attempted and at
   what effort, even if the answer is "not attempted".
 - **Length by tier**: full for the deep-read tier, short for the skim tier
-  (see the template).
+  (see the template). The project sets the word caps; the harness fixes none.
 
 ## 4. Store it
 
-Run these steps **sequential-blocking**: each consumes the preceding output.
+The filed note is an **HTML child note** under the work's Zotero item, reached
+through the local API only (never the Web API). Run these steps
+**sequential-blocking**: each consumes the preceding output.
 
-1. Stage the note as `docs/<AuthorYear>_<ShortTitle>.md` (git-ignored staging).
-2. Archive it now as its own **Document** with stored Markdown, following
-   [Zotero Markdown intake](../zotero/references/import.md#markdown-research-notes).
-   Carry `work_key` and the source Zotero library/item key in the note metadata
-   and Document provenance; keep the live hash receipt (Document and attachment
-   keys). A creation response alone is not storage verification. If blocked,
-   report archiving pending and retain staging.
-3. When a `critical-lit-review` run delegated the note, also leave the path in
-   the run's working directory it named.
-4. When the note belongs to a project corpus (`work_key` set) and the project
+1. Write the draft in the project's drafts directory (default
+   `reading-notes/<AuthorYear>_<ShortTitle>.html`; a project may name another,
+   such as `wiki/works/`), on a branch, in the format of
+   `references/template.md`. Never in `docs/`.
+2. `zotero_item` is the **exact key** of the work's item, read from Zotero
+   (`zotero` skill, find-work), never guessed from a filename or title. No item
+   yet: import the work first (§ 1).
+3. Review and merge the draft by the project's route. After merge, publish with
+   `zotero publish-notes`, which files the HTML as a child note of
+   `zotero_item` and reads it back. If publishing is blocked, report it pending
+   and keep the draft on the branch.
+4. Zotero's note is then authoritative; the repository keeps the draft and any
+   generated snapshot, which are never edited to diverge from it.
+5. **Superseding an old filing.** A standalone Document with an `.md`
+   attachment from the earlier workflow is left in place, not migrated
+   automatically. When the work is re-noted, publish the new child note, then
+   tell the author which old Document it supersedes so they can retire it; do
+   not delete it.
+6. When a `critical-lit-review` run delegated the note, also leave the draft
+   path in the run's working directory it named.
+7. When the note belongs to a project corpus (`work_key` set) and the project
    keeps a coding dataset, append the frontmatter there as one record keyed by
    `work_key`, so syntheses query the dataset rather than parse notes.
 
 ## Output to the user
 
-One line: work title — Zotero item of the work — Zotero item of the note —
-archival receipt or pending reason — full text read (yes / abstract only, why) — word count. Then the three findings
+One line: work title — Zotero item of the work — draft path —
+publication receipt (child note key) or pending reason — full text read (yes / abstract only, why) — word count. Then the three findings
 that matter most for the author's question, one line each.
