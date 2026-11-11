@@ -111,7 +111,7 @@ re-derive verdicts, apply them:
 - **Routing table** — `design/trace-counterfactuals-2026-06.md` § Routing: the
   settled disposition of each recommendation (adopt now / phase-5 A/B / reject),
   the refined `$/week`, and why. The disjoint-bucket dedup total there
-  ($2,356 = 34.8%) is the addressable ceiling — do not sum overlapping buckets
+  (USD 2,356 = 34.8%) is the addressable ceiling — do not sum overlapping buckets
   on top of it.
 
 For the current window, compare each hypothesis statistic against its settled
