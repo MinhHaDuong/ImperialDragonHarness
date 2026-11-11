@@ -157,6 +157,27 @@ def test_cmd_runs_under_bash_so_a_seconds_poll_waits(env, monkeypatch, capsys):
     assert done.stdout.strip().endswith("exited 0: polled bash"), done.stdout
 
 
+@pytest.mark.integration
+def test_cmd_survives_a_removed_arming_worktree(env, monkeypatch, capsys, tmp_path):
+    """Raid 4b0d13: raid_land --cleanup removed the shell's worktree before the sitrep fired, and
+    every git read in CMD failed `Unable to read current working directory`. CMD runs from the
+    primary checkout of the repository it was armed in, never from the arming directory."""
+    monkeypatch.setenv("PATH", f"{env}:/usr/bin:/bin")
+    monkeypatch.setenv("CLAUDECODE", "1")
+    repo, tree = tmp_path / "repo", tmp_path / "tree"
+    git = ["git", "-c", "user.email=t@t", "-c", "user.name=t"]
+    subprocess.run([*git, "init", "-q", str(repo)], check=True)
+    subprocess.run([*git, "-C", str(repo), "commit", "-q", "--allow-empty", "-m", "base"], check=True)
+    subprocess.run([*git, "-C", str(repo), "worktree", "add", "-q", str(tree)], check=True)
+    monkeypatch.chdir(tree)
+    out = cli(capsys, "wake", "arm", "--after", "0", "--cmd", "git rev-parse --show-toplevel")[1]
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(["git", "-C", str(repo), "worktree", "remove", str(tree)], check=True)
+    done = subprocess.run(shlex.split(out.removeprefix("RUN-IN-BACKGROUND ")), capture_output=True,
+                          text=True, timeout=30, cwd=tmp_path)
+    assert done.stdout.strip().endswith(f"exited 0: {repo.resolve()}"), done.stdout
+
+
 def test_claude_negative_controls(env, monkeypatch, capsys):
     """Headless has no session to wake; send and disarm are typed NOOPs."""
     monkeypatch.setenv("CLAUDECODE", "1")
