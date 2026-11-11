@@ -980,3 +980,79 @@ def test_close_with_cwd_inside_session_worktree_gone(tmp_path):
     r = subprocess.run(["sh", "-c", script, "sh", str(primary), str(caller), sys.executable, str(CLOSE), *args, "--repo", str(primary)],
                        cwd=caller, env=env, capture_output=True, text=True)
     check_gone_close(primary, tmp_path, f, r)
+
+
+# Ticket 1523 (author ruling: solve it offline): a close that cannot attribute warns, never refuses.
+SELF_PLAN = "# budget: 10m\nself\tself\tanthropic\tgaze\n"
+SELF_REPORT = {"self": "worker: self · family=anthropic\nok\n"}
+
+
+def _close(tmp_path, primary, env, extra=()):
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    return run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment), *extra], primary, env)
+
+
+def test_no_plan_written_closes_and_names_the_cause(tmp_path):
+    primary, env, f = opened(tmp_path)
+    r = _close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "attribution: no seat block (no plan was written)" in r.stdout
+
+
+def test_unreadable_manifest_names_seat_clocks_exit_and_stderr(tmp_path):
+    primary, env, f = opened(tmp_path)
+    d = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7"
+    (d / "manifest.txt").mkdir(parents=True)  # a manifest seat_clock cannot read
+    r = _close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert re.search(r"^attribution: no seat block \(seat_clock exited [1-9]\d*: .+\)$", r.stdout, re.M), r.stdout
+
+
+def test_cell_short_rows_build_no_seat_and_say_so(tmp_path):
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nbroken\tclaude-x\n")
+    r = _close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "attribution: no seat block (the plan holds no item of four tab-separated cells)" in r.stdout
+
+
+def test_script_only_plan_is_a_warning_not_a_loss(tmp_path):
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\n", {"regression": "ran: ok\n"})
+    r = _close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "attribution: no seat block (script-only plan, no reviewer seat)" in r.stdout
+
+
+def test_self_seat_without_a_model_names_both_repairs(tmp_path):
+    """Exit status is main's (2, the seat-line failure); the warning names what to rerun with."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n", SELF_REPORT)
+    r = _close(tmp_path, primary, dict(env, IDH_SESSION_MODEL="", IDH_SESSION_RUNTIME="claude-code"))
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "attribution: seat line FAILED" in r.stdout and "model not observed" in r.stdout
+    assert "--session-model" in r.stdout and "--masked-evidence" in r.stdout
+    assert answer_attr(primary, f) == []
+
+
+def test_self_seat_with_masked_evidence_is_recorded_as_runtime_masked(tmp_path):
+    primary, env, f = opened(tmp_path)
+    panel(primary, SELF_PLAN, SELF_REPORT)
+    r = _close(tmp_path, primary, dict(env, IDH_SESSION_MODEL="", IDH_SESSION_RUNTIME="claude-code"),
+               extra=["--masked-evidence", "docs/runtime.md:3"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = answer_attr(primary, f)
+    assert "seat=self" in line and "model-state=runtime-masked" in line and "model-evidence=docs/runtime.md:3" in line
+
+
+def test_self_only_answer_carries_the_self_reviewer_line(tmp_path):
+    """Positive control: with the session model, a self-only answer records the self seat.
+    Verify-gate verdicts store no model id and stay outside attribution."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\n# no-door: subagent door not used\nself\tself\tanthropic\tgaze\n", SELF_REPORT)
+    r = _close(tmp_path, primary, env, extra=["--session-runtime", "claude-code", "--session-model", "claude-x"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert answer_attr(primary, f) == [
+        "reviewer: step=review · seat=self · runtime=claude-code · model=anthropic/claude-x · effort=not-stated"
+        " · route=self · independence=not-stated · status: ran"]

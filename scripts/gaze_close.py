@@ -179,15 +179,35 @@ def plan_check_line(primary, pr):
     return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
 
 
-def seat_block(primary, pr, runtime, model):
+def seat_block(primary, pr, runtime, model, diagnosis=None):
     """The `seat:` lines `seat_clock.py identities` builds from the review panel, as a list;
-    empty when the panel cannot be read."""
+    empty when the panel cannot be read. `diagnosis`, a list, receives the panel path tried, the
+    reader's exit code and its first stderr line, for the warning of an empty block (ticket 1523)."""
     key = unit_key(pr)
     panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
     r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "identities", str(panel),
                         "--session-runtime", runtime or "", "--session-model", model or ""],
                        capture_output=True, text=True)
+    if diagnosis is not None:
+        diagnosis += [panel, r.returncode, (r.stderr.strip().splitlines() or ["no stderr"])[-1]]
     return [ln for ln in r.stdout.splitlines() if ln.strip()] if r.returncode == 0 else []
+
+
+def no_seat_warning(tried):
+    """One warning line naming why the seat block is empty (ticket 1523): the answer then carries no
+    reviewer line. Never a refusal: the close runs on every exit path and records as ever."""
+    panel, code, err = tried
+    manifest = panel / "manifest.txt"
+    if not manifest.exists():
+        cause = "no plan was written"
+    elif code:
+        cause = f"seat_clock exited {code}: {err}"
+    else:
+        rows = [ln.split("\t") for ln in manifest.read_text(encoding="utf-8-sig").splitlines()
+                if ln.strip() and not ln.startswith("#")]
+        cause = ("script-only plan, no reviewer seat" if rows and all(len(r) > 2 and r[2].strip() == "none" for r in rows)
+                 else "the plan holds no item of four tab-separated cells")
+    return f"attribution: no seat block ({cause})"
 
 
 def raw_output_links(primary, pr):
@@ -210,7 +230,7 @@ def raw_output_links(primary, pr):
     return links
 
 
-def attribution_lines(file_text, seats):
+def attribution_lines(file_text, seats, masked_evidence=None):
     """(lines, failures): the answer's attribution lines from the generated seats and the finding lines of the
     attribution file. Each seat's `reviewer:` line is derived (attribution_record.seat_lines);
     its findings follow it. A file the contract refuses raises ValueError, before anything is
@@ -232,7 +252,7 @@ def attribution_lines(file_text, seats):
         findings.setdefault(seat, []).append(f"  finding: {m.group(2)} · {m.group(3)} · adopted: {m.group(4)}")
     out, failures = [], []
     for ln in seats:
-        reviewers, failed = attribution_record.seat_lines(ln, "")
+        reviewers, failed = attribution_record.seat_lines(ln, "", masked_evidence)
         failures += failed
         for rv in reviewers:
             out += [rv, *findings.get(ln.split(" · ")[0][len("seat: "):], [])]
@@ -364,6 +384,8 @@ def main():
     ap.add_argument("--comment-file", type=Path)
     ap.add_argument("--session-runtime", default=os.environ.get("IDH_SESSION_RUNTIME", ""),
                     help="runtime of this session, for a `self` seat")
+    ap.add_argument("--masked-evidence", default="",
+                    help="path:line showing the runtime masks its model, for a seat whose model is not observed")
     ap.add_argument("--session-model", default=os.environ.get("IDH_SESSION_MODEL", ""),
                     help="model of this session, for a `self` seat")
     a = ap.parse_args()
@@ -395,11 +417,14 @@ def main():
             return 2
     plan_line = plan_check_line(primary, a.pr)
     print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
-    seats = seat_block(primary, a.pr, a.session_runtime, a.session_model)  # before cleanup removes the panel
+    tried = []
+    seats = seat_block(primary, a.pr, a.session_runtime, a.session_model, tried)  # before cleanup removes the panel
+    if not seats:
+        print(no_seat_warning(tried))
     for ln in seats:
         print(ln)
     try:
-        lines, failures = attribution_lines(a.attribution_file.read_text(), seats)
+        lines, failures = attribution_lines(a.attribution_file.read_text(), seats, a.masked_evidence or None)
     except ValueError as exc:
         print(f"gaze_close: {exc}", file=sys.stderr)
         return 2
@@ -408,6 +433,8 @@ def main():
     entry_branch = a.entry_branch or entry["branch"]
     status = 2 if failures else 0
     for failure in failures:
+        if failure.startswith("seat self: model not observed"):  # ticket 1523: name both repairs
+            failure = "seat self: model not observed (pass --session-model <verbatim id>, or --masked-evidence <path:line>)"
         print(f"attribution: seat line FAILED {failure}")
     lines = "\n".join(lines)
     local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend

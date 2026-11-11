@@ -316,3 +316,25 @@ def test_cli_render_and_from_notes_exit_zero_on_lost_attribution(repo):
     for args in (["--from-notes", "pr:7"], ["--render-pr", "7"]):  # no review at all
         done = subprocess.run([*run, *args], cwd=repo, capture_output=True, text=True, env=child_env())
         assert done.returncode == 0, done.stderr
+
+
+def test_missing_attribution_lists_merged_units_with_an_empty_answer(repo):
+    """Ticket 1523: the offline count. A unit whose latest gaze answer carries no attribution is listed,
+    one with a reviewer line is not, an unmerged one is not; the report decides nothing (exit 0)."""
+    empty, covered = gazed(repo, "pr:7", attribution=()), gazed(repo, "pr:8")
+    git(repo, "switch", "-q", "main")
+    git(repo, "merge", "-q", "--no-ff", "-m", "merge feat", "feat")
+    git(repo, "switch", "-qc", "later")
+    (repo / "c.txt").write_text("c\n")
+    git(repo, "add", "c.txt")
+    git(repo, "commit", "-qm", "later work")
+    ar.record_writer(str(repo), WRITER, "pr:9", branch="later")
+    rid = ar.record_writer(str(repo), WRITER, "pr:9", branch="later")
+    rn.add(str(repo), "answer", rid, {"run_id": "gz-2", "result": "REVIEWED", "seats": "self-only",
+                                      "attribution": [], "text": "result: REVIEWED\n"})
+    git(repo, "switch", "-q", "main")  # `later` is not merged into main
+    out = subprocess.run([sys.executable, str(SCRIPTS / "attribution_query.py"), "--missing-attribution", str(repo)],
+                         capture_output=True, text=True, env=child_env())
+    assert out.returncode == 0, out.stderr
+    assert "1 merged unit(s)" in out.stdout and empty in out.stdout and "pr:7" in out.stdout
+    assert covered not in out.stdout and "pr:8" not in out.stdout and "pr:9" not in out.stdout

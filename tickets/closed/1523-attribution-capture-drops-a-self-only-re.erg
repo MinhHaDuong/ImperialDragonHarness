@@ -2,9 +2,13 @@
 Title: Attribution capture drops a self-only review's writer record
 Created: 2026-11-11
 Author: claude
+Closed: autoclosed — PR #2449
 
 --- log ---
 2026-11-11T11:15Z claude created
+2026-11-11T11:59Z reviewer note: decided direction (orchestrator, advisor-checked): record a self-only review through the existing self-seat path (seat_clock identities -> attribution_record.seat_lines, route=self, independence=not-stated); parse_record's no-reviewer refusal stays. Observed on climate-finance-het PR 2117: answer text held no seat: line, a blank where {{seats}} expanded, so seat_block returned []. Reproduced cause of an empty block: seat_clock identities died with RuntimeError (archive root unset) and gaze_close read its stderr as nothing. Fix: gaze_close refuses (exit 2, nothing recorded) an empty seat block or a self seat with no observed model, naming the repair; seat_clock treats an unset archive root as an unreadable archive. Verify-gate verdicts store no model id and stay out of attribution.
+2026-11-11T13:44Z reviewer note: author ruling (relayed by the orchestrator): solve it offline. gaze_close records as on main and warns, with the cause and the repair, where a refusal stood; the seat_clock archive-root fix and the --masked-evidence pass-through stay; the count of merged units with an empty attribution is attribution_query.py --missing-attribution (it reads review notes of a project, which main_sweep, a gate-receipt audit of main commits, does not). Report only: no ticket, exit 0 on hits.
+2026-11-11T13:48Z reviewer closed — autoclosed — PR #2449
 
 --- body ---
 ## Context
