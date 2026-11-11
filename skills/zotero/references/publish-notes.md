@@ -75,3 +75,27 @@ JSON on stdout: `project`, `dry_run`, `state_file`, `zotero` (the URL, or
 - 74: Zotero slow (a read not finished in time).
 
 The first write may open Zotero's key dialog (SKILL.md § Safety contract).
+
+## pull-notes: the notes back as HTML
+
+```bash
+"$IDH_ROOT/scripts/zotero.py" pull-notes --project <project> \
+    [--out-dir DIR] [--library user|<groupID>]
+```
+
+The read side, through the same local API and the same tag key
+`wiki:<project>/<slug>`: a pull right after a publish reads what was
+published, and a note edited in Zotero's editor since is read as edited. It
+writes nothing to Zotero. The harness emits HTML and metadata only; any
+`.qmd` envelope belongs to the consumer.
+
+JSON on stdout: `project`, `zotero` and `results`, one row per note with
+`slug`, `tag`, `item` (the parent's key), `note` (its key), `version`,
+`date_modified`, `status: pulled` and `html`. With `--out-dir`, the HTML goes
+to `DIR/<slug>.html` and the row carries `file` instead of `html`. Two notes
+under one tag are both `ambiguous` (no HTML, nothing written, exit 1).
+
+- 0: the project's notes, possibly none (`results: []` with Zotero up).
+- 75: Zotero unavailable; the JSON holds no `results`, so an unreachable
+  library is never read as an empty project. 74: Zotero slow.
+- 1: a malformed `--project`, an unwritable `--out-dir`, or an ambiguous slug.

@@ -11,7 +11,7 @@
 """Backend helper scripts/zotero.py for the zotero skill.
 
 Subcommands: extract-metadata, find-work, report-duplicates, check-staging,
-suggest-attachments, create-items, suggest-edits, publish-notes.
+suggest-attachments, create-items, suggest-edits, publish-notes, pull-notes.
 
 `extract-metadata` reads a PDF and never needs Zotero; every other
 subcommand talks to the running Zotero.
@@ -1747,6 +1747,91 @@ def cmd_publish_notes(args: argparse.Namespace) -> int:
     if not status and any(r["status"] not in PUBLISH_OK for r in rows):
         status = 1
     emit_json({**payload, "results": [public_row(r) for r in rows]})
+    return status
+
+
+# --- pull-notes: a project's child notes back to HTML snapshots --------------
+# The read side of publish-notes: the notes tagged wiki:<project>/<slug>, as
+# the HTML Zotero holds now (an edit made in Zotero's editor included) with
+# the metadata that tells which version it is. Nothing is written to Zotero.
+# The consumer wraps the HTML in whatever envelope it needs.
+
+def project_notes(z: zotero.Zotero, project: str) -> list[tuple[str, dict[str, Any]]]:
+    """(tag, note) for every child note carrying a tag of `project`, each
+    page read to its end. The tag list is asked for by prefix; a tag is
+    matched exactly again here, whatever the server's matching."""
+    prefix = f"{NOTE_TAG_PREFIX}{project}/"
+    found: dict[str, tuple[str, dict[str, Any]]] = {}
+    with local_api():
+        tags = z.everything(z.tags(q=prefix, qmode="startsWith", limit=PAGE))
+        for name in sorted({t if isinstance(t, str) else t.get("tag", "")
+                            for t in tags}):
+            if not name.startswith(prefix) or len(name) == len(prefix):
+                continue
+            for item in z.everything(z.items(tag=name, itemType="note",
+                                             limit=PAGE)):
+                if (item["data"].get("itemType") == "note"
+                        and name in note_tags(item)):
+                    found[f"{name}\0{item['key']}"] = (name, item)
+    return list(found.values())
+
+
+def pulled_row(tag: str, note: dict[str, Any], prefix: str) -> dict[str, Any]:
+    data = note["data"]
+    return {"slug": tag[len(prefix):], "tag": tag,
+            "item": data.get("parentItem"), "note": note["key"],
+            "version": note["version"],
+            "date_modified": data.get("dateModified"),
+            "html": data.get("note", ""), "status": "pulled"}
+
+
+def cmd_pull_notes(args: argparse.Namespace) -> int:
+    project = args.project
+    if not project or any(c.isspace() or c == "/" for c in project):
+        emit_json({"error": f"--project {project!r}: one word, no '/'"})
+        return 1
+    payload: dict[str, Any] = {"project": project}
+    prefix = f"{NOTE_TAG_PREFIX}{project}/"
+    try:
+        ensure_zotero()
+        z = local_library(getattr(args, "library", USER_LIBRARY))
+        found = project_notes(z, project)
+    except ZoteroUnavailable as exc:
+        print(f"pull-notes: {exc}", file=sys.stderr)
+        emit_json({**payload, **unavailable_payload(exc)})
+        return EXIT_UNAVAILABLE
+    except ZoteroSlow as exc:
+        print(f"pull-notes: {exc}", file=sys.stderr)
+        emit_json({**payload, **slow_payload(exc)})
+        return EXIT_SLOW
+    except (LocalAPIError, ValueError) as exc:
+        emit_json({**payload, "error": str(exc)})
+        return 1
+    payload["zotero"] = zotero_url()
+    rows = sorted((pulled_row(t, n, prefix) for t, n in found),
+                  key=lambda r: (r["slug"], r["note"]))
+    slugs = [r["slug"] for r in rows]
+    status = 0
+    for row in rows:
+        if slugs.count(row["slug"]) > 1:
+            row.update(status="ambiguous", html=None,
+                       reason=f"{slugs.count(row['slug'])} notes carry {row['tag']}")
+            status = 1
+    if getattr(args, "out_dir", None):
+        out = Path(args.out_dir)
+        try:
+            out.mkdir(parents=True, exist_ok=True)
+            for row in rows:
+                if row["status"] == "pulled":
+                    target = out / f"{row['slug']}.html"
+                    target.write_text(row.pop("html"), encoding="utf-8")
+                    row["file"] = str(target)
+        except OSError as exc:
+            emit_json({**payload, "error": f"cannot write {out}: {exc}"})
+            return 1
+        for row in rows:
+            row.pop("html", None)
+    emit_json({**payload, "results": rows})
     return status
 
 
@@ -3898,6 +3983,19 @@ def main() -> int:
     pn.add_argument("--library", default=USER_LIBRARY,
                     help="'user' (default) or a numeric groupID")
     pn.set_defaults(func=cmd_publish_notes)
+
+    pl = sub.add_parser("pull-notes",
+                        help="read a project's notes (tag wiki:<project>/"
+                             "<slug>) back as HTML snapshots with their "
+                             "item, version and date, through the local API")
+    pl.add_argument("--project", required=True,
+                    help="the project the notes belong to (one word, no '/')")
+    pl.add_argument("--out-dir",
+                    help="write <slug>.html per note here; the JSON on "
+                         "stdout then carries the file path, not the HTML")
+    pl.add_argument("--library", default=USER_LIBRARY,
+                    help="'user' (default) or a numeric groupID")
+    pl.set_defaults(func=cmd_pull_notes)
 
     args = p.parse_args()
     if args.cmd == "suggest-edits" and args.item_key and not args.expect_title:
