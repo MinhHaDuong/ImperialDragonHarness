@@ -327,10 +327,23 @@ def test_missing_panel_is_refused_and_records_nothing(tmp_path):
     assert not [e for e in _notes().entries(primary, f["review_id"]) if e["kind"] == "answer"]
 
 
-def test_script_only_plan_is_refused_as_an_empty_seat_block(tmp_path):
-    """A plan whose items are all scripts (family `none`) builds no seat line either."""
+def test_script_only_plan_records_with_one_warning(tmp_path):
+    """A readable plan of script checks (family `none`) has no reviewer seat: skills/gaze/references/plan.md
+    allows it, so the close records as before and warns once (ticket 1523 fix round)."""
     primary, env, f = opened(tmp_path)
     panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\n", {"regression": "ran: ok\n"})
+    comment = tmp_path / "c.md"
+    comment.write_text("{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert r.stdout.count("attribution: no reviewer seat (script-only plan)") == 1
+    assert [e for e in _notes().entries(primary, f["review_id"]) if e["kind"] == "answer"]
+
+
+def test_unreadable_plan_items_are_still_refused(tmp_path):
+    """Free text and cell-short rows build no seat either, and that is a plan that could not be read."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nOne seat reads the diff.\n")
     comment = tmp_path / "c.md"
     comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
