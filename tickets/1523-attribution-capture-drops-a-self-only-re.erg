@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-11-11T11:15Z claude created
+2026-11-11T11:59Z reviewer note: decided direction (orchestrator, advisor-checked): record a self-only review through the existing self-seat path (seat_clock identities -> attribution_record.seat_lines, route=self, independence=not-stated); parse_record's no-reviewer refusal stays. Observed on climate-finance-het PR 2117: answer text held no seat: line, a blank where {{seats}} expanded, so seat_block returned []. Reproduced cause of an empty block: seat_clock identities died with RuntimeError (archive root unset) and gaze_close read its stderr as nothing. Fix: gaze_close refuses (exit 2, nothing recorded) an empty seat block or a self seat with no observed model, naming the repair; seat_clock treats an unset archive root as an unreadable archive. Verify-gate verdicts store no model id and stay out of attribution.
 
 --- body ---
 ## Context

@@ -327,7 +327,7 @@ def launched_seats() -> list[dict] | None:
         for r in rows:
             r['seat'], r['unit'], r['ts_start'], r.get('out')  # KeyError: a malformed row is an unreadable archive
         return rows
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, RuntimeError):  # RuntimeError: archive root unset (1523)
         print('seat_clock: launch archive unreadable; no headless header is trusted', file=sys.stderr)
         return None
 

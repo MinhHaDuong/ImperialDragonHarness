@@ -301,7 +301,7 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
     """Ticket 1267: the verdict is the checker's, copied by the script. A free-text
     manifest (the format that produced a model-relabelled PASS) is a FAIL."""
     primary, env, f = opened(tmp_path)
-    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
+    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\nself\tself\tanthropic\tgaze\n")
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}} — the model's reason\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
@@ -311,21 +311,38 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
     assert "{{" not in answer_text(primary, f)
 
 
-def test_missing_panel_is_a_failed_plan_check(tmp_path):
+def test_missing_panel_is_refused_and_records_nothing(tmp_path):
+    """Ticket 1523 (climate-finance-het PR 2117): an empty `{{seats}}` expansion left an answer
+    with no seat line and `"attribution": []`. The close answers 2, names the panel it tried and
+    the causes, removes nothing and writes no answer entry."""
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
     comment.write_text("{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)],
+            primary, dict(env, GAZE_FIXTURE_NO_DEFAULT_PANEL="1"))
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "no seat line could be built" in r.stderr and "review-7/.panel/7" in r.stderr
+    assert "seat_clock identities exit" in r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists()
+    assert not [e for e in _notes().entries(primary, f["review_id"]) if e["kind"] == "answer"]
+
+
+def test_script_only_plan_is_refused_as_an_empty_seat_block(tmp_path):
+    """A plan whose items are all scripts (family `none`) builds no seat line either."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\n", {"regression": "ran: ok\n"})
+    comment = tmp_path / "c.md"
+    comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
-    assert r.returncode == 0, r.stdout + r.stderr
-    assert plan_line(primary, f) == ["plan check: FAIL — manifest unreadable"]
+    assert r.returncode == 2 and "no seat line could be built" in r.stderr
+    assert not [e for e in _notes().entries(primary, f["review_id"]) if e["kind"] == "answer"]
 
 
 def test_valid_plan_check_reaches_the_comment_as_pass(tmp_path):
     """Positive control for the FAIL test: same path, a parseable manifest and a report."""
     primary, env, f = opened(tmp_path)
-    panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\n")
-    d = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7"
-    (d / "regression.md").write_text("ran: ok\n")
+    panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\nself\tself\tanthropic\tgaze\n",
+          {"regression": "ran: ok\n", "self": "worker: self · family=anthropic\nok\n"})
     comment = tmp_path / "c.md"
     comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
@@ -378,7 +395,7 @@ def test_stdout_carries_the_checkers_fail_verbatim(tmp_path):
 
 def test_blocked_cleanup_still_prints_the_plan_check(tmp_path):
     primary, env, f = opened(tmp_path)
-    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
+    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\nself\tself\tanthropic\tgaze\n")
     (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 1
@@ -569,12 +586,41 @@ def test_self_seat_takes_the_session_identity(tmp_path):
     assert "runtime=claude-code" in line and "route=self" in line and "model=anthropic/claude-x" in line
 
 
-def test_self_seat_without_a_session_model_is_loud_not_invented(tmp_path):
+def test_self_seat_without_a_session_model_is_refused_and_records_nothing(tmp_path):
+    """Ticket 1523: a self seat with no observed model loses its `reviewer:` line; the close
+    answers 2 naming both repairs, removes nothing and writes no answer entry."""
     primary, env, f = opened(tmp_path)
     seats_shim(tmp_path, env)
     panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n", {"self": "worker: self · family=anthropic\nok\n"})
-    r = seat_close(tmp_path, primary, env)
-    assert r.returncode == 2 and "model not observed" in r.stdout
+    r = seat_close(tmp_path, primary, dict(env, IDH_SESSION_MODEL=""))
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "--session-model" in r.stderr and "--masked-evidence" in r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists()
+    assert not [e for e in _notes().entries(primary, f["review_id"]) if e["kind"] == "answer"]
+
+
+def test_self_seat_with_masked_evidence_is_recorded_as_runtime_masked(tmp_path):
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n", {"self": "worker: self · family=anthropic\nok\n"})
+    r = seat_close(tmp_path, primary, dict(env, IDH_SESSION_MODEL=""), extra=["--masked-evidence", "docs/runtime.md:3"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = answer_attr(primary, f)
+    assert "model-state=runtime-masked" in line and "model-evidence=docs/runtime.md:3" in line
+
+
+def test_self_only_answer_carries_the_self_reviewer_line(tmp_path):
+    """Ticket 1523: seats self-only is recorded through the self seat, not dropped. Verify-gate
+    verdicts store no model id and stay outside attribution."""
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    panel(primary, "# budget: 10m\n# no-door: subagent door not used\nself\tself\tanthropic\tgaze\n",
+          {"self": "worker: self · family=anthropic\nok\n"})
+    r = seat_close(tmp_path, primary, env, extra=["--session-runtime", "claude-code", "--session-model", "claude-x"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert answer_attr(primary, f) == [
+        "reviewer: step=review · seat=self · runtime=claude-code · model=anthropic/claude-x · effort=not-stated"
+        " · route=self · independence=not-stated · status: ran"]
 
 
 SIGNED = "worker: model=m · family={}\nverdict: clear\n"
@@ -946,6 +992,8 @@ def gone_session(tmp_path):
     git(primary, "worktree", "add", "-b", "callerbr", str(caller))
     r = run(SETUP, ["7"], caller, env)
     assert r.returncode == 0, r.stderr
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n")  # the close refuses an answer with no seat line (1523)
+    env = dict(env, IDH_SESSION_RUNTIME="claude-code", IDH_SESSION_MODEL="claude-x")
     (primary / "stray.txt").write_text("foreign\n")
     comment = tmp_path / "c.md"
     comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{duration}}\n{{containment}}\n")

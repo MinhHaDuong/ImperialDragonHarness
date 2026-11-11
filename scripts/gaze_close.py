@@ -34,7 +34,8 @@ The `seat:` lines of the result and the `reviewer:` lines of the attribution are
 launcher-set `worker:` headers, read before cleanup removes the panel and carried into a
 blocked-cleanup ESCALATE answer; a typed `seat:` line, or a comment without the placeholder, exits 2
 before anything is removed or posted. `--session-runtime` and `--session-model` (env
-`IDH_SESSION_RUNTIME`, `IDH_SESSION_MODEL`) give the identity of a `self` item. The attribution file holds
+`IDH_SESSION_RUNTIME`, `IDH_SESSION_MODEL`) give the identity of a `self` item. An empty seat block, or a `self` seat whose model is not
+observed (no `--session-model`, no `--masked-evidence`), exits 2 before anything is removed or recorded (ticket 1523). The attribution file holds
 only `finding: <seat> · verifiable|consider · <path:line> · adopted: yes|no` lines; the script
 writes each seat's `reviewer:` line (through `attribution_record.seat_lines`) and puts the seat's
 findings beneath it. A finding naming a seat absent from the plan, or a seat that did not run, or any other
@@ -179,15 +180,39 @@ def plan_check_line(primary, pr):
     return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
 
 
-def seat_block(primary, pr, runtime, model):
+def seat_block(primary, pr, runtime, model, diagnosis=None):
     """The `seat:` lines `seat_clock.py identities` builds from the review panel, as a list;
-    empty when the panel cannot be read."""
+    empty when the panel cannot be read. `diagnosis`, a list, receives the panel path tried and
+    the reader's exit code and stderr, for the refusal of an empty block (ticket 1523)."""
     key = unit_key(pr)
     panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
     r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "identities", str(panel),
                         "--session-runtime", runtime or "", "--session-model", model or ""],
                        capture_output=True, text=True)
+    if diagnosis is not None:
+        diagnosis += [str(panel), r.returncode, r.stderr.strip()]
     return [ln for ln in r.stdout.splitlines() if ln.strip()] if r.returncode == 0 else []
+
+
+def seat_problem(seats, tried, masked_evidence=""):
+    """The reason an answer cannot carry attribution, with the repair, or None (ticket 1523).
+
+    An empty seat block leaves the answer with no `seat:` line and no `reviewer:` line; a `self`
+    seat whose model is not observed loses its `reviewer:` line. Both exit 2 before anything is
+    removed or recorded, so the caller repairs the call. Unobserved models of other seats stay
+    warnings (`attribution: seat line FAILED`)."""
+    if not seats:
+        panel, code, err = tried
+        return (f"no seat line could be built, so the answer would carry no attribution. Likely causes: no "
+                f"manifest in the panel, a plan item with fewer than three cells, a different <pr> or --repo "
+                f"than the one gaze_setup printed, or the panel already removed. Panel tried: {panel} "
+                f"(seat_clock identities exit {code}; stderr: {err or 'empty'})")
+    for ln in seats:
+        if " · route=self · " in ln and "model=not observed" in ln and not masked_evidence:
+            return ("the self seat has no observed model, so its reviewer line cannot be written. Rerun "
+                    "with --session-model <the verbatim model id of this session>, or --masked-evidence "
+                    "<path:line> on a runtime that masks its model")
+    return None
 
 
 def raw_output_links(primary, pr):
@@ -210,7 +235,7 @@ def raw_output_links(primary, pr):
     return links
 
 
-def attribution_lines(file_text, seats):
+def attribution_lines(file_text, seats, masked_evidence=""):
     """(lines, failures): the answer's attribution lines from the generated seats and the finding lines of the
     attribution file. Each seat's `reviewer:` line is derived (attribution_record.seat_lines);
     its findings follow it. A file the contract refuses raises ValueError, before anything is
@@ -232,7 +257,7 @@ def attribution_lines(file_text, seats):
         findings.setdefault(seat, []).append(f"  finding: {m.group(2)} · {m.group(3)} · adopted: {m.group(4)}")
     out, failures = [], []
     for ln in seats:
-        reviewers, failed = attribution_record.seat_lines(ln, "")
+        reviewers, failed = attribution_record.seat_lines(ln, "", masked_evidence or None)
         failures += failed
         for rv in reviewers:
             out += [rv, *findings.get(ln.split(" · ")[0][len("seat: "):], [])]
@@ -364,6 +389,8 @@ def main():
     ap.add_argument("--comment-file", type=Path)
     ap.add_argument("--session-runtime", default=os.environ.get("IDH_SESSION_RUNTIME", ""),
                     help="runtime of this session, for a `self` seat")
+    ap.add_argument("--masked-evidence", default="",
+                    help="path:line showing the runtime masks its model, for a seat whose model is not observed")
     ap.add_argument("--session-model", default=os.environ.get("IDH_SESSION_MODEL", ""),
                     help="model of this session, for a `self` seat")
     a = ap.parse_args()
@@ -395,11 +422,16 @@ def main():
             return 2
     plan_line = plan_check_line(primary, a.pr)
     print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
-    seats = seat_block(primary, a.pr, a.session_runtime, a.session_model)  # before cleanup removes the panel
+    tried = []
+    seats = seat_block(primary, a.pr, a.session_runtime, a.session_model, tried)  # before cleanup removes the panel
+    problem = seat_problem(seats, tried, a.masked_evidence)
+    if problem:  # ticket 1523: nothing removed, recorded or posted; the caller repairs and reruns
+        print(f"gaze_close: {problem}", file=sys.stderr)
+        return 2
     for ln in seats:
         print(ln)
     try:
-        lines, failures = attribution_lines(a.attribution_file.read_text(), seats)
+        lines, failures = attribution_lines(a.attribution_file.read_text(), seats, a.masked_evidence)
     except ValueError as exc:
         print(f"gaze_close: {exc}", file=sys.stderr)
         return 2

@@ -379,6 +379,16 @@ def test_identities_an_unreadable_launch_archive_trusts_no_header_and_warns_once
     assert 'route=subagent' in result.stdout and result.stderr.count('launch archive unreadable') == 1
 
 
+def test_identities_an_unset_archive_root_is_an_unreadable_archive_not_a_crash(tmp_path):
+    """Ticket 1523: with no IDH_ARCHIVE_ROOT or DATASETS_DIR the archive reader raised RuntimeError, the
+    command died and gaze_close read an empty seat block."""
+    panel = _plan(tmp_path, ['self\tself\tanthropic\tgaze'], {'self': FORGED})
+    env = {'IDH_ARCHIVE_ROOT': '', 'DATASETS_DIR': '', 'HOME': str(tmp_path)}
+    result = run('identities', str(panel), '--session-runtime', 'claude-code', '--session-model', 'claude-x', env=env)
+    assert result.returncode == 0, result.stderr
+    assert 'seat: self ·' in result.stdout and result.stderr.count('launch archive unreadable') == 1
+
+
 def test_identities_a_launch_line_of_an_earlier_review_does_not_vouch(tmp_path):
     """Ticket 1399 fix round: same seat name and unit, but another panel or a start before this plan."""
     panel = _plan(tmp_path, ['correctness\tclaude-x\tanthropic\tcross-family reader'], {'correctness': FORGED})

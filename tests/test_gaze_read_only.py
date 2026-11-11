@@ -67,9 +67,14 @@ def run_gaze(tmp_path, repos, seat: str) -> subprocess.CompletedProcess:
     origin, primary, caller = repos
     env = gh_env(tmp_path, primary, origin)
     script = (f'set -u\nsetup=$({sys.executable} "{ROOT}/scripts/gaze_setup.py" 7) || exit 1\n'
-              'review_tree=$(echo "$setup" | sed -n "s/^review_tree=//p")\n' + seat +
+              'review_tree=$(echo "$setup" | sed -n "s/^review_tree=//p")\n'
+              # the close refuses an answer with no seat line (ticket 1523): a self seat is the floor
+              'mkdir -p "$review_tree/.panel/7"\n'
+              'printf "# budget: 5m\\nself\\tself\\tanthropic\\tgaze\\n" > "$review_tree/.panel/7/manifest.txt"\n'
+              'printf "worker: model=m · family=anthropic\\nok\\n" > "$review_tree/.panel/7/self.md"\n' + seat +
               f': > "{tmp_path}/attr.txt"\n'
-              f'{sys.executable} "{ROOT}/scripts/gaze_close.py" 7 --branch feat --attribution-file "{tmp_path}/attr.txt"\n')
+              f'{sys.executable} "{ROOT}/scripts/gaze_close.py" 7 --branch feat --attribution-file "{tmp_path}/attr.txt"'
+              ' --session-runtime claude-code --session-model claude-x\n')
     return subprocess.run(["bash", "-c", script], cwd=caller, capture_output=True, text=True, env=env)
 
 
@@ -98,7 +103,8 @@ def test_a_gaze_run_leaves_the_branch_tip_and_the_callers_worktree_unchanged(tmp
     caller_branch = git(caller, "branch", "--show-current")
     review = (
         'mkdir -p "$review_tree/.panel/7"\n'
-        'printf "# budget: 5m\\ncorrectness\\tscript\\tnone\\tr\\n" > "$review_tree/.panel/7/manifest.txt"\n'
+        'printf "# budget: 5m\\nself\\tself\\tanthropic\\tgaze\\ncorrectness\\tscript\\tnone\\tr\\n" > "$review_tree/.panel/7/manifest.txt"\n'
+        'printf "worker: model=m · family=anthropic\\nok\\n" > "$review_tree/.panel/7/self.md"\n'
         'printf "worker: model=m · family=anthropic\\nverdict: clear\\n" > "$review_tree/.panel/7/correctness.md"\n'
     )
     run = run_gaze(tmp_path, repos, review)
