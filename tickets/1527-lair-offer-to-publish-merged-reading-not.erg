@@ -1,0 +1,26 @@
+%erg 0.1
+Title: lair: offer to publish merged reading notes not yet in Zotero
+Created: 2026-11-11
+Author: claude
+Blocked-by: 1525
+
+--- log ---
+2026-11-11T16:45Z claude created
+
+--- body ---
+Parent: 1522
+
+## Context
+Child of tracker 1522. Lair step 11 is "no Zotero access, no network", so the
+offer reads local state only.
+
+## Design (MOE)
+- Beside step 11, a trigger script compares the project's merged note drafts
+  with publish-notes' local state file (1525) and prints
+  "N merged notes not yet published: offer /zotero publish-notes" when drafts
+  are ahead; no output otherwise. Proposal only, never run automatically, as
+  for check-staging. No Zotero call, no network.
+
+## Exit criteria
+- [ ] lair offer for unpublished merged notes, with a test (drafts ahead ->
+      one line; in step -> no output; no state file -> the count of all drafts)

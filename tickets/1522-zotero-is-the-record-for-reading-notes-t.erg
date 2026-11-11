@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-11-10T16:11Z HDMX-coding-agent created
+2026-11-11T16:45Z reviewer note decomposed into 1524-1527 (raid af737d); transport ruled local API by the author 2026-11-11
 
 --- body ---
 
@@ -52,6 +53,18 @@ the read key answered 403), so publishing needs no running desktop.
 
 climate-finance-het ticket 3019 (wiki-pull, 61 pages to migrate);
 sen-causal-reading (73 reading pages with 103 anchor links; ticket there).
+
+## Children (decomposed by raid af737d, 2026-11-11)
+- 1524 rule and reading-note skill narrowed: open
+- 1525 zotero publish-notes (local API): open
+- 1526 zotero pull-notes (Blocked-by 1525): open
+- 1527 lair offer (Blocked-by 1525): open
+- climate-finance-het 3019 consumes the verbs (other repository; its wiki-pull
+  moves to the local API per the 2026-11-11 ruling)
+
+Transport ruling (author, 2026-11-11): publish-notes and pull-notes use the
+local API only; the 2026-10-16 "never the Web API" ruling stands. The
+ticket's "Web API with the read-write key" choice is superseded.
 
 ## Exit criteria
 

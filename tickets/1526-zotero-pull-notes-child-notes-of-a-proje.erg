@@ -1,0 +1,29 @@
+%erg 0.1
+Title: zotero pull-notes: child notes of a project back to HTML snapshots
+Created: 2026-11-11
+Author: claude
+Blocked-by: 1525
+
+--- log ---
+2026-11-11T16:45Z claude created
+
+--- body ---
+Parent: 1522
+
+## Context
+Child of tracker 1522; same transport (local API, author ruling 2026-11-11)
+and the same tag key as 1525, so a pull right after a publish reads what was
+published.
+
+## Design (MOE)
+- Verb `pull-notes`: the child notes of a project (by tag `wiki:<project>/*`)
+  -> one HTML snapshot per note plus its metadata (item key, slug, version,
+  date modified) on stdout or into a directory the caller names. The `.qmd`
+  envelope belongs to the consumer (climate-finance-het 3019 wraps it); the
+  harness emits HTML and metadata only.
+- Unavailable is reported as such, never as an empty project.
+
+## Exit criteria
+- [ ] zotero pull-notes verb with tests on the live fixture (round trip with
+      publish-notes; unavailable != empty)
+- [ ] skills/zotero/SKILL.md documents the verb

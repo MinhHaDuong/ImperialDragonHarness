@@ -1,0 +1,41 @@
+%erg 0.1
+Title: zotero publish-notes: merged HTML drafts become child notes over the local API
+Created: 2026-11-11
+Author: claude
+
+--- log ---
+2026-11-11T16:45Z claude created
+
+--- body ---
+Parent: 1522
+
+## Context
+Child of tracker 1522. Transport: pyzotero's local client only (author ruling
+2026-11-11; scripts/zotero.py already sets Zotero 10 as the floor for local
+writes, ~line 512). tests/zotero_live.py:467 already creates a child note
+through the local API on the Xvfb fixture.
+
+## Design (MOE, raid af737d)
+- Verb `publish-notes`: merged HTML drafts -> child notes under each draft's
+  `zotero_item`. Idempotence by a Zotero tag on the note,
+  `wiki:<project>/<slug>`, not by the HTML field table (the editor rewrites it:
+  adds <tbody>, wraps cells in <p>); the table stays for display.
+- Create when no tagged note exists; update in place only a note carrying the
+  tag, and only when its Zotero version equals the version recorded at the last
+  publish (a local state file outside git, under the XDG state dir, keyed by
+  project and slug). A changed version is a refusal reported per note
+  ("edited in Zotero since last publish"), never an overwrite.
+- Zotero unreachable is reported as `unavailable`, never as in sync; exit code
+  distinct from "nothing to publish".
+- `--dry-run` reads only and prints what would be created, updated or refused
+  (ticket 1527 uses the state file, not this).
+- Test fixtures use invented notes only (the harness is public; consumer repos
+  are private).
+
+## Exit criteria
+- [ ] zotero publish-notes verb with tests on the live fixture (no mock):
+      idempotence (second run changes nothing), editor wrapping of the field
+      table does not break matching, unavailable != in sync, a note edited in
+      Zotero is refused, not overwritten
+- [ ] skills/zotero/SKILL.md documents the verb
+- [ ] live tests run by hand with DISPLAY=:0 before landing, result quoted
