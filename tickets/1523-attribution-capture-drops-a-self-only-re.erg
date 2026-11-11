@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Attribution capture drops a self-only review's writer record
+Created: 2026-11-11
+Author: claude
+
+--- log ---
+2026-11-11T11:15Z claude created
+
+--- body ---
+## Context
+Reported by climate-finance-het (raid 4b0d13, 2026-11-11, padme). A unit whose
+gaze answer reads `seats: self-only` carries `"attribution": []`: gaze itself is
+not a seat, so `gaze_close.attribution_lines` writes no `reviewer:` line. The
+writer lines (`step=plan`, `step=execute`) are on the review notes, yet
+`attribution_record.py --capture-unit pr:N --capture ...` prints
+`attribution: not derivable: reviewers`, exits 0 and writes no file:
+`salvage()` returns None for a record with no reviewer
+(`scripts/attribution_record.py`, the `not derivable: reviewers` branch).
+`raid_land.py` printed the same warning for PRs 2117 and 2118. PR 2116, reviewed
+by a panel, captured normally.
+
+The roar capture runbook (`skills/roar/runbooks/capture.md` step on
+`--capture-unit`) promises that a lost fact is one warning and "the rest is
+captured". For self-only reviews nothing is captured, so the public-audience
+attribution record of who wrote the change is lost without notice beyond a warning.
+Evidence: climate-finance-het review note rv-20261111-pr-2117-3792 (request,
+answer self-only with empty attribution, two writer lines, two verdicts).
+
+Decision for the coder (pick one and say why in the commit message):
+- record the gaze orchestrator as a `reviewer:` line when seats are self-only, or
+- accept a record holding writers and no reviewer, with an explicit
+  "no independent reviewer" fact, or
+- keep refusing, and correct the runbook to say so.
+
+## Exit criteria
+- [ ] A self-only unit with writer lines either yields a captured record or the
+      runbook states it does not; the code and the runbook agree
+- [ ] A test with a self-only answer and writer lines fails on current main
+- [ ] Verify-gate seats (`verdict` entries) are considered as possible reviewer
+      evidence, or the choice not to count them is stated
+- [ ] `make check` passes
