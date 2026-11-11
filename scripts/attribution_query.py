@@ -13,8 +13,10 @@ from pathlib import Path
 
 if __package__:
     from .attribution_record import parse_record, runtime_masked
+    from . import review_notes
 else:
     from attribution_record import parse_record, runtime_masked
+    import review_notes
 
 LOG = logging.getLogger(__name__)
 RECORD_NAME = re.compile(r"\d{4}-\d{2}-\d{2}-review-attribution-pr([1-9][0-9]*)(\.md|\.age|\.md\.age)$")
@@ -297,13 +299,55 @@ def render(data):
     return '\n'.join(lines)
 
 
+def missing_attribution(project, until='HEAD'):
+    """Merged units whose latest gaze answer carries no attribution lines (ticket 1523).
+
+    Read-only: it lists, it decides nothing. A unit is merged when the head its latest answer reviewed
+    is an ancestor of `until`; a rebase or squash merge leaves the head out of the count."""
+    project = str(project)
+    reviews = defaultdict(list)
+    for entry in review_notes.all_entries(project):
+        reviews[entry.get('review_id')].append(entry)
+    found = []
+    for review_id, entries in sorted(reviews.items(), key=lambda item: str(item[0])):
+        answers = [e for e in entries if e['kind'] == 'answer']
+        requests = [e for e in entries if e['kind'] == 'request']
+        if not answers or not requests or answers[-1].get('attribution'):
+            continue
+        latest = answers[-1]
+        head = latest.get('head') or requests[-1].get('head') or ''
+        merged = head and subprocess.run(['git', '-C', project, 'merge-base', '--is-ancestor', head, until],
+                                         capture_output=True).returncode == 0
+        if merged:
+            unit = next((r['unit'] for r in reversed(requests) if r.get('unit')), f"branch:{requests[-1].get('branch')}")
+            found.append({'review_id': review_id, 'unit': unit, 'answer': latest['id'],
+                          'result': latest.get('result'), 'seats': latest.get('seats')})
+    return found
+
+
+def render_missing(found):
+    lines = [f'missing-attribution: {len(found)} merged unit(s) whose latest gaze answer carries no attribution']
+    lines += [f"  {f['unit']} · {f['review_id']} · answer {f['answer']} · {f['result']} · seats: {f['seats']}" for f in found]
+    return '\n'.join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('project', nargs='?', type=Path, default=Path.cwd())
     parser.add_argument('--json', action='store_true', help='structured result from the same read-only derivation')
     parser.add_argument('--since', help='explicit git range start for missing-record coverage')
     parser.add_argument('--until', default='HEAD', help='explicit range endpoint (default HEAD); requires --since')
+    parser.add_argument('--missing-attribution', action='store_true',
+                        help='list merged units whose latest gaze answer carries no attribution (read-only; exit 0 on hits)')
     args = parser.parse_args()
+    if args.missing_attribution:
+        try:
+            found = missing_attribution(args.project, args.until)
+        except (OSError, subprocess.CalledProcessError, review_notes.Refusal) as error:
+            LOG.error('attribution-query: %s', error)
+            return 1
+        sys.stdout.write((json.dumps(found, ensure_ascii=False) if args.json else render_missing(found)) + '\n')
+        return 0
     if args.until != 'HEAD' and not args.since:
         parser.error('--until requires --since')
     try:

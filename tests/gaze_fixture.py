@@ -60,24 +60,7 @@ def make_repo(tmp_path, body="Closes nothing"):
     return primary, env
 
 
-NO_DEFAULT_PANEL = "GAZE_FIXTURE_NO_DEFAULT_PANEL"
-
-
 def run(script, args, cwd, env):
-    """Run a script. A gaze_close call finds an unreported self plan item (plan check FAIL) and a session identity unless the test brings
-    its own panel or sets NO_DEFAULT_PANEL: the close refuses an answer with no seat line
-    (ticket 1523), and most close tests are about cleanup, not seats."""
-    if script == CLOSE:
-        env = dict(env)
-        env.setdefault("IDH_SESSION_RUNTIME", "claude-code")
-        env.setdefault("IDH_SESSION_MODEL", "claude-x")
-        if not env.pop(NO_DEFAULT_PANEL, None) and args:
-            key = args[0] if not args[0].startswith("branch:") else "branch-" + args[0][len("branch:"):].split()[0]
-            common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir")
-            d = Path(common).parent / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
-            if d.parent.parent.is_dir() and not (d / "manifest.txt").exists():
-                d.mkdir(parents=True, exist_ok=True)
-                (d / "manifest.txt").write_text("# budget: 10m\nself\tself\tanthropic\tgaze\n")
     return subprocess.run([sys.executable, str(script), *args], cwd=cwd, env=env,
                           capture_output=True, text=True)
 
