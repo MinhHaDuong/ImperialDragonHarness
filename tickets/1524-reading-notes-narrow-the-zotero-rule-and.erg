@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Reading notes: narrow the Zotero rule and switch reading-note to HTML child notes
+Created: 2026-11-11
+Author: claude
+
+--- log ---
+2026-11-11T16:45Z claude created
+
+--- body ---
+Parent: 1522
+
+## Context
+Child of tracker 1522 (author decisions of 2026-11-10 in climate-finance-het,
+journal 2026-11-10-rel-pr-adjudication-roar.md). Reading notes become HTML child
+notes under the work's Zotero item; git holds drafts under review and generated
+snapshots. Transport ruling (author, 2026-11-11, raid af737d): the local API
+only, the 2026-10-16 "never the Web API" ruling stands.
+
+## Scope
+- `rules/zotero.md`: narrow to "Zotero is the record for works and reading
+  notes; repositories hold drafts under review and generated snapshots".
+  Extend its `paths:` globs to the note-draft locations the consumers use
+  (`wiki/works/*.qmd`, `wiki/references/*.qmd`, or the drafts directory the
+  skill names) so the rule loads while a note draft is edited.
+- `skills/reading-note/SKILL.md` §4 and `references/template.md`: filing as an
+  HTML child note under `zotero_item` (exact key, never a filename guess);
+  template in HTML; drafts on a branch, published after merge by
+  `zotero publish-notes` (ticket 1525). Word caps stay per project: the skill
+  says the project sets them; no harness-wide number.
+- `skills/critical-lit-review/SKILL.md:64` (`note_item`) follows the same rule.
+- Existing standalone Documents with an .md attachment are left as they are;
+  the skill says how a re-filed note supersedes one (no automatic migration).
+
+## Exit criteria
+- [ ] rules/zotero.md and the reading-note skill state the narrowed rule
+- [ ] critical-lit-review agrees with it
+- [ ] tests/test_zotero_rule.py and the skills-catalog/drift checks pass
