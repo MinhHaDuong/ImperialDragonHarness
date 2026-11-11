@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Lair step 11 trigger: are merged reading-note drafts ahead of the publish record?
+
+Usage: zotero-publish-trigger [project-root [project]]
+       (defaults: current directory; its base name)
+Prints one proposal line when drafts (*.html under wiki/works, wiki/references,
+reading-notes; rules/zotero.md) are unpublished or changed since their last
+publish; nothing otherwise. Reads local files only: the drafts and
+$XDG_STATE_HOME/idh/zotero/publish-notes.json (written by `zotero.py
+publish-notes`, keyed <project>/<slug>, each with the sha256 of the draft's
+body). No Zotero call, no network; it never publishes (ticket 1527).
+In a git repository only drafts tracked at HEAD (merged) count.
+
+The frontmatter split and the body hash restate the zotero helper's
+split_draft and plan_note (in the scripts directory) on purpose, to avoid importing it; keep them equal.
+"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+DIRS = (("wiki/works", False), ("wiki/references", False), ("reading-notes", True))
+
+
+def body_of(text: str) -> str:
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].rstrip() != "---":
+        return text
+    for end in range(1, len(lines)):
+        if lines[end].rstrip() == "---":
+            return "".join(lines[end + 1:])
+    return text
+
+
+def candidates(root: Path) -> list[Path]:
+    tracked = subprocess.run(["git", "-C", str(root), "ls-tree", "-r", "--name-only", "HEAD"],
+                             capture_output=True, text=True)
+    top = subprocess.run(["git", "-C", str(root), "rev-parse", "--show-prefix"],
+                         capture_output=True, text=True)
+    if tracked.returncode == 0 and top.returncode == 0 and top.stdout.strip() == "":
+        names = [Path(n) for n in tracked.stdout.splitlines() if n.endswith(".html")]
+    else:
+        names = [p.relative_to(root) for p in root.rglob("*.html")]
+    found = []
+    for rel in names:
+        for base, deep in DIRS:
+            b = Path(base)
+            if rel.parent == b or (deep and b in rel.parents):
+                if (root / rel).is_file():
+                    found.append(root / rel)
+                break
+    return found
+
+
+def main() -> None:
+    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    project = sys.argv[2] if len(sys.argv) > 2 else root.name
+    base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+    try:
+        notes = json.loads((Path(base) / "idh" / "zotero" / "publish-notes.json")
+                           .read_text(encoding="utf-8"))["notes"]
+        if not isinstance(notes, dict):
+            notes = {}
+    except (OSError, ValueError, KeyError, TypeError):
+        notes = {}
+    ahead = 0
+    for path in candidates(root):
+        try:
+            digest = hashlib.sha256(body_of(path.read_text(encoding="utf-8"))
+                                    .encode("utf-8")).hexdigest()
+        except (OSError, UnicodeDecodeError):
+            continue
+        record = notes.get(f"{project}/{path.stem}")
+        if not isinstance(record, dict) or record.get("sha256") != digest:
+            ahead += 1
+    if ahead:
+        noun = "note" if ahead == 1 else "notes"
+        print(f"{ahead} merged {noun} not yet published: offer `/zotero publish-notes` "
+              "(proposal only; accept or skip)")
+
+
+main()

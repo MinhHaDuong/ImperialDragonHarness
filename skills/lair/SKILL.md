@@ -78,6 +78,11 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     so git cannot see it). If it prints a line, include it in the final summary
     as an offer of `/zotero check-staging`; the author accepts or not. No output, no
     mention. Proposed, never run automatically; it does not belong in molt.
+    Likewise run `"$IDH_ROOT/skills/lair/zotero-publish-trigger"` (local files
+    only: merged reading-note drafts against `publish-notes`' state file, no
+    Zotero call, no network). A line means drafts are unpublished or changed
+    since their last publish: include it as an offer of `/zotero publish-notes`.
+    No output, no mention; never run automatically.
 12. **Suggest a smelt in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/smelts/`. An unmerged report does not mark experiences
