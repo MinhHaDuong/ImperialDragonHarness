@@ -207,7 +207,7 @@ or one that did not run, and for any other line in the file. Line fields:
 
 On every exit path run `references/cleanup.md` through the one closing call
 (`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --repo <repo> --token <clock> --attribution-file <file> --comment-file <file> --session-runtime <runtime> --session-model <model>`;
-`<repo>` is the `repo=` line setup printed, so a moved cwd never picks the project; the attribution file is required, empty when no seat ran; the session flags give a `self` item its identity; a block with no seat line, or a `self` seat with no observed model, exits 2 and records nothing: rerun with `--session-model <verbatim id>`, or `--masked-evidence <path:line>` where the runtime masks its model):
+`<repo>` is the `repo=` line setup printed, so a moved cwd never picks the project; the attribution file is required, empty when no seat ran; the session flags give a `self` item its identity; a manifest that builds no seat line, or a `self` seat with no observed model, exits 2 and records nothing (no manifest, or a script-only plan, records with a warning): rerun with `--session-model <verbatim id>`, or `--masked-evidence <path:line>` where the runtime masks its model):
 it builds the attribution lines first, then removes this run's review scratch and the review worktree, checks the
 containment postcondition (cwd, branch, foreign files)
 and records the answer, then posts the pointer. On a blocked cleanup (exit 1)

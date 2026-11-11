@@ -34,8 +34,8 @@ The `seat:` lines of the result and the `reviewer:` lines of the attribution are
 launcher-set `worker:` headers, read before cleanup removes the panel and carried into a
 blocked-cleanup ESCALATE answer; a typed `seat:` line, or a comment without the placeholder, exits 2
 before anything is removed or posted. `--session-runtime` and `--session-model` (env
-`IDH_SESSION_RUNTIME`, `IDH_SESSION_MODEL`) give the identity of a `self` item. An empty seat block, or a `self` seat whose model is not
-observed (no `--session-model`, no `--masked-evidence`), exits 2 before anything is removed or recorded (ticket 1523). The attribution file holds
+`IDH_SESSION_RUNTIME`, `IDH_SESSION_MODEL`) give the identity of a `self` item. A manifest that builds no seat line (seat_clock failed, cell-short rows), or a `self` seat whose model is not
+observed (no `--session-model`, no `--masked-evidence`), exits 2 before anything is removed or recorded (ticket 1523); no manifest at all (an early ESCALATE) or a script-only plan records with a warning. The attribution file holds
 only `finding: <seat> · verifiable|consider · <path:line> · adopted: yes|no` lines; the script
 writes each seat's `reviewer:` line (through `attribution_record.seat_lines`) and puts the seat's
 findings beneath it. A finding naming a seat absent from the plan, or a seat that did not run, or any other
@@ -208,14 +208,15 @@ def script_only(manifest):
 def seat_problem(seats, tried, masked_evidence=""):
     """The reason an answer cannot carry attribution, with the repair, or None (ticket 1523).
 
-    An empty seat block, unless the plan is script-only, leaves the answer with no `seat:` line and no `reviewer:` line; a `self`
+    An empty seat block, unless no plan was written or it is script-only, leaves the answer with no `seat:` line and no `reviewer:` line; a `self`
     seat whose model is not observed loses its `reviewer:` line. Both exit 2 before anything is
     removed or recorded, so the caller repairs the call. Unobserved models of other seats stay
     warnings (`attribution: seat line FAILED`)."""
     if not seats:
         panel, code, err = tried
-        if code == 0 and script_only(Path(panel) / "manifest.txt"):
-            return None  # a readable plan of script checks has no reviewer seat: main() warns
+        manifest = Path(panel) / "manifest.txt"
+        if not manifest.exists() or (code == 0 and script_only(manifest)):
+            return None  # no plan was ever written (an early ESCALATE), or script checks only: main() warns
         return (f"no seat line could be built, so the answer would carry no attribution. Likely causes: no "
                 f"manifest in the panel, a plan item with fewer than three cells, a different <pr> or --repo "
                 f"than the one gaze_setup printed, or the panel already removed. Panel tried: {panel} "
@@ -439,7 +440,8 @@ def main():
     seats = seat_block(primary, a.pr, a.session_runtime, a.session_model, tried)  # before cleanup removes the panel
     problem = seat_problem(seats, tried, a.masked_evidence)
     if problem is None and not seats:
-        print("attribution: no reviewer seat (script-only plan)")
+        has_plan = (Path(tried[0]) / "manifest.txt").exists()
+        print("attribution: no reviewer seat (" + ("script-only plan" if has_plan else "no plan was written") + ")")
     if problem:  # ticket 1523: nothing removed, recorded or posted; the caller repairs and reruns
         print(f"gaze_close: {problem}", file=sys.stderr)
         return 2

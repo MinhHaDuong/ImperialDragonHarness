@@ -311,15 +311,29 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
     assert "{{" not in answer_text(primary, f)
 
 
-def test_missing_panel_is_refused_and_records_nothing(tmp_path):
-    """Ticket 1523 (climate-finance-het PR 2117): an empty `{{seats}}` expansion left an answer
-    with no seat line and `"attribution": []`. The close answers 2, names the panel it tried and
-    the causes, removes nothing and writes no answer entry."""
+def test_missing_panel_is_a_failed_plan_check(tmp_path):
+    """No manifest means no plan was ever written (an early ESCALATE: gaze_setup exited before the plan).
+    The close still runs on every exit path: it records the answer with plan check FAIL, warns that no
+    attribution was possible, and cleans up (ticket 1523 fix round; main's behavior)."""
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
     comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)],
             primary, dict(env, GAZE_FIXTURE_NO_DEFAULT_PANEL="1"))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert plan_line(primary, f) == ["plan check: FAIL — manifest unreadable"]
+    assert "attribution: no reviewer seat (no plan was written)" in r.stdout
+    assert not (primary / ".claude" / "worktrees" / "review-7").exists()
+
+
+def test_a_manifest_that_builds_no_seat_is_refused_and_records_nothing(tmp_path):
+    """A plan that exists but whose seat block cannot be built (cell-short rows) is a lost attribution:
+    the close answers 2 naming the panel and the causes, removes nothing, writes no answer entry."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nbroken\tclaude-x\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 2, r.stdout + r.stderr
     assert "no seat line could be built" in r.stderr and "review-7/.panel/7" in r.stderr
     assert "seat_clock identities exit" in r.stderr
