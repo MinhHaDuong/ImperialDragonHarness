@@ -73,6 +73,7 @@ VERBS = {
     "suggest-attachments",
     "create-items",
     "suggest-edits",
+    "publish-notes",
 }
 
 # The retired names: no alias may answer to them (ticket 1116).
