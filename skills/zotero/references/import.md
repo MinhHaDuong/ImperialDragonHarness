@@ -112,6 +112,11 @@ Always remind the user that Zotero's *Duplicate Items* view (left panel) is the 
 
 ## Markdown research notes
 
+A reading note on one work is not filed this way: it is drafted in HTML,
+merged, and published as a child note of the work's item by `publish-notes`
+(`references/publish-notes.md`). This section covers the other Markdown
+research material, such as a paragraph note spanning several works.
+
 Run these steps **sequential-blocking**: the note needs the source item keys,
 and the storage receipt needs the completed upload. Archive sources at intake
 and the finished note when produced; do not wait for manuscript submission.
@@ -131,7 +136,7 @@ not inherit the source work's DOI as its own identifier.
    the helper uploads readable bytes and infers MIME from the filename.
 
    ```json
-   [{"type":"document","title":"Reading note: Exact source title",
+   [{"type":"document","title":"Research note: Exact topic",
      "authors":["Actual note author"],"year":"2026-10-23",
      "abstract":"work_key: doi:10.example/source; source_items: user:ABCD1234",
      "pdf":"/absolute/project/docs/AuthorYear_Title.md","attach_pdf":true}]
@@ -144,7 +149,7 @@ not inherit the source work's DOI as its own identifier.
 
    ```bash
    "$IDH_ROOT/scripts/zotero.py" find-work --type document \
-     --title "Reading note: Exact source title" \
+     --title "Research note: Exact topic" \
      --pdf /absolute/project/docs/AuthorYear_Title.md --library user
    "$IDH_ROOT/scripts/zotero.py" create-items \
      --entries-file /absolute/project/docs/note-entry.json --library user

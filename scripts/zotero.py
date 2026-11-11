@@ -11,16 +11,18 @@
 """Backend helper scripts/zotero.py for the zotero skill.
 
 Subcommands: extract-metadata, find-work, report-duplicates, check-staging,
-suggest-attachments, create-items, suggest-edits.
+suggest-attachments, create-items, suggest-edits, publish-notes.
 
 `extract-metadata` reads a PDF and never needs Zotero; every other
 subcommand talks to the running Zotero.
 
-Local-only and stateless, on top of pyzotero's local client. Every library
+Local-only, on top of pyzotero's local client. Every library
 read goes through the running desktop client's local API (127.0.0.1:23119,
 no key), live, on each call; zotero.sqlite is never opened, and nothing is
 cached, indexed or logged to disk between runs (the md5 index of
-check-staging and suggest-attachments lives in memory for one run). Writes go through the same
+check-staging and suggest-attachments lives in memory for one run), except
+the note versions `publish-notes` wrote, recorded in a state file outside
+git so that a note edited in Zotero is never overwritten. Writes go through the same
 local API with a local API key the user grants once in Zotero (kept in
 key_file(), mode 600, never printed). `create-items` creates new items with
 their PDFs; `suggest-edits`, `suggest-attachments` and `check-staging
@@ -56,6 +58,7 @@ import time
 import unicodedata
 import urllib.parse
 import urllib.request
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -1437,6 +1440,314 @@ def enrich_status(results: list[dict[str, Any]]) -> int:
     ok = {"suggested", "nothing to change", "written"}
     return int(any(row.get("refused") or row.get("status") not in ok
                    for row in results))
+
+
+# --- publish-notes: merged HTML drafts become child notes --------------------
+# A reading-note draft is an HTML file reviewed in a project's repository:
+# a YAML frontmatter block, which stays in the repository, then the HTML
+# body, which becomes the note. Once merged, publish-notes files the body
+# as a child note under the work the frontmatter names (`zotero_item`), or
+# failing that the body's field table (the row whose first cell reads
+# "zotero_item"). The note
+# is found again by a Zotero tag, wiki:<project>/<slug>, the slug being the
+# draft's file name without extension: never by the note's HTML, which
+# Zotero's editor rewrites (a <tbody>, each cell wrapped in a <p>). A note
+# is updated in place only while its version is the one this machine
+# recorded when it last published it, in a state file outside git; a note
+# edited in Zotero since then is refused, never overwritten.
+
+NOTE_TAG_PREFIX = "wiki:"
+# Statuses of a publish-notes row that are not a failure.
+PUBLISH_OK = {"created", "updated", "in sync", "edited in zotero",
+              "would create", "would update"}
+
+
+class _TableRows(HTMLParser):
+    """Every table row's cell texts, whatever markup wraps them."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.rows: list[list[str]] = []
+        self._row: list[str] | None = None
+        self._cell: list[str] | None = None
+
+    def handle_starttag(self, tag: str, attrs: Any) -> None:
+        if tag == "tr":
+            self._row = []
+        elif tag in ("td", "th") and self._row is not None:
+            self._cell = []
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("td", "th") and self._row is not None and self._cell is not None:
+            self._row.append(" ".join("".join(self._cell).split()))
+            self._cell = None
+        elif tag == "tr" and self._row is not None:
+            self.rows.append(self._row)
+            self._row = None
+
+    def handle_data(self, data: str) -> None:
+        if self._cell is not None:
+            self._cell.append(data)
+
+
+def draft_field(text: str, name: str) -> str | None:
+    """The value of field `name` in a draft's field table: the second cell
+    of the first row whose first cell reads `name`; None when absent."""
+    parser = _TableRows()
+    parser.feed(text)
+    parser.close()
+    for row in parser.rows:
+        if len(row) >= 2 and row[0] == name and row[1]:
+            return row[1]
+    return None
+
+
+def split_draft(text: str) -> tuple[dict[str, str], str]:
+    """(frontmatter scalars, HTML body) of a draft. The reading-note
+    template opens with a YAML block between `---` lines; only its top-level
+    `key: value` scalars are read (no YAML library), quotes and a trailing
+    `# comment` dropped. A draft without one is all body."""
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].rstrip() != "---":
+        return {}, text
+    for end in range(1, len(lines)):
+        if lines[end].rstrip() == "---":
+            break
+    else:
+        return {}, text
+    meta: dict[str, str] = {}
+    for line in lines[1:end]:
+        match = re.match(r'([A-Za-z_][\w-]*):\s*("[^"]*"|\'[^\']*\'|[^#]*)', line)
+        if match:
+            meta[match.group(1)] = match.group(2).strip().strip("\"'")
+    return meta, "".join(lines[end + 1:])
+
+
+def publish_state_file(given: str | None = None) -> Path:
+    """Where publish-notes records what it published: --state-file, else
+    $XDG_STATE_HOME/idh/zotero/publish-notes.json. Outside any repository."""
+    if given:
+        return Path(given)
+    base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
+    return Path(base) / "idh" / "zotero" / "publish-notes.json"
+
+
+def read_publish_state(path: Path) -> dict[str, Any]:
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"notes": {}}
+    if not isinstance(state, dict) or not isinstance(state.get("notes"), dict):
+        raise ValueError(f"{path}: not a publish-notes state file")
+    return state
+
+
+def write_publish_state(path: Path, state: dict[str, Any]) -> None:
+    """Replace the state file atomically, so a crash keeps the old record."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(state, stream, indent=2, ensure_ascii=False)
+            stream.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
+
+
+def note_tags(note: dict[str, Any]) -> set[str]:
+    return {t.get("tag") for t in note.get("data", {}).get("tags", [])}
+
+
+def plan_note(z: zotero.Zotero, project: str, draft: Path,
+              state: dict[str, Any]) -> dict[str, Any]:
+    """What publishing one draft takes, read only: a row whose `status` is
+    "would create", "would update", "in sync", "edited in zotero" or
+    "refused", with what the write needs under private keys."""
+    slug = draft.stem
+    tag = f"{NOTE_TAG_PREFIX}{project}/{slug}"
+    row: dict[str, Any] = {"draft": str(draft), "slug": slug, "tag": tag}
+    try:
+        text = draft.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return {**row, "status": "refused", "reason": f"cannot read the draft: {exc}"}
+    if any(c.isspace() for c in slug):
+        return {**row, "status": "refused",
+                "reason": "the draft's file name holds whitespace; a tag key cannot"}
+    meta, text = split_draft(text)
+    parent = meta.get("zotero_item") or draft_field(text, "zotero_item")
+    row["item"] = parent
+    if not parent:
+        return {**row, "status": "refused",
+                "reason": "no zotero_item in the draft's frontmatter or "
+                          "field table"}
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    try:
+        with local_api():
+            children = z.everything(z.children(parent, limit=PAGE))
+    except ze.ResourceNotFoundError:
+        return {**row, "status": "refused",
+                "reason": f"no item {parent} in the library"}
+    tagged = [c for c in children if c.get("data", {}).get("itemType") == "note"
+              and tag in note_tags(c)]
+    row.update(_text=text, _digest=digest)
+    if not tagged:
+        return {**row, "status": "would create"}
+    if len(tagged) > 1:
+        return {**row, "status": "refused",
+                "note": [c["key"] for c in tagged],
+                "reason": f"{len(tagged)} notes under {parent} carry {tag}"}
+    note = tagged[0]
+    row.update(note=note["key"], _note=note)
+    record = state["notes"].get(f"{project}/{slug}")
+    # The record must be this note's: same key, library and parent item.
+    if not record or (record.get("note"), str(record.get("library")),
+                      record.get("item")) != (note["key"], str(z.library_id),
+                                              parent):
+        if note["data"].get("note") == text:
+            return {**row, "status": "in sync", "_adopt": True}
+        return {**row, "status": "refused",
+                "reason": "the tagged note has no publish record on this "
+                          "machine (published elsewhere, or the state file "
+                          "was lost); compare it with the draft in Zotero"}
+    if note["version"] != record.get("version"):
+        if digest == record.get("sha256"):
+            return {**row, "status": "edited in zotero"}
+        return {**row, "status": "refused",
+                "reason": "edited in Zotero since last publish (version "
+                          f"{note['version']}, published as "
+                          f"{record.get('version')}); reconcile the draft "
+                          "with Zotero's note by hand"}
+    if digest == record.get("sha256"):
+        return {**row, "status": "in sync"}
+    return {**row, "status": "would update"}
+
+
+def apply_note(z: zotero.Zotero, project: str, row: dict[str, Any],
+               state: dict[str, Any], state_path: Path) -> None:
+    """Carry out a planned row; record the note's new version at once."""
+    if row["status"] == "would create":
+        payload = {"itemType": "note", "parentItem": row["item"],
+                   "note": row["_text"], "tags": [{"tag": row["tag"]}],
+                   "collections": [], "relations": {}}
+        result = write(z, lambda: z.create_items([payload]))
+        if not result.get("successful"):
+            failed = next(iter((result.get("failed") or {}).values()), {})
+            raise LocalAPIError(f"Zotero did not create the note: "
+                                f"{failed.get('message', result)}")
+        row["note"] = next(iter(result["successful"].values()))["key"]
+        row["status"] = "created"
+    elif row["status"] == "would update":
+        note = row["_note"]
+        write(z, lambda: z.update_item({**note["data"], "note": row["_text"],
+                                        "version": note["version"]}))
+        row["status"] = "updated"
+    elif not row.get("_adopt"):
+        return
+    with local_api():
+        version = z.item(row["note"])["version"]
+    state["notes"][f"{project}/{row['slug']}"] = {
+        "library": z.library_id, "item": row["item"], "note": row["note"],
+        "version": version, "sha256": row["_digest"],
+        "published": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    write_publish_state(state_path, state)
+
+
+def public_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {k: v for k, v in row.items() if not k.startswith("_")}
+
+
+def cmd_publish_notes(args: argparse.Namespace) -> int:
+    project = args.project
+    if not project or any(c.isspace() or c == "/" for c in project):
+        emit_json({"error": f"--project {project!r}: one word, no '/'"})
+        return 1
+    state_path = publish_state_file(getattr(args, "state_file", None))
+    drafts = [Path(d) for d in args.drafts]
+    try:
+        state = read_publish_state(state_path)
+    except (OSError, ValueError) as exc:
+        emit_json({"error": str(exc)})
+        return 1
+    payload: dict[str, Any] = {"project": project, "dry_run": args.dry_run,
+                               "state_file": str(state_path)}
+    try:
+        ensure_zotero()
+        z = local_library(getattr(args, "library", USER_LIBRARY))
+    except ZoteroUnavailable as exc:
+        print(f"publish-notes: {exc}", file=sys.stderr)
+        emit_json({**payload, **unavailable_payload(exc)})
+        return EXIT_UNAVAILABLE
+    except ZoteroSlow as exc:
+        print(f"publish-notes: {exc}", file=sys.stderr)
+        emit_json({**payload, **slow_payload(exc)})
+        return EXIT_SLOW
+    except (LocalAPIError, ValueError) as exc:
+        emit_json({**payload, "error": str(exc)})
+        return 1
+    payload["zotero"] = zotero_url()
+    rows: list[dict[str, Any]] = []
+    status = 0
+    if not args.dry_run:
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+    lock = (contextlib.nullcontext() if args.dry_run
+            else directory_locks([state_path.parent]))
+    with contextlib.ExitStack() as held:
+        try:
+            held.enter_context(lock)
+            # Read again under the lock: another run may have just written.
+            if not args.dry_run:
+                state = read_publish_state(state_path)
+        except (OSError, ValueError) as exc:
+            emit_json({**payload, "error": str(exc)})
+            return 1
+        for n, draft in enumerate(drafts):
+            row: dict[str, Any] = {"draft": str(draft), "slug": draft.stem}
+            try:
+                row = plan_note(z, project, draft, state)
+                if not args.dry_run:
+                    apply_note(z, project, row, state, state_path)
+                rows.append(row)
+            except (ZoteroUnavailable, ZoteroSlow) as exc:
+                code = (EXIT_UNAVAILABLE if isinstance(exc, ZoteroUnavailable)
+                        else EXIT_SLOW)
+                in_flight = (not args.dry_run and row.get("status")
+                             in ("would create", "would update"))
+                if not rows and not in_flight:
+                    # Nothing written: the whole run is a no-op.
+                    print(f"publish-notes: {exc}", file=sys.stderr)
+                    emit_json({**payload, **(unavailable_payload(exc)
+                               if code == EXIT_UNAVAILABLE
+                               else slow_payload(exc))})
+                    return code
+                if in_flight:
+                    row.update(status="unknown",
+                               reason=f"write outcome unknown: {exc}")
+                else:
+                    row.update(status="not attempted", reason=str(exc))
+                rows.append(row)
+                rows += [{"draft": str(d), "slug": d.stem,
+                          "status": "not attempted",
+                          "reason": "not attempted after Zotero stopped"}
+                         for d in drafts[n + 1:]]
+                payload["zotero"] = ("unavailable" if code == EXIT_UNAVAILABLE
+                                     else "slow")
+                status = code
+                break
+            except (LocalAPIError, KeyNotGranted, OSError) as exc:
+                row.update(status="not written", reason=str(exc))
+                rows.append(row)
+                if isinstance(exc, KeyNotGranted):
+                    rows += [{"draft": str(d), "slug": d.stem,
+                              "status": "not attempted", "reason": KEY_NOT_ATTEMPTED}
+                             for d in drafts[n + 1:]]
+                    break
+    if not status and any(r["status"] not in PUBLISH_OK for r in rows):
+        status = 1
+    emit_json({**payload, "results": [public_row(r) for r in rows]})
+    return status
 
 
 # --- CLI -------------------------------------------------------------------
@@ -3565,6 +3876,28 @@ def main() -> int:
     add_edit_arg(pe, "write the suggested fields (default: report)")
     add_library_args(pe, scope)
     pe.set_defaults(func=cmd_suggest_edits)
+
+    pn = sub.add_parser("publish-notes",
+                        help="file merged HTML note drafts as child notes "
+                             "under the item each draft's field table names "
+                             "(zotero_item), through the local API; found "
+                             "again by the tag wiki:<project>/<slug>")
+    pn.add_argument("drafts", nargs="+", metavar="DRAFT.html",
+                    help="merged drafts; the file name without extension "
+                         "is the slug")
+    pn.add_argument("--project", required=True,
+                    help="the project the notes belong to, the tag's first "
+                         "part (one word, no '/')")
+    pn.add_argument("--dry-run", action="store_true",
+                    help="read only: print what would be created, updated "
+                         "or refused")
+    pn.add_argument("--state-file",
+                    help="where the published versions are recorded "
+                         "(default: $XDG_STATE_HOME/idh/zotero/"
+                         "publish-notes.json)")
+    pn.add_argument("--library", default=USER_LIBRARY,
+                    help="'user' (default) or a numeric groupID")
+    pn.set_defaults(func=cmd_publish_notes)
 
     args = p.parse_args()
     if args.cmd == "suggest-edits" and args.item_key and not args.expect_title:
