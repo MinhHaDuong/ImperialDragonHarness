@@ -1,0 +1,14 @@
+merge-gate-record: v1
+result: pass
+time: 2026-11-11T11:48:45Z
+actor: runtime=not-stated · model=not-stated · effort=not-stated · user=haduong · git-name=reviewer
+host: padme
+revision: candidate=39152172dec8516d4b43b98e11347b11a4596f9c base=be0e56e9e79c62f0ee64f7f1c3a5a798c7b74526 head=c41b8e191913a6625260dd042fc016bb83bbbd75
+command: merge-gate run --base origin/main --head HEAD
+scope: 1045-decision-3/before-merge: validate-tickets agnostic-guard pipefail-guard skills-drift lint
+versions: git git version 2.43.0 · python Python 3.11.15 · bash GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu) · grep grep (GNU grep) 3.11 · awk mawk 1.3.4 20240123 · make GNU Make 4.3 · uv uv 0.12.7 (x86_64-unknown-linux-gnu) · age v1.3.2 · erg-blob c03ff06de7dbb289813a312514129b89b3e1d7d4
+check: validate-tickets pass 0.3s :: tickets/erg check tickets/
+check: agnostic-guard pass 0.2s :: bash scripts/check-agnostic.sh
+check: pipefail-guard pass 0.0s :: bash scripts/check-pipefail.sh
+check: skills-drift pass 0.9s :: make check-skills-drift
+check: lint pass 19.0s :: make lint
