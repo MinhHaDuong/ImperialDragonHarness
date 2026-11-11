@@ -1586,7 +1586,7 @@ def plan_note(z: zotero.Zotero, project: str, draft: Path,
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     try:
         with local_api():
-            children = z.children(parent)
+            children = z.everything(z.children(parent, limit=PAGE))
     except ze.ResourceNotFoundError:
         return {**row, "status": "refused",
                 "reason": f"no item {parent} in the library"}
@@ -1602,7 +1602,10 @@ def plan_note(z: zotero.Zotero, project: str, draft: Path,
     note = tagged[0]
     row.update(note=note["key"], _note=note)
     record = state["notes"].get(f"{project}/{slug}")
-    if not record or record.get("note") != note["key"]:
+    # The record must be this note's: same key, library and parent item.
+    if not record or (record.get("note"), str(record.get("library")),
+                      record.get("item")) != (note["key"], str(z.library_id),
+                                              parent):
         if note["data"].get("note") == text:
             return {**row, "status": "in sync", "_adopt": True}
         return {**row, "status": "refused",

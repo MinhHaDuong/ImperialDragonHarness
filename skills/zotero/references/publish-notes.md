@@ -39,7 +39,7 @@ the editor rewrites the HTML on its first save.
 | the tagged note, at the version recorded | changed | `updated` | the note's HTML, in place |
 | the tagged note, at another version | unchanged | `edited in zotero` | none: the author's edit stands |
 | the tagged note, at another version | changed | `refused` | none: "edited in Zotero since last publish" |
-| a tagged note with no record on this machine | — | `in sync` if its HTML equals the draft's body (recorded), else `refused` | none |
+| a tagged note with no record on this machine naming its key, library and parent item | — | `in sync` if its HTML equals the draft's body (recorded), else `refused` | none |
 | several tagged notes | — | `refused` | none |
 
 A refused note is reconciled by hand: carry Zotero's edits into the draft, or

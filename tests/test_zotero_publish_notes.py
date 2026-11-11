@@ -290,3 +290,47 @@ def test_a_frontmatter_draft_publishes_its_body_only(use_live, tmp_path, capsys)
                                                'status: "author revised"'))
     status, out = publish(capsys, project, draft, state_file=state)
     assert out["results"][0]["status"] == "in sync", out
+
+
+@pytest.mark.integration
+def test_a_record_for_another_item_does_not_license_an_update(use_live, tmp_path,
+                                                              capsys):
+    """The publish record must name this note's library and parent item as
+    well as its key; a record for another item is no record here."""
+    item = use_live.save(unique_title())
+    project, slug = unique("proj").replace(" ", "-"), "note-moved"
+    state = tmp_path / "state.json"
+    draft = write_draft(tmp_path, slug, item, "Invented text, as published.")
+    assert publish(capsys, project, draft, state_file=state)[0] == 0
+    recorded = json.loads(state.read_text())
+    recorded["notes"][f"{project}/{slug}"]["item"] = "OTHER234"
+    state.write_text(json.dumps(recorded))
+
+    write_draft(tmp_path, slug, item, "Invented text, a later draft.")
+    status, out = publish(capsys, project, draft, state_file=state)
+    assert status == 1, out
+    assert out["results"][0]["status"] == "refused"
+    (kept,) = tagged_notes(use_live, item, f"wiki:{project}/{slug}")
+    assert "as published" in kept["data"]["note"]
+
+
+@pytest.mark.integration
+def test_every_child_note_is_read_past_the_first_page(use_live, tmp_path, capsys):
+    """An item with more children than one page: every tagged note is seen
+    (here 105 carry the tag, so the refusal must list all 105)."""
+    project, slug = unique("proj").replace(" ", "-"), "note-many"
+    tag = f"wiki:{project}/{slug}"
+    item = use_live.save(unique_title())
+    z = use_live.client()
+    for start in range(0, 105, 50):
+        batch = [{"itemType": "note", "parentItem": item,
+                  "note": f"<p>Invented note {n}.</p>", "tags": [{"tag": tag}]}
+                 for n in range(start, min(start + 50, 105))]
+        assert len(z.create_items(batch)["successful"]) == len(batch)
+    draft = write_draft(tmp_path, slug, item, "Invented text.")
+    status, out = publish(capsys, project, draft,
+                          state_file=tmp_path / "state.json")
+    assert status == 1, out
+    (row,) = out["results"]
+    assert row["status"] == "refused"
+    assert len(row["note"]) == 105
