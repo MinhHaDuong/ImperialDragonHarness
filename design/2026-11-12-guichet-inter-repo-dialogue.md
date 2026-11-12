@@ -30,6 +30,13 @@ channel, always. Three things hurt:
   `rules/guards.md` carves out tickets as the one exception; the exception is the
   part of the protocol most likely to be wrong.
 
+**Design case [author, 2026-11-12].** Projects find bugs in the services
+they consume and must report them: the harness (`~/.agents`), git-erg ticket
+tooling, and padme host services (repository `padme`). Those three are the
+receivers; every other project is an asker. Two observed cases per receiver
+are in § 2, Observed cases. Communication between sessions inside one
+repository is out of scope.
+
 The author's direction **[author]**: talk first; the *receiving* repository
 records, triages and answers with a new ticket, an amended ticket, or pushback.
 A dropped ticket stays as the fallback.
@@ -37,6 +44,29 @@ A dropped ticket stays as the fallback.
 ## 2. Situation
 
 Read from `origin/main` at `829d7a582`.
+
+**Observed cases.** A history sweep on 2026-11-12 (research subagent,
+Claude pinned `sonnet`, read-only over the three receivers' ticket stores,
+git logs and the askers' journals; one quoted line per receiver checked by
+the drafter) found these, two per receiver. Each row is what happened, not
+a cause.
+
+| # | Asker → receiver | Observed | How it travelled | What the travel cost |
+|---|---|---|---|---|
+| H1 | climate-finance-het → harness, 2026-11-10/11 | reading-note filing contradicted the author's new Zotero-first decision | harness ticket 1522 written with the asker's framing (Web API, read-write key); cfh 3019 its child | the asker's premise ran against the 2026-10-16 "never the Web API" ruling; it survived about a day in two stores until the author ruled the local API and both were rewritten (cfh 3019: "Web-API and project-script choices superseded") |
+| H2 | climate-finance-het → harness, 2026-11-12 | `publish-notes` leaves parent items out of the project's Zotero collection | harness 1541, "relayed by a climate-finance-het session", observation only, design left to the executor | none visible: a well-formed report, after the asker had worked around it with a one-off script for 55 parents |
+| G1 | JETP-observer → git-erg, 2026-11-09 | managed pre-commit printed ~40 KB of warnings per ticket commit | git-erg 0313, `Author: Claude (JETP-observer session)`, filed in the receiver's store | fixed in 32 min (PR #405), but the fix needed every adopter to reinstall its hooks, which the reporter could not know: a clone sweep followed |
+| G2 | harness rollout (padme, JETP-observer, chemin-de-voix) → git-erg, 2026-11-09 | a hook rule refused `tickets/erg` on branches | git-erg 0311; seen earlier in chemin-de-voix (0219) and not fixed then | adopters were told `--no-verify`, reversed 6 min later when the rule was dropped; a stale hook block stayed in some clones |
+| P1 | arena → padme, 2026-11-01 | a profile note called 256K context "beyond native 128K", which is false | padme 0086, "Reported from an arena session" | closed in 22 min: the report named the missing check (the model card) and why it mattered (a planned long-context arm) |
+| P2 | arena → padme, 2026-10-29/30 | arena asked for a Nemotron profile for judge screening | padme 0073/0074, "the arena asks, padme owns the engines" | two corrections (profile name, then an engine pin padme's `start` refused), re-pointed twice, abandoned when the pilot failed; arena 1122 credits a separate session's padme work, not the request |
+
+What the cases show, for § 5: reports that stated an observation and its
+evidence (H2, P1) travelled cheaply; reports that carried the asker's
+diagnosis or design (H1, P2) needed corrections the receiver could have
+given at intake. Fixes whose consequences fall back on askers (G1's hook
+reinstall, G2's workaround) had no return path except a later log line. The
+sweep did not find the source of 1341's "two corrections" line; P2 is the
+nearest match, unconfirmed.
 
 **Rule.** `rules/workflow.md` § Cross-project work (from 1341, merged in PR
 #1970, 2026-10-29): (1) ticket there, always; (2) tell a live session when
