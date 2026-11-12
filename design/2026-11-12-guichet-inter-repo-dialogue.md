@@ -332,7 +332,8 @@ cases and a hand run. The trial
 triage brief blind on 27 real cross-project reports to the three receivers:
 
 - 19 of 25 judgeable cases: no change. Well-formed reports, author-driven
-  decisions and rollouts; the first owner action came within about an hour.
+  decisions and rollouts; the median first owner action came within about
+  an hour (G4 still unread, the case addition 1 is meant to catch).
 - 3 small or partial gains (G2, H3, K-H1). G2 and H3 were also found by
   the first owner read within 26 minutes to an hour; in K-H1, the one case with a
   large possible saving, the triager missed the recorded ruling.
@@ -535,7 +536,7 @@ cases and a hand run before approving C1. Method, cases and judgment:
 `design/research/2026-11-12-guichet-triage-trial.md` (21 new cases found by
 a sonnet sweep, 27 in all; blind triage by opus; judgment by Claude Fable;
 the drafter verified the three claims the conclusion rests on). Result: 19
-no change, 3 small gains, 3 harms out of 25 judgeable. The author ruled:
+no change, 3 small or partial gains, 3 harms out of 25 judgeable. The author ruled:
 commit the trial and rewrite the recommendation as the status quo plus
 the three additions; C1 is rejected and kept in git history at `72fed79`.
 
