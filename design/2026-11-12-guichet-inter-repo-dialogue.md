@@ -119,7 +119,7 @@ session can run a model of any family the route skill picks, local ones
 included. Pi also has an `--mode rpc` and named sessions (`--name`,
 `--session-id`). Not yet observed: `idh-wake.ts` delivering into a Pi
 session started detached (tmux or a `systemd-run --user` unit), which is
-how a guichet would run.
+how the superseded guichet session would have run.
 
 **Background sessions.** Outside the harness's doors, the Claude Code CLI
 (2.1.322) has `claude --bg [-n <name>]`: it starts a session in the
@@ -134,8 +134,8 @@ messages are held (§ 3).
 **Merge path for ticket-only changes.** `merge-gate.py tier` classifies a
 `tickets/*.erg`-only diff as bookkeeping tier: no gate verdict needed, and
 ticket-only merge requests are merged right after opening (memory
-`feedback_ticketwork_automerge`). A guichet's output is ticket-only, so it
-rides the fast track with no special rights **[author]**.
+`feedback_ticketwork_automerge`). Under C1 (§ 5) intake branches are an
+exception: the asker never merges them.
 
 **Routing.** `skills/route/SKILL.md` sends advisor calls to the ASSURANCE tier;
 family choice for independence lives in `references/decorrelation.md`.
@@ -164,8 +164,8 @@ natively. MCP is agent-to-tool access, not peer dialogue (secondary:
 (done) or `failure`; `agree` may be skipped under a reply-by deadline
 (secondary summaries:
 <https://www.cs.sjsu.edu/~pearce/modules/lectures/abs/jadeweb/fipaIPs.htm>).
-The guichet vocabulary maps onto it: ACK = `agree` made mandatory with T as
-reply-by; NEW/AMENDED = `inform-done` with the ticket as result; PUSHBACK =
+The guichet drafts' vocabulary mapped onto it (ACK and T are retired under
+C1): ACK = `agree` made mandatory with T as reply-by; NEW/AMENDED = `inform-done` with the ticket as result; PUSHBACK =
 `refuse`; QUESTION = A2A's `input-required`. Contract Net (bidding among many
 contractors) does not fit a single desk; we did not retrieve its primary
 sources or KQML's.
@@ -306,8 +306,8 @@ day.
 build). agent-message-queue, hcom or repowire already carry messages
 between Claude Code, Codex and Pi sessions and wake idle ones (reuse table
 in `design/research/2026-11-12-guichet-biblio-saturation.md`). E is
-not an alternative to B but a possible carrier for its asking side, kept as
-an option if our adapters prove harder than expected. None of the tools examined
+a carrier for live dialogue, which C1 (§ 5) no longer needs; it was
+considered as a carrier for B, now rejected. None of the tools examined
 provides the triage role or the durable record in the receiving store, and
 none documents Vibe support; their discovery features were not compared.
 
@@ -367,7 +367,9 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 - **Intake id** `<asker-repo>-<date>-<rand>`, minted by the asker; it is
   the deduplication key (A2A's `contextId`, § 3).
 - **Intake branch** `intake/<id>`, pushed by the asker to the receiving
-  repository's `origin` with a plain `git push` (no forge API). It adds
+  repository's remote (`git -C <receiver checkout> remote get-url origin`,
+  not the asker's own `origin`) with a plain `git push`, no forge API,
+  together with its head ref `refs/intake-heads/<id>` and the thread. It adds
   exactly one `incoming` ticket with an `Origin: <asker-repo>` header, the
   facts and the evidence. The asker never merges it.
 - **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
@@ -375,8 +377,9 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   `ts` first: `request`, `question`, `answer`, `verdict`, each with its
   author and the branch head. Transport and concurrent-write merging are
   those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
-  without force); the code is `review_notes.py`'s, generalized or as a
-  sibling. The branch head is kept at `refs/intake-heads/<id>`, so the
+  without force); the code is a sibling of `review_notes.py` sharing its
+  transport layer, with its own entry schema and lock (review entries and
+  locks are review-specific). The branch head is kept at `refs/intake-heads/<id>`, so the
   branch can go once the verdict is written.
 - Verdict states keep A2A's names: `completed` (NEW or AMENDED), `rejected`
   (PUSHBACK), `input-required` (QUESTION), `failed` (the triager could not
@@ -385,24 +388,37 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 ### The flow
 
 1. The asker pushes the intake branch and appends the `request` note.
-2. It tries `runtime.py triage <receiver> <id>`, which starts one detached,
-   headless run in the receiving repository's checkout: read-only tools
-   only (Pi: `--tools read,grep,find,ls`, no extensions), serialized per
-   receiver by `flock -o -w 2`, capped in wall time, model by route at the
-   advisor tier **[author]**. A failed launch is harmless: the intake stays
+2. It tries `runtime.py triage <receiver> <id>` on the receiver's host
+   (over `ssh` from another host). The launcher, a script, first writes
+   the run's inputs as files into a run directory: the intake branch's
+   diff, the intake thread, and a live-work snapshot (worktree locks with
+   their tickets and liveness, each live branch's changed files). It then
+   starts one headless run with read-only tools only (Pi: `--tools
+   read,grep,find,ls`, no extensions), **inside a sandbox that makes only
+   the receiving repository and the run directory readable** (a
+   `systemd-run --user` unit with read-only bind mounts, or `bwrap`;
+   phase 1 proves it), capped in wall time, model by route at the advisor
+   tier **[author]**. Runs are serialized per receiver by `flock -o`; the
+   launcher holding the lock drains every untriaged intake of that
+   receiver, one fresh run each, before releasing it, so a second launch
+   that finds the lock held just leaves. A failed launch is harmless: the intake stays
    durable and the sweep (step 6) finds it. The asker leaves.
-3. The triager reads the intake branch, the receiving store, its history
-   and the repository's live work (worktree locks and their tickets, each
-   live branch's changed files; § Knowing the repository's live work
-   below), and prints one verdict as JSON.
-4. The verdict script acts:
-   - **NEW**: rewrites the ticket in the receiver's voice as a commit on the
-     intake branch, keeps `Origin:`, adds `needs-human` until an owner
-     promotes it, and lands the branch by the local gated merge
-     (`raid_land.py`, `branch:` unit, bookkeeping tier);
-   - **AMENDED**: appends the report as a log line on the existing ticket
-     (its own ticket-only branch, same landing) and deletes the intake
-     branch;
+3. The triager reads the run directory, the receiving store and its
+   history (§ Knowing the repository's live work below), and prints one
+   verdict as JSON.
+4. The verdict script acts, after checking that the asker's commits
+   (base to `refs/intake-heads/<id>`) add exactly one new `tickets/*.erg`
+   and nothing else (the bookkeeping tier alone would also admit `memory/`
+   and `STATE.md`). **It never lands anything on main [author]**: it
+   prepares the intake branch, and the receiver's own normal merge process
+   lands it when an owner promotes it.
+   - **NEW**: commits the ticket rewritten in the receiver's voice on the
+     intake branch, keeps `Origin:`, adds `needs-human`; the owner's
+     promotion lands it;
+   - **AMENDED**: replaces, on the intake branch, the asker's new ticket by
+     one dated log line on the existing ticket, naming `Origin:` and the
+     intake id and quoting the report as data, never touching the ticket's
+     scope or exit criteria; the owner's promotion lands it;
    - **PUSHBACK**: writes the reason in the thread and deletes the intake
      branch;
    - **QUESTION**: writes the question in the thread and stops.
@@ -414,16 +430,19 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    with an `answer` note and relaunches the triager, at most three rounds;
    unanswered after seven days, the triager decides on what it has or adds
    `needs-human`.
-6. **Sweep.** The receiver's `/molt` lists intake branches with no verdict
-   older than a day and launches the triager on each; `/dashboard` shows
-   them. The launch in step 2 is therefore never a single point of failure.
+6. **Sweep.** The receiver's `/molt` relaunches every intake that is not
+   finished: no verdict after a day; a NEW or AMENDED verdict whose commit
+   is not on the intake branch; a QUESTION unanswered for seven days (decided on what the
+   triager has, or `needs-human`); a `failed` verdict, retried twice, then
+   `needs-human`. `/dashboard` lists them. The launch in step 2 is
+   therefore never a single point of failure.
 
 ### Knowing the repository's live work
 
-Unchanged in substance, now read-only: before its verdict, the triager
-reads worktree locks (ticket and owner pid), pid liveness, claims, open
-branches and each live branch's changed files, and matches the intake's
-evidence paths against them. A shared path is the overlap signal. On
+Unchanged in substance, now read-only and pre-computed: the launcher's
+snapshot gives worktree locks (ticket and owner pid), pid liveness, claims,
+open branches and each live branch's changed files, and the triager
+matches the intake's evidence paths against them. A shared path is the overlap signal. On
 overlap the verdict is AMENDED on the running ticket, naming the branch
 and session, or PUSHBACK "in progress on `<branch>`". It never messages a
 session, never steers one, and never reads a transcript: the informant and
@@ -434,10 +453,10 @@ sessions.
 
 | Finding | Under C1 |
 |---|---|
-| peer text as a user turn into a shell | the triager has no shell; the intake is a file it reads as data |
+| peer text as a user turn into a shell | the triager has no shell; git and `/proc` are read by the launcher script, and the intake is a file the triager reads as data |
 | ticket-only unenforced | the model writes nothing; the script writes only `tickets/*.erg` on the intake or a ticket-only branch, and refuses any other path |
 | `replyTo` arbitrary write | gone: replies are notes in the thread |
-| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the triager reads only the receiving repository and the intake branch |
+| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable (phase 1 proves the sandbox; until then, receivers whose host holds uncleared material use a local model) |
 | wedged session, lost request | no session to wedge; a run has a wall-time cap; branch and notes are durable before any run starts |
 | authority laundering | `Origin:` kept, `needs-human` on every NEW until an owner promotes it |
 | cost runaway | one run per intake, serialized per receiver, a daily cap per receiver in the launcher |
@@ -446,8 +465,8 @@ sessions.
 ### Authorization and the rule
 
 `rules/guards.md` allows, in another project, tickets only. C1 widens that
-exception from "a ticket" to "an intake branch adding one ticket, and its
-intake note". Rules are the author's law, so phase 3 proposes the wording
+exception from "a ticket" to "an intake branch adding one ticket, its head
+ref under `refs/intake-heads/`, and its intake note". Rules are the author's law, so phase 3 proposes the wording
 and the author decides. The asker's launch of a triager in the receiving
 repository is the standing authorization the author ruled for: triage
 only, under that repository's rules, read-only.
@@ -457,7 +476,8 @@ only, under that repository's rules, read-only.
 Route picks the model for the triage role at each launch; the tier is
 advisor by the author's ruling, recorded on route's side; uncleared content
 forces a local model. Any runtime whose headless door supports read-only
-tools can run it (Pi's does; others after phase 1). The asker and the
+tools can run it (Pi's does; another runtime only once its door is shown
+to confine reads, phase 1). The asker and the
 triager may be the same family; the mitigation is the protocol's: facts
 from the asker, checks against the receiver's own store, no argument
 toward consensus.
@@ -469,7 +489,7 @@ toward consensus.
 | launch fails, model unavailable, Pi down | intake stays; the sweep relaunches |
 | triager crashes mid-run | no verdict note; the sweep relaunches |
 | crash after the verdict note | the action is rerun from the note |
-| two askers file the same bug | the second triage finds the first ticket: AMENDED |
+| two askers file the same bug | the draining launcher triages them in turn; the second finds the first: AMENDED |
 | asker gone before the verdict | the thread and the store keep the outcome |
 | question never answered | decided after seven days, or `needs-human` |
 | notes written concurrently | `cat_sort_uniq` merge, as for reviews |
@@ -495,8 +515,9 @@ last.
    `runtime.py triage` (detached headless run, read-only tools, `flock -o
    -w 2`, wall-time cap, daily cap, model by route), and the verdict script
    with its path refusal. *Proves*, by a dry run between two of the
-   author's repositories, each verdict: NEW lands, AMENDED logs and
-   deletes, PUSHBACK deletes, QUESTION waits and resumes on an answer.
+   author's repositories, each verdict: NEW and AMENDED leave a branch
+   ready for the owner to promote, PUSHBACK deletes it, QUESTION waits and
+   resumes on an answer.
 2. **Triage profile.** `profiles/guichet/PROFILE.md` and its shell: facts
    against framing, duplicate search, the live-work read, clearance as the
    stricter of the two repositories, the verdict format. *Proves*, on the
@@ -549,7 +570,7 @@ reconciled: § Authorization;
 the fallback directly;
 (5) journal writes contradicted ticket-only scope, and retirement "past" the
 guard broke it: journal writes removed, retirement moved before the guard
-(§ Protocol and path, Closing);
+(a section of the superseded guichet design, in git history);
 (6) rule before machinery, and a value metric that overclaimed: phases
 reordered, metric compares against fallback triage.
 KISS: drop journal hand-offs, adaptive lifetime tuning and the outbox
@@ -569,7 +590,7 @@ superseded by the transport amendment);
 (4) the advisor tier must yield to uncleared content: adopted;
 (5) phase order and missing "proves" lines: adopted;
 (6) the launch race, headless askers and the guichet's own worktree:
-§ Failure modes and § Durable record;
+sections of the superseded guichet design, in git history;
 (7) per-dialogue cost ignored cold context: noted under Costs as unmeasured;
 the observation window was inconsistent: fixed;
 (8) factual slips: roar's hand-off is step 8 (verified), messaging is
@@ -590,7 +611,7 @@ running work ("we are already doing this, I will pass your case to the
 running coder"). Added § Knowing the repository's live work: read-only
 signals joined by pid, no steering.
 **Author rulings (2026-11-12):** A2A is not adopted, its vocabulary is
-reused (§ Protocol and path, Vocabulary). The guichet does not middleman: when a live session
+reused (vocabulary section of the superseded design, in git history). The guichet does not middleman: when a live session
 is better placed, it redirects the asker to talk with it directly, replacing
 the relay first drafted.
 **Author follow-up (2026-11-12):** asked which further state of the art
@@ -643,6 +664,11 @@ Same brief to two seats, attack surfaces named, conclusions not given.
 - The drafter verified each code claim (`idh-guard.ts:162-167`,
   `idh-wake.ts` delete right after delivery, `merge-gate.py` bookkeeping
   list, `~/.local` mode 0700 with every agent under one account).
+
+**Author ruling (2026-11-12, landing):** option (b): the triager never
+lands; accepted intakes land through the receiver's normal merge process
+at the owner's promotion. Gaze rv-20261112-pr-2473-165b had found that the
+local gated merge refuses `branch:` units in a repository with an `origin`.
 
 **Author rulings (2026-11-12, C1):** "looks like it starts by dropping a
 ticket, then try waking up someone"; "Just C1"; variants 1 to 5 discussed,
