@@ -398,7 +398,11 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 
 ### The flow
 
-1. The asker pushes the intake branch and appends the `request` note.
+1. The asker pushes the intake branch and appends the `request` note,
+   which says whether the asker is blocked on the outcome (`blocking: yes`).
+   On its own side it logs `intake <id> filed at <receiver>` on the ticket
+   of the work that found the bug, so any later session, roar or sweep in
+   the asker's repository knows the intake is pending.
 2. It tries `runtime.py triage <receiver> <id>` on the receiver's host
    (over `ssh` from another host). The launcher, a script, first writes
    the run's inputs as files into a run directory: the intake branch's
@@ -416,7 +420,14 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    `runnable` intake of that receiver (§ Intake lifecycle), one fresh run each, and after releasing
    the lock scans once more, relocking if anything arrived meanwhile, so a
    second launch that finds the lock held can just leave. A failed launch is harmless: the intake stays
-   durable and the sweep (step 6) finds it. The asker leaves.
+   durable and the sweep (step 6) finds it. **The launcher job, never a
+   model, runs the whole chain** for each intake: run directory, triager,
+   verdict script, push of commit and notes; the sweep starts the same job.
+   The asker then arms one bounded wake on the intake thread (merge's
+   queued-wait pattern: `runtime.py wake arm --after 0` with a poller that
+   exits when a verdict appears, at most about 25 minutes), and goes on with
+   its work or idles. Where `wake arm` answers NOOP (a headless session),
+   the log line of step 1 is the only pickup.
 3. The triager reads the run directory, the receiving store and its
    history (§ Knowing the repository's live work below), and prints one
    verdict as JSON.
@@ -464,12 +475,30 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    decision, so the automerge habit for ticket-only requests applies from
    that point on. A NEW ticket keeps `needs-human` after landing unless the
    owner removes it in the promotion.
-5. The asker reads the outcome when it next looks (its roar or lair):
+5. **Pickup.** The asker reads the outcome when its wake fires, or else
+   when a session in its repository next looks (its roar, lair or `/molt`,
+   which read the threads of every intake its ticket logs list as pending):
    `git fetch` of the receiver and the intake thread. It answers a question
    with an `answer` note and relaunches the triager (a failed relaunch is
    caught by the sweep), at most three rounds;
    unanswered after seven days, the triager decides on what it has (a
    failure to decide is a `failed` verdict like any other).
+   **A blocked asker parks, it does not wait.** A verdict comes in minutes;
+   the fix comes hours or days later, after promotion and the receiver's
+   own work. The asker logs `blocked on intake <id>` on its ticket, adds
+   the `deferred` label (one of erg's default skip labels, so the ticket
+   leaves the ready queue everywhere), and ends cleanly. Once the intake has
+   `landed`, the asker's sweep adds `Blocked-by:` with the receiver's ticket
+   (erg accepts a reference to another repository's ticket: a relative path
+   such as `git-erg/0008` or an absolute URI; verified in git-erg's
+   `design/erg-manual.md`, rule 9). That line records the dependency; it
+   gates readiness only where the reference resolves in the checkout, since
+   erg treats an unresolved reference as optimistic, so the label does the
+   gating. When the receiver closes a ticket that carries an `intake <id>`
+   log line, its close step appends a `resolved` note to that intake's
+   thread, naming the landing commit. The asker's sweep, seeing `resolved`,
+   logs `unblocked by intake <id>`, removes `deferred`, and the parked
+   ticket returns to the ready queue for a raid or the author.
 6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
    it runs the triager on runnable intakes older than an hour, decides
    questions unanswered for seven days, retries failures, and deletes the
@@ -490,7 +519,8 @@ must be; a tip that breaks its state's invariant moves the intake to
 | `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
 | `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
 | `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
-| `landed` | a ticket on the receiver's `main` carries the log line `intake <id> from …` (NEW and AMENDED alike) | none | finished; the sweep deletes branch and head ref |
+| `landed` | a ticket on the receiver's `main` carries the log line `intake <id> from …` (NEW and AMENDED alike) | none | the sweep deletes branch and head ref; `resolved` when that ticket closes |
+| `resolved` | the receiver's close step appends a `resolved` note naming the landing commit | none | finished; the asker's sweep unblocks any ticket parked on it |
 | `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
 | `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted as above |
 | `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
@@ -580,7 +610,8 @@ last.
    script with its range and tip checks. *Proves*, by a dry run between two
    of the author's repositories, each verdict: NEW and AMENDED leave a
    prepared head for the owner to promote, PUSHBACK deletes branch and head
-   ref, QUESTION waits and resumes on an answer; each move into `held` and
+   ref, QUESTION waits and resumes on an answer; the asker's pending log
+   line and its bounded wake firing on the verdict; each move into `held` and
    out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
    detected after a rebase merge; and that the sandbox denies a read outside
    the receiver.
@@ -593,11 +624,17 @@ last.
    intake and launch the triager, instead of dropping a ticket; the
    `rules/guards.md` exception widened to intake branches and notes, for
    the author to decide. Callers (`roar` step 8, `raid`) cite the new
-   wording. *Proves* nothing new: it records what phases 1 and 2 showed.
+   wording; the receiver's close step (`/merge` step 1 or `/roar`) appends
+   the `resolved` note for a ticket carrying an `intake <id>` log line; the
+   asker's parking (log line, `deferred`, `Blocked-by:`) is described for
+   both sides. *Proves* nothing new: it records what phases 1 and 2 showed.
 4. **Sweep and promotion view.** `/molt` applies the lifecycle table
    (§ 5, Intake lifecycle); `/dashboard` lists every state but the
-   finished ones. *Proves* that an intake whose launch failed, or
-   whose answer's relaunch failed, gets a verdict within a day.
+   finished ones. On the asker's side, `/molt` reads the threads of pending
+   intakes and unblocks parked tickets on `resolved`. *Proves* that an
+   intake whose launch failed, or whose answer's relaunch failed, gets a
+   verdict within a day, and that a parked ticket returns to the ready
+   queue after its intake is resolved.
 5. **Report, conditional.** After the review below, if the data show
    something: a HAL technical report on the design case and its outcomes,
    citing § 3.
@@ -731,6 +768,15 @@ Same brief to two seats, attack surfaces named, conclusions not given.
 - The drafter verified each code claim (`idh-guard.ts:162-167`,
   `idh-wake.ts` delete right after delivery, `merge-gate.py` bookkeeping
   list, `~/.local` mode 0700 with every agent under one account).
+
+**Author follow-up (2026-11-12, pickup and blocking):** asked who
+launches the verdict script (the launcher job), when the asker picks up
+the answer (a bounded wake, else its repository's next roar, lair or sweep
+via a pending log line), and what a blocked asker does (it parks with
+`deferred` and `Blocked-by:`, the receiver's close writes `resolved`, the
+asker's sweep unblocks). The author stated that erg's `Blocked-by:`
+accepts another repository's ticket; verified (erg manual rule 9; unresolved
+references are optimistic for readiness).
 
 **Author rulings (2026-11-12, intake file):** intake files live under
 `tickets/intake/` and are not erg tickets; erg's header set is strictly
