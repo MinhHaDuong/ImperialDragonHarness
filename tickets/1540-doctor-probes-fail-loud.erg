@@ -1,0 +1,36 @@
+%erg 0.1
+Title: test-doctor probes fail loud: gate_traces on an unresolved --project, gate_profile on a stale record
+Created: 2026-11-12
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-12T10:20Z HDMX-coding-agent created from a climate-finance-het test-doctor visit (its ticket 3080, PR 2141); author asked for the ticket
+
+--- body ---
+## Context
+Two probe defects met in one test-doctor consultation on 2026-11-12. Both
+return an all-clear that cannot be told from "I could not look".
+
+1. `scripts/gate_traces.py collect --project climate-finance-het --days 28`
+   printed `climate-finance-het: 0 foreground gate runs in 28d (0 sessions,
+   0 background, 0 unpaired, 0 unreadable)`. The same call with the absolute
+   project path found 652 runs in 503 sessions. `--project` is a path
+   (`project_directories` encodes it into a trace-directory name); a bare
+   name matches no directory and the tool reports zero instead of failing.
+   `skills/test-doctor/SKILL.md` § Examination writes `--project <project>`,
+   which invites the name.
+2. `scripts/gate_profile.py profile .test_durations.json --workers 16` read a
+   record last written 2026-07-27, three and a half months old, without a
+   word; it still listed two 236 s tests the selection had since dropped,
+   and its lower bound (236.6 s) described a suite that no longer exists.
+
+## Exit criteria
+- [ ] `gate_traces.py` exits non-zero with a message naming the encoded
+      directory it looked for when `--project` resolves to no trace
+      directory (0 sessions), on every subcommand that takes `--project`.
+- [ ] The test-doctor Examination lines say the argument is the project's
+      absolute path.
+- [ ] `gate_profile.py profile` prints the record's age (file mtime, or a
+      timestamp inside the record when there is one) and warns past a
+      threshold (suggest 14 days); `compare` does the same for both inputs.
+- [ ] A red test for each, from the motivating case.
