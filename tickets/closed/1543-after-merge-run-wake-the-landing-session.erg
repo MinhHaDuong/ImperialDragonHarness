@@ -2,9 +2,11 @@
 Title: after-merge run: wake the landing session, alert the author on red
 Created: 2026-11-12
 Author: reviewer
+Closed: autoclosed — PR #2472
 
 --- log ---
 2026-11-12T13:36Z reviewer created
+2026-11-12T14:29Z reviewer closed — autoclosed — PR #2472
 
 --- body ---
 ## Context
