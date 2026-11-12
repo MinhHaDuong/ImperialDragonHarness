@@ -7,6 +7,7 @@ Author: HDMX-coding-agent
 2026-11-10T16:11Z HDMX-coding-agent created
 2026-11-11T16:45Z reviewer note decomposed into 1524-1527 (raid af737d); transport ruled local API by the author 2026-11-11
 2026-11-11T17:18Z reviewer note integration review (raid af737d): children 1524-1527 merged (PRs 2452-2455); union sweep found no stale filing references; tracker stays open on the climate-finance-het 3019 criterion
+2026-11-12T09:03Z reviewer child climate-finance-het 3019 closed by #2140 on 2026-11-12 (children 3043 via #2130/#2135, 3044 via #2136); tracker update due. Facts: 55 notes published to the personal library via publish-notes (dry run first each time, 21 updated in place later, 0 refused); pull-notes returns 55 and regenerates wiki/works byte-identical; project integration review on climate-finance-het main 64829a0b: make wiki 83 pages 0 broken links, check-fast and domain rel green. Observations: zotero.py must run as an executable (uv); Quarto 1.8.27 rewrites .qmd hrefs inside raw HTML; Zotero-editor-on-save href behaviour untested; publish state is per machine (padme).
 
 --- body ---
 
