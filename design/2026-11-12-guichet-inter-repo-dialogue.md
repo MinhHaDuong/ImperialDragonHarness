@@ -69,8 +69,17 @@ Claude Code sessions on the same host. Every other pair is one-way or unprobed.
 Each runs one turn and exits; the caller collects the output. None keeps a
 session alive: `claude -p` exits after its turn, and `--restricted` ignores
 the settings files, so a headless Claude session never sees the host's
-inbound-messaging setting. Nothing in the harness keeps a session running
-between requests.
+inbound-messaging setting.
+
+**Background sessions.** Outside the harness's doors, the Claude Code CLI
+(2.1.322) has `claude --bg [-n <name>]`: it starts a session in the
+background, returns at once, and the session persists; `claude agents --json`
+lists it (id, name, cwd, state busy/idle), and `attach`, `logs`, `stop`, `rm`
+manage it. On padme on 2026-11-12, `claude agents --json` listed 9 such
+sessions, idle ones among them in other repositories. No skill or script
+uses `--bg` yet. Not yet observed: a `--bg` session receiving a peer's
+`SendMessage` and replying; its permission mode decides whether inbound
+messages are held (§ 3).
 
 **Merge path for ticket-only changes.** `merge-gate.py tier` classifies a
 `tickets/*.erg`-only diff as bookkeeping tier: no gate verdict needed, and
@@ -205,13 +214,14 @@ day.
 
 ## 5. Synthesis and recommendation
 
-**Pick B, in a hybrid form: talk to a live guichet when one exists, else run a
-one-shot guichet; the receiving store records every verdict.** B fixes both
-pains of § 1: the owner writes its own ticket, and intake has an owner. The
-reviews (below) showed that a persistent, reused session has no launch or
-lifetime mechanism in the harness (§ 2, one-shot doors) and would need a
-per-repository supervisor, the upkeep held against D. The hybrid keeps reuse
-where it is free and uses the one-shot doors elsewhere.
+**Pick B, in a hybrid form: a reused background guichet where the runtime
+can host one, a one-shot guichet elsewhere; the receiving store records
+every verdict.** B fixes both pains of § 1: the owner writes its own ticket,
+and intake has an owner. The reviews (below) found no way in the harness's
+doors to keep a guichet alive; the author pointed to `claude --bg` (§ 2,
+background sessions), which does, with no supervisor to build. Codex and Pi
+askers, and any host where the background launch fails, use the one-shot
+doors.
 
 ### Roles **[author]**
 
@@ -257,18 +267,27 @@ Every message carries a correlation id the asker mints
 (`<asker-repo>-<date>-<rand>`) and starts with its kind: `REQUEST`, `ACK`,
 `QUESTION`, `ANSWER`, `VERDICT`.
 
-**Live path** (a guichet session already runs; today only Claude Code on the
-same host, `ListAgents` name `guichet-<repo>`):
+**Live path** (Claude Code askers on the same host, the only two-way path
+in § 2):
 
+0. If neither `ListAgents` nor `claude agents --json` shows a session named
+   `guichet-<repo>`, the asker launches one **[author]**:
+   `claude --bg -n guichet-<repo> --model <advisor> ...` in the receiving
+   repository's primary checkout, with the guichet profile as its agent and
+   the REQUEST as its first prompt. It persists idle between requests and
+   costs nothing while idle.
 1. REQUEST → ACK within **T = 5 min [author]**, proving the channel two-way;
 2. questions and answers, at most three rounds;
 3. VERDICT, after the store line is written.
 
-A live guichet exists only when someone started one interactively (the
-author, or a session the author left open). The harness does not keep one
-alive; § 6 phase 5 revisits that after measurement.
+**Retirement.** Before the context guard (230K for a launched worker), the
+guichet converts open ids to `incoming` tickets and exits; `claude stop` or
+`rm` cleans it, and the next asker launches a fresh one. Two askers racing
+to launch produce two guichets for a while: both write store lines, the
+second AMENDs, and the elder retires the younger by name.
 
-**One-shot path** (no live guichet, or no ACK within T):
+**One-shot path** (Codex and Pi askers, a failed background launch, or no
+ACK within T):
 
 1. The asker launches a headless run in the receiving repository through the
    door of the family chosen below, with the guichet profile and the REQUEST
@@ -331,7 +350,7 @@ observation log (§ 6) checks it.
 | Failure | Handling |
 |---|---|
 | guichet crashes or stops after ACK | open ids become `incoming` tickets on stop; a crash leaves the REQUEST unrecorded, so the asker's later grep finds nothing and it drops the fallback |
-| two askers launch at once | two one-shot runs: the second greps the store, finds the first's id or a duplicate ticket, and AMENDs; no name to collide on |
+| two askers launch at once | live path: two `guichet-<repo>` sessions until one retires; one-shot path: two runs. Either way the second greps the store, finds the first's id or a duplicate ticket, and AMENDs |
 | asker exits before the verdict | the store line survives; its next roar or lair reads it |
 | headless asker | fallback directly |
 | peer message held or refused (Claude inbound setting) | no ACK within T, one-shot path |
@@ -348,9 +367,9 @@ Estimates by the drafter; author-hours are review time; USD unmeasured.
 | C timer triage | 1 | one skill section + timer | 5–10 build; one advisor run per sweep | disable the timer |
 | D A2A server | 6+ | daemon, auth, per-runtime adapters | 50+ build, plus upkeep | stop the service |
 
-A persistent guichet (the variant the reviews removed) would add a supervisor
-per repository and host, and every wake of an idle session re-reads its whole
-context without cache: unmeasured, but the reason it is deferred to phase 5.
+The background guichet needs no supervisor (`claude --bg`), but every wake
+of an idle session re-reads its whole context, uncached after an idle hour:
+unmeasured, and one of the observation's questions.
 
 ## 6. Implementation plan
 
@@ -360,7 +379,9 @@ changes last, once its machinery exists **(revised after review)**.
 1. **Audit peer-to-peer capabilities [author].** For each runtime pair
    (Claude Code, Codex, Pi; same host, cross host), probe with a
    REQUEST/ACK round trip: can A start a turn in B, can B reply, is receipt
-   reported, latency; and for each one-shot door, can it write the receiving
+   reported, latency. First probe: a `claude --bg -n guichet-<repo>`
+   session receiving a peer `SendMessage` and replying, under each
+   permission mode the guichet might run in. For each one-shot door: can it write the receiving
    store from its own worktree. Includes `wake send` → Claude Code (NOOP
    today) and Claude's inbound hold. *Proves* which pairs the live path may
    use and which doors the one-shot path may use; results replace § 2's
@@ -380,10 +401,10 @@ changes last, once its machinery exists **(revised after review)**.
    *Proves* nothing new: it records what phases 1 and 2 showed.
 4. **Pi path** (only if phase 1 shows `pi --print` cannot serve a one-shot
    guichet or Pi needs a live path): extend `idh-wake.ts` with a reply route.
-5. **Persistent guichet, conditional.** Only if the observation shows
-   one-shot cold starts costly or the live path frequently useful: a
-   supervisor that keeps `guichet-<repo>` alive, with retirement before the
-   context guard. Priced then, not now.
+5. **Live guichets for Codex and Pi, conditional.** Only if the
+   observation shows one-shot cold starts costly for those askers, and
+   phase 1 found a two-way path: a persistent guichet on those runtimes.
+   Priced then, not now.
 
 **Observe, then assess.** From phase 3's merge, each guichet run adds one
 field to its store line: path (live / one-shot / fallback), ACK latency,
@@ -400,6 +421,7 @@ revisit (memory `feedback_no_wait_tickets`), deciding:
   AMENDED, so frequency alone does not credit the dialogue; compare against
   a sample of fallback tickets triaged without one. Near zero means C alone
   would do;
+- **idle-wake cost** of a background guichet against a one-shot run;
 - **phase 5**: start it or not.
 
 ## Review
@@ -448,9 +470,12 @@ because journal writes were removed.
 KISS: a one-shot-only guichet, which would drop the live path, ACK and T.
 **Partly adopted**: one-shot is the default path, but the live path and
 T = 5 min stay, because the author ruled for a reused session and T, and
-the live path costs nothing when a session already exists. **Decision for
-the author:** keep the hybrid, or go one-shot only and retire T.
+the live path costs nothing when a session already exists. **Author follow-up (2026-11-12):** "Why not launching `--bg`?" Checked:
+`claude --bg` persists a named session (§ 2), so Fable's finding (1)
+no longer forces one-shot for Claude Code; the live path now launches a
+background guichet, and phase 5 shrinks to Codex and Pi.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
-vocabulary) but adds no machinery; the persistent session, supervisor,
-retirement, and Pi extension are out of the first build.
+vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
+does the hosting), and the Pi extension and non-Claude live guichets are out
+of the first build.
