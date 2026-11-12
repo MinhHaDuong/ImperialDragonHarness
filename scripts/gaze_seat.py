@@ -424,7 +424,7 @@ def unwrap_header(text: str) -> tuple[str, bool]:
 
 PREAMBLE_MAX = 3  # leading lines of progress text a seat may write before its header (ticket 1542)
 HEADER_START = re.compile(r'(worker:|reach:)', re.I)
-BODY_FIELD = re.compile(r'(finding:|verdict:|not-run)', re.I)
+BODY_FIELD = re.compile(r'(?:[-*+]\s+|\d+[.)]\s+)?(finding|verdict):|.*not-run', re.I)  # list markers too; NOT-RUN anywhere
 
 
 def drop_preamble(text: str) -> str:

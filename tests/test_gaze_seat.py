@@ -1095,6 +1095,16 @@ def test_a_not_run_line_in_the_preamble_is_still_a_refusal():
     assert gs.derive({}, raw, WORKER)[1] == 'no report (seat refused: NOT-RUN)'
 
 
+@pytest.mark.parametrize('line', [
+    'Result: NOT-RUN, the tree was unreachable.', '- NOT-RUN: HEAD moved', '- finding: x', '1. verdict: blocking',
+])
+def test_a_listed_or_embedded_body_line_ends_the_preamble(line):
+    """/gaze rv-20261112-pr-2469-360f: these were dropped as progress text and the seat filed."""
+    gs = load_module()
+    assert gs.drop_preamble(f'{line}\n{YES_REACH}\n') == f'{line}\n{YES_REACH}\n'
+    assert gs.derive({}, f'{line}\n{YES_REACH}\nverdict: clear\n', WORKER)[1] is not None
+
+
 def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
     gs = load_module()
     report = gs.stamp('reach: read=yes shell=no tests=not-run\nNOT-RUN: x\nverdict: none\n', 'worker: launcher')
