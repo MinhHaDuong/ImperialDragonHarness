@@ -430,7 +430,7 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    **The asker pushes only when filing.** Corrections come as `answer`
    notes, or as a new intake with a new id.
    - **NEW**: commits the ticket rewritten in the receiver's voice on the
-     intake branch, keeps `Origin:`, adds `needs-human`; the owner's
+     intake branch, keeps `Origin:` and `Intake:`, adds `needs-human`; the owner's
      promotion lands it;
    - **AMENDED**: replaces, on the intake branch, the asker's new ticket by
      one dated log line on the existing ticket, naming `Origin:` and the
@@ -458,8 +458,8 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    `git fetch` of the receiver and the intake thread. It answers a question
    with an `answer` note and relaunches the triager (a failed relaunch is
    caught by the sweep), at most three rounds;
-   unanswered after seven days, the triager decides on what it has, or the
-   intake goes to `held`.
+   unanswered after seven days, the triager decides on what it has (a
+   failure to decide is a `failed` verdict like any other).
 6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
    it runs the triager on runnable intakes older than an hour, decides
    questions unanswered for seven days, retries failures, and deletes the
@@ -476,15 +476,15 @@ must be; a tip that breaks its state's invariant moves the intake to
 
 | State | Entered by | Tip invariant | Next |
 |---|---|---|---|
-| `runnable` | a `request` or an `answer` note | the asker's head | the launcher runs it at once (no delay); the sweep after an hour |
+| `runnable` | a `request` note, or an `answer` note while `waiting` (an answer moves no other state) | the asker's head | the launcher runs it at once (no delay); the sweep after an hour |
 | `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
-| `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep reruns the action), then the prepared head | `promoted` or `declined` by an owner |
-| `promoted` | the owner's `promoted` note, with the merge request opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
+| `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
+| `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
 | `landed` | the ticket on the receiver's `main` carries the intake id (NEW: its `Intake:` header; AMENDED: its log line) | none | finished; the sweep deletes branch and head ref |
 | `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
-| `declined` | an owner's `declined` note, or a promotion closed unmerged | none | finished; deleted as above |
-| `failed` | a `failed` verdict | the asker's head | `runnable` again, twice; then `held` |
-| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left, after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
+| `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted as above |
+| `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
+| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left (to `runnable` when it left `failed`), after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
 
 "Landed" is detected on `main`, not from the branch, so a merge that
 rebases or deletes the branch is still recognized.
@@ -543,7 +543,7 @@ toward consensus.
 | crash after the verdict note | the action is rerun from the note |
 | two askers file the same bug | the draining launcher triages them in turn; the second finds the first: AMENDED |
 | asker gone before the verdict | the thread and the store keep the outcome |
-| question never answered | decided after seven days, or `held` |
+| question never answered | decided after seven days |
 | notes written concurrently | `cat_sort_uniq` merge, as for reviews |
 
 ### Costs
