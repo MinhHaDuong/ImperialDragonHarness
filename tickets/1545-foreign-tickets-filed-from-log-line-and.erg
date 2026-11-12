@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Foreign tickets: filed-from log line and owner wake-up in molt and dashboard
+Created: 2026-11-12
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-11-12T22:28Z claude created
+2026-11-12T22:29Z reviewer label needs-human
+
+--- body ---
+Parent: 1544
+
+## Context
+
+Addition 1 of `design/2026-11-12-guichet-inter-repo-dialogue.md` § 5: wake an owner at filing. In the trial (`design/research/2026-11-12-guichet-triage-trial.md`),
+the one foreign ticket still untouched (G4) is the case this catches.
+
+## Scope
+
+- `rules/workflow.md` § Cross-project work: the asker logs
+  `filed from <asker-repo> <asker-ticket>` on the ticket it files in the
+  receiver's store (erg's header set is closed, so provenance goes in the
+  log); when timing matters it also tells a live session, as today.
+- `/molt` and `/dashboard` list open tickets carrying such a line that
+  nobody has picked up (no branch or worktree lock naming the ticket) after
+  a day.
+
+## Exit criteria
+
+- [ ] The convention is stated once in `rules/workflow.md`; callers cite it.
+- [ ] On a test store, a foreign ticket older than a day with no branch is
+      listed by both skills and disappears once a branch names it.
+- [ ] `make check` passes.

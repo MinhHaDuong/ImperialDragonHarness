@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Tracker: cross-repository reports, status quo plus three additions
+Created: 2026-11-12
+Author: claude
+
+--- log ---
+2026-11-12T22:28Z claude created
+
+--- body ---
+## Context
+
+Projects report bugs in the services they depend on (the harness, git-erg,
+padme). Design note `design/2026-11-12-guichet-inter-repo-dialogue.md` (Status: provisional), § 5 and § 6, after a blind
+triage trial on 27 real cross-project reports (`design/research/2026-11-12-guichet-triage-trial.md`: 19 no change, 3 small
+or partial gains, 3 harms out of 25 judgeable): keep the status quo, in
+which the asker files a ticket in the receiver's store, and add three
+things. `rules/guards.md` stays unchanged. The rejected C1 design is in git
+history at `72fed79`.
+
+## Children
+
+- 1545 filed-from log line and owner wake-up in molt and dashboard: open
+- 1546 premise check at pickup in hunt and raid: open
+- 1547 blocked askers park on another repository's ticket, released in molt: open
+
+## Exit criteria
+
+- [ ] 1545, 1546 and 1547 closed.
+- [ ] Integration review (roar step 8): `rules/workflow.md` § Cross-project
+      work states the three additions once, and molt, dashboard, hunt and
+      raid cite it rather than restate it.
+- [ ] Observation started: a doctor-journal revisit after 20 foreign tickets
+      or six weeks from 1545's merge (memory `feedback_no_wait_tickets`),
+      counting foreign tickets, time to first owner action, premise
+      corrections at pickup, parked tickets released.
