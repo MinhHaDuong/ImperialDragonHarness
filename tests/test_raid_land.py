@@ -284,6 +284,21 @@ def test_duration_comment_posted_after_merge(repo):
     assert len(comments) == 1 and f"merge {head(repo)}: duration: " in comments[0][1]
 
 
+def test_a_gated_landing_prints_the_wake_arm_line_for_the_new_tip(repo, monkeypatch):
+    """Ticket 1543: the lander arms a wait on the after-merge record of the tip it produced."""
+    monkeypatch.setattr(rl, "gate", lambda cwd, *a: 0)
+    code, out = land(repo, StubForge(head(repo)), head(repo))
+    assert code == 0, out
+    tip = sh(repo, "rev-parse", "refs/heads/main")
+    (line,) = [x for x in out if x.startswith("after-merge: arm the wake")]
+    assert "wake arm --after 0 --cmd" in line and f"wait-after --tip {tip}" in line
+
+
+def test_an_ungated_landing_prints_no_wake_arm_line(repo):
+    code, out = land(repo, StubForge(head(repo)), head(repo))
+    assert not any(x.startswith("after-merge:") for x in out)
+
+
 def test_exception_after_merge_is_outcome_unknown_code_6(repo):
     forge = StubForge(head(repo))
     forge.read_back = lambda pr: (_ for _ in ()).throw(OSError("boom"))

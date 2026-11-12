@@ -72,13 +72,21 @@ RED_RETRIES landing attempts; a failing check in the before set leaves the
 request open (its own record would refuse it). The dedupe key is the sorted failing-check set,
 not the tip: no ticket opens when an open after-merge-red ticket on the tip or
 a remote `red-*` branch already carries that set. An unlanded request stays
-open with its branch, for a human. Nothing reverts, nothing re-runs.
+open with its branch, for a human. Nothing reverts, nothing re-runs. A red
+also raises an author alert through `runtime.py notify`, best effort (ticket 1543).
+
+Wait (ticket 1543): `wait-after --tip <oid>` polls the gate notes until the
+tip carries an after-merge record, at most `--timeout` seconds (default 600,
+twice the worst wait observed), and exits on its result. The lander arms it
+through `runtime.py wake arm` (raid_land prints the line), so the result
+wakes the session that landed the merge.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
 unchanged), 1 full (an empty diff included), 3 error. `plan`: 0 printed, 1
 gate off (no declared checks), 3 error. `run-after`: 0 green, off or busy,
-1 red, 3 error.
+1 red, 3 error. `wait-after`: 0 pass, 1 red, 2 no record within the bound,
+5 environment, 3 error.
 Any unexpected exception exits 3.
 """
 
@@ -1109,6 +1117,7 @@ def run_after(remote, branch, actor, command, forge=None):
             else:
                 report = red_report(tip, outcome[2], outcome[1])
                 sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")
+                alert_red(tip, outcome[1])
                 if forge is not None:
                     try:
                         built = forge() if callable(forge) else forge
@@ -1118,6 +1127,51 @@ def run_after(remote, branch, actor, command, forge=None):
                 code = FAIL
             done = tip
         return code
+
+
+def alert_red(tip, results):
+    """Tell the author a tip went red (ticket 1543): `runtime.py notify`, a popup plus an alert file.
+
+    Best effort: the record, the log and the ticket carry the red whatever happens here.
+    """
+    failing = ", ".join(r.split()[0] for r in results if " fail " in f" {r} ") or "see the after-merge log"
+    notify = Path(__file__).resolve().with_name("runtime.py")
+    try:
+        subprocess.run(
+            [sys.executable, str(notify), "notify", "--key", f"after-merge-red-{tip[:12]}",
+             "--title", "main is red", "--body", f"after-merge run on {tip[:12]}: {failing}"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except Exception as exc:  # noqa: BLE001 — an alert never fails the runner
+        sys.stdout.write(f"red alert: not sent ({type(exc).__name__}: {exc})\n")
+
+
+WAIT_RESULT = {"pass": PASS, "fail": FAIL, "environment": ENV}
+
+
+def cmd_wait_after(args):
+    """Wait until `--tip` carries an after-merge record, then exit on its result (ticket 1543).
+
+    Exit 0 pass, 1 fail, 5 environment, 2 when no record came within `--timeout` seconds. The
+    landing session arms this through `runtime.py wake arm`, so its exit is the session's wake.
+    """
+    tip = rev(args.tip) or args.tip
+    end = time.monotonic() + args.timeout
+    while True:
+        try:
+            fetch_notes(args.remote)
+        except GateError as exc:  # a remote that cannot be read now may answer at the next poll
+            sys.stdout.write(f"wait-after: {exc}\n")
+        entries = after_entries(tip)
+        if entries:
+            result = entries[-1].get("result", "fail")
+            sys.stdout.write(f"{result}: {tip} carries its after-merge record\n")
+            return WAIT_RESULT.get(result, FAIL)
+        if time.monotonic() >= end:
+            sys.stdout.write(f"wait-after: no after-merge record on {tip} within {args.timeout:g}s; "
+                             "read <git-common-dir>/idh/after-merge.log\n")
+            return MISSING
+        time.sleep(args.interval)
 
 
 def cmd_run_after(args):
@@ -1152,6 +1206,13 @@ def parser():
     after.add_argument("--open-ticket", action="store_true", help="on red, open and land its ticket (ticket 1251)")
     for name in ("runtime", "model", "effort"):
         after.add_argument(f"--{name}", default=os.environ.get(f"MERGE_GATE_{name.upper()}", ""))
+    wait = sub.add_parser("wait-after", help="wait for the after-merge record of a tip, exit on its result")
+    wait.set_defaults(func=cmd_wait_after)
+    wait.add_argument("--tip", required=True, help="the main tip the landing produced")
+    wait.add_argument("--remote", default="origin", help="where refs/notes/gate lives")
+    wait.add_argument("--timeout", type=float, default=600.0,
+                      help="seconds to wait (default 600: twice the worst wait observed, ticket 1543)")
+    wait.add_argument("--interval", type=float, default=10.0, help="seconds between polls")
     for name, func in (
         ("run", cmd_run),
         ("check", cmd_check),

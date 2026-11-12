@@ -8,7 +8,8 @@ Run it from the request's own worktree on its head branch. It executes
 just before the merge: ticket 1299; on a forge it then renders the attribution block of notes into the
 request body, a warning when it fails: ticket 1307); step 9 (the after-merge
 runner) needs no call here: hooks/reference-transaction starts it when step 8's
-sync moves main (ticket 1265). That file stays the contract.
+sync moves main (ticket 1265); after a gated landing it prints the wake-arm line that waits for
+that run's record (ticket 1543). That file stays the contract.
 `--ruled-head` is the tip the review gate ruled on (`-` for a bookkeeping tier
 request, which then must read as bookkeeping). `--ruled-claims` is the comma
 list of ticket ids the gate ruled on (`-` for none); the body must still claim
@@ -30,6 +31,7 @@ sync-local-main.sh are called directly.
 import argparse
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -412,6 +414,20 @@ def sync_local(cwd: Path, base: str) -> tuple[bool, list[str]]:
     return ok, lines
 
 
+def wait_line(cwd: Path, base: str) -> str:
+    """The wake-arm command that waits for the after-merge record of the new tip (ticket 1543).
+
+    The hook starts the runner on step 8's move of main; the lander arms this so the record's
+    result wakes it (merge step 9). Printed, not run: on Claude Code only the session's own
+    background tool can arm its wake.
+    """
+    primary = Path(git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()).parent
+    tip = rev(primary, f"refs/heads/{base}")
+    wait = f"cd {shlex.quote(str(primary))} && python3 {shlex.quote(str(ROOT / 'scripts' / 'merge-gate.py'))} wait-after --tip {tip}"
+    return (f"after-merge: arm the wake on its result: python3 {shlex.quote(str(ROOT / 'scripts' / 'runtime.py'))} "
+            f"wake arm --after 0 --cmd {shlex.quote(wait)}")
+
+
 def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out, local=False) -> int:
     back = fg.read_back(pr)
     if back is None:
@@ -437,6 +453,8 @@ def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out, 
         out(line)
     if not synced:
         return UNSYNCED
+    if gated:
+        out(wait_line(cwd, base))
     if do_cleanup:
         out(cleanup(cwd, branch, head, base, base if local else None))
     return OK

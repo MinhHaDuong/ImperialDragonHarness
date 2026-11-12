@@ -742,3 +742,57 @@ def test_an_ungated_tip_is_not_an_attempt(tmp_path):
     assert finish(run_after(work))[0] == 0
     gaps = [ln.split()[1] for ln in audit(work, "--after").stdout.splitlines() if ln.startswith("after-gap")]
     assert ungated[:12] not in gaps
+
+
+# --- ticket 1543: wake the landing session, alert the author on red ---------------------------
+
+
+def wait_after(work, tip, *args):
+    return subprocess.Popen(
+        [sys.executable, str(GATE), "wait-after", "--tip", tip, "--interval", "0.2", *args],
+        cwd=work, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=child_env(),
+    )
+
+
+def test_wait_after_returns_when_the_runner_records_a_pass(tmp_path):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    tip = git(work, "rev-parse", "main")
+    waiter = wait_after(work, tip, "--timeout", "30")
+    assert finish(run_after(work))[0] == 0
+    code, out, err = finish(waiter)
+    assert code == 0, out + err
+    assert f"pass: {tip}" in out
+
+
+def test_wait_after_exits_one_on_a_red_record(tmp_path):
+    work = make_repo(tmp_path, [{"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]}])
+    assert finish(run_after(work))[0] == 0
+    tip = merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    assert finish(run_after(work))[0] == 1
+    code, out, err = finish(wait_after(work, tip, "--timeout", "10"))
+    assert code == 1, out + err
+    assert f"fail: {tip}" in out
+
+
+def test_wait_after_gives_up_at_its_bound(tmp_path):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    tip = git(work, "rev-parse", "main")
+    code, out, err = finish(wait_after(work, tip, "--timeout", "1"))
+    assert code == 2, out + err
+    assert "no after-merge record" in out
+
+
+def test_a_red_run_alerts_and_a_green_run_does_not(tmp_path):
+    alerts = tmp_path / "alerts"
+    env = {**child_env(), "IDH_ALERT_DIR": str(alerts), "PATH": "/usr/bin:/bin"}  # no notify-send needed
+    work = make_repo(tmp_path, [{"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]}])
+    green = subprocess.run([sys.executable, str(GATE), "run-after", "--ref", "main"], cwd=work,
+                           capture_output=True, text=True, env=env)
+    assert green.returncode == 0 and not list(alerts.glob("*.alert"))
+    tip = merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    red = subprocess.run([sys.executable, str(GATE), "run-after", "--ref", "main"], cwd=work,
+                         capture_output=True, text=True, env=env)
+    assert red.returncode == 1
+    (alert,) = alerts.glob("*.alert")
+    body = json.loads(alert.read_text())
+    assert tip[:12] in body["key"] and tip[:12] in body["body"]
