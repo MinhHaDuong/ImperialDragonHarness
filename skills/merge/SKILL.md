@@ -198,7 +198,14 @@ marker; another forge needs the same writes in its own spelling.
 9. **After-merge run (gated base).** Nothing to start: step 8's sync moves
    local main, and the main-update hook (`hooks/reference-transaction`,
    § after-merge start) starts the runner detached on that move. Read
-   `$(git rev-parse --git-common-dir)/idh/after-merge.log`, never wait on it.
+   `$(git rev-parse --git-common-dir)/idh/after-merge.log`, never wait on it
+   in the foreground. To hear its result, arm the wake line `raid_land.py`
+   prints after a gated landing (`after-merge: arm the wake …`, through
+   `runtime.py wake arm`): `merge-gate.py wait-after --tip <tip>` exits on
+   the tip's record (0 pass, 1 red, 5 environment, 2 none within 600 s; the
+   check set takes about a minute). A red also raises an author alert
+   (the `notify` alert file, plus a popup where notify-send exists); red stays the lander's to report,
+   never broadcast.
    The runner runs the full set on the newest `<base>` tip and notes the record there
    (a busy lock means a runner already covers this tip; `covered` means the
    tip already carries a record; an `environment` record, a failure on locked

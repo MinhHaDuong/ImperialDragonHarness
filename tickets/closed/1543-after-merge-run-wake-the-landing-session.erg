@@ -1,0 +1,43 @@
+%erg 0.1
+Title: after-merge run: wake the landing session, alert the author on red
+Created: 2026-11-12
+Author: reviewer
+Closed: autoclosed — PR #2472
+
+--- log ---
+2026-11-12T13:36Z reviewer created
+2026-11-12T14:29Z reviewer closed — autoclosed — PR #2472
+
+--- body ---
+## Context
+
+The after-merge runner (`merge-gate.py run-after`, started detached by
+hooks/reference-transaction) tells no one when it finishes: the result sits in
+`<git-common-dir>/idh/after-merge.log` and the gate note until a session reads
+them. Author's choice 2026-11-12 (options A+B of the guichet's Imagine): the
+landing session is woken on the result, and the author is alerted on red.
+
+Measured over 630 after-merge records since 2026-10-27: the check set takes
+median ~50 s, p99 ~100 s, max 146 s (plus a few seconds of worktree setup);
+a tip queued behind a busy runner waits at most one more run. 66 of 630 were
+red.
+
+## Ask
+
+- A: `merge-gate.py wait-after --tip <sha>` polls the gate notes until the tip
+  carries an after-merge record, bounded (default 600 s, twice the worst
+  observed wait), and exits on its result. `raid_land.py` prints the
+  `runtime.py wake arm` line that runs it after a gated landing; the merge
+  skill's step 9 tells the lander to arm it. Waking reuses the existing wake
+  backends (Claude background command, Codex timer, Pi inbox); no new transport.
+- B: on a red record, the runner raises the `notify` alert (alert file, plus
+  a desktop popup where notify-send exists; rate limited per tip). Best
+  effort: a failed notify changes nothing, and its lock wait is bounded.
+- Red stays one owner's: no broadcast to other sessions (rules/workflow.md,
+  a red gate on main is a broadcast).
+
+## Exit criteria
+- [ ] `wait-after` exits 0 on a pass record, 1 on a fail record, 2 at the bound, 5 on an environment record
+- [ ] A red after-merge run writes an alert for its tip; a green run writes none
+- [ ] raid_land prints the wake-arm line after a gated landing
+- [ ] skills/merge step 9 says to arm it

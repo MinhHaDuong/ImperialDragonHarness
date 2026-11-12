@@ -9,7 +9,9 @@ of a repository shares it. A second call for the same key inside `--repeat` seco
 3600; 0 disables) prints `SUPPRESSED <key>` and does nothing: the rate limit of the arena
 watchdog pattern, kept in `state.json` under flock as forge.py's `_update_cache`. A missing
 or failing notify-send never fails the verb, since the alert file is the durable channel; the
-result line says what happened. Exit 2 only when the alert dir cannot be written.
+result line says what happened. Exit 2 when the alert dir cannot be written, or when its lock
+stays held past LOCK_WAIT seconds (ticket 1543: a flock lives as long as its holder, so a stopped
+holder would otherwise stall the caller for good).
 
 This is the documented fallback whenever `runtime.py can wake` answers no (sitrep.md).
 """
@@ -29,6 +31,7 @@ NAME = "notify"
 DEFAULT_MODE = "send"
 DEFAULT_REPEAT = 3600.0
 FAILED = 2
+LOCK_WAIT = 10.0  # seconds to wait for the alert lock; a stopped or hung holder must not stall the caller (ticket 1543)
 
 
 def register(sub) -> None:
@@ -76,7 +79,15 @@ def run(args, rt: str) -> int:
         adir = alert_dir()
         os.makedirs(adir, exist_ok=True)
         with open(os.path.join(adir, "state.lock"), "w") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+            deadline = time.monotonic() + LOCK_WAIT
+            while True:
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise OSError(f"alert lock busy for {LOCK_WAIT:g}s ({lock.name}); nothing written") from None
+                    time.sleep(0.05)
             state_path = os.path.join(adir, "state.json")
             try:
                 with open(state_path) as f:
