@@ -97,3 +97,47 @@ def test_cli_profile_whatif_and_compare(tmp_path):
     broken = tmp_path / "bad.xml"
     broken.write_text("not xml")
     assert run("profile", str(broken)).returncode == 2
+
+
+# --- a stale record is said, not read silently (ticket 1540) ---------------
+
+def _run(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True,
+                          env=child_env())
+
+
+def _age(path: Path, days: float) -> None:
+    import os
+    import time
+    then = time.time() - days * 86400
+    os.utime(path, (then, then))
+
+
+@pytest.mark.integration
+def test_an_old_record_warns_and_a_fresh_one_does_not(tmp_path):
+    record = _junit(tmp_path / "r.xml", _cases())
+    fresh = _run("profile", str(record))
+    assert fresh.returncode == 0 and "file mtime, not run time" in fresh.stdout and "stale" not in fresh.stderr
+    _age(record, 107)
+    old = _run("profile", str(record))
+    assert old.returncode == 0 and "stale" in old.stderr and "107" in old.stderr
+    assert "stale" not in _run("profile", str(record), "--max-age-days", "200").stderr
+
+
+@pytest.mark.integration
+def test_a_testsuite_timestamp_beats_the_file_mtime(tmp_path):
+    record = tmp_path / "r.xml"
+    record.write_text('<testsuites><testsuite timestamp="2020-01-01T00:00:00">'
+                      '<testcase classname="a" name="t" time="1"/></testsuite></testsuites>')
+    out = _run("profile", str(record))
+    assert out.returncode == 0 and "stale" in out.stderr and "testsuite timestamp" in out.stdout
+
+
+@pytest.mark.integration
+def test_compare_prints_both_ages_and_names_the_stale_input(tmp_path):
+    before = _junit(tmp_path / "b.xml", _cases())
+    after = _junit(tmp_path / "a.xml", _cases())
+    _age(before, 90)
+    out = _run("compare", str(before), str(after))
+    assert out.returncode == 0 and out.stdout.count("age:") == 2
+    assert "stale" in out.stderr and "before" in out.stderr and "after" not in out.stderr

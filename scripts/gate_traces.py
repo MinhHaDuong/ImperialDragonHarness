@@ -525,9 +525,20 @@ def _print_table(collected: Collected, project: Path, days: float) -> None:
         print(f"  {row.seconds:6.0f}s  {row.when:%Y-%m-%d}  {row.session[:8]}  {row.command[:90]!r}")
 
 
+def _resolve_project(arg: Path) -> Path:
+    """An absolute path as given; a bare name only as ~/<name>, never relative to the cwd."""
+    if not arg.is_absolute() and len(arg.parts) == 1 and arg.parts[0] not in (".", ".."):
+        home_copy = Path.home() / arg
+        if home_copy.is_dir():
+            print(f"gate_traces: --project {arg} resolved to {home_copy}", file=sys.stderr)
+            return home_copy.resolve()
+        return arg
+    return arg.resolve() if arg.exists() else arg
+
+
 def _common(parser: argparse.ArgumentParser, days: float) -> None:
     parser.add_argument("--project", type=Path, default=Path.cwd(),
-                        help="project working directory (worktrees included); default: current directory")
+                        help="project absolute path (worktrees included); a bare name is read as ~/NAME; default: current directory")
     parser.add_argument("--traces", type=Path, default=Path.home() / ".claude" / "projects",
                         help="trace root; default: Claude Code's project trace directory")
     parser.add_argument("--days", type=float, default=days, help="look back this many days")
@@ -547,7 +558,16 @@ def main(argv: list[str] | None = None) -> int:
     _common(again, 28)
     again.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
-    project = args.project.resolve() if args.project.exists() else args.project
+    project = _resolve_project(args.project)
+    if not project_directories(args.traces, project):
+        encoded = encode_project(project)
+        if args.command == "survey":
+            print(f"test-doctor: not checked (no trace directory {encoded} under {args.traces})")
+            return 0
+        print(f"gate_traces: no trace directory {encoded} under {args.traces}; --project takes the "
+              f"project's absolute path, and only this --traces root (Claude Code's by default) is read",
+              file=sys.stderr)
+        return 1
     if args.command == "survey":
         for line in survey(args.traces, project, args.days, extra=args.pattern):
             print(line)
