@@ -18,7 +18,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 TOP_COUNTS = (1, 5, 10, 25, 50)
