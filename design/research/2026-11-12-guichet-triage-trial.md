@@ -198,7 +198,7 @@ One SAME case carries a correction the author's ruling overturned (H9).
    H12, H3), filing delay (G2 15 days without access, H2 25h to land), workaround then reversal
    (K-G2), cost falling on adopters (K-G1).
 6. The evidence does not support building C1 over the status quo plus small additions: 3 small or
-   partial gains against 3 harms in 25, with the gains reproduced by the first owner read.
+   partial gains against 3 harms in 25, with two of them (G2, H3) also found by the first owner read.
 7. Small additions the cases do support: wake an owner at filing; make the premise check the first
    step of whoever picks the ticket up (raid's Verify already does); if a triage run is kept, limit
    it to enrichment notes and route any ruling conflict to the author as a question, never as a
