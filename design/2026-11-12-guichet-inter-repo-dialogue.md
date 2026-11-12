@@ -373,13 +373,15 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   repository's remote (from that list, not the asker's own `origin`) with a
   plain `git push`, no forge API,
   together with its head ref `refs/intake-heads/<id>` and the thread. It adds
-  exactly one `incoming` ticket with an `Origin: <asker-repo>` header, the
+  exactly one `incoming` ticket with `Origin: <asker-repo>` and `Intake:
+  <id>` headers, the
   facts and the evidence, on a base the request note records (the
   receiver's `main` at filing). The asker never merges it.
 - **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
   anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
-  `ts` first: `request`, `question`, `answer`, `verdict`, each with its
-  author and the branch head. Transport and concurrent-write merging are
+  `ts` first: `request`, `answer` (asker); `verdict` (triager, through the
+  script); `promoted`, `declined`, `resume` (owner); `held` (script or
+  sweep); each with its author and the branch head. Transport and concurrent-write merging are
   those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
   without force); the code is a sibling of `review_notes.py` sharing its
   transport layer, with its own entry schema and lock (review entries and
@@ -444,10 +446,11 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    promotion (NEW or AMENDED, prepared, not landed). An owner (the author,
    or a session of the receiver acting with the author's leave) promotes
    one by opening the receiver's ordinary merge request for the intake
-   branch at exactly the prepared head, or declines it with a `declined`
-   note and a reason. Once a promotion is open, the receiver's merge
-   process owns the branch (a rebase before the gate is normal); a
-   promotion closed without merging counts as declined. Promotion is the owner's
+   branch at exactly the prepared head and writing a `promoted` note, or
+   declines it with a `declined` note and a reason. Once `promoted`, the
+   receiver's merge process owns the branch (a rebase before the gate is
+   normal); an owner who closes the promotion without merging writes a
+   `declined` note. Promotion is the owner's
    decision, so the automerge habit for ticket-only requests applies from
    that point on. A NEW ticket keeps `needs-human` after landing unless the
    owner removes it in the promotion.
@@ -461,7 +464,7 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    it runs the triager on runnable intakes older than an hour, decides
    questions unanswered for seven days, retries failures, and deletes the
    branch and head ref of finished intakes. `/dashboard` lists intakes
-   runnable, waiting on a question, prepared, and held. The launch in step 2
+   runnable, waiting on a question, failed, prepared, promoted and held. The launch in step 2
    is therefore never a single point of failure.
 
 ### Intake lifecycle
@@ -469,19 +472,19 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 The state of an intake is read from the last entry of its thread and, for
 `landed`, from the receiver's `main`. Each state fixes what the branch tip
 must be; a tip that breaks its state's invariant moves the intake to
-`held`, with no retriage.
+`held` (from any state with an invariant), with no retriage.
 
 | State | Entered by | Tip invariant | Next |
 |---|---|---|---|
 | `runnable` | a `request` or an `answer` note | the asker's head | the launcher runs it at once (no delay); the sweep after an hour |
-| `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; decided after seven days |
-| `prepared` | a NEW or AMENDED verdict, with its prepared head | the prepared head | `promoted` or `declined` by an owner |
-| `promoted` | the owner's merge request at the prepared head | owned by the receiver's merge process | `landed`, or `declined` if closed unmerged |
-| `landed` | the intake id appears in the ticket on the receiver's `main` (NEW: its `Origin:` header; AMENDED: its log line) | none | finished; the sweep deletes branch and head ref |
+| `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
+| `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep reruns the action), then the prepared head | `promoted` or `declined` by an owner |
+| `promoted` | the owner's `promoted` note, with the merge request opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
+| `landed` | the ticket on the receiver's `main` carries the intake id (NEW: its `Intake:` header; AMENDED: its log line) | none | finished; the sweep deletes branch and head ref |
 | `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
 | `declined` | an owner's `declined` note, or a promotion closed unmerged | none | finished; deleted as above |
 | `failed` | a `failed` verdict | the asker's head | `runnable` again, twice; then `held` |
-| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason | none enforced | an owner's `resume` note (back to `runnable`) or `declined` note; the sweep skips it |
+| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left, after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
 
 "Landed" is detected on `main`, not from the branch, so a merge that
 rebases or deletes the branch is still recognized.
@@ -567,8 +570,10 @@ last.
    script with its range and tip checks. *Proves*, by a dry run between two
    of the author's repositories, each verdict: NEW and AMENDED leave a
    prepared head for the owner to promote, PUSHBACK deletes branch and head
-   ref, QUESTION waits and resumes on an answer; and that the sandbox
-   denies a read outside the receiver.
+   ref, QUESTION waits and resumes on an answer; each move into `held` and
+   out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
+   detected after a rebase merge; and that the sandbox denies a read outside
+   the receiver.
 2. **Triage profile.** `profiles/guichet/PROFILE.md` and its shell: facts
    against framing, duplicate search, the live-work read, clearance as the
    stricter of the two repositories, the verdict format. *Proves*, on the
@@ -580,9 +585,8 @@ last.
    the author to decide. Callers (`roar` step 8, `raid`) cite the new
    wording. *Proves* nothing new: it records what phases 1 and 2 showed.
 4. **Sweep and promotion view.** `/molt` applies the lifecycle table
-   (§ 5, Intake lifecycle); `/dashboard` lists runnable, waiting and held
-   intakes and those
-   awaiting promotion. *Proves* that an intake whose launch failed, or
+   (§ 5, Intake lifecycle); `/dashboard` lists every state but the
+   finished ones. *Proves* that an intake whose launch failed, or
    whose answer's relaunch failed, gets a verdict within a day.
 5. **Report, conditional.** After the review below, if the data show
    something: a HAL technical report on the design case and its outcomes,
