@@ -1,0 +1,39 @@
+%erg 0.1
+Title: gaze seat: a short progress preamble before the header costs the seat
+Created: 2026-11-12
+Author: reviewer
+Closed: autoclosed — PR #2469
+
+--- log ---
+2026-11-12T12:19Z reviewer created
+2026-11-12T13:19Z reviewer closed — autoclosed — PR #2469
+
+--- body ---
+## Context
+
+Measured 2026-11-12 by replaying the archived seat answers (agent-sessions
+raw store, seat-raw, 426 files since 2026-10-31) through `gaze_seat.derive`:
+all 20 seats refused for their reach line carried a valid
+`reach: read=… shell=… tests=…` line. Each had progress text before the
+header: one line ("Status: I've read the diff…", "Now let me write the
+report:") on 17 Claude seats and 1 Vibe seat; a long tool trace on 2 Vibe
+seats. Claude-family seats lost about 9% (17/194), still on 2026-11-12;
+GPT 0/218. In the review notes of 15 repos since 2026-10-27, reach-line
+refusals are 32 of 87 failed seats, the largest cause.
+
+`reach_refusal` reads the reach line at the report's second line only
+(ticket 1290, commit 22f3c16a3, against picking a reach line out of the
+body). Ticket 1400 later refused any second valid reach line, which covers
+the quoted-line risk on its own.
+
+## Ask
+
+Accept a short progress preamble: drop up to three leading non-blank lines
+when the header (seat `worker:` line, `reach:` line, or a fenced header
+block) follows them. A reach line deeper in the body stays refused.
+
+## Exit criteria
+- [ ] A report with up to three lines of progress text before its header is filed, the preamble not in the filed report
+- [ ] A reach line after more than three lines of body is still `no valid reach line`
+- [ ] Replaying the 20 archived refusals: every one with a preamble of three lines or fewer is filed
+- [ ] panel.md states the rule
