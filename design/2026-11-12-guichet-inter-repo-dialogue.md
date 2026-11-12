@@ -214,12 +214,47 @@ other repositories; LLM accuracy at routing or priority triage; official
 `codex queue` documentation; any native A2A support in the three runtimes;
 primary sources for Contract Net, KQML and maintainer triage practice.
 
+**State of practice (bibliographic saturation, 2026-11-12).** Three blind
+searchers (Claude, pinned `sonnet`), an adversarial judge that re-fetched
+every primary text (Claude Fable) and a completeness critic (gpt-6-astra,
+logs only) examined three claims; report and logs in
+`design/research/2026-11-12-guichet-biblio-saturation.md`. Coverage is
+partial for every claim. Findings:
+- *Local A2A transports.* No A2A binding over the local filesystem is
+  among the a2aproject proposals we examined as of 2026-11-12. The nearest are the open
+  STDIO binding proposal (<https://github.com/a2aproject/A2A/issues/2048>:
+  "no listening socket, no port", session bound to a pid) and
+  store-and-forward proposals (A2A issues 2191, 2185, 2438). File mailboxes
+  with atomic-rename claims exist without A2A: a2a-relay
+  (<https://github.com/Hosuke/a2a-relay>), abq
+  (<https://github.com/aygp-dr/abq>), agent-message-queue
+  (<https://github.com/avivsinai/agent-message-queue>), pi-messenger, tap.
+  synapse-a2a keeps one registry file per agent with its pid and checks
+  liveness by `kill(pid, 0)`. So the transport below is *partly
+  anticipated*: each ingredient exists, the combination under A2A's
+  vocabulary was not found.
+- *Coding-agent CLIs of several vendors as peers.* Anticipated:
+  synapse-a2a, a2abridge, and a2aproject's own a2a-serve (v0.1.0,
+  2026-11-11) put Claude Code, Codex and others on A2A, by their own
+  account (A2A conformance self-declared, untested); agmsg, hcom, repowire,
+  agent-message-queue and tap (arXiv 2606.14445, Claude and Codex on one
+  codebase) do it over their own protocols. None of the ten tools examined
+  documents Mistral Vibe support.
+- *Agents reporting bugs to repositories or services they depend on,
+  measured.* We did not identify a matching study in the searches described
+  (coverage partial: no Semantic Scholar, OpenAlex or HAL; several
+  exclusions rest on abstracts). Nearest: agentic property-based testing (arXiv
+  2510.09907; authors selected and reported 5 bugs), human upstream-bug
+  studies (Lin et al., EMSE 2022, doi 10.1007/s10664-022-10173-y; NPM
+  maintainer responsiveness, arXiv 2511.04986).
+
 **What this changes in § 5.** (1) Messages are notification, the ticket
 store is the record: every verdict names a ticket or a logged pushback.
 (2) The ACK is an application-level message with the correlation id, since
-no runtime's transport acknowledges across all pairs. (3) A live Claude Code
-guichet must accept peer messages without a human hold, or REQUESTs expire
-unseen; a missing ACK sends the asker to the one-shot path. (4) Facts, not agreement:
+no runtime's transport acknowledges across all pairs. (3) Where a Claude
+Code `SendMessage` shortcut is used, the receiver's inbound hold can let
+REQUESTs expire unseen; a missing ACK sends the asker to the protocol's own
+transport, and failing that to the one-shot path. (4) Facts, not agreement:
 the guichet triages against its own repository, not the asker's framing,
 and the round cap bounds loops.
 
@@ -249,6 +284,14 @@ answers. Uniform across runtimes in principle; in practice a new service to
 run, secure and keep alive on padme and doudou, for a handful of messages a
 day.
 
+**E. Reuse an existing local agent bus** (different family: buy, not
+build). agent-message-queue, hcom or repowire already carry messages
+between Claude Code, Codex and Pi sessions and wake idle ones (reuse table
+in `design/research/2026-11-12-guichet-biblio-saturation.md`). E is
+not an alternative to B: it is B's transport. None of the tools examined
+provides the triage role or the durable record in the receiving store, and
+none documents Vibe support; their discovery features were not compared.
+
 ## 5. Synthesis and recommendation
 
 **Pick B, in a hybrid form: a reused background guichet where the runtime
@@ -256,9 +299,10 @@ can host one, a one-shot guichet elsewhere; the receiving store records
 every verdict.** B fixes both pains of § 1: the owner writes its own ticket,
 and intake has an owner. The reviews (below) found no way in the harness's
 doors to keep a guichet alive; the author pointed to `claude --bg` (§ 2,
-background sessions), which does, with no supervisor to build. Codex and Pi
-askers, and any host where the background launch fails, use the one-shot
-doors.
+background sessions), which does, with no supervisor to build. The
+transport amendment below makes discovery and delivery runtime-neutral: any
+asker reaches a live guichet; the one-shot doors serve tenders that cannot
+run in the background and failed launches.
 
 ### Roles **[author]**
 
@@ -305,6 +349,19 @@ worktree it moved into, so the cwd cannot make the join. For Codex and Pi the
 lock and pid still name the ticket and prove liveness; only the session name
 is missing.
 
+**When metadata is not enough: an informant reads the transcript
+[author].** If the files show an overlap and the guichet needs the running
+session's intent (is it fixing the same cause?), it does not query that
+session, which would interrupt it, and it does not read the transcript
+itself. It sends a cheap read-only informant, a small-model subagent, to
+the session's live transcript, located through `transcript_spool.py`
+`NAMED_ROOTS` (claude, codex, pi, aider, vibe), which returns three lines of
+facts: ticket, files, current hypothesis. The guichet records facts, never
+quotes; transcripts may hold uncleared material. Mapping a pid to its
+transcript file is known for Claude Code (`sessionId` in `claude agents
+--json`); for the other runtimes it goes through cwd and mtime, a phase 1
+probe.
+
 **Overlap is detected by files, then judged by ticket.** The guichet
 matches the paths in the asker's evidence against each live branch's files
 in flight (the command the sync rule already uses, `rules/workflow.md`
@@ -321,16 +378,18 @@ middleman [author]**:
   the guichet answers the asker with that session's address, the ticket,
   and the session's state (busy or idle, from `claude agents --json`), logs
   a one-line pointer on the ticket (`redirected <contextId> to <session>`),
-  and steps out. **A busy session is not interrupted:** the asker
-  subscribes with `SendMessage` `notify_when_idle: true` and no message,
-  which costs the session nothing, and opens the dialogue when the idle
-  notice arrives. The asker stays non-blocking meanwhile; a subscription
+  and steps out. **A busy session is not interrupted:** where its runtime
+  offers an idle notice (Claude Code: `SendMessage` `notify_when_idle: true`
+  with no message, free for the session), the asker subscribes and opens
+  the dialogue when the notice arrives; elsewhere it writes to the session's
+  inbox only when the live-work read shows the session idle. The asker stays non-blocking meanwhile; a subscription
   that expires unanswered falls back to a log line on the ticket. The asker opens its own dialogue with that
   session under the same protocol; the session records the outcome on its
   own ticket, as any receiver does. The guichet relays nothing in either
   direction.
 - **The case does not touch the session's current work**, or the session
-  is not reachable (a Codex or Pi coder, § 2): no redirect. The guichet logs
+  is not reachable (its runtime has no inbox or wake adapter, § Transport
+  and discovery): no redirect. The guichet logs
   the case on the running ticket and answers `completed` with the ticket as
   artifact, so a busy coder reads it at its own pace.
 - **The request would change something a live branch is rewriting**:
@@ -360,6 +419,70 @@ no memory. The asker finds any verdict later by grepping the receiving store
 for its id, which also deduplicates: a repeated REQUEST, or a fallback ticket
 citing an id already answered, gets the recorded verdict back.
 
+### Transport and discovery: runtime-neutral, reuse first **(amended 2026-11-12)**
+
+The first-class runtimes are Claude Code, Codex, Vibe and Pi, with more to
+come **[author]**. A Vibe MOE in another project cannot see a Claude
+`guichet-idh` through `ListAgents`, so discovery and delivery must not
+depend on any one runtime's native tools.
+
+- **Card.** A live guichet writes a card at a well-known path on its host,
+  `~/.local/state/idh/guichets/<repo>.json`, with Agent Card names: `name`,
+  the inbox as `url`, `protocolBinding`, plus `runtime`, `model`, `host`,
+  `pid`, `started`. It deletes the card on retirement; a card whose pid is
+  dead is absent. `runtime.py guichet find <repo>` reads it from bash, so
+  every runtime can call it.
+- **Tender, chosen by the receiver.** A `guichet.json` in the receiving
+  repository names who tends its guichet: runtime, model, host (for the
+  harness, for example, Claude Code with Fable on padme). An asker that
+  finds no live card launches exactly that, through `runtime.py launch` in
+  peer mode: detached, in the receiving repository's checkout, under that
+  repository's rules, reporting to no one but the protocol; from another
+  host, over `ssh`. A tender hosts a live guichet only if its runtime can run
+  in the background and has a wake adapter: today Claude Code (`claude
+  --bg`); other runtimes once phase 1 or 4 proves it. Otherwise the guichet
+  runs one-shot.
+- **Delivery: reuse first.** Phase 1 trials agent-message-queue as the
+  carrier: files with fsync and rename, no broker, a wake process per agent
+  for Claude Code, Codex and Pi, MIT licence (§ 3). Whether its Claude wake
+  (documented as `claude --print`) starts a turn in the background session
+  or a fresh headless run is a phase 1 question. Messages carry the A2A fields below in their body. If the
+  trial fails (behavior, maturity, or a fit problem with cards), we build
+  the same shape ourselves: an inbox directory per participant in the Pi
+  wake-inbox format (`runtime_wake.py`), one directory per task whose files
+  mirror A2A's core operations (send = rename into the inbox, get = read
+  the status file, list = list the task directories, cancel = write a cancel
+  file; no streaming), and a per-runtime adapter that turns an arrived file
+  into a turn (the Pi extension exists; Claude via `wake arm`; Codex via
+  `codex queue`).
+- **Vibe.** None of the tools examined documents support for it, and the
+  harness has no Vibe adapter. A Vibe
+  asker writes REQUESTs like any other and reads its reply inbox at its own
+  pauses (non-blocking, slower); a Vibe adapter comes only if that proves
+  too slow (phase 4, conditional).
+- **Native channels are shortcuts.** `SendMessage` between two Claude
+  sessions on one host stays allowed; it is not the protocol.
+- **Cross-host.** Cards and inboxes are per host. A doudou asker reads
+  padme's card and writes padme's inbox over `ssh padme`, or falls back.
+- **A2A level: binding-shaped, not declared [author].** Field names and the
+  operation mapping follow A2A, so a declared custom binding or an HTTP
+  bridge stays a mechanical step. Declaring one is dropped from the build
+  plan (it returns only as phase 5's conditional option):
+  the filesystem binding is partly anticipated and the design borrows A2A's
+  vocabulary, not its full data model (§ 3). A publication, if any, would
+  rest on the measured cross-repository bug reports, the part for which
+  § 3 found no matching study (pending the critic's open angles).
+
+**Is this the cheapest local inter-runtime transport? [author]** Every
+transport that starts a turn in a running session needs a per-runtime wake
+adapter, so the cost difference lies elsewhere. To build, a file inbox
+reuses the most of what exists (the Pi extension, `wake arm`, `codex
+queue`) and needs no daemon; sockets need a listener in every session and
+HTTP (alternative D) a server per agent. A shared SQLite store (agmsg,
+hcom) is comparable: no required daemon, but a client in every runtime.
+Cheaper than any build is reusing one (E), which the phase 1 trial prices.
+Cheapest of all is today's ticket-only protocol, which buys no dialogue.
+
 ### Two paths
 
 **Vocabulary: A2A's, without A2A [author].** The transport is not adopted
@@ -386,15 +509,15 @@ citing an id already answered, gets the recorded verdict back.
 A2A has no redirect state; the guichet uses `completed` with a redirect
 artifact, since its task (triage) is done. That is the one extension.
 
-**Live path** (Claude Code askers on the same host, the only two-way path
-in § 2):
+**Live path** (any asker on the guichet's host, or reaching it over ssh):
 
-0. If neither `ListAgents` nor `claude agents --json` shows a session named
-   `guichet-<repo>`, the asker launches one **[author]**:
-   `claude --bg -n guichet-<repo> --model <advisor> ...` in the receiving
-   repository's primary checkout, with the guichet profile as its agent and
-   the REQUEST as its first prompt. It persists idle between requests and
-   costs nothing while idle.
+0. If `runtime.py guichet find <repo>` finds no live card, the asker
+   launches **[author]** the tender the receiver's `guichet.json` names,
+   through `runtime.py launch --mode bg` in the receiving repository's
+   primary checkout, with the guichet profile and the REQUEST as its first
+   prompt. For a Claude Code tender that is `claude --bg -n guichet-<repo>
+   --model <advisor>`. It persists idle between requests and costs nothing
+   while idle.
 1. REQUEST (`submitted`) → ACK (`working`) within **T = 5 min [author]**,
    proving the channel two-way;
 2. questions and answers, at most three rounds;
@@ -407,8 +530,8 @@ guichet converts open ids to `incoming` tickets and exits; `claude stop` or
 to launch produce two guichets for a while: both write store lines, the
 second AMENDs, and the elder retires the younger by name.
 
-**One-shot path** (Codex and Pi askers, a failed background launch, or no
-ACK within T):
+**One-shot path** (a tender that cannot run in the background, a failed
+background launch, or no ACK within T):
 
 1. The asker launches a headless run in the receiving repository through the
    door of the family chosen below, with the guichet profile and the REQUEST
@@ -458,12 +581,15 @@ enforced, the profile states it and the observation log (§ 6) checks it.
   holds uncleared content, which forces LOCAL/PRIVÉ (`skills/route/SKILL.md`).
   Triage is judgment work: deciding that a foreign observation is a duplicate,
   not ours, or a symptom of a known cause.
-- **Family: the one easiest to talk to [author], not dogmatically the
-  asker's.** On the live path, the family of the live guichet. On the one-shot
-  path, any family the asker's host can launch through a live door with
-  write access to the receiving tickets; the launch line records the choice
-  and its reason, as route requires.
-- **Tension with decorrelation.** The easiest pair is often same-family, and
+- **Family: chosen by the receiver.** The author first ruled "the one
+  easiest to talk to, not dogmatically the asker's". With a transport every
+  runtime can reach, ease of talk no longer depends on family, so the
+  receiver's `guichet.json` names its tender on quality (route's choice,
+  for example Fable for the harness). A one-shot run uses the same tender
+  when its door is live; the launch line records the choice and its reason,
+  as route requires.
+- **Tension with decorrelation.** The receiver's tender and the asker are
+  often the same family, and
   § 3 reports that homogeneous LLM groups amplify agreement errors. The
   protocol carries the mitigation: the asker sends facts and evidence, not
   conclusions; the guichet checks them against its own store and history
@@ -491,6 +617,7 @@ Estimates by the drafter; author-hours are review time; USD unmeasured.
 | B hybrid | 2–3 over the phases | audit, profile, launcher, rule: ~4 MRs | 10–30 build; per one-shot dialogue one advisor run plus a ticket MR, ~1–3 | revert the rule, retire the profile; the fallback is today's protocol |
 | C timer triage | 1 | one skill section + timer | 5–10 build; one advisor run per sweep | disable the timer |
 | D A2A server | 6+ | daemon, auth, per-runtime adapters | 50+ build, plus upkeep | stop the service |
+| E reuse a bus (as B's transport) | 1 (trial review) | a trial MR; adapters only for gaps that prove costly (Vibe, if replies at pauses are too slow) | ~5 trial; then upkeep of a pinned dependency | unpin; fall back to our own file transport |
 
 The background guichet needs no supervisor (`claude --bg`), but every wake
 of an idle session re-reads its whole context, uncached after an idle hour:
@@ -501,28 +628,30 @@ unmeasured, and one of the observation's questions.
 One tracker, children in order; each child one merge request. The rule
 changes last, once its machinery exists **(revised after review)**.
 
-1. **Audit peer-to-peer capabilities [author].** For each runtime pair
-   (Claude Code, Codex, Pi; same host, cross host), probe with a
-   REQUEST/ACK round trip: can A start a turn in B, can B reply, is receipt
-   reported, latency. First probe: a `claude --bg -n guichet-<repo>`
-   session receiving a peer `SendMessage` and replying, under each
-   permission mode the guichet might run in. Second probe: the live-work
-   join (worktree lock pid ↔ `claude agents --json` pid ↔ ticket) on a
-   repository with a running Codex or Pi coder too. Third probe: an asker
-   subscribing to a busy `--bg` coder's idle notice, then messaging it, to
-   confirm the notice arrives and the coder's turn ran uninterrupted. For
-   each one-shot door: can it write the receiving
-   store from its own worktree. Includes `wake send` → Claude Code (NOOP
-   today) and Claude's inbound hold. *Proves* which pairs the live path may
-   use and which doors the one-shot path may use; results replace § 2's
-   transport table.
+1. **Audit and transport trial [author].** (a) Trial agent-message-queue
+   between a Claude Code, a Codex and a Pi session on padme: REQUEST/ACK
+   round trip, wake of an idle session, durability across a restart,
+   licence and pin. (b) One probe per wake adapter instead of per runtime
+   pair, including a `claude --bg` guichet's inbound hold under each
+   permission mode it might run in. (c) The live-work join (worktree lock
+   pid ↔ session ↔ ticket) and the pid-to-transcript mapping for each
+   runtime. (d) An asker subscribing to a busy coder's idle notice. (e) For
+   each one-shot door: can it write the receiving store from its own
+   worktree, push and open a merge request (Codex `workspace-write` has no
+   network by default). (f) doudou → padme over ssh. *Proves* which carrier
+   to use (reused or built) and which adapters are missing; results replace
+   § 2's transport table.
 2. **Guichet profile and launcher.** `profiles/guichet/PROFILE.md`, shell
    `agents/guichet.md` with its `tools:` grant, `Requires-tools` line; the
    verdict vocabulary, store-line format, `incoming` and `intake` tickets,
    three-round cap, the A2A field and state names, the live-work read and
-   redirect rules; one launch line per door. *Proves*, by a dry run between
-   two of the author's repositories, that a one-shot run returns a verdict
-   and lands its store line by a ticket-only merge request.
+   redirect rules, the informant; the card and `runtime.py guichet find`;
+   `runtime.py launch`, stateless, with one-shot, `--bg` and peer modes,
+   reusing `gaze_seat.py`'s door rendering so headless launches keep one code
+   path; the receiver's `guichet.json` for the harness, git-erg and padme.
+   *Proves*, by a dry run between two of the author's repositories, that a
+   one-shot run returns a verdict and lands its store line by a ticket-only
+   merge request.
 3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: dialogue with
    the receiving guichet first (live, else one-shot); it tickets, amends or
    pushes back; drop an `incoming` ticket when neither path works. Step 3
@@ -530,14 +659,16 @@ changes last, once its machinery exists **(revised after review)**.
    and step 4 stay. Callers (`roar` step 8, `raid`) cite the new wording;
    roar's tracker hand-off becomes a REQUEST, with the log line as fallback.
    *Proves* nothing new: it records what phases 1 and 2 showed.
-4. **Pi path** (only if phase 1 shows `pi --print` cannot serve a one-shot
-   guichet or Pi needs a live path): extend `idh-wake.ts` with a reply route.
-   *Proves* a Pi asker or guichet completes one REQUEST round trip.
-5. **Live guichets for Codex and Pi, conditional.** Only if the
-   observation shows one-shot cold starts costly for those askers, and
-   phase 1 found a two-way path: a persistent guichet on those runtimes.
-   Priced then, not now. *Proves* the live path's ACK within T for a Codex
-   or Pi asker.
+4. **Missing adapters, conditional** (only those phase 1 finds missing and
+   the observation finds costly: Vibe if replies read at its pauses prove too
+   slow, Pi if the carrier does not cover it): an inbox adapter per
+   runtime. *Proves* that runtime completes one REQUEST round trip as
+   asker and as guichet.
+5. **Report, conditional.** After the review below, if the measured
+   cross-repository reports show something: a technical report (HAL) on the
+   design case and its outcomes, citing § 3's state of practice. A declared
+   A2A binding only if something outside this setup must talk to a
+   guichet. *Proves* nothing for the harness; it is a publication choice.
 
 **Observe, then assess.** From phase 3's merge, each guichet run adds one
 field to its store line: path (live / one-shot / fallback), ACK latency,
@@ -559,7 +690,7 @@ revisit (memory `feedback_no_wait_tickets`), deciding:
 - **redirects**: how often the guichet sent an asker to a running session,
   and whether that session used the case or found the dialogue an
   interruption;
-- **phase 5**: start it or not.
+- **phase 5**: write the report or not.
 
 ## Review
 
@@ -591,7 +722,8 @@ the drafter, same family; subagent, read-only). Verdict NEEDS-REVISION.
 Findings, verified by the drafter against the files:
 (1) no mechanism keeps a guichet alive: the headless door is
 `claude -p --restricted`, one turn, settings ignored. Adopted: hybrid
-live/one-shot, persistence deferred to phase 5;
+live/one-shot, persistence deferred to phase 5 (phase numbering since
+superseded by the transport amendment);
 (2) verdicts had no durable address: same fix as seat 1 (1);
 (3) the launch ruling widens step 3, and "ticket-only" was unenforced:
 § Authorization, enforcement through the `tools:` grant and sandbox;
@@ -610,14 +742,16 @@ T = 5 min stay, because the author ruled for a reused session and T, and
 the live path costs nothing when a session already exists. **Author follow-up (2026-11-12):** "Why not launching `--bg`?" Checked:
 `claude --bg` persists a named session (§ 2), so Fable's finding (1)
 no longer forces one-shot for Claude Code; the live path now launches a
-background guichet, and phase 5 shrinks to Codex and Pi.
+background guichet, and phase 5 shrinks to Codex and Pi (since replaced:
+the transport amendment makes the live path runtime-neutral, and phase 5
+is now the conditional report).
 **Author follow-up (2026-11-12):** the guichet must know what the
 repository's other live sessions are doing, since a request may overlap
 running work ("we are already doing this, I will pass your case to the
 running coder"). Added § Knowing the repository's live work: read-only
 signals joined by pid, no steering.
 **Author rulings (2026-11-12):** A2A is not adopted, its vocabulary is
-reused (§ Vocabulary). The guichet does not middleman: when a live session
+reused (§ Two paths, Vocabulary). The guichet does not middleman: when a live session
 is better placed, it redirects the asker to talk with it directly, replacing
 the relay first drafted.
 **Author follow-up (2026-11-12):** asked which further state of the art
@@ -626,8 +760,20 @@ redirect to a busy session only on its idle notice (after Google SRE's
 interrupt handling), and overlap detection by files in flight (after
 blackboard matching). The other five confirmed existing choices and stay
 out of § 3.
+**Author follow-ups (2026-11-12, transport amendment):** padme is the
+padme services' repository; discovery must work across Claude Code, Codex,
+Vibe and Pi (a Vibe MOE cannot list Claude sessions), hence the card file,
+the receiver's `guichet.json` and a runtime-neutral transport; A2A
+bindings were read in the specification (§ 12 allows custom bindings, URI
+identifiers, all core operations required), and the author chose
+binding-shaped; a bibliographic saturation pass found the transport partly
+anticipated and peer messaging across vendors' CLIs anticipated, so the
+transport is reuse-first (agent-message-queue trial) and publication rests
+on the measured case; the guichet sees other runtimes' sessions by
+metadata first, then through a transcript-reading informant; cheapest
+transport answered in § 5.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
-does the hosting), and the Pi extension and non-Claude live guichets are out
-of the first build.
+does the hosting); the transport is reused if the phase 1 trial holds, and
+only the adapters it lacks and that prove costly are built, in phase 4.
