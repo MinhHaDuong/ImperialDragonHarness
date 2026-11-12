@@ -373,10 +373,14 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   repository's remote (from that list, not the asker's own `origin`) with a
   plain `git push`, no forge API,
   together with its head ref `refs/intake-heads/<id>` and the thread. It adds
-  exactly one `incoming` ticket with `Origin: <asker-repo>` and `Intake:
-  <id>` headers, the
-  facts and the evidence, on a base the request note records (the
-  receiver's `main` at filing). The asker never merges it.
+  exactly one **intake file**, `tickets/intake/<id>.md`: plain markdown, not
+  an erg ticket, so erg ignores it (probed: `erg check` passes with such a
+  file present) and the asker needs neither the receiver's erg nor an ID
+  claim in its store. The file opens with `Origin: <asker-repo>` and
+  `Intake: <id>` lines, then the facts and the evidence. erg's ticket header
+  set is closed **[author]**, so these lines never go into an erg ticket.
+  The branch sits on a base the request note records (the receiver's `main`
+  at filing). The asker never merges it.
 - **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
   anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
   `ts` first: `request`, `answer` (asker); `verdict` (triager, through the
@@ -418,8 +422,8 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    verdict as JSON.
 4. The verdict script acts, after checking that the asker's commits
    (from the recorded base to `refs/intake-heads/<id>`, the asker's
-   submission) add exactly one new `tickets/*.erg` and nothing else (the
-   bookkeeping tier alone would also admit `memory/` and `STATE.md`), and
+   submission) add exactly one `tickets/intake/<id>.md` and nothing else,
+   and
    that the branch tip satisfies the invariant of the intake's state
    (§ Intake lifecycle below).
    **It never lands anything on main [author].** It pushes its commit and
@@ -429,13 +433,19 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    head: equal means the action is done.
    **The asker pushes only when filing.** Corrections come as `answer`
    notes, or as a new intake with a new id.
-   - **NEW**: commits the ticket rewritten in the receiver's voice on the
-     intake branch, keeps `Origin:` and `Intake:`, adds `needs-human`; the owner's
-     promotion lands it;
-   - **AMENDED**: replaces, on the intake branch, the asker's new ticket by
-     one dated log line on the existing ticket, naming `Origin:` and the
-     intake id and quoting the report as data, never touching the ticket's
-     scope or exit criteria; the owner's promotion lands it;
+   - **NEW**: in one commit on the intake branch, creates the ticket with
+     `erg new` (an ID claimed by the receiver), written in the receiver's
+     voice and labelled `needs-human`, adds the erg log line `intake <id>
+     from <asker-repo>`, and deletes the intake file; the owner's promotion
+     lands it;
+   - **AMENDED**: in one commit, adds to the existing ticket the erg log
+     line `intake <id> from <asker-repo>` with the report quoted as data,
+     never touching the ticket's scope or exit criteria, and deletes the
+     intake file; the owner's promotion lands it.
+
+   Either way the prepared head's net change against `main` touches only
+   `tickets/*.erg` (and claims), so the intake file never reaches `main` and
+   the promotion is bookkeeping tier with no gate change.
    - **PUSHBACK**: writes the reason in the thread and deletes the intake
      branch;
    - **QUESTION**: writes the question in the thread and stops.
@@ -480,7 +490,7 @@ must be; a tip that breaks its state's invariant moves the intake to
 | `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
 | `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
 | `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
-| `landed` | the ticket on the receiver's `main` carries the intake id (NEW: its `Intake:` header; AMENDED: its log line) | none | finished; the sweep deletes branch and head ref |
+| `landed` | a ticket on the receiver's `main` carries the log line `intake <id> from …` (NEW and AMENDED alike) | none | finished; the sweep deletes branch and head ref |
 | `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
 | `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted as above |
 | `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
@@ -506,18 +516,18 @@ sessions.
 | Finding | Under C1 |
 |---|---|
 | peer text as a user turn into a shell | the triager has no shell; git and `/proc` are read by the launcher script, and the intake is a file the triager reads as data |
-| ticket-only unenforced | the model writes nothing; the script writes only `tickets/*.erg` on the intake branch, refuses any other path, and records the exact head the owner may promote |
+| ticket-only unenforced | the model writes nothing; the asker may add only its intake file; the script writes only `tickets/*.erg` (through erg) and deletes the intake file, refuses any other path, and records the exact head the owner may promote |
 | `replyTo` arbitrary write | gone: replies are notes in the thread |
 | clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable. Until phase 1 proves the sandbox, C1 does not run where the host holds uncleared material outside the receiver: a local model would stop leaks to a provider, not quotes into a ticket |
 | wedged session, lost request | no session to wedge; a run has a wall-time cap; branch and notes are durable before any run starts |
-| authority laundering | `Origin:` kept; nothing lands without an owner's promotion; `needs-human` on every NEW |
+| authority laundering | origin kept in the erg log line and the intake thread; nothing lands without an owner's promotion; `needs-human` on every NEW |
 | cost runaway | one run per intake, serialized per receiver, a daily cap per receiver in the launcher |
 | cross-host replies | git remotes reach every host |
 
 ### Authorization and the rule
 
 `rules/guards.md` allows, in another project, tickets only. C1 widens that
-exception from "a ticket" to "an intake branch adding one ticket, its head
+exception from "a ticket" to "an intake branch adding one file under `tickets/intake/`, its head
 ref under `refs/intake-heads/`, and its intake note". Rules are the author's law, so phase 3 proposes the wording
 and the author decides. The asker's launch of a triager in the receiving
 repository is the standing authorization the author ruled for: triage
@@ -721,6 +731,11 @@ Same brief to two seats, attack surfaces named, conclusions not given.
 - The drafter verified each code claim (`idh-guard.ts:162-167`,
   `idh-wake.ts` delete right after delivery, `merge-gate.py` bookkeeping
   list, `~/.local` mode 0700 with every agent under one account).
+
+**Author rulings (2026-11-12, intake file):** intake files live under
+`tickets/intake/` and are not erg tickets; erg's header set is strictly
+closed, so `Origin:` and `Intake:` appear only in the intake file, and the
+erg ticket records the origin as a log line, which landing detection reads.
 
 **Author ruling (2026-11-12, landing):** option (b): the triager never
 lands; accepted intakes land through the receiver's normal merge process
