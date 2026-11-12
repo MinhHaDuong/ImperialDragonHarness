@@ -2,12 +2,14 @@
 Title: publish-notes: file each note's parent item into a named collection (--collection)
 Created: 2026-11-12
 Author: reviewer
+Closed: autoclosed — PR #2464
 
 --- log ---
 2026-11-12T10:53Z reviewer created
 2026-11-12T11:07Z reviewer PR 2464: option is publish-notes --collection "<key or path 'A / B'>". Criteria 1-2 met; criterion 3 open: climate-finance-het has no reachable ticket store (its checkout on this host is not a repo), so its lane has not been told
 2026-11-12T11:08Z reviewer criterion 3 met: guichet session told climate-finance-het's 'Reading notes goto Zotero' session the option name by inter-session message (2026-11-12): publish-notes --collection N7RPNKQH in its lane
 2026-11-12T11:11Z reviewer verify-reroll — round 1: agnostic-guard fails on the ticket 1541 log line (absolute home path); reworded
+2026-11-12T11:19Z reviewer closed — autoclosed — PR #2464
 
 --- body ---
 ## Context
