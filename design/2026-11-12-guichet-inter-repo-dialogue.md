@@ -407,7 +407,7 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    runtime without being readable by its `read` tool), capped in wall time,
    model by route at the advisor tier **[author]**. Runs are serialized per
    receiver by `flock -o`; the launcher holding the lock drains every
-   pending intake of that receiver, one fresh run each, and after releasing
+   unsettled intake of that receiver (step 6 defines unsettled), one fresh run each, and after releasing
    the lock scans once more, relocking if anything arrived meanwhile, so a
    second launch that finds the lock held can just leave. A failed launch is harmless: the intake stays
    durable and the sweep (step 6) finds it. The asker leaves.
@@ -415,12 +415,20 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    history (§ Knowing the repository's live work below), and prints one
    verdict as JSON.
 4. The verdict script acts, after checking that the asker's commits
-   (from the recorded base to `refs/intake-heads/<id>`) add exactly one new
-   `tickets/*.erg` and nothing else (the bookkeeping tier alone would also
-   admit `memory/` and `STATE.md`), and that the branch tip still equals
-   that head. **It never lands anything on main [author].** It pushes its
-   commit and notes to the receiver's remote and records the prepared head
-   in the verdict note.
+   (from the recorded base to `refs/intake-heads/<id>`, the asker's
+   submission) add exactly one new `tickets/*.erg` and nothing else (the
+   bookkeeping tier alone would also admit `memory/` and `STATE.md`), and,
+   on a first verdict, that the branch tip still equals the asker's head.
+   **It never lands anything on main [author].** It pushes its commit and
+   notes to the receiver's remote and records the prepared head in the
+   verdict note; from then on the prepared head, not the asker's, is the
+   reference. A crash repair compares the tip with the recorded prepared
+   head: equal means the action is done.
+   **After a verdict the asker never pushes to the branch.** Corrections
+   come as `answer` notes, or as a new intake with a new id. A tip that
+   differs from both recorded heads while no promotion is open is
+   tampering: the sweep marks the intake `needs-human` instead of
+   retriaging it.
    - **NEW**: commits the ticket rewritten in the receiver's voice on the
      intake branch, keeps `Origin:`, adds `needs-human`; the owner's
      promotion lands it;
@@ -438,8 +446,9 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    promotion (NEW or AMENDED, prepared, not landed). An owner (the author,
    or a session of the receiver acting with the author's leave) promotes
    one by opening the receiver's ordinary merge request for the intake
-   branch at exactly the prepared head; a push after the verdict changes
-   the tip, so the sweep triages again instead. Promotion is the owner's
+   branch at exactly the prepared head. Once a promotion is open, the
+   receiver's merge process owns the branch (a rebase before the gate is
+   normal) and the sweep leaves it alone. Promotion is the owner's
    decision, so the automerge habit for ticket-only requests applies from
    that point on. A NEW ticket keeps `needs-human` after landing unless the
    owner removes it in the promotion.
@@ -452,7 +461,8 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 6. **Sweep.** The receiver's `/molt` relaunches every intake whose thread
    is not settled: last entry a `request` or an `answer` older than an hour;
    a NEW or AMENDED verdict whose prepared head is missing on the remote
-   (and no landing yet); a branch tip that moved after the verdict; a
+   (and no landing yet); a tip matching neither recorded head with no
+   promotion open (marked `needs-human`, not retriaged); a
    QUESTION unanswered for seven days (decided on what the triager has, or
    `needs-human`); a `failed` verdict, retried twice, then `needs-human`. `/dashboard` lists them. The launch in step 2 is
    therefore never a single point of failure.
