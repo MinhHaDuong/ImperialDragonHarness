@@ -55,13 +55,18 @@ Zotero too.
 
 `--collection` keeps a project's collection in step with its notes: the parent
 item of every row not refused is added to that collection, given as a
-collection key or as a path of names joined by `/` (`"Project / Sources"`). The
-collection is resolved once, before any write; an unknown or ambiguous one
+collection key or as a path of names joined by `/` (`"Project / Sources"`), in
+the library `--library` names. A string equal to a key is taken as that key; a
+single name means a top-level collection; names match exactly, case included.
+The collection is resolved once, before any write; an unknown or ambiguous one
 stops the run (exit 1, nothing written). Filing only adds: the parent's other
 collections stay, and a note `in sync` still repairs a parent missing from the
 collection. Each row then carries `collection`: `would add` or `already in`
 under `--dry-run`, `added` (read back after the write) or `already in`
-otherwise.
+otherwise. A refused row carries no `collection`. When filing fails after the
+note was written, the row reads `not written` with the filing error as its
+`reason`, although the note landed and the state file records it: a rerun
+finds it `in sync` and retries the filing.
 
 ## The state file
 

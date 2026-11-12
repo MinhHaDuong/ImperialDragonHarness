@@ -14,7 +14,7 @@ climate-finance-het the option name.
 ## Events
 
 - PR 2457 was already merged (09:45Z) when the guichet started; read back
-  MERGED at 899ed20. PR 2463 (bookkeeping tier) landed by `raid_land.py`
+  MERGED with head 899ed20 (merge commit c1cb80a). PR 2463 (bookkeeping tier) landed by `raid_land.py`
   without refusal.
 - Ticket 1541 was handed to a coder (hunt inline). It wrote the code before
   the tests, ran the two live-Zotero tests by hand with DISPLAY=:0, and left
@@ -29,7 +29,8 @@ climate-finance-het the option name.
 - The guichet's `raid_land.py 2464` (full tier, gaze and gate run in the same
   session, leave coming from the launching brief) was refused as "Merge
   Without Review". It ran unrefused after the author typed "land 2464".
-  Merged at 1ccbe94 (6e47724 plus the close commit).
+  Merged with head 1ccbe94 (6e47724 plus the close commit; merge commit
+  cc75ace).
 - The coder did not update the zotero skill docs for the new option; roar's
   bundle did.
 - Attribution capture for PR 2464 recorded nothing:
