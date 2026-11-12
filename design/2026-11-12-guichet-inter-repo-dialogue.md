@@ -454,16 +454,21 @@ depend on any one runtime's native tools.
   guichet>`, run inside the detached session. `flock` holds the lock for
   the guichet's lifetime; `-o` keeps it out of Pi's child processes, so a
   child that outlives a crashed Pi cannot hold it (reproduced without `-o`,
-  util-linux 2.39.3, gaze rv-20261112-pr-2470-8fb1); `-w 2` rides out a
-  concurrent probe. A second launch fails after two seconds and does
+  util-linux 2.39.3, gaze rv-20261112-pr-2470-8fb1); `-w 2` lets two
+  racing launchers settle. A second launch fails after two seconds and does
   nothing; a crash releases the lock, so no stale lock needs breaking.
-  Liveness is read without taking the lock (`lslocks` or `/proc/locks` on
-  the lock file), so a probe never makes a launch fail. A plain card file cannot
+  Liveness is read without taking the lock (`lslocks` by path, or
+  `/proc/locks` by the lock file's inode), so a probe never makes a launch
+  fail. Under `-o` only the `flock` process holds the lock, so a guichet is
+  stopped as a whole (its tmux session or systemd unit), never by killing
+  `flock` alone, which would free the lock while Pi runs on. The lock file
+  is never deleted: removing and recreating it while held would let a
+  second guichet lock the new file. A plain card file cannot
   serve as the lock: breaking a stale one after a crash is itself a race.
 - **Card.** A running guichet writes a card at
   `~/.local/state/idh/guichets/<repo>.json`, with Agent Card names: `name`,
   the inbox as `url`, `protocolBinding`, plus `model`, `host`, `pid`,
-  `started`. It is descriptive: who listens and with which model. Whether
+  `started`, where `pid` is Pi's, not `flock`'s. It is descriptive: who listens and with which model. Whether
   anyone listens is the lock's answer. `runtime.py guichet find <repo>`
   reads the lock state and the card from bash, so every runtime can call
   it. Two passing states are normal: lock held and no card yet (starting),
@@ -575,8 +580,9 @@ does, except the author.
   costs at least a fresh launch that reads only the profile and the store.
 - **Before the context guard** (230K for a launched worker).
 - On closing it converts open ids to `incoming` tickets, deletes its card,
-  reads the inbox once more and answers anything that arrived meanwhile,
-  then exits, which releases the lock. The inbox stays; the next asker's
+  reads the inbox once more and gives anything that arrived meanwhile a
+  verdict, or turns it into an `incoming` ticket when it would need a
+  question round, then exits, which releases the lock. The inbox stays; the next asker's
   REQUEST launches a fresh guichet that reads whatever waits there.
 - **A crash** needs no cleanup: the kernel releases the lock, and the next
   launch overwrites the stale card.
@@ -676,8 +682,8 @@ changes last, once its machinery exists **(revised after review)**.
    `systemd-run --user`) keeps running and `idh-wake.ts` delivers into it;
    the guichet's model reachable through Pi for each of route's tiers and
    each clearance level; the `flock -o` lock held for the session's lifetime,
-   released by a kill even with a Pi child still running, and readable
-   without being taken.
+   released by a kill even with a Pi child still running, readable without
+   being taken; stopping the session stops both `flock` and Pi.
    (b) Pi with a guichet brief does triage work: ticket commands through
    bash, its own worktree, a ticket-only merge request, under `idh-guard.ts`.
    (c) One asker-side probe per runtime, including whether a `wake arm`
