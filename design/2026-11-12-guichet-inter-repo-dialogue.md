@@ -1,6 +1,6 @@
 # Guichet: dialogue first between repositories
 
-Status: proposed
+Status: provisional (author, 2026-11-12)
 
 Drafted 2026-11-12 by Claude (claude-opus-5-5) with the author in the loop.
 Author rulings are marked **[author]**; everything else is the drafter's
