@@ -47,26 +47,28 @@ Read from `origin/main` at `829d7a582`.
 
 **Observed cases.** A history sweep on 2026-11-12 (research subagent,
 Claude pinned `sonnet`, read-only over the three receivers' ticket stores,
-git logs and the askers' journals; one quoted line per receiver checked by
-the drafter) found these, two per receiver. Each row is what happened, not
+git logs and the askers' journals) found these, two per receiver; every
+row was then checked against its tickets by gaze review
+rv-20261112-pr-2465-7bae and corrected by the drafter (P2 replaced). Each row is what happened, not
 a cause.
 
 | # | Asker → receiver | Observed | How it travelled | What the travel cost |
 |---|---|---|---|---|
-| H1 | climate-finance-het → harness, 2026-11-10/11 | reading-note filing contradicted the author's new Zotero-first decision | harness ticket 1522 written with the asker's framing (Web API, read-write key); cfh 3019 its child | the asker's premise ran against the 2026-10-16 "never the Web API" ruling; it survived about a day in two stores until the author ruled the local API and both were rewritten (cfh 3019: "Web-API and project-script choices superseded") |
-| H2 | climate-finance-het → harness, 2026-11-12 | `publish-notes` leaves parent items out of the project's Zotero collection | harness 1541, "relayed by a climate-finance-het session", observation only, design left to the executor | none visible: a well-formed report, after the asker had worked around it with a one-off script for 55 parents |
-| G1 | JETP-observer → git-erg, 2026-11-09 | managed pre-commit printed ~40 KB of warnings per ticket commit | git-erg 0313, `Author: Claude (JETP-observer session)`, filed in the receiver's store | fixed in 32 min (PR #405), but the fix needed every adopter to reinstall its hooks, which the reporter could not know: a clone sweep followed |
-| G2 | harness rollout (padme, JETP-observer, chemin-de-voix) → git-erg, 2026-11-09 | a hook rule refused `tickets/erg` on branches | git-erg 0311; seen earlier in chemin-de-voix (0219) and not fixed then | adopters were told `--no-verify`, reversed 6 min later when the rule was dropped; a stale hook block stayed in some clones |
+| H1 | climate-finance-het → harness, 2026-11-10/11 | reading-note filing contradicted the author's new Zotero-first decision | harness ticket 1522, written from the author decisions of 2026-11-10 as relayed by the asker, planned `publish-notes` on the Web API; cfh 3019 its child | the plan ran against the standing local-API-only ruling (2026-10-15/16); it survived about a day until the author ruled the local API: cfh 3019 was rewritten ("Web-API and project-script choices superseded"), 1522 gained a superseding paragraph |
+| H2 | climate-finance-het → harness, 2026-11-12 | `publish-notes` leaves parent items out of the project's Zotero collection | harness 1541, "relayed by a climate-finance-het session": the observation plus one suggested shape, design left to the executor | none visible: a well-formed report, after the asker had worked around it with a one-off script for 55 parents |
+| G1 | JETP-observer → git-erg, 2026-11-09 | managed pre-commit printed ~40 KB of warnings per ticket commit | git-erg 0313, `Author: Claude (JETP-observer session)`, filed in the receiver's store | fixed in about 35 min (PR #405), but the fix took effect only after every adopter reinstalled its hooks, a consequence the reporter could not know and only the ticket's note announced |
+| G2 | JETP-observer (claims rollout) → git-erg, 2026-11-09 | a pre-installed hook block refused committing `tickets/erg` off the default branch | git-erg 0311, filed by the author relaying JETP-observer PR #285; an earlier sighting (git-erg 0219, met in chemin-de-voix) had been partly fixed by git-erg PR #268 | the harness rollout tracker told adopters to commit with `--no-verify` (harness 1478, 12:19Z) and reversed it 6 min later when git-erg #399 dropped the rule (12:25Z) |
 | P1 | arena → padme, 2026-11-01 | a profile note called 256K context "beyond native 128K", which is false | padme 0086, "Reported from an arena session" | closed in 22 min: the report named the missing check (the model card) and why it mattered (a planned long-context arm) |
-| P2 | arena → padme, 2026-10-29/30 | arena asked for a Nemotron profile for judge screening | padme 0073/0074, "the arena asks, padme owns the engines" | two corrections (profile name, then an engine pin padme's `start` refused), re-pointed twice, abandoned when the pilot failed; arena 1122 credits a separate session's padme work, not the request |
+| P2 | git-erg → padme, 2026-11-09 | a stale `erg` on the host PATH (no claims) and dead `core.hooksPath` in two clones of other projects | padme 0110, "Relevé par la session git-erg", filed at that session's request | one observation needed four owners: padme for the PATH binary (an author decision, replace rather than delete), tickets fanned out by hand to AEDIST-technical-report (0686) and chemin-de-voix (0259), and the harness told through its tracker 1478; closed in 33 min |
 
-What the cases show, for § 5: reports that stated an observation and its
-evidence (H2, P1) travelled cheaply; reports that carried the asker's
-diagnosis or design (H1, P2) needed corrections the receiver could have
-given at intake. Fixes whose consequences fall back on askers (G1's hook
-reinstall, G2's workaround) had no return path except a later log line. The
-sweep did not find the source of 1341's "two corrections" line; P2 is the
-nearest match, unconfirmed.
+What the cases show, for § 5. Reports that stated an observation and its
+evidence (H2, P1, G1) travelled cheaply. The one that carried a design
+built on a stale premise (H1) needed a correction the receiver's own rulings
+would have given at intake. A single observation can belong to several
+owners (P2), and the fan-out was done by hand. Fixes whose consequences fall
+back on askers (G1's hook reinstall, G2's temporary `--no-verify`) reached
+them only through a tracker log line. The sweep did not find the source of
+1341's "two corrections" line.
 
 **Rule.** `rules/workflow.md` § Cross-project work (from 1341, merged in PR
 #1970, 2026-10-29): (1) ticket there, always; (2) tell a live session when
