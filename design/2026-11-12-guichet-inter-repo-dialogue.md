@@ -235,10 +235,11 @@ partial for every claim. Findings:
   vocabulary was not found.
 - *Coding-agent CLIs of several vendors as peers.* Anticipated:
   synapse-a2a, a2abridge, and a2aproject's own a2a-serve (v0.1.0,
-  2026-11-11) put Claude Code, Codex and others on A2A; agmsg, hcom,
-  repowire, agent-message-queue and tap do it over their own protocols
-  (tap: arXiv 2606.14445, a 27-day Claude–Codex trial on one codebase). No
-  tool supports Mistral Vibe.
+  2026-11-11) put Claude Code, Codex and others on A2A, by their own
+  account (A2A conformance self-declared, untested); agmsg, hcom, repowire,
+  agent-message-queue and tap (arXiv 2606.14445, Claude and Codex on one
+  codebase) do it over their own protocols. None of the ten tools examined
+  documents Mistral Vibe support.
 - *Agents reporting bugs to repositories or services they depend on,
   measured.* We did not identify a matching study in the searches described
   (coverage partial: no Semantic Scholar, OpenAlex or HAL; several
@@ -250,9 +251,10 @@ partial for every claim. Findings:
 **What this changes in § 5.** (1) Messages are notification, the ticket
 store is the record: every verdict names a ticket or a logged pushback.
 (2) The ACK is an application-level message with the correlation id, since
-no runtime's transport acknowledges across all pairs. (3) A live Claude Code
-guichet must accept peer messages without a human hold, or REQUESTs expire
-unseen; a missing ACK sends the asker to the one-shot path. (4) Facts, not agreement:
+no runtime's transport acknowledges across all pairs. (3) Where a Claude
+Code `SendMessage` shortcut is used, the receiver's inbound hold can let
+REQUESTs expire unseen; a missing ACK sends the asker to the protocol's own
+transport or the one-shot path. (4) Facts, not agreement:
 the guichet triages against its own repository, not the asker's framing,
 and the round cap bounds loops.
 
@@ -285,8 +287,9 @@ day.
 **E. Reuse an existing local agent bus** (different family: buy, not
 build). agent-message-queue, hcom or repowire already carry messages
 between Claude Code, Codex and Pi sessions and wake idle ones (§ 3). E is
-not an alternative to B: it is B's transport. It leaves the guichet role,
-the durable record and discovery to us, and none of them supports Vibe.
+not an alternative to B: it is B's transport. None of the tools examined
+provides the triage role or the durable record in the receiving store, and
+none documents Vibe support; their discovery features were not compared.
 
 ## 5. Synthesis and recommendation
 
@@ -295,9 +298,10 @@ can host one, a one-shot guichet elsewhere; the receiving store records
 every verdict.** B fixes both pains of § 1: the owner writes its own ticket,
 and intake has an owner. The reviews (below) found no way in the harness's
 doors to keep a guichet alive; the author pointed to `claude --bg` (§ 2,
-background sessions), which does, with no supervisor to build. Codex and Pi
-askers, and any host where the background launch fails, use the one-shot
-doors.
+background sessions), which does, with no supervisor to build. The
+transport amendment below makes discovery and delivery runtime-neutral: any
+asker reaches a live guichet; the one-shot doors serve tenders that cannot
+run in the background and failed launches.
 
 ### Roles **[author]**
 
@@ -431,8 +435,9 @@ depend on any one runtime's native tools.
   finds no live card launches exactly that, through `runtime.py launch`.
 - **Delivery: reuse first.** Phase 1 trials agent-message-queue as the
   carrier: files with fsync and rename, no broker, a wake process per agent
-  that starts a turn in an idle Claude Code, Codex or Pi session, MIT
-  licence (§ 3). Messages carry the A2A fields below in their body. If the
+  for Claude Code, Codex and Pi, MIT licence (§ 3). Whether its Claude wake
+  (documented as `claude --print`) starts a turn in the background session
+  or a fresh headless run is a phase 1 question. Messages carry the A2A fields below in their body. If the
   trial fails (behavior, maturity, or a fit problem with cards), we build
   the same shape ourselves: an inbox directory per participant in the Pi
   wake-inbox format (`runtime_wake.py`), one directory per task whose files
@@ -441,7 +446,8 @@ depend on any one runtime's native tools.
   file; no streaming), and a per-runtime adapter that turns an arrived file
   into a turn (the Pi extension exists; Claude via `wake arm`; Codex via
   `codex queue`).
-- **Vibe.** No tool supports it and the harness has no Vibe adapter. A Vibe
+- **Vibe.** None of the tools examined documents support for it, and the
+  harness has no Vibe adapter. A Vibe
   asker writes REQUESTs like any other and reads its reply inbox at its own
   pauses (non-blocking, slower); a Vibe adapter comes only if that proves
   too slow.
@@ -457,15 +463,15 @@ depend on any one runtime's native tools.
   rest on the measured cross-repository bug reports, the part for which
   § 3 found no matching study (pending the critic's open angles).
 
-**Is this the cheapest local inter-runtime transport? [author]** Among
-transports that can start a turn in a running session, yes, by
-construction: every such transport needs a per-runtime wake adapter, and
-the file inbox reuses the most of what exists (the Pi extension, `wake
-arm`, `codex queue`) without a daemon. Sockets need a listener in every
-session, HTTP (A2A's own bindings, alternative D) needs a server per
-agent, and a shared SQLite queue needs a client in every runtime. Cheaper
-still is not building: E. Cheapest of all is today's ticket-only protocol,
-which buys no dialogue.
+**Is this the cheapest local inter-runtime transport? [author]** Every
+transport that starts a turn in a running session needs a per-runtime wake
+adapter, so the cost difference lies elsewhere. To build, a file inbox
+reuses the most of what exists (the Pi extension, `wake arm`, `codex
+queue`) and needs no daemon; sockets need a listener in every session and
+HTTP (alternative D) a server per agent. A shared SQLite store (agmsg,
+hcom) is comparable: no required daemon, but a client in every runtime.
+Cheaper than any build is reusing one (E), which the phase 1 trial prices.
+Cheapest of all is today's ticket-only protocol, which buys no dialogue.
 
 ### Two paths
 
@@ -704,7 +710,8 @@ the drafter, same family; subagent, read-only). Verdict NEEDS-REVISION.
 Findings, verified by the drafter against the files:
 (1) no mechanism keeps a guichet alive: the headless door is
 `claude -p --restricted`, one turn, settings ignored. Adopted: hybrid
-live/one-shot, persistence deferred to phase 5;
+live/one-shot, persistence deferred to phase 5 (phase numbering since
+superseded by the transport amendment);
 (2) verdicts had no durable address: same fix as seat 1 (1);
 (3) the launch ruling widens step 3, and "ticket-only" was unenforced:
 § Authorization, enforcement through the `tools:` grant and sandbox;
@@ -723,7 +730,9 @@ T = 5 min stay, because the author ruled for a reused session and T, and
 the live path costs nothing when a session already exists. **Author follow-up (2026-11-12):** "Why not launching `--bg`?" Checked:
 `claude --bg` persists a named session (§ 2), so Fable's finding (1)
 no longer forces one-shot for Claude Code; the live path now launches a
-background guichet, and phase 5 shrinks to Codex and Pi.
+background guichet, and phase 5 shrinks to Codex and Pi (since replaced:
+the transport amendment makes the live path runtime-neutral, and phase 5
+is now the conditional report).
 **Author follow-up (2026-11-12):** the guichet must know what the
 repository's other live sessions are doing, since a request may overlap
 running work ("we are already doing this, I will pass your case to the
@@ -754,5 +763,5 @@ transport answered in § 5.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
-does the hosting), and the Pi extension and non-Claude live guichets are out
-of the first build.
+does the hosting); the transport is reused if the phase 1 trial holds, and
+only the adapters it lacks (Vibe certainly) are built, in phase 4.
