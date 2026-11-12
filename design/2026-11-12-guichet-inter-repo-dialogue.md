@@ -392,8 +392,8 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   without force); the code is a sibling of `review_notes.py` sharing its
   transport layer, with its own entry schema and lock (review entries and
   locks are review-specific). The asker's head is kept at
-  `refs/intake-heads/<id>`; branch and head ref are deleted together, after
-  a PUSHBACK or once a promoted intake has landed.
+  `refs/intake-heads/<id>`; branch and head ref are deleted together, once
+  the intake is landed, resolved, rejected or declined.
 - Verdict states keep A2A's names: `completed` (NEW or AMENDED), `rejected`
   (PUSHBACK), `input-required` (QUESTION), `failed` (the triager could not
   decide).
@@ -511,7 +511,7 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
    it runs the triager on runnable intakes older than an hour, decides
    questions unanswered for seven days, retries failures, and deletes the
-   branch and head ref of landed, rejected and declined intakes. `/dashboard`
+   branch and head ref of landed intakes and of finished ones. `/dashboard`
    lists every state that is not finished (finished: `resolved`, `rejected`,
    `declined`), `landed` included, since it waits on the receiver's fix. The launch in step 2
    is therefore never a single point of failure.
@@ -621,9 +621,9 @@ last.
    of the author's repositories, each verdict: NEW and AMENDED leave a
    prepared head for the owner to promote, PUSHBACK deletes branch and head
    ref, QUESTION waits and resumes on an answer; the asker's pending log
-   line and its bounded wake firing on the verdict; `resolved` written by a
-   close and read by the asker's sweep, releasing a parked ticket, and a
-   parked ticket moved to `needs-human` on `rejected`; each move into `held` and
+   line and its bounded wake firing on the verdict; a `resolved` note
+   written by a close (the release it triggers on the asker's side is
+   proved in phase 4); each move into `held` and
    out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
    detected after a rebase merge; and that the sandbox denies a read outside
    the receiver.
@@ -638,12 +638,15 @@ last.
    the author to decide. Callers (`roar` step 8, `raid`) cite the new
    wording; the receiver's close step (`/merge` step 1 or `/roar`) appends
    the `resolved` note for a ticket carrying an `intake <id>` log line; the
-   asker's parking (log line, `deferred`, `Blocked-by:`) is described for
-   both sides. *Proves* nothing new: it records what phases 1 and 2 showed.
+   asker's parking (log line, `deferred`, `Blocked-by:`), closing line and
+   release (to the ready queue on `resolved`, to `needs-human` on `rejected`
+   or `declined`) are described for both sides. *Proves* nothing new: it records what phases 1 and 2 showed.
 4. **Sweep and promotion view.** `/molt` applies the lifecycle table
    (§ 5, Intake lifecycle); `/dashboard` lists every state but the
    finished ones. On the asker's side, `/molt` reads the threads of pending
-   intakes and unblocks parked tickets on `resolved`. *Proves* that an
+   intakes, writes the closing line of finished ones, and releases parked
+   tickets (ready on `resolved`, `needs-human` on `rejected` or
+   `declined`). *Proves* that an
    intake whose launch failed, or whose answer's relaunch failed, gets a
    verdict within a day, and that a parked ticket returns to the ready
    queue after its intake is resolved.
