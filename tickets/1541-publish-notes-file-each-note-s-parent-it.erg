@@ -1,0 +1,23 @@
+%erg 0.1
+Title: publish-notes: file each note's parent item into a named collection (--collection)
+Created: 2026-11-12
+Author: reviewer
+
+--- log ---
+2026-11-12T10:53Z reviewer created
+
+--- body ---
+## Context
+
+Request from the author (2026-11-12), relayed by a climate-finance-het session: "il faut que la collection reste à jour". After the 3019 migration (55 reading notes, tag `wiki:climate-finance-het/<slug>`), the author asked that every item carrying a project reading note sit in the Zotero collection `REL on ICF / REL wiki sources` (key N7RPNKQH, personal library). A one-off script filed the 55 parents (42 added, 13 already there; read back 55/55). It reused `zotero.py`'s `local_library()` and `write()` with pyzotero's `addto_collection`.
+
+Observation: `publish-notes` files a note under its `zotero_item` but leaves the parent's collections untouched. So a later note on an item outside the collection leaves the collection stale, and nothing reports it. `create-items` already takes a collection (`create_item(..., collection)`).
+
+## Ask (the author's goal; the shape is yours)
+
+Keep a project's collection in step with its published notes. One shape: `publish-notes --collection "<path or key>"` adds each published note's parent to that collection; it never removes, it is idempotent, it is shown in `--dry-run`, and it is read back. The project would pass it in its lane (`wiki/templates/README.md`), or a per-project setting could carry it, like the word caps.
+
+## Exit criteria
+- [ ] After `publish-notes` with the collection set, every parent of a published note is in the collection (read back), with dry-run output naming the additions
+- [ ] Existing collections of the parent are kept (add only)
+- [ ] climate-finance-het is told the option name, so its lane passes it
