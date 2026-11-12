@@ -294,6 +294,13 @@ def test_a_gated_landing_prints_the_wake_arm_line_for_the_new_tip(repo, monkeypa
     assert "wake arm --after 0 --cmd" in line
 
 
+def test_no_wake_arm_line_when_the_after_merge_runner_is_off(repo, monkeypatch):
+    monkeypatch.setattr(rl, "gate", lambda cwd, *a: 0)
+    sh(repo, "config", "idh.afterMerge", "off")
+    code, out = land(repo, StubForge(head(repo)), head(repo))
+    assert code == 0 and not any("wait-after" in x for x in out), out
+
+
 def test_an_ungated_landing_prints_no_wake_arm_line(repo):
     code, out = land(repo, StubForge(head(repo)), head(repo))
     assert not any("wait-after" in x for x in out)

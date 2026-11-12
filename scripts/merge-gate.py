@@ -73,7 +73,8 @@ request open (its own record would refuse it). The dedupe key is the sorted fail
 not the tip: no ticket opens when an open after-merge-red ticket on the tip or
 a remote `red-*` branch already carries that set. An unlanded request stays
 open with its branch, for a human. Nothing reverts, nothing re-runs. A red
-also raises an author alert through `runtime.py notify`, best effort (ticket 1543).
+also raises an author alert (runtime_notify's popup plus alert file, called
+in-process after the ticket), best effort (ticket 1543).
 
 Wait (ticket 1543): `wait-after --tip <oid>` polls the gate notes until the
 tip carries an after-merge record, at most `--timeout` seconds (default 600,
