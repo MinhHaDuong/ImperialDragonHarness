@@ -1,4 +1,4 @@
-# Guichet: triaged intake between repositories
+# Guichet: cross-repository reports, status quo plus three additions
 
 Status: provisional (author, 2026-11-12)
 
@@ -39,9 +39,11 @@ repository is out of scope.
 
 The author's first direction **[author]**: talk first; the *receiving*
 repository records, triages and answers with a new ticket, an amended
-ticket, or pushback. After a red-team round, the author chose the simpler
-form (§ 5): the asker files an intake over git, a fresh read-only triager
-on the receiver's side decides, and nobody holds a dialogue session open.
+ticket, or pushback. After a red-team round, the author chose a simpler
+form (C1: an intake over git, a read-only triager on the receiver's side).
+A blind trial on 27 real reports then showed triage at intake changes
+little and can harm, so the recommendation (§ 5) is the status quo plus
+three small additions.
 
 ## 2. Situation
 
@@ -65,8 +67,9 @@ a cause.
 
 What the cases show, for § 5. Reports that stated an observation and its
 evidence (H2, P1, G1) travelled cheaply. The one that carried a design
-built on a stale premise (H1) needed a correction the receiver's own rulings
-would have given at intake. A single report can hold observations for
+built on a stale premise (H1) needed a correction the receiver's rulings
+already recorded; the later triage trial (§ 5) shows a triager can still
+miss such a ruling. These ids are the trial's K-* cases. A single report can hold observations for
 several owners (P2), and the fan-out was done by hand. Fixes whose consequences fall
 back on askers (G1's hook reinstall, G2's temporary `--no-verify`) reached
 them only through a tracker log line. The sweep did not find the source of
@@ -134,8 +137,8 @@ messages are held (§ 3).
 **Merge path for ticket-only changes.** `merge-gate.py tier` classifies a
 `tickets/*.erg`-only diff as bookkeeping tier: no gate verdict needed, and
 ticket-only merge requests are merged right after opening (memory
-`feedback_ticketwork_automerge`). Under C1 (§ 5) intake branches are an
-exception: the asker never merges them.
+`feedback_ticketwork_automerge`). Under the rejected C1, intake branches were an
+exception: the asker never merged them.
 
 **Routing.** `skills/route/SKILL.md` sends advisor calls to the ASSURANCE tier;
 family choice for independence lives in `references/decorrelation.md`.
@@ -261,8 +264,8 @@ partial for every claim. Findings:
   studies (Lin et al., EMSE 2022, doi 10.1007/s10664-022-10173-y; NPM
   maintainer responsiveness, arXiv 2511.04986).
 
-**What this changed in the guichet drafts** (kept for the record; C1 in
-§ 5 needs only (1) and (4)). (1) Messages are notification, the ticket
+**What this changed in the guichet drafts** (kept for the record; the
+recommendation of § 5 needs only (1) and (4)). (1) Messages are notification, the ticket
 store is the record: every verdict names a ticket or a logged pushback.
 (2) The ACK is an application-level message with the correlation id, since
 no runtime's transport acknowledges across all pairs. (3) Where a Claude
@@ -281,8 +284,7 @@ the unowned intake in place.
 
 **B. Guichet: a service-desk role per repository** (the author's
 direction). Dialogue first; the receiver writes the ticket. Amended seven
-times on 2026-11-12, then rejected after the red-team round (§ 5, How the
-choice was reached).
+times on 2026-11-12, then rejected after the red-team round (Review section).
 
 **C. Asynchronous intake by ticket, triaged on a timer** (different family:
 no dialogue at all). Askers drop tickets as today, tagged `incoming`; a
@@ -291,9 +293,9 @@ reads them, merges duplicates, rewrites them in the house voice, or closes
 them with a pushback note, and logs the outcome where the asker's roar or
 lair will see it. Works on every runtime today, needs no live peer; loses the
 clarifying questions and answers hours later instead of minutes. **C1**,
-the recommendation (§ 5), is C with an event trigger instead of a timer, an
+recommended from PR #2473 to PR #2476, was C with an event trigger instead of a timer, an
 intake branch and notes thread instead of a merged ticket, and questions
-kept as notes.
+kept as notes. C1 was later rejected after a blind trial (§ 5).
 
 **D. Agent-to-agent protocol server** (different family: standard transport).
 Each repository exposes an A2A-style endpoint (agent card, task lifecycle,
@@ -306,370 +308,115 @@ day.
 build). agent-message-queue, hcom or repowire already carry messages
 between Claude Code, Codex and Pi sessions and wake idle ones (reuse table
 in `design/research/2026-11-12-guichet-biblio-saturation.md`). E is
-a carrier for live dialogue, which C1 (§ 5) no longer needs; it was
+a carrier for live dialogue, which the recommendation (§ 5) does not need; it was
 considered as a carrier for B, now rejected. None of the tools examined
 provides the triage role or the durable record in the receiving store, and
 none documents Vibe support; their discovery features were not compared.
 
 ## 5. Synthesis and recommendation
 
-**Pick C1 in its first variant, over git alone [author, 2026-11-12]: the
-asker files an intake branch with a notes thread in the receiving
-repository, launches a fresh read-only triager, and leaves. A script, not
-the model, writes the verdict.** C1 is alternative C with an event trigger:
-the dropped ticket stays the channel, and it now gets an owner within
-minutes.
+**Keep the status quo, in which the asker files a ticket in the receiver's
+store, and add three things: an owner wake-up, a premise check at pickup,
+and a return path for blocked askers [author, 2026-11-12, after the
+trial].** `rules/guards.md` stays as it is: the asker still writes only a
+ticket in the other project.
 
-### How the choice was reached
+### Why not C1
 
-B, a guichet session receiving dialogue, went through seven amendments on
-2026-11-12 (persistent Claude `--bg` session, card file and file inboxes,
-Pi-hosted single path, kernel lock, self-closing). A red-team round
-(gpt-6-astra and Claude Fable, independent briefs; Review section) returned
-NEEDS-REDESIGN from both seats: the inbox was an unauthenticated user turn
-into a session that can run bash; the ticket-only limit was unenforced
-(`idh-guard.ts` on Pi inspects only `--hard` commands and fails open);
-`replyTo` was an arbitrary write; clearance looked only at the receiver; a
-wedged session held its lock with no recovery; tickets laundered authority
-into raid. Both seats also found the value weak: none of the six observed
-cases needed a question round, and four closed within 35 minutes. What each
-case needed was an owner looking promptly. The author then saw that the
-redesign amounted to "drop a ticket, then wake someone to look at it", and
-chose C1.
+C1 (an intake branch and notes thread, a sandboxed read-only triager, a
+verdict script that never lands, owner promotion, a ten-state lifecycle)
+was the recommendation from PR #2473 to PR #2476; its full text is in git
+history at `72fed79`. Before building it, the author asked for more real
+cases and a hand run. The trial
+(`design/research/2026-11-12-guichet-triage-trial.md`) replayed the draft
+triage brief blind on 27 real cross-project reports to the three receivers:
 
-Five variants of C1 were weighed **[author]**:
+- 19 of 25 judgeable cases: no change. Well-formed reports, author-driven
+  decisions and rollouts; the median first owner action came within about
+  an hour (G4 still unread, the case addition 1 is meant to catch).
+- 3 small or partial gains (G2, H3, K-H1). G2 and H3 were also found by
+  the first owner read within 26 minutes to an hour; in K-H1, the one case with a
+  large possible saving, the triager missed the recorded ruling.
+- 3 harms (G3, H1, H7): two pushbacks citing a recorded design the owner
+  then reversed, and one fold into another ticket that would have parked a
+  small fix for nine days.
+- Most recorded friction (fan-out by hand, filing delays,
+  workaround-then-reversal, costs falling on adopters) is out of a
+  verdict's reach.
 
-| Variant | Verdict |
-|---|---|
-| 1. file the intake, launch a triager, leave | **chosen** |
-| 2. as 1, then wait for questions, answer, repeat | folded into 1: a question is a note; the asker answers when it next looks (roar, lair), never blocking |
-| 3. file and merge the ticket at once, then as 1 | rejected: the outsider's framing lands on main before triage, raid can pick it up, and a report costs two merges |
-| 4. as 3, then as 2 | rejected, for both reasons |
-| 5. any of these, but talk to an idle session first | rejected: it brings back an unconfined session receiving peer text, mixes unrelated context, needs discovery across runtimes, and may interrupt the author's own session; the triager's read-only live-work survey gives the same knowledge |
+C1's machinery buys little the owner does not already do, and its one
+active power, refusing at intake, is where it harmed. The path to C1 (the
+guichet session, the red-team round, the C1 variants) stays in § 4, the
+Review section and git history.
 
-A forge pull request was the first carrier considered for variant 1; the
-author ruled **no forge**: the intake rides on git branches and git notes,
-as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
+### The three additions
 
-### Roles
+1. **Wake an owner at filing.** The asker's ticket in the receiver's store
+   carries an erg log line `filed from <asker-repo> <asker-ticket>` (erg's
+   header set is closed, so provenance goes in the log). The receiver's
+   `/molt` and `/dashboard` list open tickets with such a line that nobody
+   has picked up (no claim, no branch) after a day. When timing matters the
+   asker also tells a live session, as the current rule already says.
+2. **A premise check at pickup.** Whoever picks up a ticket with a `filed
+   from` line (`/hunt`, raid) starts with the trial brief's four checks:
+   facts against framing, duplicates and overlap, ownership, standing
+   rulings. A conflict with a recorded ruling goes to the author as a
+   question, never as a refusal: two of the trial's three harms came from
+   refusing on recorded text the owner then changed (the third was a fold
+   into another ticket, which the check does not do).
+3. **A return path for blocked askers.** A blocked asker parks instead of
+   waiting: its own ticket gets `Blocked-by: <receiver>/<NNNN>` (erg accepts
+   another repository's ticket as a URI reference; git-erg
+   `design/erg-manual.md`, rule 9), the `deferred` skip label (erg reads a
+   relative reference as a path in the asker's own checkout, where it stays
+   unresolved and is treated as optimistic, so the label gates readiness) and a
+   log line. The asker's `/molt` reads each such reference in the
+   receiver's store; when the receiver's ticket is closed, it removes
+   `deferred`, removes the `Blocked-by:` line, and logs `unblocked by
+   <receiver> <NNNN>, closed in <commit>`. Nothing is written into the
+   receiver beyond the original ticket.
 
-- **Asker** states facts and evidence from its side: what it saw, where,
-  with paths and commits. No orders, no patch to the receiver's files, no
-  diagnosis passed off as fact.
-- **Triager** (the guichet, as a role, not a session): one fresh run per
-  intake, read-only, in the receiving repository. It reads the intake, the
-  store, the history and the live work, and outputs one verdict.
-- **Verdict script**: the only writer. It acts on the verdict and refuses
-  anything outside the intake's own scope.
+### What stays out
 
-### The intake unit
-
-- **Intake id** `<asker-repo>-<date>-<rand>`, minted by the asker; it is
-  the deduplication key (A2A's `contextId`, § 3).
-- **Receivers** are listed in one harness file with their remote URL and
-  home host (harness, git-erg, padme), so an asker on any host knows where
-  to push without a local checkout of the receiver.
-- **Intake branch** `intake/<id>`, pushed by the asker to the receiving
-  repository's remote (from that list, not the asker's own `origin`) with a
-  plain `git push`, no forge API,
-  together with its head ref `refs/intake-heads/<id>` and the thread. It adds
-  exactly one **intake file**, `tickets/intake/<id>.md`: plain markdown, not
-  an erg ticket, so erg ignores it (probed: `erg check` passes with such a
-  file present) and the asker needs neither the receiver's erg nor an ID
-  claim in its store. The file opens with `Origin: <asker-repo>` and
-  `Intake: <id>` lines, then the facts and the evidence. erg's ticket header
-  set is closed **[author]**, so these lines never go into an erg ticket.
-  The branch sits on a base the request note records (the receiver's `main`
-  at filing). The asker never merges it.
-- **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
-  anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
-  `ts` first: `request`, `answer` (asker); `verdict` (triager, through the
-  script); `promoted`, `declined`, `resume` (owner); `held` (script or
-  sweep); `resolved` (the receiver's close step, which needs no live
-  branch: the thread lives on `refs/notes/intake`); each with its author
-  and, where one exists, the branch head. Transport and concurrent-write merging are
-  those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
-  without force); the code is a sibling of `review_notes.py` sharing its
-  transport layer, with its own entry schema and lock (review entries and
-  locks are review-specific). The asker's head is kept at
-  `refs/intake-heads/<id>`; branch and head ref are deleted together, once
-  the intake is landed, resolved, rejected or declined.
-- Verdict states keep A2A's names: `completed` (NEW or AMENDED), `rejected`
-  (PUSHBACK), `input-required` (QUESTION), `failed` (the triager could not
-  decide).
-
-### The flow
-
-1. The asker pushes the intake branch and appends the `request` note,
-   which says whether the asker is blocked on the outcome (`blocking: yes`).
-   On its own side it logs `intake <id> filed at <receiver>` on the ticket
-   of the work that found the bug, so any later session, roar or sweep in
-   the asker's repository knows the intake is pending.
-2. It tries `runtime.py triage <receiver> <id>` on the receiver's host
-   (over `ssh` from another host). The launcher, a script, first writes
-   the run's inputs as files into a run directory: the intake branch's
-   diff, the intake thread, the recent history of the paths the intake
-   cites, and a live-work snapshot (worktree locks with their tickets and
-   liveness, each live branch's changed files). It then
-   starts one headless run with read-only tools only (Pi: `--tools
-   read,grep,find,ls`, no extensions), **inside a sandbox that makes only
-   the receiving repository and the run directory readable** (a
-   `systemd-run --user` unit with read-only bind mounts, or `bwrap`;
-   phase 1 proves it, including that the model's credentials reach the
-   runtime without being readable by its `read` tool), capped in wall time,
-   model by route at the advisor tier **[author]**. Runs are serialized per
-   receiver by `flock -o`; the launcher holding the lock drains every
-   `runnable` intake of that receiver (§ Intake lifecycle), one fresh run each, and after releasing
-   the lock scans once more, relocking if anything arrived meanwhile, so a
-   second launch that finds the lock held can just leave. A failed launch is harmless: the intake stays
-   durable and the sweep (step 6) finds it. **The launcher job, never a
-   model, runs the whole chain** for each intake: run directory, triager,
-   verdict script, push of commit and notes; the sweep starts the same job.
-   The asker then arms one bounded wake on the intake thread (merge's
-   queued-wait pattern: `runtime.py wake arm --after 0` with a poller that
-   exits when a verdict appears, at most about 25 minutes), and goes on with
-   its work or idles. Where `wake arm` answers NOOP (a headless session),
-   the log line of step 1 is the only pickup.
-3. The triager reads the run directory, the receiving store and its
-   history (§ Knowing the repository's live work below), and prints one
-   verdict as JSON.
-4. The verdict script acts, after checking that the asker's commits
-   (from the recorded base to `refs/intake-heads/<id>`, the asker's
-   submission) add exactly one `tickets/intake/<id>.md` and nothing else,
-   and
-   that the branch tip satisfies the invariant of the intake's state
-   (§ Intake lifecycle below).
-   **It never lands anything on main [author].** It pushes its commit and
-   notes to the receiver's remote and records the prepared head in the
-   verdict note; from then on the prepared head, not the asker's, is the
-   reference. A crash repair compares the tip with the recorded prepared
-   head: equal means the action is done.
-   **The asker pushes only when filing.** Corrections come as `answer`
-   notes, or as a new intake with a new id.
-   - **NEW**: in one commit on the intake branch, creates the ticket with
-     `erg new` (an ID claimed by the receiver), written in the receiver's
-     voice and labelled `needs-human`, adds the erg log line `intake <id>
-     from <asker-repo>`, and deletes the intake file; the owner's promotion
-     lands it;
-   - **AMENDED**: in one commit, adds to the existing ticket the erg log
-     line `intake <id> from <asker-repo>` with the report quoted as data,
-     never touching the ticket's scope or exit criteria, and deletes the
-     intake file; the owner's promotion lands it.
-
-   Either way the prepared head's net change against `main` touches only
-   `tickets/*.erg` (and claims), so the intake file never reaches `main` and
-   the promotion is bookkeeping tier with no gate change.
-   - **PUSHBACK**: writes the reason in the thread and deletes the intake
-     branch;
-   - **QUESTION**: writes the question in the thread and stops.
-
-   Every outcome is a `verdict` note first, so a crash between note and
-   action is repaired by rerunning the action.
-   **Promotion.** The receiver's `/dashboard` lists intakes awaiting
-   promotion (NEW or AMENDED, prepared, not landed). An owner (the author,
-   or a session of the receiver acting with the author's leave) promotes
-   one by opening the receiver's ordinary merge request for the intake
-   branch at exactly the prepared head and writing a `promoted` note, or
-   declines it with a `declined` note and a reason. Once `promoted`, the
-   receiver's merge process owns the branch (a rebase before the gate is
-   normal); an owner who closes the promotion without merging writes a
-   `declined` note. Promotion is the owner's
-   decision, so the automerge habit for ticket-only requests applies from
-   that point on. A NEW ticket keeps `needs-human` after landing unless the
-   owner removes it in the promotion.
-5. **Pickup.** The asker reads the outcome when its wake fires, or else
-   when a session in its repository next looks (its roar, lair or `/molt`,
-   which read the threads of every intake its ticket logs list as pending):
-   `git fetch` of the receiver and the intake thread. It answers a question
-   with an `answer` note and relaunches the triager (a failed relaunch is
-   caught by the sweep), at most three rounds;
-   unanswered after seven days, the triager decides on what it has (a
-   failure to decide is a `failed` verdict like any other).
-   **A blocked asker parks, it does not wait.** A verdict comes in minutes;
-   the fix comes hours or days later, after promotion and the receiver's
-   own work. The asker logs `blocked on intake <id>` on its ticket, adds
-   the `deferred` label (one of erg's default skip labels, so the ticket
-   leaves the ready queue everywhere), and ends cleanly. Once the intake has
-   `landed`, the asker's sweep adds `Blocked-by:` with the receiver's ticket
-   (erg accepts a reference to another repository's ticket: a relative path
-   such as `git-erg/0008` or an absolute URI; verified in git-erg's
-   `design/erg-manual.md`, rule 9). That line records the dependency; it
-   gates readiness only where the reference resolves in the checkout, since
-   erg treats an unresolved reference as optimistic, so the label does the
-   gating. When the receiver closes a ticket that carries an `intake <id>`
-   log line, its close step appends a `resolved` note to that intake's
-   thread, naming the landing commit.
-   **Closing on the asker's side.** When an intake reaches a finished
-   state (`resolved`, `rejected` or `declined`), the asker's sweep logs
-   `intake <id> <final state>` on the ticket that filed it, which ends its
-   pending status, so later sweeps stop reading its thread. A parked ticket
-   is also released: on `resolved` the sweep removes `deferred` and its
-   `Blocked-by:` line (the receiver's `erg close` edits only its own store)
-   and the ticket returns to the ready queue; on `rejected` or `declined`
-   it swaps `deferred` for `needs-human`, with the reason, since the
-   blocked work now needs a decision rather than a wait.
-6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
-   it runs the triager on runnable intakes older than an hour, decides
-   questions unanswered for seven days, retries failures, and deletes the
-   branch and head ref of landed intakes and of finished ones. `/dashboard`
-   lists every state that is not finished (finished: `resolved`, `rejected`,
-   `declined`), `landed` included, since it waits on the receiver's fix. The launch in step 2
-   is therefore never a single point of failure.
-
-### Intake lifecycle
-
-The state of an intake is read from the last entry of its thread and, for
-`landed`, from the receiver's `main`. Each state fixes what the branch tip
-must be; a tip that breaks its state's invariant moves the intake to
-`held` (from any state with an invariant), with no retriage.
-
-| State | Entered by | Tip invariant | Next |
-|---|---|---|---|
-| `runnable` | a `request` note, or an `answer` note while `waiting` (an answer moves no other state) | the asker's head | the launcher runs it at once (no delay); the sweep after an hour |
-| `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
-| `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
-| `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
-| `landed` | a ticket on the receiver's `main` carries the log line `intake <id> from …` (NEW and AMENDED alike) | none | the sweep deletes branch and head ref; `resolved` when that ticket closes |
-| `resolved` | the receiver's close step appends a `resolved` note naming the landing commit | none | finished; the asker's sweep closes the pending line and releases any ticket parked on it |
-| `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep; the asker's sweep closes the pending line and moves a parked ticket to `needs-human` |
-| `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted and closed on the asker's side as for `rejected` |
-| `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
-| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left (to `runnable` when it left `failed`), after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
-
-"Landed" is detected on `main`, not from the branch, so a merge that
-rebases or deletes the branch is still recognized.
-
-### Knowing the repository's live work
-
-Unchanged in substance, now read-only and pre-computed: the launcher's
-snapshot gives worktree locks (ticket and owner pid), pid liveness, claims,
-open branches and each live branch's changed files, and the triager
-matches the intake's evidence paths against them. A shared path is the overlap signal. On
-overlap the verdict is AMENDED on the running ticket, naming the branch
-and session, or PUSHBACK "in progress on `<branch>`". It never messages a
-session, never steers one, and never reads a transcript: the informant and
-the redirect of earlier drafts are dropped, since they reached into other
-sessions.
-
-### What the red team's findings become
-
-| Finding | Under C1 |
-|---|---|
-| peer text as a user turn into a shell | the triager has no shell; git and `/proc` are read by the launcher script, and the intake is a file the triager reads as data |
-| ticket-only unenforced | the model writes nothing; the asker may add only its intake file; the script writes only `tickets/*.erg` (through erg) and deletes the intake file, refuses any other path, and records the exact head the owner may promote |
-| `replyTo` arbitrary write | gone: replies are notes in the thread |
-| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable. Until phase 1 proves the sandbox, C1 does not run where the host holds uncleared material outside the receiver: a local model would stop leaks to a provider, not quotes into a ticket |
-| wedged session, lost request | no session to wedge; a run has a wall-time cap; branch and notes are durable before any run starts |
-| authority laundering | origin kept in the erg log line and the intake thread; nothing lands without an owner's promotion; `needs-human` on every NEW |
-| cost runaway | one run per intake, serialized per receiver, a daily cap per receiver in the launcher |
-| cross-host replies | git remotes reach every host |
-
-### Authorization and the rule
-
-`rules/guards.md` allows, in another project, tickets only. C1 widens that
-exception from "a ticket" to "an intake branch adding one file under `tickets/intake/`, its head
-ref under `refs/intake-heads/`, and its intake note". Rules are the author's law, so phase 3 proposes the wording
-and the author decides. The asker's launch of a triager in the receiving
-repository is the standing authorization the author ruled for: triage
-only, under that repository's rules, read-only.
-
-### Model and family
-
-Route picks the model for the triage role at each launch; the tier is
-advisor by the author's ruling, recorded on route's side; uncleared content
-forces a local model. Any runtime whose headless door supports read-only
-tools can run it (Pi's does; another runtime only once its door is shown
-to confine reads, phase 1). The asker and the
-triager may be the same family; the mitigation is the protocol's: facts
-from the asker, checks against the receiver's own store, no argument
-toward consensus.
-
-### Failure modes handled
-
-| Failure | Handling |
-|---|---|
-| launch fails, model unavailable, Pi down | intake stays; the sweep relaunches |
-| triager crashes mid-run | no verdict note; the sweep relaunches |
-| crash after the verdict note | the action is rerun from the note |
-| two askers file the same bug | the draining launcher triages them in turn; the second finds the first: AMENDED |
-| asker gone before the verdict | the thread and the store keep the outcome |
-| question never answered | decided after seven days |
-| notes written concurrently | `cat_sort_uniq` merge, as for reviews |
+Intake branches, the notes thread, the sandboxed triager, the verdict
+script, the lifecycle table and any guichet session. An enrichment-only
+triage run (notes, never verdicts) is not built; it returns to the table
+only if the observation below shows foreign tickets waiting unread.
 
 ### Costs
 
-Estimates by the drafter; author-hours are review time; USD unmeasured.
+Estimates by the drafter; author-hours are review time.
 
 | | Author-hours | Agent time | USD (rough) | Undo |
 |---|---|---|---|---|
-| A wording | 0.3 | one small MR | < 1 | revert one paragraph |
-| C1 (variant 1) | 1.5 | notes and launcher, verdict script, profile, rule: ~4 MRs | 5–15 build; one advisor run per intake | revert the rule; intakes revert to plain dropped tickets |
-| B guichet, as amended through PR #2470 | 3+ | ~6 MRs plus Pi extension work | 10–30 build | superseded by the red-team round |
-| D A2A server | 6+ | daemon, auth, adapters | 50+ build, plus upkeep | stop the service |
+| status quo + three additions | 0.5 | three skill edits and one rule paragraph: ~3 MRs | < 5 | revert the edits |
+| C1 (rejected after the trial) | 1.5 | ~4 MRs plus a sandbox | 5–15 build; one advisor run per report | — |
 
 ## 6. Implementation plan
 
-One tracker, children in order, each one merge request. The rule changes
-last.
+One tracker, children in order, each one merge request.
 
-1. **Intake plumbing.** The receivers list; `refs/notes/intake` (a sibling
-   of `review_notes.py` sharing its transport); the intake branch, base and
-   head conventions; `runtime.py triage` (run directory, sandbox with
-   credentials kept unreadable, read-only tools, `flock -o` with the drain
-   and rescan, wall-time and daily caps, model by route); and the verdict
-   script with its range and tip checks. *Proves*, by a dry run between two
-   of the author's repositories, each verdict: NEW and AMENDED leave a
-   prepared head for the owner to promote, PUSHBACK deletes branch and head
-   ref, QUESTION waits and resumes on an answer; the asker's pending log
-   line and its bounded wake firing on the verdict; a `resolved` note
-   written by a close (the release it triggers on the asker's side is
-   proved in phase 4); each move into `held` and
-   out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
-   detected after a rebase merge; and that the sandbox denies a read outside
-   the receiver.
-2. **Triage profile.** `profiles/guichet/PROFILE.md` and its shell: facts
-   against framing, duplicate search, the live-work read, clearance as the
-   stricter of the two repositories, the verdict format. *Proves*, on the
-   six observed cases of § 2 replayed as intakes, that the verdicts match
-   what the owners eventually did.
-3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: file an
-   intake and launch the triager, instead of dropping a ticket; the
-   `rules/guards.md` exception widened to intake branches and notes, for
-   the author to decide. Callers (`roar` step 8, `raid`) cite the new
-   wording; the receiver's close step (`/merge` step 1 or `/roar`) appends
-   the `resolved` note for a ticket carrying an `intake <id>` log line; the
-   asker's parking (log line, `deferred`, `Blocked-by:`), closing line and
-   release (to the ready queue on `resolved`, to `needs-human` on `rejected`
-   or `declined`) are described for both sides. *Proves* nothing new: it records what phases 1 and 2 showed.
-4. **Sweep and promotion view.** `/molt` applies the lifecycle table
-   (§ 5, Intake lifecycle); `/dashboard` lists every state but the
-   finished ones. On the asker's side, `/molt` reads the threads of pending
-   intakes, writes the closing line of finished ones, and releases parked
-   tickets (ready on `resolved`, `needs-human` on `rejected` or
-   `declined`). *Proves* that an
-   intake whose launch failed, or whose answer's relaunch failed, gets a
-   verdict within a day, and that a parked ticket returns to the ready
-   queue after its intake is resolved.
-5. **Report, conditional.** After the review below, if the data show
-   something: a HAL technical report on the design case and its outcomes,
-   citing § 3.
+1. **Filing convention and owner wake-up.** The `filed from` log line in
+   `rules/workflow.md` § Cross-project work; `/molt` and `/dashboard` list
+   unpicked foreign tickets older than a day. *Proves*, on a test store,
+   that such a ticket is listed and disappears once claimed.
+2. **Premise check at pickup.** `/hunt` and raid's Verify open a foreign
+   ticket with the four checks, and route a ruling conflict to the author
+   as a question. *Proves*, on the trial's G2 and H3 reports, that the check
+   names the corrections the owners later made.
+3. **Return path.** The asker-side parking (log line, `deferred`,
+   `Blocked-by:`) and the `/molt` release. *Proves*, between two of the
+   author's repositories, that a parked ticket returns to the ready queue
+   once the receiver's ticket closes, and that a sibling-path and an
+   absolute-URI reference both work.
 
-**Observe, then assess.** Each verdict note records the model, the run's
-duration and cost when known, the rounds, and the time from request to
-verdict. **Review after 20 intakes or six weeks after phase 3, whichever
-comes first**, in a doctor-journal revisit (memory
-`feedback_no_wait_tickets`), deciding:
-
-- **value**: how many verdicts changed what a plain dropped ticket would
-  have become (duplicate merged, premise corrected, refused with reason),
-  against the § 2 cases as baseline;
-- **speed**: time to verdict against the pre-C1 waits;
-- **tier**: keep advisor, or step down if owners never reverse verdicts;
-- **questions**: how often a round was needed; near zero confirms dropping
-  the dialogue;
-- **upgrade to C2** (a raw note in an inbox before any ticket) only if
-  outsider text in intake branches proves harmful or askers need answers
-  sooner than their next roar.
+**Observe, then assess.** From phase 1's merge, count foreign tickets, time
+to first owner action, premise corrections made at pickup, and parked
+tickets released. **Review after 20 foreign tickets or six weeks,
+whichever comes first**, in a doctor-journal revisit (memory
+`feedback_no_wait_tickets`): if foreign tickets wait unread, reconsider an
+enrichment-only triage run; if pickups keep finding wrong premises, move
+the premise check earlier.
 
 ## Review
 
@@ -784,6 +531,18 @@ Same brief to two seats, attack surfaces named, conclusions not given.
   `idh-wake.ts` delete right after delivery, `merge-gate.py` bookkeeping
   list, `~/.local` mode 0700 with every agent under one account).
 
+**Triage trial and ruling (2026-11-12).** The author asked for more real
+cases and a hand run before approving C1. Method, cases and judgment:
+`design/research/2026-11-12-guichet-triage-trial.md` (21 new cases found by
+a sonnet sweep, 27 in all; blind triage by opus; judgment by Claude Fable;
+the drafter verified the three claims the conclusion rests on). Result: 19
+no change, 3 small or partial gains, 3 harms out of 25 judgeable. The author ruled:
+commit the trial and rewrite the recommendation as the status quo plus
+the three additions; C1 is rejected and kept in git history at `72fed79`.
+
+*The entries below record the C1 phase, superseded by the trial ruling
+above; they describe the design as it then stood.*
+
 **Author follow-up (2026-11-12, pickup and blocking):** asked who
 launches the verdict script (the launcher job), when the asker picks up
 the answer (a bounded wake, else its repository's next roar, lair or sweep
@@ -813,3 +572,8 @@ the reused session, earlier author rulings, are retired with it.
 
 KISS pass by the drafter: one branch, one notes thread, one read-only run,
 one writer script, one sweep. The A2A state names stay as labels only.
+
+KISS pass after the trial (current): the status quo plus one log-line
+convention, one check at pickup, and one release step in the asker's
+`/molt`; nothing new between repositories but the ticket the asker already
+files.
