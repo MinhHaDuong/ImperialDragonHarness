@@ -204,7 +204,7 @@ marker; another forge needs the same writes in its own spelling.
    `runtime.py wake arm`): `merge-gate.py wait-after --tip <tip>` exits on
    the tip's record (0 pass, 1 red, 5 environment, 2 none within 600 s; the
    check set takes about a minute). A red also raises an author alert
-   (the `notify` popup plus alert file); red stays the lander's to report,
+   (the `notify` alert file, plus a popup where notify-send exists); red stays the lander's to report,
    never broadcast.
    The runner runs the full set on the newest `<base>` tip and notes the record there
    (a busy lock means a runner already covers this tip; `covered` means the

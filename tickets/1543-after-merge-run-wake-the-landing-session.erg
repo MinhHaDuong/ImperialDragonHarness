@@ -28,9 +28,9 @@ red.
   `runtime.py wake arm` line that runs it after a gated landing; the merge
   skill's step 9 tells the lander to arm it. Waking reuses the existing wake
   backends (Claude background command, Codex timer, Pi inbox); no new transport.
-- B: on a red record, the runner raises the `notify` alert (desktop popup
-  plus alert file, rate limited per tip). Best effort: a failed notify
-  changes nothing.
+- B: on a red record, the runner raises the `notify` alert (alert file, plus
+  a desktop popup where notify-send exists; rate limited per tip). Best
+  effort: a failed notify changes nothing, and its lock wait is bounded.
 - Red stays one owner's: no broadcast to other sessions (rules/workflow.md,
   a red gate on main is a broadcast).
 

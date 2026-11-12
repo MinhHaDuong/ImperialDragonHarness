@@ -110,3 +110,20 @@ def test_notify_is_registered():
 def test_keys_that_sanitize_alike_keep_separate_alert_files():
     assert runtime_notify.safe_name("a/b") != runtime_notify.safe_name("a_b")
     assert runtime_notify.safe_name("k1") == "k1"
+
+
+def test_a_held_alert_lock_times_out_instead_of_waiting_forever(env, monkeypatch, capsys):
+    """Ticket 1543: a stopped or hung holder must not stall the caller (the after-merge runner)."""
+    import fcntl
+    import time
+    alerts = env / "alerts"
+    alerts.mkdir()
+    monkeypatch.setattr(runtime_notify, "LOCK_WAIT", 0.3, raising=False)
+    with open(alerts / "state.lock", "w") as held:  # flock is per open file: this blocks run()'s own open
+        fcntl.flock(held, fcntl.LOCK_EX)
+        start = time.monotonic()
+        code = runtime.main(["notify", "--key", "k", "--title", "t", "--body", "b"])
+        waited = time.monotonic() - start
+    assert code == runtime_notify.FAILED and waited < 5
+    assert "alert lock busy" in capsys.readouterr().err
+    assert not list(alerts.glob("*.alert")) and sent(env) == []
