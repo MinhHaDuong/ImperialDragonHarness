@@ -422,6 +422,34 @@ def unwrap_header(text: str) -> tuple[str, bool]:
     return '\n'.join(lines[:start] + inner + lines[end + 1:]) + '\n', True
 
 
+PREAMBLE_MAX = 3  # leading lines of progress text a seat may write before its header (ticket 1542)
+HEADER_START = re.compile(r'(worker:|reach:)', re.I)
+BODY_FIELD = re.compile(r'(finding:|verdict:|not-run)', re.I)
+
+
+def drop_preamble(text: str) -> str:
+    """Drop up to PREAMBLE_MAX lines of progress text ("Status: I've read the diff…") before the header.
+
+    Seats often open with one status sentence, which put a valid reach line off the second line
+    (ticket 1542: 20 of 20 archived reach refusals). Only plain text goes: a `finding:`, `verdict:` or `NOT-RUN` line
+    before the header is report body or a refusal, so the text is returned unchanged and the reach check
+    refuses it, as it refuses a header found deeper than PREAMBLE_MAX lines.
+    """
+    lines = text.splitlines()
+    seen = 0
+    for index, line in enumerate(lines):
+        plain = line.strip().strip('*`#').strip()
+        fence = line.strip().startswith('```')
+        if not plain and not fence:
+            continue
+        if fence or HEADER_START.match(plain):
+            return text if seen == 0 else '\n'.join(lines[index:]) + '\n'
+        if seen == PREAMBLE_MAX or BODY_FIELD.match(plain):
+            return text
+        seen += 1
+    return text
+
+
 def header_lines(text: str) -> list[str]:
     """The report's lines that hold a word character, stripped of `*` and backticks, after the header block
     is unwrapped: a line of rules or bare markers (`---`, `**`) is blank.
@@ -487,7 +515,7 @@ def derive(door: dict, raw: str, worker: str) -> tuple[str, str | None, str, boo
     """
     answer = answer_of(door, raw)
     raw_answer = answer
-    answer, unwrapped = unwrap_header(answer)
+    answer, unwrapped = unwrap_header(drop_preamble(answer))
     report = stamp(answer, worker)
     if not report:
         thinking, marker = door.get('thinking_marker'), door.get('answer_marker')

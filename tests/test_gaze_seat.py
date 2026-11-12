@@ -63,7 +63,7 @@ case "$STUB_MODE" in
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
   noread) printf 'reach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
-  lateread) printf 'Looking.\\nreach: read=yes shell=no tests=not-run\\nverdict: clear\\n' ;;
+  lateread) printf 'Looking.\nreach: read=yes shell=no tests=not-run\nverdict: clear\n' ;;
   tail) printf 'reach: read=yes shell=yes tests=not-run (read code only)\nfinding: none\nverdict: clear\n' ;;
   tail-noread) printf 'reach: read=no shell=no tests=not-run (could not open it)\nverdict: clear\n' ;;
   noreach) printf 'finding: none\nverdict: clear\n' ;;
@@ -233,9 +233,11 @@ def test_report_without_reach_line_is_no_report(rig):
 
 
 @pytest.mark.integration
-def test_reach_line_must_be_the_second_line(rig):
-    result = launch(rig, mode='lateread')
-    assert result.returncode == 1 and 'seat reach: no valid reach line' in result.stdout
+def test_a_progress_line_before_the_header_is_dropped(rig):
+    result = launch(rig, mode='lateread')  # 'Looking.' then the reach line (ticket 1542)
+    assert result.returncode == 0, result.stdout
+    filed = (rig['panel'] / 'correctness.md').read_text().splitlines()
+    assert filed[1] == 'reach: read=yes shell=no tests=not-run' and 'Looking.' not in filed
 
 
 @pytest.mark.integration
@@ -1003,6 +1005,14 @@ def test_header_wrapped_in_a_balanced_block_is_accepted(rig, mode):
 
 
 @pytest.mark.integration
+def test_a_fenced_header_after_a_progress_line_is_accepted(rig):
+    result = launch(rig, mode='fenced-quoted')  # 'Looking.' then a balanced header block (ticket 1542)
+    assert result.returncode == 0, result.stdout
+    lines = (rig['panel'] / 'correctness.md').read_text().splitlines()
+    assert lines[1] == 'reach: read=yes shell=no tests=not-run' and 'Looking.' not in lines
+
+
+@pytest.mark.integration
 def test_ordinary_report_is_not_noted_as_unwrapped(rig):
     result = launch(rig)
     assert 'unwrapped' not in result.stdout and not (rig['panel'] / 'correctness.md.raw').exists()
@@ -1017,7 +1027,6 @@ def test_ordinary_report_is_not_noted_as_unwrapped(rig):
     ('fenced-two', 'not a balanced header-only block'),
     ('fenced-extra', 'not a balanced header-only block'),
     ('fenced-lang', 'not a balanced header-only block'),
-    ('fenced-quoted', 'no valid reach line'),
     ('fenced-example', 'no valid reach line'),
 ])
 def test_wrapped_header_never_invents_or_promotes_a_declaration(rig, mode, reason):
@@ -1050,6 +1059,40 @@ def test_repeated_or_contradictory_reach_lines_are_refused():
     assert gs.reach_refusal(late) == 'ambiguous reach declaration (repeated reach line)'
     prose = gs.stamp(f'{yes}\nfinding: the line reach: is parsed\nverdict: clear\n', 'worker: launcher')
     assert gs.reach_refusal(prose) is None
+
+
+YES_REACH = 'reach: read=yes shell=no tests=not-run'
+
+
+@pytest.mark.parametrize('preamble', [
+    "Status: I've read the diff and the touched files, and I'm writing the report now.\n\n",
+    'Now let me write the report:\n',
+    'One.\nTwo.\n**Three.**\n',
+])
+def test_derive_files_a_report_after_a_short_progress_preamble(preamble):
+    """Ticket 1542: the archived refusals carried a valid header after one status sentence."""
+    gs = load_module()
+    raw = f'{preamble}worker: model=claude-sonnet-5-5 · family=Claude\n{YES_REACH}\n\nfinding: none\nverdict: clear\n'
+    report, reason, _, _ = gs.derive({}, raw, WORKER)
+    assert reason is None
+    assert report.splitlines()[:2] == [WORKER, YES_REACH]
+    assert preamble.splitlines()[0] not in report
+
+
+@pytest.mark.parametrize('raw,reason', [
+    ('One.\nTwo.\nThree.\nFour.\n' + YES_REACH + '\nverdict: clear\n', 'no valid reach line'),
+    ('finding: none\n' + YES_REACH + '\nverdict: clear\n', 'no valid reach line'),
+    ('verdict: clear\n' + YES_REACH + '\n', 'no valid reach line'),
+])
+def test_derive_still_refuses_a_header_after_body_or_a_long_preamble(raw, reason):
+    gs = load_module()
+    assert gs.derive({}, raw, WORKER)[1] == f'no report (seat reach: {reason})'
+
+
+def test_a_not_run_line_in_the_preamble_is_still_a_refusal():
+    gs = load_module()
+    raw = f'Reading first.\nNOT-RUN: HEAD moved\n{YES_REACH}\nverdict: clear\n'
+    assert gs.derive({}, raw, WORKER)[1] == 'no report (seat refused: NOT-RUN)'
 
 
 def test_not_run_line_is_a_refusal_even_before_a_verdict_line():
@@ -1134,7 +1177,7 @@ def test_replay_checks_the_sha_then_runs_the_real_derivation(tmp_path):
 @pytest.mark.integration
 def test_refused_seat_raw_output_survives_the_review_tree(rig):
     """A seat refused for its reach line leaves its bytes in the archive's raw store."""
-    result = launch(rig, mode='fenced-quoted')
+    result = launch(rig, mode='fenced-example')
     assert result.returncode == 1 and 'no valid reach line' in result.stdout
     shutil.rmtree(rig['tree'])  # the review tree, panel included, is gone
     kept = list((Path(rig['env']['IDH_ARCHIVE_ROOT']) / 'raw').glob('*/seat-raw/*-correctness.raw'))
@@ -1172,7 +1215,7 @@ def test_keep_raw_names_the_launch_seat_id_and_warns_on_a_failed_copy(tmp_path, 
 
 @pytest.mark.integration
 def test_raw_file_joins_its_launch_line_by_seat_id(rig):
-    result = launch(rig, mode='fenced-quoted')
+    result = launch(rig, mode='fenced-example')
     assert result.returncode == 1
     archive = Path(rig['env']['IDH_ARCHIVE_ROOT'])
     (row,) = [json.loads(line) for line in next((archive / 'raw').glob('*/launches.jsonl')).read_text().splitlines()]
