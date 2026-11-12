@@ -10,9 +10,10 @@ the status quo (the report filed as an ordinary ticket and handled when
 someone got to it)?
 
 **Result.** Over 25 judgeable cases: 19 no change, 3 small or partial
-gains, 3 harms; 2 unjudgeable. The gains were ones the first owner read
-also found, within 26 minutes to an hour. The evidence does not support
-building C1.
+gains, 3 harms; 2 unjudgeable. Two of the gains (G2, H3) were also found
+by the first owner read, within 26 minutes to an hour; the third (K-H1)
+was partial, the triager missing the ruling the author applied a day
+later. The evidence does not support building C1.
 
 ## Method
 

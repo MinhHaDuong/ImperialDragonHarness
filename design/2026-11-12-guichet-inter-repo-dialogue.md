@@ -67,8 +67,9 @@ a cause.
 
 What the cases show, for § 5. Reports that stated an observation and its
 evidence (H2, P1, G1) travelled cheaply. The one that carried a design
-built on a stale premise (H1) needed a correction the receiver's own rulings
-would have given at intake. A single report can hold observations for
+built on a stale premise (H1) needed a correction the receiver's rulings
+already recorded; the later triage trial (§ 5) shows a triager can still
+miss such a ruling. These ids are the trial's K-* cases. A single report can hold observations for
 several owners (P2), and the fan-out was done by hand. Fixes whose consequences fall
 back on askers (G1's hook reinstall, G2's temporary `--no-verify`) reached
 them only through a tracker log line. The sweep did not find the source of
@@ -332,8 +333,8 @@ triage brief blind on 27 real cross-project reports to the three receivers:
 
 - 19 of 25 judgeable cases: no change. Well-formed reports, author-driven
   decisions and rollouts; the first owner action came within about an hour.
-- 3 small or partial gains (G2, H3, K-H1), each also found by the first
-  owner read within 26 minutes to an hour; in K-H1, the one case with a
+- 3 small or partial gains (G2, H3, K-H1). G2 and H3 were also found by
+  the first owner read within 26 minutes to an hour; in K-H1, the one case with a
   large possible saving, the triager missed the recorded ruling.
 - 3 harms (G3, H1, H7): two pushbacks citing a recorded design the owner
   then reversed, and one fold into another ticket that would have parked a
@@ -359,13 +360,15 @@ Review section and git history.
    from` line (`/hunt`, raid) starts with the trial brief's four checks:
    facts against framing, duplicates and overlap, ownership, standing
    rulings. A conflict with a recorded ruling goes to the author as a
-   question, never as a refusal: the trial's three harms came from refusing
-   on recorded text.
+   question, never as a refusal: two of the trial's three harms came from
+   refusing on recorded text the owner then changed (the third was a fold
+   into another ticket, which the check does not do).
 3. **A return path for blocked askers.** A blocked asker parks instead of
    waiting: its own ticket gets `Blocked-by: <receiver>/<NNNN>` (erg accepts
    another repository's ticket as a URI reference; git-erg
-   `design/erg-manual.md`, rule 9), the `deferred` skip label (erg treats an
-   unresolved reference as optimistic, so the label gates readiness) and a
+   `design/erg-manual.md`, rule 9), the `deferred` skip label (erg reads a
+   relative reference as a path in the asker's own checkout, where it stays
+   unresolved and is treated as optimistic, so the label gates readiness) and a
    log line. The asker's `/molt` reads each such reference in the
    receiver's store; when the receiver's ticket is closed, it removes
    `deferred`, removes the `Blocked-by:` line, and logs `unblocked by
@@ -536,6 +539,9 @@ no change, 3 small gains, 3 harms out of 25 judgeable. The author ruled:
 commit the trial and rewrite the recommendation as the status quo plus
 the three additions; C1 is rejected and kept in git history at `72fed79`.
 
+*The entries below record the C1 phase, superseded by the trial ruling
+above; they describe the design as it then stood.*
+
 **Author follow-up (2026-11-12, pickup and blocking):** asked who
 launches the verdict script (the launcher job), when the asker picks up
 the answer (a bounded wake, else its repository's next roar, lair or sweep
@@ -565,3 +571,8 @@ the reused session, earlier author rulings, are retired with it.
 
 KISS pass by the drafter: one branch, one notes thread, one read-only run,
 one writer script, one sweep. The A2A state names stay as labels only.
+
+KISS pass after the trial (current): the status quo plus one log-line
+convention, one check at pickup, and one release step in the asker's
+`/molt`; nothing new between repositories but the ticket the asker already
+files.
