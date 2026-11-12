@@ -1152,7 +1152,8 @@ WAIT_RESULT = {"pass": PASS, "fail": FAIL, "environment": ENV}
 def cmd_wait_after(args):
     """Wait until `--tip` carries an after-merge record, then exit on its result (ticket 1543).
 
-    Exit 0 pass, 1 fail, 5 environment, 2 when no record came within `--timeout` seconds. The
+    Exit 0 pass, 1 fail (an unknown result reads as fail), 5 environment, 2 when no record came
+    within `--timeout` seconds. The
     landing session arms this through `runtime.py wake arm`, so its exit is the session's wake.
     """
     tip = rev(args.tip) or args.tip

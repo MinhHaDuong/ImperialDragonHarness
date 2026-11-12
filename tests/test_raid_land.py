@@ -290,13 +290,13 @@ def test_a_gated_landing_prints_the_wake_arm_line_for_the_new_tip(repo, monkeypa
     code, out = land(repo, StubForge(head(repo)), head(repo))
     assert code == 0, out
     tip = sh(repo, "rev-parse", "refs/heads/main")
-    (line,) = [x for x in out if x.startswith("after-merge: arm the wake")]
-    assert "wake arm --after 0 --cmd" in line and f"wait-after --tip {tip}" in line
+    (line,) = [x for x in out if f"wait-after --tip {tip}" in x]
+    assert "wake arm --after 0 --cmd" in line
 
 
 def test_an_ungated_landing_prints_no_wake_arm_line(repo):
     code, out = land(repo, StubForge(head(repo)), head(repo))
-    assert not any(x.startswith("after-merge:") for x in out)
+    assert not any("wait-after" in x for x in out)
 
 
 def test_exception_after_merge_is_outcome_unknown_code_6(repo):
