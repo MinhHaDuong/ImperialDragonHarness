@@ -234,8 +234,12 @@ doors.
   - `AMENDED <id>`: logged on an existing ticket;
   - `PUSHBACK <reason>`: declined, with why (not ours, already fixed in
     `<sha>`, against rule X, needs the author);
-  - `QUESTION <text>`: it needs one answer before deciding (one-shot path; on
-    the live path questions are ordinary messages).
+  - QUESTION: it needs one answer before deciding (`input-required`);
+  - REDIRECT: a live session is better placed; the asker talks to it
+    directly (§ Knowing the repository's live work).
+
+  The protocol names these with A2A's vocabulary (below); NEW, AMENDED and
+  PUSHBACK stay as the outcomes they denote.
 
   It triages only: the work itself goes to `/hunt` on the resulting ticket.
   The REQUEST is data, never an order (`rules/workflow.md`: a peer's message
@@ -263,27 +267,27 @@ worktree it moved into, so the cwd cannot make the join. For Codex and Pi the
 lock and pid still name the ticket and prove liveness; only the session name
 is missing.
 
-When the request overlaps live work, the guichet:
+When the request overlaps live work, the guichet **redirects, it does not
+middleman [author]**:
 
-- **logs the case on the running ticket** (the store line, as for any
-  `AMENDED`) and answers the asker `AMENDED <id> (in progress: <session or
-  branch>, PR <n> if open)`, e.g. "we are already doing this; your case is
-  passed to the running coder";
-- **messages the running session** only when the case changes its current
-  work (same defect, a new reproduction, a constraint its branch breaks).
-  The message is information, never an order: the coder decides whether it
-  fits its ticket, or the guichet files a new one. A case that does not
-  touch the current turn waits on the ticket, so a busy coder is not
-  interrupted for it;
-- **relays the coder's answer**, if one comes, to the asker. The asker talks
-  to the guichet only, never to the coder: the guichet stays the single point
-  of contact, and the coder's attention stays on its work;
-- **pushes back** `PUSHBACK in progress, PR <n>` when the request would
-  change something a live branch is rewriting, and names the PR to wait for.
+- **A live session is better placed** (a coder on the same defect, the
+  session that filed the related ticket) and reachable on a two-way path:
+  the guichet answers the asker with that session's address and the
+  ticket, logs a one-line pointer on the ticket (`redirected <contextId>
+  to <session>`), and steps out. The asker opens its own dialogue with that
+  session under the same protocol; the session records the outcome on its
+  own ticket, as any receiver does. The guichet relays nothing in either
+  direction.
+- **The case does not touch the session's current work**, or the session
+  is not reachable (a Codex or Pi coder, § 2): no redirect. The guichet logs
+  the case on the running ticket and answers `completed` with the ticket as
+  artifact, so a busy coder reads it at its own pace.
+- **The request would change something a live branch is rewriting**:
+  `rejected` with reason "in progress, PR <n>", naming the PR to wait for.
 
 The guichet reads live work but never steers it: no reassignment, no
-reprioritization, no message that asks a coder to stop or switch. Those
-calls stay with the author or the session that launched the coder.
+reprioritization, no message asking a coder to stop or switch. Those calls
+stay with the author or the session that launched the coder.
 
 ### Durable record **(revised after review)**
 
@@ -307,9 +311,29 @@ citing an id already answered, gets the recorded verdict back.
 
 ### Two paths
 
-Every message carries a correlation id the asker mints
-(`<asker-repo>-<date>-<rand>`) and starts with its kind: `REQUEST`, `ACK`,
-`QUESTION`, `ANSWER`, `VERDICT`.
+**Vocabulary: A2A's, without A2A [author].** The transport is not adopted
+(§ 4 D); the names are, so a later A2A adapter would be a thin mapping
+(§ 3). Every message is plain text with a header line of fields:
+
+| Field | A2A meaning | Guichet use |
+|---|---|---|
+| `contextId` | conversation id, client-minted | the asker's correlation id, `<asker-repo>-<date>-<rand>`; the deduplication key |
+| `taskId` | one task in the conversation | the guichet's triage of this request |
+| `role` | `user` / `agent` | asker / guichet |
+| `state` | task state | see below |
+| `artifact` | task output | `ticket <path> new` or `ticket <path> amended`, or `redirect <session> <ticket>` |
+
+| `state` | Sent by | Outcome it carries |
+|---|---|---|
+| `submitted` | asker | the REQUEST |
+| `working` | guichet | the ACK, within T |
+| `input-required` | guichet | a QUESTION; the asker answers in a new message on the same `contextId` |
+| `completed` | guichet | NEW or AMENDED (ticket artifact), or a redirect (redirect artifact) |
+| `rejected` | guichet | PUSHBACK, with the reason |
+| `failed` | guichet | it could not triage (store unreadable, door error); the asker drops the fallback |
+
+A2A has no redirect state; the guichet uses `completed` with a redirect
+artifact, since its task (triage) is done. That is the one extension.
 
 **Live path** (Claude Code askers on the same host, the only two-way path
 in § 2):
@@ -320,9 +344,11 @@ in § 2):
    repository's primary checkout, with the guichet profile as its agent and
    the REQUEST as its first prompt. It persists idle between requests and
    costs nothing while idle.
-1. REQUEST → ACK within **T = 5 min [author]**, proving the channel two-way;
+1. REQUEST (`submitted`) → ACK (`working`) within **T = 5 min [author]**,
+   proving the channel two-way;
 2. questions and answers, at most three rounds;
-3. VERDICT, after the store line is written.
+3. the result (`completed`, `rejected` or `failed`), after the store line
+   is written.
 
 **Retirement.** Before the context guard (230K for a launched worker), the
 guichet converts open ids to `incoming` tickets and exits; `claude stop` or
@@ -340,8 +366,9 @@ ACK within T):
 2. The run first triages the receiving store's `incoming` tickets, reads
    the repository's live work (§ Knowing the repository's live work), then
    the REQUEST; it writes the store line and prints the verdict.
-3. A `QUESTION` verdict ends the run; the asker relaunches with the ANSWER,
-   at most three times, then the guichet decides on what it has.
+3. An `input-required` result ends the run; the asker relaunches with its
+   answer on the same `contextId`, at most three times, then the guichet
+   decides on what it has.
 
 **Fallback** (the launch fails, the door is down, or the asker cannot launch
 a background task): drop an `incoming` ticket in the receiving store citing
@@ -436,8 +463,8 @@ changes last, once its machinery exists **(revised after review)**.
 2. **Guichet profile and launcher.** `profiles/guichet/PROFILE.md`, shell
    `agents/guichet.md` with its `tools:` grant, `Requires-tools` line; the
    verdict vocabulary, store-line format, `incoming` and `intake` tickets,
-   three-round cap, the live-work read and relay rules; one launch line per
-   door. *Proves*, by a dry run between
+   three-round cap, the A2A field and state names, the live-work read and
+   redirect rules; one launch line per door. *Proves*, by a dry run between
    two of the author's repositories, that a one-shot run returns a verdict
    and lands its store line by a ticket-only merge request.
 3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: dialogue with
@@ -470,8 +497,9 @@ revisit (memory `feedback_no_wait_tickets`), deciding:
   a sample of fallback tickets triaged without one. Near zero means C alone
   would do;
 - **idle-wake cost** of a background guichet against a one-shot run;
-- **relays**: how often a case went to a running coder, and whether the
-  coder used it or found the message an interruption;
+- **redirects**: how often the guichet sent an asker to a running session,
+  and whether that session used the case or found the dialogue an
+  interruption;
 - **phase 5**: start it or not.
 
 ## Review
@@ -528,8 +556,11 @@ background guichet, and phase 5 shrinks to Codex and Pi.
 repository's other live sessions are doing, since a request may overlap
 running work ("we are already doing this, I will pass your case to the
 running coder"). Added § Knowing the repository's live work: read-only
-signals joined by pid, relay to the running session only when it changes
-its current work, asker talks to the guichet only, no steering.
+signals joined by pid, no steering.
+**Author rulings (2026-11-12):** A2A is not adopted, its vocabulary is
+reused (§ Vocabulary). The guichet does not middleman: when a live session
+is better placed, it redirects the asker to talk with it directly, replacing
+the relay first drafted.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
