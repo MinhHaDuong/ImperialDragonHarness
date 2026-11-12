@@ -53,8 +53,8 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    seat missing, and gaze never replaces it with its own read. A headless seat
    declares `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on its
    second line (up to three lines of progress text before the header are
-   dropped; a `finding:`, `verdict:` or `NOT-RUN` line before it is not
-   progress text); a missing line or `read=no` is that same missing seat, and
+   dropped, never a finding or a refusal); a missing line or `read=no` is
+   that same missing seat, and
    `tests=not-run` marks a clear that read code only, never ran it.
    `--dry-run` prints the command and launches nothing.
 
