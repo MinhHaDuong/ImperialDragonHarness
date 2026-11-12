@@ -1,4 +1,4 @@
-# Guichet: dialogue first between repositories
+# Guichet: triaged intake between repositories
 
 Status: provisional (author, 2026-11-12)
 
@@ -37,9 +37,11 @@ receivers; every other project is an asker. Two observed cases per receiver
 are in § 2, Observed cases. Communication between sessions inside one
 repository is out of scope.
 
-The author's direction **[author]**: talk first; the *receiving* repository
-records, triages and answers with a new ticket, an amended ticket, or pushback.
-A dropped ticket stays as the fallback.
+The author's first direction **[author]**: talk first; the *receiving*
+repository records, triages and answers with a new ticket, an amended
+ticket, or pushback. After a red-team round, the author chose the simpler
+form (§ 5): the asker files an intake over git, a fresh read-only triager
+on the receiver's side decides, and nobody holds a dialogue session open.
 
 ## 2. Situation
 
@@ -117,7 +119,7 @@ session can run a model of any family the route skill picks, local ones
 included. Pi also has an `--mode rpc` and named sessions (`--name`,
 `--session-id`). Not yet observed: `idh-wake.ts` delivering into a Pi
 session started detached (tmux or a `systemd-run --user` unit), which is
-how a guichet would run.
+how the superseded guichet session would have run.
 
 **Background sessions.** Outside the harness's doors, the Claude Code CLI
 (2.1.322) has `claude --bg [-n <name>]`: it starts a session in the
@@ -132,8 +134,8 @@ messages are held (§ 3).
 **Merge path for ticket-only changes.** `merge-gate.py tier` classifies a
 `tickets/*.erg`-only diff as bookkeeping tier: no gate verdict needed, and
 ticket-only merge requests are merged right after opening (memory
-`feedback_ticketwork_automerge`). A guichet's output is ticket-only, so it
-rides the fast track with no special rights **[author]**.
+`feedback_ticketwork_automerge`). Under C1 (§ 5) intake branches are an
+exception: the asker never merges them.
 
 **Routing.** `skills/route/SKILL.md` sends advisor calls to the ASSURANCE tier;
 family choice for independence lives in `references/decorrelation.md`.
@@ -162,8 +164,8 @@ natively. MCP is agent-to-tool access, not peer dialogue (secondary:
 (done) or `failure`; `agree` may be skipped under a reply-by deadline
 (secondary summaries:
 <https://www.cs.sjsu.edu/~pearce/modules/lectures/abs/jadeweb/fipaIPs.htm>).
-The guichet vocabulary maps onto it: ACK = `agree` made mandatory with T as
-reply-by; NEW/AMENDED = `inform-done` with the ticket as result; PUSHBACK =
+The guichet drafts' vocabulary mapped onto it (ACK and T are retired under
+C1): ACK = `agree` made mandatory with T as reply-by; NEW/AMENDED = `inform-done` with the ticket as result; PUSHBACK =
 `refuse`; QUESTION = A2A's `input-required`. Contract Net (bidding among many
 contractors) does not fit a single desk; we did not retrieve its primary
 sources or KQML's.
@@ -259,7 +261,8 @@ partial for every claim. Findings:
   studies (Lin et al., EMSE 2022, doi 10.1007/s10664-022-10173-y; NPM
   maintainer responsiveness, arXiv 2511.04986).
 
-**What this changes in § 5.** (1) Messages are notification, the ticket
+**What this changed in the guichet drafts** (kept for the record; C1 in
+§ 5 needs only (1) and (4)). (1) Messages are notification, the ticket
 store is the record: every verdict names a ticket or a logged pushback.
 (2) The ACK is an application-level message with the correlation id, since
 no runtime's transport acknowledges across all pairs. (3) Where a Claude
@@ -277,8 +280,9 @@ first". No new role, no new transport. Leaves the outsider-written ticket and
 the unowned intake in place.
 
 **B. Guichet: a service-desk role per repository** (the author's
-direction). Dialogue first; the receiver writes the ticket. Detailed in § 5,
-where the reviews and the author reshaped it into one Pi-hosted path.
+direction). Dialogue first; the receiver writes the ticket. Amended seven
+times on 2026-11-12, then rejected after the red-team round (§ 5, How the
+choice was reached).
 
 **C. Asynchronous intake by ticket, triaged on a timer** (different family:
 no dialogue at all). Askers drop tickets as today, tagged `incoming`; a
@@ -286,7 +290,10 @@ scheduled triage run in the receiving repo (part of `molt`, or its own timer)
 reads them, merges duplicates, rewrites them in the house voice, or closes
 them with a pushback note, and logs the outcome where the asker's roar or
 lair will see it. Works on every runtime today, needs no live peer; loses the
-clarifying questions and answers hours later instead of minutes.
+clarifying questions and answers hours later instead of minutes. **C1**,
+the recommendation (§ 5), is C with an event trigger instead of a timer, an
+intake branch and notes thread instead of a merged ticket, and questions
+kept as notes.
 
 **D. Agent-to-agent protocol server** (different family: standard transport).
 Each repository exposes an A2A-style endpoint (agent card, task lifecycle,
@@ -299,363 +306,245 @@ day.
 build). agent-message-queue, hcom or repowire already carry messages
 between Claude Code, Codex and Pi sessions and wake idle ones (reuse table
 in `design/research/2026-11-12-guichet-biblio-saturation.md`). E is
-not an alternative to B but a possible carrier for its asking side, kept as
-an option if our adapters prove harder than expected. None of the tools examined
+a carrier for live dialogue, which C1 (§ 5) no longer needs; it was
+considered as a carrier for B, now rejected. None of the tools examined
 provides the triage role or the durable record in the receiving store, and
 none documents Vibe support; their discovery features were not compared.
 
 ## 5. Synthesis and recommendation
 
-**Pick B with one path: a persistent guichet hosted by Pi, running the
-model route picks, reached by askers of any runtime; the receiving store
-records every verdict; a dropped ticket is the only fallback [author].** B
-fixes both pains of § 1: the owner writes its own ticket, and intake has an
-owner. An earlier version had two paths, a live guichet that only Claude
-Code could host (`claude --bg`) and a one-shot run for everything else. The
-author asked whether the one runtime able to host would always be selected
-(it would, so route's choice was a fiction) and why not a Pi extension. Pi
-already has the inbox extension and reaches every model family (§ 2, Pi as
-a host), so the runtime is fixed and the model is free.
+**Pick C1 in its first variant, over git alone [author, 2026-11-12]: the
+asker files an intake branch with a notes thread in the receiving
+repository, launches a fresh read-only triager, and leaves. A script, not
+the model, writes the verdict.** C1 is alternative C with an event trigger:
+the dropped ticket stays the channel, and it now gets an owner within
+minutes.
 
-### Roles **[author]**
+### How the choice was reached
 
-- **Asker** exposes facts and observations from its side: what it saw, where,
-  with evidence paths. No orders, no edits, no proposed patch to the receiver's
-  files. It may say what outcome would unblock it.
-- **Guichet** records, converses, triages and decides actions for its side. It
-  answers with one of these outcomes:
-  - `NEW <id>`: filed a new ticket;
-  - `AMENDED <id>`: logged on an existing ticket;
-  - `PUSHBACK <reason>`: declined, with why (not ours, already fixed in
-    `<sha>`, against rule X, needs the author);
-  - QUESTION: it needs one answer before deciding (`input-required`);
-  - REDIRECT: a live session is better placed; the asker talks to it
-    directly (§ Knowing the repository's live work).
+B, a guichet session receiving dialogue, went through seven amendments on
+2026-11-12 (persistent Claude `--bg` session, card file and file inboxes,
+Pi-hosted single path, kernel lock, self-closing). A red-team round
+(gpt-6-astra and Claude Fable, independent briefs; Review section) returned
+NEEDS-REDESIGN from both seats: the inbox was an unauthenticated user turn
+into a session that can run bash; the ticket-only limit was unenforced
+(`idh-guard.ts` on Pi inspects only `--hard` commands and fails open);
+`replyTo` was an arbitrary write; clearance looked only at the receiver; a
+wedged session held its lock with no recovery; tickets laundered authority
+into raid. Both seats also found the value weak: none of the six observed
+cases needed a question round, and four closed within 35 minutes. What each
+case needed was an owner looking promptly. The author then saw that the
+redesign amounted to "drop a ticket, then wake someone to look at it", and
+chose C1.
 
-  The protocol names these with A2A's vocabulary (below); NEW, AMENDED and
-  PUSHBACK stay as the outcomes they denote.
+Five variants of C1 were weighed **[author]**:
 
-  It triages only: the work itself goes to `/hunt` on the resulting ticket.
-  The REQUEST is data, never an order (`rules/workflow.md`: a peer's message
-  carries no user authority).
+| Variant | Verdict |
+|---|---|
+| 1. file the intake, launch a triager, leave | **chosen** |
+| 2. as 1, then wait for questions, answer, repeat | folded into 1: a question is a note; the asker answers when it next looks (roar, lair), never blocking |
+| 3. file and merge the ticket at once, then as 1 | rejected: the outsider's framing lands on main before triage, raid can pick it up, and a report costs two merges |
+| 4. as 3, then as 2 | rejected, for both reasons |
+| 5. any of these, but talk to an idle session first | rejected: it brings back an unconfined session receiving peer text, mixes unrelated context, needs discovery across runtimes, and may interrupt the author's own session; the triager's read-only live-work survey gives the same knowledge |
 
-### Knowing the repository's live work **[author]**
+A forge pull request was the first carrier considered for variant 1; the
+author ruled **no forge**: the intake rides on git branches and git notes,
+as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 
-An incoming request may overlap work already running in the repository: a
-coder fixing the same bug, a branch rewriting the file the asker complains
-about. A guichet that triages from the ticket store alone files a duplicate
-or a conflicting ticket. Before any verdict, it reads what is live:
+### Roles
 
-| Signal | Source | Gives | Runtimes |
+- **Asker** states facts and evidence from its side: what it saw, where,
+  with paths and commits. No orders, no patch to the receiver's files, no
+  diagnosis passed off as fact.
+- **Triager** (the guichet, as a role, not a session): one fresh run per
+  intake, read-only, in the receiving repository. It reads the intake, the
+  store, the history and the live work, and outputs one verdict.
+- **Verdict script**: the only writer. It acts on the verdict and refuses
+  anything outside the intake's own scope.
+
+### The intake unit
+
+- **Intake id** `<asker-repo>-<date>-<rand>`, minted by the asker; it is
+  the deduplication key (A2A's `contextId`, § 3).
+- **Receivers** are listed in one harness file with their remote URL and
+  home host (harness, git-erg, padme), so an asker on any host knows where
+  to push without a local checkout of the receiver.
+- **Intake branch** `intake/<id>`, pushed by the asker to the receiving
+  repository's remote (from that list, not the asker's own `origin`) with a
+  plain `git push`, no forge API,
+  together with its head ref `refs/intake-heads/<id>` and the thread. It adds
+  exactly one `incoming` ticket with `Origin: <asker-repo>` and `Intake:
+  <id>` headers, the
+  facts and the evidence, on a base the request note records (the
+  receiver's `main` at filing). The asker never merges it.
+- **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
+  anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
+  `ts` first: `request`, `answer` (asker); `verdict` (triager, through the
+  script); `promoted`, `declined`, `resume` (owner); `held` (script or
+  sweep); each with its author and the branch head. Transport and concurrent-write merging are
+  those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
+  without force); the code is a sibling of `review_notes.py` sharing its
+  transport layer, with its own entry schema and lock (review entries and
+  locks are review-specific). The asker's head is kept at
+  `refs/intake-heads/<id>`; branch and head ref are deleted together, after
+  a PUSHBACK or once a promoted intake has landed.
+- Verdict states keep A2A's names: `completed` (NEW or AMENDED), `rejected`
+  (PUSHBACK), `input-required` (QUESTION), `failed` (the triager could not
+  decide).
+
+### The flow
+
+1. The asker pushes the intake branch and appends the `request` note.
+2. It tries `runtime.py triage <receiver> <id>` on the receiver's host
+   (over `ssh` from another host). The launcher, a script, first writes
+   the run's inputs as files into a run directory: the intake branch's
+   diff, the intake thread, the recent history of the paths the intake
+   cites, and a live-work snapshot (worktree locks with their tickets and
+   liveness, each live branch's changed files). It then
+   starts one headless run with read-only tools only (Pi: `--tools
+   read,grep,find,ls`, no extensions), **inside a sandbox that makes only
+   the receiving repository and the run directory readable** (a
+   `systemd-run --user` unit with read-only bind mounts, or `bwrap`;
+   phase 1 proves it, including that the model's credentials reach the
+   runtime without being readable by its `read` tool), capped in wall time,
+   model by route at the advisor tier **[author]**. Runs are serialized per
+   receiver by `flock -o`; the launcher holding the lock drains every
+   `runnable` intake of that receiver (§ Intake lifecycle), one fresh run each, and after releasing
+   the lock scans once more, relocking if anything arrived meanwhile, so a
+   second launch that finds the lock held can just leave. A failed launch is harmless: the intake stays
+   durable and the sweep (step 6) finds it. The asker leaves.
+3. The triager reads the run directory, the receiving store and its
+   history (§ Knowing the repository's live work below), and prints one
+   verdict as JSON.
+4. The verdict script acts, after checking that the asker's commits
+   (from the recorded base to `refs/intake-heads/<id>`, the asker's
+   submission) add exactly one new `tickets/*.erg` and nothing else (the
+   bookkeeping tier alone would also admit `memory/` and `STATE.md`), and
+   that the branch tip satisfies the invariant of the intake's state
+   (§ Intake lifecycle below).
+   **It never lands anything on main [author].** It pushes its commit and
+   notes to the receiver's remote and records the prepared head in the
+   verdict note; from then on the prepared head, not the asker's, is the
+   reference. A crash repair compares the tip with the recorded prepared
+   head: equal means the action is done.
+   **The asker pushes only when filing.** Corrections come as `answer`
+   notes, or as a new intake with a new id.
+   - **NEW**: commits the ticket rewritten in the receiver's voice on the
+     intake branch, keeps `Origin:` and `Intake:`, adds `needs-human`; the owner's
+     promotion lands it;
+   - **AMENDED**: replaces, on the intake branch, the asker's new ticket by
+     one dated log line on the existing ticket, naming `Origin:` and the
+     intake id and quoting the report as data, never touching the ticket's
+     scope or exit criteria; the owner's promotion lands it;
+   - **PUSHBACK**: writes the reason in the thread and deletes the intake
+     branch;
+   - **QUESTION**: writes the question in the thread and stops.
+
+   Every outcome is a `verdict` note first, so a crash between note and
+   action is repaired by rerunning the action.
+   **Promotion.** The receiver's `/dashboard` lists intakes awaiting
+   promotion (NEW or AMENDED, prepared, not landed). An owner (the author,
+   or a session of the receiver acting with the author's leave) promotes
+   one by opening the receiver's ordinary merge request for the intake
+   branch at exactly the prepared head and writing a `promoted` note, or
+   declines it with a `declined` note and a reason. Once `promoted`, the
+   receiver's merge process owns the branch (a rebase before the gate is
+   normal); an owner who closes the promotion without merging writes a
+   `declined` note. Promotion is the owner's
+   decision, so the automerge habit for ticket-only requests applies from
+   that point on. A NEW ticket keeps `needs-human` after landing unless the
+   owner removes it in the promotion.
+5. The asker reads the outcome when it next looks (its roar or lair):
+   `git fetch` of the receiver and the intake thread. It answers a question
+   with an `answer` note and relaunches the triager (a failed relaunch is
+   caught by the sweep), at most three rounds;
+   unanswered after seven days, the triager decides on what it has (a
+   failure to decide is a `failed` verdict like any other).
+6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
+   it runs the triager on runnable intakes older than an hour, decides
+   questions unanswered for seven days, retries failures, and deletes the
+   branch and head ref of finished intakes. `/dashboard` lists intakes
+   runnable, waiting on a question, failed, prepared, promoted and held. The launch in step 2
+   is therefore never a single point of failure.
+
+### Intake lifecycle
+
+The state of an intake is read from the last entry of its thread and, for
+`landed`, from the receiver's `main`. Each state fixes what the branch tip
+must be; a tip that breaks its state's invariant moves the intake to
+`held` (from any state with an invariant), with no retriage.
+
+| State | Entered by | Tip invariant | Next |
 |---|---|---|---|
-| worktree locks | `git worktree list --porcelain` | path, branch, lock reason naming the ticket and the owner's pid (hunt's § Worktree recipe) | all |
-| liveness | `kill -0 <pid>` | whether the lock's owner still runs | all |
-| sessions | `claude agents --json`, `ListAgents` | name, pid, state busy/idle | Claude Code |
-| claims and requests | `tickets/.claims/`, open merge requests and their branches | who claimed which ticket, what is about to land | all |
-| files in flight | `git diff --name-only origin/main...<branch>` per live branch | the paths each live branch changes | all |
+| `runnable` | a `request` note, or an `answer` note while `waiting` (an answer moves no other state) | the asker's head | the launcher runs it at once (no delay); the sweep after an hour |
+| `waiting` | a QUESTION verdict | the asker's head | `runnable` on an answer; after seven days, or after the third round, the triager decides on what it has |
+| `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
+| `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
+| `landed` | the ticket on the receiver's `main` carries the intake id (NEW: its `Intake:` header; AMENDED: its log line) | none | finished; the sweep deletes branch and head ref |
+| `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
+| `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted as above |
+| `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
+| `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left (to `runnable` when it left `failed`), after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
 
-The join is the pid: a hunt worktree's lock reason carries the runtime
-process id (`$PPID`), and `claude agents --json` reports the same pid. On
-2026-11-12 the drafter's own lock (`pid 789752`) matched its session's
-`pid` in the listing. A session's listed `cwd` is where it started, not the
-worktree it moved into, so the cwd cannot make the join. For Codex and Pi the
-lock and pid still name the ticket and prove liveness; only the session name
-is missing.
+"Landed" is detected on `main`, not from the branch, so a merge that
+rebases or deletes the branch is still recognized.
 
-**When metadata is not enough: an informant reads the transcript
-[author].** If the files show an overlap and the guichet needs the running
-session's intent (is it fixing the same cause?), it does not query that
-session, which would interrupt it, and it does not read the transcript
-itself. It sends a cheap read-only informant, a small-model subagent, to
-the session's live transcript, located through `transcript_spool.py`
-`NAMED_ROOTS` (claude, codex, pi, aider, vibe), which returns three lines of
-facts: ticket, files, current hypothesis. The guichet records facts, never
-quotes; transcripts may hold uncleared material. Mapping a pid to its
-transcript file is known for Claude Code (`sessionId` in `claude agents
---json`); for the other runtimes it goes through cwd and mtime, a phase 1
-probe.
+### Knowing the repository's live work
 
-**Overlap is detected by files, then judged by ticket.** The guichet
-matches the paths in the asker's evidence against each live branch's files
-in flight (the command the sync rule already uses, `rules/workflow.md`
-§ Sync before starting work). A shared path is a concrete overlap signal:
-it is also where conflicting work would collide. A request with no path in
-common may still overlap by cause; the guichet then judges from the running
-ticket's text.
+Unchanged in substance, now read-only and pre-computed: the launcher's
+snapshot gives worktree locks (ticket and owner pid), pid liveness, claims,
+open branches and each live branch's changed files, and the triager
+matches the intake's evidence paths against them. A shared path is the overlap signal. On
+overlap the verdict is AMENDED on the running ticket, naming the branch
+and session, or PUSHBACK "in progress on `<branch>`". It never messages a
+session, never steers one, and never reads a transcript: the informant and
+the redirect of earlier drafts are dropped, since they reached into other
+sessions.
 
-When the request overlaps live work, the guichet **redirects, it does not
-middleman [author]**:
+### What the red team's findings become
 
-- **A live session is better placed** (a coder on the same defect, the
-  session that filed the related ticket) and reachable on a two-way path:
-  the guichet answers the asker with that session's address, the ticket,
-  and the session's state (busy or idle, from `claude agents --json`), logs
-  a one-line pointer on the ticket (`redirected <contextId> to <session>`),
-  and steps out. **A busy session is not interrupted:** where its runtime
-  offers an idle notice (Claude Code: `SendMessage` `notify_when_idle: true`
-  with no message, free for the session), the asker subscribes and opens
-  the dialogue when the notice arrives. A session whose busy or idle state
-  is not observable (today: Codex, Pi and Vibe coders, until phase 1 finds a
-  signal) gets no redirect: the guichet logs the case on its ticket instead
-  (next bullet). The asker stays non-blocking meanwhile; a subscription
-  that expires unanswered falls back to a log line on the ticket. The asker opens its own dialogue with that
-  session under the same protocol; the session records the outcome on its
-  own ticket, as any receiver does. The guichet relays nothing in either
-  direction.
-- **The case does not touch the session's current work**, or the session
-  is not reachable (its runtime has no inbox or wake adapter, § Transport
-  and discovery): no redirect. The guichet logs
-  the case on the running ticket and answers `completed` with the ticket as
-  artifact, so a busy coder reads it at its own pace.
-- **The request would change something a live branch is rewriting**:
-  `rejected` with reason "in progress, PR <n>", naming the PR to wait for.
+| Finding | Under C1 |
+|---|---|
+| peer text as a user turn into a shell | the triager has no shell; git and `/proc` are read by the launcher script, and the intake is a file the triager reads as data |
+| ticket-only unenforced | the model writes nothing; the script writes only `tickets/*.erg` on the intake branch, refuses any other path, and records the exact head the owner may promote |
+| `replyTo` arbitrary write | gone: replies are notes in the thread |
+| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable. Until phase 1 proves the sandbox, C1 does not run where the host holds uncleared material outside the receiver: a local model would stop leaks to a provider, not quotes into a ticket |
+| wedged session, lost request | no session to wedge; a run has a wall-time cap; branch and notes are durable before any run starts |
+| authority laundering | `Origin:` kept; nothing lands without an owner's promotion; `needs-human` on every NEW |
+| cost runaway | one run per intake, serialized per receiver, a daily cap per receiver in the launcher |
+| cross-host replies | git remotes reach every host |
 
-The guichet reads live work but never steers it: no reassignment, no
-reprioritization, no message asking a coder to stop or switch. Those calls
-stay with the author or the session that launched the coder.
+### Authorization and the rule
 
-### Durable record **(revised after review)**
-
-Messages notify; the receiving ticket store records. Before it answers, the
-guichet writes one store line keyed by the correlation id:
-
-- `NEW`: the new ticket carries the id in its log;
-- `AMENDED`: the log line on the existing ticket carries the id;
-- `PUSHBACK`: a log line on an `intake` ticket of the receiving store (one
-  standing ticket per repository, holding pushback lines), so a refusal is as
-  findable as an acceptance;
-- an id still open when a running guichet stops becomes an `incoming` ticket,
-  so no acknowledged request is held only in a session's context.
-
-All of these are `tickets/*.erg` writes, landed from the guichet's own
-worktree (`rules/workflow.md` § Session start) by a ticket-only merge request
-on the bookkeeping fast track. The guichet writes nothing else: no journal,
-no memory. The asker finds any verdict later by grepping the receiving store
-for its id, which also deduplicates: a repeated REQUEST, or a fallback ticket
-citing an id already answered, gets the recorded verdict back.
-
-### Transport and discovery: runtime-neutral **(amended 2026-11-12)**
-
-The first-class runtimes are Claude Code, Codex, Vibe and Pi, with more to
-come **[author]**. A Vibe MOE in another project cannot see a Claude
-`guichet-idh` through `ListAgents`, so discovery and delivery must not
-depend on any one runtime's native tools.
-
-- **Stable inbox.** Each receiver's guichet inbox lives at a well-known
-  path on its host, `~/.local/state/idh/inbox/guichet-<repo>/`, independent
-  of any session: an asker creates it if missing and writes there whether a
-  guichet runs or not, and messages survive a guichet's closing. `idh-wake.ts`
-  today creates a random per-session inbox at `session_start` and deletes it
-  at shutdown when empty; it gains the option to read a preset path instead,
-  and never deletes a preset inbox (phase 2).
-- **Lock [drafter's proposal].** At most one guichet per receiver and host,
-  enforced by the kernel, not by a file's presence: the launch command is
-  `flock -o -w 2 ~/.local/state/idh/guichets/<repo>.lock <start the Pi
-  guichet>`, run inside the detached session. `flock` holds the lock for
-  the guichet's lifetime; `-o` keeps it out of Pi's child processes, so a
-  child that outlives a crashed Pi cannot hold it (reproduced without `-o`,
-  util-linux 2.39.3, gaze rv-20261112-pr-2470-8fb1); `-w 2` lets two
-  racing launchers settle. A second launch fails after two seconds and does
-  nothing; a crash releases the lock, so no stale lock needs breaking.
-  Liveness is read without taking the lock (`lslocks` by path, or
-  `/proc/locks` by the lock file's inode), so a probe never makes a launch
-  fail. Under `-o` only the `flock` process holds the lock, so a guichet is
-  stopped as a whole (its tmux session or systemd unit), never by killing
-  `flock` alone, which would free the lock while Pi runs on. The lock file
-  is never deleted: removing and recreating it while held would let a
-  second guichet lock the new file. A plain card file cannot
-  serve as the lock: breaking a stale one after a crash is itself a race.
-- **Card.** A running guichet writes a card at
-  `~/.local/state/idh/guichets/<repo>.json`, with Agent Card names: `name`,
-  the inbox as `url`, `protocolBinding`, plus `model`, `host`, `pid`,
-  `started`, where `pid` is Pi's, not `flock`'s. It is descriptive: who listens and with which model. Whether
-  anyone listens is the lock's answer. `runtime.py guichet find <repo>`
-  reads the lock state and the card from bash, so every runtime can call
-  it. Two passing states are normal: lock held and no card yet (starting),
-  and a card with the lock free (left by a crash, overwritten by the next
-  launch).
-- **Host: Pi, always; model: route's choice [author].** Every guichet runs
-  as a persistent Pi session named `guichet-<repo>`, started detached in the
-  receiving repository's checkout (tmux, or a `systemd-run --user` unit as
-  `runtime_wake.py` already does for Codex), under that repository's rules,
-  reporting to no one but the protocol. A `guichet.json` in the receiving
-  repository states the role and the need, never a model or a tier: the
-  guichet role, clearance, host. Route maps the role to a worker at each
-  launch (`AGENTS.md`: "A skill states a role and a need; it never names a
-  model or a capability tier"; the advisor tier for this role is the
-  author's ruling, recorded on route's side); the card and the launch line
-  record the model actually used. An asker that finds the lock free
-  launches one through `runtime.py launch`; from another host, over `ssh`.
-- **Delivery.** Receiving side: `idh-wake.ts` reads the guichet's stable
-  inbox (exists, with the preset-path option above). A small Pi extension next to it writes the card at
-  `session_start` and removes it at shutdown; replies are file writes into
-  the asker's `replyTo` inbox. Asking side, one adapter per runtime: Pi
-  (the same extension), Claude Code (a `wake arm` waiter on its inbox),
-  Codex (`codex queue`), Vibe (below). Messages are files in the Pi
-  wake-inbox format with the A2A fields in their body; a task's files mirror
-  A2A's core operations (send = rename into the inbox, get = read the
-  status file, list = list the task directories, cancel = write a cancel
-  file; no streaming). Reusing agent-message-queue for the asking side stays
-  an option if our adapters prove harder than expected (§ 4 E).
-- **Vibe.** None of the tools examined documents support for it, and the
-  harness has no Vibe adapter. A Vibe
-  asker writes REQUESTs like any other and reads its reply inbox at its own
-  pauses (non-blocking, slower); a Vibe adapter comes only if that proves
-  too slow (phase 4, conditional).
-- **Native channels are shortcuts.** `SendMessage` between two Claude
-  sessions on one host stays allowed; it is not the protocol.
-- **Cross-host.** Inboxes, locks and cards are per host. A doudou asker
-  writes padme's stable inbox over `ssh padme` (its path is known without
-  the card), then probes padme's lock and launches there if needed, or falls
-  back.
-- **A2A level: binding-shaped, not declared [author].** Field names and the
-  operation mapping follow A2A, so a declared custom binding or an HTTP
-  bridge stays a mechanical step. Declaring one is dropped from the build
-  plan (it returns only as phase 5's conditional option):
-  the filesystem binding is partly anticipated and the design borrows A2A's
-  vocabulary, not its full data model (§ 3). A publication, if any, would
-  rest on the measured cross-repository bug reports, the part for which
-  § 3 found no matching study (pending the critic's open angles).
-
-**Is this the cheapest local inter-runtime transport? [author]** Every
-transport that starts a turn in a running session needs a per-runtime wake
-adapter, so the cost difference lies elsewhere. To build, a file inbox
-reuses the most of what exists (the Pi extension, `wake arm`, `codex
-queue`) and needs no daemon; sockets need a listener in every session and
-HTTP (alternative D) a server per agent. A shared SQLite store (agmsg,
-hcom) is comparable: no required daemon, but a client in every runtime.
-Reusing one (E) could be cheaper still; it stays an option if our adapters
-prove harder than expected.
-Cheapest of all is today's ticket-only protocol, which buys no dialogue.
-
-### Protocol and path
-
-**Vocabulary: A2A's, without A2A [author].** The transport is not adopted
-(§ 4 D); the names are, so a later A2A adapter would be a thin mapping
-(§ 3). Every message is plain text with a header line of fields:
-
-| Field | A2A meaning | Guichet use |
-|---|---|---|
-| `contextId` | conversation id, client-minted | the asker's correlation id, `<asker-repo>-<date>-<rand>`; the deduplication key |
-| `taskId` | one task in the conversation | the guichet's triage of this request |
-| `role` | `user` / `agent` | asker / guichet |
-| `state` | task state | see below |
-| `artifact` | task output | `ticket <path> new` or `ticket <path> amended`, or `redirect <session> <ticket>` |
-
-| `state` | Sent by | Outcome it carries |
-|---|---|---|
-| `submitted` | asker | the REQUEST |
-| `working` | guichet | the ACK, within T |
-| `input-required` | guichet | a QUESTION; the asker answers in a new message on the same `contextId` |
-| `completed` | guichet | NEW or AMENDED (ticket artifact), or a redirect (redirect artifact) |
-| `rejected` | guichet | PUSHBACK, with the reason |
-| `failed` | guichet | it could not triage (store unreadable, door error); the asker drops the fallback |
-
-A2A has no redirect state; the guichet uses `completed` with a redirect
-artifact, since its task (triage) is done. That is the one extension.
-
-**The path:**
-
-0. The asker writes the REQUEST into the stable inbox, then runs
-   `runtime.py guichet find <repo>`. Lock free: it launches the guichet
-   **[author]** under the lock, a detached Pi session with the guichet
-   profile and the model route resolves from `guichet.json`, which reads the
-   waiting REQUEST on start. Lock held: nothing to launch. Two askers racing
-   both try; the lock lets one guichet start. The asker never waits for the
-   launch.
-1. REQUEST (`submitted`), with `replyTo` → ACK
-   (`working`) into the asker's inbox within **T = 5 min [author]**,
-   proving the channel two-way;
-2. questions and answers, at most three rounds;
-3. the result (`completed`, `rejected` or `failed`), after the store line
-   is written.
-
-On start and when idle, the guichet also triages the receiving store's
-`incoming` tickets, so dropped tickets reach the same desk.
-
-**Closing [drafter's proposal].** The guichet closes itself; nobody else
-does, except the author.
-- **Idle for one hour**, to be measured: after an idle hour the prompt cache
-  is cold, so waking the old session re-reads its whole context, which
-  costs at least a fresh launch that reads only the profile and the store.
-- **Before the context guard** (230K for a launched worker).
-- On closing it converts open ids to `incoming` tickets, deletes its card,
-  reads the inbox once more and gives anything that arrived meanwhile a
-  verdict, or turns it into an `incoming` ticket when it would need a
-  question round, then exits, which releases the lock. The inbox stays; the next asker's
-  REQUEST launches a fresh guichet that reads whatever waits there.
-- **A crash** needs no cleanup: the kernel releases the lock, and the next
-  launch overwrites the stale card.
-- **The author** may stop a guichet at any time (its tmux session or
-  systemd unit). Lair and other sessions do not close guichets.
-- **Deduplication backstop.** A REQUEST read after its asker already
-  dropped the fallback ticket, or delivered twice for any reason, is
-  answered with the verdict already recorded for its `contextId`
-  (§ Durable record).
-
-**Fallback** (no ACK within T, the launch fails, or Pi is down): drop an
-`incoming` ticket in the receiving store citing the id, as today. The next
-guichet triages it first.
-
-**Non-blocking for the asker [author].** The asker writes the REQUEST (and
-launches if needed), then continues its own work. The ACK and the result
-arrive through its runtime's adapter at its next tool round, or at its
-next pause for a runtime without one. It never sleeps or polls (memory
-`feedback_no_blocking_waits`). A headless asker (a night sweep under
-`claude -p`) that cannot wait past its turn takes the fallback directly. At
-its wrap-up the asker records what it has: a verdict, or "pending at
-<repo>, id X". Its next roar or lair greps the receiving store for pending
-ids.
-
-### Authorization **[author]**, and what the rule must say
-
-The author ruled that the asker launches. Current law allows a launch "only
-for authorized work that must happen now" (`rules/workflow.md` § Cross-project
-work, step 3), so the ruling widens step 3; it does not narrow it. Phase 3
-rewrites step 3 to give guichet runs standing authorization: triage only,
-under the receiving repository's rules, memory and gate, writing tickets
-only. `rules/guards.md` needs no change: the asker still writes no file in
-the other project (the fallback ticket is the existing exception), and the
-guichet works in its own project.
-
-The ticket-only limit is enforced where it can be: the guichet profile,
-and the Pi guard extension (`adapters/pi/extensions/idh-guard.ts`) the
-guichet session loads. Where the limit cannot be enforced, the profile
-states it and the observation log (§ 6) checks it.
+`rules/guards.md` allows, in another project, tickets only. C1 widens that
+exception from "a ticket" to "an intake branch adding one ticket, its head
+ref under `refs/intake-heads/`, and its intake note". Rules are the author's law, so phase 3 proposes the wording
+and the author decides. The asker's launch of a triager in the receiving
+repository is the standing authorization the author ruled for: triage
+only, under that repository's rules, read-only.
 
 ### Model and family
 
-- **Tier: advisor (ASSURANCE) [author]**, unless the receiving repository
-  holds uncleared content, which forces LOCAL/PRIVÉ (`skills/route/SKILL.md`).
-  Triage is judgment work: deciding that a foreign observation is a duplicate,
-  not ours, or a symptom of a known cause.
-- **Family: route's choice, free.** The author first ruled "the one
-  easiest to talk to, not dogmatically the asker's". With Pi as host and a
-  transport every runtime reaches, ease of talk no longer depends on family:
-  route picks the model for the need `guichet.json` states, and the launch
-  line records the choice and its reason, as route requires.
-- **Cost.** A hosted model reached through Pi bills per API key, not under
-  a runtime's subscription (local padme models and albert excepted); the
-  observation records the cost per dialogue.
-- **Tension with decorrelation.** The guichet's model and the asker's may
-  be the same family, and
-  § 3 reports that homogeneous LLM groups amplify agreement errors. The
-  protocol carries the mitigation: the asker sends facts and evidence, not
-  conclusions; the guichet checks them against its own store and history
-  before any verdict; neither side argues toward consensus. If the
-  observation shows the guichet rubber-stamping askers, revisit the family.
+Route picks the model for the triage role at each launch; the tier is
+advisor by the author's ruling, recorded on route's side; uncleared content
+forces a local model. Any runtime whose headless door supports read-only
+tools can run it (Pi's does; another runtime only once its door is shown
+to confine reads, phase 1). The asker and the
+triager may be the same family; the mitigation is the protocol's: facts
+from the asker, checks against the receiver's own store, no argument
+toward consensus.
 
 ### Failure modes handled
 
 | Failure | Handling |
 |---|---|
-| guichet crashes or stops after ACK | open ids become `incoming` tickets on stop; a crash leaves the REQUEST unrecorded, so the asker's later grep finds nothing and it drops the fallback |
-| two askers launch at once | the lock lets one guichet start; the other launch is a no-op |
-| guichet idle, or near its context guard | it closes itself; the inbox keeps later REQUESTs for the next launch |
-| asker exits before the verdict | the store line survives; its next roar or lair reads it |
-| headless asker | fallback directly |
-| Pi down, or the launch fails | no ACK within T, fallback ticket |
-| loops | three-round cap; Claude Code askers' messages are also throttled by their runtime (§ 3) |
+| launch fails, model unavailable, Pi down | intake stays; the sweep relaunches |
+| triager crashes mid-run | no verdict note; the sweep relaunches |
+| crash after the verdict note | the action is rerun from the note |
+| two askers file the same bug | the draining launcher triages them in turn; the second finds the first: AMENDED |
+| asker gone before the verdict | the thread and the store keep the outcome |
+| question never answered | decided after seven days |
+| notes written concurrently | `cat_sort_uniq` merge, as for reviews |
 
 ### Costs
 
@@ -664,88 +553,61 @@ Estimates by the drafter; author-hours are review time; USD unmeasured.
 | | Author-hours | Agent time | USD (rough) | Undo |
 |---|---|---|---|---|
 | A wording | 0.3 | one small MR | < 1 | revert one paragraph |
-| B Pi-hosted | 2–3 over the phases | audit, profile and Pi extension, launcher, rule: ~4 MRs | 10–30 build; per dialogue an advisor-tier conversation through Pi plus a ticket MR, ~1–3 | revert the rule, retire the profile; the fallback is today's protocol |
-| C timer triage | 1 | one skill section + timer | 5–10 build; one advisor run per sweep | disable the timer |
-| D A2A server | 6+ | daemon, auth, per-runtime adapters | 50+ build, plus upkeep | stop the service |
-| E reuse a bus (asking side, optional) | 1 | a trial MR, only if our asker adapters prove hard | ~5 trial; then upkeep of a pinned dependency | unpin; back to our own adapters |
-
-The persistent guichet costs nothing while idle, but every wake re-reads
-its whole context, uncached after an idle hour: unmeasured, and one of the
-observation's questions.
+| C1 (variant 1) | 1.5 | notes and launcher, verdict script, profile, rule: ~4 MRs | 5–15 build; one advisor run per intake | revert the rule; intakes revert to plain dropped tickets |
+| B guichet, as amended through PR #2470 | 3+ | ~6 MRs plus Pi extension work | 10–30 build | superseded by the red-team round |
+| D A2A server | 6+ | daemon, auth, adapters | 50+ build, plus upkeep | stop the service |
 
 ## 6. Implementation plan
 
-One tracker, children in order; each child one merge request. The rule
-changes last, once its machinery exists **(revised after review)**.
+One tracker, children in order, each one merge request. The rule changes
+last.
 
-1. **Audit [author].** (a) A Pi session started detached (tmux, then
-   `systemd-run --user`) keeps running and `idh-wake.ts` delivers into it;
-   the guichet's model reachable through Pi for each of route's tiers and
-   each clearance level; the `flock -o` lock held for the session's lifetime,
-   released by a kill even with a Pi child still running, readable without
-   being taken; stopping the session stops both `flock` and Pi.
-   (b) Pi with a guichet brief does triage work: ticket commands through
-   bash, its own worktree, a ticket-only merge request, under `idh-guard.ts`.
-   (c) One asker-side probe per runtime, including whether a `wake arm`
-   waiter turns a reply file into a turn in a running Claude Code session:
-   Claude Code (`wake arm` waiter),
-   Codex (`codex queue`), Pi, Vibe (reply read at a pause). (d) The
-   live-work join (worktree lock pid ↔ session ↔ ticket) and the
-   pid-to-transcript mapping per runtime. (e) An asker subscribing to a busy
-   coder's idle notice where the runtime offers one. (f) doudou → padme over
-   ssh. *Proves* that Pi can host the guichet and which asker adapters are
-   missing; results replace § 2's transport table.
-2. **Guichet profile and launcher.** `profiles/guichet/PROFILE.md`, shell
-   `agents/guichet.md` with its `tools:` grant, `Requires-tools` line; the
-   verdict vocabulary, store-line format, `incoming` and `intake` tickets,
-   three-round cap, the A2A field and state names, the live-work read and
-   redirect rules, the informant; the card and `runtime.py guichet find`;
-   the Pi card extension and `idh-wake.ts`'s preset inbox path (never
-   deleted); the stable inbox directories; the lock and the idle close;
-   `runtime.py launch` for a detached Pi guichet under `flock`,
-   with route resolving the model; the receiver's `guichet.json` (need, not
-   model) for the harness, git-erg and padme. *Proves*, by a dry run between
-   two of the author's repositories, that a guichet returns a verdict and
-   lands its store line by a ticket-only merge request.
-3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: dialogue with
-   the receiving guichet first; it tickets, amends or pushes back; drop an
-   `incoming` ticket when it does not answer. Step 3
-   gains the guichet's standing authorization; step 2's no-authority sentence
-   and step 4 stay. Callers (`roar` step 8, `raid`) cite the new wording;
-   roar's tracker hand-off becomes a REQUEST, with the log line as fallback.
-   *Proves* nothing new: it records what phases 1 and 2 showed.
-4. **Missing adapters, conditional** (only those phase 1 finds missing and
-   the observation finds costly: Vibe if replies read at its pauses prove too
-   slow): an asker-side inbox adapter per runtime. *Proves* that runtime completes one REQUEST round trip as
-   asker and as guichet.
-5. **Report, conditional.** After the review below, if the measured
-   cross-repository reports show something: a technical report (HAL) on the
-   design case and its outcomes, citing § 3's state of practice. A declared
-   A2A binding only if something outside this setup must talk to a
-   guichet. *Proves* nothing for the harness; it is a publication choice.
+1. **Intake plumbing.** The receivers list; `refs/notes/intake` (a sibling
+   of `review_notes.py` sharing its transport); the intake branch, base and
+   head conventions; `runtime.py triage` (run directory, sandbox with
+   credentials kept unreadable, read-only tools, `flock -o` with the drain
+   and rescan, wall-time and daily caps, model by route); and the verdict
+   script with its range and tip checks. *Proves*, by a dry run between two
+   of the author's repositories, each verdict: NEW and AMENDED leave a
+   prepared head for the owner to promote, PUSHBACK deletes branch and head
+   ref, QUESTION waits and resumes on an answer; each move into `held` and
+   out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
+   detected after a rebase merge; and that the sandbox denies a read outside
+   the receiver.
+2. **Triage profile.** `profiles/guichet/PROFILE.md` and its shell: facts
+   against framing, duplicate search, the live-work read, clearance as the
+   stricter of the two repositories, the verdict format. *Proves*, on the
+   six observed cases of § 2 replayed as intakes, that the verdicts match
+   what the owners eventually did.
+3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: file an
+   intake and launch the triager, instead of dropping a ticket; the
+   `rules/guards.md` exception widened to intake branches and notes, for
+   the author to decide. Callers (`roar` step 8, `raid`) cite the new
+   wording. *Proves* nothing new: it records what phases 1 and 2 showed.
+4. **Sweep and promotion view.** `/molt` applies the lifecycle table
+   (§ 5, Intake lifecycle); `/dashboard` lists every state but the
+   finished ones. *Proves* that an intake whose launch failed, or
+   whose answer's relaunch failed, gets a verdict within a day.
+5. **Report, conditional.** After the review below, if the data show
+   something: a HAL technical report on the design case and its outcomes,
+   citing § 3.
 
-**Observe, then assess.** From phase 3's merge, each guichet run adds one
-field to its store line: path (guichet / fallback), model, ACK latency,
-rounds, verdict, cost when the door reports it, and the paths its merge
-request changed outside `tickets/` (expected: none). **Review after 20 dialogues
-or six weeks after phase 3, whichever comes first**, in a doctor-journal
-revisit (memory `feedback_no_wait_tickets`), deciding:
+**Observe, then assess.** Each verdict note records the model, the run's
+duration and cost when known, the rounds, and the time from request to
+verdict. **Review after 20 intakes or six weeks after phase 3, whichever
+comes first**, in a doctor-journal revisit (memory
+`feedback_no_wait_tickets`), deciding:
 
-- **T**: keep 5 min, or set it from the measured live ACK latency;
-- **tier**: keep advisor, or step down if verdicts are never reversed;
-- **value**: count the dialogues where the guichet changed the outcome a
-  blind dropped ticket would have had (duplicate merged, cause corrected,
-  refusal with reason) against those where it rewrote the asker's request in
-  the house voice and nothing more. Both C and B can produce PUSHBACK and
-  AMENDED, so frequency alone does not credit the dialogue; compare against
-  a sample of fallback tickets triaged without one. Near zero means C alone
-  would do;
-- **idle-wake cost** of the persistent guichet, and the cost per dialogue
-  through Pi;
-- **redirects**: how often the guichet sent an asker to a running session,
-  and whether that session used the case or found the dialogue an
-  interruption;
-- **phase 5**: write the report or not.
+- **value**: how many verdicts changed what a plain dropped ticket would
+  have become (duplicate merged, premise corrected, refused with reason),
+  against the § 2 cases as baseline;
+- **speed**: time to verdict against the pre-C1 waits;
+- **tier**: keep advisor, or step down if owners never reverse verdicts;
+- **questions**: how often a round was needed; near zero confirms dropping
+  the dialogue;
+- **upgrade to C2** (a raw note in an inbox before any ticket) only if
+  outsider text in intake branches proves harmful or askers need answers
+  sooner than their next roar.
 
 ## Review
 
@@ -765,7 +627,7 @@ reconciled: § Authorization;
 the fallback directly;
 (5) journal writes contradicted ticket-only scope, and retirement "past" the
 guard broke it: journal writes removed, retirement moved before the guard
-(§ Protocol and path, Closing);
+(a section of the superseded guichet design, in git history);
 (6) rule before machinery, and a value metric that overclaimed: phases
 reordered, metric compares against fallback triage.
 KISS: drop journal hand-offs, adaptive lifetime tuning and the outbox
@@ -785,7 +647,7 @@ superseded by the transport amendment);
 (4) the advisor tier must yield to uncleared content: adopted;
 (5) phase order and missing "proves" lines: adopted;
 (6) the launch race, headless askers and the guichet's own worktree:
-§ Failure modes and § Durable record;
+sections of the superseded guichet design, in git history;
 (7) per-dialogue cost ignored cold context: noted under Costs as unmeasured;
 the observation window was inconsistent: fixed;
 (8) factual slips: roar's hand-off is step 8 (verified), messaging is
@@ -806,7 +668,7 @@ running work ("we are already doing this, I will pass your case to the
 running coder"). Added § Knowing the repository's live work: read-only
 signals joined by pid, no steering.
 **Author rulings (2026-11-12):** A2A is not adopted, its vocabulary is
-reused (§ Protocol and path, Vocabulary). The guichet does not middleman: when a live session
+reused (vocabulary section of the superseded design, in git history). The guichet does not middleman: when a live session
 is better placed, it redirects the asker to talk with it directly, replacing
 the relay first drafted.
 **Author follow-up (2026-11-12):** asked which further state of the art
@@ -840,7 +702,38 @@ always Pi-hosted, route picks its model from a need stated in
 `guichet.json` (never a model name), and the one-shot path, `claude --bg`
 as host and the per-door write probes are removed.
 
-KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
-vocabulary) but adds no machinery; one path, one host runtime (Pi), one
-fallback (the dropped ticket); only the asker adapters that prove costly
-are built, in phase 4.
+**Red-team round (2026-11-12), on the design as merged through PR #2470.**
+Same brief to two seats, attack surfaces named, conclusions not given.
+- *Seat A: OpenAI gpt-6-astra @medium* (other family, `codex exec`,
+  read-only). NEEDS-REDESIGN. Critical: prompt injection into an
+  unconfined executor; no trust boundary on inboxes, cards or locks;
+  `replyTo` and informants open to exfiltration. High: delete-before-record
+  loss; no cost bound; tickets laundering authority. Medium: benefit
+  unproven, alternative C credible.
+- *Seat B: Anthropic Claude Fable* (advisor model, subagent, read-only).
+  NEEDS-REDESIGN. Critical: inbox as an unauthenticated user turn into a
+  shell; ticket-only unenforced (`idh-guard.ts` on Pi checks only `--hard`;
+  the bookkeeping fast track also covers `memory/` and `STATE.md`). High:
+  `replyTo` arbitrary write; clearance on the receiver only; lock held while
+  wedged; laundering into raid. Medium: cross-host replies, cost. Value:
+  weak against the observed cases; C with a trigger, a fresh read-only run
+  and a scripted writer wins.
+- The drafter verified each code claim (`idh-guard.ts:162-167`,
+  `idh-wake.ts` delete right after delivery, `merge-gate.py` bookkeeping
+  list, `~/.local` mode 0700 with every agent under one account).
+
+**Author ruling (2026-11-12, landing):** option (b): the triager never
+lands; accepted intakes land through the receiver's normal merge process
+at the owner's promotion. Gaze rv-20261112-pr-2473-165b had found that the
+local gated merge refuses `branch:` units in a repository with an `origin`.
+
+**Author rulings (2026-11-12, C1):** "looks like it starts by dropping a
+ticket, then try waking up someone"; "Just C1"; variants 1 to 5 discussed,
+variant 1 chosen with questions folded in; "NO FORGE, git notes". § 5 and
+§ 6 rewritten accordingly; the guichet machinery of PRs #2460 to #2470
+(sessions, inboxes, cards, locks, A2A message protocol, Pi extension,
+informant, redirect) is superseded and kept in git history. T = 5 min and
+the reused session, earlier author rulings, are retired with it.
+
+KISS pass by the drafter: one branch, one notes thread, one read-only run,
+one writer script, one sweep. The A2A state names stay as labels only.
