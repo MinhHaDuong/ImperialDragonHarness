@@ -385,7 +385,9 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
   `ts` first: `request`, `answer` (asker); `verdict` (triager, through the
   script); `promoted`, `declined`, `resume` (owner); `held` (script or
-  sweep); each with its author and the branch head. Transport and concurrent-write merging are
+  sweep); `resolved` (the receiver's close step, which needs no live
+  branch: the thread lives on `refs/notes/intake`); each with its author
+  and, where one exists, the branch head. Transport and concurrent-write merging are
   those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
   without force); the code is a sibling of `review_notes.py` sharing its
   transport layer, with its own entry schema and lock (review entries and
@@ -496,14 +498,22 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
    erg treats an unresolved reference as optimistic, so the label does the
    gating. When the receiver closes a ticket that carries an `intake <id>`
    log line, its close step appends a `resolved` note to that intake's
-   thread, naming the landing commit. The asker's sweep, seeing `resolved`,
-   logs `unblocked by intake <id>`, removes `deferred`, and the parked
-   ticket returns to the ready queue for a raid or the author.
+   thread, naming the landing commit.
+   **Closing on the asker's side.** When an intake reaches a finished
+   state (`resolved`, `rejected` or `declined`), the asker's sweep logs
+   `intake <id> <final state>` on the ticket that filed it, which ends its
+   pending status, so later sweeps stop reading its thread. A parked ticket
+   is also released: on `resolved` the sweep removes `deferred` and its
+   `Blocked-by:` line (the receiver's `erg close` edits only its own store)
+   and the ticket returns to the ready queue; on `rejected` or `declined`
+   it swaps `deferred` for `needs-human`, with the reason, since the
+   blocked work now needs a decision rather than a wait.
 6. **Sweep.** The receiver's `/molt` applies the lifecycle table below:
    it runs the triager on runnable intakes older than an hour, decides
    questions unanswered for seven days, retries failures, and deletes the
-   branch and head ref of finished intakes. `/dashboard` lists intakes
-   runnable, waiting on a question, failed, prepared, promoted and held. The launch in step 2
+   branch and head ref of landed, rejected and declined intakes. `/dashboard`
+   lists every state that is not finished (finished: `resolved`, `rejected`,
+   `declined`), `landed` included, since it waits on the receiver's fix. The launch in step 2
    is therefore never a single point of failure.
 
 ### Intake lifecycle
@@ -520,9 +530,9 @@ must be; a tip that breaks its state's invariant moves the intake to
 | `prepared` | a NEW or AMENDED verdict, with its prepared head | the asker's head while the script's commit is pending (the sweep pushes the very commit whose sha the verdict recorded, kept under `refs/intake-heads/<id>-prepared`), then the prepared head | `promoted` or `declined` by an owner |
 | `promoted` | the owner's `promoted` note, written before the merge request is opened at the prepared head | owned by the receiver's merge process | `landed`, or `declined` by the owner's note if closed unmerged |
 | `landed` | a ticket on the receiver's `main` carries the log line `intake <id> from …` (NEW and AMENDED alike) | none | the sweep deletes branch and head ref; `resolved` when that ticket closes |
-| `resolved` | the receiver's close step appends a `resolved` note naming the landing commit | none | finished; the asker's sweep unblocks any ticket parked on it |
-| `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep |
-| `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted as above |
+| `resolved` | the receiver's close step appends a `resolved` note naming the landing commit | none | finished; the asker's sweep closes the pending line and releases any ticket parked on it |
+| `rejected` | a PUSHBACK verdict | none | finished; branch and head ref deleted, by the script or the next sweep; the asker's sweep closes the pending line and moves a parked ticket to `needs-human` |
+| `declined` | an owner's `declined` note (also written when a promotion is closed unmerged) | none | finished; deleted and closed on the asker's side as for `rejected` |
 | `failed` | a `failed` verdict | the asker's head | `runnable` again, twice (failures counted since the last `resume`); then `held` |
 | `held` | a broken tip invariant, or a third failure, recorded as a `held` note with the reason and the state it left | none enforced | an owner's `resume` note returns it to the state it left (to `runnable` when it left `failed`), after the owner has reset the branch to that state's recorded head if the tip moved; or a `declined` note; the sweep skips it |
 
@@ -611,7 +621,9 @@ last.
    of the author's repositories, each verdict: NEW and AMENDED leave a
    prepared head for the owner to promote, PUSHBACK deletes branch and head
    ref, QUESTION waits and resumes on an answer; the asker's pending log
-   line and its bounded wake firing on the verdict; each move into `held` and
+   line and its bounded wake firing on the verdict; `resolved` written by a
+   close and read by the asker's sweep, releasing a parked ticket, and a
+   parked ticket moved to `needs-human` on `rejected`; each move into `held` and
    out by `resume`; `declined` from `prepared` and from `promoted`; `landed`
    detected after a rebase merge; and that the sandbox denies a read outside
    the receiver.
