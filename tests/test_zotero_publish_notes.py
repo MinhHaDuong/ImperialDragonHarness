@@ -71,9 +71,10 @@ def write_frontmatter_draft(directory, slug: str, item_key: str, body: str):
 
 
 def publish(capsys, project: str, *drafts, dry_run: bool = False,
-            state_file=None) -> tuple[int, dict]:
+            state_file=None, collection=None) -> tuple[int, dict]:
     args = argparse.Namespace(drafts=[str(d) for d in drafts], project=project,
                               dry_run=dry_run, library="user",
+                              collection=collection,
                               state_file=str(state_file) if state_file else None)
     status = zi.cmd_publish_notes(args)
     return status, json.loads(capsys.readouterr().out)
@@ -334,3 +335,59 @@ def test_every_child_note_is_read_past_the_first_page(use_live, tmp_path, capsys
     (row,) = out["results"]
     assert row["status"] == "refused"
     assert len(row["note"]) == 105
+
+
+def make_collection(live, name: str, parent: str | None = None) -> str:
+    body = {"name": name, **({"parentCollection": parent} if parent else {})}
+    return next(iter(live.client().create_collections([body])
+                     ["successful"].values()))["key"]
+
+
+@pytest.mark.integration
+def test_collection_files_the_parent_add_only_and_idempotently(
+        use_live, tmp_path, capsys):
+    other = make_collection(use_live, unique("other"))
+    target = make_collection(use_live, unique("target"))
+    item = use_live.save(unique_title(), collection=other)
+    draft = write_draft(tmp_path, "note-coll", item, "Invented text.")
+    project, state = unique("proj").replace(" ", "-"), tmp_path / "s.json"
+
+    status, out = publish(capsys, project, draft, dry_run=True,
+                          state_file=state, collection=target)
+    assert status == 0, out
+    assert out["results"][0]["collection"] == "would add"
+    assert use_live.item(item)["data"]["collections"] == [other]
+
+    status, out = publish(capsys, project, draft, state_file=state,
+                          collection=target)
+    assert status == 0, out
+    assert out["results"][0]["collection"] == "added"
+    assert set(use_live.item(item)["data"]["collections"]) == {other, target}
+
+    status, out = publish(capsys, project, draft, state_file=state,
+                          collection=target)
+    assert status == 0, out
+    assert out["results"][0]["collection"] == "already in"
+    assert set(use_live.item(item)["data"]["collections"]) == {other, target}
+
+
+@pytest.mark.integration
+def test_collection_is_found_by_path_and_an_unknown_one_stops_the_run(
+        use_live, tmp_path, capsys):
+    top = unique("top")
+    parent = make_collection(use_live, top)
+    child = make_collection(use_live, "Sources", parent)
+    item = use_live.save(unique_title())
+    draft = write_draft(tmp_path, "note-path", item, "Invented text.")
+    project, state = unique("proj").replace(" ", "-"), tmp_path / "s.json"
+
+    status, out = publish(capsys, project, draft, state_file=state,
+                          collection=f"{top} / Sources")
+    assert status == 0, out
+    assert use_live.item(item)["data"]["collections"] == [child]
+
+    before = use_live.versions()
+    status, out = publish(capsys, project, draft, state_file=state,
+                          collection="no such collection")
+    assert status == 1 and "error" in out
+    assert use_live.versions() == before

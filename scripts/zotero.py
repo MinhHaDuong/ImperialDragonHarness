@@ -1655,6 +1655,50 @@ def apply_note(z: zotero.Zotero, project: str, row: dict[str, Any],
     write_publish_state(state_path, state)
 
 
+def resolve_collection(z: zotero.Zotero, given: str) -> str:
+    """The key of the collection `given` names in z's library: a key, or a
+    path of names joined by '/' ("Project / Sources"). Raises ValueError."""
+    with local_api():
+        every = z.everything(z.collections(limit=PAGE))
+    if any(c["key"] == given for c in every):
+        return given
+    names = [n.strip() for n in given.split("/")]
+    parent: str | bool = False
+    for name in names:
+        hits = [c for c in every if c["data"]["name"] == name
+                and c["data"].get("parentCollection", False) == parent]
+        if len(hits) != 1:
+            raise ValueError(f"--collection {given!r}: {len(hits)} "
+                             f"collections named {name!r} at that level, "
+                             f"or no such key in this library")
+        parent = hits[0]["key"]
+    return str(parent)
+
+
+def plan_filing(z: zotero.Zotero, row: dict[str, Any], collection: str) -> None:
+    """Say, read only, whether the row's parent item needs filing."""
+    if row["status"] == "refused" or not row.get("item"):
+        return
+    with local_api():
+        held = z.item(row["item"])["data"].get("collections", [])
+    row["collection"] = "already in" if collection in held else "would add"
+
+
+def apply_filing(z: zotero.Zotero, row: dict[str, Any], collection: str) -> None:
+    """Add the parent to the collection, keeping its others; read it back."""
+    if row.get("collection") != "would add":
+        return
+    with local_api():
+        item = z.item(row["item"])
+    write(z, lambda: z.addto_collection(collection, item))
+    with local_api():
+        held = z.item(row["item"])["data"].get("collections", [])
+    if collection not in held:
+        raise LocalAPIError(f"read back: {row['item']} is not in "
+                            f"collection {collection}")
+    row["collection"] = "added"
+
+
 def public_row(row: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in row.items() if not k.startswith("_")}
 
@@ -1688,6 +1732,22 @@ def cmd_publish_notes(args: argparse.Namespace) -> int:
         emit_json({**payload, "error": str(exc)})
         return 1
     payload["zotero"] = zotero_url()
+    target = getattr(args, "collection", None)
+    if target:
+        try:
+            target = resolve_collection(z, target)
+        except ZoteroUnavailable as exc:
+            print(f"publish-notes: {exc}", file=sys.stderr)
+            emit_json({**payload, **unavailable_payload(exc)})
+            return EXIT_UNAVAILABLE
+        except ZoteroSlow as exc:
+            print(f"publish-notes: {exc}", file=sys.stderr)
+            emit_json({**payload, **slow_payload(exc)})
+            return EXIT_SLOW
+        except (LocalAPIError, ValueError) as exc:
+            emit_json({**payload, "error": str(exc)})
+            return 1
+        payload["collection"] = target
     rows: list[dict[str, Any]] = []
     status = 0
     if not args.dry_run:
@@ -1707,8 +1767,12 @@ def cmd_publish_notes(args: argparse.Namespace) -> int:
             row: dict[str, Any] = {"draft": str(draft), "slug": draft.stem}
             try:
                 row = plan_note(z, project, draft, state)
+                if target:
+                    plan_filing(z, row, target)
                 if not args.dry_run:
                     apply_note(z, project, row, state, state_path)
+                    if target:
+                        apply_filing(z, row, target)
                 rows.append(row)
             except (ZoteroUnavailable, ZoteroSlow) as exc:
                 code = (EXIT_UNAVAILABLE if isinstance(exc, ZoteroUnavailable)
@@ -3976,6 +4040,11 @@ def main() -> int:
     pn.add_argument("--dry-run", action="store_true",
                     help="read only: print what would be created, updated "
                          "or refused")
+    pn.add_argument("--collection",
+                    help="also add each published note's parent item to "
+                         "this collection (a key, or a path 'A / B'); add "
+                         "only, idempotent, read back; --dry-run names the "
+                         "additions")
     pn.add_argument("--state-file",
                     help="where the published versions are recorded "
                          "(default: $XDG_STATE_HOME/idh/zotero/"
