@@ -15,8 +15,10 @@ run lands above it.
 import argparse
 import json
 import sys
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 TOP_COUNTS = (1, 5, 10, 25, 50)
@@ -59,6 +61,31 @@ def load(path: Path) -> list[tuple[str, float]]:
     if not pairs:
         raise ValueError(f"{path}: no timed tests in the record")
     return pairs
+
+
+def record_age(path: Path, now: float | None = None) -> tuple[float, str]:
+    """Age in days and its source: a JUnit testsuite timestamp when present, else the file mtime."""
+    now = time.time() if now is None else now
+    if path.suffix != ".json":
+        try:
+            stamp = next((e.get("timestamp") for e in ET.parse(path).getroot().iter("testsuite")
+                          if e.get("timestamp")), None)
+            if stamp:
+                moment = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+                if moment.tzinfo is None:
+                    moment = moment.astimezone()
+                return (now - moment.timestamp()) / 86400, "testsuite timestamp"
+        except (ET.ParseError, ValueError, OSError):
+            pass
+    return (now - path.stat().st_mtime) / 86400, "file mtime, not run time"
+
+
+def _report_age(label: str, path: Path, max_days: float) -> str:
+    days, source = record_age(path)
+    if days > max_days:
+        print(f"gate_profile: stale {label} record {path}: {days:.0f} days old ({source}), "
+              f"older than {max_days:g}; it may describe a suite that no longer exists", file=sys.stderr)
+    return f"{label} age: {days:.1f} days ({source})"
 
 
 def _file_of(test_id: str) -> str:
@@ -136,18 +163,24 @@ def main(argv: list[str] | None = None) -> int:
     one.add_argument("--top", type=int, default=10)
     one.add_argument("--workers", type=int, help="also print the worker lower bound")
     one.add_argument("--json", action="store_true")
+    one.add_argument("--max-age-days", type=float, default=14, help="warn when the record is older")
     two = sub.add_parser("compare", help="two records side by side")
     two.add_argument("before", type=Path)
     two.add_argument("after", type=Path)
     two.add_argument("--json", action="store_true")
+    two.add_argument("--max-age-days", type=float, default=14, help="warn when an input is older")
     args = parser.parse_args(argv)
     try:
         if args.command == "compare":
             change = compare(profile(load(args.before)), profile(load(args.after)))
+            ages = [_report_age("before", args.before, args.max_age_days),
+                    _report_age("after", args.after, args.max_age_days)]
+            print("\n".join(ages), file=sys.stderr if args.json else sys.stdout)
             print(json.dumps(change, indent=2) if args.json else
                   "\n".join(f"{key}: {value}" for key, value in change.items()))
             return 0
         prof = profile(load(args.record))
+        age = _report_age("record", args.record, args.max_age_days)
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
     if args.json:
@@ -156,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
                           "over_10s": prof.over_ten_seconds,
                           "slowest": [(t, round(s, 1)) for t, s in prof.tests[:args.top]]}, indent=2))
     else:
+        print(age)
         _print_profile(prof, args.top, args.workers)
     return 0
 

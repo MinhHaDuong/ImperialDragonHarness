@@ -472,3 +472,61 @@ def test_cli_survey_and_collect_json(tmp_path, project):
     assert reruns.returncode == 0 and "reruns could not be judged" in reruns.stdout
     missing = _run("survey", "--project", str(project), "--traces", str(tmp_path / "none"))
     assert missing.returncode == 0 and missing.stdout.startswith("test-doctor: not checked")
+
+
+# --- an unresolved --project fails loud (ticket 1540) ----------------------
+
+def _env_home(home: Path) -> dict:
+    env = child_env()
+    env["HOME"] = str(home)
+    return env
+
+
+def _cli(*args: str, home: Path) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True,
+                          env=_env_home(home))
+
+
+@pytest.mark.integration
+def test_collect_on_a_bare_name_with_no_trace_directory_fails_loud(tmp_path, project):
+    traces = tmp_path / "traces"
+    _trace(_project_dir(traces, project) / "s1.jsonl", [_call("make check-fast", 60, days_ago=0.1)])
+    home = tmp_path / "home"
+    home.mkdir()
+    for sub in ("collect", "reruns"):
+        out = _cli(sub, "--project", "my-project", "--traces", str(traces), home=home)
+        assert out.returncode != 0 and "my-project" in out.stderr and str(traces) in out.stderr
+
+
+@pytest.mark.integration
+def test_survey_with_no_trace_directory_says_not_checked_and_exits_zero(tmp_path, project):
+    traces = tmp_path / "traces"
+    traces.mkdir()
+    home = tmp_path / "home"
+    home.mkdir()
+    out = _cli("survey", "--project", "my-project", "--traces", str(traces), home=home)
+    assert out.returncode == 0 and "not checked" in out.stdout and "my-project" in out.stdout
+
+
+@pytest.mark.integration
+def test_a_directory_with_zero_runs_in_the_window_is_a_legitimate_zero(tmp_path, project):
+    traces = tmp_path / "traces"
+    _project_dir(traces, project).mkdir(parents=True)
+    out = _cli("collect", "--project", str(project), "--traces", str(traces), home=tmp_path)
+    assert out.returncode == 0 and "0 foreground gate runs" in out.stdout
+
+
+@pytest.mark.integration
+def test_a_bare_name_resolves_under_home_and_never_under_the_cwd(tmp_path):
+    home = tmp_path / "home"
+    (home / "proj").mkdir(parents=True)
+    traces = tmp_path / "traces"
+    traces.mkdir()
+    (traces / pt.encode_project((home / "proj").resolve())).mkdir()
+    out = _cli("collect", "--project", "proj", "--traces", str(traces), home=home)
+    assert out.returncode == 0 and str(home / "proj") in out.stderr
+    elsewhere = tmp_path / "cwd"
+    (elsewhere / "other").mkdir(parents=True)
+    out = subprocess.run([sys.executable, str(SCRIPT), "collect", "--project", "other", "--traces", str(traces)],
+                         capture_output=True, text=True, env=_env_home(home), cwd=elsewhere)
+    assert out.returncode != 0

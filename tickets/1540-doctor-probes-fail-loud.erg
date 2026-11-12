@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-11-12T10:20Z HDMX-coding-agent created from a climate-finance-het test-doctor visit (its ticket 3080, PR 2141); author asked for the ticket
+2026-11-12T10:42Z reviewer design: no-directory (directories==0) fails loud for collect/reruns (exit 1, names encoded dir + traces root); survey narrowed: prints 'test-doctor: not checked (no trace directory ...)' and exits 0 because lair step 13 depends on it; dir present with zero runs stays exit 0. Bare name resolves only to ~/<name> if it exists (stderr note), never cwd-relative. gate_profile ages: testsuite timestamp else file mtime (labelled), warn on stderr past --max-age-days 14, never fail.
 
 --- body ---
 ## Context
