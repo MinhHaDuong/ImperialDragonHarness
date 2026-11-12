@@ -258,6 +258,7 @@ or a conflicting ticket. Before any verdict, it reads what is live:
 | liveness | `kill -0 <pid>` | whether the lock's owner still runs | all |
 | sessions | `claude agents --json`, `ListAgents` | name, pid, state busy/idle | Claude Code |
 | claims and requests | `tickets/.claims/`, open merge requests and their branches | who claimed which ticket, what is about to land | all |
+| files in flight | `git diff --name-only origin/main...<branch>` per live branch | the paths each live branch changes | all |
 
 The join is the pid: a hunt worktree's lock reason carries the runtime
 process id (`$PPID`), and `claude agents --json` reports the same pid. On
@@ -267,14 +268,27 @@ worktree it moved into, so the cwd cannot make the join. For Codex and Pi the
 lock and pid still name the ticket and prove liveness; only the session name
 is missing.
 
+**Overlap is detected by files, then judged by ticket.** The guichet
+matches the paths in the asker's evidence against each live branch's files
+in flight (the command the sync rule already uses, `rules/workflow.md`
+§ Sync before starting work). A shared path is a concrete overlap signal:
+it is also where conflicting work would collide. A request with no path in
+common may still overlap by cause; the guichet then judges from the running
+ticket's text.
+
 When the request overlaps live work, the guichet **redirects, it does not
 middleman [author]**:
 
 - **A live session is better placed** (a coder on the same defect, the
   session that filed the related ticket) and reachable on a two-way path:
-  the guichet answers the asker with that session's address and the
-  ticket, logs a one-line pointer on the ticket (`redirected <contextId>
-  to <session>`), and steps out. The asker opens its own dialogue with that
+  the guichet answers the asker with that session's address, the ticket,
+  and the session's state (busy or idle, from `claude agents --json`), logs
+  a one-line pointer on the ticket (`redirected <contextId> to <session>`),
+  and steps out. **A busy session is not interrupted:** the asker
+  subscribes with `SendMessage` `notify_when_idle: true` and no message,
+  which costs the session nothing, and opens the dialogue when the idle
+  notice arrives. The asker stays non-blocking meanwhile; a subscription
+  that expires unanswered falls back to a log line on the ticket. The asker opens its own dialogue with that
   session under the same protocol; the session records the outcome on its
   own ticket, as any receiver does. The guichet relays nothing in either
   direction.
@@ -455,7 +469,10 @@ changes last, once its machinery exists **(revised after review)**.
    session receiving a peer `SendMessage` and replying, under each
    permission mode the guichet might run in. Second probe: the live-work
    join (worktree lock pid ↔ `claude agents --json` pid ↔ ticket) on a
-   repository with a running Codex or Pi coder too. For each one-shot door: can it write the receiving
+   repository with a running Codex or Pi coder too. Third probe: an asker
+   subscribing to a busy `--bg` coder's idle notice, then messaging it, to
+   confirm the notice arrives and the coder's turn ran uninterrupted. For
+   each one-shot door: can it write the receiving
    store from its own worktree. Includes `wake send` → Claude Code (NOOP
    today) and Claude's inbound hold. *Proves* which pairs the live path may
    use and which doors the one-shot path may use; results replace § 2's
@@ -561,6 +578,12 @@ signals joined by pid, no steering.
 reused (§ Vocabulary). The guichet does not middleman: when a live session
 is better placed, it redirects the asker to talk with it directly, replacing
 the relay first drafted.
+**Author follow-up (2026-11-12):** asked which further state of the art
+improves the design; of seven threads offered, two did and were added:
+redirect to a busy session only on its idle notice (after Google SRE's
+interrupt handling), and overlap detection by files in flight (after
+blackboard matching). The other five confirmed existing choices and stay
+out of § 3.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
