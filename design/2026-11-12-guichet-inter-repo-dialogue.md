@@ -394,8 +394,10 @@ middleman [author]**:
   and steps out. **A busy session is not interrupted:** where its runtime
   offers an idle notice (Claude Code: `SendMessage` `notify_when_idle: true`
   with no message, free for the session), the asker subscribes and opens
-  the dialogue when the notice arrives; elsewhere it writes to the session's
-  inbox only when the live-work read shows the session idle. The asker stays non-blocking meanwhile; a subscription
+  the dialogue when the notice arrives. A session whose busy or idle state
+  is not observable (today: Codex, Pi and Vibe coders, until phase 1 finds a
+  signal) gets no redirect: the guichet logs the case on its ticket instead
+  (next bullet). The asker stays non-blocking meanwhile; a subscription
   that expires unanswered falls back to a log line on the ticket. The asker opens its own dialogue with that
   session under the same protocol; the session records the outcome on its
   own ticket, as any receiver does. The guichet relays nothing in either
@@ -444,15 +446,23 @@ depend on any one runtime's native tools.
   of any session: an asker creates it if missing and writes there whether a
   guichet runs or not, and messages survive a retirement. `idh-wake.ts`
   today creates a random per-session inbox at `session_start` and deletes it
-  at shutdown when empty; it gains the option to read a preset path instead
-  (phase 2).
+  at shutdown when empty; it gains the option to read a preset path instead,
+  and never deletes a preset inbox (phase 2).
+- **Lock [drafter's proposal].** At most one guichet per receiver and host,
+  enforced by the kernel, not by a file's presence: the launch command is
+  `flock -n ~/.local/state/idh/guichets/<repo>.lock <start the Pi
+  guichet>`, run inside the detached session, and `flock` holds the lock for
+  the guichet's lifetime. A second launch fails at once and does nothing; a
+  crash releases the lock, so no stale lock needs breaking. Liveness is a
+  non-blocking `flock -n` probe on the lock file. A plain card file cannot
+  serve as the lock: breaking a stale one after a crash is itself a race.
 - **Card.** A running guichet writes a card at
   `~/.local/state/idh/guichets/<repo>.json`, with Agent Card names: `name`,
   the inbox as `url`, `protocolBinding`, plus `model`, `host`, `pid`,
-  `started`. It deletes the card on retirement; a card whose pid is dead is
-  absent. The card says whether someone is listening; the inbox does not
-  depend on it. `runtime.py guichet find <repo>` reads it from bash, so
-  every runtime can call it.
+  `started`. It is descriptive: who listens and with which model. Whether
+  anyone listens is the lock's answer. `runtime.py guichet find <repo>`
+  probes the lock and reads the card from bash, so every runtime can call
+  it.
 - **Host: Pi, always; model: route's choice [author].** Every guichet runs
   as a persistent Pi session named `guichet-<repo>`, started detached in the
   receiving repository's checkout (tmux, or a `systemd-run --user` unit as
@@ -483,8 +493,10 @@ depend on any one runtime's native tools.
   too slow (phase 4, conditional).
 - **Native channels are shortcuts.** `SendMessage` between two Claude
   sessions on one host stays allowed; it is not the protocol.
-- **Cross-host.** Cards and inboxes are per host. A doudou asker reads
-  padme's card and writes padme's inbox over `ssh padme`, or falls back.
+- **Cross-host.** Inboxes, locks and cards are per host. A doudou asker
+  writes padme's stable inbox over `ssh padme` (its path is known without
+  the card), then probes padme's lock and launches there if needed, or falls
+  back.
 - **A2A level: binding-shaped, not declared [author].** Field names and the
   operation mapping follow A2A, so a declared custom binding or an HTTP
   bridge stays a mechanical step. Declaring one is dropped from the build
@@ -534,10 +546,12 @@ artifact, since its task (triage) is done. That is the one extension.
 **The path:**
 
 0. The asker writes the REQUEST into the stable inbox, then runs
-   `runtime.py guichet find <repo>`. No live card: it launches the guichet
-   **[author]**, a detached Pi session with the guichet profile and the
-   model route resolves from `guichet.json`, which reads the waiting
-   REQUEST on start. The asker never waits for the launch.
+   `runtime.py guichet find <repo>`. Lock free: it launches the guichet
+   **[author]** under the lock, a detached Pi session with the guichet
+   profile and the model route resolves from `guichet.json`, which reads the
+   waiting REQUEST on start. Lock held: nothing to launch. Two askers racing
+   both try; the lock lets one guichet start. The asker never waits for the
+   launch.
 1. REQUEST (`submitted`), with `replyTo` → ACK
    (`working`) into the asker's inbox within **T = 5 min [author]**,
    proving the channel two-way;
@@ -548,11 +562,23 @@ artifact, since its task (triage) is done. That is the one extension.
 On start and when idle, the guichet also triages the receiving store's
 `incoming` tickets, so dropped tickets reach the same desk.
 
-**Retirement.** Before the context guard (230K for a launched worker), the
-guichet converts open ids to `incoming` tickets, removes its card and
-exits; the next asker launches a fresh one. Two askers racing to launch
-produce two guichets for a while: both write store lines, the second
-AMENDs, and the elder retires the younger by name.
+**Closing [drafter's proposal].** The guichet closes itself; nobody else
+does, except the author.
+- **Idle for one hour**, to be measured: after an idle hour the prompt cache
+  is cold, so waking the old session re-reads its whole context, which
+  costs at least a fresh launch that reads only the profile and the store.
+- **Before the context guard** (230K for a launched worker).
+- On closing it converts open ids to `incoming` tickets, deletes its card
+  and exits, which releases the lock. The inbox stays; the next asker's
+  REQUEST launches a fresh guichet that reads whatever waits there.
+- **A crash** needs no cleanup: the kernel releases the lock, and the next
+  launch overwrites the stale card.
+- **The author** may stop a guichet at any time (its tmux session or
+  systemd unit). Lair and other sessions do not close guichets.
+- **Deduplication backstop.** A REQUEST read after its asker already
+  dropped the fallback ticket, or delivered twice for any reason, is
+  answered with the verdict already recorded for its `contextId`
+  (§ Durable record).
 
 **Fallback** (no ACK within T, the launch fails, or Pi is down): drop an
 `incoming` ticket in the receiving store citing the id, as today. The next
@@ -611,7 +637,8 @@ states it and the observation log (§ 6) checks it.
 | Failure | Handling |
 |---|---|
 | guichet crashes or stops after ACK | open ids become `incoming` tickets on stop; a crash leaves the REQUEST unrecorded, so the asker's later grep finds nothing and it drops the fallback |
-| two askers launch at once | two `guichet-<repo>` sessions until the elder retires the younger; the second greps the store, finds the first's id or a duplicate ticket, and AMENDs |
+| two askers launch at once | the lock lets one guichet start; the other launch is a no-op |
+| guichet idle, or near its context guard | it closes itself; the inbox keeps later REQUESTs for the next launch |
 | asker exits before the verdict | the store line survives; its next roar or lair reads it |
 | headless asker | fallback directly |
 | Pi down, or the launch fails | no ACK within T, fallback ticket |
@@ -640,10 +667,14 @@ changes last, once its machinery exists **(revised after review)**.
 
 1. **Audit [author].** (a) A Pi session started detached (tmux, then
    `systemd-run --user`) keeps running and `idh-wake.ts` delivers into it;
-   the guichet's model reachable through Pi for each tier and clearance.
+   the guichet's model reachable through Pi for each of route's tiers and
+   each clearance level; the `flock` lock held for the session's lifetime
+   and released by a kill.
    (b) Pi with a guichet brief does triage work: ticket commands through
    bash, its own worktree, a ticket-only merge request, under `idh-guard.ts`.
-   (c) One asker-side probe per runtime: Claude Code (`wake arm` waiter),
+   (c) One asker-side probe per runtime, including whether a `wake arm`
+   waiter turns a reply file into a turn in a running Claude Code session:
+   Claude Code (`wake arm` waiter),
    Codex (`codex queue`), Pi, Vibe (reply read at a pause). (d) The
    live-work join (worktree lock pid ↔ session ↔ ticket) and the
    pid-to-transcript mapping per runtime. (e) An asker subscribing to a busy
@@ -655,8 +686,9 @@ changes last, once its machinery exists **(revised after review)**.
    verdict vocabulary, store-line format, `incoming` and `intake` tickets,
    three-round cap, the A2A field and state names, the live-work read and
    redirect rules, the informant; the card and `runtime.py guichet find`;
-   the Pi card extension and `idh-wake.ts`'s preset inbox path; the stable
-   inbox directories; `runtime.py launch` for a detached Pi guichet,
+   the Pi card extension and `idh-wake.ts`'s preset inbox path (never
+   deleted); the stable inbox directories; the lock and the idle close;
+   `runtime.py launch` for a detached Pi guichet under `flock`,
    with route resolving the model; the receiver's `guichet.json` (need, not
    model) for the harness, git-erg and padme. *Proves*, by a dry run between
    two of the author's repositories, that a guichet returns a verdict and
@@ -719,7 +751,7 @@ reconciled: § Authorization;
 the fallback directly;
 (5) journal writes contradicted ticket-only scope, and retirement "past" the
 guard broke it: journal writes removed, retirement moved before the guard
-(§ Protocol and path, Retirement);
+(§ Protocol and path, Closing);
 (6) rule before machinery, and a value metric that overclaimed: phases
 reordered, metric compares against fallback triage.
 KISS: drop journal hand-offs, adaptive lifetime tuning and the outbox
@@ -781,6 +813,12 @@ transport is reuse-first (agent-message-queue trial) and publication rests
 on the measured case; the guichet sees other runtimes' sessions by
 metadata first, then through a transcript-reading informant; cheapest
 transport answered in § 5.
+**Author follow-up (2026-11-12, lock and closing):** the review leftovers
+of PRs #2467 and #2468 are folded in (redirect only to sessions whose
+state is observable, preset inbox never deleted, deduplication backstop,
+tier and cross-host wording, the `wake arm` probe); a guichet closes itself
+when idle for an hour or before its context guard; a kernel `flock` lock,
+not the card, guarantees one guichet per receiver.
 **Author follow-up (2026-11-12, one path):** "Two paths is one too much."
 With only Claude Code able to host, it would always be selected; Pi already
 has the inbox extension and reaches every model family, so the guichet is
