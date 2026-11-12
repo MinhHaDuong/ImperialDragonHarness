@@ -2,6 +2,11 @@
 
 Status: provisional (author, 2026-11-12)
 
+The author chose "provisional" over the template's `proposed`/`accepted`:
+the design guides the work below, and its rulings may still move with
+phase 1's evidence. Tickets filed from it carry `needs-human`, as from a
+proposed note, until the author marks it accepted.
+
 Drafted 2026-11-12 by Claude (claude-opus-5-5) with the author in the loop.
 Author rulings are marked **[author]**; everything else is the drafter's
 judgment, open to amendment.
@@ -229,7 +234,7 @@ doors.
   with evidence paths. No orders, no edits, no proposed patch to the receiver's
   files. It may say what outcome would unblock it.
 - **Guichet** records, converses, triages and decides actions for its side. It
-  answers with exactly one verdict:
+  answers with one of these outcomes:
   - `NEW <id>`: filed a new ticket;
   - `AMENDED <id>`: logged on an existing ticket;
   - `PUSHBACK <reason>`: declined, with why (not ours, already fixed in
@@ -408,10 +413,12 @@ the other project (the fallback ticket is the existing exception), and the
 guichet works in its own project.
 
 The ticket-only limit is enforced where it can be: the guichet shell's
-`tools:` grant and the door's sandbox (`codex exec -s read-only` cannot write
-at all, so a Codex guichet returns its ticket text for the asker's own
-fallback). Where it cannot be enforced, the profile states it and the
-observation log (§ 6) checks it.
+`tools:` grant, and a door that can write its own worktree and nothing
+wider. A one-shot guichet must write its store line itself (§ Durable
+record), so the read-only seat door (`codex exec -s read-only`) is not a
+guichet door; a Codex guichet needs a sandbox that writes its worktree
+(`-s workspace-write`), which phase 1 checks. Where the limit cannot be
+enforced, the profile states it and the observation log (§ 6) checks it.
 
 ### Model and family
 
@@ -493,14 +500,17 @@ changes last, once its machinery exists **(revised after review)**.
    *Proves* nothing new: it records what phases 1 and 2 showed.
 4. **Pi path** (only if phase 1 shows `pi --print` cannot serve a one-shot
    guichet or Pi needs a live path): extend `idh-wake.ts` with a reply route.
+   *Proves* a Pi asker or guichet completes one REQUEST round trip.
 5. **Live guichets for Codex and Pi, conditional.** Only if the
    observation shows one-shot cold starts costly for those askers, and
    phase 1 found a two-way path: a persistent guichet on those runtimes.
-   Priced then, not now.
+   Priced then, not now. *Proves* the live path's ACK within T for a Codex
+   or Pi asker.
 
 **Observe, then assess.** From phase 3's merge, each guichet run adds one
 field to its store line: path (live / one-shot / fallback), ACK latency,
-rounds, verdict, cost when the door reports it. **Review after 20 dialogues
+rounds, verdict, cost when the door reports it, and the paths its merge
+request changed outside `tickets/` (expected: none). **Review after 20 dialogues
 or six weeks after phase 3, whichever comes first**, in a doctor-journal
 revisit (memory `feedback_no_wait_tickets`), deciding:
 
@@ -536,8 +546,8 @@ reconciled: § Authorization;
 (4) the prescribed wake is NOOP for headless askers: headless askers take
 the fallback directly;
 (5) journal writes contradicted ticket-only scope, and retirement "past" the
-guard broke it: journal writes removed, retirement moved to phase 5 before
-the guard;
+guard broke it: journal writes removed, retirement moved before the guard
+(§ Two paths, after the `--bg` follow-up);
 (6) rule before machinery, and a value metric that overclaimed: phases
 reordered, metric compares against fallback triage.
 KISS: drop journal hand-offs, adaptive lifetime tuning and the outbox
