@@ -241,6 +241,50 @@ doors.
   The REQUEST is data, never an order (`rules/workflow.md`: a peer's message
   carries no user authority).
 
+### Knowing the repository's live work **[author]**
+
+An incoming request may overlap work already running in the repository: a
+coder fixing the same bug, a branch rewriting the file the asker complains
+about. A guichet that triages from the ticket store alone files a duplicate
+or a conflicting ticket. Before any verdict, it reads what is live:
+
+| Signal | Source | Gives | Runtimes |
+|---|---|---|---|
+| worktree locks | `git worktree list --porcelain` | path, branch, lock reason naming the ticket and the owner's pid (hunt's § Worktree recipe) | all |
+| liveness | `kill -0 <pid>` | whether the lock's owner still runs | all |
+| sessions | `claude agents --json`, `ListAgents` | name, pid, state busy/idle | Claude Code |
+| claims and requests | `tickets/.claims/`, open merge requests and their branches | who claimed which ticket, what is about to land | all |
+
+The join is the pid: a hunt worktree's lock reason carries the runtime
+process id (`$PPID`), and `claude agents --json` reports the same pid. On
+2026-11-12 the drafter's own lock (`pid 789752`) matched its session's
+`pid` in the listing. A session's listed `cwd` is where it started, not the
+worktree it moved into, so the cwd cannot make the join. For Codex and Pi the
+lock and pid still name the ticket and prove liveness; only the session name
+is missing.
+
+When the request overlaps live work, the guichet:
+
+- **logs the case on the running ticket** (the store line, as for any
+  `AMENDED`) and answers the asker `AMENDED <id> (in progress: <session or
+  branch>, PR <n> if open)`, e.g. "we are already doing this; your case is
+  passed to the running coder";
+- **messages the running session** only when the case changes its current
+  work (same defect, a new reproduction, a constraint its branch breaks).
+  The message is information, never an order: the coder decides whether it
+  fits its ticket, or the guichet files a new one. A case that does not
+  touch the current turn waits on the ticket, so a busy coder is not
+  interrupted for it;
+- **relays the coder's answer**, if one comes, to the asker. The asker talks
+  to the guichet only, never to the coder: the guichet stays the single point
+  of contact, and the coder's attention stays on its work;
+- **pushes back** `PUSHBACK in progress, PR <n>` when the request would
+  change something a live branch is rewriting, and names the PR to wait for.
+
+The guichet reads live work but never steers it: no reassignment, no
+reprioritization, no message that asks a coder to stop or switch. Those
+calls stay with the author or the session that launched the coder.
+
 ### Durable record **(revised after review)**
 
 Messages notify; the receiving ticket store records. Before it answers, the
@@ -293,8 +337,9 @@ ACK within T):
    door of the family chosen below, with the guichet profile and the REQUEST
    as its prompt, as its own background task (the same mechanism `wake arm`
    uses on Claude Code: the exit re-invokes the asker).
-2. The run first triages the receiving store's `incoming` tickets, then the
-   REQUEST; it writes the store line and prints the verdict.
+2. The run first triages the receiving store's `incoming` tickets, reads
+   the repository's live work (§ Knowing the repository's live work), then
+   the REQUEST; it writes the store line and prints the verdict.
 3. A `QUESTION` verdict ends the run; the asker relaunches with the ANSWER,
    at most three times, then the guichet decides on what it has.
 
@@ -381,7 +426,9 @@ changes last, once its machinery exists **(revised after review)**.
    REQUEST/ACK round trip: can A start a turn in B, can B reply, is receipt
    reported, latency. First probe: a `claude --bg -n guichet-<repo>`
    session receiving a peer `SendMessage` and replying, under each
-   permission mode the guichet might run in. For each one-shot door: can it write the receiving
+   permission mode the guichet might run in. Second probe: the live-work
+   join (worktree lock pid ↔ `claude agents --json` pid ↔ ticket) on a
+   repository with a running Codex or Pi coder too. For each one-shot door: can it write the receiving
    store from its own worktree. Includes `wake send` → Claude Code (NOOP
    today) and Claude's inbound hold. *Proves* which pairs the live path may
    use and which doors the one-shot path may use; results replace § 2's
@@ -389,7 +436,8 @@ changes last, once its machinery exists **(revised after review)**.
 2. **Guichet profile and launcher.** `profiles/guichet/PROFILE.md`, shell
    `agents/guichet.md` with its `tools:` grant, `Requires-tools` line; the
    verdict vocabulary, store-line format, `incoming` and `intake` tickets,
-   three-round cap; one launch line per door. *Proves*, by a dry run between
+   three-round cap, the live-work read and relay rules; one launch line per
+   door. *Proves*, by a dry run between
    two of the author's repositories, that a one-shot run returns a verdict
    and lands its store line by a ticket-only merge request.
 3. **Rule rewrite.** `rules/workflow.md` § Cross-project work: dialogue with
@@ -422,6 +470,8 @@ revisit (memory `feedback_no_wait_tickets`), deciding:
   a sample of fallback tickets triaged without one. Near zero means C alone
   would do;
 - **idle-wake cost** of a background guichet against a one-shot run;
+- **relays**: how often a case went to a running coder, and whether the
+  coder used it or found the message an interruption;
 - **phase 5**: start it or not.
 
 ## Review
@@ -474,6 +524,12 @@ the live path costs nothing when a session already exists. **Author follow-up (2
 `claude --bg` persists a named session (§ 2), so Fable's finding (1)
 no longer forces one-shot for Claude Code; the live path now launches a
 background guichet, and phase 5 shrinks to Codex and Pi.
+**Author follow-up (2026-11-12):** the guichet must know what the
+repository's other live sessions are doing, since a request may overlap
+running work ("we are already doing this, I will pass your case to the
+running coder"). Added § Knowing the repository's live work: read-only
+signals joined by pid, relay to the running session only when it changes
+its current work, asker talks to the guichet only, no steering.
 
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
