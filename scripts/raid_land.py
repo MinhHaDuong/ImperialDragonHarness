@@ -453,8 +453,8 @@ def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out, 
         out(line)
     if not synced:
         return UNSYNCED
-    if gated:
-        out(wait_line(cwd, base))
+    if gated and git(cwd, "config", "--get", "idh.afterMerge").stdout.strip() != "off":
+        out(wait_line(cwd, base))  # no runner starts when the hook is switched off: nothing to wait for
     if do_cleanup:
         out(cleanup(cwd, branch, head, base, base if local else None))
     return OK

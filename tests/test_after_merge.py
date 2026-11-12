@@ -784,7 +784,9 @@ def test_wait_after_gives_up_at_its_bound(tmp_path):
 
 def test_a_red_run_alerts_and_a_green_run_does_not(tmp_path):
     alerts = tmp_path / "alerts"
-    env = {**child_env(), "IDH_ALERT_DIR": str(alerts), "PATH": "/usr/bin:/bin"}  # no notify-send needed
+    env = {k: v for k, v in child_env().items()  # a plain terminal: no runtime marker (gaze 2472)
+           if not k.startswith(("CLAUDE", "CODEX", "PI_")) and k not in ("IDH_WAKE_INBOX",)}
+    env.update(IDH_ALERT_DIR=str(alerts), PATH="/usr/bin:/bin")  # no notify-send needed
     work = make_repo(tmp_path, [{"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]}])
     green = subprocess.run([sys.executable, str(GATE), "run-after", "--ref", "main"], cwd=work,
                            capture_output=True, text=True, env=env)

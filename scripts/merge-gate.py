@@ -1117,31 +1117,34 @@ def run_after(remote, branch, actor, command, forge=None):
             else:
                 report = red_report(tip, outcome[2], outcome[1])
                 sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")
-                alert_red(tip, outcome[1])
                 if forge is not None:
                     try:
                         built = forge() if callable(forge) else forge
                         sys.stdout.write(open_red_ticket(report, outcome[1], tip, built, remote, branch, outcome[2]) + "\n")
                     except Exception as exc:  # the red stands in the note and the log whatever happens here
                         sys.stdout.write(f"red ticket: not opened ({type(exc).__name__}: {exc})\n")
+                alert_red(tip, failing_checks(outcome[2], outcome[1]))
                 code = FAIL
             done = tip
         return code
 
 
-def alert_red(tip, results):
-    """Tell the author a tip went red (ticket 1543): `runtime.py notify`, a popup plus an alert file.
+def alert_red(tip, failing):
+    """Tell the author a tip went red (ticket 1543): runtime_notify's popup plus alert file.
 
-    Best effort: the record, the log and the ticket carry the red whatever happens here.
+    Called in-process, not through runtime.py, whose runtime detection refuses a runner started
+    from a plain terminal (no runtime marker) or a nested session (two). Best effort: the record,
+    the log and the ticket carry the red whatever happens here.
     """
-    failing = ", ".join(r.split()[0] for r in results if " fail " in f" {r} ") or "see the after-merge log"
-    notify = Path(__file__).resolve().with_name("runtime.py")
     try:
-        subprocess.run(
-            [sys.executable, str(notify), "notify", "--key", f"after-merge-red-{tip[:12]}",
-             "--title", "main is red", "--body", f"after-merge run on {tip[:12]}: {failing}"],
-            capture_output=True, text=True, timeout=30,
-        )
+        spec = importlib.util.spec_from_file_location(
+            "runtime_notify", Path(__file__).resolve().with_name("runtime_notify.py"))
+        notify = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(notify)
+        args = argparse.Namespace(key=f"after-merge-red-{tip[:12]}", title="main is red", repeat=3600.0,
+                                  body=f"after-merge run on {tip[:12]}: {', '.join(failing) or 'see the after-merge log'}")
+        if notify.run(args, "none"):
+            sys.stdout.write("red alert: not written (runtime_notify failed)\n")
     except Exception as exc:  # noqa: BLE001 — an alert never fails the runner
         sys.stdout.write(f"red alert: not sent ({type(exc).__name__}: {exc})\n")
 
@@ -1172,7 +1175,7 @@ def cmd_wait_after(args):
             sys.stdout.write(f"wait-after: no after-merge record on {tip} within {args.timeout:g}s; "
                              "read <git-common-dir>/idh/after-merge.log\n")
             return MISSING
-        time.sleep(args.interval)
+        time.sleep(max(0.0, min(args.interval, end - time.monotonic())))
 
 
 def cmd_run_after(args):
