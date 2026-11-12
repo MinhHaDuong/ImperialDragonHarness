@@ -254,7 +254,7 @@ store is the record: every verdict names a ticket or a logged pushback.
 no runtime's transport acknowledges across all pairs. (3) Where a Claude
 Code `SendMessage` shortcut is used, the receiver's inbound hold can let
 REQUESTs expire unseen; a missing ACK sends the asker to the protocol's own
-transport or the one-shot path. (4) Facts, not agreement:
+transport, and failing that to the one-shot path. (4) Facts, not agreement:
 the guichet triages against its own repository, not the asker's framing,
 and the round cap bounds loops.
 
@@ -286,7 +286,8 @@ day.
 
 **E. Reuse an existing local agent bus** (different family: buy, not
 build). agent-message-queue, hcom or repowire already carry messages
-between Claude Code, Codex and Pi sessions and wake idle ones (§ 3). E is
+between Claude Code, Codex and Pi sessions and wake idle ones (reuse table
+in `design/research/2026-11-12-guichet-biblio-saturation.md`). E is
 not an alternative to B: it is B's transport. None of the tools examined
 provides the triage role or the durable record in the receiving store, and
 none documents Vibe support; their discovery features were not compared.
@@ -377,16 +378,18 @@ middleman [author]**:
   the guichet answers the asker with that session's address, the ticket,
   and the session's state (busy or idle, from `claude agents --json`), logs
   a one-line pointer on the ticket (`redirected <contextId> to <session>`),
-  and steps out. **A busy session is not interrupted:** the asker
-  subscribes with `SendMessage` `notify_when_idle: true` and no message,
-  which costs the session nothing, and opens the dialogue when the idle
-  notice arrives. The asker stays non-blocking meanwhile; a subscription
+  and steps out. **A busy session is not interrupted:** where its runtime
+  offers an idle notice (Claude Code: `SendMessage` `notify_when_idle: true`
+  with no message, free for the session), the asker subscribes and opens
+  the dialogue when the notice arrives; elsewhere it writes to the session's
+  inbox only when the live-work read shows the session idle. The asker stays non-blocking meanwhile; a subscription
   that expires unanswered falls back to a log line on the ticket. The asker opens its own dialogue with that
   session under the same protocol; the session records the outcome on its
   own ticket, as any receiver does. The guichet relays nothing in either
   direction.
 - **The case does not touch the session's current work**, or the session
-  is not reachable (a Codex or Pi coder, § 2): no redirect. The guichet logs
+  is not reachable (its runtime has no inbox or wake adapter, § Transport
+  and discovery): no redirect. The guichet logs
   the case on the running ticket and answers `completed` with the ticket as
   artifact, so a busy coder reads it at its own pace.
 - **The request would change something a live branch is rewriting**:
@@ -432,7 +435,13 @@ depend on any one runtime's native tools.
 - **Tender, chosen by the receiver.** A `guichet.json` in the receiving
   repository names who tends its guichet: runtime, model, host (for the
   harness, for example, Claude Code with Fable on padme). An asker that
-  finds no live card launches exactly that, through `runtime.py launch`.
+  finds no live card launches exactly that, through `runtime.py launch` in
+  peer mode: detached, in the receiving repository's checkout, under that
+  repository's rules, reporting to no one but the protocol; from another
+  host, over `ssh`. A tender hosts a live guichet only if its runtime can run
+  in the background and has a wake adapter: today Claude Code (`claude
+  --bg`); other runtimes once phase 1 or 4 proves it. Otherwise the guichet
+  runs one-shot.
 - **Delivery: reuse first.** Phase 1 trials agent-message-queue as the
   carrier: files with fsync and rename, no broker, a wake process per agent
   for Claude Code, Codex and Pi, MIT licence (§ 3). Whether its Claude wake
@@ -450,14 +459,15 @@ depend on any one runtime's native tools.
   harness has no Vibe adapter. A Vibe
   asker writes REQUESTs like any other and reads its reply inbox at its own
   pauses (non-blocking, slower); a Vibe adapter comes only if that proves
-  too slow.
+  too slow (phase 4, conditional).
 - **Native channels are shortcuts.** `SendMessage` between two Claude
   sessions on one host stays allowed; it is not the protocol.
 - **Cross-host.** Cards and inboxes are per host. A doudou asker reads
   padme's card and writes padme's inbox over `ssh padme`, or falls back.
 - **A2A level: binding-shaped, not declared [author].** Field names and the
   operation mapping follow A2A, so a declared custom binding or an HTTP
-  bridge stays a mechanical step. Declaring one is dropped from the plan:
+  bridge stays a mechanical step. Declaring one is dropped from the build
+  plan (it returns only as phase 5's conditional option):
   the filesystem binding is partly anticipated and the design borrows A2A's
   vocabulary, not its full data model (§ 3). A publication, if any, would
   rest on the measured cross-repository bug reports, the part for which
@@ -578,7 +588,8 @@ enforced, the profile states it and the observation log (§ 6) checks it.
   for example Fable for the harness). A one-shot run uses the same tender
   when its door is live; the launch line records the choice and its reason,
   as route requires.
-- **Tension with decorrelation.** The easiest pair is often same-family, and
+- **Tension with decorrelation.** The receiver's tender and the asker are
+  often the same family, and
   § 3 reports that homogeneous LLM groups amplify agreement errors. The
   protocol carries the mitigation: the asker sends facts and evidence, not
   conclusions; the guichet checks them against its own store and history
@@ -606,7 +617,7 @@ Estimates by the drafter; author-hours are review time; USD unmeasured.
 | B hybrid | 2–3 over the phases | audit, profile, launcher, rule: ~4 MRs | 10–30 build; per one-shot dialogue one advisor run plus a ticket MR, ~1–3 | revert the rule, retire the profile; the fallback is today's protocol |
 | C timer triage | 1 | one skill section + timer | 5–10 build; one advisor run per sweep | disable the timer |
 | D A2A server | 6+ | daemon, auth, per-runtime adapters | 50+ build, plus upkeep | stop the service |
-| E reuse a bus (as B's transport) | 1 (trial review) | a trial MR; adapters only for gaps (Vibe) | ~5 trial; then upkeep of a pinned dependency | unpin; fall back to our own file transport |
+| E reuse a bus (as B's transport) | 1 (trial review) | a trial MR; adapters only for gaps that prove costly (Vibe, if replies at pauses are too slow) | ~5 trial; then upkeep of a pinned dependency | unpin; fall back to our own file transport |
 
 The background guichet needs no supervisor (`claude --bg`), but every wake
 of an idle session re-reads its whole context, uncached after an idle hour:
@@ -648,9 +659,10 @@ changes last, once its machinery exists **(revised after review)**.
    and step 4 stay. Callers (`roar` step 8, `raid`) cite the new wording;
    roar's tracker hand-off becomes a REQUEST, with the log line as fallback.
    *Proves* nothing new: it records what phases 1 and 2 showed.
-4. **Missing adapters, conditional** (only those phase 1 finds missing:
-   Vibe certainly, Pi if the carrier does not cover it): an inbox adapter
-   per runtime. *Proves* that runtime completes one REQUEST round trip as
+4. **Missing adapters, conditional** (only those phase 1 finds missing and
+   the observation finds costly: Vibe if replies read at its pauses prove too
+   slow, Pi if the carrier does not cover it): an inbox adapter per
+   runtime. *Proves* that runtime completes one REQUEST round trip as
    asker and as guichet.
 5. **Report, conditional.** After the review below, if the measured
    cross-repository reports show something: a technical report (HAL) on the
@@ -739,7 +751,7 @@ running work ("we are already doing this, I will pass your case to the
 running coder"). Added § Knowing the repository's live work: read-only
 signals joined by pid, no steering.
 **Author rulings (2026-11-12):** A2A is not adopted, its vocabulary is
-reused (§ Vocabulary). The guichet does not middleman: when a live session
+reused (§ Two paths, Vocabulary). The guichet does not middleman: when a live session
 is better placed, it redirects the asker to talk with it directly, replacing
 the relay first drafted.
 **Author follow-up (2026-11-12):** asked which further state of the art
@@ -764,4 +776,4 @@ transport answered in § 5.
 KISS pass by the drafter: the FIPA/A2A mapping stays in § 3 (it fixed the
 vocabulary) but adds no machinery; no supervisor is built (`claude --bg`
 does the hosting); the transport is reused if the phase 1 trial holds, and
-only the adapters it lacks (Vibe certainly) are built, in phase 4.
+only the adapters it lacks and that prove costly are built, in phase 4.
