@@ -9,27 +9,27 @@ in the Smelt skill. Provenance: [inventory](../design/memory-v8/source-inventory
 - [User rulings](topics/user-rulings.md) — contextual decisions and author edits persist;
   Brood integrates and retires integrated rulings.
 - [Git, worktrees, sessions](topics/git-worktree-session-guards.md) — primary
-  is the author's workspace; setup links must not point to a tree's sole copy.
+  is the author's workspace; clean up your own tree; force-push alone in its call.
 - [Raids, review, merging](topics/raid-review-and-merge.md) — records bind
-  base/head; filing PRs must not use a Ticket close-claim line.
-- [CI, tests, doctors](topics/ci-and-test-suite.md) — workers clamp 2..24;
-  new doctor diagnostics run on demand, outside routine gates.
+  base/head; a refused gated landing waits for the author's "Land <PR>".
+- [CI, tests, doctors](topics/ci-and-test-suite.md) — check and check-fast on
+  workers; on an after-merge red, read after-merge.log before blaming main.
 - [Hosts and services](topics/host-environment.md) — one transcript archive;
-  Zotero exact identity remains distinct from filename candidates.
-- [Runtimes and models](topics/runtime-observations.md) — launch pins do not
-  establish a masked served identity; runtime observations are dated.
+  Zotero identity by attachment md5, then identifiers, title last.
+- [Runtimes and models](topics/runtime-observations.md) — context ceilings live
+  in route's ceilings.json; requested pins are not observed identities.
 - [Memory system](topics/memory-v8-governance.md) — blueprint in
-  design/memory-v8/README.md; Smelt nominates, Brood promotes on request.
+  design/memory-v8/README.md; grep memory/ before archiving a ticket.
 - [Skills, docs, hooks](topics/skills-docs-and-hooks.md) — generated catalog;
   a contract is cited rather than paraphrased.
 
 ## Smelts
 
+- [Eighth](smelts/2026-11-10-eighth-smelt.md) — proposed, awaiting the author.
 - [Seventh](smelts/2026-11-08-seventh-smelt.md) — accepted by the author
   2026-11-08; PR #2263.
 - [Sixth](smelts/2026-11-01-sixth-smelt.md) — accepted 2026-11-05 (PR #2197).
 - [Fifth](smelts/2026-10-30-fifth-smelt.md) — accepted (PR #2049).
-- [Fourth](smelts/2026-10-15-fourth-hoard.md) — accepted.
 
 History: `journal/YYYY/`, reports and git; attribution: `evidence/attribution/`.
 Native store: Claude Code auto-memory keyed by the primary checkout; inventory
