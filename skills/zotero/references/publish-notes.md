@@ -8,7 +8,8 @@ record, and the author corrects it in Zotero's note editor.
 
 ```bash
 "$IDH_ROOT/scripts/zotero.py" publish-notes --project <project> [--dry-run] \
-    [--state-file PATH] [--library user|<groupID>] <draft.html>...
+    [--state-file PATH] [--library user|<groupID>] \
+    [--collection "<key or path 'A / B'>"] <draft.html>...
 ```
 
 ## What a draft must carry
@@ -50,6 +51,23 @@ Zotero too.
 `--dry-run` reads only and prints `would create`, `would update`, `in sync`,
 `edited in zotero` or `refused`; it records nothing.
 
+## Filing the parent into a collection
+
+`--collection` keeps a project's collection in step with its notes: the parent
+item of every row not refused is added to that collection, given as a
+collection key or as a path of names joined by `/` (`"Project / Sources"`), in
+the library `--library` names. A string equal to a key is taken as that key; a
+single name means a top-level collection; names match exactly, case included.
+The collection is resolved once, before any write; an unknown or ambiguous one
+stops the run (exit 1, nothing written). Filing only adds: the parent's other
+collections stay, and a note `in sync` still repairs a parent missing from the
+collection. Each row then carries `collection`: `would add` or `already in`
+under `--dry-run`, `added` (read back after the write) or `already in`
+otherwise. A refused row carries no `collection`. When filing fails after the
+note was written, the row reads `not written` with the filing error as its
+`reason`, although the note landed and the state file records it: a rerun
+finds it `in sync` and retries the filing.
+
 ## The state file
 
 After each write the note's key, its new version and the sha256 of the draft's body are
@@ -63,7 +81,7 @@ runs serialise on a lock of the file's directory.
 ## Output and exit status
 
 JSON on stdout: `project`, `dry_run`, `state_file`, `zotero` (the URL, or
-`unavailable` / `slow`) and `results`, one row per draft with `draft`,
+`unavailable` / `slow`), `collection` (its key, with `--collection`) and `results`, one row per draft with `draft`,
 `slug`, `tag`, `item`, `note`, `status` and, when refused, `reason`.
 
 - 0: every row created, updated, in sync, edited in zotero, or would be.
