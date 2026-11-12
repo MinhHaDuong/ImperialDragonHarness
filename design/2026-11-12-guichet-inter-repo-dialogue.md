@@ -366,12 +366,16 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 
 - **Intake id** `<asker-repo>-<date>-<rand>`, minted by the asker; it is
   the deduplication key (A2A's `contextId`, § 3).
+- **Receivers** are listed in one harness file with their remote URL and
+  home host (harness, git-erg, padme), so an asker on any host knows where
+  to push without a local checkout of the receiver.
 - **Intake branch** `intake/<id>`, pushed by the asker to the receiving
-  repository's remote (`git -C <receiver checkout> remote get-url origin`,
-  not the asker's own `origin`) with a plain `git push`, no forge API,
+  repository's remote (from that list, not the asker's own `origin`) with a
+  plain `git push`, no forge API,
   together with its head ref `refs/intake-heads/<id>` and the thread. It adds
   exactly one `incoming` ticket with an `Origin: <asker-repo>` header, the
-  facts and the evidence. The asker never merges it.
+  facts and the evidence, on a base the request note records (the
+  receiver's `main` at filing). The asker never merges it.
 - **Intake thread** on `refs/notes/intake`: one note per intake on a fixed
   anchor (`git hash-object` of `idh-intake <id>`), one JSON object per line,
   `ts` first: `request`, `question`, `answer`, `verdict`, each with its
@@ -379,8 +383,9 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
   those of `refs/notes/review` (glob fetch refspecs, `cat_sort_uniq`, sync
   without force); the code is a sibling of `review_notes.py` sharing its
   transport layer, with its own entry schema and lock (review entries and
-  locks are review-specific). The branch head is kept at `refs/intake-heads/<id>`, so the
-  branch can go once the verdict is written.
+  locks are review-specific). The asker's head is kept at
+  `refs/intake-heads/<id>`; branch and head ref are deleted together, after
+  a PUSHBACK or once a promoted intake has landed.
 - Verdict states keep A2A's names: `completed` (NEW or AMENDED), `rejected`
   (PUSHBACK), `input-required` (QUESTION), `failed` (the triager could not
   decide).
@@ -391,27 +396,31 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 2. It tries `runtime.py triage <receiver> <id>` on the receiver's host
    (over `ssh` from another host). The launcher, a script, first writes
    the run's inputs as files into a run directory: the intake branch's
-   diff, the intake thread, and a live-work snapshot (worktree locks with
-   their tickets and liveness, each live branch's changed files). It then
+   diff, the intake thread, the recent history of the paths the intake
+   cites, and a live-work snapshot (worktree locks with their tickets and
+   liveness, each live branch's changed files). It then
    starts one headless run with read-only tools only (Pi: `--tools
    read,grep,find,ls`, no extensions), **inside a sandbox that makes only
    the receiving repository and the run directory readable** (a
    `systemd-run --user` unit with read-only bind mounts, or `bwrap`;
-   phase 1 proves it), capped in wall time, model by route at the advisor
-   tier **[author]**. Runs are serialized per receiver by `flock -o`; the
-   launcher holding the lock drains every untriaged intake of that
-   receiver, one fresh run each, before releasing it, so a second launch
-   that finds the lock held just leaves. A failed launch is harmless: the intake stays
+   phase 1 proves it, including that the model's credentials reach the
+   runtime without being readable by its `read` tool), capped in wall time,
+   model by route at the advisor tier **[author]**. Runs are serialized per
+   receiver by `flock -o`; the launcher holding the lock drains every
+   pending intake of that receiver, one fresh run each, and after releasing
+   the lock scans once more, relocking if anything arrived meanwhile, so a
+   second launch that finds the lock held can just leave. A failed launch is harmless: the intake stays
    durable and the sweep (step 6) finds it. The asker leaves.
 3. The triager reads the run directory, the receiving store and its
    history (§ Knowing the repository's live work below), and prints one
    verdict as JSON.
 4. The verdict script acts, after checking that the asker's commits
-   (base to `refs/intake-heads/<id>`) add exactly one new `tickets/*.erg`
-   and nothing else (the bookkeeping tier alone would also admit `memory/`
-   and `STATE.md`). **It never lands anything on main [author]**: it
-   prepares the intake branch, and the receiver's own normal merge process
-   lands it when an owner promotes it.
+   (from the recorded base to `refs/intake-heads/<id>`) add exactly one new
+   `tickets/*.erg` and nothing else (the bookkeeping tier alone would also
+   admit `memory/` and `STATE.md`), and that the branch tip still equals
+   that head. **It never lands anything on main [author].** It pushes its
+   commit and notes to the receiver's remote and records the prepared head
+   in the verdict note.
    - **NEW**: commits the ticket rewritten in the receiver's voice on the
      intake branch, keeps `Origin:`, adds `needs-human`; the owner's
      promotion lands it;
@@ -425,16 +434,27 @@ as reviews already do (`refs/notes/review`, `scripts/review_notes.py`).
 
    Every outcome is a `verdict` note first, so a crash between note and
    action is repaired by rerunning the action.
+   **Promotion.** The receiver's `/dashboard` lists intakes awaiting
+   promotion (NEW or AMENDED, prepared, not landed). An owner (the author,
+   or a session of the receiver acting with the author's leave) promotes
+   one by opening the receiver's ordinary merge request for the intake
+   branch at exactly the prepared head; a push after the verdict changes
+   the tip, so the sweep triages again instead. Promotion is the owner's
+   decision, so the automerge habit for ticket-only requests applies from
+   that point on. A NEW ticket keeps `needs-human` after landing unless the
+   owner removes it in the promotion.
 5. The asker reads the outcome when it next looks (its roar or lair):
    `git fetch` of the receiver and the intake thread. It answers a question
-   with an `answer` note and relaunches the triager, at most three rounds;
+   with an `answer` note and relaunches the triager (a failed relaunch is
+   caught by the sweep), at most three rounds;
    unanswered after seven days, the triager decides on what it has or adds
    `needs-human`.
-6. **Sweep.** The receiver's `/molt` relaunches every intake that is not
-   finished: no verdict after a day; a NEW or AMENDED verdict whose commit
-   is not on the intake branch; a QUESTION unanswered for seven days (decided on what the
-   triager has, or `needs-human`); a `failed` verdict, retried twice, then
-   `needs-human`. `/dashboard` lists them. The launch in step 2 is
+6. **Sweep.** The receiver's `/molt` relaunches every intake whose thread
+   is not settled: last entry a `request` or an `answer` older than an hour;
+   a NEW or AMENDED verdict whose prepared head is missing on the remote
+   (and no landing yet); a branch tip that moved after the verdict; a
+   QUESTION unanswered for seven days (decided on what the triager has, or
+   `needs-human`); a `failed` verdict, retried twice, then `needs-human`. `/dashboard` lists them. The launch in step 2 is
    therefore never a single point of failure.
 
 ### Knowing the repository's live work
@@ -454,11 +474,11 @@ sessions.
 | Finding | Under C1 |
 |---|---|
 | peer text as a user turn into a shell | the triager has no shell; git and `/proc` are read by the launcher script, and the intake is a file the triager reads as data |
-| ticket-only unenforced | the model writes nothing; the script writes only `tickets/*.erg` on the intake or a ticket-only branch, and refuses any other path |
+| ticket-only unenforced | the model writes nothing; the script writes only `tickets/*.erg` on the intake branch, refuses any other path, and records the exact head the owner may promote |
 | `replyTo` arbitrary write | gone: replies are notes in the thread |
-| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable (phase 1 proves the sandbox; until then, receivers whose host holds uncleared material use a local model) |
+| clearance on the receiver only | clearance is the stricter of asker and receiver, defaulting to uncleared; the sandbox makes only the receiving repository and the run directory readable. Until phase 1 proves the sandbox, C1 does not run where the host holds uncleared material outside the receiver: a local model would stop leaks to a provider, not quotes into a ticket |
 | wedged session, lost request | no session to wedge; a run has a wall-time cap; branch and notes are durable before any run starts |
-| authority laundering | `Origin:` kept, `needs-human` on every NEW until an owner promotes it |
+| authority laundering | `Origin:` kept; nothing lands without an owner's promotion; `needs-human` on every NEW |
 | cost runaway | one run per intake, serialized per receiver, a daily cap per receiver in the launcher |
 | cross-host replies | git remotes reach every host |
 
@@ -510,14 +530,16 @@ Estimates by the drafter; author-hours are review time; USD unmeasured.
 One tracker, children in order, each one merge request. The rule changes
 last.
 
-1. **Intake plumbing.** `refs/notes/intake` (generalizing
-   `review_notes.py`), the intake branch convention and heads,
-   `runtime.py triage` (detached headless run, read-only tools, `flock -o
-   -w 2`, wall-time cap, daily cap, model by route), and the verdict script
-   with its path refusal. *Proves*, by a dry run between two of the
-   author's repositories, each verdict: NEW and AMENDED leave a branch
-   ready for the owner to promote, PUSHBACK deletes it, QUESTION waits and
-   resumes on an answer.
+1. **Intake plumbing.** The receivers list; `refs/notes/intake` (a sibling
+   of `review_notes.py` sharing its transport); the intake branch, base and
+   head conventions; `runtime.py triage` (run directory, sandbox with
+   credentials kept unreadable, read-only tools, `flock -o` with the drain
+   and rescan, wall-time and daily caps, model by route); and the verdict
+   script with its range and tip checks. *Proves*, by a dry run between two
+   of the author's repositories, each verdict: NEW and AMENDED leave a
+   prepared head for the owner to promote, PUSHBACK deletes branch and head
+   ref, QUESTION waits and resumes on an answer; and that the sandbox
+   denies a read outside the receiver.
 2. **Triage profile.** `profiles/guichet/PROFILE.md` and its shell: facts
    against framing, duplicate search, the live-work read, clearance as the
    stricter of the two repositories, the verdict format. *Proves*, on the
@@ -528,9 +550,10 @@ last.
    `rules/guards.md` exception widened to intake branches and notes, for
    the author to decide. Callers (`roar` step 8, `raid`) cite the new
    wording. *Proves* nothing new: it records what phases 1 and 2 showed.
-4. **Sweep.** `/molt` launches triage on untriaged intakes older than a
-   day; `/dashboard` lists them. *Proves* that an intake whose launch
-   failed gets a verdict within a day.
+4. **Sweep and promotion view.** `/molt` relaunches every unsettled
+   intake (§ 5 step 6); `/dashboard` lists unsettled intakes and those
+   awaiting promotion. *Proves* that an intake whose launch failed, or
+   whose answer's relaunch failed, gets a verdict within a day.
 5. **Report, conditional.** After the review below, if the data show
    something: a HAL technical report on the design case and its outcomes,
    citing § 3.
