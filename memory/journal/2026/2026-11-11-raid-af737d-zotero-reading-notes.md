@@ -42,5 +42,5 @@ author's library was not written.
 
 ## References
 
-- tickets/1522-zotero-is-the-record-for-reading-notes-t.erg
+- tickets/closed/1522-zotero-is-the-record-for-reading-notes-t.erg
 - reviews rv-20261111-pr-2452-bf1f, -2453-71a5, -2454-b3cf, -2455-e614
