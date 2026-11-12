@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Foreign tickets: premise check at pickup in hunt and raid
+Created: 2026-11-12
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-11-12T22:28Z claude created
+2026-11-12T22:29Z reviewer label needs-human
+
+--- body ---
+Parent: 1544
+
+## Context
+
+Addition 2 of `design/2026-11-12-guichet-inter-repo-dialogue.md` § 5: a premise check at pickup. The trial (`design/research/2026-11-12-guichet-triage-trial.md`)
+showed triage adds value only on reports that assert something checkable
+and wrong (G2, H3), and harms when it refuses on recorded text the owner
+then changes (G3, H1).
+
+## Scope
+
+- `/hunt` (Plan) and raid (Verify), on a ticket with a `filed from` line,
+  start with the trial brief's four checks: facts against framing,
+  duplicates and overlap, ownership, standing rulings.
+- A conflict with a recorded ruling goes to the author as a question
+  (`rules/workflow.md` § Escalation protocol), never as a refusal or a
+  pushback.
+
+## Exit criteria
+
+- [ ] Both skills run the four checks on foreign tickets and route a ruling
+      conflict as a question.
+- [ ] Replayed on the trial's G2 and H3 reports, the check names the
+      corrections the owners later made.
+- [ ] `make check` passes.

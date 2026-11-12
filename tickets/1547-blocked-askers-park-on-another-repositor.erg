@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Blocked askers: park on another repository's ticket and release in molt
+Created: 2026-11-12
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-11-12T22:28Z claude created
+2026-11-12T22:29Z reviewer label needs-human
+
+--- body ---
+Parent: 1544
+
+## Context
+
+Addition 3 of `design/2026-11-12-guichet-inter-repo-dialogue.md` § 5: a return path for blocked askers. In the trial,
+consequences of fixes reached adopters only through tracker log lines
+(K-G1, K-G2).
+
+## Scope
+
+- A blocked asker parks its own ticket: `Blocked-by: <receiver>/<NNNN>`
+  (erg accepts another repository's ticket as a URI reference; git-erg
+  `design/erg-manual.md`, rule 9), the `deferred` label (an unresolved
+  reference is optimistic for readiness, so the label gates it), and a log
+  line. It does not wait.
+- The asker's `/molt` reads each such reference in the receiver's store;
+  when the receiver's ticket is closed it removes `deferred` and the
+  `Blocked-by:` line and logs `unblocked by <receiver> <NNNN>, closed in
+  <commit>`. Nothing is written into the receiver.
+
+## Exit criteria
+
+- [ ] Parking and release described in `rules/workflow.md` § Cross-project
+      work and implemented in `/molt`.
+- [ ] Between two of the author's repositories, a parked ticket returns to
+      the ready queue once the receiver's ticket closes; a sibling-path and
+      an absolute-URI reference both work.
+- [ ] `make check` passes.
