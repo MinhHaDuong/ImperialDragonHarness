@@ -25,14 +25,23 @@ Printed lines a review quotes: `selected:`, `fallback:`, `result:`.
 Exit: 0 the tests ran and passed, 1 a test failed, 2 usage or git error,
 4 not a pass: nothing ran (no test layout, no source or test file changed,
 no test collected), or `incomplete`: a planned run collected no test (the
-selection, or an empty integration tier) or a changed source file no test
-names met no declared integration marker.
+selection, or an empty integration tier), a changed source file no test
+names met no declared integration marker, or the integration tier outran
+`--integration-timeout`.
+
+`--integration-timeout <s>` bounds the fallback tier (ticket 1551): at the
+bound the script stops the tier's process group and prints
+`result: incomplete (... integration tier stopped at <s> s)`. A caller with a
+short budget (gaze) passes one, so its report says what did not run; a run
+killed from outside prints no `result:` line at all. Selected tests are never
+bounded.
 """
 
 import argparse
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -114,6 +123,27 @@ def workers(root, python, env):
     return proc.stdout.split() if proc.returncode == 0 else []
 
 
+def run(cmd, root, env, bound):
+    """pytest's exit code, or None when the run outlasted `bound` seconds and was stopped."""
+    if bound is None:
+        return subprocess.run(cmd, cwd=root, env=env).returncode
+    proc = subprocess.Popen(cmd, cwd=root, env=env, start_new_session=True)  # its own group: uv, pytest, workers
+    try:
+        return proc.wait(timeout=bound)
+    except subprocess.TimeoutExpired:
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            try:
+                os.killpg(proc.pid, sig)
+            except ProcessLookupError:
+                break
+            try:
+                proc.wait(timeout=10)
+                break
+            except subprocess.TimeoutExpired:
+                continue
+        return None
+
+
 def select(root, changes):
     """(selected test paths, unnamed source paths)."""
     tests = sorted(str(p.relative_to(root)) for p in (root / "tests").rglob("test_*.py"))
@@ -139,6 +169,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--base", default="origin/main", help="base branch; the change starts at its merge-base with HEAD")
     ap.add_argument("--list", action="store_true", help="print the selection only; run nothing")
+    ap.add_argument("--integration-timeout", type=int, metavar="S",
+                    help="stop the fallback integration tier after S seconds and report incomplete")
     args = ap.parse_args(argv)
     try:
         root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel").strip())
@@ -179,22 +211,26 @@ def main(argv=None):
         cmd = [*python, "-m", "pytest", "-q", *extra, *targets]
         out(f"run: {' '.join(repr(a) if a == '' else a for a in cmd)}")
         sys.stdout.flush()
-        codes[label] = subprocess.run(cmd, cwd=root, env=env).returncode
-    failed = [f"{label}: pytest exit {code}" for label, code in codes.items() if code not in (0, 5)]
+        codes[label] = run(cmd, root, env, args.integration_timeout if label == "integration" else None)
+    stopped = codes.get("integration", 0) is None
+    failed = [f"{label}: pytest exit {code}" for label, code in codes.items() if code not in (0, 5, None)]
     if failed:
         out(f"result: fail ({'; '.join(failed)})")
         return FAIL
     names = {"selected": f"{len(selected)} selected file(s)", "integration": "integration tier"}
     ran = [names[label] for label, code in codes.items() if code == 0]
     empty = [names[label] for label, code in codes.items() if code == 5]  # pytest collected nothing
-    if not ran:
+    if not ran and not stopped:
         out("result: skipped (no test collected)")
         return SKIPPED
     gaps = [f"{e} collected no test" for e in empty]
+    if stopped:
+        gaps.append(f"integration tier stopped at {args.integration_timeout} s")
     if unnamed and not marker:
         gaps.append(f"{len(unnamed)} source file(s) not covered: no integration marker declared")
     if gaps:
-        out(f"result: incomplete ({', '.join(ran)} passed; {'; '.join(gaps)})")
+        passed = f"{', '.join(ran)} passed; " if ran else ""
+        out(f"result: incomplete ({passed}{'; '.join(gaps)})")
         return SKIPPED
     out(f"result: pass ({', '.join(ran)})")
     return PASS
