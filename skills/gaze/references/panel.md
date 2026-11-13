@@ -138,9 +138,10 @@ unavailable route is never reported as a clean review.
    from the review worktree, once per review: every test that names a changed
    file, integration tier included, or the whole integration tier for a changed
    source file no test names (ticket 1283; a fast-tier run alone missed a
-   moved symbol). Gaze adds `--integration-timeout <s>`, a bound inside what
-   the plan's budget leaves (240 for a 5-minute plan), and gives its own shell
-   call a longer one: a tier that outruns the bound ends `result: incomplete`
+   moved symbol). Gaze adds `--integration-timeout <s>`, a bound on the tier alone, inside what
+   the plan's budget leaves once the selected tests have run (240 for a
+   5-minute plan whose selection is quick), and gives its own shell call a
+   longer one: a tier that outruns the bound ends `result: incomplete`
    and the gate runs it whole, where a run killed from outside leaves the
    tests item no report and fails the plan check (ticket 1551). The review
    quotes its `selected:`, `fallback:` and `result:`

@@ -8,6 +8,7 @@ integration tier for a changed source file no test names. Real git, real
 pytest, a throwaway project.
 """
 
+import os
 import subprocess
 import sys
 import time
@@ -303,3 +304,45 @@ def test_a_tier_that_outruns_its_bound_is_incomplete_not_silent(tmp_path):
     code, out, err = touched(root, "--integration-timeout", "60")
     assert code == 0, out + err
     assert line(out, "result").startswith("result: pass")
+
+
+STUBBORN = '''import subprocess
+import sys
+import time
+from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.integration
+
+CHILD = "import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(120)"
+
+
+def test_spawns_a_child_that_ignores_sigterm():
+    child = subprocess.Popen([sys.executable, "-c", CHILD])
+    Path(__file__).with_name("child.pid").write_text(str(child.pid))
+    time.sleep(120)
+'''
+
+
+def test_a_stopped_tier_leaves_no_child_behind(tmp_path):
+    """Gaze of PR 2490: pytest exits on SIGTERM, and a child that ignores it outlived the stop."""
+    root = project(tmp_path, {
+        "pytest.ini": PYTEST_INI,
+        "scripts/alpha.py": "X = 1\n",
+        "tests/test_stubborn.py": STUBBORN,
+    })
+    write(root, {"scripts/report.py": "print('a report no test names')\n"})
+    commit(root, "add a script no test names")
+
+    code, out, err = touched(root, "--integration-timeout", "5")
+    assert code == 4, out + err
+    pid = int((root / "tests" / "child.pid").read_text())
+    try:
+        with pytest.raises(ProcessLookupError):
+            os.kill(pid, 0)
+    finally:
+        try:
+            os.kill(pid, 9)
+        except ProcessLookupError:
+            pass

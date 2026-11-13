@@ -131,16 +131,19 @@ def run(cmd, root, env, bound):
     try:
         return proc.wait(timeout=bound)
     except subprocess.TimeoutExpired:
-        for sig in (signal.SIGTERM, signal.SIGKILL):
+        if proc.poll() is not None:  # it ended as the bound fired: keep its verdict
+            return proc.returncode
+        # TERM lets pytest stop its workers; KILL then goes to the whole group whatever
+        # the leader did, since a child that ignores TERM outlives a leader that obeys it.
+        for sig, grace in ((signal.SIGTERM, 10), (signal.SIGKILL, None)):
             try:
                 os.killpg(proc.pid, sig)
             except ProcessLookupError:
                 break
             try:
-                proc.wait(timeout=10)
-                break
+                proc.wait(timeout=grace)
             except subprocess.TimeoutExpired:
-                continue
+                pass
         return None
 
 
