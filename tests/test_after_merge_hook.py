@@ -188,3 +188,38 @@ def test_git_pack_refs_starts_no_runner(repo):
     proc, _ = timed(repo, "pack-refs", "--all", "--prune")
     assert proc.returncode == 0, proc.stderr
     assert starts(repo) == []
+
+
+def test_a_red_run_started_by_the_hook_raises_a_popup_naming_its_repository(repo):
+    """Ticket 1550, the positive control: the runner is the harness's own, outside the fixture
+    repository, started from inside its .git; the popup and the alert file still happen."""
+    work, common = repo["work"], repo["common"]
+    (work / "scripts" / "merge-gate.py").unlink()  # the hook falls back to $IDH_ROOT, a script of another repository
+    (work / ".merge-gate.json").write_text(json.dumps(
+        {"gate": "on", "scope": "s", "checks": [{"name": "always-red", "argv": ["false"]}]}))
+    repo["git"](work, "commit", "-q", "-a", "-m", "red gate")
+    repo["git"](work, "push", "-q", "origin", "main")
+    repo["git"](work, "switch", "-q", "side")
+    repo["git"](work, "merge", "-q", "-X", "ours", "main", "-m", "side catches up")
+    repo["git"](work, "switch", "-q", "main")
+    side = repo["git"](work, "rev-parse", "side").stdout.strip()
+    bindir = repo["tmp"] / "bin"
+    bindir.mkdir()
+    stub = bindir / "notify-send"
+    sent = repo["tmp"] / "sent.txt"
+    stub.write_text(f'#!/bin/sh\nprintf "%s|%s\\n" "$3" "$4" >> {sent}\n')
+    stub.chmod(0o755)
+    env = {k: v for k, v in repo["env"].items() if k not in ("IDH_NO_POPUP", "IDH_ALERT_DIR")}
+    env.update(IDH_ROOT=str(ROOT), PATH=f"{bindir}:{env['PATH']}")
+    proc = subprocess.run(["git", "-C", str(work), "update-ref", "refs/heads/main", side],
+                          capture_output=True, text=True, env=env)
+    assert proc.returncode == 0, proc.stderr
+    end = time.monotonic() + 60
+    while time.monotonic() < end and not sent.exists():
+        time.sleep(0.2)
+    log = (common / "idh" / "after-merge.log").read_text()
+    assert sent.exists(), log
+    title, body = sent.read_text().splitlines()[0].split("|", 1)
+    assert title == f"main is red in {work}", title  # tmp paths lie outside HOME
+    assert "always-red" in body
+    assert list((common / "idh-alerts").glob("*.alert")), log
