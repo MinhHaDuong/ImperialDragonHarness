@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Review notes: a request bound to a deleted base ref blocks every answer and verdict
+Created: 2026-11-13
+Author: reviewer
+
+--- log ---
+2026-11-13T11:40Z reviewer created
+2026-11-13T11:41Z reviewer filed from climate-finance-het, landing of #2154 #2160 #2166 on 2026-11-13 (journal memory/journal/2026/2026-11-13-t2063-stack-landing-roar.md there)
+
+--- body ---
+## Context
+
+Observed on 2026-11-13 in climate-finance-het, while landing a stack of three
+merge requests (#2154 <- #2160 <- #2166, each based on the previous one's
+head branch). That repository has GitHub's `delete_branch_on_merge` on.
+
+- #2154 merged; GitHub deleted its head branch `t2063-round-three-yield`,
+  which was the base of #2160. The request was retargeted to `main`.
+- The review of #2160 (`rv-20261112-pr-2160-6923`) held requests whose
+  `base_ref` was `origin/t2063-round-three-yield`. Once the tracking ref was
+  pruned, `review_notes.py` answered `cannot resolve
+  origin/t2063-round-three-yield` to `gate`, `verdict` and the answer write
+  of `gaze_close.py`.
+- Cost: one verify-gate run of 20 minutes ended ESCALATE with nothing
+  recorded, although every check had passed; one gaze run of 5 minutes ended
+  the same way. A plain relaunch of gaze hit the same wall, because
+  `gaze_setup.py` (`reviewed_request`) reuses the latest request on the
+  reviewed head, whatever its base.
+- Where the binding is read: `review_notes.py` `_append` (the request's
+  `base_ref`), `coverage` and `gate_state` (the latest answer's `base_ref`).
+- What unblocked it, by hand: `review_notes.py request --review <id>
+  --branch <head branch> --base-ref origin/main`, then gaze, then the gate.
+  Merge base and range patch-id were unchanged by the retarget.
+
+The same happens to any request whose base branch disappears or whose forge
+base changes after its review opened; a stack on an auto-deleting forge
+meets it at every level but the top one landed last.
+
+## Scope
+
+The review path (gaze setup and close, the gate's admission and verdict
+write) when the forge base of a request differs from the base its latest
+request names, or when that base ref no longer resolves. How to handle it is
+the implementer's choice: rebind by a new request on the same head, refuse
+early with the unblocking command, or resolve the binding from the recorded
+base OID instead of the ref name.
+
+Out of scope: the merge recipe's handling of stacks in general.
+
+## Exit criteria
+
+- [ ] A review whose latest request names a base ref that no longer
+      resolves, on a request since retargeted to `main`: gaze records its
+      answer and verify-gate records its verdict without a hand-written
+      request, or both refuse before doing any work and print the command
+      that unblocks them.
+- [ ] A test reproduces the 2026-11-13 case: a request on a head, its base
+      ref deleted, the forge base moved to `main`, same merge base.
+- [ ] `skills/merge/SKILL.md` says what to do with a stacked request whose
+      base merged, or says nothing is needed.
+- [ ] `make check` passes.
