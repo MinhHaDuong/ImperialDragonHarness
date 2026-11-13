@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Test runs raise real main-is-red popups on the author's desktop
+Created: 2026-11-13
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-13T12:46Z HDMX-coding-agent created
+2026-11-13T12:46Z HDMX-coding-agent filed from climate-finance-het (no asker ticket: the author's report in session, 2026-11-13)
+
+--- body ---
+## Context
+
+The red alert of ticket 1543 (`_alert_red` in `scripts/merge-gate.py`, through
+`scripts/runtime_notify.py`) runs `notify-send -a idh "main is red" ...` for
+real when the harness test suite runs on a machine with a desktop session.
+Every test that drives a red after-merge run in a fixture repository puts a
+"main is red" popup on the author's screen.
+
+Observed on padme, 2026-11-13 13:43 CET: twelve or more popups at once,
+bodies `after-merge run on <12 hex>: the-check`, `... marker-absent`,
+`... the-check, real`, `... marker-absent, seco...`. The commit ids exist in
+neither the harness nor climate-finance-het: they are tips of pytest fixture
+repositories. `the-check` and `marker-absent` are check names from
+`tests/test_after_merge.py` and `tests/test_merge_gate.py`.
+
+Reproduction (one passing test, two real `Notify` calls on the session bus,
+body `after-merge run on d63967259d96: marker-absent`):
+
+```sh
+dbus-monitor --session "interface='org.freedesktop.Notifications',member='Notify'" &
+python3 -m pytest tests/test_after_merge.py -k red_run_alerts -q
+```
+
+Read in the code, at `7e95e6496`:
+
+- `test_a_red_run_alerts_and_a_green_run_does_not` redirects the alert file
+  with `IDH_ALERT_DIR` but sets `PATH="/usr/bin:/bin"` with the comment
+  "no notify-send needed". On padme `notify-send` is `/usr/bin/notify-send`,
+  so the popup fires.
+- The other red-run tests of the two files set neither: the alert file goes
+  to the fixture repository's git directory and the popup to the desktop.
+- The rate limit does not help: the key is `after-merge-red-<tip>` and each
+  fixture has a fresh tip.
+
+Cost so far: the author read the popups as a red `main` of
+climate-finance-het ("main has been red for 13 hours") and a session there
+ran every gate of that project, all green, before finding the source. The
+real alert is now indistinguishable from test noise.
+
+A second observation, same popup: the text names no repository. With
+several projects on one desktop, "main is red" plus a short commit id does
+not say whose `main`.
+
+## Exit criteria
+
+- [ ] Running the harness test suite on a machine with a desktop session
+      sends no desktop notification (shown with the `dbus-monitor` command
+      above, or a recording stub ahead of `notify-send` on `PATH`).
+- [ ] Positive control: a red after-merge run outside the tests still raises
+      the popup and writes the alert file.
+- [ ] The popup names the repository whose `main` is red.
+- [ ] `make check` passes.
