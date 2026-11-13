@@ -540,9 +540,10 @@ never `git notes` by hand.
 - **Round and review.** `review_notes.py gate <review_id> <head> --base-ref <base>`
   prints the state as JSON and exits 0 only when the gate may run. `<base>` is
   the request's current base: `origin/<base-branch>` from the forge on a PR; on
-  `branch:`, the `base` that `forge.py resolve` prints, already a ref (`origin/main`), unchanged. It rebinds a review whose base branch
-  landed and was deleted, or was retargeted: the old answer admits the head only
-  when its merge base is unchanged against `<base>` (ticket 1548). It reads the remote first when
+  `branch:`, the `base` that `forge.py resolve` prints, already a ref
+  (`origin/main`), unchanged. It rebinds a review whose base branch landed and
+  was deleted, or was retargeted: the old answer admits the head only when its
+  merge base is unchanged against `<base>` (ticket 1548). It reads the remote first when
   `origin` exists, so verdicts and answers of other clones count; a non-empty
   `stale` says that read failed and the round may be undercounted: write
   `notes: stale (<stale>)` in the verdict text. `round` is the
