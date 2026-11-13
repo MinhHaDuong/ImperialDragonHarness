@@ -7,6 +7,26 @@ set -euo pipefail
 
 DOIFETCH_REF=v0.3.0  # DOIfetch v0.3.0, annotated unsigned tag d76db1f on 95efea6 (author ruling 2026-10-29)
 
+# A named shadow source is refused (ticket 1549). The wrapper would run it
+# without the `shadow` extra (bs4 missing), and it would skip the open sources
+# and the receipt that the bare --doi / --isbn cascade provides (ticket 1448).
+# Both spellings, a comma list, and an absent identifier are refused alike.
+prev=""
+for arg in "$@"; do
+    value=""
+    if [[ "$prev" == "--source" ]]; then value="$arg"
+    elif [[ "$arg" == --source=* ]]; then value="${arg#--source=}"
+    fi
+    prev="$arg"
+    [[ -n "$value" ]] || continue
+    IFS=, read -r -a named <<<"$value"
+    for one in "${named[@]}"; do
+        if [[ "$one" == scihub || "$one" == libgen ]]; then
+            echo "doifetch: --source $one is not run by this helper: it would skip the open sources and leave no receipt. Use '--doi <doi>' or '--isbn <isbn>' without --source: it tries the open sources, then the shadow source, and records the channel." >&2
+            exit 2
+        fi
+    done
+done
 if ! command -v uvx >/dev/null 2>&1; then
     echo "doifetch: uvx not found; install uv (https://docs.astral.sh/uv/) and retry" >&2
     exit 127
