@@ -82,7 +82,10 @@ bookkeeping to the latest reviewed one, or it is the round-2 re-gate
 of a REROLL fix descending from the rerolled head;
 never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
-round, never a REROLL on round 2; `add` refuses `verdict`.
+round, never a REROLL on round 2; `add` refuses `verdict`. Both take `--base-ref`, the
+request's current forge base (ticket 1548): an answer bound to a base since deleted or
+retargeted admits only when its merge base is unchanged against it (a squash-landed base
+is refused), and without it a base that no longer resolves refuses, naming the option.
 
 Readers (ticket 1301). The answers are the review evidence of a PR unit too; its PR comment is
 a one-line pointer. `answers --unit pr:<n>` prints every answer's text (attribution's seat
@@ -191,6 +194,10 @@ def _rev(cwd, ref):
     if done.returncode:
         raise Refusal(f"cannot resolve {ref}")
     return done.stdout.strip()
+
+
+def _resolves(cwd, ref):
+    return _git(cwd, "rev-parse", "--verify", "-q", ref + "^{commit}", check=False).returncode == 0
 
 
 def _has_ref(cwd, ref):
@@ -834,7 +841,9 @@ def _carries_over(cwd, rid, branch, base_ref, head):
     if not answers or any(e.get("unit") for e in es if e["kind"] == "request"):
         return False
     head = _rev(cwd, head or branch)
-    return answers[-1]["head"] == head or _bookkeeping_since(cwd, answers[-1]["base_ref"], head, answers[-1]["head"])
+    last = answers[-1]
+    return _range_kept(cwd, last, base_ref) and (
+        last["head"] == head or _bookkeeping_since(cwd, base_ref, head, last["head"]))
 
 
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
@@ -853,7 +862,7 @@ def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", link
 
 
 def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
-            request_id=None):
+            request_id=None, base_ref=None):
     reqs = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
     if not reqs:
         raise Refusal(f"review {review_id} has no request")
@@ -872,7 +881,7 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
         raise Refusal(f"head {oid[:12]} is not the head of request {req['request_id']} "
                       f"({req['head'][:12]}): an entry binds only to the request it reviewed; "
                       "name that request (--request), or request the head first")
-    binding = _binding(cwd, oid, req["base_ref"])
+    binding = _binding(cwd, oid, base_ref or req["base_ref"])  # base_ref: the verdict's, the gate's base
     return _write(cwd, _entry(cwd, kind, review_id, req["request_id"], binding, author, skill,
                               links, dict(fields)))
 
@@ -950,16 +959,21 @@ def open_findings(cwd, review_id):
     return [f for fid, f in found.items() if state.get(fid, "") not in CLOSED]
 
 
-def coverage(cwd, review_id, head):
+def coverage(cwd, review_id, head, base_ref=None):
     """Does `head` carry the review? match: equal | patch-id | none, with the answer. An old
-    entry's `coverage` field is ignored (ticket 1305 deleted the scope label)."""
+    entry's `coverage` field is ignored (ticket 1305 deleted the scope label). `base_ref` is the
+    request's current base (default: the latest answer's); an answer bound to another base
+    covers an equal head only with an unchanged merge base (ticket 1548, `_range_kept`)."""
     head = _rev(cwd, head)
     answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
     if not answers:
         return {"match": "none", "head": head}
-    binding = _binding(cwd, head, answers[-1]["base_ref"])
+    base_ref = base_ref or answers[-1]["base_ref"]
+    if not _resolves(cwd, base_ref):
+        raise Refusal(f"cannot resolve {base_ref}: pass the request's current base, --base-ref origin/<base>")
+    binding = _binding(cwd, head, base_ref)
     for e in reversed(answers):
-        if e["head"] == head:
+        if e["head"] == head and (e["base_ref"] == base_ref or e["merge_base"] == binding["merge_base"]):
             match = "equal"
         elif e["range_patch_id"] and e["range_patch_id"] == binding["range_patch_id"]:
             match = "patch-id"
@@ -971,6 +985,22 @@ def coverage(cwd, review_id, head):
 
 def _verdicts(cwd, review_id):
     return [e for e in entries(cwd, review_id) if e["kind"] == "verdict"]
+
+
+def _range_kept(cwd, answer, base_ref):
+    """Is the range `answer` (or a REROLL verdict) examined still its head's range against `base_ref` (ticket 1548)? Under
+    its own base ref, yes, as before. Under another (a retargeted request, a base branch landed
+    and deleted) only with the same merge base, or the same non-empty patch-id: a base landed by
+    squash or rebase moves the merge base, and the old answer no longer covers the head. Never
+    anchored on the answer's `base` commit, which nothing retains once its ref is deleted."""
+    if answer["base_ref"] == base_ref:
+        return True
+    try:
+        now = _binding(cwd, answer["head"], base_ref)
+    except Refusal:  # a head the repository lacks keeps nothing, as in `_carries`
+        return False
+    return now["merge_base"] == answer["merge_base"] or bool(
+        answer["range_patch_id"] and now["range_patch_id"] == answer["range_patch_id"])
 
 
 def _bookkeeping_since(cwd, base_ref, head, since):
@@ -1002,7 +1032,7 @@ def _carries(cwd, rerolled, head):
     return bool(old) and new is not None and old <= new
 
 
-def gate_state(cwd, review_id, head, remote="origin"):
+def gate_state(cwd, review_id, head, remote="origin", base_ref=None):
     """What verify-gate needs before ruling `head` (spec §5, §8): the round it would rule,
     whether a completed review admits it, and why not. Refreshes first when there is a remote
     (fetch and merge, never a push), so verdicts and answers written by other clones count
@@ -1015,19 +1045,24 @@ def gate_state(cwd, review_id, head, remote="origin"):
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds.
     `stale` is empty after a good read; after a failed fetch it names the failure: the state
-    rests on local entries and the round may be undercounted (ticket 1300)."""
+    rests on local entries and the round may be undercounted (ticket 1300).
+    `base_ref` is the request's current forge base (ticket 1548), default the latest answer's:
+    an answer bound to another base admits only when its range is unchanged against this one
+    (`_range_kept`), and a base that no longer resolves refuses, naming the option to pass."""
     report = refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
     answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
+    base_ref = base_ref or (answers[-1]["base_ref"] if answers else "")
+    unresolved = bool(answers) and not _resolves(cwd, base_ref)
     state = {"review_id": review_id, "head": head, "round": len(verdicts) + 1, "ready": False,
              "stale": "; ".join(report["warnings"]) if report["status"] == "stale" else "",
              "reason": "", "match": "none", "answer": None, "result": None,
-             "reviewed_head": answers[-1]["head"] if answers else None,
+             "reviewed_head": answers[-1]["head"] if answers else None, "base_ref": base_ref,
              "verdicts": [{"round": v.get("round"), "verdict": v.get("verdict"),
                            "session": v.get("gate_session_id"), "head": v["head"], "id": v["id"]}
                           for v in verdicts]}
-    cov = coverage(cwd, review_id, head) if answers else {"match": "none"}
+    cov = coverage(cwd, review_id, head, base_ref) if answers and not unresolved else {"match": "none"}
     state.update({k: cov[k] for k in ("match", "answer", "result") if k in cov})
     escalated = [v["id"] for v in verdicts if v.get("verdict") == "ESCALATE"]
     if state["round"] > MAX_ROUNDS:
@@ -1038,14 +1073,19 @@ def gate_state(cwd, review_id, head, remote="origin"):
         state["reason"] = "no completed review: no gaze answer in the review"
     elif answers[-1].get("result") == "ESCALATE":
         state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
+    elif unresolved:
+        state["reason"] = (f"base {base_ref} does not resolve (its branch landed and was deleted, or is not fetched): pass "
+                           f"the request's current forge base, `review_notes.py gate {review_id} {head[:12]} "
+                           "--base-ref origin/<base>` (`verdict ... --base-ref` alike)")
     elif state["result"] == "ESCALATE":
         state["reason"] = f"no completed review: the answer {state['answer']} covering the head is ESCALATE"
     elif cov["match"] != "none":
         state["ready"] = True
     elif (verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS
-          and _carries(cwd, verdicts[-1]["head"], head)):
+          and _range_kept(cwd, verdicts[-1], base_ref) and _carries(cwd, verdicts[-1]["head"], head)):
         state.update(ready=True, match="reroll-fix", answer=None, result=None)
-    elif _bookkeeping_since(cwd, answers[-1]["base_ref"], head, state["reviewed_head"]):
+    elif (_range_kept(cwd, answers[-1], base_ref)
+          and _bookkeeping_since(cwd, base_ref, head, state["reviewed_head"])):
         state.update(ready=True, match="bookkeeping", answer=answers[-1]["id"],
                      result=answers[-1].get("result"))
     else:
@@ -1055,7 +1095,7 @@ def gate_state(cwd, review_id, head, remote="origin"):
 
 
 def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_candidate="", text="",
-                   author=None, remote="origin", forge_read="unread"):
+                   author=None, remote="origin", forge_read="unread", base_ref=None):
     """Append the gate's `verdict` entry; the round is derived here from the review's recorded
     verdicts (all sessions), never passed, and only when `gate_state` admits the head.
     The write is local; a remote gets a background sync, never waited (ticket 1300). Returns
@@ -1063,14 +1103,15 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
     the same round already in the local ref (two gate runs ruling at once; once both meet, the
     next `gate` refuses, past the cap); `stale` is gate_state's. `forge_read` is when the gate
     read the human and Copilot reviews (`review_evidence.py forge`'s `forge-read:`), or `unread`:
-    the landing recheck counts only reviews newer than it, every one when unread (ticket 1308)."""
+    the landing recheck counts only reviews newer than it, every one when unread (ticket 1308).
+    `base_ref` is gate_state's; the verdict binds to the base the head was admitted on (1548)."""
     if verdict not in VERDICTS:
         raise Refusal(f"verdict must be one of {'|'.join(VERDICTS)}, got {verdict!r}")
     try:
         session = str(uuid.UUID(session))
     except (TypeError, ValueError):
         raise Refusal(f"gate session id must be a UUID, got {session!r}") from None
-    state = gate_state(cwd, review_id, head, remote)  # refreshes first, never pushes
+    state = gate_state(cwd, review_id, head, remote, base_ref)  # refreshes first, never pushes
     if not state["ready"]:
         raise Refusal(f"the gate may not rule {state['head'][:12]}: {state['reason']}")
     rnd = state["round"]
@@ -1081,7 +1122,8 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
                     {"gate_session_id": session, "round": rnd, "verdict": verdict,
                      "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text,
                      "forge_read": forge_read or "unread"},
-                    head=state["head"], author=author or {"role": "verify-gate"}, skill="verify-gate")
+                    head=state["head"], author=author or {"role": "verify-gate"}, skill="verify-gate",
+                    base_ref=state["base_ref"])
     sync_background(cwd, remote)
     conflict = [v["id"] for v in _verdicts(cwd, review_id)
                 if v.get("round") == rnd and v["id"] != entry["id"]]
@@ -1161,12 +1203,15 @@ def main(argv=None):
     s.add_argument("--latest", action="store_true", help="only the newest answer's result, seats and head")
     s.add_argument("--json", action="store_true", help="with --latest: one JSON object")
     s.add_argument("--head", help="with --latest: report whether the answer reviewed this commit (current)")
+    base_help = "the request's current forge base, origin/<name> (default: the latest answer's; ticket 1548)"
     s = sub.add_parser("coverage")
     s.add_argument("review")
     s.add_argument("head")
+    s.add_argument("--base-ref", help=base_help)
     s = sub.add_parser("gate")
     s.add_argument("review")
     s.add_argument("head")
+    s.add_argument("--base-ref", help=base_help)
     s = sub.add_parser("verdict")
     s.add_argument("--review", required=True)
     s.add_argument("--session", required=True, help="the gate session UUID (session=)")
@@ -1177,6 +1222,7 @@ def main(argv=None):
     s.add_argument("--text-file", type=Path, help="the human-readable verdict summary")
     s.add_argument("--forge-read", default="unread",
                    help="the forge-read: time review_evidence.py forge printed, else unread (ticket 1308)")
+    s.add_argument("--base-ref", help=base_help)
     s = sub.add_parser("keep-head")
     s.add_argument("review")
     s.add_argument("request")
@@ -1253,15 +1299,15 @@ def main(argv=None):
             for f in open_findings(cwd, a.review):
                 print(json.dumps(f))
         elif a.cmd == "coverage":
-            print(json.dumps(coverage(cwd, a.review, a.head)))
+            print(json.dumps(coverage(cwd, a.review, a.head, a.base_ref)))
         elif a.cmd == "gate":
-            state = gate_state(cwd, a.review, a.head, remote)
+            state = gate_state(cwd, a.review, a.head, remote, a.base_ref)
             print(json.dumps(state))
             return 0 if state["ready"] else 1
         elif a.cmd == "verdict":
             done = record_verdict(cwd, a.review, a.session, a.verdict, a.head, a.evidence, a.candidate,
                                   a.text_file.read_text() if a.text_file else "", remote=remote,
-                                  forge_read=a.forge_read)
+                                  forge_read=a.forge_read, base_ref=a.base_ref)
             print(done["entry"]["id"], done["level"], f"round={done['entry']['round']}")
             if done["stale"]:
                 print(f"review_notes: notes: stale ({done['stale']}); the round may be undercounted",

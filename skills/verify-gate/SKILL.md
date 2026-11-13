@@ -537,8 +537,13 @@ never `git notes` by hand.
   failed fetch is a stale read, never "no review": with no local review the
   lookup refuses (`remote unreadable, no local review`, on stderr): ESCALATE
   naming it, `Missing Data`; with one, the gate rules on the local entries.
-- **Round and review.** `review_notes.py gate <review_id> <head>` prints the state as
-  JSON and exits 0 only when the gate may run. It reads the remote first when
+- **Round and review.** `review_notes.py gate <review_id> <head> --base-ref <base>`
+  prints the state as JSON and exits 0 only when the gate may run. `<base>` is
+  the request's current base: `origin/<base-branch>` from the forge on a PR; on
+  `branch:`, the `base` that `forge.py resolve` prints, already a ref
+  (`origin/main`), unchanged. It rebinds a review whose base branch landed and
+  was deleted, or was retargeted: the old answer admits the head only when its
+  merge base is unchanged against `<base>` (ticket 1548). It reads the remote first when
   `origin` exists, so verdicts and answers of other clones count; a non-empty
   `stale` says that read failed and the round may be undercounted: write
   `notes: stale (<stale>)` in the verdict text. `round` is the
@@ -562,8 +567,8 @@ never `git notes` by hand.
   `forge: none`. On a PR both steps run as above.
 - **Verdict.** Write the verdict text as one entry:
   `review_notes.py verdict --review <review_id> --session <uuid> --verdict <V>
-  --head <ruled_tip_sha> --evidence <answer ids> [--candidate <gate record OID>]
-  --text-file <file> [--forge-read <time>]`; `--forge-read` is step 3's
+  --head <ruled_tip_sha> --base-ref <base> --evidence <answer ids> [--candidate <gate record OID>]
+  --text-file <file> [--forge-read <time>]`, `<base>` as for `gate`; `--forge-read` is step 3's
   `forge-read:` time, omitted (`unread`) when the forge went unread or on `branch:`. It prints `<entry id> local round=<n>`: the round it
   recorded, which is the verdict's `round`. The write is local, with a
   background sync nobody waits for; delivery is the landing push. It re-checks

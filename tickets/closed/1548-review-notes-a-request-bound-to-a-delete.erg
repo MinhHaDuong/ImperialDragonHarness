@@ -2,11 +2,13 @@
 Title: Review notes: a request bound to a deleted base ref blocks every answer and verdict
 Created: 2026-11-13
 Author: reviewer
+Closed: autoclosed — PR #2483
 
 --- log ---
 2026-11-13T11:40Z reviewer created
 2026-11-13T11:41Z reviewer filed from climate-finance-het, landing of #2154 #2160 #2166 on 2026-11-13 (journal memory/journal/2026/2026-11-13-t2063-stack-landing-roar.md there)
 2026-11-13T12:10Z reviewer reviewed in PR 2481: defect reproduced in a throwaway repository; context corrected (exposed levels, unobserved retarget case), squash case and its criterion added, merge-skill criterion made conditional
+2026-11-13T13:07Z reviewer closed — autoclosed — PR #2483
 
 --- body ---
 ## Context
