@@ -1,10 +1,11 @@
 %erg 0.1
-Title: doifetch.sh: a named shadow source runs without the shadow extra, fails on bs4 and exits 0
+Title: doifetch.sh: a named shadow source runs without the shadow extra and fails on bs4
 Created: 2026-11-13
 Author: HDMX-coding-agent
 
 --- log ---
 2026-11-13T12:12Z HDMX-coding-agent created
+2026-11-13T12:19Z reviewer note review of PR 2482: bs4 failure reproduced for scihub and libgen; exit status 0 not reproduced (1 in every direct form, 0 only as a pipe's tail status); title, reproduction and exit criteria corrected, the exit-status criterion dropped
 
 --- body ---
 
@@ -47,18 +48,27 @@ The per-work table is `docs/reports/t3018-top200-acquisition-2026-11-13.csv`
 in climate-finance-het (PR #2167 there); its `source` and `note` columns hold
 the agents' wording.
 
-## Reproduction (padme, 2026-11-13, by the filing session)
+## Reproduction (padme, 2026-11-13)
 
 ```
 $ ~/.agents/scripts/doifetch.sh --doi 10.9999/harness-ticket-repro-no-such-doi \
       --source scihub --no-check-zotero --output-dir <scratch dir>
 Download failed: bs4 is not installed; it comes with the 'shadow' extra: uv tool install 'doifetch[shadow] @ git+https://github.com/MinhHaDuong/DOIfetch'
 $ echo $?
-0
+1
 ```
 
-Two things in that output: the missing module, and exit status 0 beside
-"Download failed".
+`--isbn <isbn> --source libgen` fails the same way, with the same status.
+
+The filing session recorded exit status 0 for this command. The review of
+PR 2482 did not reproduce that: the status was 1 with stdin open, with stdin
+closed and under `timeout`. A 0 appeared only as the status of a pipe
+(`... 2>&1 | cat`, where `PIPESTATUS` reads `1 0`). How the filing session
+captured its 0 is not established.
+
+Control: the same arguments through
+`uvx --from 'doifetch[shadow] @ git+...@v0.3.0' doifetch` reach Sci-Hub and
+exit 1 on the unknown DOI, so the extra is the only thing missing.
 
 ## Cause, as read in `scripts/doifetch.sh`
 
@@ -69,10 +79,9 @@ Two things in that output: the missing module, and exit status 0 beside
   `exec uvx -q --from "$spec" doifetch "$@"`, with the plain spec. A named
   `scihub` or `libgen` therefore runs without the extra that provides `bs4`.
 
-Not established: whether the exit status 0 on a failed download is the
-wrapper's doing or DOIfetch's own behaviour in that mode (the wrapper only
-`exec`s it). `skills/zotero/references/backfill.md` says "Exit 1 reports a
-failed fetch"; that was not checked on the cascade path here.
+The exit status on that path is DOIfetch's own, since the wrapper `exec`s it:
+1 on a failed download, as `skills/zotero/references/backfill.md` says ("Exit 1
+reports a failed fetch").
 
 ## Also reported by the agents in the same run (not reproduced by the filing session)
 
@@ -98,5 +107,4 @@ Kept for triage, not as exit criteria:
 ## Exit criteria
 
 - [ ] `doifetch.sh --doi <doi> --source scihub` and `--source libgen` either run with the shadow extra or refuse with a message naming the supported invocation; shown with the reproduction above
-- [ ] A failed download on the named-source path does not exit 0, or the reason it must is written where callers read the exit codes
 - [ ] The zotero skill's reference states which invocation reaches the shadow sources, so that a brief written from `--help` does not name them needlessly
