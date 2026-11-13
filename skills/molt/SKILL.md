@@ -186,6 +186,17 @@ Run full repo housekeeping and act on every finding.
    carry none, so they route to `skip:` for hand judgment. An `ok (reasoned)`
    finding yields no line: leave it alone.
 
+2.4. **Report unpicked foreign tickets.** Apply `rules/workflow.md` § Cross-project work:
+
+   ```bash
+   python3 "$IDH_ROOT/scripts/foreign_tickets.py" --repo "$(git rev-parse --show-toplevel)"
+   ```
+
+   Include returned rows in the run summary for owner attention. This is a
+   report, not a new ticket or an automatic wake. Without the helper, inspect
+   provenance log dates, local and remote branch names, and worktree locks
+   by hand. A failed inspection is reported as unavailable.
+
 2.5. **Audit open-ticket exit criteria.** For each open ticket, apply
    lightweight grep-able checks. Only check exit criteria that reduce to one of
    three crisp shapes:

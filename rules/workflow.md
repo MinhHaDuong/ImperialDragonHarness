@@ -131,6 +131,9 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 Work that belongs to another project:
 1. **Ticket there, always**: the ticket store is the channel between projects.
    A new ticket or a log line on an existing one, never an edit to its files.
+   Log `filed from <asker-repo> <asker-ticket>` on the receiving ticket.
+   Molt and dashboard report these requests after a day without a branch
+   or locked worktree naming the ticket.
 2. **Tell a live session there when timing matters**: agent listing and
    messaging on Claude Code; on Codex, `scripts/runtime.py wake send` to a
    known thread (queued, not delivered); on Pi, ticket only. A peer's
