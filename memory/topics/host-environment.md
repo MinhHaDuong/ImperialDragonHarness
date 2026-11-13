@@ -14,7 +14,7 @@ Data (author ruling 2026-10-31, tracker 1401): `DATASETS_DIR` both hosts, `MIRRO
 
 Credentials. Agent sessions use `GH_CONFIG_DIR=~/.config/gh-agent`, a narrow token: no settings writes, no workflow-file pushes, no issue close or delete [erg][source15]; expires ~2027-10-27, then sync `~/.config/keys/github.env` per host and re-login. Secrets to `curl` via stdin, never argv. A bench passing its environment to `sudo --preserve-env` logged a token in padme's system journal; the author left it as is [erg][source15].
 
-Zotero (`scripts/zotero.py`, local API only, never sqlite/Web API/cache; tests on a private Xvfb or skip, no mocks) [source6][source7]. Identity: Zotero's own attachment md5 first, then identifiers (.bib, url/eprint, page text), title last (1502); identifier inequality alone is no proof of another work; embedded titles are hints ([rulings][source16]). Receipts: `<staging>/.receipts.jsonl` (1503) [f7aa][source17]. The project-specific filename suffix list left the shared helper (PR 2370). Writes reach existing items only as reports; reconcile on demand, not in Molt. Zotero 10 takes local writes (9.x not); ask the author to open Zotero [source9]. DOIfetch: not in `idh install`; `scripts/doifetch.sh` pins v0.4.0 (1513) via `uvx`; pass `--output-dir` on every launch; failed download exits 69; batch `.txt` only [source10][fc10][source18].
+Zotero (`scripts/zotero.py`, local API only, never sqlite/Web API/cache; tests on a private Xvfb or skip, no mocks) [source6][source7]. Identity: Zotero's own attachment md5 first, then identifiers (.bib, url/eprint, page text), title last (1502); identifier inequality alone is no proof of another work; embedded titles are hints ([rulings][source16]). Receipts: `<staging>/.receipts.jsonl` (1503) [f7aa][source17]. The project-specific filename suffix list left the shared helper (PR 2370). Writes reach existing items only as reports; reconcile on demand, not in Molt. Zotero 10 takes local writes (9.x not); ask the author to open Zotero [source9]. DOIfetch: not in `idh install`; `scripts/doifetch.sh` pins v0.4.0 (PR 2492; one plain spec, no `shadow` extra since DOIfetch dropped bs4 [source19]) via `uvx`; pass `--output-dir` on every launch; failed download exits 69; batch `.txt` only [source10][fc10][source18].
 
 ## Hazards
 - `ssh host bash -s < script`: a stdin-reading command swallows the script, exit 0; use `< /dev/null` [source12].
@@ -45,5 +45,6 @@ Zotero (`scripts/zotero.py`, local API only, never sqlite/Web API/cache; tests o
 [source16]: user-rulings.md#on-tools-and-evidence
 [source17]: ../journal/2026/2026-11-10-raid-f7aac3-staging-recognition-and-receipts.md
 [source18]: ../journal/2026/2026-11-10-raid-fc1083-doifetch-pin-v0-3-0.md
+[source19]: ../journal/2026/2026-11-13-roar-pr2492-doifetch-pin-v0-4-0.md
 
 ## Fallback
