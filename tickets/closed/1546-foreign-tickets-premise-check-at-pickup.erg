@@ -2,6 +2,7 @@
 Title: Foreign tickets: premise check at pickup in hunt and raid
 Created: 2026-11-12
 Author: claude
+Closed: implemented
 
 --- log ---
 2026-11-12T22:28Z claude created
@@ -10,6 +11,9 @@ Author: claude
 2026-11-13T18:58Z reviewer note Author explicitly authorized raid and undefer on 2026-11-13, superseding provisional-design hold for this child.
 2026-11-13T18:58Z reviewer note Imagine: premise current; preserve original exit criteria. Plan: State receiving-project substantive Imagine acceptance once in workflow; hunt Plan and raid pickup/Verify cite its four checks, ruling conflicts go to author as questions. Merge ticket-only acceptance reviews evidence/relevance/duplication/current fit; reporting branch hands off. Replay G2/H3 against historical owner corrections.
 2026-11-13T18:58Z reviewer note Feasibility PASS: named surfaces exist; children run sequentially because workflow and molt overlap.
+
+2026-11-13T19:13Z reviewer note Verified: historical G2/H3 replay committed in design/research/2026-11-13-foreign-pickup-replay.md; lint189, fast1955, full3893pass4skip. Gaze REVIEWED4b5c2950c; rebased six reviewed artifacts byte-identical.
+2026-11-13T19:13Z reviewer closed — implemented
 
 --- body ---
 Parent: 1544
@@ -32,8 +36,8 @@ then changes (G3, H1).
 
 ## Exit criteria
 
-- [ ] Both skills run the four checks on foreign tickets and route a ruling
+- [x] Both skills run the four checks on foreign tickets and route a ruling
       conflict as a question.
-- [ ] Replayed on the trial's G2 and H3 reports, the check names the
+- [x] Replayed on the trial's G2 and H3 reports, the check names the
       corrections the owners later made.
-- [ ] `make check` passes.
+- [x] `make check` passes.
