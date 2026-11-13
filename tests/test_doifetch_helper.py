@@ -70,7 +70,9 @@ def test_every_passthrough_mode_names_its_output_directory(tmp_path, args):
     assert argv[argv.index("--output-dir") + 1] == "docs"
 
 
-@pytest.mark.parametrize("given", [["--output-dir", "elsewhere"], ["--output-dir=elsewhere"]])
+@pytest.mark.parametrize(
+    "given", [["--output-dir", "elsewhere"], ["--output-dir=elsewhere"]]
+)
 def test_a_callers_output_directory_is_kept_not_doubled(tmp_path, given):
     done, log = _run(tmp_path, "--url", "https://example.org/a.pdf", *given)
     assert done.returncode == 0, done.stderr
@@ -153,6 +155,30 @@ def test_shadow_fallback_preserves_target_and_follows_open_failure(tmp_path):
     assert log_text.index("--phase open") < log_text.index("--phase shadow")
     # One plain spec serves both phases: no extra is requested (DOIfetch 0.4.0).
     assert "[shadow]" not in log_text
+
+
+@pytest.mark.integration
+def test_shadow_failure_exit_code_passes_through(tmp_path):
+    path = tmp_path / "bin"
+    path.mkdir()
+    stub = path / "uvx"
+    stub.write_text(
+        "#!/bin/sh\n"
+        '[ "$5" = -c ] && exit 0\n'
+        '[ "$7" = open ] && { printf \'%s\\n\' \'{"status":"failed","path":"/tmp/a.pdf"}\'; exit 1; }\n'
+        'printf \'%s\\n\' \'{"status":"failed","error":"no mirror"}\'\n'
+        "exit 4\n"
+    )
+    stub.chmod(0o755)
+    env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
+    result = subprocess.run(
+        ["bash", str(HELPER), "--doi", "10.1000/a", "--title", "T"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 4
+    assert "no mirror" in result.stdout
 
 
 @pytest.mark.integration
