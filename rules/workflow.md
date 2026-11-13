@@ -128,13 +128,13 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 
 ## Cross-project work
 
-Ticket or log in the receiver's store; its other files stay untouched.
-Log `filed from <asker-repo> <asker-ticket>`; wake a live owner when timing matters.
-The reporter hands off at ticket/branch/PR. Receiver owns Imagine and execution:
-facts/framing, duplicates/overlap, ownership, rulings (conflicts → author question).
-Assess evidence, relevance, current fit. Ticket-only merge accepts into the store,
-without implementation/priority authority; completion logs verify result and scope.
-Hunt/raid check at pickup; molt/dashboard flag unpicked reports after a day.
+Ticket/log only in the receiver; log `filed from <asker-repo> <asker-ticket>`;
+wake a live owner when timing matters. Reporter hands off at ticket/branch/PR.
+Receiver owns Imagine/execution: facts/framing, duplicates/overlap, ownership,
+rulings (conflicts → author question). Assess evidence, relevance, fit. Ticket-only
+merge accepts request into store, without implementation/priority authority; completion logs
+verify result/scope. Hunt/raid check pickup; molt/dashboard flag unpicked after
+a day. Askers park; molt verifies closure before release.
 Procedure: `skills/hunt/references/cross-project-work.md`.
 
 # Ticket discipline for multi-request work
