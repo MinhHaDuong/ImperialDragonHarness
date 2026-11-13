@@ -117,6 +117,11 @@ Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for
 
 ## Phase 2: Imagine (parallel)
 
+For each ticket with a `filed from` log line, first perform the receiving-project
+Imagine review in `rules/workflow.md` § Cross-project work and record its four
+premise checks and disposition. This applies even when the reimagine below is
+skipped.
+
 Imagine has two steps, both inside this phase: the per-ticket reimagine, at
 the lead's judgment, then the cross-ticket Blind-Spot pass, which always runs
 and closes the phase. The phase ends only after the Blind-Spot verdict is
@@ -305,6 +310,10 @@ Line fields and order: `skills/merge/references/claims.md` § Line formats; a
 ## Phase 6: Verify (per-ticket gaze, then verify-gate)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
+
+For each foreign ticket, verify that its pickup record satisfies
+`rules/workflow.md` § Cross-project work and that the diff follows the recorded
+disposition; complete any missing premise checks before gating.
 
 **Tier first** (`skills/merge/SKILL.md` § Gating tiers, the one home): a
 bookkeeping-tier merge request skips gaze and verify-gate and goes to
