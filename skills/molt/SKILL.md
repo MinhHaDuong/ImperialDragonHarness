@@ -186,6 +186,13 @@ Run full repo housekeeping and act on every finding.
    carry none, so they route to `skip:` for hand judgment. An `ok (reasoned)`
    finding yields no line: leave it alone.
 
+2.3. **Resolve parked foreign blockers.** Follow
+   `skills/hunt/references/cross-project-work.md` § Park and release an asker.
+   Inspect the receiver read-only, verify its delivered result against the
+   asker's blocker, and release only that asker's resolved dependencies.
+   Follow replacement lineage; log rejected or unavailable outcomes and keep
+   them parked. Include local releases in step 3's housekeeping commit.
+
 2.4. **Report unpicked foreign tickets.** Apply `rules/workflow.md` § Cross-project work:
 
    ```bash
