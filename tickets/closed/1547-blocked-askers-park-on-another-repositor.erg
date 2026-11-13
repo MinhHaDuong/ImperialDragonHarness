@@ -2,6 +2,7 @@
 Title: Blocked askers: park on another repository's ticket and release in molt
 Created: 2026-11-12
 Author: claude
+Closed: Verified in PR #2497: parking and molt release, sibling/file references, receiver read-only, result judgment and closure provenance; make lint 189 passed, check-fast 1955 passed, make check 3910 passed and 4 skipped; gaze REVIEWED with plan check PASS.
 
 --- log ---
 2026-11-12T22:28Z claude created
@@ -11,6 +12,7 @@ Author: claude
 2026-11-13T18:58Z reviewer note Imagine: premise current; preserve original exit criteria. Plan: State parking convention once in workflow; molt resolves local sibling-path and file URI dependencies read-only and releases closed dependencies. Verify closure disposition/result against asker blocker before returning to implementation; denied closure requires a disposition, duplicate/transfer follows replacement. Tests cover both URI shapes and closed/open results.
 2026-11-13T18:58Z reviewer note Feasibility PASS: named surfaces exist; children run sequentially because workflow and molt overlap.
 2026-11-13T19:12Z reviewer Implemented parked-asker release via read-only foreign dependency reports and explicit verified-result assessment; helper and fixtures cover sibling/file references, erg ready, closure commit, replacements, unavailable stores, and remaining blockers. Molt and canonical procedure document parking, rejected closures, and manual fallback.
+2026-11-13T19:20Z reviewer closed — Verified in PR #2497: parking and molt release, sibling/file references, receiver read-only, result judgment and closure provenance; make lint 189 passed, check-fast 1955 passed, make check 3910 passed and 4 skipped; gaze REVIEWED with plan check PASS.
 
 --- body ---
 Parent: 1544
