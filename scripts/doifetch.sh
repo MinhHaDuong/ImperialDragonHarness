@@ -5,11 +5,11 @@
 # network. The pin lives here only; bump it after a DOIfetch merge worth taking.
 set -euo pipefail
 
-DOIFETCH_REF=v0.3.0  # DOIfetch v0.3.0, annotated unsigned tag d76db1f on 95efea6 (author ruling 2026-10-29)
+DOIFETCH_REF=v0.4.0  # DOIfetch v0.4.0, annotated unsigned tag f5bb9b7 on 8e3cc69 (unsigned tags: author ruling 2026-10-29)
 
-# A named shadow source is refused (ticket 1549). The wrapper would run it
-# without the `shadow` extra (bs4 missing), and it would skip the open sources
-# and the receipt that the bare --doi / --isbn cascade provides (ticket 1448).
+# A named shadow source is refused (ticket 1549): it would skip the open
+# sources and the receipt that the bare --doi / --isbn cascade provides
+# (ticket 1448).
 # Both spellings, a comma list, and an absent identifier are refused alike.
 prev=""
 for arg in "$@"; do
@@ -77,13 +77,9 @@ if [[ "$fulltext" == true ]]; then
         echo "doifetch: could not read open-phase result; shadow fetch skipped" >&2
         exit 1
     fi
-    shadow_spec="doifetch[shadow] @ ${spec}"
-    if ! uvx -q --from "$shadow_spec" python -c 'import doifetch, bs4' >/dev/null; then
-        printf '%s\n' "$open_result" >&2
-        echo "doifetch: open sources failed; could not get DOIfetch shadow extra" >&2
-        exit 69
-    fi
-    exec uvx -q --from "$shadow_spec" python "$script_dir/fulltext_cascade.py" --phase shadow --output-path "$target" "$@"
+    # Since DOIfetch 0.4.0 the shadow sources need no extra: one spec serves
+    # both phases, and the probe above already proved it resolves.
+    exec uvx -q --from "$spec" python "$script_dir/fulltext_cascade.py" --phase shadow --output-path "$target" "$@"
 fi
 # Get the tool first, so a failed download (uv exits 1, like a failed fetch)
 # gets its own code: 69, EX_UNAVAILABLE. Cached after the first run (~0.1 s).
