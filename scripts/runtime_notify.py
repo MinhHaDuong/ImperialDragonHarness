@@ -2,7 +2,7 @@
 
     runtime.py notify --key K --title T --body B [--repeat SECONDS]
 
-Runs `notify-send -a idh T B` where it exists, and always writes an alert file
+Runs `notify-send -a idh T B` where it exists (not when $IDH_NO_POPUP is set, which the test session sets), and always writes an alert file
 `<alert dir>/<key>.alert` (JSON: key, title, body, time) that outlives the popup. The alert
 dir is `$IDH_ALERT_DIR`, else `idh-alerts/` under the git common directory, so every worktree
 of a repository shares it. A second call for the same key inside `--repeat` seconds (default
@@ -31,6 +31,7 @@ NAME = "notify"
 DEFAULT_MODE = "send"
 DEFAULT_REPEAT = 3600.0
 FAILED = 2
+NO_POPUP = "IDH_NO_POPUP"  # set only inside the pytest process (tests/conftest.py, ticket 1550): the runner inherits its starter's environment, so a wider export would silence real alerts
 LOCK_WAIT = 10.0  # seconds to wait for the alert lock; a stopped or hung holder must not stall the caller (ticket 1543)
 
 
@@ -110,6 +111,9 @@ def run(args, rt: str) -> int:
 
 
 def popup(args) -> int:
+    if os.environ.get(NO_POPUP):
+        print(f"NOTIFIED {args.key}: alert file only (popup suppressed by {NO_POPUP})")
+        return 0
     if not shutil.which("notify-send"):
         print(f"NOTIFIED {args.key}: alert file only (no notify-send)")
         return 0

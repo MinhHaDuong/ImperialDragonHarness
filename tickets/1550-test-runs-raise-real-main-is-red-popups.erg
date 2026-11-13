@@ -6,6 +6,7 @@ Author: HDMX-coding-agent
 --- log ---
 2026-11-13T12:46Z HDMX-coding-agent created
 2026-11-13T12:46Z HDMX-coding-agent filed from climate-finance-het (no asker ticket: the author's report in session, 2026-11-13)
+2026-11-13T13:06Z reviewer plan (raid 004d93 Imagine): shape A, opt-out IDH_NO_POPUP honoured by runtime_notify.popup, set by a conftest autouse monkeypatch only (runner_env passes the starter's env to the detached runner; a wider export would silence real alerts); result line names the suppression. Label from the runner cwd via git-common-dir (works inside .git, hook-started, script of another repo), primary checkout path with ~; empty label degrades to the plain title. Positive control through the hook by moving main.
 
 --- body ---
 ## Context

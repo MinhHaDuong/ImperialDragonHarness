@@ -23,6 +23,7 @@ def env(tmp_path, monkeypatch):
     for key in ("CODEX_THREAD_ID", "PI_CODING_AGENT", "AI_AGENT", "CLAUDE_NIGHT_SWEEP"):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.delenv("IDH_NO_POPUP", raising=False)  # these tests drive the popup itself (ticket 1550)
     bindir = tmp_path / "bin"
     bindir.mkdir()
     stub = bindir / "notify-send"
@@ -127,3 +128,10 @@ def test_a_held_alert_lock_times_out_instead_of_waiting_forever(env, monkeypatch
     assert code == runtime_notify.FAILED and waited < 5
     assert "alert lock busy" in capsys.readouterr().err
     assert not list(alerts.glob("*.alert")) and sent(env) == []
+
+
+def test_the_popup_opt_out_skips_notify_send_and_says_so(env, monkeypatch, capsys):
+    monkeypatch.setenv("IDH_NO_POPUP", "1")
+    rc, out = notify(capsys)
+    assert rc == 0 and "popup suppressed by IDH_NO_POPUP" in out
+    assert sent(env) == [] and list((env / "alerts").glob("k1*.alert"))
