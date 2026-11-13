@@ -101,13 +101,13 @@ def test_fetch_failure_passes_through(tmp_path):
 
 
 @pytest.mark.integration
-def test_open_success_never_requires_shadow_extra(tmp_path):
+def test_open_success_skips_shadow_phase(tmp_path):
     path = tmp_path / "bin"
     path.mkdir()
     log = tmp_path / "args"
     stub = path / "uvx"
     stub.write_text(
-        f"#!/bin/sh\nprintf '%s\\n' \"$3\" >> '{log}'\n"
+        f"#!/bin/sh\nprintf '%s\\n' \"$*\" >> '{log}'\n"
         '[ "$5" = -c ] && exit 0\n'
         'printf \'%s\\n\' \'{"status":"success","source":"hal"}\'\n'
     )
@@ -121,32 +121,7 @@ def test_open_success_never_requires_shadow_extra(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     assert '"source":"hal"' in result.stdout
-    assert all("[shadow]" not in line for line in log.read_text().splitlines())
-
-
-@pytest.mark.integration
-def test_missing_shadow_extra_reports_open_failure(tmp_path):
-    path = tmp_path / "bin"
-    path.mkdir()
-    stub = path / "uvx"
-    stub.write_text(
-        "#!/bin/sh\n"
-        "case \"$3\" in *'[shadow]'*) exit 1;; esac\n"
-        '[ "$5" = -c ] && exit 0\n'
-        'printf \'%s\\n\' \'{"status":"failed","path":"/tmp/example.pdf"}\'\n'
-        "exit 1\n"
-    )
-    stub.chmod(0o755)
-    env = {"PATH": f"{path}:/usr/bin:/bin", "HOME": str(tmp_path)}
-    result = subprocess.run(
-        ["bash", str(HELPER), "--doi", "10.1000/example", "--title", "T"],
-        env=env,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 69
-    assert "open sources failed" in result.stderr
-    assert "shadow extra" in result.stderr
+    assert "--phase shadow" not in log.read_text()
 
 
 @pytest.mark.integration
@@ -175,7 +150,9 @@ def test_shadow_fallback_preserves_target_and_follows_open_failure(tmp_path):
     log_text = log.read_text()
     assert "--phase open" in log_text
     assert "--phase shadow --output-path /tmp/book name.pdf" in log_text
-    assert log_text.index("--phase open") < log_text.index("[shadow]")
+    assert log_text.index("--phase open") < log_text.index("--phase shadow")
+    # One plain spec serves both phases: no extra is requested (DOIfetch 0.4.0).
+    assert "[shadow]" not in log_text
 
 
 @pytest.mark.integration
@@ -186,7 +163,7 @@ def test_isbn_lookup_error_does_not_try_shadow(tmp_path):
     stub = path / "uvx"
     stub.write_text(
         "#!/bin/sh\n"
-        f'printf "%s\\n" "$3" >> "{log}"\n'
+        f'printf "%s\\n" "$*" >> "{log}"\n'
         '[ "$5" = -c ] && exit 0\n'
         'printf \'%s\\n\' \'{"status":"failed","error":"Crossref unavailable"}\'\n'
         "exit 3\n"
@@ -201,7 +178,7 @@ def test_isbn_lookup_error_does_not_try_shadow(tmp_path):
     )
     assert result.returncode == 3
     assert "Crossref unavailable" in result.stdout
-    assert "[shadow]" not in log.read_text()
+    assert "--phase shadow" not in log.read_text()
 
 
 def _fulltext_run(tmp_path, *args):
