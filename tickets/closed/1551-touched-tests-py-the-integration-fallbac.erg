@@ -2,10 +2,12 @@
 Title: touched-tests.py: the integration fallback runs outside the project's device selection and for report scripts
 Created: 2026-11-13
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #2490
 
 --- log ---
 2026-11-13T13:09Z HDMX-coding-agent created
 2026-11-13T13:39Z reviewer Imagine: design/2026-11-13-touched-tests-fallback.md, accepted by the author 2026-11-13. Count over review notes: 28 reviews ran the tier; harness 2 real defects, elsewhere 5 false alarms and 5 timeouts. Fix: a bound on the tier (incomplete, exit 4), not its removal. Plan-check probe: an incomplete report passes, no report fails. Device selection handed to climate-finance-het ticket 3128 (its PR 2198). Criteria amended accordingly.
+2026-11-13T13:48Z reviewer closed — autoclosed — PR #2490
 
 --- body ---
 
