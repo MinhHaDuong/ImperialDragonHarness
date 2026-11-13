@@ -969,6 +969,8 @@ def coverage(cwd, review_id, head, base_ref=None):
     if not answers:
         return {"match": "none", "head": head}
     base_ref = base_ref or answers[-1]["base_ref"]
+    if not _resolves(cwd, base_ref):
+        raise Refusal(f"cannot resolve {base_ref}: pass the request's current base, --base-ref origin/<base>")
     binding = _binding(cwd, head, base_ref)
     for e in reversed(answers):
         if e["head"] == head and (e["base_ref"] == base_ref or e["merge_base"] == binding["merge_base"]):
