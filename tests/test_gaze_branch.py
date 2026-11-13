@@ -224,3 +224,62 @@ def test_setup_writes_a_request_when_none_names_the_reviewed_head(tmp_path):
     assert f["review_id"] == rid and len(reqs) == 2
     assert f["request_id"] == reqs[-1]["request_id"] and reqs[-1]["head"] == head
     assert git(primary, "rev-parse", f"refs/review-heads/{rid}/{f['request_id']}") == head
+
+
+def deleted_base_review(tmp_path):
+    """main <- lower <- upper on the remote, a review of upper on origin/lower; then lower lands
+    by a merge commit, the forge deletes it and the clone prunes (ticket 1548)."""
+    primary, env = branch_repo(tmp_path)
+    git(primary, "switch", "-q", "-c", "lower", "origin/main")
+    (primary / "lower.txt").write_text("lower\n")
+    git(primary, "add", "lower.txt")
+    git(primary, "commit", "-q", "-m", "lower")
+    git(primary, "switch", "-q", "-c", "upper")
+    (primary / "upper.txt").write_text("upper\n")
+    git(primary, "add", "upper.txt")
+    git(primary, "commit", "-q", "-m", "upper")
+    git(primary, "push", "-q", "origin", "lower", "upper")
+    git(primary, "switch", "-q", "main")
+    git(primary, "fetch", "-q", "origin")
+    rid = rn.open_review(primary, "upper", "origin/lower", why="hunt asked")
+    git(primary, "merge", "-q", "--no-ff", "-m", "Merge lower", "lower")
+    git(primary, "push", "-q", "origin", "main", ":lower")
+    git(primary, "fetch", "-q", "--prune", "origin")
+    return primary, env, rid
+
+
+def test_gaze_rebinds_a_request_whose_base_was_deleted(tmp_path):
+    """Ticket 1548: a relaunched gaze on the retargeted unit records its answer without a
+    hand-written request, and the gate admits the head on the new base."""
+    primary, env, rid = deleted_base_review(tmp_path)
+    r = run(SETUP, ["branch:upper base=origin/main"], primary, env)
+    assert r.returncode == 0, r.stderr
+    f = fields(r.stdout)
+    assert f["review_id"] == rid
+    attr = tmp_path / "attr.txt"
+    attr.write_text("")
+    seat_panel(f)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n"
+                       "intent: default\n{{plan_check}}\n{{seats}}\n")
+    r = run(CLOSE, ["branch:upper base=origin/main", "--branch", "upper", "--token", f["clock"],
+                    "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    answer = [e for e in rn.entries(primary, rid) if e["kind"] == "answer"][-1]
+    assert answer["base_ref"] == "origin/main" and answer["head"] == f["head"]
+    g = subprocess.run(["python3", str(SCRIPTS / "review_notes.py"), "gate", rid, f["head"],
+                        "--base-ref", "origin/main"], cwd=primary, env=env, capture_output=True, text=True)
+    assert g.returncode == 0, g.stdout + g.stderr
+
+
+def test_offline_gaze_refuses_a_deleted_base_before_any_work(tmp_path, monkeypatch):
+    """Offline the cached base is unknown, never a match: the request's own base no longer
+    resolves, so setup refuses rather than bind a request its answer cannot be written to."""
+    primary, _, rid = deleted_base_review(tmp_path)
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    gs_spec = importlib.util.spec_from_file_location("gaze_setup", SCRIPTS / "gaze_setup.py")
+    gs = importlib.util.module_from_spec(gs_spec)
+    gs_spec.loader.exec_module(gs)
+    meta = {"head": git(primary, "rev-parse", "upper"), "base": "lower"}
+    with pytest.raises(gs.review_notes.Refusal, match="forge is unreachable"):
+        gs.reviewed_request(primary, rid, "upper", meta, "origin/lower", offline=True)

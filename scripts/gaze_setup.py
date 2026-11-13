@@ -112,17 +112,29 @@ def fail(code, msg):
     return code
 
 
-def reviewed_request(primary, review_id, branch, meta, base_ref=None):
+def reviewed_request(primary, review_id, branch, meta, base_ref=None, offline=False):
     """The request this run reviews: the latest one on the head the review tree holds, chosen
     by head, not by recency, so a request written meanwhile on another head never captures it
-    (ticket 1281). None on that head (the branch moved past the hunt request): gaze requests
-    it, which also keeps the reviewed commit under refs/review-heads/."""
+    (ticket 1281), and on the unit's current base whose ref still resolves (ticket 1548): a
+    request whose base branch landed and was deleted, or was retargeted, is rebound by a new
+    request on the same head. Offline the cached base is unknown, never a match: the latest
+    request on the head serves if its base resolves, else the run refuses before any work.
+    None on that head (the branch moved past the hunt request): gaze requests it, which also
+    keeps the reviewed commit under refs/review-heads/."""
+    base_ref = base_ref or meta["base"]
     on_head = [e for e in review_notes.entries(str(primary), review_id)
                if e["kind"] == "request" and e["head"] == meta["head"]]
-    if on_head:
-        return on_head[-1]["request_id"]
-    return review_notes.request(str(primary), review_id, branch, base_ref or meta["base"], skill="gaze",
-                                why="gaze on a head no request names", head=meta["head"])["request_id"]
+    usable = [e for e in on_head if (offline or e["base_ref"] == base_ref)
+              and review_notes._resolves(str(primary), e["base_ref"])]
+    if usable:
+        return usable[-1]["request_id"]
+    if offline and on_head:
+        raise review_notes.Refusal(f"base {on_head[-1]['base_ref']} of request {on_head[-1]['request_id']} "
+                                   "no longer resolves and the forge is unreachable, so the current base "
+                                   "is unknown; retry when the forge answers")
+    return review_notes.request(str(primary), review_id, branch, base_ref, skill="gaze",
+                                why="gaze on a head no request on its current base names",
+                                head=meta["head"])["request_id"]
 
 
 def main():
@@ -203,7 +215,7 @@ def main():
             return fail(2, f"cannot open a review for {branch}: {exc}")
     # frozen now, carried to gaze_close: a later request never captures this run (1281)
     try:
-        request_id = reviewed_request(primary, review_id, branch, meta, base_ref)
+        request_id = reviewed_request(primary, review_id, branch, meta, base_ref, offline)
     except review_notes.Refusal as exc:
         return fail(2, f"cannot bind a request for {branch}: {exc}")
     identity = {"review_id": review_id, "request_id": request_id,

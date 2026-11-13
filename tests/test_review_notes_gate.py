@@ -507,3 +507,111 @@ def test_push_for_landing_passes_a_single_verdict_per_round(two_clones):
     rn.record_verdict(a, rid, session(), "APPROVED", "feature")
     assert "refs/notes/review" in rn.push_for_landing(a, "feature")
     assert sh(origin, "rev-parse", "refs/notes/review") == sh(a, "rev-parse", "refs/notes/review")
+
+
+# --- ticket 1548: a request whose base branch landed and was deleted ----------------------
+
+@pytest.fixture
+def stack(tmp_path):
+    """A clone of a bare remote holding main <- lower <- upper, each one commit ahead."""
+    origin = tmp_path / "o.git"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True)
+    r = tmp_path / "s"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(r)], check=True)
+    ident(r)
+    sh(r, "remote", "add", "origin", str(origin))
+    commit(r, "f.py", "x = 0\n", "base")
+    sh(r, "switch", "-qc", "lower")
+    commit(r, "lower.py", "y = 1\n", "lower")
+    sh(r, "switch", "-qc", "upper")
+    commit(r, "upper.py", "z = 2\n", "upper")
+    sh(r, "switch", "-q", "main")
+    sh(r, "push", "-q", "origin", "main", "lower", "upper")
+    sh(r, "fetch", "-q", "origin")
+    return r
+
+
+def stack_answer(repo, rid, head="upper"):
+    oid = sh(repo, "rev-parse", head)
+    rq = [e for e in rn.entries(repo, rid) if e["kind"] == "request" and e["head"] == oid][-1]
+    return rn.add(repo, "answer", rid, {"run_id": f"gz-{rn._hex(4)}", "result": "REVIEWED", "seats": "panel",
+                                        "text": "result: REVIEWED"}, head=oid, request_id=rq["request_id"])
+
+
+def land_lower(repo, how):
+    """`lower` lands on main by a merge commit or a squash; the forge deletes it; the clone prunes."""
+    sh(repo, "switch", "-q", "main")
+    if how == "merge":
+        sh(repo, "merge", "-q", "--no-ff", "-m", "Merge lower", "lower")
+    else:
+        sh(repo, "merge", "-q", "--squash", "lower")
+        sh(repo, "commit", "-qm", "lower (squashed)")
+    sh(repo, "push", "-q", "origin", "main", ":lower")
+    sh(repo, "fetch", "-q", "--prune", "origin")
+    assert subprocess.run(["git", "-C", str(repo), "rev-parse", "-q", "--verify", "origin/lower"],
+                          capture_output=True).returncode != 0
+
+
+def close_ticket_on_upper(repo):
+    sh(repo, "switch", "-q", "upper")
+    (Path(repo) / "tickets").mkdir()
+    commit(repo, "tickets/0001-x.erg", "%erg 0.1\n", "ticket(1): close")
+    sh(repo, "switch", "-q", "main")
+
+
+def test_a_deleted_base_refuses_the_gate_early_naming_the_base_option(stack):
+    rid = rn.open_review(stack, "upper", "origin/lower")
+    stack_answer(stack, rid)
+    land_lower(stack, "merge")
+    state = rn.gate_state(stack, rid, "upper")
+    assert not state["ready"] and "--base-ref" in state["reason"] and "origin/lower" in state["reason"]
+    with pytest.raises(rn.Refusal, match="--base-ref"):
+        rn.record_verdict(stack, rid, session(), "APPROVED", "upper")
+
+
+def test_a_merge_landed_base_gates_and_rules_the_existing_answer(stack):
+    """The 2026-11-13 timeline: answer on origin/lower, lower lands by a merge commit and is
+    deleted, the request is retargeted to main; gate then verdict with no new gaze."""
+    rid = rn.open_review(stack, "upper", "origin/lower")
+    a = stack_answer(stack, rid)
+    land_lower(stack, "merge")
+    assert rn._binding(stack, "upper", "origin/main")["merge_base"] == a["merge_base"]
+    state = rn.gate_state(stack, rid, "upper", base_ref="origin/main")
+    assert state["ready"] and state["match"] == "equal" and state["answer"] == a["id"]
+    done = rn.record_verdict(stack, rid, session(), "APPROVED", "upper", evidence=[a["id"]],
+                             base_ref="origin/main")
+    assert done["entry"]["round"] == 1 and done["entry"]["base_ref"] == "origin/main"
+    assert rn.coverage(stack, rid, "upper", base_ref="origin/main")["match"] == "equal"
+
+
+def test_a_squash_landed_base_is_refused_on_the_old_answer(stack):
+    rid = rn.open_review(stack, "upper", "origin/lower")
+    a = stack_answer(stack, rid)
+    land_lower(stack, "squash")
+    assert rn._binding(stack, "upper", "origin/main")["merge_base"] != a["merge_base"]
+    state = rn.gate_state(stack, rid, "upper", base_ref="origin/main")
+    assert not state["ready"] and state["match"] == "none"
+    with pytest.raises(rn.Refusal):
+        rn.record_verdict(stack, rid, session(), "APPROVED", "upper", base_ref="origin/main")
+    assert rn.coverage(stack, rid, "upper", base_ref="origin/main")["match"] == "none"
+
+
+@pytest.mark.parametrize("how, admitted", [("merge", True), ("squash", False)])
+def test_a_bookkeeping_commit_over_a_deleted_base(stack, how, admitted):
+    rid = rn.open_review(stack, "upper", "origin/lower")
+    stack_answer(stack, rid)
+    land_lower(stack, how)
+    close_ticket_on_upper(stack)
+    state = rn.gate_state(stack, rid, "upper", base_ref="origin/main")
+    assert state["ready"] is admitted
+    assert state["match"] == ("bookkeeping" if admitted else "none")
+
+
+@pytest.mark.parametrize("how, adopted", [("merge", True), ("squash", False)])
+def test_a_pr_review_adopts_the_branch_review_over_a_deleted_base(stack, how, adopted):
+    branch_rid = rn.open_review(stack, "upper", "origin/lower")
+    stack_answer(stack, branch_rid)
+    land_lower(stack, how)
+    close_ticket_on_upper(stack)
+    pr_rid = rn.open_review(stack, "upper", "origin/main", unit="pr:9")
+    assert (pr_rid == branch_rid) is adopted
