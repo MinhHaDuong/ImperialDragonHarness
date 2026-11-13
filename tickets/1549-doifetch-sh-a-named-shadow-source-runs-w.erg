@@ -1,0 +1,110 @@
+%erg 0.1
+Title: doifetch.sh: a named shadow source runs without the shadow extra and fails on bs4
+Created: 2026-11-13
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-13T12:12Z HDMX-coding-agent created
+2026-11-13T12:19Z reviewer note review of PR 2482: bs4 failure reproduced for scihub and libgen; exit status 0 not reproduced (1 in every direct form, 0 only as a pipe's tail status); title, reproduction and exit criteria corrected, the exit-status criterion dropped
+
+--- body ---
+
+## Context
+
+Filed from the project climate-finance-het (ticket 3018 there), on the
+author's request of 2026-11-13: "File the harness ticket in a PR: detail what
+happened."
+
+## What happened
+
+On 2026-11-13 the author asked a climate-finance-het session for a Haiku
+workflow to get the 200 most-cited works of the field into Zotero, "DOIfetch
+including shadow libs". The orchestrating session (Claude Fable 5.2) wrote the
+agents' brief from `doifetch.sh --help`, which says of the default source list
+"scihub and libgen only when named here". The brief therefore told each agent
+to run a DOI with the default sources first, then again with `--source scihub`,
+then `--source libgen` for a book.
+
+The orchestrator had not read the wrapper. Its bare `--doi` / `--isbn` mode
+already runs an open phase and then a shadow phase by itself, so the
+named-source step was redundant for a single identifier, and it is the step
+that failed.
+
+The workflow ran 11 agents over 200 works (one Haiku pilot on 6 works, one
+Sonnet check of the pilot, 8 Haiku batches, one Sonnet check of the staged
+files). The agents' own notes record:
+
+- `--source scihub` and `--source libgen` through the wrapper failed with
+  "bs4 is not installed".
+- They worked around it by calling `uvx` on `doifetch[shadow] @ git+...@v0.3.0`
+  directly, without the wrapper.
+- The Sonnet check of the pilot wrote that workaround into its advice, which
+  the script passed to all 8 batches. So most named-source fetches of the run
+  bypassed the wrapper: its `--output-dir docs` default, its exit codes and
+  its single place for the pin.
+
+Outcome of the run, for scale: 178 of 200 works held in Zotero, 111 imported.
+The per-work table is `docs/reports/t3018-top200-acquisition-2026-11-13.csv`
+in climate-finance-het (PR #2167 there); its `source` and `note` columns hold
+the agents' wording.
+
+## Reproduction (padme, 2026-11-13)
+
+```
+$ ~/.agents/scripts/doifetch.sh --doi 10.9999/harness-ticket-repro-no-such-doi \
+      --source scihub --no-check-zotero --output-dir <scratch dir>
+Download failed: bs4 is not installed; it comes with the 'shadow' extra: uv tool install 'doifetch[shadow] @ git+https://github.com/MinhHaDuong/DOIfetch'
+$ echo $?
+1
+```
+
+`--isbn <isbn> --source libgen` fails the same way, with the same status.
+
+The filing session recorded exit status 0 for this command. The review of
+PR 2482 did not reproduce that: the status was 1 with stdin open, with stdin
+closed and under `timeout`. A 0 appeared only as the status of a pipe
+(`... 2>&1 | cat`, where `PIPESTATUS` reads `1 0`). How the filing session
+captured its 0 is not established.
+
+Control: the same arguments through
+`uvx --from 'doifetch[shadow] @ git+...@v0.3.0' doifetch` reach Sci-Hub and
+exit 1 on the unknown DOI, so the extra is the only thing missing.
+
+## Cause, as read in `scripts/doifetch.sh`
+
+- The cascade branch (`fulltext=true`: a bare `--doi` or `--isbn`, no
+  `--source`) builds `shadow_spec="doifetch[shadow] @ ${spec}"`, checks
+  `import doifetch, bs4`, and runs the shadow phase with it.
+- Any explicit `--source` sets `fulltext=false` and falls to the last line,
+  `exec uvx -q --from "$spec" doifetch "$@"`, with the plain spec. A named
+  `scihub` or `libgen` therefore runs without the extra that provides `bs4`.
+
+The exit status on that path is DOIfetch's own, since the wrapper `exec`s it:
+1 on a failed download, as `skills/zotero/references/backfill.md` says ("Exit 1
+reports a failed fetch").
+
+## Also reported by the agents in the same run (not reproduced by the filing session)
+
+Kept for triage, not as exit criteria:
+
+- A LibGen download by ISBN came back truncated on the first attempt and
+  complete on the second.
+- An agent hand-wrote one line of `docs/.receipts.jsonl` because the receipt's
+  source field was cut in the output it captured; backfill.md says nothing is
+  recorded by hand.
+- The pilot check warned that DOIfetch names files by title, so parallel
+  fetchers sharing an output directory could collide. The run had four agents
+  on one directory; no collision was reported.
+- A Zotero lookup by title missed an existing item whose title was worded
+  differently (a book held without a DOI); the agent found it another way.
+
+## Relevant files
+
+- `scripts/doifetch.sh`
+- `scripts/fulltext_cascade.py`
+- `skills/zotero/references/backfill.md` (exit codes, "Fetching missing fulltexts")
+
+## Exit criteria
+
+- [ ] `doifetch.sh --doi <doi> --source scihub` and `--source libgen` either run with the shadow extra or refuse with a message naming the supported invocation; shown with the reproduction above
+- [ ] The zotero skill's reference states which invocation reaches the shadow sources, so that a brief written from `--help` does not name them needlessly
