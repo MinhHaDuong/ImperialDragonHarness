@@ -1,10 +1,10 @@
 # The touched-tests fallback: a bound in the harness, a safe direct pytest in the project
 
-Status: proposed
+Status: accepted 2026-11-13
 
 Ticket 1551. Drafted by an agent (Claude Fable 5.2) on the author's request of
-2026-11-13 and revised once after two advisor reviews (§ Review); every
-judgment below is the agent's until the author accepts.
+2026-11-13 and revised once after two advisor reviews (§ Review); the
+author accepted the plan on 2026-11-13.
 
 ## 1. Problem
 
@@ -153,10 +153,10 @@ each repository (§ 6). The author rules on that amendment.
    `touched-tests.py`; gaze's panel step passes it; `--list` output unchanged
    (raid reads its `fallback:` line). Regression test first: a tier that
    outruns the bound yields `result: incomplete` and exit 4, where today the
-   run has no bound. To prove before merge: a gaze whose touched-tests item
-   returns `incomplete` passes its plan check and can end REVIEWED with the
-   gap quoted. If the plan check fails on it, that is the defect to fix in the
-   same request.
+   run has no bound. Settled on 2026-11-13 by a probe of
+   `seat_clock.py plan-check` on a two-item plan: with no report for the
+   tests item the check fails (the PR 2154 and 2185 shape); with a report
+   whose result is `incomplete` it passes. The plan check needs no change.
 2. **climate-finance-het, a ticket there.** `qa_gate_gpu.py` exposes its choice
    as values; the root `conftest.py` sets `CUDA_DEVICE_ORDER` and
    `CUDA_VISIBLE_DEVICES` before any torch import when the caller set neither
