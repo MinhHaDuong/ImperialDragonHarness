@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-13T11:40Z reviewer created
 2026-11-13T11:41Z reviewer filed from climate-finance-het, landing of #2154 #2160 #2166 on 2026-11-13 (journal memory/journal/2026/2026-11-13-t2063-stack-landing-roar.md there)
+2026-11-13T12:10Z reviewer reviewed in PR 2481: defect reproduced in a throwaway repository; context corrected (exposed levels, unobserved retarget case), squash case and its criterion added, merge-skill criterion made conditional
 
 --- body ---
 ## Context
@@ -27,14 +28,28 @@ head branch). That repository has GitHub's `delete_branch_on_merge` on.
   `gaze_setup.py` (`reviewed_request`) reuses the latest request on the
   reviewed head, whatever its base.
 - Where the binding is read: `review_notes.py` `_append` (the request's
-  `base_ref`), `coverage` and `gate_state` (the latest answer's `base_ref`).
+  `base_ref`), `coverage`, `gate_state` and `_carries_over` (the latest
+  answer's `base_ref`).
 - What unblocked it, by hand: `review_notes.py request --review <id>
-  --branch <head branch> --base-ref origin/main`, then gaze, then the gate.
-  Merge base and range patch-id were unchanged by the retarget.
+  --branch <head branch> --base-ref origin/main`, then gaze, then the gate:
+  the new request alone does not admit the head, the gate reads the latest
+  answer's base. Merge base and range patch-id were unchanged by the
+  retarget, #2154 having landed by a merge commit.
 
-The same happens to any request whose base branch disappears or whose forge
-base changes after its review opened; a stack on an auto-deleting forge
-meets it at every level but the top one landed last.
+The same happens to any request whose base branch disappears while a write
+is still owed. On an auto-deleting forge, every level of a stack is exposed
+but the bottom one, landed first: #2166, the top, escaped only because it
+was gated before its base went. The harness repository deletes head branches
+on merge too.
+
+Not observed: a request retargeted while its old base ref still resolves.
+Nothing refuses then; the review stays bound to the old base.
+
+Reproduced on 2026-11-13 in a throwaway repository with a bare remote: an
+answer written with the base ref present, then, after a merge-commit landing
+of the base branch and a pruning fetch, `add answer`, `coverage`,
+`gate_state` and `record_verdict` all refuse with `cannot resolve
+origin/<base>`.
 
 ## Scope
 
@@ -44,6 +59,11 @@ request names, or when that base ref no longer resolves. How to handle it is
 the implementer's choice: rebind by a new request on the same head, refuse
 early with the unblocking command, or resolve the binding from the recorded
 base OID instead of the ref name.
+
+The observed case keeps its merge base. When the base branch landed by
+squash or rebase, the range against the new base differs and the old review
+no longer covers the head: whatever the handling, that case is still
+refused, never admitted on the old answer.
 
 Out of scope: the merge recipe's handling of stacks in general.
 
@@ -56,6 +76,8 @@ Out of scope: the merge recipe's handling of stacks in general.
       that unblocks them.
 - [ ] A test reproduces the 2026-11-13 case: a request on a head, its base
       ref deleted, the forge base moved to `main`, same merge base.
-- [ ] `skills/merge/SKILL.md` says what to do with a stacked request whose
-      base merged, or says nothing is needed.
+- [ ] The same request with a changed merge base (its base branch landed by
+      squash) is refused, not admitted on the old answer; a test shows it.
+- [ ] If the handling leaves a manual step, `skills/merge/SKILL.md` names
+      it; otherwise the skill is unchanged.
 - [ ] `make check` passes.
