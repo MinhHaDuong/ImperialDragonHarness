@@ -615,3 +615,19 @@ def test_a_pr_review_adopts_the_branch_review_over_a_deleted_base(stack, how, ad
     close_ticket_on_upper(stack)
     pr_rid = rn.open_review(stack, "upper", "origin/main", unit="pr:9")
     assert (pr_rid == branch_rid) is adopted
+
+
+@pytest.mark.parametrize("how, admitted", [("merge", True), ("squash", False)])
+def test_a_round_two_reroll_fix_over_a_deleted_base(stack, how, admitted):
+    """gaze on PR 2483: a round-1 REROLL bound to origin/lower; lower lands and is deleted. The
+    round-2 re-gate of the fix on origin/main is admitted only when the range is unchanged."""
+    rid = rn.open_review(stack, "upper", "origin/lower")
+    stack_answer(stack, rid)
+    rn.record_verdict(stack, rid, session(), "REROLL", "upper")
+    land_lower(stack, how)
+    sh(stack, "switch", "-q", "upper")
+    commit(stack, "upper.py", "z = 3\n", "fix")
+    sh(stack, "switch", "-q", "main")
+    state = rn.gate_state(stack, rid, "upper", base_ref="origin/main")
+    assert state["ready"] is admitted
+    assert state["match"] == ("reroll-fix" if admitted else "none")

@@ -988,14 +988,17 @@ def _verdicts(cwd, review_id):
 
 
 def _range_kept(cwd, answer, base_ref):
-    """Is the range `answer` examined still its head's range against `base_ref` (ticket 1548)? Under
+    """Is the range `answer` (or a REROLL verdict) examined still its head's range against `base_ref` (ticket 1548)? Under
     its own base ref, yes, as before. Under another (a retargeted request, a base branch landed
     and deleted) only with the same merge base, or the same non-empty patch-id: a base landed by
     squash or rebase moves the merge base, and the old answer no longer covers the head. Never
     anchored on the answer's `base` commit, which nothing retains once its ref is deleted."""
     if answer["base_ref"] == base_ref:
         return True
-    now = _binding(cwd, answer["head"], base_ref)
+    try:
+        now = _binding(cwd, answer["head"], base_ref)
+    except Refusal:  # a head the repository lacks keeps nothing, as in `_carries`
+        return False
     return now["merge_base"] == answer["merge_base"] or bool(
         answer["range_patch_id"] and now["range_patch_id"] == answer["range_patch_id"])
 
@@ -1071,7 +1074,7 @@ def gate_state(cwd, review_id, head, remote="origin", base_ref=None):
     elif answers[-1].get("result") == "ESCALATE":
         state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
     elif unresolved:
-        state["reason"] = (f"base {base_ref} no longer resolves (its branch landed or was deleted): pass "
+        state["reason"] = (f"base {base_ref} does not resolve (its branch landed and was deleted, or is not fetched): pass "
                            f"the request's current forge base, `review_notes.py gate {review_id} {head[:12]} "
                            "--base-ref origin/<base>` (`verdict ... --base-ref` alike)")
     elif state["result"] == "ESCALATE":
@@ -1079,7 +1082,7 @@ def gate_state(cwd, review_id, head, remote="origin", base_ref=None):
     elif cov["match"] != "none":
         state["ready"] = True
     elif (verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS
-          and _carries(cwd, verdicts[-1]["head"], head)):
+          and _range_kept(cwd, verdicts[-1], base_ref) and _carries(cwd, verdicts[-1]["head"], head)):
         state.update(ready=True, match="reroll-fix", answer=None, result=None)
     elif (_range_kept(cwd, answers[-1], base_ref)
           and _bookkeeping_since(cwd, base_ref, head, state["reviewed_head"])):
