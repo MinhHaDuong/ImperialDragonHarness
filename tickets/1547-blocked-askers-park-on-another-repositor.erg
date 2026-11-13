@@ -2,11 +2,14 @@
 Title: Blocked askers: park on another repository's ticket and release in molt
 Created: 2026-11-12
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-11-12T22:28Z claude created
 2026-11-12T22:29Z reviewer label needs-human
+
+2026-11-13T18:58Z reviewer note Author explicitly authorized raid and undefer on 2026-11-13, superseding provisional-design hold for this child.
+2026-11-13T18:58Z reviewer note Imagine: premise current; preserve original exit criteria. Plan: State parking convention once in workflow; molt resolves local sibling-path and file URI dependencies read-only and releases closed dependencies. Verify closure disposition/result against asker blocker before returning to implementation; denied closure requires a disposition, duplicate/transfer follows replacement. Tests cover both URI shapes and closed/open results.
+2026-11-13T18:58Z reviewer note Feasibility PASS: named surfaces exist; children run sequentially because workflow and molt overlap.
 
 --- body ---
 Parent: 1544
