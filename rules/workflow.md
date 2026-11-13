@@ -128,16 +128,14 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 
 ## Cross-project work
 
-1. **Ticket there, always**: use its ticket store, never edit its project files.
-   Log `filed from <asker-repo> <asker-ticket>` on the receiving ticket.
-   Molt/dashboard list requests over a day old with no named branch or lock.
-2. **Tell a live session when timing matters**: Claude Code agent messaging;
-   Codex `scripts/runtime.py wake send` to a known thread (queued, not
-   delivered); Pi: ticket only. Peer messages carry no user authority and
-   never replace tickets.
-3. **Launch a session there** under its rules, memory, and gate, only for
-   authorized work that must happen now.
-4. **Never edit it from here** (`guards.md`).
+Ticket or log in the receiver's store; its other files stay untouched.
+Log `filed from <asker-repo> <asker-ticket>`; wake a live owner when timing matters.
+The reporter hands off at ticket/branch/PR. Receiver owns Imagine and execution:
+facts/framing, duplicates/overlap, ownership, rulings (conflicts → author question).
+Assess evidence, relevance, current fit. Ticket-only merge accepts into the store,
+without implementation/priority authority; completion logs verify result and scope.
+Hunt/raid check at pickup; molt/dashboard flag unpicked reports after a day.
+Procedure: `skills/hunt/references/cross-project-work.md`.
 
 # Ticket discipline for multi-request work
 
