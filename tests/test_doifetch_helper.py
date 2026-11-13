@@ -238,3 +238,44 @@ def test_the_cascades_own_output_directory_wins(tmp_path):
     (line,) = _fulltext_run(tmp_path, "--doi", "10.1000/a", "--output-dir", "x")
     assert line.split().count("--output-dir") == 1
     assert "--output-dir x" in line
+
+
+SHADOW_FORMS = [
+    ("--doi", "10.1000/a", "--source", "scihub"),
+    ("--doi", "10.1000/a", "--source=scihub"),
+    ("--isbn", "9780000000002", "--source", "libgen"),
+    ("--isbn", "9780000000002", "--source=libgen"),
+    ("--source", "scihub", "--doi", "10.1000/a"),
+    ("--source", "libgen"),
+    ("--source=scihub",),
+    ("--fulltext", "--doi", "10.1000/a", "--source", "scihub"),
+    ("--doi", "10.1000/a", "--source", "crossref,scihub"),
+]
+
+
+@pytest.mark.parametrize("args", SHADOW_FORMS)
+def test_a_named_shadow_source_is_refused_before_anything_runs(tmp_path, args):
+    done, log = _run(tmp_path, *args)
+    assert done.returncode == 2, done.stderr
+    assert not log.exists(), "the refusal must not launch DOIfetch"
+    assert "--doi <doi>" in done.stderr and "--isbn <isbn>" in done.stderr
+
+
+def test_a_named_shadow_source_is_refused_even_without_uvx(tmp_path):
+    done, _ = _run(tmp_path, "--doi", "10.1000/a", "--source", "scihub", uvx=False)
+    assert done.returncode == 2, done.stderr
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ("--doi", "10.1000/a", "--source", "crossref"),
+        ("--title", "T", "--source", "all"),
+        ("--title", "scihub"),
+        ("--version",),
+    ],
+)
+def test_other_sources_and_informational_modes_still_pass_through(tmp_path, args):
+    done, log = _run(tmp_path, *args)
+    assert done.returncode == 0, done.stderr
+    assert log.exists()

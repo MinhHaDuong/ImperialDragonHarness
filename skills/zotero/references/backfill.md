@@ -261,6 +261,13 @@ its `shadow` extra could not be obtained. The open cascade is still attempted
 before obtaining the extra. Name the failure; do not report an
 unattempted source as unavailable. No per-project opt-in is required.
 
+Only the bare `--doi` or `--isbn` form reaches the shadow sources. The
+upstream `--help` text ("scihub and libgen only when named here") describes
+DOIfetch's own default, not the helper's: a brief written from it should not
+name them. The helper refuses `--source scihub` and `--source libgen` (exit 2,
+both spellings, with or without an identifier), because a named shadow source
+would skip the open channels and leave no receipt.
+
 The helper's other modes forward their options to DOIfetch, adding
 `--output-dir docs` when the caller gave none; its own upstream default
 remains open and institutional sources only. Check the pinned
