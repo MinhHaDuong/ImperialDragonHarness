@@ -1,0 +1,17 @@
+{
+  "observation_start": "2026-11-13T19:12:05Z",
+  "source_revision": "4742071c17af04e4f6a937aa8cd1dfc2f57fe74b",
+  "generated_at": "2026-11-13T19:18:27.244407+00:00",
+  "selection": "scripts.foreign_tickets.PROVENANCE canonical dated note filed from <repo> <ticket>; cohort timestamp >= observation_start",
+  "post_start_foreign_tickets": 0,
+  "evidence": [],
+  "owner_action_latency": "not measured at baseline",
+  "premise_corrections": "not measured at baseline",
+  "parked_tickets_released": "not measured at baseline",
+  "parser_positive_control": {
+    "synthetic_line": "2026-11-13T19:13Z reporter note filed from fixture-project 0001",
+    "matched": true,
+    "ordinary_note_rejected": true
+  },
+  "pre_start_canonical_evidence": []
+}

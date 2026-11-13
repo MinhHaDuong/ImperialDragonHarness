@@ -1,0 +1,17 @@
+PR 2494
+  merge            45s
+  total            45s
+  slowest: merge (45s)
+PR 2496
+  merge            40s
+  total            40s
+  slowest: merge (40s)
+PR 2495
+  gaze             41s
+  merge            43s
+  total            3m47s
+  slowest: merge (43s)
+PR 2497
+  merge            39s
+  total            39s
+  slowest: merge (39s)
