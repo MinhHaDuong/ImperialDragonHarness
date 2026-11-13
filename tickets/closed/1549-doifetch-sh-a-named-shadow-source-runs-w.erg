@@ -2,10 +2,12 @@
 Title: doifetch.sh: a named shadow source runs without the shadow extra and fails on bs4
 Created: 2026-11-13
 Author: HDMX-coding-agent
+Closed: autoclosed — PR #2484
 
 --- log ---
 2026-11-13T12:12Z HDMX-coding-agent created
 2026-11-13T12:19Z reviewer note review of PR 2482: bs4 failure reproduced for scihub and libgen; exit status 0 not reproduced (1 in every direct form, 0 only as a pipe's tail status); title, reproduction and exit criteria corrected, the exit-status criterion dropped
+2026-11-13T12:30Z reviewer closed — autoclosed — PR #2484
 
 --- body ---
 
