@@ -1,0 +1,62 @@
+%erg 0.1
+Title: touched-tests.py: the integration fallback runs outside the project's device selection and for report scripts
+Created: 2026-11-13
+Author: HDMX-coding-agent
+
+--- log ---
+2026-11-13T13:09Z HDMX-coding-agent created
+
+--- body ---
+
+## Context
+
+Filed from the project climate-finance-het by the session that landed its
+PRs 2167 and 2185 on 2026-11-13 (host padme). Both reviews hit the same
+behaviour of `scripts/touched-tests.py`; one of them could not complete.
+
+## What happened
+
+- **Gaze on PR 2185** (head fa21414d, review `rv-20261113-pr-2185-a173`,
+  answer `20261113T124439325Z-padme-ff93c925`). The tests item printed
+  `fallback: full integration tier`, because no test names the table builder
+  `docs/reports/t3104-r0-abstract-table-2026-11-13.py` or
+  `scripts/catalog_rel_r0_service_abstracts.py`. The run hit the 300 s cap
+  and filed no report: plan check FAIL, result ESCALATE, with no finding in
+  hand. Verify-gate then refused the PR ("no completed review"). Before the
+  cap the run printed 2 failures, both `torch.OutOfMemoryError` in
+  `tests/test_divergence.py`, code the PR does not touch.
+- **Verify-gate on PR 2167** (verdict `20261113T130636896Z-padme-e2974783`).
+  The diff holds one Python file, `docs/reports/t3018-gate-removal-2026-11-13.py`,
+  a report generator no test imports. The gate printed `selected: none`,
+  the same fallback, and `result: fail`: 9 failed, 558 passed, 1 skipped,
+  about 11 of the gate's 17 minutes. All 9 failures are CUDA out-of-memory
+  on the RTX 5070 Ti, which another process held. The gate reran the 9 on
+  the card the project's make targets select (RTX A4000): all pass. It
+  ruled APPROVED by reading the failure as environmental.
+
+## Observations
+
+- `scripts/touched-tests.py:168` runs `pytest -m integration tests/`
+  directly. The project selects its test device in its Makefile
+  (`GATE_DEV`, from `scripts/qa_gate_gpu.py`: `CUDA_DEVICE_ORDER=PCI_BUS_ID`
+  and the card with most free memory, else CPU under `nice -n 19`), so the
+  selection applies only to runs started through `make`. A direct pytest
+  run takes torch's default `cuda:0`, the card the LLM service holds.
+- A Python file under `docs/reports/` counts as a changed source file. The
+  project's own gate for such a diff is `make lint` and `make check-fast`
+  (plus `make check-domain-rel` when a domain test changes); all three
+  passed on both heads. The integration tier is not part of it.
+- Cause of the 300 s overrun not isolated: the tier ran in about 11 minutes
+  in the gate, on a host that was also running other sessions' tests.
+
+## Exit criteria
+
+- [ ] On a host whose default CUDA device is busy, the fallback of a diff
+      that touches no GPU code does not report `result: fail` on
+      out-of-memory errors: it runs under the project's declared device
+      selection, or reports the failure as environmental.
+- [ ] A review of a diff whose only unnamed Python files are report
+      scripts does not end ESCALATE because the fallback outran the item
+      cap; the fallback is proportionate to the diff or its cap fits the
+      tier.
+- [ ] A regression test reproduces each case before the fix.
