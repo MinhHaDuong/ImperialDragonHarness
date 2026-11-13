@@ -30,10 +30,15 @@ def git(repo, *args):
 
 def owner_tickets(repo):
     names = git(repo, "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes")
+    owned = {int(match.group(1)) for match in TICKET_NAME.finditer(names)}
     for entry in git(repo, "worktree", "list", "--porcelain").split("\n\n"):
         if any(line.startswith("locked") for line in entry.splitlines()):
-            names += "\n" + entry
-    return {int(match.group(1)) for match in TICKET_NAME.finditer(names)}
+            # Only explicit ticket markers count in locks: PIDs and path suffixes
+            # often contain unrelated numbers.
+            owned.update(int(match) for match in re.findall(
+                r"(?<![a-zA-Z0-9])t0*(\d+)(?![a-zA-Z0-9])", entry
+            ))
+    return owned
 
 
 def ticket_texts(repo, ref):

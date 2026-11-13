@@ -103,3 +103,11 @@ def test_dashboard_invokes_shared_report(repo, tmp_path):
     assert "0001 | Request 1 | filed from asker 0042" in dashboard()
     git(repo, "branch", "t1-owner")
     assert "0001 |" not in dashboard()
+
+
+@pytest.mark.integration
+def test_lock_owner_pid_does_not_claim_unrelated_ticket(repo, tmp_path):
+    worktree = tmp_path / "worker"
+    git(repo, "worktree", "add", "--detach", str(worktree))
+    git(repo, "worktree", "lock", "--reason", "hunt t99 (pid 1)", str(worktree))
+    assert "0001 | Request 1" in report(repo)
