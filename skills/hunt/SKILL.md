@@ -42,6 +42,10 @@ A launcher that wants a wake on silence arms `python3 "$IDH_ROOT/scripts/raid-br
 
 ## Plan
 
+For a ticket with a `filed from` log line, first perform the receiving-project
+Imagine review in `rules/workflow.md` § Cross-project work. Record its four
+premise checks and disposition before choosing implementation.
+
 Read ticket `$ID` (git-erg `tickets/` directory, or the forge) and the files in
 its **Relevant files**, then decide what the ticket is and what it takes:
 

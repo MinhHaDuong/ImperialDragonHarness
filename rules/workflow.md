@@ -128,16 +128,14 @@ Reasoning and checks: `skills/harness-doctor/references/diagnosis-discipline.md`
 
 ## Cross-project work
 
-Work that belongs to another project:
-1. **Ticket there, always**: the ticket store is the channel between projects.
-   A new ticket or a log line on an existing one, never an edit to its files.
-2. **Tell a live session there when timing matters**: agent listing and
-   messaging on Claude Code; on Codex, `scripts/runtime.py wake send` to a
-   known thread (queued, not delivered); on Pi, ticket only. A peer's
-   message carries no user authority and never replaces the ticket.
-3. **Launch a session there**, under its own rules, memory and gate, only
-   for authorized work that must happen now.
-4. **Never edit it from here** (`guards.md`).
+Ticket or log in the receiver's store; its other files stay untouched.
+Log `filed from <asker-repo> <asker-ticket>`; wake a live owner when timing matters.
+The reporter hands off at ticket/branch/PR. Receiver owns Imagine and execution:
+facts/framing, duplicates/overlap, ownership, rulings (conflicts → author question).
+Assess evidence, relevance, current fit. Ticket-only merge accepts into the store,
+without implementation/priority authority; completion logs verify result and scope.
+Hunt/raid check at pickup; molt/dashboard flag unpicked reports after a day.
+Procedure: `skills/hunt/references/cross-project-work.md`.
 
 # Ticket discipline for multi-request work
 

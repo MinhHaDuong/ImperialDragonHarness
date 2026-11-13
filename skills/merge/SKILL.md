@@ -33,6 +33,11 @@ executable one is full.
 | bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No gaze, no verify-gate, no review seat. |
 | full | gaze, then verify-gate APPROVED; on a gated base, the record. |
 
+Before merging a foreign ticket-only PR, apply the substantive receiving-project
+Imagine acceptance review in `rules/workflow.md` § Cross-project work, including
+its completion-log case. This is receiving-owner judgment before mechanical
+landing; the tier governs merge checks and grants no implementation priority.
+
 **Two moments, whatever the tier** (ticket 1245, tracker 1226). On a gated
 base, `.merge-gate.json` declares the full check set (`"checks"`) and its
 cheap subset (`"before"`): ticket validator, guards, catalog drift and
