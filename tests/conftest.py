@@ -52,3 +52,13 @@ def _no_ambient_session_identity(monkeypatch):
     then passes or fails by who landed the last merge. Tests that need one set it."""
     monkeypatch.delenv("IDH_SESSION_MODEL", raising=False)
     monkeypatch.delenv("IDH_SESSION_RUNTIME", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _no_desktop_popup(monkeypatch):
+    """Ticket 1550: a red after-merge run in a fixture repository raised real `main is red`
+    popups. runtime_notify skips notify-send while IDH_NO_POPUP is set; it is set here, inside
+    the pytest process only (children inherit it through os.environ), never in a wider
+    environment, since the detached runner would carry it into real alerts. A test of the popup
+    itself deletes it."""
+    monkeypatch.setenv("IDH_NO_POPUP", "1")

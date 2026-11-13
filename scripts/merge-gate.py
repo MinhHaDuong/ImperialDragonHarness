@@ -1131,6 +1131,29 @@ def run_after(remote, branch, actor, command, forge=None):
         return code
 
 
+def repo_label():
+    """The repository whose main is red, as the author knows it: the primary checkout, home as `~`.
+
+    Taken from the working directory, never from this script's location: the hook starts the
+    runner from inside the git directory, and the script may belong to another repository.
+    `--show-toplevel` fails there; the common git directory answers. Empty when it cannot be told.
+    """
+    try:
+        done = subprocess.run(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                              capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    if done.returncode != 0 or not done.stdout.strip():
+        return ""
+    path = done.stdout.strip()
+    if path.endswith("/.git"):
+        path = path[: -len("/.git")]
+    home = os.path.expanduser("~")
+    if home not in ("", "/") and (path == home or path.startswith(home + "/")):
+        path = "~" + path[len(home):]
+    return path
+
+
 def alert_red(tip, failing):
     """Tell the author a tip went red (ticket 1543): runtime_notify's alert file, plus a popup where possible.
 
@@ -1143,7 +1166,9 @@ def alert_red(tip, failing):
             "runtime_notify", Path(__file__).resolve().with_name("runtime_notify.py"))
         notify = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(notify)
-        args = argparse.Namespace(key=f"after-merge-red-{tip[:12]}", title="main is red", repeat=3600.0,
+        label = repo_label()
+        args = argparse.Namespace(key=f"after-merge-red-{tip[:12]}", title=f"main is red in {label}" if label else "main is red",
+                                  repeat=3600.0,
                                   body=f"after-merge run on {tip[:12]}: {', '.join(failing) or 'see the after-merge log'}")
         if notify.run(args, "none"):
             sys.stdout.write("red alert: not written (runtime_notify failed)\n")
