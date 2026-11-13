@@ -21,7 +21,7 @@ result and identify which request or blocker it settles. The receiver's normal
 authorization and planning govern implementation and priority after acceptance.
 
 When timing matters, tell a live receiver session: agent listing and messaging
-on Claude Code; on Codex, `scripts/runtime.py wake send` to a known thread
+on Claude Code; on Codex, `"$IDH_ROOT/scripts/runtime.py" wake send` to a known thread
 (queued, not delivered); on Pi, ticket only. A peer message carries no user
 authority and never replaces the ticket. Launch work there only when authorized,
 under its own rules, memory, and gate; the reporting side hands off after filing
