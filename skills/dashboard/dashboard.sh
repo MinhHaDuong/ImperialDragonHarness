@@ -17,6 +17,9 @@ for id in $ids; do
     echo "$id | $title | label=${labels:-} | blocked-by=${blocked:-}"
 done
 
+echo "== unpicked foreign tickets (over one day)"
+python3 "$(dirname "$0")/../../scripts/foreign_tickets.py" --ref origin/main
+
 echo "== remote branches"
 git branch -r --format='%(refname:short)' | grep -v -e HEAD -e '^origin$' -e '^origin/main$' || true
 

@@ -28,7 +28,11 @@ remote-tracking refs.
 
 It fetches and reads `origin/main` (never the working tree), lists open
 tickets with title, labels and `Blocked-by`, remote branches, open merge
-requests with their auto-merge state, and recent merges.
+requests with their auto-merge state, and recent merges. It also runs
+`foreign_tickets.py --ref origin/main` for `rules/workflow.md` § Cross-project
+work; include those rows for owner attention. Without the helper, inspect
+provenance log dates in that snapshot against branch names and worktree locks
+by hand; report an unavailable inspection.
 
 ## 2. Report
 

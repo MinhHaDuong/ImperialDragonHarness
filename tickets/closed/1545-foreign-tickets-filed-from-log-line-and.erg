@@ -2,6 +2,7 @@
 Title: Foreign tickets: filed-from log line and owner wake-up in molt and dashboard
 Created: 2026-11-12
 Author: claude
+Closed: Implemented shared foreign-ticket provenance reporting in molt and dashboard; six behavioral fixtures, lint, fast tier, and full make check pass; gaze REVIEWED 6fe7227d2afa6eef3d37aa939231917924cb3b1f.
 
 --- log ---
 2026-11-12T22:28Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-11-13T18:58Z reviewer note Author explicitly authorized raid and undefer on 2026-11-13, superseding provisional-design hold for this child.
 2026-11-13T18:58Z reviewer note Imagine: premise current; preserve original exit criteria. Plan: State provenance once in workflow; a shared standard-library report helper, invoked by molt and dashboard, lists unpicked foreign tickets older than one day. Test an old foreign ticket and a named branch positive control.
 2026-11-13T18:58Z reviewer note Feasibility PASS: named surfaces exist; children run sequentially because workflow and molt overlap.
+2026-11-13T19:08Z reviewer closed — Implemented shared foreign-ticket provenance reporting in molt and dashboard; six behavioral fixtures, lint, fast tier, and full make check pass; gaze REVIEWED 6fe7227d2afa6eef3d37aa939231917924cb3b1f.
 
 --- body ---
 Parent: 1544
