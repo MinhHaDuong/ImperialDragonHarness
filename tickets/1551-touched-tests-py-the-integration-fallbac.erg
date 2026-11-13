@@ -5,6 +5,7 @@ Author: HDMX-coding-agent
 
 --- log ---
 2026-11-13T13:09Z HDMX-coding-agent created
+2026-11-13T13:39Z reviewer Imagine: design/2026-11-13-touched-tests-fallback.md, accepted by the author 2026-11-13. Count over review notes: 28 reviews ran the tier; harness 2 real defects, elsewhere 5 false alarms and 5 timeouts. Fix: a bound on the tier (incomplete, exit 4), not its removal. Plan-check probe: an incomplete report passes, no report fails. Device selection handed to climate-finance-het ticket 3128 (its PR 2198). Criteria amended accordingly.
 
 --- body ---
 
@@ -51,12 +52,18 @@ behaviour of `scripts/touched-tests.py`; one of them could not complete.
 
 ## Exit criteria
 
-- [ ] On a host whose default CUDA device is busy, the fallback of a diff
-      that touches no GPU code does not report `result: fail` on
-      out-of-memory errors: it runs under the project's declared device
-      selection, or reports the failure as environmental.
-- [ ] A review of a diff whose only unnamed Python files are report
-      scripts does not end ESCALATE because the fallback outran the item
-      cap; the fallback is proportionate to the diff or its cap fits the
-      tier.
-- [ ] A regression test reproduces each case before the fix.
+Amended 2026-11-13 on the author's acceptance of
+`design/2026-11-13-touched-tests-fallback.md`: the device criterion moved to
+climate-finance-het, where the device selection lives (its ticket 3128, its
+PR 2198). The original three criteria are in this file's git history.
+
+- [x] A review whose fallback tier outruns the reviewer's budget does not end
+      ESCALATE for want of a report: `touched-tests.py --integration-timeout`
+      stops the tier and prints `result: incomplete`, and gaze's tests item
+      passes that bound (`skills/gaze/references/panel.md`).
+- [x] A regression test reproduces the case before the fix
+      (`tests/test_touched_tests.py`, the tier that outruns its bound).
+- [x] The out-of-memory false alarms are handed to the project: ticket 3128
+      of climate-finance-het is filed (PR 2198 there).
+
+Later review, 2026-11-27: the recount of the note's § 6, step 3.
