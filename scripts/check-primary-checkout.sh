@@ -5,7 +5,7 @@
 # dirty working tree beyond a locally-modified settings.json. A dream run that
 # dies between its consolidation commit and the push+PR leaves exactly this
 # state: the primary parked on a `dream-consolidate-*` branch with a dirty tree,
-# which blocks the daily-pull timer and beat's dirty-tree pre-flight for days.
+# which blocks beat's dirty-tree pre-flight for days.
 #
 # Silent + exit 0 when the checkout is on <default-branch> and clean.
 # Prints a STRANDED: reason to stdout and exits 1 otherwise.
