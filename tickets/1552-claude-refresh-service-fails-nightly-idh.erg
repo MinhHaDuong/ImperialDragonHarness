@@ -1,0 +1,27 @@
+%erg 0.1
+Title: claude-refresh.service fails nightly: ~/.idh missing on doudou
+Created: 2026-11-18
+Author: games-session
+
+--- log ---
+2026-11-18T07:59Z games-session created
+
+--- body ---
+## Context
+On doudou, the user unit `~/.config/systemd/user/claude-refresh.service`
+("Refresh ~/.idh (harness checkout) from git origin", `WorkingDirectory=%h/.idh`,
+`ExecStart=git pull --ff-only`, fired by `claude-refresh.timer`) fails every
+night with status 200/CHDIR: `~/.idh` does not exist. Last seen 2026-11-18
+00:03 CET; `systemctl --user --failed` lists it. Found during a read-only
+health sweep of doudou (machine project `~/CNRS/projets/actifs/doudou`).
+
+Observation only: nothing in the harness's `scripts/` mentions
+`claude-refresh` today, so the unit looks left over from an earlier
+checkout layout. Cause not established.
+
+## Exit criteria
+- [ ] Decide: retire the unit and timer, or point them at the current harness
+      checkout.
+- [ ] `systemctl --user --failed` on doudou no longer lists claude-refresh.
+- [ ] If retired, the installer or a migration removes it on other machines
+      that still carry it (padme?).
