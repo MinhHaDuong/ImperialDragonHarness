@@ -5,6 +5,7 @@ Author: claude
 --- log ---
 2026-11-25T14:41Z claude created
 2026-11-25T15:25Z Minh Ha-Duong note blocker 1555 closed — Blocked-by removed.
+2026-11-25T15:26Z Minh-Ha-Duong author ruling: no commercial software; R in replicator's pinned image; Stata packages transcoded and labelled re-implemented; I4R picks with R/Python packages
 
 --- body ---
 ## Context
@@ -12,14 +13,23 @@ Author: claude
 Child of tracker 1552. Runs `/replicate reproduce` on the Gavard Scotch
 reproduction (`~/CNRS/papiers/actif/Gavard Scotch 2026 Climate finance
 counterproductive/`, completed by hand, a known answer) plus 2 I4R papers.
-Needs an execution environment: on 2026-11-25 doudou had neither Stata nor R,
-and `replicator/docker/` was empty. Where it comes from (replicator's docker
-image or the host) is an author decision, open.
+Execution environment, ruled by the author on 2026-11-25: no commercial
+software is available, so no Stata. R runs in a pinned image (rocker, with
+`renv`) that replicator provides; the skill only records the environment in
+`manifest.json`. A Stata-only package is transcoded to Python (`pyfixest`
+matches `reghdfe`'s small-sample corrections) or R (`fixest`) and reported
+as "re-implemented, matched to published figures", not "reproduced from the
+authors' package". Gavard Scotch is that case (Stata package, Python port,
+known answer). The 2 I4R papers are chosen among packages in R or Python,
+so one run executes code as published. For Toulouse the author's plan is
+to transcode and rerun before the Games.
 
 ## Exit criteria
 
-- [ ] An R (and, if a chosen paper needs it, Stata) environment exists and is
-      recorded where replicator's docs say.
-- [ ] `reproduce` run on Gavard Scotch and 2 I4R papers; for the I4R papers,
-      whether it finds I4R's recorded discrepancies.
+- [ ] A pinned R environment exists in replicator and is recorded in each
+      folder's `manifest.json`; no Stata.
+- [ ] `reproduce` run on Gavard Scotch (transcoded, compared with the
+      September port) and 2 I4R papers with R or Python packages (run as
+      published); for the I4R papers, whether it finds I4R's recorded
+      discrepancies.
 - [ ] Results in `design/replicate-reproduce-validation-<date>.md`.
