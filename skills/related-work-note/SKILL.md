@@ -2,7 +2,7 @@
 metadata:
   category: research
 name: related-work-note
-description: "Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist."
+description: "Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited and related-but-not-cited works, methods, verification checklist."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: 'free-form inline — see "Inputs" section'

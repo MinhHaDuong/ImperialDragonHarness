@@ -2,11 +2,13 @@
 Title: Write the /replicate skill: four verbs, rules reference, assessment schema
 Created: 2026-11-25
 Author: claude
+Closed: autoclosed — PR #2511
 
 --- log ---
 2026-11-25T14:41Z claude created
 2026-11-25T14:44Z Minh-Ha-Duong layout ruled by replicator 7ad7fe2 (robustness/ not probe/, README.md, data/, out/ CSV columns, manifest fields shared with Phase B)
 2026-11-25T14:46Z Minh-Ha-Duong author: a skill must not hardcode its output path; root is a caller argument, replicator/replications is an example
+2026-11-25T15:25Z Minh Ha-Duong closed — autoclosed — PR #2511
 
 --- body ---
 ## Context
