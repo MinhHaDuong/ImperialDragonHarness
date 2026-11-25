@@ -126,9 +126,10 @@ The identity and provenance fields are shared with replicator's Phase B
   "files": [{"path": "data/Final_panel_v6.dta", "sha256": "…", "bytes": 0,
              "license": "CC-BY-4.0", "redistributable": true}],
   "environment": {"interpreter": "Stata 18 MP", "lockfile": "reproduce/requirements.lock"},
-  "template": {"name": "I4R Template: Reproduction Report - General", "version": "…"}
+  "template": {"name": "I4R Template: Reproduction Report – General", "record": "23226406",
+               "version": "1", "reason": "no template named in the assignment; field fits none specific"}
 }
 ```
 
-`template` is added by `report`. `fetch.sh` reads `files[]` and fails on the
+`template` is added by `report` (chosen from `references/templates/INDEX.md`; an adapted structure adds `"adapted": true`). `fetch.sh` reads `files[]` and fails on the
 first hash that differs.

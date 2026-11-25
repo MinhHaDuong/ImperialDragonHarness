@@ -3,8 +3,8 @@
 Source: Abel Brodeur, "Pre-Games Meeting", Institute for Replication,
 November 2026, slides 3-16, as converted in replicator's
 `doc/brodeur-i4r-pregames-2026/2026_i4r-pregames.md`. The rules below
-restate the talk. The I4R report template on Zenodo is the authoritative
-format.
+restate the talk. The I4R report template chosen from `templates/INDEX.md` is the
+authoritative format.
 
 Written for a team that is not all economists. Two words first:
 

@@ -169,10 +169,23 @@ The goal is to run fair robustness checks, chosen by people.
 
 The goal is the I4R report, written as a team.
 
-1. Fetch the I4R template ("I4R Template: Reproduction Report - General",
-   Zenodo) into `report/` if absent. Record its version in `manifest.json`.
-   The template governs the format. Where it is silent, follow
+1. Choose the I4R template from `references/templates/INDEX.md`, using the
+   context the folder already holds: the template I4R named in the assignment
+   first, then the paper's field and journal, then the kind of work
+   (reproduction and robustness report, or forensic commentary on specific
+   problems). When two fit, take the General one. Copy the chosen Word or
+   LaTeX files into `report/` if absent and record in `manifest.json`
+   `template{name, record, version, reason}`; the reason is one sentence naming
+   the evidence. The template governs the format. Where it is silent, follow
    `references/rules.md`.
+   No template fits (a format or field none covers)? Say so, give the reason,
+   and propose an adapted structure for this replication in
+   `report/structure.md`, starting from the closest template and naming each
+   section changed. Record the closest template with `"adapted": true`. Never
+   add a new generic template to the skill. A person confirms the adapted
+   structure before the report is written.
+   Optionally read each record's `links.latest` on Zenodo (needs the network)
+   and report a newer version; do not switch to it.
 2. Write the report in `report/`. Name the paper's method in the summary
    (rule 8). Include the Reproducibility Table, derived from
    `assessment.json`, showing only discrepancies. Round values to three
