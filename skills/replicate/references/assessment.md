@@ -20,7 +20,8 @@ the I4R study (<https://doi.org/10.1038/s41586-026-10251-x>).
   "criteres": {
     "code_analyse_complet": "data/Estimations_final.do lines 186-192 produce Table 1",
     "donnees_analyse_completes": "data/Final_panel_v6.dta holds every Table 1 variable",
-    "chaine_brute_incomplete": "cleaning code absent: no script builds the panel from CRS records"
+    "chaine_brute_incomplete": "the raw chain stops at the panel: neither CRS records nor cleaning code",
+    "code_nettoyage_inaccessible": "no script builds data/Final_panel_v6.dta from CRS records"
   },
   "non_etabli": {"donnees_brutes_completes": "CRS activity records not in the deposit"},
   "a_evaluer": ["cra_reussie", "cra_echouee", "crr_reussie", "crr_echouee"],
@@ -51,6 +52,7 @@ reads `non_etabli` until `reproduce` runs.
 
 ```python
 import json
+GRID = "<path to grille-i4r.json, the grid named in assessment.json>"
 grid, a = json.load(open(GRID)), json.load(open("assessment.json"))
 rules = grid["dimensions"]["reproductibilite_calculatoire"]
 level = next((r["classe"] for r in rules if all(c in a["criteres"] for c in r["criteres"])), "non_etabli")
@@ -69,7 +71,9 @@ The evidence is the path of the CSV and its rows' `outcome_key`.
 Each row comes from the criteria and from `out/reproduce.csv`. The grid has
 no criterion for every "Partially" cell. There, the evidence text of
 `analyse_partiellement_accessible` or `chaine_brute_incomplete` must name
-which piece is partial, and the row reads it.
+which piece is partial, and the row reads it. A "No" criterion
+outranks that reading: `code_nettoyage_inaccessible` makes the cleaning-code
+row No even when `chaine_brute_incomplete` is also established.
 
 | Row | Fully | Partially | No |
 |---|---|---|---|

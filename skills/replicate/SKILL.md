@@ -46,9 +46,10 @@ reproducible-science project may host one per graded publication.
 Before writing, resolve the folder and refuse two cases:
 
 ```bash
-F=$(realpath -m "$FOLDER"); H=$(realpath "$IDH_ROOT")
+F=$(realpath -m "$FOLDER"); H=$(git -C "$IDH_ROOT" rev-parse --show-toplevel)
 case "$F/" in "$H"/*) echo "refused: folder inside the harness"; exit 1;; esac
-git -C "$(dirname "$F")" rev-parse --show-toplevel   # must be the assigned project
+D=$F; while [ ! -d "$D" ]; do D=$(dirname "$D"); done   # nearest existing parent
+git -C "$D" rev-parse --show-toplevel   # must be the assigned project, not "$H"
 ```
 
 A folder in a project other than the assigned one is reached only through
@@ -95,7 +96,8 @@ skill call or an agent instruction in the folder.
 ## assess
 
 The goal is to grade the package from its contents, before running anything.
-That is ACRe levels L1 to L7. Batchable: for a reading list, or for a team
+Contents alone settle L1 to L3, L6 and L7; L4, L5
+and L8 to L10 wait for `reproduce`. Batchable: for a reading list, or for a team
 choosing among candidate papers, loop over the papers sequentially in one session, one
 folder each.
 

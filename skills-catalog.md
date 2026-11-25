@@ -67,7 +67,7 @@
 |---------|-------------|
 | [`/external-peer-review`](skills/external-peer-review/SKILL.md) | Obtain independent AI peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings. |
 | [`/manuscript-review`](skills/manuscript-review/SKILL.md) | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
-| [`/ingest-decision-letter`](skills/ingest-decision-letter/SKILL.md) | Ingest a journal decision letter and reviewer comments into a remark ledger and check that every remark maps to a ticket, for a Revise-and-Resubmit. |
+| [`/ingest-decision-letter`](skills/ingest-decision-letter/SKILL.md) | Ingest a journal decision letter and reviewer comments into a remark ledger, archive the sources and check that every remark maps to a ticket, for a Revise-and-Resubmit. |
 
 ### Writing and delivery
 
