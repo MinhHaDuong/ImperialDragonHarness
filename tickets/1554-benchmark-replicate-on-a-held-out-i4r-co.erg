@@ -1,0 +1,44 @@
+%erg 0.1
+Title: Benchmark /replicate on a held-out I4R corpus
+Created: 2026-11-25
+Author: claude
+Blocked-by: 1552
+
+--- log ---
+2026-11-25T13:53Z claude created
+
+--- body ---
+## Context
+
+Child of 1552 (`/replicate` skill). 1552 validates on a development split
+(about 10 papers for `assess`, Gavard Scotch plus 2 for `reproduce`) to meet
+the 2026-12-05 deadline; this ticket measures the skill on a held-out split
+of the I4R corpus afterwards. Not needed for the Toulouse Games.
+
+The corpus: I4R discussion papers, each with the original replication package
+and the replicators' reproducibility table, harvested by replicator's dataset
+(`replicator dataset fetch --source i4r`, table `replication_results`).
+
+## Design constraints
+
+- Blind the agent to the I4R report; it sees the paper and package only
+  (pillage 0266 technique 4, `design/pillage-0266-agentic-reproduction-2026-07-12.md`).
+- Include papers published after the evaluated model's training cutoff, and
+  report results separately for them (contamination check).
+- Held-out split disjoint from 1552's development split, about 30 papers;
+  sample stratified by I4R's reproducibility verdict, since the corpus skews
+  toward better packages than a reading list.
+- `assess`: per-row agreement of the six-row table and ACRe level with I4R's.
+  `reproduce`: recall of I4R's discrepancies, on a subset sized to the data
+  and compute available. `probe`: coverage of the robustness menu and overlap
+  with I4R's choices only, no correctness score.
+- Price the run before launching it (author's call above the route cap).
+
+## Exit criteria
+
+- [ ] Split, sampling and scoring script committed in replicator (benchmark
+      code is replicator's, the skill is the harness's).
+- [ ] Results table with per-verb scores, the post-cutoff subset reported
+      separately, recorded in replicator and linked from a harness `design/`
+      note.
+- [ ] Findings that change the skill are fixed in it or ticketed.
