@@ -1,0 +1,76 @@
+%erg 0.1
+Title: Add a /replicate skill for I4R-style paper replication
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T13:30Z claude created
+
+--- body ---
+## Context
+
+Filed from the replicator project (`~/CNRS/projets/actifs/replicator`), no
+asker ticket; the author chose this option on 2026-11-25 over (A) reference
+notes in replicator's `plans/phase-b.plan` only and (B) schema-level checks in
+replicator code.
+
+No skill covers replicating an economics paper by hand with agent help. The
+author takes part in the I4R Replication Games in Toulouse on 2026-12-08
+(`~/CNRS/missions/actif/2026-12-08 Toulouse Replication Games/`), with a
+nominated paper already ticketed in replicator
+(`tickets/2026-11-19-imf-wp-26-128-toulouse-pilot.md`). A skill usable by a
+session that day is the deadline that matters.
+
+The replicator project (automated agent, Phase B, not started) is the long-run
+home of the automated pipeline; this skill is the hands-on, session-driven
+counterpart and should not duplicate replicator code.
+
+## Sources to build from
+
+- I4R pre-games talk, Abel Brodeur, November 2026, converted to Markdown:
+  `~/CNRS/projets/actifs/replicator/doc/brodeur-i4r-pregames-2026/2026_i4r-pregames.md`
+  (slides 3-16; example tables in `media/image2.png`, `media/image3.png`).
+- I4R protocol: `~/CNRS/projets/actifs/replicator/doc/protocol_i4r.pdf` and
+  `doc/SYNTHESE.md` there.
+- A completed hand reproduction, the de-facto workflow to distil:
+  `~/CNRS/papiers/actif/Gavard Scotch 2026 Climate finance counterproductive/`
+  (`reproduction/`, `audit/reproduction-final-2026-09-22.md`,
+  `audit/final-replication-package-search-2026-09-15.md`).
+- I4R report template on Zenodo ("I4R Template: Reproduction Report -
+  General"), not yet fetched: the authoritative report format.
+- Prior harness analysis: `design/pillage-0266-agentic-reproduction-2026-07-12.md`.
+
+## Rules the talk makes binding (report acceptance criteria)
+
+1. Reproducibility Table always present: six rows (raw data, cleaning code,
+   analysis data, analysis code provided; reproducible from raw, from analysis
+   data) x Fully / Partially / No. Show only discrepancies, not matches.
+2. Every reported statistic at 3-digit precision (coefficient, SE, p-value or
+   CI), each robustness result next to the original estimate; a check with no
+   original comparator is suspect.
+3. Table layout: reproduced original first, then one column (pair) per
+   alteration; notes name the original table and what changed.
+4. Fairness: no cherry-picking specifications that break significance or flip
+   signs; a robust verdict is as valuable as a fragile one.
+5. Scope: heterogeneity analyses and extensions are extras, not robustness.
+6. The report is itself reproducible: new code shipped, scripts emit CSV.
+7. Robustness menu: PAP deviations, coding-error fixes (count as robustness),
+   clustering/weights/SE, parametric vs non-parametric, outliers and sample
+   restrictions, variable redefinition, re-coding in other software.
+8. Summary names the paper's method; morning = reproduction, data problems,
+   coding errors; afternoon = robustness and writing.
+
+## Exit criteria
+
+- [ ] `skills/replicate/SKILL.md` exists, with phases matching the Games
+      (prepare: package inventory and reproducibility table; reproduce;
+      inspect code vs manuscript; robustness pre-plan then run; write report).
+- [ ] The eight rules above live in a reference file under
+      `skills/replicate/references/`, citing the talk as source.
+- [ ] The workflow is checked against the Gavard Scotch reproduction: each
+      step that run took has a home in the skill, or a recorded reason not to.
+- [ ] If the skill launches workers it states the model per
+      `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
+- [ ] Output lives in the target project (paper or mission folder), never in
+      the harness.
+- [ ] Usable for the Toulouse Games on 2026-12-08: merged before 2026-12-05.
