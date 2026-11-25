@@ -96,7 +96,7 @@ skill call or an agent instruction in the folder.
 
 The goal is to grade the package from its contents, before running anything.
 That is ACRe levels L1 to L7. Batchable: for a reading list, or for a team
-choosing among candidate papers, loop over the papers in one session, one
+choosing among candidate papers, loop over the papers sequentially in one session, one
 folder each.
 
 1. **Identify the paper.** Get the full text and the Zotero item by the
