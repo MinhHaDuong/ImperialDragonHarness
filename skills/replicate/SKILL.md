@@ -43,13 +43,15 @@ default location. Examples of hosts: replicator keeps its own replications in
 `replications/<citekey>/`; a paper folder may hold `replication/`; the CIRED
 reproducible-science project may host one per graded publication.
 
-Before writing, resolve the folder and refuse two cases:
+Before writing, resolve the folder. Refuse it inside the harness or
+outside any project; otherwise check it is the assigned project:
 
 ```bash
-F=$(realpath -m "$FOLDER"); H=$(git -C "$IDH_ROOT" rev-parse --show-toplevel)
+F=$(realpath -m "$FOLDER")   # H: the harness's primary checkout, its worktrees inside
+H=$(dirname "$(git -C "$IDH_ROOT" rev-parse --path-format=absolute --git-common-dir)")
 case "$F/" in "$H"/*) echo "refused: folder inside the harness"; exit 1;; esac
 D=$F; while [ ! -d "$D" ]; do D=$(dirname "$D"); done   # nearest existing parent
-git -C "$D" rev-parse --show-toplevel   # must be the assigned project, not "$H"
+git -C "$D" rev-parse --show-toplevel || echo "refused: not in any project"
 ```
 
 A folder in a project other than the assigned one is reached only through
