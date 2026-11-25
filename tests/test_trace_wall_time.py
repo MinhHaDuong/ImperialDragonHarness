@@ -12,7 +12,9 @@ spec = importlib.util.spec_from_file_location("trace_wall_time", SCRIPTS / "trac
 tw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tw)
 
-T0 = datetime(2026, 10, 20, 10, 0, 0, tzinfo=timezone.utc)
+# Relative to now: the survey windows below are relative to now, so a fixed
+# date expires once it falls out of them (ticket 1553).
+T0 = (datetime.now(timezone.utc) - timedelta(days=2)).replace(microsecond=0)
 WT = "/repo/.claude/worktrees/t1-1"
 
 
