@@ -8,6 +8,7 @@ Author: claude
 2026-11-25T13:33Z Minh-Ha-Duong claude note added the CIRED reproducible-science project as source and consumer: ACRe grid and Zotero storage contract
 2026-11-25T13:34Z Minh-Ha-Duong claude note acceptance: facts read in sources (slides MD, CIRED grid and protocol, Gavard Scotch audit exist); no duplicate in open/closed tickets; owner harness (skills/), outputs in target projects; no conflicting ruling; accepted, priority by deadline 2026-12-05
 2026-11-25T13:53Z Minh-Ha-Duong claude reimagined: one skill with four verbs (assess, reproduce, probe, report), autonomy per verb; rule-6 home replicator/replications/<citekey>/; I4R corpus as validation, held-out benchmark split to 1554
+2026-11-25T13:59Z Minh-Ha-Duong claude note Brodeur reply: no AI rule, teammates expected to use AI; team from stats/CS/geography in infrastructure/energy; open questions updated
 
 --- body ---
 ## Context
@@ -153,6 +154,15 @@ ticket 1554.
 
 ## Open before the Games
 
-- I4R's policy on AI assistance and its disclosure at the Games: the talk is
-  silent; ask the Toulouse organisers.
+- AI assistance: Abel Brodeur's reply (2026-11-25) states no rule; he
+  expects teammates to use AI to some extent. Treat AI use as accepted and
+  disclose it in the report anyway: no explicit policy was given.
+- The team mixes infrastructure/energy researchers from stats, computer
+  science and geography, each likely with their own AI tooling. The skill's
+  outputs (subproject files, CSVs, `probe/plan.md`) must be usable by
+  teammates who do not run this harness, and the rules reference must read
+  as teaching material for non-economists.
+- The team picks its paper together (talk, slide 112): the nominated paper in
+  replicator's pilot ticket may change; `assess` should run quickly on
+  candidates to inform that choice.
 - The report is a team product: where team drafts live during the day.
