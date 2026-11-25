@@ -7,6 +7,7 @@ Author: claude
 2026-11-25T13:30Z claude created
 2026-11-25T13:33Z Minh-Ha-Duong claude note added the CIRED reproducible-science project as source and consumer: ACRe grid and Zotero storage contract
 2026-11-25T13:34Z Minh-Ha-Duong claude note acceptance: facts read in sources (slides MD, CIRED grid and protocol, Gavard Scotch audit exist); no duplicate in open/closed tickets; owner harness (skills/), outputs in target projects; no conflicting ruling; accepted, priority by deadline 2026-12-05
+2026-11-25T13:53Z Minh-Ha-Duong claude reimagined: one skill with four verbs (assess, reproduce, probe, report), autonomy per verb; rule-6 home replicator/replications/<citekey>/; I4R corpus as validation, held-out benchmark split to 1554
 
 --- body ---
 ## Context
@@ -26,6 +27,61 @@ session that day is the deadline that matters.
 The replicator project (automated agent, Phase B, not started) is the long-run
 home of the automated pipeline; this skill is the hands-on, session-driven
 counterpart and should not duplicate replicator code.
+
+## Shape (reimagined with the author, 2026-11-25)
+
+Three uses were weighed: assess reproducibility for a reading list, draft a
+whole report autonomously, write one interactively. They are not three skills
+but three stopping points on one ladder, which the sources already draw: the
+CIRED protocol's three child notes (reading note, preliminary assessment,
+reproduction report); the ACRe grid, whose L1-L7 depend only on package
+contents and L8-L10 on execution; Brodeur's advice to do the mechanical work
+before the Games and keep the day for team robustness work.
+
+`/replicate <verb> <paper>`, each verb idempotent and reading only what the
+previous verb left in the paper's subproject:
+
+| Verb | Unattended | Writes |
+|---|---|---|
+| `assess` | yes, batchable | `assessment.json` (grid `acre-i4r-1`, evidence per criterion, run criteria `a_evaluer`), six-row table derived from it, preliminary-assessment Zotero note |
+| `reproduce` | yes | run scripts, 3-digit comparison CSVs (discrepancies only), `cra_*`/`crr_*` evidence raising the level |
+| `probe` | no: stops at `probe/plan.md` until signed off | robustness scripts and CSVs, one column per alteration |
+| `report` | no | I4R template report, reproduction-report Zotero note |
+
+Autonomy is a property of the verb, not a mode. A fully autonomous report is
+`assess` + `reproduce` unattended, then a halt at the signed-off `probe` plan:
+choosing robustness checks unattended is the cherry-picking rule 4 forbids,
+and the unattended pipeline is replicator Phase B's job. The reading-list use
+is `assess` alone; `/reading-note`, which already looks for a replication
+package, may call it.
+
+**Rule 6 home: a subfolder of replicator** (author's choice, 2026-11-25, over
+a dedicated repository or the CIRED project). One subproject per reproduced
+paper:
+
+```
+replicator/replications/<citekey>/
+  manifest.json   DOI, package source, hashes, licence, redistributable?
+  fetch.sh        non-redistributable data stays out of git, re-fetched
+  assessment.json
+  reproduce/  probe/  report/    scripts -> out/*.csv
+```
+
+The skill writes there only from a session assigned to replicator (guards:
+project files only in the assigned project); the layout is agreed by a
+replicator ticket before first use.
+
+**Validation corpus.** The I4R discussion papers give, for hundreds of
+papers, the original package and the replicators' own reproducibility table:
+a ground truth. replicator's dataset (`replicator dataset fetch --source
+i4r`, table `replication_results`) already harvests them. `assess` is checked
+row by row against I4R's table; `reproduce` by whether it finds I4R's
+discrepancies; `probe` has no ground truth (judgment), scored only for
+coverage of the robustness menu. Guards: blind the agent to the I4R report
+(pillage 0266 technique 4), include papers published after the model's
+training cutoff, keep a held-out split; the corpus skews toward better
+packages than a typical reading list. The full held-out benchmark is child
+ticket 1554.
 
 ## Sources to build from
 
@@ -73,22 +129,30 @@ counterpart and should not duplicate replicator code.
 
 ## Exit criteria
 
-- [ ] `skills/replicate/SKILL.md` exists, with phases matching the Games
-      (prepare: package inventory and reproducibility table; reproduce;
-      inspect code vs manuscript; robustness pre-plan then run; write report).
+- [ ] `skills/replicate/SKILL.md` exists with the four verbs `assess`,
+      `reproduce`, `probe`, `report`, each idempotent and resumable from the
+      subproject's files; `probe` halts at `plan.md` until a person signs it.
 - [ ] The eight rules above live in a reference file under
       `skills/replicate/references/`, citing the talk as source.
-- [ ] The workflow is checked against the Gavard Scotch reproduction: each
-      step that run took has a home in the skill, or a recorded reason not to.
-- [ ] If the skill launches workers it states the model per
-      `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
-- [ ] The preliminary assessment records the ACRe level and per-criterion
-      evidence in the CIRED grid's vocabulary (`grille-i4r.json`, versioned
-      grid id), so a replication feeds the CIRED monitoring without
-      re-entry; the I4R six-row Reproducibility Table is derived from the
-      same evidence, not filled separately.
+- [ ] `assess` records the ACRe level and per-criterion evidence in the CIRED
+      grid's vocabulary (`grille-i4r.json`, versioned grid id); the I4R
+      six-row Reproducibility Table is derived from the same evidence, not
+      filled separately; `reproduce` updates the same file.
+- [ ] Output lives in `replicator/replications/<citekey>/` with the layout
+      above, never in the harness; a replicator ticket records the layout.
 - [ ] Notes reach Zotero through the existing `scripts/zotero.py` and
       `/reading-note` paths, as the three child notes the CIRED protocol names.
-- [ ] Output lives in the target project (paper or mission folder), never in
-      the harness.
+- [ ] Validation, development split: `assess` run blind on about 10 I4R
+      papers with its tables compared to I4R's; `reproduce` on the Gavard
+      Scotch reproduction plus 2 I4R papers. Results recorded in `design/`.
+- [ ] The workflow is checked against the Gavard Scotch reproduction: each
+      step that run took has a home in a verb, or a recorded reason not to.
+- [ ] If the skill launches workers it states the model per
+      `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
 - [ ] Usable for the Toulouse Games on 2026-12-08: merged before 2026-12-05.
+
+## Open before the Games
+
+- I4R's policy on AI assistance and its disclosure at the Games: the talk is
+  silent; ask the Toulouse organisers.
+- The report is a team product: where team drafts live during the day.
