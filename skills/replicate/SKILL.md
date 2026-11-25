@@ -51,6 +51,7 @@ F=$(realpath -m "$FOLDER")
 C=$(git -C "${IDH_ROOT:?}" rev-parse --path-format=absolute --git-common-dir) ||
   { echo "refused: harness root unresolved"; exit 1; }
 H=$(dirname "$C")   # the primary checkout; harness worktrees sit inside it
+[ -f "$H/rules/guards.md" ] || { echo "refused: IDH_ROOT is not the harness"; exit 1; }
 case "$F/" in "$H"/*) echo "refused: folder inside the harness"; exit 1;; esac
 D=$F; while [ ! -d "$D" ]; do D=$(dirname "$D"); done   # nearest existing parent
 git -C "$D" rev-parse --show-toplevel || { echo "refused: not in any project"; exit 1; }
