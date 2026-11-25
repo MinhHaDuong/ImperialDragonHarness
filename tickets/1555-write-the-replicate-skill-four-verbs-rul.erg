@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-11-25T14:41Z claude created
 2026-11-25T14:44Z Minh-Ha-Duong layout ruled by replicator 7ad7fe2 (robustness/ not probe/, README.md, data/, out/ CSV columns, manifest fields shared with Phase B)
+2026-11-25T14:46Z Minh-Ha-Duong author: a skill must not hardcode its output path; root is a caller argument, replicator/replications is an example
 
 --- body ---
 ## Context
@@ -17,7 +18,8 @@ Replication Games on 2026-12-08 need: merge before 2026-12-05.
 
 The layout was ruled by replicator on 2026-11-25 (replicator main 7ad7fe2,
 `~/CNRS/projets/actifs/replicator/tickets/2026-11-25-replications-folder-layout.md`);
-it supersedes 1552's proposal:
+it supersedes 1552's proposal. The layout is relative to whatever root the
+caller gives; replicator's `replications/` is today's root, not a constant:
 
 ```
 replications/<citekey>/   citekey = Zotero Better BibTeX key, ASCII lowercase
@@ -54,8 +56,11 @@ Validation runs are children 1556 and 1557, not this one.
       grid's vocabulary (`grille-i4r.json`, versioned grid id); the I4R
       six-row Reproducibility Table is derived from the same evidence, not
       filled separately; `reproduce` updates the same file.
-- [ ] The skill writes output only to `replicator/replications/<citekey>/`,
-      never to the harness, and says a replicator-assigned session does it.
+- [ ] The skill hardcodes no output path: it works on a subproject root
+      given by the caller (`<root>/<citekey>/` with the layout above),
+      refuses a root inside the harness, and names replicator's
+      `replications/` as the current home only as a documented example,
+      written from a session assigned to the project that owns the root.
 - [ ] Notes reach Zotero through the existing `scripts/zotero.py` and
       `/reading-note` paths, as the three child notes the CIRED protocol names.
 - [ ] The workflow is checked against the Gavard Scotch reproduction: each
