@@ -1,0 +1,60 @@
+%erg 0.1
+Title: /replicate: ship the I4R templates as references and choose one in context
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T15:48Z claude created
+
+--- body ---
+## Context
+
+Filed from the replicator project on 2026-11-25 at the author's request:
+"The skill should have templates as reference material. Intelligently
+choose an appropriate one or IF NECESSARY propose another IN CONTEXT."
+Child of tracker 1552.
+
+Today `skills/replicate/SKILL.md` § report step 1 fetches only the General
+template from Zenodo at run time and knows of no other. Zenodo holds three
+I4R templates (search `"I4R Template"`, 2026-11-25), each as Word and LaTeX,
+CC-BY 4.0:
+
+| Record | Template | Version | Published |
+|---|---|---|---|
+| 23226406 | Reproduction Report – General | 1 | 2026-10-08 |
+| 23214112 | Reproduction Report – Psychological Science Phase 2 | 1 | 2026-10-07 |
+| 23597737 | Commentary from Forensic Report | 1 | 2026-10-23 |
+
+Checksummed copies and an index are in replicator, `doc/i4r-templates/`
+(replicator commit 217a541); the General one is the link on slide 5 of
+Brodeur's pre-games deck.
+
+## Request
+
+1. **Templates as reference material.** Ship the three templates under
+   `skills/replicate/references/templates/` with an index (record, version,
+   date, checksum, CC-BY attribution), so the skill works offline and
+   reproducibly, and the choice is made from known material.
+2. **Choose intelligently.** At `report`, pick the template from the
+   context the skill already has: the paper's field and journal, the kind
+   of work (reproduction and robustness report vs forensic commentary), and
+   any template named by I4R in the assignment. Record the choice and its
+   reason in `manifest.json` (`template{name, record, version, reason}`).
+3. **Propose another only if necessary, in context.** When none fits (e.g.
+   a format or field none covers), say so and propose an adapted structure
+   for this replication, starting from the closest template, inside the
+   replication folder. Do not mint a new generic template in the skill.
+4. Keep `references/rules.md` as the fallback where the chosen template is
+   silent. Optionally check Zenodo for a newer version and report it,
+   without switching silently.
+
+## Exit criteria
+
+- [ ] The three templates and their index live under
+      `skills/replicate/references/templates/`, checksums matching Zenodo.
+- [ ] `SKILL.md` report step chooses among them from context and records
+      `template{name, record, version, reason}` in `manifest.json`.
+- [ ] The no-fit path proposes an adapted structure in the replication
+      folder, with the reason, never a new generic template.
+- [ ] `references/assessment.md`'s manifest example shows the `template`
+      fields.
