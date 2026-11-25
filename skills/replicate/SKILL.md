@@ -47,11 +47,12 @@ Before writing, resolve the folder. Refuse it inside the harness or
 outside any project; otherwise check it is the assigned project:
 
 ```bash
-F=$(realpath -m "$FOLDER")   # H: the harness's primary checkout, its worktrees inside
+F=$(realpath -m "$FOLDER")
 H=$(dirname "$(git -C "$IDH_ROOT" rev-parse --path-format=absolute --git-common-dir)")
+[ -d "$H/.git" ] || { echo "refused: harness root unresolved"; exit 1; }   # worktrees sit inside H
 case "$F/" in "$H"/*) echo "refused: folder inside the harness"; exit 1;; esac
 D=$F; while [ ! -d "$D" ]; do D=$(dirname "$D"); done   # nearest existing parent
-git -C "$D" rev-parse --show-toplevel || echo "refused: not in any project"
+git -C "$D" rev-parse --show-toplevel || { echo "refused: not in any project"; exit 1; }
 ```
 
 A folder in a project other than the assigned one is reached only through
