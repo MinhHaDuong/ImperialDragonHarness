@@ -2,7 +2,7 @@
 metadata:
   category: research
 name: replicate
-description: "Reproduce and robustness-check an empirical paper, I4R style: assess its replication package, rerun it, plan fair robustness checks, write the report. Use for a Replication Games paper, a reading-list reproducibility grade or a reproduction report."
+description: "Replicate an empirical paper, I4R style: assess its package, rerun it, plan robustness checks, write the report."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<assess|reproduce|probe|report> <replication folder> [paper: DOI | citekey | Zotero item]"
