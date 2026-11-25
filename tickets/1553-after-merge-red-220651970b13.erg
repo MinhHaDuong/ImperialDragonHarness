@@ -5,6 +5,7 @@ Author: merge-gate
 
 --- log ---
 2026-11-25T13:40Z merge-gate created
+2026-11-25T13:41Z Minh-Ha-Duong claude note diagnosis: clock time bomb, not PR #2502 (ticket-only). tests/test_trace_wall_time.py fixes T0=2026-10-20T10:00Z while _report() windows at now-1d-30d; since about 2026-11-20T10:00Z the fixture run starts before the window and is dropped (runs=0, agents=0, KeyError 'runs'). Same 4 failures reproduce on 30483a8, green on 2026-11-18. Fix: derive T0 from now (e.g. now-2d) in the test
 
 --- body ---
 ## Context
