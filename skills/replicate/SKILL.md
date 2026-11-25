@@ -48,8 +48,9 @@ outside any project; otherwise check it is the assigned project:
 
 ```bash
 F=$(realpath -m "$FOLDER")
-H=$(dirname "$(git -C "$IDH_ROOT" rev-parse --path-format=absolute --git-common-dir)")
-[ -d "$H/.git" ] || { echo "refused: harness root unresolved"; exit 1; }   # worktrees sit inside H
+C=$(git -C "${IDH_ROOT:?}" rev-parse --path-format=absolute --git-common-dir) ||
+  { echo "refused: harness root unresolved"; exit 1; }
+H=$(dirname "$C")   # the primary checkout; harness worktrees sit inside it
 case "$F/" in "$H"/*) echo "refused: folder inside the harness"; exit 1;; esac
 D=$F; while [ ! -d "$D" ]; do D=$(dirname "$D"); done   # nearest existing parent
 git -C "$D" rev-parse --show-toplevel || { echo "refused: not in any project"; exit 1; }
