@@ -10,6 +10,7 @@ Author: claude
 2026-11-25T13:53Z Minh-Ha-Duong claude reimagined: one skill with four verbs (assess, reproduce, probe, report), autonomy per verb; rule-6 home replicator/replications/<citekey>/; I4R corpus as validation, held-out benchmark split to 1554
 2026-11-25T13:59Z Minh-Ha-Duong claude note Brodeur reply: no AI rule, teammates expected to use AI; team from stats/CS/geography in infrastructure/energy; open questions updated
 2026-11-25T14:42Z Minh-Ha-Duong decomposed (author: monster ticket): children 1555 skill, 1556 assess validation, 1557 reproduce validation; layout asked of replicator; 1554 now blocked by 1556, 1557
+2026-11-25T15:40Z Minh-Ha-Duong re-ticketed: 1554, 1556, 1557 closed as moved to replicator 0004, 0002, 0003 (+0001 environment); tracker table updated
 
 --- body ---
 ## Context
@@ -135,13 +136,23 @@ Decomposed on 2026-11-25 (author agreed: monster ticket). The body above
 remains the shared reference the children build from. This tracker closes
 after the integration review, not when the last child merges.
 
-| Child | Deliverable | Blocked-by |
-|---|---|---|
-| replicator (asked of the replicator session) | Agree the `replications/<citekey>/` layout and record it in a replicator ticket | none |
-| 1555 | The skill: four verbs, rules reference, `assessment.json` schema, Zotero hand-off, Gavard Scotch mapping; merge before 2026-12-05 | none (layout aligned when replicator rules) |
-| 1556 | `assess` validation, blind, about 10 I4R papers | 1555 |
-| 1557 | `reproduce` validation, Gavard Scotch plus 2 I4R papers; needs an R/Stata environment (author decision open) | 1555 |
-| 1554 | Held-out benchmark | 1556, 1557 |
+Re-ticketed 2026-11-25 (author ruling): work executed in replicator is
+ticketed in replicator; the harness keeps the skill and this tracker.
+Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
+(replicator 9678126, no forge).
+
+| Child | Project | Deliverable | Blocked-by |
+|---|---|---|---|
+| 1555 | harness | The skill, merged in PR #2511 (closed) | none |
+| replicator layout ticket | replicator | `2026-11-25-replications-folder-layout.md`, ruled (7ad7fe2, 145d56e) | none |
+| replicator 0001 | replicator | Pinned R environment under podman | none |
+| replicator 0002 | replicator | `assess` validation, blind, about 10 I4R papers (was 1556) | none |
+| replicator 0003 | replicator | `reproduce` validation, Gavard Scotch transcoded plus 2 I4R papers (was 1557) | 0001 |
+| replicator 0004 | replicator | Held-out benchmark (was 1554) | 0002, 0003 |
+
+Integration review: read the results of 0002 and 0003; a skill fix they
+call for is a new harness ticket. Constraints in every replicator ticket:
+no API spending (subscription plans, or Pi with a local LLM), no Stata.
 
 ## Open before the Games
 
