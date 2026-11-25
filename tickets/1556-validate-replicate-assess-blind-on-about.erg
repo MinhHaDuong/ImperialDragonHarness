@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Validate /replicate assess blind on about 10 I4R papers
+Created: 2026-11-25
+Author: claude
+Blocked-by: 1555
+--- log ---
+2026-11-25T14:41Z claude created
+
+--- body ---
+## Context
+
+Child of tracker 1552 (validation corpus and blinding guards in its body).
+Runs `/replicate assess` on the development split; the held-out benchmark
+is 1554. Writing output under `replicator/replications/` needs a session
+assigned to replicator; the summary lands here in `design/` by a harness
+merge request.
+
+## Exit criteria
+
+- [ ] `assess` run blind (paper and package only, no I4R report) on about 10
+      I4R papers from replicator's `replication_results` table, at least one
+      published after the model's training cutoff.
+- [ ] Each paper's six-row table compared row by row with I4R's; agreement
+      and each disagreement with its cause recorded in
+      `design/replicate-assess-validation-<date>.md`.
+- [ ] Papers used are listed so 1554 can keep its split disjoint.

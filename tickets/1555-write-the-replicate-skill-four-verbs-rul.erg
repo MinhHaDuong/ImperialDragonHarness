@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Write the /replicate skill: four verbs, rules reference, assessment schema
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T14:41Z claude created
+
+--- body ---
+## Context
+
+Child of tracker 1552, which holds the shape (four verbs, autonomy per verb,
+rule-6 home), the sources to build from and the eight rules: read its body
+first. This child is the skill itself, the only piece the Toulouse
+Replication Games on 2026-12-08 need: merge before 2026-12-05.
+
+The `replications/<citekey>/` layout is agreed in replicator (asked of the
+replicator session on 2026-11-25; it records its ruling in a replicator
+ticket); draft against 1552's proposed layout and align once replicator rules.
+Validation runs are children 1556 and 1557, not this one.
+
+## Exit criteria
+
+- [ ] `skills/replicate/SKILL.md` exists with the four verbs `assess`,
+      `reproduce`, `probe`, `report`, each idempotent and resumable from the
+      subproject's files; `probe` halts at `plan.md` until a person signs it.
+- [ ] The eight rules of 1552 live in a reference file under
+      `skills/replicate/references/`, citing the talk as source, written as
+      teaching material readable by non-economists.
+- [ ] `assess` records the ACRe level and per-criterion evidence in the CIRED
+      grid's vocabulary (`grille-i4r.json`, versioned grid id); the I4R
+      six-row Reproducibility Table is derived from the same evidence, not
+      filled separately; `reproduce` updates the same file.
+- [ ] The skill writes output only to `replicator/replications/<citekey>/`,
+      never to the harness, and says a replicator-assigned session does it.
+- [ ] Notes reach Zotero through the existing `scripts/zotero.py` and
+      `/reading-note` paths, as the three child notes the CIRED protocol names.
+- [ ] The workflow is checked against the Gavard Scotch reproduction: each
+      step that run took has a home in a verb, or a recorded reason not to.
+- [ ] Subproject outputs (CSVs, `probe/plan.md`) are usable by teammates who
+      do not run this harness.
+- [ ] If the skill launches workers it states the model per
+      `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
