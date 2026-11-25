@@ -9,6 +9,7 @@ Author: claude
 2026-11-25T13:34Z Minh-Ha-Duong claude note acceptance: facts read in sources (slides MD, CIRED grid and protocol, Gavard Scotch audit exist); no duplicate in open/closed tickets; owner harness (skills/), outputs in target projects; no conflicting ruling; accepted, priority by deadline 2026-12-05
 2026-11-25T13:53Z Minh-Ha-Duong claude reimagined: one skill with four verbs (assess, reproduce, probe, report), autonomy per verb; rule-6 home replicator/replications/<citekey>/; I4R corpus as validation, held-out benchmark split to 1554
 2026-11-25T13:59Z Minh-Ha-Duong claude note Brodeur reply: no AI rule, teammates expected to use AI; team from stats/CS/geography in infrastructure/energy; open questions updated
+2026-11-25T14:42Z Minh-Ha-Duong decomposed (author: monster ticket): children 1555 skill, 1556 assess validation, 1557 reproduce validation; layout asked of replicator; 1554 now blocked by 1556, 1557
 
 --- body ---
 ## Context
@@ -128,29 +129,19 @@ ticket 1554.
 8. Summary names the paper's method; morning = reproduction, data problems,
    coding errors; afternoon = robustness and writing.
 
-## Exit criteria
+## Children (tracker since 2026-11-25)
 
-- [ ] `skills/replicate/SKILL.md` exists with the four verbs `assess`,
-      `reproduce`, `probe`, `report`, each idempotent and resumable from the
-      subproject's files; `probe` halts at `plan.md` until a person signs it.
-- [ ] The eight rules above live in a reference file under
-      `skills/replicate/references/`, citing the talk as source.
-- [ ] `assess` records the ACRe level and per-criterion evidence in the CIRED
-      grid's vocabulary (`grille-i4r.json`, versioned grid id); the I4R
-      six-row Reproducibility Table is derived from the same evidence, not
-      filled separately; `reproduce` updates the same file.
-- [ ] Output lives in `replicator/replications/<citekey>/` with the layout
-      above, never in the harness; a replicator ticket records the layout.
-- [ ] Notes reach Zotero through the existing `scripts/zotero.py` and
-      `/reading-note` paths, as the three child notes the CIRED protocol names.
-- [ ] Validation, development split: `assess` run blind on about 10 I4R
-      papers with its tables compared to I4R's; `reproduce` on the Gavard
-      Scotch reproduction plus 2 I4R papers. Results recorded in `design/`.
-- [ ] The workflow is checked against the Gavard Scotch reproduction: each
-      step that run took has a home in a verb, or a recorded reason not to.
-- [ ] If the skill launches workers it states the model per
-      `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
-- [ ] Usable for the Toulouse Games on 2026-12-08: merged before 2026-12-05.
+Decomposed on 2026-11-25 (author agreed: monster ticket). The body above
+remains the shared reference the children build from. This tracker closes
+after the integration review, not when the last child merges.
+
+| Child | Deliverable | Blocked-by |
+|---|---|---|
+| replicator (asked of the replicator session) | Agree the `replications/<citekey>/` layout and record it in a replicator ticket | none |
+| 1555 | The skill: four verbs, rules reference, `assessment.json` schema, Zotero hand-off, Gavard Scotch mapping; merge before 2026-12-05 | none (layout aligned when replicator rules) |
+| 1556 | `assess` validation, blind, about 10 I4R papers | 1555 |
+| 1557 | `reproduce` validation, Gavard Scotch plus 2 I4R papers; needs an R/Stata environment (author decision open) | 1555 |
+| 1554 | Held-out benchmark | 1556, 1557 |
 
 ## Open before the Games
 

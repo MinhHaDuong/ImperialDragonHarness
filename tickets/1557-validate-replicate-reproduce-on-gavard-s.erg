@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Validate /replicate reproduce on Gavard Scotch and 2 I4R papers
+Created: 2026-11-25
+Author: claude
+Blocked-by: 1555
+--- log ---
+2026-11-25T14:41Z claude created
+
+--- body ---
+## Context
+
+Child of tracker 1552. Runs `/replicate reproduce` on the Gavard Scotch
+reproduction (`~/CNRS/papiers/actif/Gavard Scotch 2026 Climate finance
+counterproductive/`, completed by hand, a known answer) plus 2 I4R papers.
+Needs an execution environment: on 2026-11-25 doudou had neither Stata nor R,
+and `replicator/docker/` was empty. Where it comes from (replicator's docker
+image or the host) is an author decision, open.
+
+## Exit criteria
+
+- [ ] An R (and, if a chosen paper needs it, Stata) environment exists and is
+      recorded where replicator's docs say.
+- [ ] `reproduce` run on Gavard Scotch and 2 I4R papers; for the I4R papers,
+      whether it finds I4R's recorded discrepancies.
+- [ ] Results in `design/replicate-reproduce-validation-<date>.md`.
