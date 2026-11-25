@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Skill to initialize a project's decision log from its history
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T15:21Z claude created
+
+--- body ---
+## Context
+
+Filed from the replicator project (`~/CNRS/projets/actifs/replicator`) at
+the author's request on 2026-11-25: "decision.log initialization: create a
+harness skill". Replicator's `AGENTS.md` (commit e96e253) now names
+`plans/decision.log` — "history of project key choices and their
+rationale" — but the file does not exist. Writing it once by hand for one
+project is the case a generic skill should serve instead (harness defines
+skills and generic organization; projects define implementation).
+
+## Request
+
+A skill that initializes a project's decision log by mining what the
+project already records: merge commits and commit bodies (the "why this
+and not another" that `rules/git.md` asks for), plan/design files, closed
+tickets. Each entry: date, decision, alternatives considered, rationale,
+source reference (commit SHA, file, ticket). The output path and file
+format are the caller's (replicator wants `plans/decision.log`); the skill
+hardcodes neither.
+
+## Premise checks for the receiver (Imagine)
+
+- **Overlap with standing memory:** `rules/git.md` makes git the long-term
+  memory and keeps history out of top-level files; roar captures journal
+  entries under `memory/journal/`; smelt consolidates memory. Decide
+  whether a decision log is a derived, regenerable view of git (fits the
+  rule) or a second hand-maintained store (conflicts with it), and say so
+  in the skill.
+- **Init vs upkeep:** the request is initialization. Whether later entries
+  come from the same skill on demand, from roar, or by hand is a design
+  question to settle, not assume.
+
+## Exit criteria
+
+- [ ] `skills/<name>/SKILL.md` builds a decision log from a project's git
+      history, plans and tickets, every entry carrying a source reference.
+- [ ] Output path and format come from the caller; nothing project-specific
+      is hardcoded.
+- [ ] The skill states its relation to `rules/git.md` § Git is the
+      project's long-term memory, roar's journal and smelt.
+- [ ] Trial on replicator produces `plans/decision.log`, landed by a
+      replicator session.
