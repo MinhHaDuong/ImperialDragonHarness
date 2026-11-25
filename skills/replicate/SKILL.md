@@ -2,7 +2,7 @@
 metadata:
   category: research
 name: replicate
-description: "Replicate an empirical paper, I4R style: assess its package, rerun it, plan robustness checks, write the report."
+description: "Replicate an empirical paper, I4R style: assess its package, rerun it, plan robustness checks, report."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<assess|reproduce|probe|report> <replication folder> [paper: DOI | citekey | Zotero item]"
