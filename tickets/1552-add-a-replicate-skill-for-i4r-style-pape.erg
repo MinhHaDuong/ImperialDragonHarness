@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-11-25T13:30Z claude created
+2026-11-25T13:33Z Minh-Ha-Duong claude note added the CIRED reproducible-science project as source and consumer: ACRe grid and Zotero storage contract
 
 --- body ---
 ## Context
@@ -39,6 +40,15 @@ counterpart and should not duplicate replicator code.
 - I4R report template on Zenodo ("I4R Template: Reproduction Report -
   General"), not yet fetched: the authoritative report format.
 - Prior harness analysis: `design/pillage-0266-agentic-reproduction-2026-07-12.md`.
+- CIRED reproducible-science project (`~/CNRS/projets/actifs/science reproductible`,
+  launched 2026-11-23): `monitoring/grille-i4r.json` adapts the ACRe 10-level
+  scale used in the I4R study (L1-L10, per-criterion evidence, `a_evaluer` /
+  `non_etabli` / `non_applicable`); `monitoring/protocole.md` § Stockage et
+  intégration IDH fixes the storage contract: one Zotero item per publication
+  with three child notes (reading note, preliminary assessment, reproduction
+  report), evidence exportable to `classer.py --preuves`, published with
+  `scripts/zotero.py publish-notes`. Its workshop `ateliers/04-reproductibilite`
+  is still empty: this skill can serve as its teaching material.
 
 ## Rules the talk makes binding (report acceptance criteria)
 
@@ -71,6 +81,13 @@ counterpart and should not duplicate replicator code.
       step that run took has a home in the skill, or a recorded reason not to.
 - [ ] If the skill launches workers it states the model per
       `skills/route/SKILL.md` (`tests/test_launch_model_choice.py` passes).
+- [ ] The preliminary assessment records the ACRe level and per-criterion
+      evidence in the CIRED grid's vocabulary (`grille-i4r.json`, versioned
+      grid id), so a replication feeds the CIRED monitoring without
+      re-entry; the I4R six-row Reproducibility Table is derived from the
+      same evidence, not filled separately.
+- [ ] Notes reach Zotero through the existing `scripts/zotero.py` and
+      `/reading-note` paths, as the three child notes the CIRED protocol names.
 - [ ] Output lives in the target project (paper or mission folder), never in
       the harness.
 - [ ] Usable for the Toulouse Games on 2026-12-08: merged before 2026-12-05.
