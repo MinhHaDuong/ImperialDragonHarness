@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-11-25T14:41Z claude created
+2026-11-25T14:44Z Minh-Ha-Duong layout ruled by replicator 7ad7fe2 (robustness/ not probe/, README.md, data/, out/ CSV columns, manifest fields shared with Phase B)
 
 --- body ---
 ## Context
@@ -14,9 +15,31 @@ rule-6 home), the sources to build from and the eight rules: read its body
 first. This child is the skill itself, the only piece the Toulouse
 Replication Games on 2026-12-08 need: merge before 2026-12-05.
 
-The `replications/<citekey>/` layout is agreed in replicator (asked of the
-replicator session on 2026-11-25; it records its ruling in a replicator
-ticket); draft against 1552's proposed layout and align once replicator rules.
+The layout was ruled by replicator on 2026-11-25 (replicator main 7ad7fe2,
+`~/CNRS/projets/actifs/replicator/tickets/2026-11-25-replications-folder-layout.md`);
+it supersedes 1552's proposal:
+
+```
+replications/<citekey>/   citekey = Zotero Better BibTeX key, ASCII lowercase
+  README.md        paper, method, status per check, effort/cost, next blocker
+  manifest.json    shares Phase B run.yaml identity fields: doi, citekey,
+                   zotero_item, family_id, package{source_url, version,
+                   retrieved, language}, files[]{path, sha256, bytes, license,
+                   redistributable}, environment{interpreter, lockfile}
+  fetch.sh         re-fetches non-redistributable inputs into data/,
+                   fails on hash mismatch
+  assessment.json  ACRe level + per-criterion evidence, grid id
+  data/            fetched inputs, git-ignored
+  reproduce/  robustness/  report/   (robustness/, not probe/: I4R vocabulary)
+  out/             tracked CSVs, columns mapping onto replication_results:
+                   outcome_key, stage (reproduce|robustness), original_value,
+                   reproduced_value, se, p_value, status, spec; full
+                   precision, the report rounds to 3 digits
+```
+
+Whether the `probe` verb is renamed to match `robustness/` is this
+ticket's call. Replicator's first use (the Toulouse pilot) creates the
+folder.
 Validation runs are children 1556 and 1557, not this one.
 
 ## Exit criteria
