@@ -2,6 +2,7 @@
 Title: /replicate: identification review (causal DAG) beside the score
 Created: 2026-11-26
 Author: claude
+Closed: autoclosed — PR #2539
 
 --- log ---
 2026-11-26T19:41Z claude created
@@ -14,6 +15,7 @@ Author: claude
 
 2026-11-26T22:45Z reviewer raid ebfa91 Execute: adapted pinned replicator method into report subsection and attributed reference; preserved four verbs, computation-only ACRe and six rows, and 1568 confirmation subsection
 2026-11-26T22:45Z reviewer raid ebfa91 Verify: lint 191 passed, fast 1966 passed; distinct semantic worker returned no findings; no-spend local different-family endpoints refused connections, perspective unavailable; evidence tickets/reviews/1569-identification-adherence.md
+2026-11-26T22:33Z reviewer closed — autoclosed — PR #2539
 
 --- body ---
 ## Context and authority
