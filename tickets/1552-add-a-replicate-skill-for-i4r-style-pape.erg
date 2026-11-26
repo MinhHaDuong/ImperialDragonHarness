@@ -25,6 +25,7 @@ Author: claude
 2026-11-26T19:41Z reviewer integration review (replicator 0002 closed as development cohort, 0007 Carter confirmed, 0008 identification): new children 1568 (independent-confirmation reproduce mode), 1569 (identification review); filed at author request, receiving Imagine pending
 2026-11-26T21:58Z codex note receiving Imagine1568/1569 completed against replicator eded457; both accepted with qualifications for Plan, numerical confirmation and causal identification kept separate; no implementation or integration closure authorized
 2026-11-26T22:23Z reviewer new child 1570 (probe: inventory-first plan, design menus, sign-off modes) from replicator 0003; full-chain blind pilot with panel sign-off started in replicator
+2026-11-26T22:39Z reviewer children1568 and1569 closed by PR2537 and PR2539 on2026-11-26; tracker child rows updated; integration tracker remains open
 
 --- body ---
 ## Context
@@ -175,8 +176,8 @@ Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
 | 1565 | harness | Verified-gap provision contract, closed PR #2530 (2026-11-26); replicator comparator pickup remains | none |
 | 1566 | harness | Boundary uncertainty separated from execution, closed PR #2531 (2026-11-26); replicator comparator pickup remains | none |
 | 1567 | harness | Explicit selected-target contract, closed PR #2534 (2026-11-26); whole-paper default retained; downstream selected-scope encoding/validation remains | none |
-| 1568 | harness | Independent-confirmation mode for `reproduce` (from replicator 0007), receiving Imagine accepted with qualifications (2026-11-26); Plan pending | none |
-| 1569 | harness | Identification review beside the score (from replicator 0008), receiving Imagine accepted with qualifications (2026-11-26); Plan pending | none |
+| 1568 | harness | Selected-claim confirmation for `reproduce`, closed PR #2537 (2026-11-26); frozen evidence and checker limits, whole-paper default retained | none |
+| 1569 | harness | Identification review beside the computational score, closed PR #2539 (2026-11-26); argued verdicts without subjective probabilities | none |
 | 1570 | harness | `probe`: inventory-first plan, design menus in references, sign-off modes (from replicator 0003), receiving Imagine pending | none |
 
 Integration review: read the results of 0002 and 0003; a skill fix they
