@@ -7,6 +7,7 @@ Author: reviewer
 2026-11-26T07:09Z reviewer created
 2026-11-26T07:09Z reviewer filed from padme 0112 (PR #263)
 2026-11-26T08:28Z reviewer receiving review: current raid_land.py and forge.py confirm auto=True becomes --auto without capability fallback; padme refusal is sender-reported, not rerun here. No duplicate open request; 1473 changed molt instructions only. Harness owns the helpers. Prior ruling preferred preserving auto-merge-off; author is considering a padme configuration change, with no setting changed by this filing. Accepted into ticket store on explicit author merge request; no implementation or priority commitment.
+2026-11-26T08:36Z reviewer Imagine raid 8484af: receiving premise rechecked against e690b9ebc: current helpers still always request auto on ungated GitHub; 1473 only covered molt; harness owns adapter; author now explicitly requests tool fix with settings unchanged. One bounded ticket; per-ticket reimagine skipped. Blind-Spot identified blanket retry hazard and preserved enabled-auto, gated, no-forge boundaries; restrict fallback to definitive auto-disabled refusal, pin captured head, retain unknown-outcome handling. EC unchanged.
 
 --- body ---
 ## Context
