@@ -2,6 +2,7 @@
 Title: /replicate assess: raw/analysis and cleaning/analysis boundaries; No-outranks rule disagrees with I4R Partially
 Created: 2026-11-25
 Author: claude
+Closed: operational data/code boundaries and component-wise table readings verified — PR #2522
 
 --- log ---
 2026-11-25T16:07Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-11-26T06:54Z codex note raid Plan: after 1561, define deposited raw and transformation-based cleaning; separate code provision from inputs/execution; mixed or undecidable split Partially, absent components No; walk supplied cases and true-absence control.
 
 2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+2026-11-26T07:26Z reviewer closed — operational data/code boundaries and component-wise table readings verified — PR #2522
 
 --- body ---
 ## Context

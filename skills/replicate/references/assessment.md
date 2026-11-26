@@ -20,7 +20,7 @@ the I4R study (<https://doi.org/10.1038/s41586-026-10251-x>).
   "criteres": {
     "analyse_partiellement_accessible": "Table 1 code and variables are present; appendix Tables A2-A3 lack sector inputs",
     "chaine_brute_incomplete": "the raw chain stops at the panel: neither CRS records nor cleaning code",
-    "code_nettoyage_inaccessible": "no script builds data/Final_panel_v6.dta from CRS records"
+    "code_nettoyage_inaccessible": "package inventory and script inspection found no cleaning transformations for any applicable path"
   },
   "non_etabli": {"donnees_brutes_completes": "CRS activity records not in the deposit"},
   "a_evaluer": ["cra_reussie", "cra_echouee", "crr_reussie", "crr_echouee"]
@@ -87,6 +87,44 @@ statistic of the main result matches from the analysis data, and
 `cra_echouee` when one does not. `crr_*` is the same check from the raw data.
 The evidence is the path of the CSV and its rows' `outcome_key`.
 
+## Raw inputs and cleaning code
+
+Raw data are the authors' deposited starting extracts for the documented
+raw-to-analysis pipeline. Their provision does not require the entire
+upstream archive, FOIA database, or source provider's database when the
+extracts contain all inputs needed by that pipeline. Verify this boundary
+against the documentation and transformations for every applicable path in
+the whole-paper inventory. A deposited final analysis panel remains analysis
+data; calling it the first available file does not establish raw provision.
+
+Cleaning code comprises transformations that prepare analysis inputs,
+including merges, recodes, lags, imputations, and sample construction. Count
+these operations wherever they occur, including inside an analysis script.
+Assess whether code covers each documented transformation from the starting
+extracts to analysis inputs; a separate cleaning script is unnecessary.
+Present cleaning operations with a missing panel-build stage establish
+partial cleaning coverage, rather than total code inaccessibility.
+
+Assess code provision separately from input availability and execution.
+Complete cleaning scripts can establish `code_nettoyage_complet` while an
+unavailable dictionary or input prevents complete raw provision or a run.
+A script that writes no output needs execution diagnosis; that observation
+alone establishes neither omitted code nor a partial code-provision row.
+Record an established missing code stage, missing input, or execution defect
+under its own evidence and affected component.
+
+When inspection cannot resolve whether a supplied dataset is raw or
+analysis data, record the ambiguity and its evidence. Read raw provision as
+Partially through `donnees_brutes_partielles`; do not guess Fully or No.
+For inseparable cleaning and analysis code, describe the demonstrated
+cleaning operations and unresolved coverage in `chaine_brute_incomplete`
+and read cleaning provision as Partially. This is an examined ambiguity,
+not an unexamined component (`a_evaluer`). It establishes no successful raw
+run; an analogous unresolved raw/analysis boundary makes the from-raw table
+row Partially, with that reason, rather than asserting a matched raw run or
+`crr_reussie`. Keep any unexamined output comparisons explicit under the
+execution-coverage rule in [The six-row table, derived](#the-six-row-table-derived).
+
 ## The six-row table, derived
 
 The four provision rows use whole-paper package coverage; the two execution
@@ -94,9 +132,15 @@ rows use whole-paper reproduction coverage. Each row comes from the criteria,
 the output inventory, and `out/reproduce.csv`. The grid has
 no criterion for every "Partially" cell. There, the evidence text of
 `analyse_partiellement_accessible` or `chaine_brute_incomplete` must name
-which piece is partial, and the row reads it. A "No" criterion
-outranks that reading: `code_nettoyage_inaccessible` makes the cleaning-code
-row No even when `chaine_brute_incomplete` is also established.
+which piece is partial, and the row reads it. Resolve coverage separately
+for each component. No requires verified absence or inaccessibility of the
+entire relevant component across applicable paths; a missing stage alongside
+available cleaning operations is Partially. If evidence supports both a No
+criterion and partial provision for the same component, reconcile the paths
+and operations and correct the criterion dossier before deriving the row.
+Do not resolve contradictory evidence by blanket precedence. A total absence
+of cleaning code can coexist with `chaine_brute_incomplete` describing
+available raw data: that evidence concerns different components.
 
 | Row | Fully | Partially | No |
 |---|---|---|---|
@@ -105,7 +149,7 @@ row No even when `chaine_brute_incomplete` is also established.
 | Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming the data | `aucune_donnee_accessible` |
 | Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming the code, or `scripts_accessibles` alone | `aucun_code_accessible` |
 | Reproducible from analysis data | every required statistic in the whole-paper inventory has a `stage=reproduce` analysis-data row with `status=match` | some required statistics match and others fail or have known missing inputs | none match, or the code does not run |
-| Reproducible from raw data | same, for rows from raw data | same | same, or raw data or cleaning code missing |
+| Reproducible from raw data | same, for rows from raw data | same, or the examined unresolved raw/analysis boundary in [Raw inputs and cleaning code](#raw-inputs-and-cleaning-code) | same, or raw data or cleaning code missing, when the boundary is resolved |
 
 The execution rows require an inventory of all applicable outputs and their
 required comparison statistics, mapped to `cra:` or `crr:` rows separately.
@@ -118,9 +162,12 @@ for the selected main result can coexist with a Partially or not yet assessed
 whole-paper execution row.
 
 A provision row whose inputs are still `a_evaluer` is printed as "not yet
-assessed", never guessed. When no row from raw data exists because the package starts
-at the analysis data, "Reproducible from raw data" is No, and the reason is
-recorded.
+assessed", never guessed. When the package is verified to start only at final analysis
+data and no raw run is possible, "Reproducible from raw data" is No, and the
+reason is recorded. Apply the examined ambiguous-boundary reading in
+[Raw inputs and cleaning code](#raw-inputs-and-cleaning-code)
+when the split cannot be resolved; a missing raw-run row alone does not
+settle that boundary.
 
 ## out/*.csv
 
