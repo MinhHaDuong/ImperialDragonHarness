@@ -79,9 +79,48 @@ runtime does not expose a served model ID or observed effort. Attribution
 therefore uses model `not observed`, family OpenAI, and effort `not observed`.
 Requested routing intent is not measured deployment identity.
 
-Review transport will use one actual same-family collaboration worker for
-semantic adherence and contract consistency, with its completed report and
-launch task path recorded below and on review notes. It adds another reading,
-not cross-family independence. No Anthropic or external-provider export is
-authorized or attempted. The orchestrator records writer lines only after
-the completed gaze review exists.
+Semantic review completed through the actual collaboration worker
+`/root/raid_1567/blind_plan/consistency1567`, launched with inherited context.
+Its served model and effort were not exposed; both remain `not observed`,
+family OpenAI. The implementation request's model pin is routing intent only.
+The completed [semantic report](semantic-review.md) identifies its reviewed
+head and independently derives scenario outcomes, with no findings.
+This is same-family review, not cross-family independence. No Anthropic or
+external-provider export was attempted. Gaze reuses that seat for the final
+head and checks the evidence-only delta; review notes hold the completed gaze
+result. The orchestrator records writer lines only after that review exists.
+
+## Self-gate evidence
+
+The declared adherence runner is `Makefile`'s documented `lint` target,
+validated with `make -n lint` and run as `make lint`: PASS. The fast tier
+`make check-fast` also passed. Static reference resolution is not applicable
+(no changed TeX, Quarto, or bibliography). The semantic phase was required
+because the diff changes skill instructions and scientific assessment meaning;
+the actual completed worker report satisfies that phase. No trace was supplied.
+
+```yaml
+adherence: PASS
+mechanical_runner: ran
+escalation: null
+semantic_review:
+  applicable: true
+  status: ran
+  reason: skill instructions and scientific assessment contract changed
+  worker_id: /root/raid_1567/blind_plan/consistency1567
+  model: not observed
+  family: OpenAI
+  effort: not observed
+  route: collaboration, inherited context
+  launch_evidence: design/replicate-target-1567/README.md:82
+  completion_evidence: design/replicate-target-1567/semantic-review.md:1
+mechanical_failures: []
+semantic_findings: []
+```
+
+Documentary scenario checks were selected for this prose/instruction change.
+No implementation test was added to mirror wording. Existing scoped-test
+selection is none/fallback none/skipped; this is not a claimed scoped test
+pass. The repository adherence and fast tiers above are separate full-tier
+checks. No source comparator alignment, scientific execution, or reference
+accuracy assessment is certified by them.
