@@ -171,9 +171,13 @@ The goal is the I4R report, written as a team.
 
 1. Choose the I4R template from `references/templates/INDEX.md`, using the
    context the folder already holds: the template I4R named in the assignment
-   first, then the paper's field and journal, then the kind of work
-   (reproduction and robustness report, or forensic commentary on specific
-   problems). When two fit, take the General one. Copy the chosen Word or
+   first. Otherwise use the kind of work and the paper's field and journal:
+   choose Commentary from Forensic Report for forensic commentary on specific
+   problems; choose Psychological Science Phase 2 for a reproduction report
+   in that I4R project; use General for other reproduction and robustness
+   reports. Psychology alone does not establish Phase 2 membership. If the
+   context leaves the specific templates equally applicable, use General and
+   explain the uncertainty. Copy the chosen Word or
    LaTeX files into `report/` if absent and record in `manifest.json`
    `template{name, record, version, reason}`; the reason is one sentence naming
    the evidence. The template governs the format. Where it is silent, follow
