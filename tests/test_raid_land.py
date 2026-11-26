@@ -147,6 +147,75 @@ def test_happy_path_prints_one_row_and_syncs(repo):
     assert out[-1].startswith("sync-local-main")
 
 
+AUTO_DISABLED = "GraphQL: Auto merge is not allowed for this repository (enablePullRequestAutoMerge)"
+
+
+def gh_merge_stub(forge, monkeypatch, errors):
+    """Exercise the real GitHub merge adapter inside the controlled lander fixture."""
+    calls = []
+    replies = iter(errors)
+
+    def gh(*args):
+        calls.append(list(args))
+        error = next(replies)
+        return subprocess.CompletedProcess(args, bool(error), "", error)
+
+    monkeypatch.setattr(forge, "_gh", gh, raising=False)
+    monkeypatch.setattr(forge, "merge", lambda pr, h, auto: rl.forge.GhForge.merge(forge, pr, h, auto))
+    return calls
+
+
+def test_ungated_auto_disabled_merges_directly_at_same_head_and_reads_back(repo, monkeypatch):
+    forge = StubForge(head(repo))
+    calls = gh_merge_stub(forge, monkeypatch, [AUTO_DISABLED, ""])
+    code, _ = land(repo, forge, head(repo))
+    assert code == 0 and forge.reads == 1
+    assert calls == [
+        ["pr", "merge", "7", "--merge", "--match-head-commit", head(repo), "--auto"],
+        ["pr", "merge", "7", "--merge", "--match-head-commit", head(repo)],
+    ]
+
+
+@pytest.mark.parametrize("gated", [False, True])
+def test_gh_landing_preserves_auto_and_gated_direct_routes(repo, monkeypatch, gated):
+    forge = StubForge(head(repo))
+    monkeypatch.setattr(rl, "gate", lambda cwd, *a: 0 if gated else 1)
+    calls = gh_merge_stub(forge, monkeypatch, [""])
+    code, _ = land(repo, forge, head(repo))
+    assert code == 0
+    assert calls == [["pr", "merge", "7", "--merge", "--match-head-commit", head(repo)]
+                     + ([] if gated else ["--auto"])]
+
+
+@pytest.mark.parametrize("error", ["not mergeable", "permission denied", "Auto merge is not allowed",
+                                   "GraphQL: Pull request is in clean status (enablePullRequestAutoMerge)"])
+def test_other_auto_refusals_never_retry(repo, monkeypatch, error):
+    forge = StubForge(head(repo), readback=f"OPEN {head(repo)} -")
+    calls = gh_merge_stub(forge, monkeypatch, [error])
+    with pytest.raises(rl.Refusal, match="still open"):
+        land(repo, forge, head(repo))
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("back", [None, "OPEN " + "b" * 40 + " -", "MERGED " + "b" * 40 + " -"])
+def test_auto_disabled_direct_success_requires_matching_merged_readback(repo, monkeypatch, back):
+    forge = StubForge(head(repo))
+    forge.readback = back
+    calls = gh_merge_stub(forge, monkeypatch, [AUTO_DISABLED, ""])
+    with pytest.raises(rl.PostMerge):
+        land(repo, forge, head(repo))
+    assert len(calls) == 2 and forge.reads == 1
+
+
+def test_auto_disabled_direct_retry_refuses_moved_head_without_third_attempt(repo, monkeypatch):
+    forge = StubForge(head(repo), readback=f"OPEN {'b' * 40} -")
+    calls = gh_merge_stub(forge, monkeypatch, [AUTO_DISABLED, "head commit does not match"])
+    with pytest.raises(rl.PostMerge):
+        land(repo, forge, head(repo))
+    assert len(calls) == 2
+    assert all(call[call.index("--match-head-commit") + 1] == head(repo) for call in calls)
+
+
 def test_unsynced_main_exits_4_without_remerge(repo, monkeypatch):
     monkeypatch.setattr(rl, "sync", lambda p, b: (False, ["sync-local-main: local main diverged — left untouched"]))
     forge = StubForge(head(repo))
