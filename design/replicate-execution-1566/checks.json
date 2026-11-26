@@ -1,0 +1,501 @@
+{
+  "source_commit": "80c8a1df298e1dec8afca857875554fb0d5243da",
+  "method": "Read-only original-comparator import with bytecode disabled; no reproduce.py main invocation; only this harness artifact written. Independent synthetic execution inputs exercise the existing comparator, not a new evaluator or scientific run.",
+  "source_files": [
+    {
+      "path": "scripts/compare_assess.py",
+      "sha256": "9d70cf063276a2c656fe03a1c4088c84cae4e4a8fc8c3a1feea24c949a5e454d",
+      "bytes": 12002,
+      "matches_handoff": true
+    },
+    {
+      "path": "replications/investigation-2026-11-26/controls.json",
+      "sha256": "6975efbdf04ce0f7c1d5dd0c4cdd5a0735defde68e598208a88162fbfebe33ad",
+      "bytes": 4365,
+      "matches_handoff": true
+    }
+  ],
+  "supplied_boundary_control": {
+    "name": "raw_boundary_without_run",
+    "input": {
+      "criteres": {
+        "donnees_brutes_partielles": "assembled panel boundary unresolved"
+      },
+      "non_etabli": {},
+      "a_evaluer": [
+        "analyse_partiellement_accessible",
+        "aucun_code_accessible",
+        "aucune_donnee_accessible",
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "code_nettoyage_inaccessible",
+        "cra_echouee",
+        "cra_reussie",
+        "crr_echouee",
+        "crr_reussie",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes",
+        "donnees_brutes_inaccessibles",
+        "scripts_accessibles"
+      ],
+      "blocked": {
+        "paper": {
+          "reason": "unseen"
+        }
+      },
+      "raw_analysis_boundary": {
+        "status": "unresolved",
+        "evidence": "panel before lagging"
+      }
+    },
+    "derived": {
+      "raw_data": "Partially",
+      "cleaning_code": "not yet assessed",
+      "analysis_data": "not yet assessed",
+      "analysis_code": "not yet assessed",
+      "repro_analysis": "not yet assessed",
+      "repro_raw": "Partially"
+    }
+  },
+  "independent_execution_controls": [
+    {
+      "name": "independent_boundary_without_run",
+      "input": {
+        "criteres": {
+          "donnees_brutes_partielles": "Historical boundary-only coding: inspected assembled panel requires recodes, but upstream assembly boundary is unresolved; no verified raw input gap is claimed."
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "unresolved",
+          "evidence": "Hypothetical assembled panel with embedded recodes; upstream raw-to-panel assembly has not been resolved."
+        },
+        "execution_coverage": {}
+      },
+      "reproduction_rows": [],
+      "actual_unchanged_comparator": {
+        "raw_data": "Partially",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "Partially"
+      }
+    },
+    {
+      "name": "independent_observed_partial",
+      "input": {
+        "criteres": {},
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {
+          "raw": {
+            "complete": true,
+            "required_outcomes": [
+              "crr:p.estimate",
+              "crr:p.se"
+            ]
+          }
+        }
+      },
+      "reproduction_rows": [
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.estimate",
+          "status": "match"
+        },
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.se",
+          "status": "discrepancy"
+        }
+      ],
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "Partially"
+      }
+    },
+    {
+      "name": "independent_complete_match",
+      "input": {
+        "criteres": {},
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {
+          "raw": {
+            "complete": true,
+            "required_outcomes": [
+              "crr:p.estimate",
+              "crr:p.se"
+            ]
+          }
+        }
+      },
+      "reproduction_rows": [
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.estimate",
+          "status": "match"
+        },
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.se",
+          "status": "match"
+        }
+      ],
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "Fully"
+      }
+    },
+    {
+      "name": "independent_observed_failure",
+      "input": {
+        "criteres": {},
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {
+          "raw": {
+            "complete": true,
+            "required_outcomes": [
+              "crr:p.estimate",
+              "crr:p.se"
+            ]
+          }
+        }
+      },
+      "reproduction_rows": [
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.estimate",
+          "status": "discrepancy"
+        },
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.se",
+          "status": "discrepancy"
+        }
+      ],
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "No"
+      }
+    },
+    {
+      "name": "independent_provision_impossibility",
+      "input": {
+        "criteres": {
+          "donnees_brutes_inaccessibles": "Hypothetical inspected complete deposit starts at final analysis data; required raw inputs absent.",
+          "code_nettoyage_inaccessible": "Hypothetical inspected complete deposit has no raw-to-analysis transformations on applicable paths."
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {}
+      },
+      "reproduction_rows": [],
+      "actual_unchanged_comparator": {
+        "raw_data": "No",
+        "cleaning_code": "No",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "No"
+      }
+    },
+    {
+      "name": "independent_incomplete_comparison_coverage",
+      "input": {
+        "criteres": {},
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {
+          "raw": {
+            "complete": true,
+            "required_outcomes": [
+              "crr:p.estimate",
+              "crr:p.se"
+            ]
+          }
+        }
+      },
+      "reproduction_rows": [
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.estimate",
+          "status": "match"
+        }
+      ],
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      }
+    },
+    {
+      "name": "independent_failed_attempt_before_numbers",
+      "input": {
+        "criteres": {},
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles",
+          "scripts_accessibles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {
+          "status": "resolved",
+          "evidence": "Hypothetical control stipulates the documented raw starting boundary, not an empirical package finding."
+        },
+        "execution_coverage": {
+          "raw": {
+            "complete": true,
+            "required_outcomes": [
+              "crr:p.estimate",
+              "crr:p.se"
+            ]
+          }
+        }
+      },
+      "reproduction_rows": [
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.estimate",
+          "status": "not_run",
+          "reason": "Synthetic control stipulates an attempted raw run failed at launch before producing numbers; see this control's stipulated failure record."
+        },
+        {
+          "stage": "reproduce",
+          "outcome_key": "crr:p.se",
+          "status": "not_run",
+          "reason": "Synthetic control stipulates an attempted raw run failed at launch before producing numbers; see this control's stipulated failure record."
+        }
+      ],
+      "stipulated_failure_record": "Synthetic fixture fact, not an actual package run log: run was attempted from the documented raw boundary and exited nonzero before producing estimate or SE; both inventoried required comparisons were affected.",
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "No"
+      }
+    }
+  ],
+  "frozen_blair": {
+    "assessment": {
+      "path": "replications/blair2023peacekeeping/assessment.json",
+      "sha256": "1a17e2ec06dd87ced40422c2766c7b27f42edc52b5b5f06c7aaacc61e41c1741",
+      "bytes": 10070
+    },
+    "execution_coverage": {},
+    "raw_analysis_boundary": {
+      "status": "unresolved",
+      "evidence": "Readme calls data_replication.dta the analysis-replication dataset; replication.do:31 immediately loads a merged country-year panel then :35\u2013119 performs sample/lag/imputation preparation. No source-to-panel assembly code or source-extract boundary documented in staged files."
+    },
+    "run_criteria_unexamined": [
+      "cra_echouee",
+      "cra_reussie",
+      "crr_echouee",
+      "crr_reussie"
+    ],
+    "blocked": {
+      "code_analyse_complet": {
+        "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+        "source": "https://doi.org/10.7910/DVN/UOYDHN",
+        "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+      },
+      "code_nettoyage_complet": {
+        "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+        "source": "https://doi.org/10.7910/DVN/UOYDHN",
+        "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+      },
+      "donnees_analyse_completes": {
+        "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+        "source": "https://doi.org/10.7910/DVN/UOYDHN",
+        "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+      },
+      "donnees_brutes_completes": {
+        "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+        "source": "https://doi.org/10.7910/DVN/UOYDHN",
+        "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+      },
+      "donnees_brutes_inaccessibles": {
+        "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+        "source": "https://doi.org/10.7910/DVN/UOYDHN",
+        "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+      },
+      "paper": {
+        "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+        "source": "https://doi.org/10.1017/s0003055422001319",
+        "next_step": "Supply original main-paper full text."
+      }
+    },
+    "reproduction_csv_exists": false,
+    "actual_unchanged_comparator": {
+      "raw_data": "Partially",
+      "cleaning_code": "Partially",
+      "analysis_data": "Partially",
+      "analysis_code": "Partially",
+      "repro_analysis": "not yet assessed",
+      "repro_raw": "Partially"
+    },
+    "prior_observed_raw_execution": "Partially",
+    "evidence": "Examined unresolved raw/analysis boundary for supplied assembled country-year panel. This is the schema\u2019s boundary-ambiguity reading only; no match or successful raw run claimed. Primary replication.do:31\u2013119."
+  },
+  "prior_preservation_evidence": "../replicate-provision-1565/checks.json records the all-50-artifact and all-40-provision recheck; not duplicated here.",
+  "limitation": "Old comparator results remain actual; the revised contract-expected no-run interpretation and basis labels are documented separately in README.md. No new assessment, package execution, historical inventory certification, I4R adjudication, target alignment, or accuracy claim."
+}

@@ -119,9 +119,13 @@ ticket 1554.
 
 ## Rules the talk makes binding (report acceptance criteria)
 
-1. Reproducibility Table always present: six rows (raw data, cleaning code,
-   analysis data, analysis code provided; reproducible from raw, from analysis
-   data) x Fully / Partially / No. Show only discrepancies, not matches.
+1. Reproducibility Table always present: retain all six rows (raw data,
+   cleaning code, analysis data, analysis code provided; reproducible from
+   raw, from analysis data), including Fully and "not yet assessed" statuses
+   with their evidence basis. Use Fully / Partially / No only when
+   established; fixed three-column templates leave unknown categories
+   unmarked and state the status/reason beside the row. Show only
+   discrepancies in the separate detailed statistic comparisons.
 2. Every reported statistic at 3-digit precision (coefficient, SE, p-value or
    CI), each robustness result next to the original estimate; a check with no
    original comparator is suspect.

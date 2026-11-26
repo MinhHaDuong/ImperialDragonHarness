@@ -36,3 +36,20 @@ of blanket No precedence with component-specific evidence reconciliation.
 Template selection and the six-row table's coverage stay as introduced by
 1559 and 1561. Ticket 1563's blocked/blind, MD5, and generated-data handling
 remain outside this change.
+
+
+## Dated supersession: 2026-11-26
+
+The preceding walkthrough preserves ticket 1562's supplied scenarios and
+then-current interpretation; it is historical evidence, not current
+assessment guidance. Ticket 1565 superseded its ambiguity-only partial
+provision reading: unresolved raw/analysis and cleaning coverage stay not
+yet assessed, while demonstrated provision plus a verified missing required
+stage remains Partially. Ticket 1566 supersedes its boundary-only from-raw
+execution Partially reading: uncertainty stays explicit and supplies no
+numerical execution category without comparison evidence. A verified
+analysis-only package's No is labelled provision-based impossibility,
+distinct from an observed failed run. See the current
+[assessment reference](../../skills/replicate/references/assessment.md) and
+[execution walkthrough](../replicate-execution-1566/README.md). This context
+changes none of the original observations or supplied package claims.

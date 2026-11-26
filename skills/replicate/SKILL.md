@@ -224,10 +224,13 @@ The goal is the I4R report, written as a team.
    Optionally read each record's `links.latest` on Zenodo (needs the network)
    and report a newer version; do not switch to it.
 2. Write the report in `report/`. Name the paper's method in the summary
-   (rule 8). Include the Reproducibility Table, derived from
-   `assessment.json`, showing only discrepancies. Round values to three
-   digits from `out/*.csv`. Put each robustness result beside its original
-   estimate. Disclose AI assistance.
+   (rule 8). Include all six rows of the Reproducibility Table, derived from
+   `assessment.json`, with each evidence basis and any "not yet assessed"
+   status visible (`references/assessment.md`). Distinguish provision-based
+   impossibility from observed execution failure. Show only discrepancies
+   in the detailed statistic comparisons, rounding values to three digits
+   from `out/*.csv`. Put each robustness result beside its original estimate.
+   Disclose AI assistance.
 3. List the questions for the original authors. Do not send them.
 4. Draft `report/<citekey>-reproduction-report.html` and publish it as in
    § Zotero notes.
