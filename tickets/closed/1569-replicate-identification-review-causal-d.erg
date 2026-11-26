@@ -2,12 +2,20 @@
 Title: /replicate: identification review (causal DAG) beside the score
 Created: 2026-11-26
 Author: claude
+Closed: autoclosed — PR #2539
 
 --- log ---
 2026-11-26T19:41Z claude created
 2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
 2026-11-26T21:58Z codex note receiving Imagine accepted with qualifications; four premise checks recorded below; Plan only, no implementation or new scientific validation authorized
 2026-11-26T22:03Z codex note author ruling: avoid generating subjective probabilities; implementation must use an argued identification verdict and explicit uncertainty without subjective percentages
+2026-11-26T22:20Z reviewer raid ebfa91 Imagine: amended author scope accepted; Blind-Spot found test-only definition omission; distinguish testable implications from argued support for untestable identifying assumptions; no subjective probabilities
+2026-11-26T22:20Z reviewer raid ebfa91 Plan: report subsection and attributed reusable reference with sourced DAG, eleven design-adapted prompts and four argued labels; underdetermined judgment allowed, no probabilities or new estimates; semantic diff validation, no wording tests
+2026-11-26T22:20Z reviewer raid ebfa91 feasibility PASS: source method read by lead at replicator eded457, planner source access unavailable and disclosed; existing report/probe and route contracts reused; sequential after1568 because shared SKILL.md; no shared registry
+
+2026-11-26T22:45Z reviewer raid ebfa91 Execute: adapted pinned replicator method into report subsection and attributed reference; preserved four verbs, computation-only ACRe and six rows, and 1568 confirmation subsection
+2026-11-26T22:45Z reviewer raid ebfa91 Verify: lint 191 passed, fast 1966 passed; distinct semantic worker returned no findings; no-spend local different-family endpoints refused connections, perspective unavailable; evidence tickets/reviews/1569-identification-adherence.md
+2026-11-26T22:33Z reviewer closed — autoclosed — PR #2539
 
 --- body ---
 ## Context and authority
@@ -52,9 +60,9 @@ document could move to `skills/replicate/references/`.
 
 - [x] Receiving Imagine records facts, duplicates, ownership, rulings
   (rule 4 fairness: a robust verdict is as valuable as a fragile one).
-- [ ] If accepted: the section is placed, the scale and checklist are
+- [x] If accepted: the section is placed, the scale and checklist are
   referenced, and the score/table remain computation-only.
-- [ ] Verdict wording never presented as a reproducibility status.
+- [x] Verdict wording never presented as a reproducibility status.
 
 ## Receiving Imagine (2026-11-26)
 

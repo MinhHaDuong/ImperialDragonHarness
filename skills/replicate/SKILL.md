@@ -312,6 +312,22 @@ The goal is the I4R report, written as a team.
 4. Draft `report/<citekey>-reproduction-report.html` and publish it as in
    § Zotero notes.
 
+### Causal identification review
+
+Include a separate identification section in the report, following
+`references/identification-review.md`: declare the causal claim, draw a
+sourced DAG, adapt the eleven prompts to the study design, and give an argued
+reviewer judgment with its unresolved assumptions. Write for a non-specialist
+economist. Seek a reviewer from another model family through the route skill
+for substantive causal reasoning, and disclose an unavailable perspective.
+
+This source-based appraisal runs no new estimates. Any proposed empirical
+check goes through the existing signed `probe` plan. Keep causal
+identification, statistical significance, and estimator robustness distinct;
+the identification judgment changes neither ACRe nor any of the six
+Reproducibility Table rows, all of which assess computation. A favorable or
+adverse judgment earns the same evidential scrutiny (rule 4).
+
 ## Zotero notes
 
 The CIRED protocol keeps three child notes under the paper's Zotero item:
