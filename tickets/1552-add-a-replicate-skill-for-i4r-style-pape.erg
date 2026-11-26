@@ -24,6 +24,7 @@ Author: claude
 2026-11-26T14:43Z reviewer 1567 closed PR2534 head959e1793100485e5e6af7a28191c861d45434bb0; selected_target explicit additive namespace usable, whole-paper default/grid retained; source session notification queued by raid; tracker remains open pending downstream scope encoding and integration validation, no fresh release or accuracy claim
 2026-11-26T19:41Z reviewer integration review (replicator 0002 closed as development cohort, 0007 Carter confirmed, 0008 identification): new children 1568 (independent-confirmation reproduce mode), 1569 (identification review); filed at author request, receiving Imagine pending
 2026-11-26T21:58Z codex note receiving Imagine1568/1569 completed against replicator eded457; both accepted with qualifications for Plan, numerical confirmation and causal identification kept separate; no implementation or integration closure authorized
+2026-11-26T22:23Z reviewer new child 1570 (probe: inventory-first plan, design menus, sign-off modes) from replicator 0003; full-chain blind pilot with panel sign-off started in replicator
 
 --- body ---
 ## Context
@@ -176,6 +177,7 @@ Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
 | 1567 | harness | Explicit selected-target contract, closed PR #2534 (2026-11-26); whole-paper default retained; downstream selected-scope encoding/validation remains | none |
 | 1568 | harness | Independent-confirmation mode for `reproduce` (from replicator 0007), receiving Imagine accepted with qualifications (2026-11-26); Plan pending | none |
 | 1569 | harness | Identification review beside the score (from replicator 0008), receiving Imagine accepted with qualifications (2026-11-26); Plan pending | none |
+| 1570 | harness | `probe`: inventory-first plan, design menus in references, sign-off modes (from replicator 0003), receiving Imagine pending | none |
 
 Integration review: read the results of 0002 and 0003; a skill fix they
 call for is a new harness ticket. Constraints in every replicator ticket:

@@ -1,0 +1,129 @@
+%erg 0.1
+Title: /replicate probe: inventory-first plan, design menus in references, sign-off modes
+Created: 2026-11-26
+Author: claude
+
+--- log ---
+2026-11-26T22:22Z claude created
+2026-11-26T22:23Z reviewer filed from replicator 0003 (ec32d2c) at author request; receiving Imagine pending
+2026-11-26T22:37Z reviewer receiving Imagine accepted planning/menu scope with qualifications; pending sign-off decision must be separated before implementation closure; four premise checks and Blind-Spot findings recorded
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0003 (branch t0003-full-chain, commit ec32d2c) at
+the author's request on 2026-11-26. Integration-review finding for
+tracker 1552; complements 1569 (identification review). Request for
+receiving Imagine, not an implementation authorization.
+
+## Evidence
+
+An inventory of the robustness work in 19 I4R discussion papers (fixed
+sample: 9 from replicator's 0002 development cohort, 10 drawn with seed
+20261126): `~/CNRS/projets/actifs/replicator/replications/chain-pilot-0003/i4r-robustness-inventory.md`
+and `.json`, sample list beside them. 15 are replication reports, 4 are
+meta-science or protocol. Extraction by Sonnet-class agents; three
+entries spot-checked against the source text (papers 89, 100, 137), all
+held; counts are approximate. No report in the sample concerns an RDD.
+
+Observations (counts over the 15 reports or 127 checks; see the file):
+- most frequent check categories: re-coding in other software, functional
+  form/estimator, alternative controls, inference/clustering, sample
+  restrictions, coding-error fixes (9 checks in 7 papers);
+- identification critique in 5 of 15 reports, mostly inside the
+  robustness section, own section in 1;
+- original estimate beside each check in about half the checks; 4
+  reports never do it; original column first is the common layout.
+
+A first draft of a Carter (2024) plan in replicator showed the overfitting
+risk: an RDD menu written from one paper would have entered the skill.
+
+## Proposed split (for Imagine to accept, amend or reject)
+
+Into SKILL.md § probe (design-independent):
+1. Inventory the paper's own robustness (appendix and code) and propose
+   only checks it does not already run; list the excluded ones.
+2. Every code anomaly logged by `reproduce` becomes a candidate check.
+3. The plan fixes its reporting rule beforehand: every check reported, no
+   overall verdict from a count of passes.
+4. Drop-one at the assignment or cluster unit, not the observation.
+5. Validation hygiene: in a validation run, the executor and the signers
+   have not read the paper's I4R report.
+6. Sign-off modes: a person's line (default); a person's approval given
+   in conversation, transcribed verbatim and labelled as transcription;
+   an author-authorized model panel (replicator 0003 pilots Astra +
+   Fable, rule in its PROTOCOL.md), recorded as a deviation until the
+   pilot result is in.
+
+Into a new reference (`references/robustness-menus.md`), menus per
+design, each item citing either at least two I4R reports in an inventory
+or a named methods source:
+- from the sample: meta-analysis (publication-bias adjustments,
+  REML vs DerSimonian-Laird, drop-one study); DiD (alternative treatment
+  thresholds, event study, multiple-testing correction over interactions);
+  experiments (pre-analysis-plan deviations, controls, outliers);
+  observational panels (proxy validity, dropping dominant units,
+  nonlinear controls);
+- from methods literature, marked as such: RDD (bandwidth grid, kernel,
+  polynomial order, donut, placebo cutoffs).
+
+Stays in the paper folder, never in the skill: any variable, unit,
+threshold or check specific to one paper.
+
+## Exit criteria
+
+- [ ] Receiving Imagine records facts, duplicates (1568, 1569), ownership,
+  standing rulings (rule 4: a person signs).
+- [ ] If accepted: SKILL.md § probe gains the steps kept; the menus file
+  exists with a source per item; no paper-specific item in either.
+- [ ] The sign-off modes question is ruled after replicator 0003 reports.
+
+## Receiving Imagine (2026-11-26)
+
+Disposition: accept the design-independent planning and sourced-menu work for
+implementation, subject to separating the pending sign-off decision. Keep the
+existing person-written signature rule. No generic model-panel or transcribed
+signature authorization follows from this reception, and the final sign-off
+exit criterion remains open until the author rules after the pilot report.
+
+1. **Facts against framing.** Read the inventory and PROTOCOL.md at replicator
+   ec32d2c. They document extracted candidate checks, not a certified frequency
+   census or a demonstrated improvement in replication quality. The inventory
+   mixes reproduction operations and non-replication papers; its counts remain
+   approximate and its report sample supplies no empirical RDD coverage. The
+   protocol calls model-panel signing an explicit pilot deviation and describes
+   a two-paper descriptive trial, not an accuracy estimate. No completed pilot
+   report was present at this cited revision; no heldout I4R report was read.
+2. **Duplicates and overlap.** Current probe already requires a signed fair
+   plan, comparison to an original estimate, and renewed signature for changes.
+   Rule 5 labels heterogeneity and extensions as extras; coding-error fixes
+   already count as robustness under rule 7. Reuse those contracts. Closed1568
+   covers frozen computational confirmation; closed1569 covers source-based
+   identification appraisal, whose proposed empirical tests enter probe. The
+   new work is inventory/exclusions before selection, sourced candidate menus,
+   and prospective complete reporting.
+3. **Ownership and placement.** Harness owns generic probe steps and an
+   attributed reference with applicability, source per item, and explicit
+   methods-literature origins for RDD. Each menu item needs two actual I4R
+   report examples from an inspected inventory or a named methods source;
+   inventory labels alone cannot justify a recommendation. Variables, units,
+   thresholds, and case judgments stay in the paper folder. Drop-one units
+   follow the design/assignment/clustering structure; observation deletion is
+   not a universal influence test. Menus suggest candidates, not mandatory or
+   automatically authorized checks.
+4. **Standing rulings and fit.** Preserve fairness and the person-written
+   signature gate. Pilot-only model signing remains a recorded deviation. For
+   validation, keep executing and signing contexts unexposed to the heldout
+   comparison report, disclose prior exposure, and exclude exposed papers from
+   independent validation claims. Do not export this blindness restriction to
+   ordinary report appraisal. Every planned check has a reported disposition
+   (completed, failed, blocked, or withdrawn, with reason); amendments preserve
+   their history and require renewed signature. No overall robustness verdict
+   follows from a pass count. Classify heterogeneity/extensions separately even
+   when an inventory or menu calls them robustness.
+
+Blind-Spot pass: two material omissions accepted, complete disposition of
+every planned check and design-specific scope classification under rule 5.
+They refine existing reporting/fairness requirements without adding a verb or
+a new empirical deliverable. Requested reviewer Sol6.1 medium, native OpenAI;
+observed model/effort masked. No scientific rerun or paid model call occurred.
