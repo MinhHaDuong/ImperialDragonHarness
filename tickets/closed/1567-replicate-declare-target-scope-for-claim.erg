@@ -2,6 +2,7 @@
 Title: /replicate: declare target scope for claim-level provision assessments
 Created: 2026-11-26
 Author: codex
+Closed: autoclosed — PR #2534
 
 --- log ---
 2026-11-26T13:22Z codex created
@@ -9,6 +10,7 @@ Author: codex
 2026-11-26T13:25Z reviewer source consolidation reviewed in replicator fd85bcc86b928ee8d30d22be9d87c8d6e6ea5a0e on branch t0002-consolidation: doc/examples/arechar-mainclaim/README.md and IDH-SCOPE-BRIEF.md; 175 prior artifacts and 44 sources preserved, no scientific execution. CRA from analytic inputs is not blocked by unresolved raw provenance; receiving Imagine remains pending.
 
 2026-11-26T14:04Z codex note receiving Imagine: facts read against current IDH e6521eec and pinned replicator e4cb874/a167acb/fd85bcc; ACRe primary guide verified; no open duplicate; IDH owns contract and replicator downstream implementation. Accept explicit-target request for Plan; retain whole-paper criterion meanings and default until an explicit design/author decision. Reception authorizes ticket landing only; 1552 and1567 remain open.
+2026-11-26T14:38Z reviewer closed — autoclosed — PR #2534
 
 --- body ---
 ## Context and authority
