@@ -18,21 +18,20 @@ the I4R study (<https://doi.org/10.1038/s41586-026-10251-x>).
   "citekey": "gavard2026climate",
   "main_result": "Table 1, joint model, six-lag sums (chosen before any run)",
   "criteres": {
-    "code_analyse_complet": "data/Estimations_final.do lines 186-192 produce Table 1",
-    "donnees_analyse_completes": "data/Final_panel_v6.dta holds every Table 1 variable",
+    "analyse_partiellement_accessible": "Table 1 code and variables are present; appendix Tables A2-A3 lack sector inputs",
     "chaine_brute_incomplete": "the raw chain stops at the panel: neither CRS records nor cleaning code",
     "code_nettoyage_inaccessible": "no script builds data/Final_panel_v6.dta from CRS records"
   },
   "non_etabli": {"donnees_brutes_completes": "CRS activity records not in the deposit"},
-  "a_evaluer": ["cra_reussie", "cra_echouee", "crr_reussie", "crr_echouee"],
-  "level": "non_etabli",
-  "history": [{"date": "2026-12-01", "verb": "assess", "level": "non_etabli"}]
+  "a_evaluer": ["cra_reussie", "cra_echouee", "crr_reussie", "crr_echouee"]
 }
 ```
 
-In this example no rule matches before a run: L5 or L4 waits for the
-outcome from the analysis data. A package that is complete on paper still
-reads `non_etabli` until `reproduce` runs.
+This example records partial analysis inputs for the paper, even though
+Table 1 can be attempted. Derive its level with the grid; Table 1 evidence
+alone establishes neither whole-package completeness nor a successful run.
+The derived `level` and `history` fields are omitted from this illustration;
+fill them only after computing the level with the grid.
 
 - **`criteres`** holds only the criteria that are established, each mapped to
   one verified piece of evidence (path and line, URL and passage, or CSV
@@ -61,6 +60,28 @@ level = next((r["classe"] for r in rules if all(c in a["criteres"] for c in r["c
 - **`history`** gets one entry per verb run that changed the level.
   `reproduce` updates this same file. It never writes a second assessment.
 
+## Package coverage and main-result runs
+
+The four completeness criteria cover the **whole paper**, including
+applicable appendix and supplementary tables, figures, and published
+robustness outputs. The preselected `main_result` limits the ACRe run
+criteria only. For package assessment, inventory the published outputs in
+`README.md` and map each to its required files and code; carry that map into
+`reproduce/README.md` when running. Identify outputs requiring no data or
+code and explain their exclusion. Unexamined coverage stays `a_evaluer`.
+
+| Criterion | Evidence required across the whole-paper inventory |
+|---|---|
+| `code_analyse_complet` | Analysis code for every applicable output |
+| `donnees_analyse_completes` | Analysis inputs for every applicable output |
+| `code_nettoyage_complet` | Cleaning code for every applicable raw-to-analysis path |
+| `donnees_brutes_completes` | Raw inputs for every applicable raw-to-analysis path |
+
+A verified gap prevents the corresponding completeness criterion. Record
+partial coverage with the partial criterion used by the six-row table and
+name the missing outputs and component in its evidence. Finding the chosen
+main result's inputs alone cannot establish a completeness criterion.
+
 The run criteria refer to the main result. `cra_reussie` holds when every
 statistic of the main result matches from the analysis data, and
 `cra_echouee` when one does not. `crr_*` is the same check from the raw data.
@@ -68,7 +89,9 @@ The evidence is the path of the CSV and its rows' `outcome_key`.
 
 ## The six-row table, derived
 
-Each row comes from the criteria and from `out/reproduce.csv`. The grid has
+The four provision rows use whole-paper package coverage; the two execution
+rows use whole-paper reproduction coverage. Each row comes from the criteria,
+the output inventory, and `out/reproduce.csv`. The grid has
 no criterion for every "Partially" cell. There, the evidence text of
 `analyse_partiellement_accessible` or `chaine_brute_incomplete` must name
 which piece is partial, and the row reads it. A "No" criterion
@@ -81,11 +104,21 @@ row No even when `chaine_brute_incomplete` is also established.
 | Cleaning code provided | `code_nettoyage_complet` | `chaine_brute_incomplete` naming the cleaning code | `code_nettoyage_inaccessible` or `aucun_code_accessible` |
 | Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming the data | `aucune_donnee_accessible` |
 | Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming the code, or `scripts_accessibles` alone | `aucun_code_accessible` |
-| Reproducible from analysis data | every `stage=reproduce` row from analysis data is `match` | some `match`, some not | none match, or the code does not run |
+| Reproducible from analysis data | every required statistic in the whole-paper inventory has a `stage=reproduce` analysis-data row with `status=match` | some required statistics match and others fail or have known missing inputs | none match, or the code does not run |
 | Reproducible from raw data | same, for rows from raw data | same | same, or raw data or cleaning code missing |
 
-A row whose inputs are still `a_evaluer` is printed as "not yet assessed",
-never guessed. When no row from raw data exists because the package starts
+The execution rows require an inventory of all applicable outputs and their
+required comparison statistics, mapped to `cra:` or `crr:` rows separately.
+Record known missing inputs or failed attempts as `missing_input` or
+`not_run` with the reason. An all-match subset earns no Fully: if inventory
+coverage or any required comparison remains unexamined, print "not yet
+assessed" and name the gap. Known missing inputs with some matches yield
+Partially even when every executed comparison matched. Thus `cra_reussie`
+for the selected main result can coexist with a Partially or not yet assessed
+whole-paper execution row.
+
+A provision row whose inputs are still `a_evaluer` is printed as "not yet
+assessed", never guessed. When no row from raw data exists because the package starts
 at the analysis data, "Reproducible from raw data" is No, and the reason is
 recorded.
 
