@@ -415,7 +415,13 @@ reviewThreads(first:100){pageInfo{hasNextPage}
         self._gh("pr", "merge", str(ref), "--disable-auto")
 
     def merge(self, ref: str, head: str, auto: bool) -> None:
-        done = self._gh("pr", "merge", str(ref), "--merge", *(["--auto"] if auto else ["--match-head-commit", head]))
+        args = ("pr", "merge", str(ref), "--merge", "--match-head-commit", head)
+        done = self._gh(*args, *(["--auto"] if auto else []))
+        # This repository setting definitively refused the auto request. Retry only that
+        # refusal, preserving the captured head and all direct-merge policy checks.
+        disabled = "Auto merge is not allowed for this repository (enablePullRequestAutoMerge)"
+        if auto and done.returncode != 0 and done.stderr.strip() in (disabled, "GraphQL: " + disabled):
+            done = self._gh(*args)
         if done.returncode != 0:
             raise MergeRefused(done.stderr.strip() or f"gh exit {done.returncode}")
 
