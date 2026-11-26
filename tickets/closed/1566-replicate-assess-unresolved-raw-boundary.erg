@@ -2,6 +2,7 @@
 Title: /replicate assess: unresolved raw boundary yields Partially without execution
 Created: 2026-11-26
 Author: codex
+Closed: autoclosed — PR #2531
 
 --- log ---
 2026-11-26T09:00Z codex created
@@ -14,6 +15,7 @@ Author: codex
 2026-11-26T09:13Z codex note Plan: remove boundary-only numerical partial; retain uncertainty separately, comparison coverage unchanged, observed partial/full and provision-based impossibility No distinguished from failed run; reconcile report and table instructions. First evidence old no-run boundary Partially versus independent match+failure Partial and all-match Fully. Historical1562 gets dated supersession context.
 
 2026-11-26T09:13Z codex note feasibility WARN: paths and comparator derive_table signature verified;50 frozen artifacts hashes/sizes match, no execution/API needed. Docs cannot certify external comparator conformance; retain old observations and label revised contract expectations. Shared assessment.md forces serial waves1565 then1566; no three-PR registry. Reviewer identity runtime-masked (requested gpt-6.1-sol medium, OpenAI same family).
+2026-11-26T09:39Z reviewer closed — autoclosed — PR #2531
 
 --- body ---
 ## Provenance and receiving Imagine
