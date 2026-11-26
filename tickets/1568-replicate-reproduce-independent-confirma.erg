@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-11-26T19:41Z claude created
 2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
+2026-11-26T21:58Z codex note receiving Imagine accepted with qualifications; four premise checks recorded below; Plan only, no implementation or new scientific validation authorized
 
 --- body ---
 ## Context and authority
@@ -60,8 +61,52 @@ Whole-paper `reproduce` stays the default.
 
 ## Exit criteria
 
-- [ ] Receiving Imagine records facts, duplicates (1561, 1567), ownership,
+- [x] Receiving Imagine records facts, duplicates (1561, 1567), ownership,
   standing rulings (Stata excluded, Python default in replicator).
 - [ ] If accepted: SKILL.md § reproduce describes the mode in at most one
   added subsection, with the Carter folder cited as worked example.
 - [ ] Whole-paper default and ACRe criterion meanings unchanged.
+
+## Receiving Imagine (2026-11-26)
+
+Disposition: accepted for Plan with the qualifications below. This reception
+records the request; it authorizes no implementation, numerical run, or new
+validation claim. Ticket 1568 and integration tracker 1552 remain open.
+
+1. **Facts against framing.** Read Carter's `prospective-freeze.json`,
+   `REPORT.md`, and `reproduce/review.md` in replicator at
+   `eded45754c76bd3d1822703e2cd0923a9237b8a4`. The artifacts support a
+   pre-fit freeze with a recorded pre-result crash amendment, preserved first
+   results, and a comparison with residual diagnosis. This reception did not
+   rerun the numerical analysis or independently validate every hash. Correct
+   the version framing: the historical R rdrobust version is unknown; R 4.2.2
+   is not an estimator version. A contemporaneous Python port alone proves
+   no historical equivalence. Record known version differences, inspected
+   equivalence evidence, and remaining uncertainty. The checker used production
+   bandwidths; first-pass point estimates were blind to production estimates,
+   while corrected SE agreement followed a supplied source-derived recipe.
+   Independence must be stated for inputs, bandwidth selection, estimates,
+   and variance separately, preserving the first disagreement.
+2. **Duplicates and overlap.** Closed 1561 establishes whole-paper coverage;
+   closed 1567 adds `selected_target`. Current reproduce steps already set
+   half-last-digit tolerance and forbid widening it. Reuse those contracts;
+   the new work is prospective freezing, translation provenance, first-run
+   preservation, and qualified checking. No duplicate implementation request
+   found in the ticket store or open PR list (2536 deposits these requests;
+   2516 is the older tracker wrap-up).
+3. **Ownership and placement.** Harness owns one added subsection under
+   `reproduce`, reusing `selected_target`; replicator owns implementations,
+   freezes, and evidence. Carter is a worked example, not a mandatory harness
+   dependency or a universal result. Preserve whole-paper defaults and ACRe
+   meanings; translated confirmation must name the method actually executed.
+4. **Standing rulings and fit.** Replicator's `plans/overview.plan` explicitly
+   authorizes faithful Python confirmation and excludes waiting for Stata;
+   this is a project-local preference, not a new global language requirement.
+   Model, sample, SE, pooling, tolerance, and robustness changes still require
+   the author's ruling. Diagnose residuals separately without rewriting the
+   frozen first-run outcome; a corrected run is a separately labelled result.
+   The optional checker follows route's independence rules and reports limits.
+
+Plan boundary: documentation only unless separately authorized. Keep the
+single-subsection limit and the Carter link; do not add a new verb or alter
+canonical score export.
