@@ -7,6 +7,7 @@ Author: claude
 2026-11-26T19:41Z claude created
 2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
 2026-11-26T21:58Z codex note receiving Imagine accepted with qualifications; four premise checks recorded below; Plan only, no implementation or new scientific validation authorized
+2026-11-26T22:03Z codex note author ruling: avoid generating subjective probabilities; implementation must use an argued identification verdict and explicit uncertainty without subjective percentages
 
 --- body ---
 ## Context and authority
@@ -97,3 +98,13 @@ Plan boundary: retain the four existing verbs and place this alongside the
 computational report, with sourced assumptions, plain-language explanations,
 applicability and uncertainty visible. An underdetermined judgment must be
 reported as such rather than forced into a confident label.
+
+## Author ruling after reception (2026-11-26)
+
+The author explicitly instructed: avoid generating subjective probabilities.
+This supersedes the proposal to attach a subjective percentage and the
+receiving Imagine's conditional allowance for one. Preserve Carter's historical
+judgments as case evidence, but do not prescribe or generate such percentages
+in the reusable identification review. Give an argued verdict, open threats,
+and evidence that would change the judgment. The author subsequently requested
+`raid 1569`, authorizing implementation within this amended scope.
