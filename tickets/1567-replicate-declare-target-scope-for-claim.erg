@@ -1,0 +1,41 @@
+%erg 0.1
+Title: /replicate: declare target scope for claim-level provision assessments
+Created: 2026-11-26
+Author: codex
+
+--- log ---
+2026-11-26T13:22Z codex created
+2026-11-26T13:22Z reviewer filed from replicator 0002; author-approved consolidation handoff; receiving Imagine and any implementation decision pending
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0002 after the author requested consolidation before numerical confirmation. Related to tracker 1552 and closed scope ticket 1561. This is a request for receiving-project Imagine, not an implementation authorization or an assertion that the existing whole-paper categories are false.
+
+## Observation
+
+At IDH main e6521eeca366035930ce4a0e281bda0ec53220ab, references/assessment.md lines 84-114 require whole-paper provision, while lines 122-124 already permit main-result CRA/CRR. Lines 194-220 give the derived table whole-paper coverage. A host-author override was needed to assess provision for a declared selected claim. Scoped Fully must not silently satisfy an existing whole-paper criterion.
+
+Replicator's reviewed Arechar audit (e4cb874de0a034fbe7a97fa5b35569c4dd3fad1f) selects numerical Figures 5a/5d before dependency inspection. Their actual producer/consumer chain excludes national WVS distributions needed by supplementary Figure S4. Reassessment (a167acb57a39cb70590ef8ba066fbe990f308e8f) finds analysis input information and numerical code complete for that target, upstream raw/cleaning unknown. The broader 3/4 pilot remains unchanged. No scientific program was run and no new accuracy claim is made.
+
+The existing primary route is ACRe Assessment, https://bitss.github.io/ACRE/assessment.html : introduction permits selected claims, display items or estimates; section 3.2 maps each item to inputs; 3.3.1 grades individual items; 3.3.3 treats paper-level practices separately. Brodeur pre-Games slides 4/9 emphasize main results/models without defining every provision category.
+
+## Request for receiver Imagine
+
+Represent a declared claim/output/estimate scope explicitly and propagate it through provision, execution and reference comparison. Retain a labeled whole-paper audit. Consider main-claim default for Games as a proposal; do not silently change the canonical CIRED grid, existing scope decisions, tolerances, adaptation conventions or old observations. Resolve how selected-target results coexist with existing whole-paper criteria before implementation.
+
+Receiver owns fact/framing checks, duplicate and work-in-flight checks, ownership, standing rulings and disposition. Source preflight found only tracker 1552 open; closed 1561 deliberately established current whole-paper scope. Preserve the already merged 1565/1566 evidence fixes; these are not being refiled.
+
+## Proposed acceptance questions
+
+- [ ] Declared target is inspectable and consistently named at every stage; whole-paper mode remains available.
+- [ ] A gap outside the target cannot become a selected-result gap; unknown required coverage stays unknown.
+- [ ] Cross-scope categories cannot produce an unqualified agreement score; printed reference categories and narrative inferences stay distinguishable.
+- [ ] Numerical estimates and literal rendering, information provision and software readiness, remain distinct.
+- [ ] Existing grid meanings and old evidence are preserved or explicitly migrated under an approved decision.
+
+## Evidence and handoff boundary
+
+Assigned source project: /home/haduong/CNRS/projets/actifs/replicator. Read reviewed reports with git show on the hashes above: replications/arechar-mainclaim-audit-2026-11-26/REPORT.md and replications/arechar-reevaluation-2026-11-26/REPORT.md. The consolidation branch t0002-consolidation carries doc/examples/arechar-mainclaim/README.md and IDH-SCOPE-BRIEF.md; its final commit will be logged after consolidation. These are references, not files to change from IDH.
+
+No IDH skill, scientific source, comparator or canonical grid is changed by this ticket. Replicator owns downstream input/comparator follow-up. Main-claim CRA can proceed from adequate analytic inputs without resolving the upstream raw boundary first; CRR and raw-completeness claims cannot.
