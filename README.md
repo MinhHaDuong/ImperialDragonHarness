@@ -103,14 +103,10 @@ explains the layout.
 
 ### 3. Memory
 
-> **Being reworked (2026-10-29).** The fifth consolidation was closed
-> unmerged because topics had become accumulated incident logs. The redesign
-> is ticketed: fixed departments with a 4 KB cap per page, the journal kept
-> intact as the source with the pages as guides to it, and the runtimes'
-> native memories (Claude Code, Codex) drained as inboxes. `/smelt` becomes
-> `/smelt`, and a trial measures whether memory helps. See tickets 1346–1352
-> and [the audit](design/2026-10-29-memory-system-audit.md). Until then,
-> the description below is the current mechanism.
+The [memory index](memory/MEMORY.md) lists the current departments,
+provenance, and accepted or pending consolidations. Review-attribution
+records live separately from the experience journal, under
+`memory/evidence/attribution/`.
 
 Memory is layered, from raw to distilled. Project memory is written in each
 project's own repository; the harness's memory is its own (`memory/`).
