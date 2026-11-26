@@ -1,0 +1,42 @@
+%erg 0.1
+Title: /replicate assess: scope of *_complet criteria undefined (main result vs whole package)
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T16:07Z claude created
+2026-11-25T16:08Z MinhHaDuong filed from replicator 0002
+
+--- body ---
+## Context
+
+Filed from replicator ticket 0002 (raid 2ba62a, blind validation of
+`/replicate assess` on ten I4R papers against I4R's six-row tables,
+2026-11-25). Child of tracker 1552. Evidence: replicator branch
+`t0002-validate-assess`, `replications/VALIDATION-assess-2026-11.md`.
+
+`references/assessment.md` defines `code_analyse_complet` (and the other
+`*_complet` criteria) without saying what they cover. SKILL.md asks for a
+main result, and the run criteria explicitly "refer to the main result", so
+assessors scoped `code_analyse_complet` to the main result. I4R grades the
+whole package. Two of ten disagreements come from this alone:
+
+- arechar2023understanding: agent Fully (main-result code present) vs I4R
+  Partially (Stata code missing for Figures 2-5, R code for Figure 6 reads
+  files not in the deposit; the assessor saw this and still marked Fully).
+- moscona2023directed: agent Fully vs I4R Partially (code missing for
+  appendix Tables A18, A20; the assessor noted an absolute Dropbox path).
+
+## Request
+
+State in `references/assessment.md` whether the four package criteria
+(`code_analyse_complet`, `donnees_analyse_completes`,
+`code_nettoyage_complet`, `donnees_brutes_completes`) cover the whole paper,
+as I4R reads them, or the main result. If the main result is kept for the run
+criteria, the package rows of the six-row table should still follow I4R's
+whole-package reading, or the table cannot be compared with I4R's.
+
+## Exit criteria
+
+- [ ] `assessment.md` defines the scope of each `*_complet` criterion.
+- [ ] The two cases above would derive I4R's cell under the new wording.
