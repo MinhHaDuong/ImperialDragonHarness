@@ -1,0 +1,8 @@
+Actual documentation snippets executed with a synthetic grid (not CIRED validation):
+unexamined: before=non_etabli, after=a_evaluer, expected=a_evaluer
+examined-unestablished: before=non_etabli, after=non_etabli, expected=non_etabli
+established: before=fixture-match, after=fixture-match, expected=fixture-match
+
+Base: 9bba6e4de879ebb14c5e2e9b1a05d5d70874213c
+Head: da80df5314c67910c71035137465c3e622ce2d48
+Synthetic grid: {"dimensions": {"reproductibilite_calculatoire": [{"classe": "fixture-match", "criteres": ["code_analyse_complet"]}]}}

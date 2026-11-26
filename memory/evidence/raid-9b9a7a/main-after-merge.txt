@@ -1,0 +1,11 @@
+Main tip: 1c35cb4cfd9b3c82ac6df1063c8d2cfe8c36869d
+Source: .git/idh/after-merge.log; final run segment only
+================= 3912 passed, 4 skipped, 7 warnings in 45.13s =================
+===================== 191 passed, 3725 deselected in 8.84s =====================
+check: validate-tickets pass 0.1s :: tickets/erg check tickets/
+check: agnostic-guard pass 0.1s :: bash scripts/check-agnostic.sh
+check: pipefail-guard pass 0.0s :: bash scripts/check-pipefail.sh
+check: pytest-guard pass 46.3s :: make check-tests
+check: skills-drift pass 0.1s :: make check-skills-drift
+check: lint pass 9.4s :: make lint
+pass: after-merge record on 1c35cb4cfd9b3c82ac6df1063c8d2cfe8c36869d

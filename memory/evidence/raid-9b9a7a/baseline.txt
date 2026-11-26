@@ -1,0 +1,8 @@
+Command: make check
+Revision: d382f61d1b822ba3cfe4cd3e8755ca88b7cc832b
+make: Entering directory '/home/haduong/.agents/.claude/worktrees/raid-baseline-9b9a7a'
+uv run --frozen ./scripts/check-skills-drift.py
+uv run --frozen python3 -m pytest tests/ -n 24
+============================= test session starts ==============================
+================= 3912 passed, 4 skipped, 7 warnings in 52.49s =================
+make: Leaving directory '/home/haduong/.agents/.claude/worktrees/raid-baseline-9b9a7a'
