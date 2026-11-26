@@ -6,6 +6,7 @@ Author: codex
 --- log ---
 2026-11-26T13:22Z codex created
 2026-11-26T13:22Z reviewer filed from replicator 0002; author-approved consolidation handoff; receiving Imagine and any implementation decision pending
+2026-11-26T13:25Z reviewer source consolidation reviewed in replicator fd85bcc86b928ee8d30d22be9d87c8d6e6ea5a0e on branch t0002-consolidation: doc/examples/arechar-mainclaim/README.md and IDH-SCOPE-BRIEF.md; 175 prior artifacts and 44 sources preserved, no scientific execution. CRA from analytic inputs is not blocked by unresolved raw provenance; receiving Imagine remains pending.
 
 --- body ---
 ## Context and authority
