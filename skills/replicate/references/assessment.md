@@ -277,6 +277,148 @@ columns unmarked for that row and state the unassessed status and reason
 beside it. The instruction to show only discrepancies applies to the
 detailed statistic comparisons, not to this six-row status table.
 
+## Selected-target assessment
+
+This is an additive mode only on an explicit caller request. Whole-paper
+assessment remains the default, including for Games. The existing
+`criteres`, `non_etabli`, `a_evaluer`, `blocked`, `level`, and `history`
+retain their canonical meanings. Keep the whole-paper table visible, including
+unknown rows; a selected assessment does not require completing that audit
+before proceeding. Do not migrate or rescore old evidence implicitly.
+
+Store the additional result in `assessment.json` under `selected_target`,
+separate from every canonical grid criterion. A minimal declaration is:
+
+```json
+{
+  "selected_target": {
+    "scope_id": "fig5a-5d-numerical-v1",
+    "mode": "selected",
+    "declared_before": "dependency inspection and execution",
+    "paper_evidence": "<original paper passage and exact version>",
+    "outputs": ["Figure 5a", "Figure 5d"],
+    "target_kind": "numerical",
+    "required_outcomes": ["cra:fig5a.estimate", "cra:fig5d.estimate"],
+    "exclusions": ["<other published outputs, with scope reason>"],
+    "coverage_map": "README.md#selected-target-inputs",
+    "provision": {},
+    "execution": {},
+    "reference_comparison": null
+  }
+}
+```
+
+The example's outcome list illustrates the shape; enumerate every required
+statistic for the actual target and each requested analysis/raw route before
+execution, including uncertainty statistics when required. The declaration
+names the claim/output/estimate, original-paper authority, exact included
+panels, models, samples, and statistics, and whether it assesses numerical
+values or literal rendering. Record when and why it was chosen. If no
+authoritative paper evidence supports the requested selection, record a
+selected-target blocker and leave its categories unassessed. An unavailable
+whole-paper inventory alone need not block a verifiable selected target.
+
+The stable `scope_id` identifies the full declaration, rather than just a
+figure title. Carry it through README, manifest input bindings, fetch/input
+representation records, producer/consumer map, run logs, CSV outcome mapping,
+selected rows, and report. Manifest bindings associate the scope with the
+existing `files[].path` and exact `representation`, without changing checksum
+semantics or pretending archive metadata are observed bytes. Shared files can
+serve several scopes. An explicit outcome-key map to the unchanged CSV schema
+suffices; do not silently reassign old rows to a different target. Record the
+package version and inspected source lines in the dependency map. Include
+transitive inputs required by the selected producer chain even when their
+filenames or source datasets also serve excluded outputs. Exclude a dependency
+only with evidence that the selected path does not consume it.
+
+Changing included outcomes, target kind, package/input representation, or
+a dependency boundary requires a new scope revision and a dated reason.
+Preserve the earlier declaration and observations; reassess affected provision,
+execution coverage, and reference comparisons before reporting current results.
+Unchanged evidence can be reused only with an explicit mapping to the revised
+scope. A still-valid selected run is resumable; unchanged bytes alone do not
+validate a changed target. Record scope changes even if the canonical level
+does not change. Historical dossiers without this namespace retain their
+original whole-paper interpretation; a new scope is an addition with provenance,
+not a relabelling of their observations.
+
+### Provision, execution, and canonical separation
+
+`provision` holds the four labelled component rows (raw data, cleaning code,
+analysis data, and analysis code); `execution` holds the two labelled analysis
+and raw reproduction rows. Each row records `status` (Fully, Partially, No,
+or the literal `not yet assessed`), evidence, required coverage, and unresolved
+items/blockers. Execution also names its basis: observed comparisons,
+observed failed attempt, or provision-based impossibility. These are selected
+row categories, **not new criterion IDs**. Never merge them into `criteres`,
+export them through `classer.py`, or use them to elevate the canonical `level`.
+Derive them from the declared inventory and evidence using the existing
+six-row rules with the selected inventory replacing whole-paper coverage.
+
+For each provision component, Fully requires verified complete target coverage;
+Partially requires demonstrated provision and a verified required gap; No
+requires verified absence or inaccessibility of the entire relevant component
+across the selected paths. Inspected lower bounds with unknown required
+coverage remain not yet assessed. A verified in-target gap survives unrelated
+unknowns. A gap needed only for an excluded output cannot downgrade a selected
+row; preserve it in the whole-paper audit with its actual output/path. An
+uninspected producer or unresolved raw boundary creates no verified gap.
+
+Retain separate evidence for information provision and software readiness.
+Deposited, inspected analytic inputs remain provided when the execution
+environment is unavailable; record that execution blocker separately. Likewise,
+complete supplied code can remain provided when its interpreter cannot run.
+When analysis inputs exist only through a shipped producer, retain all the
+existing inspected-chain requirements, including available inputs, software,
+and dependencies: an unverified producer cannot establish Fully generated
+provision. Name missing inputs, missing code stages, and unavailable software
+under their affected components; software failure alone proves no code omission.
+
+Derive selected execution against every declared required comparison, separately
+for CRA and CRR, with the unchanged printed-digit tolerance. An all-match subset
+with unresolved required comparisons remains not yet assessed. Some matches
+and verified required missing inputs follow the existing Partially rule.
+Unresolved upstream raw provenance does not by itself block CRA from adequate
+analytic inputs; it leaves raw-completeness and CRR claims unresolved unless
+separate evidence settles them. Preserve the distinction between an observed
+failed run and verified provision-based raw impossibility; inspection alone
+never establishes `crr_echouee`. Canonical `cra_*`/`crr_*` still refer to the
+original `main_result` and require their own appropriate execution evidence.
+
+A numerical target concerns the specified estimates/statistics. Literal
+rendering additionally concerns the declared graphics or document output and
+its required assets. Missing rendering-only assets cannot become a numerical
+gap without a dependency link; numerical agreement does not certify rendering.
+Do not invent original printed numerical values from reproduced values for an
+accuracy comparison. If the target has no authoritative numerical comparator,
+retain the obtained numbers as reproduction facts and leave accuracy unassessed.
+No scope declaration changes tolerance or authorizes an adaptation convention.
+
+### Reference comparison
+
+Record reference source/version and passage, the literal printed categories,
+and their documented scope separately from narrative interpretations or
+conditional entailments. For each compared component, identify the selected
+scope ID, reference outputs/statistics, numerical versus rendering target,
+provision versus execution meaning, and category evidence basis. Reference
+scope unavailable from the source stays unknown; an identical figure title or
+category word does not establish equivalent scope.
+
+Only scope-equivalent, evidence-supported categories may contribute to a
+qualified agreement count, with numerator, denominator, excluded/unknown rows,
+and any inference basis explicit. Different or unknown scopes cannot produce
+an unqualified agreement score. A whole-paper printed Fully may support a
+conditional selected-coverage implication only when inclusion and meanings
+are verified; label the implication and its conditions, rather than treating
+it as a directly printed selected category. Whole-paper Partially or No alone
+does not locate a gap inside the target. Narrative inference remains distinct
+from the printed label, and unknown reference rows never become agreements.
+
+Show both six-row tables with explicit scope labels in preliminary notes and
+reports. The canonical table retains whole-paper meanings; the selected table
+names its scope ID and target kind, evidence basis, exclusions, and unknowns.
+Report reference comparisons with those same qualifications.
+
 ## out/*.csv
 
 These columns map onto replicator's `replication_results` table. Write one
