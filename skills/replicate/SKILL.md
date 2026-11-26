@@ -211,6 +211,49 @@ every reported statistic.
 6. A result that cannot be produced from the package (an input is missing)
    is recorded as `missing_input`. Never transcribe it from the paper.
 
+### Selected-claim confirmation
+
+On an explicit caller request, confirm a selected claim using the existing
+`selected_target` declaration and scope ID (`references/assessment.md`).
+Whole-paper reproduction remains the default; this mode leaves its coverage
+and canonical ACRe criteria unchanged. Follow these steps sequentially: each
+freeze precedes the execution or diagnosis it governs.
+
+1. Before executing code, commit a dated, hashed freeze of the authoritative
+   paper targets, every required statistic and analysis/raw route, tolerance
+   under the existing printed-digit rule, and comparison rules (including
+   rounding and exact counts where applicable). Bind the scope ID to the input
+   representations, code, and locked environment. Retain the earlier target
+   declaration made before dependency inspection. Record any pre-result crash
+   and amendment with its reason and changed hashes before retrying; a changed
+   target requires the existing scope-revision procedure.
+2. When the request permits translation, name the method actually executed
+   and distinguish translated confirmation from rerunning the authors' code.
+   Record source and port versions, known differences, inspected equivalence
+   evidence, and remaining uncertainty; an unknown historical estimator version
+   stays unknown. A contemporaneous port or an interpreter version alone proves
+   no estimator equivalence. Lock the executed environment. Language preferences
+   remain project-local; changes to model, sample, SE, pooling, tolerance, or
+   robustness still require the author's ruling.
+3. Preserve the first outputs, logs, comparisons, code/input/environment
+   identifiers, and their hashes before diagnosis. Keep its frozen match or
+   discrepancy classifications under the declared rules. Diagnose residuals
+   separately; a corrected run is a separately labelled result and cannot
+   rewrite the first outcome or widen its tolerance.
+4. An optional checker follows the route skill's independence rules. Preserve
+   its prompt, supplied information, first output, and any disagreement. State
+   independence separately for inputs, bandwidth selection, point estimates,
+   and variance, as well as model family. Disclose supplied production values,
+   windows, or source-derived recipes and later corrections; agreement after
+   supplying a recipe is an implementation cross-check with those limits.
+
+Worked example: replicator's
+`replications/carter2024-mainclaim-cra/` at commit
+`eded45754c76bd3d1822703e2cd0923a9237b8a4`, especially
+`prospective-freeze.json`, `first-run-freeze.json`, `REPORT.md`, and
+`reproduce/review.md`. It illustrates the workflow and its checker limits;
+it supplies no required dependency or universal validation result.
+
 ## probe
 
 The goal is to run fair robustness checks, chosen by people.
