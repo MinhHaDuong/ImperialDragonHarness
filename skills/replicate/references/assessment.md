@@ -96,10 +96,28 @@ code and explain their exclusion. Unexamined coverage stays `a_evaluer`.
 | `code_nettoyage_complet` | Cleaning code for every applicable raw-to-analysis path |
 | `donnees_brutes_completes` | Raw inputs for every applicable raw-to-analysis path |
 
-A verified gap prevents the corresponding completeness criterion. Record
-partial coverage with the partial criterion used by the six-row table and
-name the missing outputs and component in its evidence. Finding the chosen
-main result's inputs alone cannot establish a completeness criterion.
+Provision categories describe demonstrated coverage, not the extent of
+inspection. Fully requires verified complete coverage of the applicable
+whole-paper inventory. Partially requires both demonstrated provision and a
+verified gap for that component: name the applicable output or path, the
+provided files or operations, and the required missing item or stage. A
+partial criterion records that evidence; its name alone does not establish
+the category. No requires verified absence or inaccessibility of the entire
+component under [The six-row table, derived](#the-six-row-table-derived).
+
+An unknown inventory, an uninspected producer, or an unresolved boundary
+establishes no gap. Leave the affected coverage unassessed and retain its
+reason in `a_evaluer` and, where access or evidence is blocked, `blocked`.
+Keep inspected files, inputs, and operations visible as lower-bound facts in
+their established criteria (for example, `scripts_accessibles`) and the
+coverage map; they alone establish neither Partially nor Fully. Finding the
+chosen main result's inputs alone cannot establish whole-paper completeness.
+
+A verified gap with demonstrated provision remains Partially even if another
+output or stage is blocked or unexamined: the known gap already rules out
+Fully. Name both the gap and the remaining unknowns. A blocker cannot create
+Partially, erase a verified gap, or certify Fully or No; reconcile any blocker
+that contradicts the evidence supporting the proposed category.
 
 The run criteria refer to the main result. `cra_reussie` holds when every
 statistic of the main result matches from the analysis data, and
@@ -114,10 +132,12 @@ analysis input across the whole-paper inventory. Cite the producing lines,
 expected output paths and coverage, all required available inputs, and the
 available software environment and dependencies. Record this basis under
 `donnees_analyse_completes` as generated provision. A filename or an uninspected
-producer is insufficient. A known missing dictionary, input, or dependency
-prevents this route to Fully: record the demonstrated partial data coverage
-under `analyse_partiellement_accessible`, or leave unresolved availability
-`a_evaluer` with its blocker. Preserve separately established code provision.
+producer is insufficient. A verified missing dictionary, input, or dependency
+prevents this route to Fully. With demonstrated provision, record the known
+gap under `analyse_partiellement_accessible`; otherwise leave unresolved
+availability `a_evaluer` with its blocker. An uninspected dependency alone
+is an inspection limit, not a verified missing dependency. Preserve separately
+established code provision.
 Do not infer successful execution from provision: before a run, `cra_*` and
 `crr_*` and the execution rows remain unassessed. Execution later records the
 observed result, including failed generation.
@@ -149,16 +169,24 @@ Record an established missing code stage, missing input, or execution defect
 under its own evidence and affected component.
 
 When inspection cannot resolve whether a supplied dataset is raw or
-analysis data, record the ambiguity and its evidence. Read raw provision as
-Partially through `donnees_brutes_partielles`; do not guess Fully or No.
-For inseparable cleaning and analysis code, describe the demonstrated
-cleaning operations and unresolved coverage in `chaine_brute_incomplete`
-and read cleaning provision as Partially. This is an examined ambiguity,
-not an unexamined component (`a_evaluer`). It establishes no successful raw
-run; an analogous unresolved raw/analysis boundary makes the from-raw table
-row Partially, with that reason, rather than asserting a matched raw run or
-`crr_reussie`. Keep any unexamined output comparisons explicit under the
-execution-coverage rule in [The six-row table, derived](#the-six-row-table-derived).
+analysis data, record the ambiguity and its evidence separately from
+provision coverage. Ambiguity alone leaves raw provision not yet assessed;
+use `donnees_brutes_partielles` only for demonstrated raw provision with a
+verified missing required input. For inseparable cleaning and analysis code,
+retain the demonstrated cleaning operations as inspected facts. Establish
+`chaine_brute_incomplete` for cleaning provision only when a required
+cleaning stage is verified missing; unresolved coverage alone leaves that
+row not yet assessed. The script's filename or separation into files does
+not decide completeness.
+
+These provision rules supersede the earlier ambiguity-only Partially
+reading for raw data and cleaning code. The legacy from-raw execution
+exception remains pending ticket 1566: an examined unresolved raw/analysis
+boundary yields a Partially from-raw execution row even without comparisons.
+This separate exception supplies no provision evidence and establishes no
+`crr_reussie`. Preserve the boundary record and any unexamined output
+comparisons under the execution-coverage
+rule in [The six-row table, derived](#the-six-row-table-derived).
 
 ## The six-row table, derived
 
@@ -167,7 +195,10 @@ rows use whole-paper reproduction coverage. Each row comes from the criteria,
 the output inventory, and `out/reproduce.csv`. The grid has
 no criterion for every "Partially" cell. There, the evidence text of
 `analyse_partiellement_accessible` or `chaine_brute_incomplete` must name
-which piece is partial, and the row reads it. Resolve coverage separately
+which component has demonstrated provision and a verified gap, and the row
+reads that evidence. Apply the provision interpretation in
+[Package coverage and main-result runs](#package-coverage-and-main-result-runs)
+to all four provision rows. Resolve coverage separately
 for each component. No requires verified absence or inaccessibility of the
 entire relevant component across applicable paths; a missing stage alongside
 available cleaning operations is Partially. If evidence supports both a No
@@ -179,15 +210,18 @@ available raw data: that evidence concerns different components.
 
 | Row | Fully | Partially | No |
 |---|---|---|---|
-| Raw data provided | `donnees_brutes_completes` | `donnees_brutes_partielles` | `donnees_brutes_inaccessibles` or `aucune_donnee_accessible` |
-| Cleaning code provided | `code_nettoyage_complet` | `chaine_brute_incomplete` naming the cleaning code | `code_nettoyage_inaccessible` or `aucun_code_accessible` |
-| Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming the data | `aucune_donnee_accessible` |
-| Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming the code, or `scripts_accessibles` alone | `aucun_code_accessible` |
+| Raw data provided | `donnees_brutes_completes` | `donnees_brutes_partielles` naming provided raw inputs and a verified missing input | `donnees_brutes_inaccessibles` or `aucune_donnee_accessible` |
+| Cleaning code provided | `code_nettoyage_complet` | `chaine_brute_incomplete` naming present cleaning operations and a verified missing stage | `code_nettoyage_inaccessible` or `aucun_code_accessible` |
+| Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming provided analysis inputs and a verified gap | `aucune_donnee_accessible` |
+| Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming present analysis code and a verified gap | `aucun_code_accessible` |
 | Reproducible from analysis data | every required statistic in the whole-paper inventory has a `stage=reproduce` analysis-data row with `status=match` | some required statistics match and others fail or have known missing inputs | none match, or the code does not run |
 | Reproducible from raw data | same, for rows from raw data | same, or the examined unresolved raw/analysis boundary in [Raw inputs and cleaning code](#raw-inputs-and-cleaning-code) | same, or raw data or cleaning code missing, when the boundary is resolved |
 
-Blocked or wholly unexamined evidence yields "not yet assessed" for each
-affected row. In particular, zero CSV rows, inaccessible contents, or an
+Unresolved provision coverage yields "not yet assessed" unless demonstrated
+provision and a verified gap already establish Partially for that component.
+A blocker alone never supplies the gap. Blocked or wholly unexamined
+execution evidence yields "not yet assessed" for each affected execution row.
+In particular, zero CSV rows, inaccessible contents, or an
 unavailable output inventory cannot establish No by the "none match" rule.
 That reading requires examined coverage and evidence of failure or absence;
 unknown inputs cannot establish the final-analysis-only exception in this section.
@@ -202,8 +236,10 @@ Partially even when every executed comparison matched. Thus `cra_reussie`
 for the selected main result can coexist with a Partially or not yet assessed
 whole-paper execution row.
 
-A provision row whose inputs are still `a_evaluer` is printed as "not yet
-assessed", never guessed. When the package is verified to start only at final analysis
+A provision row supported only by inspected lower bounds or unresolved
+coverage is printed as "not yet assessed", with its facts and unknowns kept
+visible. The verified-gap rule applies even when other criteria remain
+`a_evaluer`. When the package is verified to start only at final analysis
 data and no raw run is possible, "Reproducible from raw data" is No, and the
 reason is recorded. Apply the examined ambiguous-boundary reading in
 [Raw inputs and cleaning code](#raw-inputs-and-cleaning-code)
