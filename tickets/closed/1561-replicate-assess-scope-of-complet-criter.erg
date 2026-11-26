@@ -2,6 +2,7 @@
 Title: /replicate assess: scope of *_complet criteria undefined (main result vs whole package)
 Created: 2026-11-25
 Author: claude
+Closed: whole-paper package scope and separate execution coverage verified — PR #2521
 
 --- log ---
 2026-11-25T16:07Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-11-26T06:54Z codex note raid Plan: scope four package criteria to whole paper including appendices; update examples/mapping; separate ACRe main-result run scope and whole-paper table. Check Arechar/Moscona supplied scenarios plus complete-package control.
 
 2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+2026-11-26T07:15Z reviewer closed — whole-paper package scope and separate execution coverage verified — PR #2521
 
 --- body ---
 ## Context
