@@ -36,3 +36,10 @@ PR2521's gaze likewise reports its correctness worker's model and family as
 unavailable despite a generated requested-model header. Its factual capture
 uses the same masking policy and leaves raw review notes unchanged.
 - Boundary coder: `/root/boundaries_1562`, requested `gpt-6.1-sol`, medium, OpenAI; exact runtime identity not yet exposed.
+- Wave 3 integration: `/root/integration_boundaries`, requested `gpt-6.1-sol`, medium, OpenAI; observed model unavailable.
+- Access coder: `/root/access_1563`, requested `gpt-6.1-sol`, medium, OpenAI; exact identity not exposed at launch.
+
+PR2522's generated gaze lines name the requested `openai/gpt-6.1-sol`.
+The worker reports that its actual runtime identity was unavailable. Its
+capture masks that identity while retaining all review attempts, including
+the aborted setup's failed status. Raw notes are unchanged.

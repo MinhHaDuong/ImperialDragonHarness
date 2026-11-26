@@ -42,3 +42,17 @@ Arechar/Moscona cases and synthetic positive controls are documented in
 `design/replicate/1561-package-coverage-walkthrough.md`; no external numerical
 validation was claimed. Gaze was REVIEWED, integration CLEAN, and the first
 gate APPROVED.
+
+PR2522 closed ticket1562: raw inputs are documented starting extracts,
+cleaning includes transformations embedded in analysis scripts, and provision
+is component-specific. A missing input or failed execution does not itself
+prove incomplete code. The scenario walkthrough is under
+`design/replicate-assess/1562-boundary-walkthrough.md`. Final gaze was
+REVIEWED, integration CLEAN, and the first gate APPROVED.
+
+The review trail retains an aborted setup: it emitted the prior forge head
+and request while its anchor and checked-out tree named the newer pushed
+head. No seat launched for that setup. The cause was not isolated. A fresh
+setup and completed review bound the final head before gating; no gate round
+was spent on the inconsistent setup. Raw attempt identities remain in notes;
+factual captures mask model identifiers the runtime did not expose.
