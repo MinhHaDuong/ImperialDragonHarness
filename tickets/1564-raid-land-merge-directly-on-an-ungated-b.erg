@@ -1,0 +1,30 @@
+%erg 0.1
+Title: raid_land: merge directly on an ungated base with auto-merge disallowed, as merge step 6 allows
+Created: 2026-11-26
+Author: reviewer
+
+--- log ---
+2026-11-26T07:09Z reviewer created
+2026-11-26T07:09Z reviewer filed from padme 0112 (PR #263)
+
+--- body ---
+## Context
+Filed from padme, ticket 0112 (PR #263, 2026-11-26). `scripts/raid_land.py`
+calls `fg.merge(pr, head, auto=not gated and not local)`, so on an ungated
+base it always passes `gh pr merge --auto`. padme has no CI and
+`allow_auto_merge: false`, so the forge refused: "Auto merge is not allowed
+for this repository (enablePullRequestAutoMerge)". The ticket close commit had
+already been pushed and the request stayed open. The lander merged it by hand
+with `--match-head-commit`, as `skills/merge/SKILL.md` step 6 allows.
+
+The same defect was fixed for molt in 1473 (PR #2296). Author decision there
+(2026-11-09): leave auto-merge off on repositories without CI and fix the
+tooling, not the repository settings. raid_land, the path for both raid
+Phase 7 and `/merge`, was not covered.
+
+## Exit criteria
+- [ ] on an ungated base whose repository disallows auto-merge, `raid_land.py` merges directly, pinned to the head, and reads back MERGED
+- [ ] a test covers that case
+
+## Relevant files
+- `scripts/raid_land.py`, `scripts/forge.py`
