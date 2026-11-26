@@ -1,0 +1,33 @@
+PR 2517
+  merge            30s
+  total            30s
+  slowest: merge (30s)
+PR 2518
+  merge            46s
+  total            46s
+  slowest: merge (46s)
+PR 2519
+  merge            26s
+  total            26s
+  slowest: merge (26s)
+PR 2521
+  gaze             2m14s
+  gate1            1m42s
+  merge            28s
+  total            5m58s
+  slowest: gaze (2m14s)
+PR 2522
+  gaze-initial     1m54s
+  gaze-aborted-setup 51s
+  gaze-final       1m13s
+  gate1            2m44s
+  merge            28s
+  total            9m05s
+  slowest: gate1 (2m44s)
+PR 2523
+  gate1            3m32s
+  merge            28s
+  total            4m52s
+  slowest: gate1 (3m32s)
+
+Timing limits: PR2519 gaze/gate endpoint rows were not recorded; their notes report gaze2m39s and gate134s. Its displayed total covers only measured merge. PR2523 gaze starts were1795678510 and1795678675; end epochs were not recorded, so gaze durations and slowest overall step are not reconstructed. Full first-gaze-to-MERGED elapsed is derived from measured endpoints:1795679105-1795678510=595s (9m55s); displayed helper total for2523 covers measured gate/merge only. Bookkeeping PR2517/2518 intentionally had no gaze or verify-gate.

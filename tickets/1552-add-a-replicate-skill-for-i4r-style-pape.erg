@@ -15,6 +15,8 @@ Author: claude
 
 2026-11-26T06:53Z codex note raid Imagine: tracker remains open; external replicator 0002/0003 integration results unavailable on this host.
 
+2026-11-26T07:48Z codex note raid9b9a7a completion: harness children1559-1563 closed via PR2519/2518/2521/2522/2523. Tracker remains open: external replicator0002/0003 results and integration validation are unavailable on this host; no external child marked complete.
+
 --- body ---
 ## Context
 
@@ -152,7 +154,11 @@ Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
 | replicator 0002 | replicator | `assess` validation, blind, about 10 I4R papers (was 1556) | none |
 | replicator 0003 | replicator | `reproduce` validation, Gavard Scotch transcoded plus 2 I4R papers (was 1557) | 0001 |
 | replicator 0004 | replicator | Held-out benchmark (was 1554) | 0002, 0003 |
-| 1559 | harness | Ship the three I4R templates under `references/templates/`, choose one in context at `report`, record it in `manifest.json` | none |
+| 1559 | harness | Templates and contextual report selection, closed PR #2519 (2026-11-26) | none |
+| 1560 | harness | Installed projection and fresh Skill loading verified, closed PR #2518 (2026-11-26) | none |
+| 1561 | harness | Whole-paper completeness and execution coverage, closed PR #2521 (2026-11-26) | none |
+| 1562 | harness | Operational raw/cleaning boundaries and component-wise Partially, closed PR #2522 (2026-11-26) | none |
+| 1563 | harness | Blocked/blind assessment, checksum representations, generated inputs, closed PR #2523 (2026-11-26) | none |
 
 Integration review: read the results of 0002 and 0003; a skill fix they
 call for is a new harness ticket. Constraints in every replicator ticket:

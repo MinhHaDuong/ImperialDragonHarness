@@ -56,3 +56,43 @@ head. No seat launched for that setup. The cause was not isolated. A fresh
 setup and completed review bound the final head before gating; no gate round
 was spent on the inconsistent setup. Raw attempt identities remain in notes;
 factual captures mask model identifiers the runtime did not expose.
+
+PR2523 closed ticket1563: blocked evidence remains unexamined, blind supplied-URL
+assessment excludes helper searches/prior notes, archive hashes identify exact
+representations separately from local observed SHA-256, and generated analysis
+inputs require an inspected complete producer chain. Resumption revisits stale
+access and criteria. JSON examples parsed; the actual old/new level snippets
+were exercised with a synthetic grid, with results in
+`memory/evidence/raid-9b9a7a/level-example-check.txt`. This did not validate the
+external CIRED grid or named empirical packages.
+
+Epoch 1's semantic REVIEWED answer existed, but attribution capture failed on
+an absolute evidence anchor and emitted a placeholder identity. Epoch 2 reread
+the same head and completed masked capture. Both attempts remain in raw notes;
+the factual capture conservatively masks the historical placeholder and retains
+all reported seats. Gaze end epochs were not recorded for these attempts;
+the timing evidence names the missing measurements rather than deriving them
+from run IDs. Final gate was APPROVED in round1; wave integration was CLEAN.
+
+## Completion
+
+The initial actionable queue1559-1563 is closed. PR2517 imported tickets and
+plans; PR2518 verified the already-met loader issue; PR2519/2521/2522/2523
+landed the skill changes. Exact merged heads were confirmed on remote main.
+Tracker1552 remains open for the external replicator validations and integration
+review. The external receiver path is absent, so no completion log was written
+into a substitute project. Incoming PR2520 (ticket1564) and PR2516 belonged to
+other work and were left unchanged.
+
+Timing rows/table and recognized-bump counts are under
+`memory/evidence/raid-9b9a7a/`. Tooling/deliverable ratio is inapplicable to this
+harness product. Blind assessment was checked by scenario review. Held-out empirical
+benchmark validation remains the external tracker work. No rules or STATE
+changes were made.
+
+The standard full after-merge run passed on main after PR2523; its recorded
+summary is `memory/evidence/raid-9b9a7a/main-after-merge.txt`. The bounded
+replicate-contract union sweep found no retired conflicting instructions;
+positive control and search scope are in `union-sweep.txt`. No qualifying
+follow-up ticket was created. Historical walkthrough breadcrumbs were retained;
+no live Markdown reference was broken by ticket archival.

@@ -1,0 +1,6 @@
+Scope: source and references of skills/replicate on origin/main 1c35cb4cfd9b3c82ac6df1063c8d2cfe8c36869d
+Positive control: archive_checksum found:
+origin/main:skills/replicate/references/assessment.md:249:             "archive_checksum": {"algorithm": "md5", "digest": "<listed digest>",
+origin/main:skills/replicate/references/assessment.md:263:`archive_checksum` is nullable; when present it records the listed algorithm
+
+Retired contradictory instruction patterns: no matches (git grep exit1). Existing adherence checks validate reference pointers; historical walkthroughs retain their initial observations. No qualifying follow-up found. External grid/packages not checked.

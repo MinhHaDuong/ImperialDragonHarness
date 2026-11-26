@@ -43,3 +43,11 @@ PR2522's generated gaze lines name the requested `openai/gpt-6.1-sol`.
 The worker reports that its actual runtime identity was unavailable. Its
 capture masks that identity while retaining all review attempts, including
 the aborted setup's failed status. Raw notes are unchanged.
+- Wave 4 integration: `/root/integration_access`, requested `gpt-6.1-sol`, medium, OpenAI; observed model unavailable.
+
+PR2523 epoch 1 emitted a placeholder `openai/unavailable`; its completed
+semantic review was retained but attribution capture rejected an absolute
+masked-evidence anchor. Epoch 2 at the same head explicitly supersedes that
+capture and correctly masks the correctness/controller identities. The memory
+record masks the historical placeholder too, and includes epoch 1's controller
+seat from that answer's actual `seat: self` line. Raw notes are unchanged.

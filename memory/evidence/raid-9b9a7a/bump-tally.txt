@@ -1,0 +1,8 @@
+Command: python3 scripts/raid-reroll-tally.py tickets tickets/closed
+Exit0; no drift warnings. Counts concern recognized ticket bumps, not all notes or gaze attempts. Positive control: Ticket1369 has1 verify-reroll.
+Ticket 1552: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
+Ticket 1559: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
+Ticket 1560: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
+Ticket 1561: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
+Ticket 1562: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
+Ticket 1563: 0 recognized bump entries (0 permission, 0 verify-reroll, 0 circuit-breaker)
