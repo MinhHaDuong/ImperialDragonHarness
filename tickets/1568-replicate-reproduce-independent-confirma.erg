@@ -8,6 +8,7 @@ Author: claude
 2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
 2026-11-26T21:58Z codex note receiving Imagine accepted with qualifications; four premise checks recorded below; Plan only, no implementation or new scientific validation authorized
 2026-11-26T22:05Z reviewer raid ebfa91 Imagine: receiving acceptance retained; per-ticket reimagine skipped because accepted scope is bounded; Blind-Spot CLEAN (requested Sol6.1 medium, observed identity unavailable); user authorized implementation
+2026-11-26T22:05Z reviewer raid ebfa91 Plan: add one reproduce subsection reusing selected_target; freeze authoritative targets and decision rules, honest port provenance, immutable first results, qualified optional checker; validation by semantic diff and scoped checks, no wording tests
 
 --- body ---
 ## Context and authority
