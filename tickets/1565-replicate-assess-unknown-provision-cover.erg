@@ -14,7 +14,7 @@ Author: codex
 Filed from replicator 0002, branch `t0002-investigate-assess`, reviewed commit
 `80c8a1df298e1dec8afca857875554fb0d5243da`. Child of open tracker 1552.
 Source directory:
-`/home/haduong/CNRS/projets/actifs/replicator/.claude/worktrees/t0002-investigation-20261126/replications/investigation-2026-11-26/`.
+`~/CNRS/projets/actifs/replicator/.claude/worktrees/t0002-investigation-20261126/replications/investigation-2026-11-26/`.
 Read `IDH-ticket-briefs.md`, `REPORT.md`, `controls.json` and `reproduce.py`;
 all four and `scripts/compare_assess.py` byte-match the handoff commit.
 
