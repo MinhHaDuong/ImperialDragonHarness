@@ -1,0 +1,53 @@
+%erg 0.1
+Title: /replicate assess: no rule for an unseen package or paper (login/bot wall), MD5-only listings, analysis data built by shipped code
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T16:07Z claude created
+2026-11-25T16:08Z MinhHaDuong filed from replicator 0002
+
+2026-11-26T06:53Z codex note raid Imagine: foreign pickup: current skill lacks blocked/blind/MD5 handling; external validation absent. Relevant assessment integrity defect; no duplicate/conflicting ruling; harness owns skill. Accept stated scope. Blind-Spot: propagate hashes to fetch and blocked unknowns to table.
+
+2026-11-26T06:54Z codex note raid Plan: after 1562, define blocked/resume states, blind package URL, source checksum representation and local hashes, generated analysis-data evidence. Walk blocked/no-paper/MD5-tab/producer scenarios; no text-pinning tests.
+
+2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+
+--- body ---
+## Context
+
+Filed from replicator ticket 0002 (raid 2ba62a, blind validation of
+`/replicate assess` on ten I4R papers, 2026-11-25). Child of tracker 1552.
+Evidence: replicator branch `t0002-validate-assess`, `replications/*/`.
+
+Gaps hit by the assessors:
+
+1. **Unseen package.** Four of ten packages sit on openICPSR, which returns
+   403 (Cloudflare) to scripts and needs a login. `assess` has no rule for a
+   package that exists but could not be seen: assessors variously put every
+   criterion in `non_etabli` or left `criteres` empty. 24 of 60 table cells
+   were not comparable for this reason alone. The skill should state the
+   reading (e.g. `a_evaluer` plus a `blocked` reason) and name the human
+   step (a logged-in download into `data/`).
+2. **Unseen paper.** Step 1 ("Get the full text and the Zotero item by the
+   reading-note skill's § 1") has no fallback when the full text is behind a
+   paywall or bot wall and Zotero is off limits; the main result then cannot
+   be chosen from the paper (one assessor fell back to the package's own
+   table, which is circular).
+3. **Step 2's web search** surfaces I4R reports by title, so the skill
+   cannot be validated blind as written; a `--package-url` (or a
+   no-search mode) would make blind runs a supported path.
+4. **MD5-only listings.** Dataverse gives MD5, and for ingested tabular
+   files the MD5 of the `.tab`, not the original. `manifest.json` has only
+   `sha256`; assessors added `md5` ad hoc.
+5. **Analysis data built by shipped code.** schaeuffele2024systematic ships
+   the code that writes its analysis data (`1_tidy_data.R` writes
+   `td_ma.RData`) but not the file; no criterion fits, the row reads "not
+   established", while I4R reads Fully. graham2024become likewise.
+
+## Exit criteria
+
+- [ ] `assess` states the reading for an unseen package and an unseen paper.
+- [ ] A blind mode skips the web search given a package URL.
+- [ ] `manifest.json` schema allows an MD5-only checksum with its source.
+- [ ] Analysis data producible by shipped code has a stated reading.

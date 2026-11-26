@@ -1,0 +1,38 @@
+%erg 0.1
+Title: /replicate: skill not projected into ~/.claude/skills, Skill tool says Unknown skill
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T16:07Z claude created
+2026-11-25T16:08Z MinhHaDuong filed from replicator 0002
+
+2026-11-26T06:53Z codex note raid Imagine: foreign pickup facts: symlink now present; fresh Skill loading unverified. Relevant usability blocker; no duplicate or conflicting ruling found; harness owns installer. Disposition: verify existing installation before changing code.
+
+2026-11-26T06:54Z codex note raid Plan: fresh Claude Skill invocation is first check; symlink and dynamic installer discovery already present. Change installer only for reproduced defect; document install required for new skills.
+
+2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+
+--- body ---
+## Context
+
+Filed from replicator ticket 0002 (raid 2ba62a, blind validation of
+`/replicate assess`, 2026-11-25). Child of tracker 1552.
+
+`skills/replicate/` exists (created 2026-11-25 16:35) but
+`~/.claude/skills/replicate` does not: every other skill there is a symlink
+into `~/.agents/skills/`. All four Claude Code assessor subagents got
+"Unknown skill: replicate" from the Skill tool and had to read SKILL.md by
+path, as the orchestrator's brief told them to. A session without such a
+brief cannot run the skill at all.
+
+## Request
+
+Project `skills/replicate` into the Claude Code skills directory (rerun the
+installer, or fix whatever step skipped it), and check whether the installer
+projects new skills automatically.
+
+## Exit criteria
+
+- [ ] `~/.claude/skills/replicate` resolves to `~/.agents/skills/replicate`.
+- [ ] The Skill tool loads `replicate` in a fresh Claude Code session.

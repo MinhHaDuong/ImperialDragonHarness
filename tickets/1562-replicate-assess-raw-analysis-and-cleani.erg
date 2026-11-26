@@ -1,0 +1,61 @@
+%erg 0.1
+Title: /replicate assess: raw/analysis and cleaning/analysis boundaries; No-outranks rule disagrees with I4R Partially
+Created: 2026-11-25
+Author: claude
+
+--- log ---
+2026-11-25T16:07Z claude created
+2026-11-25T16:08Z MinhHaDuong filed from replicator 0002
+
+2026-11-26T06:53Z codex note raid Imagine: foreign pickup: ticket supplies boundary counterexamples; validation source absent here. Current No priority rule confirms ambiguity; relevant science classification defect; no duplicate/conflicting ruling; harness owns skill. Accept operational definitions without changing grid vocabulary.
+
+2026-11-26T06:54Z codex note raid Plan: after 1561, define deposited raw and transformation-based cleaning; separate code provision from inputs/execution; mixed or undecidable split Partially, absent components No; walk supplied cases and true-absence control.
+
+2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+
+--- body ---
+## Context
+
+Filed from replicator ticket 0002 (raid 2ba62a, blind validation of
+`/replicate assess` against I4R's six-row tables, 2026-11-25). Child of
+tracker 1552. Evidence: replicator branch `t0002-validate-assess`,
+`replications/VALIDATION-assess-2026-11.md`.
+
+Six of ten disagreements turn on where raw data ends and analysis data
+begins, and where cleaning code ends and analysis code begins:
+
+- **Cleaning steps inside the analysis script.** blair2023peacekeeping:
+  `replication.do` lines 42-260 build lags, imputations and sample dummies
+  from the deposited panel; no script builds the panel. The assessor
+  established `code_nettoyage_inaccessible`, and assessment.md's rule "A No
+  criterion outranks that reading" makes the row No. I4R: Partially.
+  arechar2023understanding: same, and I4R's table note says the one dataset
+  "could not clearly be categorized as either raw or analysis data" and the
+  code mixes cleaning and analysis, so it marks raw data, cleaning code and
+  reproducible-from-raw Partially. The skill derives No (and "not
+  established" for raw data): three disagreements on one paper.
+- **What counts as raw.** carter2024extraction and moscona2023directed:
+  the assessors counted upstream sources (archival and GIS inputs; FOIA,
+  patent and weather-grid sources) as missing raw data and read Partially.
+  I4R read the deposited raw extracts as Fully raw data (Carter: "cleaning
+  codes were provided ... along with the raw data"; Moscona: "Raw data
+  appears to be fully available").
+- **Code complete vs inputs present.** graham2024become: cleaning scripts
+  exist, but one input (a data dictionary xlsx) is absent, so the assessor
+  read the cleaning code as Partially; I4R: Fully. Carter, similarly, Partial
+  because one script writes nothing.
+
+## Request
+
+In `references/assessment.md`, define raw data (as deposited by the authors
+vs every upstream source) and cleaning code (a separate script vs any data
+transformation), in I4R's operational sense, and give the Partially reading
+for an undecidable split. Reconsider the "No outranks Partially" rule: I4R
+uses Partially where cleaning steps exist but do not build the analysis data
+from raw. Keep code completeness separate from input availability.
+
+## Exit criteria
+
+- [ ] `assessment.md` defines raw data and cleaning code operationally.
+- [ ] The undecidable-split case has a stated reading.
+- [ ] The No-outranks rule is kept with a reason, or revised.
