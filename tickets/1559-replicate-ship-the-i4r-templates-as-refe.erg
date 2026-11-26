@@ -9,6 +9,8 @@ Author: claude
 
 2026-11-26T06:53Z codex note raid Imagine: accepted harness-owned request; six source templates available locally; actual skill still fetches General only. Blind-Spot: no extra deliverable.
 
+2026-11-26T06:54Z codex note raid Plan: finish pushed t1559-replicate-templates in fresh worktree; verify six source hashes and contextual selection (General/Psych/forensic/assignment/no fit), manifest fields and fallback. No wording tests.
+
 --- body ---
 ## Context
 

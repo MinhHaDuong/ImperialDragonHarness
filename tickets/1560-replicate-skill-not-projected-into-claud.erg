@@ -9,6 +9,8 @@ Author: claude
 
 2026-11-26T06:53Z codex note raid Imagine: foreign pickup facts: symlink now present; fresh Skill loading unverified. Relevant usability blocker; no duplicate or conflicting ruling found; harness owns installer. Disposition: verify existing installation before changing code.
 
+2026-11-26T06:54Z codex note raid Plan: fresh Claude Skill invocation is first check; symlink and dynamic installer discovery already present. Change installer only for reproduced defect; document install required for new skills.
+
 --- body ---
 ## Context
 
