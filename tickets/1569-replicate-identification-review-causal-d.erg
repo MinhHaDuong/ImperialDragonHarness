@@ -1,0 +1,55 @@
+%erg 0.1
+Title: /replicate: identification review (causal DAG) beside the score
+Created: 2026-11-26
+Author: claude
+
+--- log ---
+2026-11-26T19:41Z claude created
+2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
+
+--- body ---
+## Context and authority
+
+Filed from replicator (closed ticket 0008, main eded457) at the author's
+request on 2026-11-26. Integration-review finding for tracker 1552. The
+author ruled the review style suitable and asked for a committed verdict
+("C'est bien identifié ou pas ?"). Request for receiving Imagine only.
+
+## Observation
+
+The I4R six-row table rates computation only; identification critiques
+live in the report's prose, and the skill has no verb or section for
+them. Replicator 0008 added, for Carter (2024) Figure 5:
+
+- a causal DAG (`identification/dag.svg`) with conventions in
+  `~/CNRS/projets/actifs/replicator/doc/identification-method.md`;
+- an 11-item checklist of Pearl-style confounder-handling errors
+  (bad controls, colliders, post-treatment conditioning, compound
+  treatment, misclassification, sensitivity bounds), each with two
+  plain-language sentences for non-specialist economists;
+- a committed verdict on a four-step scale (well / plausibly / weakly /
+  not identified) plus a labelled subjective probability (here:
+  plausibly identified, not established; 60% / 65%).
+
+A cross-family review seat caught two reasoning errors both favourable to
+the authors ("smooth, therefore absorbed" fails against a province-level
+jump at a geographic border; pre-treatment road evidence wrongly called
+post-treatment). Lesson: this review needs a decorrelated seat.
+
+Evidence: `~/CNRS/projets/actifs/replicator/replications/carter2024-mainclaim-cra/identification/`
+(checklist.md, dag.svg, index.html), `~/CNRS/projets/actifs/replicator/doc/identification-method.md`.
+
+## Proposed (for Imagine to accept, amend or reject)
+
+An identification section, under `report` (or a step of `probe`), kept
+out of the ACRe score and the six-row table: DAG, checklist, verdict
+scale, plain-language explanations, cross-family review seat. The method
+document could move to `skills/replicate/references/`.
+
+## Exit criteria
+
+- [ ] Receiving Imagine records facts, duplicates, ownership, rulings
+  (rule 4 fairness: a robust verdict is as valuable as a fragile one).
+- [ ] If accepted: the section is placed, the scale and checklist are
+  referenced, and the score/table remain computation-only.
+- [ ] Verdict wording never presented as a reproducibility status.
