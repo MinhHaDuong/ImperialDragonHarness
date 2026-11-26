@@ -123,7 +123,7 @@ not an unexamined component (`a_evaluer`). It establishes no successful raw
 run; an analogous unresolved raw/analysis boundary makes the from-raw table
 row Partially, with that reason, rather than asserting a matched raw run or
 `crr_reussie`. Keep any unexamined output comparisons explicit under the
-execution-coverage rule below.
+execution-coverage rule in [The six-row table, derived](#the-six-row-table-derived).
 
 ## The six-row table, derived
 
@@ -149,7 +149,7 @@ available raw data: that evidence concerns different components.
 | Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming the data | `aucune_donnee_accessible` |
 | Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming the code, or `scripts_accessibles` alone | `aucun_code_accessible` |
 | Reproducible from analysis data | every required statistic in the whole-paper inventory has a `stage=reproduce` analysis-data row with `status=match` | some required statistics match and others fail or have known missing inputs | none match, or the code does not run |
-| Reproducible from raw data | same, for rows from raw data | same, or the examined unresolved raw/analysis boundary described above | same, or raw data or cleaning code missing, when the boundary is resolved |
+| Reproducible from raw data | same, for rows from raw data | same, or the examined unresolved raw/analysis boundary in [Raw inputs and cleaning code](#raw-inputs-and-cleaning-code) | same, or raw data or cleaning code missing, when the boundary is resolved |
 
 The execution rows require an inventory of all applicable outputs and their
 required comparison statistics, mapped to `cra:` or `crr:` rows separately.
@@ -164,7 +164,8 @@ whole-paper execution row.
 A provision row whose inputs are still `a_evaluer` is printed as "not yet
 assessed", never guessed. When the package is verified to start only at final analysis
 data and no raw run is possible, "Reproducible from raw data" is No, and the
-reason is recorded. Apply the examined ambiguous-boundary reading above
+reason is recorded. Apply the examined ambiguous-boundary reading in
+[Raw inputs and cleaning code](#raw-inputs-and-cleaning-code)
 when the split cannot be resolved; a missing raw-run row alone does not
 settle that boundary.
 
