@@ -23,7 +23,13 @@ surprising the estimate would be if the true effect were zero.
 
 ## 1. The Reproducibility Table is always present
 
-Six rows, each marked Fully, Partially or No:
+Retain all six rows. Mark established categories Fully, Partially, or No;
+show unresolved rows as "not yet assessed", with their reason. If the chosen
+template fixes the three category columns, leave them unmarked for an
+unassessed row and place its status beside it. Inspection establishes
+provision; output comparisons establish numerical execution. A verified
+from-raw impossibility may have No with an explicit provision-based basis,
+distinct from an observed failed run (`assessment.md`).
 
 | | Fully | Partially | No |
 |---|---|---|---|
@@ -36,8 +42,11 @@ Six rows, each marked Fully, Partially or No:
 
 *Raw data* is what the authors collected or downloaded. *Cleaning code*
 turns it into *analysis data*, the file the regressions read. You can fill the
-first four rows before the Games. In the report, show only the results that
-did not reproduce. Matches are not listed.
+first four rows before the Games when their evidence permits; unknown
+coverage remains visible. The six-row table always includes Fully and
+unassessed rows. In the separate detailed statistic comparisons, show only
+the results that did not reproduce; individual matching statistics are not
+listed there.
 
 ## 2. Three-digit precision, always beside the original
 

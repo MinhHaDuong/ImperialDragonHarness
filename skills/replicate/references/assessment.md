@@ -180,13 +180,16 @@ row not yet assessed. The script's filename or separation into files does
 not decide completeness.
 
 These provision rules supersede the earlier ambiguity-only Partially
-reading for raw data and cleaning code. The legacy from-raw execution
-exception remains pending ticket 1566: an examined unresolved raw/analysis
-boundary yields a Partially from-raw execution row even without comparisons.
-This separate exception supplies no provision evidence and establishes no
-`crr_reussie`. Preserve the boundary record and any unexamined output
-comparisons under the execution-coverage
-rule in [The six-row table, derived](#the-six-row-table-derived).
+reading for raw data and cleaning code. Record the unresolved boundary in
+`raw_analysis_boundary`, with `status: unresolved` and its inspected
+`evidence`; retain the affected coverage and blockers separately. Boundary
+uncertainty supplies no numerical execution outcome. Without comparison
+outcomes or documented attempted-run failure evidence, both execution rows
+remain not yet assessed, subject only to the verified provision-based
+impossibility described in
+[The six-row table, derived](#the-six-row-table-derived). Neither an
+unresolved boundary nor that impossibility establishes `crr_reussie` or an
+observed failed run.
 
 ## The six-row table, derived
 
@@ -215,13 +218,13 @@ available raw data: that evidence concerns different components.
 | Analysis data provided | `donnees_analyse_completes` | `analyse_partiellement_accessible` naming provided analysis inputs and a verified gap | `aucune_donnee_accessible` |
 | Analysis code provided | `code_analyse_complet` | `analyse_partiellement_accessible` naming present analysis code and a verified gap | `aucun_code_accessible` |
 | Reproducible from analysis data | every required statistic in the whole-paper inventory has a `stage=reproduce` analysis-data row with `status=match` | some required statistics match and others fail or have known missing inputs | none match, or the code does not run |
-| Reproducible from raw data | same, for rows from raw data | same, or the examined unresolved raw/analysis boundary in [Raw inputs and cleaning code](#raw-inputs-and-cleaning-code) | same, or raw data or cleaning code missing, when the boundary is resolved |
+| Reproducible from raw data | same, for rows from raw data | same, based on raw-data comparison evidence | same observed-comparison rule, or verified provision-based impossibility as defined below |
 
 Unresolved provision coverage yields "not yet assessed" unless demonstrated
 provision and a verified gap already establish Partially for that component.
 A blocker alone never supplies the gap. Blocked or wholly unexamined
 execution evidence yields "not yet assessed" for each affected execution row.
-In particular, zero CSV rows, inaccessible contents, or an
+In particular, zero CSV rows alone, inaccessible contents, or an
 unavailable output inventory cannot establish No by the "none match" rule.
 That reading requires examined coverage and evidence of failure or absence;
 unknown inputs cannot establish the final-analysis-only exception in this section.
@@ -239,12 +242,40 @@ whole-paper execution row.
 A provision row supported only by inspected lower bounds or unresolved
 coverage is printed as "not yet assessed", with its facts and unknowns kept
 visible. The verified-gap rule applies even when other criteria remain
-`a_evaluer`. When the package is verified to start only at final analysis
-data and no raw run is possible, "Reproducible from raw data" is No, and the
-reason is recorded. Apply the examined ambiguous-boundary reading in
-[Raw inputs and cleaning code](#raw-inputs-and-cleaning-code)
-when the split cannot be resolved; a missing raw-run row alone does not
-settle that boundary.
+`a_evaluer`.
+
+Keep the basis of each execution category explicit in the row's evidence.
+An observed-comparison basis cites the required outcome keys, comparison
+rows, and run or failure records. An unresolved raw/analysis boundary alone
+never establishes numerical Partially, Fully, or No. Without comparison
+outcomes or documented failed attempts, print not yet assessed unless the
+provision-based exception applies. A run that fails before producing numbers
+can support No on observed failure: record the failed attempt, its log, and
+`not_run` outcomes with reasons for the required comparisons under the
+declared coverage rules. Zero attempted runs and zero matching outcomes
+are different evidence states. Boundary uncertainty cannot override the
+declared comparison-coverage rules or turn an unexamined
+comparison into an observed failure.
+
+The provision-based exception is a verified impossibility of a from-raw run:
+inspection establishes that the package starts only at final analysis data
+and supplies no required raw-data/cleaning path. Record the verified
+boundary, missing raw inputs or cleaning code, and why no raw run is
+possible. The from-raw row may then be No, explicitly labelled
+**provision-based impossibility**, even without a run. This is distinct from
+**observed failure** after an attempted run or examined nonmatching
+comparisons. Mere failed access, an unknown boundary, an unexamined path, or
+a missing raw-run CSV does not establish impossibility. Do not mark
+`crr_echouee` from this inspection-only basis; run criteria retain their
+main-result execution evidence requirements.
+
+In preliminary notes and reports, show all six derived rows, including
+Fully and not yet assessed, with the evidence basis and unresolved coverage
+visible. Use the literal status "not yet assessed" for an unassessed row;
+if a fixed template offers only Fully/Partially/No columns, leave those
+columns unmarked for that row and state the unassessed status and reason
+beside it. The instruction to show only discrepancies applies to the
+detailed statistic comparisons, not to this six-row status table.
 
 ## out/*.csv
 
@@ -266,8 +297,9 @@ row per compared statistic. A coefficient and its SE are two rows: `t1.joint.ada
 A row matches when the reproduced value lies within half a unit of the
 paper's last printed digit. The source (`analysis` or `raw`) is the
 `outcome_key` prefix `cra:` or `crr:` on reproduction rows. Keep every
-row, matches included. The report shows only discrepancies and rounds to
-three digits.
+row, matches included. The detailed statistic-comparison list in the report
+shows only discrepancies and rounds to three digits; its six-row status
+table remains complete, with evidence bases and unassessed rows visible.
 
 ## manifest.json
 
