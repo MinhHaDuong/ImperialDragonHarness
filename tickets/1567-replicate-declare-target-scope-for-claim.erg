@@ -1,0 +1,99 @@
+%erg 0.1
+Title: /replicate: declare target scope for claim-level provision assessments
+Created: 2026-11-26
+Author: codex
+
+--- log ---
+2026-11-26T13:22Z codex created
+2026-11-26T13:22Z reviewer filed from replicator 0002; author-approved consolidation handoff; receiving Imagine and any implementation decision pending
+2026-11-26T13:25Z reviewer source consolidation reviewed in replicator fd85bcc86b928ee8d30d22be9d87c8d6e6ea5a0e on branch t0002-consolidation: doc/examples/arechar-mainclaim/README.md and IDH-SCOPE-BRIEF.md; 175 prior artifacts and 44 sources preserved, no scientific execution. CRA from analytic inputs is not blocked by unresolved raw provenance; receiving Imagine remains pending.
+
+2026-11-26T14:04Z codex note receiving Imagine: facts read against current IDH e6521eec and pinned replicator e4cb874/a167acb/fd85bcc; ACRe primary guide verified; no open duplicate; IDH owns contract and replicator downstream implementation. Accept explicit-target request for Plan; retain whole-paper criterion meanings and default until an explicit design/author decision. Reception authorizes ticket landing only; 1552 and1567 remain open.
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0002 after the author requested consolidation before numerical confirmation. Related to tracker 1552 and closed scope ticket 1561. This is a request for receiving-project Imagine, not an implementation authorization or an assertion that the existing whole-paper categories are false.
+
+## Observation
+
+At IDH main e6521eeca366035930ce4a0e281bda0ec53220ab, references/assessment.md lines 84-114 require whole-paper provision, while lines 122-124 already permit main-result CRA/CRR. Lines 194-220 give the derived table whole-paper coverage. A host-author override was needed to assess provision for a declared selected claim. Scoped Fully must not silently satisfy an existing whole-paper criterion.
+
+Replicator's reviewed Arechar audit (e4cb874de0a034fbe7a97fa5b35569c4dd3fad1f) selects numerical Figures 5a/5d before dependency inspection. Their actual producer/consumer chain excludes national WVS distributions needed by supplementary Figure S4. Reassessment (a167acb57a39cb70590ef8ba066fbe990f308e8f) finds analysis input information and numerical code complete for that target, upstream raw/cleaning unknown. The broader 3/4 pilot remains unchanged. No scientific program was run and no new accuracy claim is made.
+
+The existing primary route is ACRe Assessment, https://bitss.github.io/ACRE/assessment.html : introduction permits selected claims, display items or estimates; section 3.2 maps each item to inputs; 3.3.1 grades individual items; 3.3.3 treats paper-level practices separately. Brodeur pre-Games slides 4/9 emphasize main results/models without defining every provision category.
+
+## Request for receiver Imagine
+
+Represent a declared claim/output/estimate scope explicitly and propagate it through provision, execution and reference comparison. Retain a labeled whole-paper audit. Consider main-claim default for Games as a proposal; do not silently change the canonical CIRED grid, existing scope decisions, tolerances, adaptation conventions or old observations. Resolve how selected-target results coexist with existing whole-paper criteria before implementation.
+
+Receiver owns fact/framing checks, duplicate and work-in-flight checks, ownership, standing rulings and disposition. Source preflight found only tracker 1552 open; closed 1561 deliberately established current whole-paper scope. Preserve the already merged 1565/1566 evidence fixes; these are not being refiled.
+
+## Proposed acceptance questions
+
+- [ ] Declared target is inspectable and consistently named at every stage; whole-paper mode remains available.
+- [ ] A gap outside the target cannot become a selected-result gap; unknown required coverage stays unknown.
+- [ ] Cross-scope categories cannot produce an unqualified agreement score; printed reference categories and narrative inferences stay distinguishable.
+- [ ] Numerical estimates and literal rendering, information provision and software readiness, remain distinct.
+- [ ] Existing grid meanings and old evidence are preserved or explicitly migrated under an approved decision.
+
+## Evidence and handoff boundary
+
+Assigned source project: `~/CNRS/projets/actifs/replicator`. Read reviewed reports with git show on the hashes above: replications/arechar-mainclaim-audit-2026-11-26/REPORT.md and replications/arechar-reevaluation-2026-11-26/REPORT.md. The consolidation branch t0002-consolidation carries doc/examples/arechar-mainclaim/README.md and IDH-SCOPE-BRIEF.md; its final commit will be logged after consolidation. These are references, not files to change from IDH.
+
+No IDH skill, scientific source, comparator or canonical grid is changed by this ticket. Replicator owns downstream input/comparator follow-up. Main-claim CRA can proceed from adequate analytic inputs without resolving the upstream raw boundary first; CRR and raw-completeness claims cannot.
+
+
+## Receiving Imagine (2026-11-26)
+
+Disposition: **ACCEPTED for bounded planning**, on the author's instruction
+"Réception". Land this request into the ticket store, keeping 1567 and tracker
+1552 open. This is not adoption of a new default, a grid migration, or a skill
+implementation. The five proposed acceptance questions remain unchanged.
+
+1. **Facts versus framing.** Current `assessment.md:84-124,194-240` confirms
+   whole-paper provision/table rows alongside selected-main-result run criteria.
+   This is an explicit local contract, not a parser bug. The primary ACRe guide
+   (https://bitss.github.io/ACRE/assessment.html, checked 2026-11-26, introduction
+   and sections 3.1,3.2,3.3.1,3.3.3) permits selected display items or estimates,
+   maps their inputs, and separates paper-level practices. It supports a
+   selected-target mode; it does not prescribe our Games default or redefine
+   every provision row. Brodeur slides4/9 support main-results/model emphasis,
+   without settling the proposed default.
+
+   Read pinned replicator `verification.json` and `dependencies.json` at
+   e4cb874, `comparison.json` at a167acb, and the consolidated reference at
+   fd85bcc. The inspected dependency graph excludes national WVS from numerical
+   5a/5d and includes it for S4. Its recorded positive controls identify a
+   missing required CSV/field, the off-target DTA loader, and S4's WVS gap.
+   This is source-inspection evidence, not independent numerical reproduction
+   or a certificate of historical package identity. The reference comparison
+   contains one conditional printed-Fully entailment and one narrative-based
+   inference; neither supplies a four-row accuracy score. Current work in
+   replicator may advance separately from these pinned observations.
+
+2. **Duplicates and overlap.** Open/closed ticket search, assessment history,
+   open forge PRs, and worktree inventory found no competing implementation.
+   Closed1561 deliberately established whole-paper scope;1565/1566 fixed
+   evidence semantics.1567 asks how to represent an additional declared target
+   without making scoped Fully satisfy those whole-paper criteria. It does
+   not reopen their implementation or authorize rescoring old dossiers.
+   PR2516 is unrelated memory capture and is preserved.
+
+3. **Ownership.** IDH owns the skill's target declaration, vocabulary and
+   propagation through its instructions. Replicator owns source retrieval,
+   comparator encoding, experiments and validation there. Acceptance grants
+   no authority to edit that project's scientific files from IDH.
+
+4. **Standing decisions and next boundary.** Preserve whole-paper mode, the
+   existing grid and1565/1566 unknown/gap/run distinctions. A separately named
+   selected-target result can be designed without silently weakening a
+   whole-paper criterion. Plan must make that coexistence explicit before
+   implementation. A switch to main-claim-by-default for Games remains a
+   proposal for an explicit author decision, not an ACRe mandate or a decision
+   made by this ticket receipt. No tolerance, adaptation convention, prior
+   observation or numerical-versus-rendering target changes at reception.
+
+Validation of this receipt: documentary checks above; ticket format/corpus
+and bookkeeping candidate checks before landing. No package was executed,
+no frozen source/dossier was written, and no new assessment was produced.
