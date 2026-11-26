@@ -1,0 +1,89 @@
+%erg 0.1
+Title: /replicate assess: unresolved raw boundary yields Partially without execution
+Created: 2026-11-26
+Author: codex
+
+--- log ---
+2026-11-26T09:00Z codex created
+2026-11-26T09:01Z codex filed from replicator 0002; reviewed handoff 80c8a1df298e1dec8afca857875554fb0d5243da
+2026-11-26T09:01Z codex note receiving Imagine: evidence reproduced read-only; duplicate/ownership/ruling checks recorded below; accepted defect for later planning, no implementation authorized
+
+--- body ---
+## Provenance and receiving Imagine
+
+Filed from replicator 0002, branch `t0002-investigate-assess`, reviewed commit
+`80c8a1df298e1dec8afca857875554fb0d5243da`. Child of open tracker 1552.
+Source directory:
+`/home/haduong/CNRS/projets/actifs/replicator/.claude/worktrees/t0002-investigation-20261126/replications/investigation-2026-11-26/`.
+Read `IDH-ticket-briefs.md`, `REPORT.md`, `controls.json` and `reproduce.py`;
+all four and `scripts/compare_assess.py` byte-match the handoff commit.
+
+Receiving checks (2026-11-26, IDH base
+`44c0e4f1619689a87786418b77ba7b6d93bf18f6`):
+
+1. Facts versus framing: reran `raw_boundary_without_run`, a disjoint complete
+   16-criterion partition. With no reproduction rows, no execution coverage,
+   `paper` blocked and an unresolved raw/analysis boundary, `derive_table`
+   emits `repro_raw=Partially`. Independent positive control: complete raw
+   coverage plus an actual matching `crr:x` comparison emits Fully. The empty
+   run is therefore not a broken-reader inference.
+2. Duplicates/overlap: no open duplicate or PR implementation found. Closed
+   1562 explicitly introduced the examined-boundary Partially interpretation;
+   closed 1563 separately says blocked/execution evidence remains unassessed.
+   This is a new demonstrated scientific consequence of that exception, not
+   a claim those earlier changes never landed. Related 1565 concerns provision
+   completeness, not numerical execution.
+3. Ownership: IDH owns the assessment contract; replicator owns its boundary
+   override/comparator and the trial. An implementation there requires its
+   own receiving pickup and validation.
+4. Standing rulings/current fit: prior 1562 requested a stated reading for an
+   undecidable split and accepted Partially; that history is explicit. This
+   receiving report challenges applying that provision judgment to numerical
+   execution. No contrary author ruling found mandating a numerical partial
+   result without execution. Accept the defect for Imagine, with any changed
+   target interpretation declared before validation; filing authorizes no
+   implementation or expansion of objectives.
+
+## Observation and scientific impact
+
+`skills/replicate/references/assessment.md:151-160` explicitly allows the
+ambiguous raw/analysis boundary to make the from-raw execution row Partially,
+and the table at line 187 repeats it. Lines 189-200 otherwise require
+execution/output-inventory evidence and keep unexamined comparisons unassessed.
+Replicator `scripts/compare_assess.py:204-216` applies the boundary override
+last, after resetting blocked execution to unassessed. Thus this is specified
+behavior with conflicting semantics, not a parser accident.
+
+The unchanged frozen Blair dossier also takes this exception without a run.
+That does not prove the unseen raw boundary or correct I4R label; the verified
+fact is the no-run categorical result. A numerical reproducibility category
+currently carries a provision/boundary judgment instead of output comparisons.
+
+## Bounded requested outcome
+
+Retain raw/analysis boundary uncertainty in its own evidence field and keep
+numerical execution unassessed until execution evidence exists. A verified
+analysis-only package may still justify an explicitly labelled provision-based
+impossibility/No; distinguish that basis from an observed failed run. Do not
+force agreement with I4R by changing frozen observations or comparison scope.
+
+## Exit criteria
+
+- [ ] An unresolved raw/analysis boundary without execution comparisons cannot
+      generate numerical execution Partially; uncertainty remains explicit.
+- [ ] Actual partial matches can still generate Partially under the declared
+      execution-coverage rules; a complete-match positive control still yields
+      Fully, and verified impossibility is distinguished from observed failure.
+- [ ] Assessment/report instructions and the six-row derivation distinguish
+      inspection from execution consistently. Validate the boundary-without-run,
+      observed-partial and complete-match controls and unchanged frozen Blair
+      dossier before any new cohort; preserve prior observations.
+
+## Verification limits and scope
+
+Receiver verified the four supplied full-grid controls, the independent
+complete-match execution positive control and 50 frozen deliverable hashes
+and sizes. No scientific package was run and no source/dossier was written.
+No skill rewrite or replicator comparator edit is included in this filing.
+Adapter tolerance, matched output scope and future trial design are protocol
+questions, not extra accepted defects. Tracker 1552 remains open.
