@@ -81,13 +81,29 @@ put CSVs in `out/`. Scripts run with the paper's own software (Stata, R,
 Python) from a command written in `README.md`. Never put a harness path, a
 skill call or an agent instruction in the folder.
 
+## Assessment scope
+
+Whole-paper assessment remains the default, including for Games. An explicit
+caller request may add a **selected-target assessment** for named claims,
+outputs, or estimates. Declare it from the original paper before inspecting
+its dependencies or running code; a package's available files cannot choose
+the target. Follow `references/assessment.md` § Selected-target assessment
+for its declaration, separate namespace, and evidence rules. The canonical
+whole-paper dossier, level, and table keep their existing meanings. A selected
+result never substitutes for them or exports as a whole-paper grid criterion.
+
+Carry the selected scope ID through the input/producer map, execution records,
+reference comparison, README, and report. Preserve unresolved whole-paper
+coverage even when the selected result is Fully. Changing scope requires
+rechecking affected evidence before reusing categories or comparisons.
+
 ## Every verb
 
 - **Idempotent and resumable.** Before acting, read what the folder already
   holds. Redo only what is missing or stale: a step whose inputs changed
   hash since `manifest.json` recorded them, access has become available, or
-  the governing criteria have changed. Revisit stale blocked reasons and
-  claims invalidated by clarified criteria, preserving valid evidence. A
+  the governing criteria or declared target have changed. Revisit stale blocked
+  reasons and claims invalidated by clarified criteria, preserving valid evidence. A
   rerun on a complete, still-valid folder changes nothing and says so.
 - **Evidence or nothing.** Every claim in `assessment.json`, `README.md` and
   the report points to a file, a line, a URL or a CSV row. A criterion
@@ -125,7 +141,10 @@ An inaccessible supplied URL stays blocked; it does not authorize discovery.
    set `main_result` to null and record a paper blocker until an authoritative
    original-paper excerpt permits the choice. A package table cannot choose
    the result. Retain independently verifiable package evidence, but keep
-   whole-paper completeness and unexamined comparisons unassessed.
+   whole-paper completeness and unexamined comparisons unassessed. If a selected
+   assessment was requested, also declare its exact outputs/statistics and
+   numerical or literal-rendering target from authoritative paper evidence;
+   unavailable target evidence blocks its declaration.
 2. **Find the package.** In ordinary mode, check the journal supplement, the
    data archive the paper cites, the authors' pages and repositories, and a
    web search. In blind mode, inspect the supplied URL directly. Record every
@@ -152,6 +171,11 @@ An inaccessible supplied URL stays blocked; it does not authorize discovery.
    producer-chain conditions in that reference. Run criteria (`cra_*`,
    `crr_*`) stay `a_evaluer` until execution. Derive the level and six-row
    Reproducibility Table from the evidence; blocked unknowns remain unassessed.
+   For an explicit selected target, additionally map its dependencies and derive
+   its separately labelled provision rows, following `references/assessment.md`.
+   Bind inspected inputs to manifest paths and exact representations; existing
+   fetch/checksum requirements apply unchanged. Leave selected execution rows
+   unassessed until their evidence permits a category.
 5. **Preliminary-assessment note.** Draft
    `report/<citekey>-preliminary-assessment.html` and publish it as in
    § Zotero notes.
@@ -165,7 +189,10 @@ every reported statistic.
    packages and versions go into `manifest.json` `environment`.
 2. Map each applicable published table and figure, including appendices, to
    the source lines and comparison statistics that produce it. Keep the
-   whole-paper coverage map, with gaps, in `reproduce/README.md`.
+   whole-paper coverage map, with gaps, in `reproduce/README.md`. Carry any
+   explicit selected scope ID and its required comparison outcomes separately;
+   an unexamined whole-paper map stays unresolved, without expanding the
+   selected execution request.
 3. Run from the analysis data first (CRA), then from the raw data (CRR)
    where the package allows. A broken script is fixed in a new file. The fix
    and its reason are recorded: a coding error found here is a robustness
@@ -178,6 +205,9 @@ every reported statistic.
    `crr_*`, from the main result's rows, with the CSV path as evidence. Then
    re-derive the level and the table: ACRe run criteria use the main result;
    the six-row table uses whole-paper coverage (`references/assessment.md`).
+   Update any selected-target execution rows separately, using only its declared
+   required outcomes and scope ID. Selected success alone cannot establish a
+   canonical run criterion for a different `main_result`.
 6. A result that cannot be produced from the package (an input is missing)
    is recorded as `missing_input`. Never transcribe it from the paper.
 
@@ -230,7 +260,11 @@ The goal is the I4R report, written as a team.
    impossibility from observed execution failure. Show only discrepancies
    in the detailed statistic comparisons, rounding values to three digits
    from `out/*.csv`. Put each robustness result beside its original estimate.
-   Disclose AI assistance.
+   Disclose AI assistance. If selected-target work was requested, also show its
+   separately labelled six-row table and target declaration. Keep any reference
+   comparison scoped and distinguish printed categories from inferences under
+   `references/assessment.md`; mismatched or unknown scope supplies no
+   unqualified agreement score.
 3. List the questions for the original authors. Do not send them.
 4. Draft `report/<citekey>-reproduction-report.html` and publish it as in
    § Zotero notes.
@@ -260,5 +294,5 @@ Publishing is blocked? Report it pending, and keep the draft.
 
 Print one line per verb run: the folder, the verb, the ACRe level before and
 after, the table rows that changed, the discrepancy count in `out/`, and the
-next blocker. For `probe`, either the plan path awaiting signature or the
-checks run.
+next blocker. Name any selected scope ID and its separately labelled changes.
+For `probe`, either the plan path awaiting signature or the checks run.

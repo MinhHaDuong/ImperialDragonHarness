@@ -48,6 +48,11 @@ unassessed rows. In the separate detailed statistic comparisons, show only
 the results that did not reproduce; individual matching statistics are not
 listed there.
 
+For an explicitly requested selected target, additionally show its separately
+labelled six-row table and scope ID under `assessment.md` § Selected-target
+assessment. The canonical whole-paper table keeps its meaning; selected
+categories never substitute for its unknown rows or its grid criteria.
+
 ## 2. Three-digit precision, always beside the original
 
 Report every statistic to three digits: coefficient, SE, and p-value or
