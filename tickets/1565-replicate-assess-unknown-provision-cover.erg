@@ -1,0 +1,92 @@
+%erg 0.1
+Title: /replicate assess: unknown provision coverage becomes Partially despite blockers
+Created: 2026-11-26
+Author: codex
+
+--- log ---
+2026-11-26T09:00Z codex created
+2026-11-26T09:01Z codex filed from replicator 0002; reviewed handoff 80c8a1df298e1dec8afca857875554fb0d5243da
+2026-11-26T09:01Z codex note receiving Imagine: evidence reproduced read-only; duplicate/ownership/ruling checks recorded below; accepted defect for later planning, no implementation authorized
+
+--- body ---
+## Provenance and receiving Imagine
+
+Filed from replicator 0002, branch `t0002-investigate-assess`, reviewed commit
+`80c8a1df298e1dec8afca857875554fb0d5243da`. Child of open tracker 1552.
+Source directory:
+`~/CNRS/projets/actifs/replicator/.claude/worktrees/t0002-investigation-20261126/replications/investigation-2026-11-26/`.
+Read `IDH-ticket-briefs.md`, `REPORT.md`, `controls.json` and `reproduce.py`;
+all four and `scripts/compare_assess.py` byte-match the handoff commit.
+
+Receiving checks (2026-11-26, IDH base
+`44c0e4f1619689a87786418b77ba7b6d93bf18f6`):
+
+1. Facts versus framing: reran the unchanged comparator in memory, with
+   bytecode writes disabled and no output written in replicator. Both complete
+   16-criterion partitions `scripts_only_unknown_inventory` and
+   `scripts_only_blocked_inventory` emit `analysis_code=Partially` with only
+   `scripts_accessibles` established, despite unexamined completeness. The
+   latter includes a completeness blocker. `positive_complete_code` emits
+   Fully. This verifies the derivation, not an assessor's internal cause or
+   the correct substantive label for an unseen deposit.
+2. Duplicates/overlap: searched open/closed tickets, assessment history and
+   open PR files. No current duplicate. Closed 1561 defined whole-paper scope;
+   closed 1563 added blockers and unexamined states. Their requirements do
+   not settle this still-present table/prose contradiction. Related 1566
+   concerns execution evidence and is a separate sign-off unit.
+3. Ownership: IDH owns the assessment contract; replicator owns its comparator,
+   validation target and dossiers. Contract clarification will need a later
+   replicator implementation/validation handoff, not an IDH edit there.
+4. Standing rulings/current fit: retain whole-paper completeness scope and
+   separation of provision from execution. No ruling found requiring unknown
+   inventory to be a substantive partial category. Acceptance here records a
+   scientific measurement defect, without implementing or prioritizing a fix.
+
+## Observation and scientific impact
+
+`skills/replicate/references/assessment.md:99-101` requires a verified gap
+and names missing outputs for partial coverage. Its table at line 185
+nevertheless permits `scripts_accessibles` alone to derive Partially; lines
+189-191 and 205 require blocked/unexamined provision to remain unassessed.
+Replicator's `derive_table` at lines 161-164 applies the scripts-only rule;
+its blocker loop at lines 196-201 preserves Partially despite blockers.
+The local code therefore follows one side of a contradictory contract.
+
+The frozen Blair provision dossier and the report supply empirical examples,
+but this ticket does not recertify deposit completeness or accept I4R labels
+as ground truth. Unknown coverage converted to a substantive category can
+create both false agreements and false disagreements in validation.
+
+## Bounded requested outcome
+
+Resolve whether Partially means verified incomplete provision or a declared
+inspected lower bound, and make every provision component consistent. Keep
+positive inspected facts separately from unknown completeness. The received
+proposal is to reserve categorical Partially for verified gaps; the final
+interpretation must be explicit rather than silently inferred from presence
+of any script. A new interpretation of a declared validation target is a
+protocol decision, not authority granted by filing this ticket.
+
+## Exit criteria
+
+- [ ] Under one declared interpretation, unknown inventory stays unknown,
+      a verified gap stays partial, and verified complete inventory stays full;
+      blockers cannot silently certify a substantive completeness category.
+- [ ] The four provision rows and corresponding criteria/evidence instructions
+      express that interpretation consistently; inspected lower-bound facts
+      remain visible.
+- [ ] Independent unknown-inventory, blocked-inventory, verified-gap and
+      complete-inventory controls establish those distinctions. Recheck the
+      same frozen dossiers without overwriting prior observations before
+      any new cohort is claimed as validation.
+
+## Verification limits and scope
+
+Receiver reproduced all four supplied 16-criterion controls and an independent
+positive execution match control; 50 frozen deliverable hashes/sizes match
+the existing freeze manifest. No full scientific rerun, new cohort, historical
+package inventory certification, reference-label adjudication or held-out
+accuracy claim. Source files and frozen dossiers were only read.
+No skill rewrite is included in this filing. Adaptation tolerance and matching
+output scope remain protocol questions in the source report, not extra defects
+or newly authorized objectives. Tracker 1552 stays open.
