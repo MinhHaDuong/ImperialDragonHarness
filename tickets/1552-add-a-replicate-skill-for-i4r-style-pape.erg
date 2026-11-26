@@ -21,6 +21,7 @@ Author: claude
 2026-11-26T13:22Z reviewer replicator 0002 scope-contract follow-up filed as 1567; receiving Imagine pending; numerical confirmation not started
 
 2026-11-26T14:04Z codex note receiving Imagine1567 accepted for explicit-target planning on author reception: facts/ACRe/duplicates/ownership/standing choices checked; keep current default and criterion meanings pending explicit design decision; ticket-only landing, tracker and child remain open
+2026-11-26T14:43Z reviewer 1567 closed PR2534 head959e1793100485e5e6af7a28191c861d45434bb0; selected_target explicit additive namespace usable, whole-paper default/grid retained; source session notification queued by raid; tracker remains open pending downstream scope encoding and integration validation, no fresh release or accuracy claim
 
 --- body ---
 ## Context
@@ -170,7 +171,7 @@ Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
 | 1563 | harness | Blocked/blind assessment, checksum representations, generated inputs, closed PR #2523 (2026-11-26) | none |
 | 1565 | harness | Verified-gap provision contract, closed PR #2530 (2026-11-26); replicator comparator pickup remains | none |
 | 1566 | harness | Boundary uncertainty separated from execution, closed PR #2531 (2026-11-26); replicator comparator pickup remains | none |
-| 1567 | harness | Explicit replication-target scope; receiving Imagine accepted for Plan, default/design decision pending | none |
+| 1567 | harness | Explicit selected-target contract, closed PR #2534 (2026-11-26); whole-paper default retained; downstream selected-scope encoding/validation remains | none |
 
 Integration review: read the results of 0002 and 0003; a skill fix they
 call for is a new harness ticket. Constraints in every replicator ticket:
