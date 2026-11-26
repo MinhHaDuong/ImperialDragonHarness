@@ -1,0 +1,110 @@
+%erg 0.1
+Title: /replicate: identification review (causal DAG) beside the score
+Created: 2026-11-26
+Author: claude
+
+--- log ---
+2026-11-26T19:41Z claude created
+2026-11-26T19:41Z reviewer filed from replicator 0007/0008 (main eded457) at author request; receiving Imagine pending
+2026-11-26T21:58Z codex note receiving Imagine accepted with qualifications; four premise checks recorded below; Plan only, no implementation or new scientific validation authorized
+2026-11-26T22:03Z codex note author ruling: avoid generating subjective probabilities; implementation must use an argued identification verdict and explicit uncertainty without subjective percentages
+
+--- body ---
+## Context and authority
+
+Filed from replicator (closed ticket 0008, main eded457) at the author's
+request on 2026-11-26. Integration-review finding for tracker 1552. The
+author ruled the review style suitable and asked for a committed verdict
+("C'est bien identifié ou pas ?"). Request for receiving Imagine only.
+
+## Observation
+
+The I4R six-row table rates computation only; identification critiques
+live in the report's prose, and the skill has no verb or section for
+them. Replicator 0008 added, for Carter (2024) Figure 5:
+
+- a causal DAG (`identification/dag.svg`) with conventions in
+  `~/CNRS/projets/actifs/replicator/doc/identification-method.md`;
+- an 11-item checklist of Pearl-style confounder-handling errors
+  (bad controls, colliders, post-treatment conditioning, compound
+  treatment, misclassification, sensitivity bounds), each with two
+  plain-language sentences for non-specialist economists;
+- a committed verdict on a four-step scale (well / plausibly / weakly /
+  not identified) plus a labelled subjective probability (here:
+  plausibly identified, not established; 60% / 65%).
+
+A cross-family review seat caught two reasoning errors both favourable to
+the authors ("smooth, therefore absorbed" fails against a province-level
+jump at a geographic border; pre-treatment road evidence wrongly called
+post-treatment). Lesson: this review needs a decorrelated seat.
+
+Evidence: `~/CNRS/projets/actifs/replicator/replications/carter2024-mainclaim-cra/identification/`
+(checklist.md, dag.svg, index.html), `~/CNRS/projets/actifs/replicator/doc/identification-method.md`.
+
+## Proposed (for Imagine to accept, amend or reject)
+
+An identification section, under `report` (or a step of `probe`), kept
+out of the ACRe score and the six-row table: DAG, checklist, verdict
+scale, plain-language explanations, cross-family review seat. The method
+document could move to `skills/replicate/references/`.
+
+## Exit criteria
+
+- [x] Receiving Imagine records facts, duplicates, ownership, rulings
+  (rule 4 fairness: a robust verdict is as valuable as a fragile one).
+- [ ] If accepted: the section is placed, the scale and checklist are
+  referenced, and the score/table remain computation-only.
+- [ ] Verdict wording never presented as a reproducibility status.
+
+## Receiving Imagine (2026-11-26)
+
+Disposition: accepted for Plan as a separate identification section under
+`report`, with the qualifications below. This reception authorizes no
+implementation, new estimation, or automatic transfer of a verdict to other
+papers. Ticket 1569 and integration tracker 1552 remain open.
+
+1. **Facts against framing.** Read replicator's `doc/identification-method.md`
+   and Carter's `identification/checklist.md` at
+   `eded45754c76bd3d1822703e2cd0923a9237b8a4`. They contain a sourced DAG
+   convention, eleven checks, a four-label judgment scale, and explicitly
+   subjective probabilities. Current `report` names the paper's method but
+   specifies no comparable identification review. These artifacts establish
+   the workflow's existence, not this reception's independent endorsement of
+   Carter's causal verdict. No new estimates or independent paper review ran.
+2. **Duplicates and overlap.** No existing ticket or open implementation PR
+   found for this identification section. 1568 concerns computational
+   confirmation; 1567 concerns target scope. Reuse their declared claim where
+   appropriate, without merging causal judgments into their computational
+   evidence. PR2536 is the shared request deposit; PR2516 is tracker wrap-up.
+3. **Ownership and placement.** Harness owns reusable report guidance and any
+   adapted reference; replicator retains its case DAG and judgments. Place
+   the review under `report`, since source-based appraisal needs no new
+   robustness run. Any proposed empirical check goes to the existing signed
+   `probe` plan. Preserve attribution when adapting the local method note.
+4. **Standing rulings and fit.** Preserve rule 4's fairness and route's
+   decorrelation requirements; seek a different-family review perspective for
+   substantive causal reasoning and disclose an unavailable perspective.
+   Keep ACRe and all six reproducibility rows computation-only. The eleven
+   checks are prompts adapted to the study design, not an exhaustive causal
+   test: the note's RDD examples cannot be universalized. A missing DAG arrow
+   is an assumption requiring support. Keep causal identification, estimator
+   robustness, and statistical significance distinct. The four labels are
+   reviewer judgments, not standardized certification or the technical
+   weak-identification diagnostic. A percentage, if supplied, must name its
+   event and remain explicitly subjective, with rationale and evidence that
+   would move it; Carter's 60/65 percent are not reusable calibration.
+
+Plan boundary: retain the four existing verbs and place this alongside the
+computational report, with sourced assumptions, plain-language explanations,
+applicability and uncertainty visible. An underdetermined judgment must be
+reported as such rather than forced into a confident label.
+
+## Author ruling after reception (2026-11-26)
+
+The author explicitly instructed: avoid generating subjective probabilities.
+This supersedes the proposal to attach a subjective percentage and the
+receiving Imagine's conditional allowance for one. Preserve Carter's historical
+judgments as case evidence, but do not prescribe or generate such percentages
+in the reusable identification review. Give an argued verdict, open threats,
+and evidence that would change the judgment. The author subsequently requested
+`raid 1569`, authorizing implementation within this amended scope.
