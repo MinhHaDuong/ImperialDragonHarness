@@ -65,7 +65,7 @@ lowercase:
 ```
 README.md        paper, method, status per check, effort and cost, next blocker
 manifest.json    identity and provenance (fields in references/assessment.md)
-fetch.sh         re-fetches non-redistributable inputs into data/, fails on hash mismatch
+fetch.sh         re-fetches inputs into data/, checks hashes for the selected representation
 assessment.json  ACRe level, per-criterion evidence, grid id
 data/            fetched inputs, git-ignored
 reproduce/  robustness/  report/
@@ -85,8 +85,10 @@ skill call or an agent instruction in the folder.
 
 - **Idempotent and resumable.** Before acting, read what the folder already
   holds. Redo only what is missing or stale: a step whose inputs changed
-  hash since `manifest.json` recorded them. A rerun on a complete folder
-  changes nothing and says so.
+  hash since `manifest.json` recorded them, access has become available, or
+  the governing criteria have changed. Revisit stale blocked reasons and
+  claims invalidated by clarified criteria, preserving valid evidence. A
+  rerun on a complete, still-valid folder changes nothing and says so.
 - **Evidence or nothing.** Every claim in `assessment.json`, `README.md` and
   the report points to a file, a line, a URL or a CSV row. A criterion
   without verified evidence stays unestablished.
@@ -106,22 +108,50 @@ and L8 to L10 wait for `reproduce`. Batchable: for a reading list, or for a team
 choosing among candidate papers, loop over the papers sequentially in one session, one
 folder each.
 
+For a blind assessment, pass `--blind --package-url URL`. Use only the
+supplied original paper and package, their direct source metadata, and
+original-paper full-text routes that do not expose replication answers.
+Skip title/web discovery, I4R reports, and prior replication notes, including
+searches or existing-note retrieval through `reading-note` or another helper.
+Pass this boundary to helpers before using them; omit their conflicting
+steps. Record the mode, supplied URL, and excluded sources in `README.md`.
+An inaccessible supplied URL stays blocked; it does not authorize discovery.
+
 1. **Identify the paper.** Get the full text and the Zotero item by the
-   `reading-note` skill's § 1. Choose the **main result** (one table or
-   figure) before any trial, and record it. The CIRED protocol requires
-   the same choice rule across cohorts.
-2. **Find the package.** Check the journal supplement, the data archive the
-   paper cites, the authors' pages and repositories, and a web search. Record
-   every place looked, found or not, in `README.md`; a missing package is
-   evidence too. Check versions: the deposit must match the published version.
-3. **Write `manifest.json` and `fetch.sh`.** Record per-file SHA-256, bytes,
-   licence and whether the file may be redistributed. `fetch.sh` downloads
-   into `data/` and exits non-zero on any hash mismatch.
-4. **Grade.** For each grid criterion, record evidence or leave it out, in
-   `assessment.json` (`references/assessment.md`). Inventory the whole paper,
-   including applicable appendix outputs, for package completeness. Run
-   criteria (`cra_*`, `crr_*`) stay `a_evaluer`. Derive the level and the six-row
-   Reproducibility Table from that evidence. Never fill the table separately.
+   `reading-note` skill's § 1, subject to the blind assessment boundary. Choose the
+   **main result** (one table or figure) from the original paper before any
+   trial, and record its authoritative passage. The CIRED protocol requires
+   the same choice rule across cohorts. If full text and Zotero are unavailable,
+   set `main_result` to null and record a paper blocker until an authoritative
+   original-paper excerpt permits the choice. A package table cannot choose
+   the result. Retain independently verifiable package evidence, but keep
+   whole-paper completeness and unexamined comparisons unassessed.
+2. **Find the package.** In ordinary mode, check the journal supplement, the
+   data archive the paper cites, the authors' pages and repositories, and a
+   web search. In blind mode, inspect the supplied URL directly. Record every
+   place looked and the access outcome in `README.md`. A login, bot wall, or
+   failed download proves blocked inspection, not absent contents. Name the
+   next step (for example, a logged-in download into `data/`) and resume when
+   access is supplied. Check that the deposit matches the published version.
+3. **Write `manifest.json` and `fetch.sh`.** Follow the checksum schema in
+   `references/assessment.md`: record archive-listed algorithm, digest,
+   source, and representation separately from the observed SHA-256 and byte
+   count of downloaded bytes. MD5-only metadata is allowed; unavailable local
+   hashes and sizes stay null. Record licence and redistribution rights.
+   Generate `fetch.sh` to download into `data/`, validate only checksums for
+   that exact representation, and exit non-zero on mismatch or blocked access.
+   It must not compare an ingested `.tab` checksum with an original file or
+   treat listed metadata alone as verified downloaded bytes. Record the local
+   SHA-256 when bytes become available, preserving the archive checksum.
+4. **Grade.** Account for every grid criterion exactly once as established,
+   examined but not established, or unexamined, with blocked reasons where
+   applicable (`references/assessment.md`). An empty `criteres` is valid only
+   with that full dossier. Inventory the whole paper, including applicable
+   appendix outputs, for package completeness; an unseen paper blocks this
+   coverage. Assess generated analysis inputs only under the inspected
+   producer-chain conditions in that reference. Run criteria (`cra_*`,
+   `crr_*`) stay `a_evaluer` until execution. Derive the level and six-row
+   Reproducibility Table from the evidence; blocked unknowns remain unassessed.
 5. **Preliminary-assessment note.** Draft
    `report/<citekey>-preliminary-assessment.html` and publish it as in
    § Zotero notes.
