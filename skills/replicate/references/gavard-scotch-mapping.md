@@ -14,11 +14,11 @@ recorded reason to stay outside the skill.
 | Check the ZIP's CRC and SHA-256, compare each extracted file byte for byte, keep author files read-only | `assess` | `manifest.json` `files[]`, `fetch.sh` |
 | Record that the package starts at the aggregate panel (no transaction-level CRS records, no construction code) | `assess` | `donnees_brutes_*` and `code_nettoyage_*` evidence; "Reproducible from raw data": No, with reason |
 | Separate environment from a lockfile; tests on the port | `reproduce` | step 1, `manifest.json` `environment` |
-| Map each published table to its `.do` lines | `reproduce` | step 2, `reproduce/README.md` |
+| Map each applicable published table and figure, including appendices, to its code and comparison statistics | `reproduce` | step 2, `reproduce/README.md` |
 | Port the GEE estimator and fix a residual-moment denominator that failed the published coefficients | `reproduce` | step 3; the re-coding in other software is also a robustness check (rule 7) |
 | Compare Tables 1-3, B1-B6 and A1 at half a unit of the last printed digit; keep the six strict exceptions explicit | `reproduce` | step 4, `out/reproduce.csv` `status=discrepancy` |
 | Mitigation bound printed 0.491%, reproduced 0.498953% | `reproduce`, then `report` | one discrepancy row; listed in the report |
-| Sector tables A2-A3 not producible (no sector inputs) | `reproduce` | step 6, `status=missing_input` |
+| Sector tables A2-A3 not producible (no sector inputs) | `assess`, then `reproduce` | partial whole-paper analysis-data coverage, never `donnees_analyse_completes`; step 6 records `status=missing_input`. If other outputs match, the whole-paper analysis execution row is Partially; main-result `cra_*` is assessed separately |
 | Rerun the authors' own extra robustness models (TWFE, GMM from FurtherRobustness.do); three rank failures not estimated | `reproduce` | the authors' published checks are reproduction targets, with `spec=original` |
 | Conditional annual-rate CPI correction as a sensitivity | `probe` | one check in `robustness/plan.md`, compared with the reproduced original |
 | Adaptation-minus-mitigation contrast, p = 0.202 | `probe` | a check on the main model, if the team signs it |

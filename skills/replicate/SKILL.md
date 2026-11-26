@@ -118,8 +118,9 @@ folder each.
    licence and whether the file may be redistributed. `fetch.sh` downloads
    into `data/` and exits non-zero on any hash mismatch.
 4. **Grade.** For each grid criterion, record evidence or leave it out, in
-   `assessment.json` (`references/assessment.md`). Run criteria (`cra_*`,
-   `crr_*`) stay `a_evaluer`. Derive the level and the six-row
+   `assessment.json` (`references/assessment.md`). Inventory the whole paper,
+   including applicable appendix outputs, for package completeness. Run
+   criteria (`cra_*`, `crr_*`) stay `a_evaluer`. Derive the level and the six-row
    Reproducibility Table from that evidence. Never fill the table separately.
 5. **Preliminary-assessment note.** Draft
    `report/<citekey>-preliminary-assessment.html` and publish it as in
@@ -132,8 +133,9 @@ every reported statistic.
 
 1. Run `fetch.sh`. Rebuild the authors' environment and lock it: interpreter,
    packages and versions go into `manifest.json` `environment`.
-2. Map each published table and figure to the source lines that produce it.
-   Keep the map in `reproduce/README.md`.
+2. Map each applicable published table and figure, including appendices, to
+   the source lines and comparison statistics that produce it. Keep the
+   whole-paper coverage map, with gaps, in `reproduce/README.md`.
 3. Run from the analysis data first (CRA), then from the raw data (CRR)
    where the package allows. A broken script is fixed in a new file. The fix
    and its reason are recorded: a coding error found here is a robustness
@@ -144,7 +146,8 @@ every reported statistic.
    discrepancy into a match.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
    `crr_*`, from the main result's rows, with the CSV path as evidence. Then
-   re-derive the level and the table.
+   re-derive the level and the table: ACRe run criteria use the main result;
+   the six-row table uses whole-paper coverage (`references/assessment.md`).
 6. A result that cannot be produced from the package (an input is missing)
    is recorded as `missing_input`. Never transcribe it from the paper.
 
