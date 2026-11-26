@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-11-26T22:22Z claude created
 2026-11-26T22:23Z reviewer filed from replicator 0003 (ec32d2c) at author request; receiving Imagine pending
+2026-11-26T22:37Z reviewer receiving Imagine accepted planning/menu scope with qualifications; pending sign-off decision must be separated before implementation closure; four premise checks and Blind-Spot findings recorded
 
 --- body ---
 ## Context and authority
@@ -76,3 +77,53 @@ threshold or check specific to one paper.
 - [ ] If accepted: SKILL.md § probe gains the steps kept; the menus file
   exists with a source per item; no paper-specific item in either.
 - [ ] The sign-off modes question is ruled after replicator 0003 reports.
+
+## Receiving Imagine (2026-11-26)
+
+Disposition: accept the design-independent planning and sourced-menu work for
+implementation, subject to separating the pending sign-off decision. Keep the
+existing person-written signature rule. No generic model-panel or transcribed
+signature authorization follows from this reception, and the final sign-off
+exit criterion remains open until the author rules after the pilot report.
+
+1. **Facts against framing.** Read the inventory and PROTOCOL.md at replicator
+   ec32d2c. They document extracted candidate checks, not a certified frequency
+   census or a demonstrated improvement in replication quality. The inventory
+   mixes reproduction operations and non-replication papers; its counts remain
+   approximate and its report sample supplies no empirical RDD coverage. The
+   protocol calls model-panel signing an explicit pilot deviation and describes
+   a two-paper descriptive trial, not an accuracy estimate. No completed pilot
+   report was present at this cited revision; no heldout I4R report was read.
+2. **Duplicates and overlap.** Current probe already requires a signed fair
+   plan, comparison to an original estimate, and renewed signature for changes.
+   Rule 5 labels heterogeneity and extensions as extras; coding-error fixes
+   already count as robustness under rule 7. Reuse those contracts. Closed1568
+   covers frozen computational confirmation; closed1569 covers source-based
+   identification appraisal, whose proposed empirical tests enter probe. The
+   new work is inventory/exclusions before selection, sourced candidate menus,
+   and prospective complete reporting.
+3. **Ownership and placement.** Harness owns generic probe steps and an
+   attributed reference with applicability, source per item, and explicit
+   methods-literature origins for RDD. Each menu item needs two actual I4R
+   report examples from an inspected inventory or a named methods source;
+   inventory labels alone cannot justify a recommendation. Variables, units,
+   thresholds, and case judgments stay in the paper folder. Drop-one units
+   follow the design/assignment/clustering structure; observation deletion is
+   not a universal influence test. Menus suggest candidates, not mandatory or
+   automatically authorized checks.
+4. **Standing rulings and fit.** Preserve fairness and the person-written
+   signature gate. Pilot-only model signing remains a recorded deviation. For
+   validation, keep executing and signing contexts unexposed to the heldout
+   comparison report, disclose prior exposure, and exclude exposed papers from
+   independent validation claims. Do not export this blindness restriction to
+   ordinary report appraisal. Every planned check has a reported disposition
+   (completed, failed, blocked, or withdrawn, with reason); amendments preserve
+   their history and require renewed signature. No overall robustness verdict
+   follows from a pass count. Classify heterogeneity/extensions separately even
+   when an inventory or menu calls them robustness.
+
+Blind-Spot pass: two material omissions accepted, complete disposition of
+every planned check and design-specific scope classification under rule 5.
+They refine existing reporting/fairness requirements without adding a verb or
+a new empirical deliverable. Requested reviewer Sol6.1 medium, native OpenAI;
+observed model/effort masked. No scientific rerun or paid model call occurred.
