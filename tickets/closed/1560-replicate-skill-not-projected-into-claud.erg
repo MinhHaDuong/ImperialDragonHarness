@@ -2,6 +2,7 @@
 Title: /replicate: skill not projected into ~/.claude/skills, Skill tool says Unknown skill
 Created: 2026-11-25
 Author: claude
+Closed: Already met: installed projection and fresh Claude Skill loader verified; install rerun requirement documented.
 
 --- log ---
 2026-11-25T16:07Z claude created
@@ -12,6 +13,9 @@ Author: claude
 2026-11-26T06:54Z codex note raid Plan: fresh Claude Skill invocation is first check; symlink and dynamic installer discovery already present. Change installer only for reproduced defect; document install required for new skills.
 
 2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+2026-11-26T06:58Z codex already met: ~/.claude/skills/replicate resolves to /home/haduong/.agents/skills/replicate. Fresh Claude session 7f156d2a-d818-4d3a-9533-db5755ea240b JSONL records Skill input {skill: replicate, args: assess}, tool_result is_error false, and final confirmation of heading # Replicate and verbs assess, reproduce, probe, report. Loader-only probe; no replication workflow executed.
+2026-11-26T06:58Z codex note installer explanation: adapters/projections.json declares ~/.claude/skills with children:true; scripts/validate-projections.py load_entries expands current child directories; adapters/lifecycle.py entries() supplies these to install_links(), called by install(). Discovery occurs on idh install; this install path has no automatic watcher, so rerun idh install after adding a skill. Current projection and fresh loader check pass; no installer defect reproduced and no installer change needed.
+2026-11-26T06:58Z reviewer closed — Already met: installed projection and fresh Claude Skill loader verified; install rerun requirement documented.
 
 --- body ---
 ## Context
@@ -34,5 +38,5 @@ projects new skills automatically.
 
 ## Exit criteria
 
-- [ ] `~/.claude/skills/replicate` resolves to `~/.agents/skills/replicate`.
-- [ ] The Skill tool loads `replicate` in a fresh Claude Code session.
+- [x] `~/.claude/skills/replicate` resolves to `~/.agents/skills/replicate`.
+- [x] The Skill tool loads `replicate` in a fresh Claude Code session.
