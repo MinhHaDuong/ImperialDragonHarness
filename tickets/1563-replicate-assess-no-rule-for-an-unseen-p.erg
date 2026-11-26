@@ -13,6 +13,12 @@ Author: claude
 
 2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
 
+2026-11-26T09:00Z codex note Implemented access blockers and full criterion accounting; blind supplied-URL boundary propagates through reading-note and excludes I4R answers/prior replication notes. Archive-listed checksum carries source/representation; observed local SHA-256/size require downloaded bytes. Generated provision requires inspected complete producer chain, available inputs/environment, and whole-paper coverage; execution remains separate.
+
+2026-11-26T09:01Z codex note Scenario walkthrough (supplied acceptance cases only; external packages/grid unavailable): blocked package => affected criteria a_evaluer + blocked, level a_evaluer if nothing examined, provision/execution unassessed; blocked paper => main_result null, no completeness inferred from package table; blind URL => direct original/package sources only, helper title/old-note searches skipped; MD5 .tab => never validates original, local SHA from original bytes stays distinct; complete producer + inputs/environment/output coverage => Fully provision without run success, missing dictionary => no generated Fully while code provision retained; accessible complete deposited package => Fully provision, complete matched execution => Fully execution. Login download resumes blockers; clarified criteria invalidate stale claims independently of hashes.
+
+2026-11-26T09:02Z codex note Verification: make lint 191 passed; make check-fast 1955 passed; diff whitespace clean. Generic skill-creator quick_validate rejects existing harness custom frontmatter keys; project frontmatter tests pass and keys preserved.
+
 --- body ---
 ## Context
 
