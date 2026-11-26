@@ -8,6 +8,7 @@ Author: claude
 2026-11-26T22:23Z reviewer filed from replicator 0003 (ec32d2c) at author request; receiving Imagine pending
 2026-11-26T22:37Z reviewer receiving Imagine accepted planning/menu scope with qualifications; pending sign-off decision must be separated before implementation closure; four premise checks and Blind-Spot findings recorded
 2026-11-26T22:42Z reviewer raid ebfa91 decomposition: child1571 implements accepted documentation; bundled sign-off-modes criterion remains here pending0003 report and author ruling; no original exit criterion removed
+2026-11-26T23:03Z reviewer documentation child1571 closed by PR2541; source-audited menus/reporting delivered, written-person signature unchanged; original post-pilot signing decision remains pending, tracker stays open
 
 --- body ---
 ## Context and authority
@@ -73,9 +74,9 @@ threshold or check specific to one paper.
 
 ## Exit criteria
 
-- [ ] Receiving Imagine records facts, duplicates (1568, 1569), ownership,
+- [x] Receiving Imagine records facts, duplicates (1568, 1569), ownership,
   standing rulings (rule 4: a person signs).
-- [ ] If accepted: SKILL.md § probe gains the steps kept; the menus file
+- [x] If accepted: SKILL.md § probe gains the steps kept; the menus file
   exists with a source per item; no paper-specific item in either.
 - [ ] The sign-off modes question is ruled after replicator 0003 reports.
 
@@ -138,3 +139,14 @@ All original exit criteria above remain: the sign-off-modes question stays
 here until the0003 report is available and the author rules. Closing1571
 alone cannot close1570 or integration tracker1552. Integrate the child evidence
 and the eventual ruling before closing this tracker.
+
+## Children
+
+| Child | Project | State and evidence |
+|---|---|---|
+| 1571 | harness | Documentation closed by PR #2541, 2026-11-27; probe inventory/reporting and sourced design menus |
+
+Integration check: the documentation criteria are met by1571. The original
+sign-off-modes criterion remains unmet, pending the0003 report and an author
+ruling. The existing person-written signature rule is retained; this tracker
+and1552 stay open. No panel or transcribed signature mode was adopted.
