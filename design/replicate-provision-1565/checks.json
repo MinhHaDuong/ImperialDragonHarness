@@ -1,0 +1,1961 @@
+{
+  "source_commit": "80c8a1df298e1dec8afca857875554fb0d5243da",
+  "method": "Read-only byte comparison and unchanged comparator import with bytecode disabled; no reproduce.py main invocation, no assessment or output writes in replicator.",
+  "source_files": [
+    {
+      "path": "replications/investigation-2026-11-26/IDH-ticket-briefs.md",
+      "sha256": "fd289e049ee0cb3f3664e9d45179cd2923dee1cd6a225de7767e2d3ae06557c8",
+      "bytes": 5614,
+      "handoff_sha256": "9da44398bb910a24df73690466ce589370f628683d9b5020ae921759b34e9b32",
+      "matches_source_commit": false,
+      "difference": "Appended receiver receipt only; handoff content remains the exact byte prefix."
+    },
+    {
+      "path": "replications/investigation-2026-11-26/REPORT.md",
+      "sha256": "1367e099652874bf023759d6e891aeab4827dd8d22eb0e1a36c89abc634738bf",
+      "bytes": 13343,
+      "handoff_sha256": "aaebe2247a167e64672f4d9b6c08f8d1a64ddc086e425050d7f7260e1b23fff2",
+      "matches_source_commit": false,
+      "difference": "Appended receiver receipt only; handoff content remains the exact byte prefix."
+    },
+    {
+      "path": "replications/investigation-2026-11-26/controls.json",
+      "sha256": "6975efbdf04ce0f7c1d5dd0c4cdd5a0735defde68e598208a88162fbfebe33ad",
+      "bytes": 4365,
+      "handoff_sha256": "6975efbdf04ce0f7c1d5dd0c4cdd5a0735defde68e598208a88162fbfebe33ad",
+      "matches_source_commit": true,
+      "difference": null
+    },
+    {
+      "path": "replications/investigation-2026-11-26/reproduce.py",
+      "sha256": "aadf5c412b8b85464929ad174f2b4c611526b878b6b7a82043e804dbd88e4dc1",
+      "bytes": 11983,
+      "handoff_sha256": "aadf5c412b8b85464929ad174f2b4c611526b878b6b7a82043e804dbd88e4dc1",
+      "matches_source_commit": true,
+      "difference": null
+    },
+    {
+      "path": "scripts/compare_assess.py",
+      "sha256": "9d70cf063276a2c656fe03a1c4088c84cae4e4a8fc8c3a1feea24c949a5e454d",
+      "bytes": 12002,
+      "handoff_sha256": "9d70cf063276a2c656fe03a1c4088c84cae4e4a8fc8c3a1feea24c949a5e454d",
+      "matches_source_commit": true,
+      "difference": null
+    }
+  ],
+  "frozen_deliverables_verified": [
+    {
+      "path": "replications/fehr2022place/assessment.json",
+      "sha256": "ec4c80ffade8e80baaae2b889502a40b3f80bf0dd4d984d2624efd840d4f764d",
+      "bytes": 9198
+    },
+    {
+      "path": "replications/fehr2022place/manifest.json",
+      "sha256": "ada0456d15a3a185dd93de2fb35f6981bc6ed0632f1f367913942829b969b7a1",
+      "bytes": 1329
+    },
+    {
+      "path": "replications/fehr2022place/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/fehr2022place/README.md",
+      "sha256": "a9296fe45ca76425b74e74316a760f6b2994bb779ceeecdb7d08ef999ba06f4b",
+      "bytes": 4021
+    },
+    {
+      "path": "replications/fehr2022place/report/fehr2022place-preliminary-assessment.html",
+      "sha256": "b03f226b185cc0c93a897a9b4dd43c43927572ec08aa75fe4b5f75d8d7547316",
+      "bytes": 4287
+    },
+    {
+      "path": "replications/graham2024become/assessment.json",
+      "sha256": "d2bdfecbd3f8ed326df66cddcc2746a366e01ff1db144340559008a7ca2b5a58",
+      "bytes": 9265
+    },
+    {
+      "path": "replications/graham2024become/manifest.json",
+      "sha256": "2d51bb2880fc613b3495285994717ff9fcc08f22081aed5499d440f7f75bb4a8",
+      "bytes": 6392
+    },
+    {
+      "path": "replications/graham2024become/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/graham2024become/README.md",
+      "sha256": "8e92d4bdbf70587f0149bfdc7fd24230d99c727fbd779738ed207f61cfb8f688",
+      "bytes": 4524
+    },
+    {
+      "path": "replications/graham2024become/report/graham2024become-preliminary-assessment.html",
+      "sha256": "35c2db41004678b30f4a18569bdf6edc87901a98f64d60f54af316f3b386a467",
+      "bytes": 4820
+    },
+    {
+      "path": "replications/arechar2023understanding/assessment.json",
+      "sha256": "61edffa6b25f83495881ad4f6c68b3bf2ca4a6148e76b832b3a87dade826228d",
+      "bytes": 7293
+    },
+    {
+      "path": "replications/arechar2023understanding/manifest.json",
+      "sha256": "dbc25464e21fa1909413b591d94e854514cd1c2bedc7f20ecda1f9b7464c360c",
+      "bytes": 3518
+    },
+    {
+      "path": "replications/arechar2023understanding/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/arechar2023understanding/README.md",
+      "sha256": "56e1bbb4c443b37a38fdedd21ae9e0553930676dfdd9c0d47162620068931579",
+      "bytes": 3975
+    },
+    {
+      "path": "replications/arechar2023understanding/report/arechar2023understanding-preliminary-assessment.html",
+      "sha256": "8eb8b9bcf06f832d8f825cfd00721a8bf1c9d6b97bcaf28cf6201aae4e41d6b5",
+      "bytes": 4261
+    },
+    {
+      "path": "replications/bagues2023interregional/assessment.json",
+      "sha256": "f7e065bd3b81ca2b5b1c16194df95f96ab3c43d2f6b8426f03766bb6ddbb0acb",
+      "bytes": 9056
+    },
+    {
+      "path": "replications/bagues2023interregional/manifest.json",
+      "sha256": "3f9a430bd246056729f1ff8f92cdbfa4db2222e004d5a23ed13fb69e2d846b3e",
+      "bytes": 2997
+    },
+    {
+      "path": "replications/bagues2023interregional/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/bagues2023interregional/README.md",
+      "sha256": "b2b7f4b9b11601442d5da84befb9f0ab893b892f664e036ce71982d9adf4d81a",
+      "bytes": 4266
+    },
+    {
+      "path": "replications/bagues2023interregional/report/bagues2023interregional-preliminary-assessment.html",
+      "sha256": "90348cea8b56beeae7c4d31645235d056a9b4ae59cb8e2370e4ab5714608d90a",
+      "bytes": 4530
+    },
+    {
+      "path": "replications/schaeuffele2024systematic/assessment.json",
+      "sha256": "e910cd0f5e818931ff255f070b037adc54a52b4fa80a0cdabbcb0b54f1bcb266",
+      "bytes": 9839
+    },
+    {
+      "path": "replications/schaeuffele2024systematic/manifest.json",
+      "sha256": "0307c6b1b3fda9cc9b7c524ab1de71684425a9f82499ce957a0a445a860bbb07",
+      "bytes": 14745
+    },
+    {
+      "path": "replications/schaeuffele2024systematic/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/schaeuffele2024systematic/README.md",
+      "sha256": "c7071ae69c3e04cbdd4de78196667c341252863fc04228cd79ddc4836f47c715",
+      "bytes": 5415
+    },
+    {
+      "path": "replications/schaeuffele2024systematic/report/schaeuffele2024systematic-preliminary-assessment.html",
+      "sha256": "2dbfe9838f0d4de420717b8086d229a68c0188229754bb50ddc3f2a4f5177c8d",
+      "bytes": 5732
+    },
+    {
+      "path": "replications/carter2024extraction/assessment.json",
+      "sha256": "5c396bc8aa5fe4eb393d3b1f3bf508e96e01ec9c96fa1912c0028ab3f9a2d643",
+      "bytes": 10000
+    },
+    {
+      "path": "replications/carter2024extraction/manifest.json",
+      "sha256": "198c04aacf5a251f2a3a5417010c8b4af3ed1d4b75f94be092b98e10f49e8209",
+      "bytes": 15885
+    },
+    {
+      "path": "replications/carter2024extraction/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/carter2024extraction/README.md",
+      "sha256": "be6eb5a85d7a56f6550e50a1f20ca2db8297a683d882eb95ddbf696c7911deef",
+      "bytes": 5937
+    },
+    {
+      "path": "replications/carter2024extraction/report/carter2024extraction-preliminary-assessment.html",
+      "sha256": "c1813c130678d74837f7c4fd4158c57ff9735dbf0657cd782e117a3b7fbe74fa",
+      "bytes": 6262
+    },
+    {
+      "path": "replications/masatlioglu2023intrinsic/assessment.json",
+      "sha256": "f6824472571af6781a70efade18dddafdf819122d70cad8f9de7eae627894e52",
+      "bytes": 8089
+    },
+    {
+      "path": "replications/masatlioglu2023intrinsic/manifest.json",
+      "sha256": "6a1a6da648096273e8367e767de87f50f46c87e1c16cdb498f4629374fa9cac3",
+      "bytes": 690
+    },
+    {
+      "path": "replications/masatlioglu2023intrinsic/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/masatlioglu2023intrinsic/README.md",
+      "sha256": "b57fd98939ce65a3042828055d03d694eecca3466e865d7ad537d9d5805a0add",
+      "bytes": 3450
+    },
+    {
+      "path": "replications/masatlioglu2023intrinsic/report/masatlioglu2023intrinsic-preliminary-assessment.html",
+      "sha256": "041b9f4b288e57be8d24e3e7a3a48817cf2356e51052ae39b5330a1f535f3090",
+      "bytes": 3700
+    },
+    {
+      "path": "replications/moscona2023directed/assessment.json",
+      "sha256": "6c04f35e2c5aca197da364a9291a2404e334fa1883c5a716c8542b4de7c20506",
+      "bytes": 8730
+    },
+    {
+      "path": "replications/moscona2023directed/manifest.json",
+      "sha256": "7d6ae3244ff38158ee9f6929e133d8a3c8b189e3546bfe0298c535083fc62468",
+      "bytes": 10574
+    },
+    {
+      "path": "replications/moscona2023directed/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/moscona2023directed/README.md",
+      "sha256": "9f9977580dbf1cacb68d0a87df62af07e3093317cf8147e2232545d953ee4fd9",
+      "bytes": 4596
+    },
+    {
+      "path": "replications/moscona2023directed/report/moscona2023directed-preliminary-assessment.html",
+      "sha256": "79248ddbce047a330fd5f3a9466930fc4cab6df847b26cdc6c5fa231ccbec327",
+      "bytes": 4881
+    },
+    {
+      "path": "replications/axbard2024informed/assessment.json",
+      "sha256": "b08cf28c5a54eb40a295e81f8e8f7a82b4b56d95e50d86932981615f17fab7eb",
+      "bytes": 7546
+    },
+    {
+      "path": "replications/axbard2024informed/manifest.json",
+      "sha256": "d4f10a04c09d99625eb49d46af514af32c95375a2ff913ec2cfb7167d7becb29",
+      "bytes": 678
+    },
+    {
+      "path": "replications/axbard2024informed/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/axbard2024informed/README.md",
+      "sha256": "d11f1165569c6d16147dd82676e921e7ecb3bf9333d75e13c633602a952b11a7",
+      "bytes": 3441
+    },
+    {
+      "path": "replications/axbard2024informed/report/axbard2024informed-preliminary-assessment.html",
+      "sha256": "9b35c11707a522726da23606485310af6d43a1d47f4e311470f7a5b9093a2e2d",
+      "bytes": 3709
+    },
+    {
+      "path": "replications/blair2023peacekeeping/assessment.json",
+      "sha256": "1a17e2ec06dd87ced40422c2766c7b27f42edc52b5b5f06c7aaacc61e41c1741",
+      "bytes": 10070
+    },
+    {
+      "path": "replications/blair2023peacekeeping/manifest.json",
+      "sha256": "71b759213e28cf66e83f46ed860c06be90b1211e03aa86c3cd9f461ed4e967a5",
+      "bytes": 18562
+    },
+    {
+      "path": "replications/blair2023peacekeeping/fetch.sh",
+      "sha256": "9cf57e1604d2e61e294782d32f79ec567e69afdca3ccaf0c9c186dc4cedc5689",
+      "bytes": 1665
+    },
+    {
+      "path": "replications/blair2023peacekeeping/README.md",
+      "sha256": "841942c383bd90b312bbbfdb4e3c004f06fe790384f4de719ee4be1e475a167f",
+      "bytes": 5445
+    },
+    {
+      "path": "replications/blair2023peacekeeping/report/blair2023peacekeeping-preliminary-assessment.html",
+      "sha256": "c666edd8d440448f4106c61ceee2a3cb9c233b9ad68359e2cab0ac8154185edb",
+      "bytes": 5716
+    }
+  ],
+  "supplied_controls": [
+    {
+      "name": "scripts_only_unknown_inventory",
+      "input": {
+        "criteres": {
+          "scripts_accessibles": "inspected models"
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {}
+      },
+      "derived": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Partially",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      },
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Partially",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      }
+    },
+    {
+      "name": "scripts_only_blocked_inventory",
+      "input": {
+        "criteres": {
+          "scripts_accessibles": "inspected models"
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles"
+        ],
+        "blocked": {
+          "code_analyse_complet": {
+            "reason": "supplement unseen"
+          }
+        },
+        "raw_analysis_boundary": {}
+      },
+      "derived": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Partially",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      },
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Partially",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      }
+    },
+    {
+      "name": "positive_complete_code",
+      "input": {
+        "criteres": {
+          "scripts_accessibles": "inspected models",
+          "code_analyse_complet": "every applicable output mapped"
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "donnees_brutes_partielles"
+        ],
+        "blocked": {},
+        "raw_analysis_boundary": {}
+      },
+      "derived": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Fully",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      },
+      "actual_unchanged_comparator": {
+        "raw_data": "not yet assessed",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "Fully",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "not yet assessed"
+      }
+    },
+    {
+      "name": "raw_boundary_without_run",
+      "input": {
+        "criteres": {
+          "donnees_brutes_partielles": "assembled panel boundary unresolved"
+        },
+        "non_etabli": {},
+        "a_evaluer": [
+          "analyse_partiellement_accessible",
+          "aucun_code_accessible",
+          "aucune_donnee_accessible",
+          "chaine_brute_incomplete",
+          "code_analyse_complet",
+          "code_nettoyage_complet",
+          "code_nettoyage_inaccessible",
+          "cra_echouee",
+          "cra_reussie",
+          "crr_echouee",
+          "crr_reussie",
+          "donnees_analyse_completes",
+          "donnees_brutes_completes",
+          "donnees_brutes_inaccessibles",
+          "scripts_accessibles"
+        ],
+        "blocked": {
+          "paper": {
+            "reason": "unseen"
+          }
+        },
+        "raw_analysis_boundary": {
+          "status": "unresolved",
+          "evidence": "panel before lagging"
+        }
+      },
+      "derived": {
+        "raw_data": "Partially",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "Partially"
+      },
+      "actual_unchanged_comparator": {
+        "raw_data": "Partially",
+        "cleaning_code": "not yet assessed",
+        "analysis_data": "not yet assessed",
+        "analysis_code": "not yet assessed",
+        "repro_analysis": "not yet assessed",
+        "repro_raw": "Partially"
+      }
+    }
+  ],
+  "frozen_provision_recheck": [
+    {
+      "citekey": "fehr2022place",
+      "row": "raw_data",
+      "observed": "not yet assessed",
+      "evidence": "Package contents inaccessible; staged appendix is not a replication package. See manifest.json package.access.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_partielles": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/pol.20200343",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "fehr2022place",
+      "row": "cleaning_code",
+      "observed": "not yet assessed",
+      "evidence": "Package contents inaccessible; staged appendix is not a replication package. See manifest.json package.access.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "chaine_brute_incomplete": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_inaccessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/pol.20200343",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "fehr2022place",
+      "row": "analysis_data",
+      "observed": "not yet assessed",
+      "evidence": "Package contents inaccessible; staged appendix is not a replication package. See manifest.json package.access.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/pol.20200343",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "fehr2022place",
+      "row": "analysis_code",
+      "observed": "not yet assessed",
+      "evidence": "Package contents inaccessible; staged appendix is not a replication package. See manifest.json package.access.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "scripts_accessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Only original online appendix staged. Its Tables A.1\u2013A.5 and Figures A.1\u2013A.7 appear at data/inspection/appendix.txt:10\u201390; main-paper coverage remains blocked.",
+          "source": "https://doi.org/10.3886/E146541V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/pol.20200343",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "graham2024become",
+      "row": "raw_data",
+      "observed": "not yet assessed",
+      "evidence": "No cohort extracts staged; direct repository listing shows 02-scripts and 03-results but nested results inventory inaccessible. No global absence claim.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_partielles": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ]
+      }
+    },
+    {
+      "citekey": "graham2024become",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "data/02-scripts/01-data-cleaning.Rmd:52\u201371 loads absent Data_Dictionary_Final.xlsx; :96\u2013113 loads LISS extracts and merges; remaining sections cover GSOEP/HILDA/SHP/SATSA/OCTOTWIN; separate Clean_ELSA/Clean_HRS/Clean_SHARE scripts are staged. Code provision survives absent inputs.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code: data/02-scripts/01-data-cleaning.Rmd:52\u201371 loads absent Data_Dictionary_Final.xlsx; :96\u2013113 loads LISS extracts and merges; remaining sections cover GSOEP/HILDA/SHP/SATSA/OCTOTWIN; separate Clean_ELSA/Clean_HRS/Clean_SHARE scripts are staged. Code provision survives absent inputs."
+      },
+      "blocked_drivers": {
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_inaccessible": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ]
+      }
+    },
+    {
+      "citekey": "graham2024become",
+      "row": "analysis_data",
+      "observed": "not yet assessed",
+      "evidence": "02-study-analyses.Rmd:14\u201329 requires nine *_clean.RData inputs; absent staged; producer blocked by missing dictionary and cohort inputs. No generated-data completeness claim.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ]
+      }
+    },
+    {
+      "citekey": "graham2024become",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "02-study-analyses.Rmd and 03-meta-analysis.Rmd provide models and forest plots (:928\u20131045); paper inventory/supplement match incomplete.",
+      "established_drivers": {
+        "scripts_accessibles": "data/02-scripts/02-study-analyses.Rmd:14\u201329, 03-meta-analysis.Rmd:503\u2013516 models; accessible inspected scripts."
+      },
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Inspected accepted manuscript carries review watermark; equivalence with final published version unverified. Absent data dictionary is an input/dependency gap, not proof that cleaning source code is absent.",
+          "source": "https://github.com/emoriebeck/loneliness-trajectories",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ]
+      }
+    },
+    {
+      "citekey": "arechar2023understanding",
+      "row": "raw_data",
+      "observed": "Partially",
+      "evidence": "data/Data/CR.csv header and data/inspection/codebook.txt:9\u201324 identify respondent-level source survey values; Analysis/230412 CR.do:7 imports this starting extract before :11\u2013104 recodes/reshapes. Some original raw inputs inspected; whole-paper extent unavailable.",
+      "established_drivers": {
+        "donnees_brutes_partielles": "data/Data/CR.csv and data/inspection/codebook.txt:9\u201324 provide respondent-level survey starting extract used before transformations in 230412 CR.do:7\u2013104; whole-paper raw coverage unavailable."
+      },
+      "blocked_drivers": {
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No full raw or generated-analysis-data provision inferred from this subset; unknown software dependencies prevent a generated completeness claim.",
+          "source": "https://osf.io/g65qu/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; No full raw or generated-analysis-data provision inferred from this subset; unknown software dependencies prevent a generated completeness claim.",
+          "source": "https://osf.io/g65qu/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1038/s41562-023-01641-6",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "arechar2023understanding",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "Analysis/230412 CR.do:11\u2013104 contains recoding, standardization, and reshape; Rmd:21\u201335 filters and pivots. Partial inspected coverage; no claim of absent cleaning code.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code demonstrated in 230412 CR.do:11\u2013104 (encode/recode/standardize/reshape), but complete whole-paper path inventory unavailable."
+      },
+      "blocked_drivers": {
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; No full raw or generated-analysis-data provision inferred from this subset; unknown software dependencies prevent a generated completeness claim.",
+          "source": "https://osf.io/g65qu/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1038/s41562-023-01641-6",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "arechar2023understanding",
+      "row": "analysis_data",
+      "observed": "Partially",
+      "evidence": "CR.csv supports Stata path :7\u2013104 generating CRL. Rmd:21 needs CR.dta not staged; no inspected producer for that exact representation. Full paper unavailable.",
+      "established_drivers": {
+        "analyse_partiellement_accessible": "Partial analysis data: CR.csv supports CRL generation (230412 CR.do:7\u2013104) but CovidCountryAUC.Rmd:21 requires unstaged CR.dta; partial analysis code for explicitly labeled figures; whole original paper unavailable."
+      },
+      "blocked_drivers": {
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No full raw or generated-analysis-data provision inferred from this subset; unknown software dependencies prevent a generated completeness claim.",
+          "source": "https://osf.io/g65qu/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1038/s41562-023-01641-6",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "arechar2023understanding",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "230412 CR.do:107 onwards explicitly labels main Figures 2\u20133/S5 and further outputs; CovidCountryAUC.Rmd:40\u201349 bootstraps. Whole-paper match unresolved.",
+      "established_drivers": {
+        "scripts_accessibles": "data/Analysis/230412 CR.do:107\u2013138 contains Figure 2/3 estimators; data/Analysis/CovidCountryAUC.Rmd:40\u201349 bootstrap.",
+        "analyse_partiellement_accessible": "Partial analysis data: CR.csv supports CRL generation (230412 CR.do:7\u2013104) but CovidCountryAUC.Rmd:21 requires unstaged CR.dta; partial analysis code for explicitly labeled figures; whole original paper unavailable."
+      },
+      "blocked_drivers": {
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; No full raw or generated-analysis-data provision inferred from this subset; unknown software dependencies prevent a generated completeness claim.",
+          "source": "https://osf.io/g65qu/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1038/s41562-023-01641-6",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "bagues2023interregional",
+      "row": "raw_data",
+      "observed": "not yet assessed",
+      "evidence": "Package scientific contents inaccessible; only paper, appendix, and disclosure materials inspected.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_partielles": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "bagues2023interregional",
+      "row": "cleaning_code",
+      "observed": "not yet assessed",
+      "evidence": "Package scientific contents inaccessible; only paper, appendix, and disclosure materials inspected.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "chaine_brute_incomplete": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_inaccessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "bagues2023interregional",
+      "row": "analysis_data",
+      "observed": "not yet assessed",
+      "evidence": "Package scientific contents inaccessible; only paper, appendix, and disclosure materials inspected.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "bagues2023interregional",
+      "row": "analysis_code",
+      "observed": "not yet assessed",
+      "evidence": "Package scientific contents inaccessible; only paper, appendix, and disclosure materials inspected.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "scripts_accessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Published-version equivalence remains unverified (accepted manuscript notice). Package recovery, not code or data absence, blocks component grading.",
+          "source": "https://doi.org/10.3886/E163261V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "schaeuffele2024systematic",
+      "row": "raw_data",
+      "observed": "Partially",
+      "evidence": "data/Statistical Analyses (Data and R Scripts)/Data/data.csv contains study-level extracted means/SDs/counts; 1_tidy_data.R:21,64,80 imports data.csv/fu1.csv/fu2.csv before transformations. These author starting extracts count as raw for the meta-analysis path; full screening/supplementary inventory unavailable.",
+      "established_drivers": {
+        "donnees_brutes_partielles": "data/Statistical Analyses (Data and R Scripts)/Data/data.csv contains study-level extracted means/SDs/counts; 1_tidy_data.R:21,64,80 imports data.csv/fu1.csv/fu2.csv before transformations. These author starting extracts count as raw for the meta-analysis path; full screening/supplementary inventory unavailable."
+      },
+      "blocked_drivers": {
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Generated analysis inputs receive positive partial provision: inspected producer and starting extracts present. No Fully claim because supplementary inventory and environment/dependency availability remain unresolved. No participant-level trial data requirement imposed.",
+          "source": "https://osf.io/ta4fg/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Generated analysis inputs receive positive partial provision: inspected producer and starting extracts present. No Fully claim because supplementary inventory and environment/dependency availability remain unresolved. No participant-level trial data requirement imposed.",
+          "source": "https://osf.io/ta4fg/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "schaeuffele2024systematic",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "data/Statistical Analyses (Data and R Scripts)/R Scripts/1_tidy_data.R:24\u201343 recodes/excludes studies; :88\u201397 pivots; :312\u2013326 splits/saves td_ma.RData; 2_descriptives_table1.R:13\u201331 formats descriptive source. Partial whole-paper coverage.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code: data/Statistical Analyses (Data and R Scripts)/R Scripts/1_tidy_data.R:24\u201343 recodes/excludes studies; :88\u201397 pivots; :312\u2013326 splits/saves td_ma.RData; 2_descriptives_table1.R:13\u201331 formats descriptive source. Partial whole-paper coverage."
+      },
+      "blocked_drivers": {
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Generated analysis inputs receive positive partial provision: inspected producer and starting extracts present. No Fully claim because supplementary inventory and environment/dependency availability remain unresolved. No participant-level trial data requirement imposed.",
+          "source": "https://osf.io/ta4fg/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "schaeuffele2024systematic",
+      "row": "analysis_data",
+      "observed": "Partially",
+      "evidence": "data/Statistical Analyses (Data and R Scripts)/R Scripts/1_tidy_data.R:21,64,80\u2013326 produces Data/td_ma.RData from present inputs, which 3_es_between_depression.R:18 loads; study estimates not missing merely because participant records absent. Supplementary full coverage and environment dependencies remain unresolved.",
+      "established_drivers": {
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/Statistical Analyses (Data and R Scripts)/R Scripts/1_tidy_data.R:21,64,80\u2013326 produces Data/td_ma.RData from present inputs, which 3_es_between_depression.R:18 loads; study estimates not missing merely because participant records absent. Supplementary full coverage and environment dependencies remain unresolved. data/Statistical Analyses (Data and R Scripts)/R Scripts/3_es_between_depression.R:22\u201365 computes effect sizes, random-effects models, and Figure 3; scripts 4\u201312 cover within/anxiety/sensitivity/Bayesian analyses. Complete supplement-to-code mapping unavailable."
+      },
+      "blocked_drivers": {
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Generated analysis inputs receive positive partial provision: inspected producer and starting extracts present. No Fully claim because supplementary inventory and environment/dependency availability remain unresolved. No participant-level trial data requirement imposed.",
+          "source": "https://osf.io/ta4fg/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "schaeuffele2024systematic",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "data/Statistical Analyses (Data and R Scripts)/R Scripts/3_es_between_depression.R:22\u201365 computes effect sizes, random-effects models, and Figure 3; scripts 4\u201312 cover within/anxiety/sensitivity/Bayesian analyses. Complete supplement-to-code mapping unavailable.",
+      "established_drivers": {
+        "scripts_accessibles": "data/Statistical Analyses (Data and R Scripts)/R Scripts/3_es_between_depression.R:22\u201365 effect size/model/forest plot source.",
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/Statistical Analyses (Data and R Scripts)/R Scripts/1_tidy_data.R:21,64,80\u2013326 produces Data/td_ma.RData from present inputs, which 3_es_between_depression.R:18 loads; study estimates not missing merely because participant records absent. Supplementary full coverage and environment dependencies remain unresolved. data/Statistical Analyses (Data and R Scripts)/R Scripts/3_es_between_depression.R:22\u201365 computes effect sizes, random-effects models, and Figure 3; scripts 4\u201312 cover within/anxiety/sensitivity/Bayesian analyses. Complete supplement-to-code mapping unavailable."
+      },
+      "blocked_drivers": {
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Generated analysis inputs receive positive partial provision: inspected producer and starting extracts present. No Fully claim because supplementary inventory and environment/dependency availability remain unresolved. No participant-level trial data requirement imposed.",
+          "source": "https://osf.io/ta4fg/",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "carter2024extraction",
+      "row": "raw_data",
+      "observed": "Partially",
+      "evidence": "data/eaa_replication_materials/eaa_code/cleaning/data/comm_census_raw.csv and distance.csv are deposited starting extracts read by cleaning/cenagro_variables.R:9 and distance_qhapaqnan.R:11. Full path from historical source compilations to final panels is not documented in shipped cleaning files.",
+      "established_drivers": {
+        "donnees_brutes_partielles": "data/eaa_replication_materials/eaa_code/cleaning/data/comm_census_raw.csv and distance.csv are deposited starting extracts read by cleaning/cenagro_variables.R:9 and distance_qhapaqnan.R:11. Full path from historical source compilations to final panels is not documented in shipped cleaning files."
+      },
+      "blocked_drivers": {
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No classification of code incompleteness based on lack of write.csv: census and distance scripts show operations; the specific unprovided stage is final assembly with historical sources. Public manuscript/package licence not inferred.",
+          "source": "https://doi.org/10.7910/DVN/GS838F",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; No classification of code incompleteness based on lack of write.csv: census and distance scripts show operations; the specific unprovided stage is final assembly with historical sources. Public manuscript/package licence not inferred.",
+          "source": "https://doi.org/10.7910/DVN/GS838F",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "carter2024extraction",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "data/eaa_replication_materials/eaa_code/cleaning/cenagro_variables.R:18\u2013229 constructs census outcomes; distance_qhapaqnan.R:17\u2013109 computes minimum border distance and signs. A merge/build stage assembling these outputs with historical datasets into data_qn.csv/movement_dist.csv is not present in either inspected cleaning file; code absence for that stage is separate from whether files are written.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code: data/eaa_replication_materials/eaa_code/cleaning/cenagro_variables.R:18\u2013229 constructs census outcomes; distance_qhapaqnan.R:17\u2013109 computes minimum border distance and signs. A merge/build stage assembling these outputs with historical datasets into data_qn.csv/movement_dist.csv is not present in either inspected cleaning file; code absence for that stage is separate from whether files are written."
+      },
+      "blocked_drivers": {},
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "carter2024extraction",
+      "row": "analysis_data",
+      "observed": "Partially",
+      "evidence": "data/eaa_replication_materials/eaa_code/data/*.csv supplies all five main-script inputs (eaa_code.R:21\u201330); shapefiles/all_shapefiles.zip supplies processed geographic map layers. Most analysis inputs directly deposited; exact variable-to-layer coverage for all map panels not resolved, so whole-paper Fully unestablished.",
+      "established_drivers": {
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/eaa_replication_materials/eaa_code/data/*.csv supplies all five main-script inputs (eaa_code.R:21\u201330); shapefiles/all_shapefiles.zip supplies processed geographic map layers. Most analysis inputs directly deposited; exact variable-to-layer coverage for all map panels not resolved, so whole-paper Fully unestablished. data/eaa_replication_materials/eaa_code/eaa_code.R:42\u2013126 main Table 2 and Figures 4\u20135; :147\u2013973 S5\u2013S14/S3\u2013S11; :1316\u20133466 D1\u2013D24/D1\u2013D19. Map rendering code for Figures 1/3, S1/S2/S12/S13, D17/D18/D25 not established; shapefiles/readme.md contains layer-use instructions only."
+      },
+      "blocked_drivers": {
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No classification of code incompleteness based on lack of write.csv: census and distance scripts show operations; the specific unprovided stage is final assembly with historical sources. Public manuscript/package licence not inferred.",
+          "source": "https://doi.org/10.7910/DVN/GS838F",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "carter2024extraction",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "data/eaa_replication_materials/eaa_code/eaa_code.R:42\u2013126 main Table 2 and Figures 4\u20135; :147\u2013973 S5\u2013S14/S3\u2013S11; :1316\u20133466 D1\u2013D24/D1\u2013D19. Map rendering code for Figures 1/3, S1/S2/S12/S13, D17/D18/D25 not established; shapefiles/readme.md contains layer-use instructions only.",
+      "established_drivers": {
+        "scripts_accessibles": "data/eaa_replication_materials/eaa_code/eaa_code.R:42\u2013126 estimates/plots main outcomes.",
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/eaa_replication_materials/eaa_code/data/*.csv supplies all five main-script inputs (eaa_code.R:21\u201330); shapefiles/all_shapefiles.zip supplies processed geographic map layers. Most analysis inputs directly deposited; exact variable-to-layer coverage for all map panels not resolved, so whole-paper Fully unestablished. data/eaa_replication_materials/eaa_code/eaa_code.R:42\u2013126 main Table 2 and Figures 4\u20135; :147\u2013973 S5\u2013S14/S3\u2013S11; :1316\u20133466 D1\u2013D24/D1\u2013D19. Map rendering code for Figures 1/3, S1/S2/S12/S13, D17/D18/D25 not established; shapefiles/readme.md contains layer-use instructions only."
+      },
+      "blocked_drivers": {
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; No classification of code incompleteness based on lack of write.csv: census and distance scripts show operations; the specific unprovided stage is final assembly with historical sources. Public manuscript/package licence not inferred.",
+          "source": "https://doi.org/10.7910/DVN/GS838F",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "masatlioglu2023intrinsic",
+      "row": "raw_data",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and supplied direct access unavailable; unknown, not absent.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_partielles": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/aer.20171474",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "masatlioglu2023intrinsic",
+      "row": "cleaning_code",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and supplied direct access unavailable; unknown, not absent.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "chaine_brute_incomplete": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_inaccessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/aer.20171474",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "masatlioglu2023intrinsic",
+      "row": "analysis_data",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and supplied direct access unavailable; unknown, not absent.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/aer.20171474",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "masatlioglu2023intrinsic",
+      "row": "analysis_code",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and supplied direct access unavailable; unknown, not absent.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "scripts_accessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Supply original main paper/appendices and downloaded original-author package. No contents-based criterion examined.",
+          "source": "https://doi.org/10.3886/E190641V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/aer.20171474",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "moscona2023directed",
+      "row": "raw_data",
+      "observed": "Partially",
+      "evidence": "data/crop_database_raw.csv is original crop-temperature cutoff extract used by Code/make_crop_shocks.py:54\u201365. county_areas_raw.csv and dday_database_raw.csv also required there but unstaged; recovery blocked, not proven absent from original archive.",
+      "established_drivers": {
+        "donnees_brutes_partielles": "data/crop_database_raw.csv is original crop-temperature cutoff extract used by Code/make_crop_shocks.py:54\u201365. county_areas_raw.csv and dday_database_raw.csv also required there but unstaged; recovery blocked, not proven absent from original archive."
+      },
+      "blocked_drivers": {
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Unstaged raw/counterfactual inputs are access/staging gaps rather than asserted archive omissions. Shipped final panels count as analysis data. No upstream weather archive or USDA FOIA system required for the raw boundary.",
+          "source": "https://doi.org/10.7910/DVN/5ELEPA",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; Unstaged raw/counterfactual inputs are access/staging gaps rather than asserted archive omissions. Shipped final panels count as analysis data. No upstream weather archive or USDA FOIA system required for the raw boundary.",
+          "source": "https://doi.org/10.7910/DVN/5ELEPA",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1093/qje/qjac039",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "moscona2023directed",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "Code/make_crop_shocks.py:54\u201365,186\u2013187 reads raw extracts and generates shocks; make_county_shocks.py:79\u201382,218 aggregates. Complete producer for crop_level_data.dta/county_level_data.dta is unestablished; these are final panels, not raw extracts.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code: Code/make_crop_shocks.py:54\u201365,186\u2013187 reads raw extracts and generates shocks; make_county_shocks.py:79\u201382,218 aggregates. Complete producer for crop_level_data.dta/county_level_data.dta is unestablished; these are final panels, not raw extracts."
+      },
+      "blocked_drivers": {
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Unstaged raw/counterfactual inputs are access/staging gaps rather than asserted archive omissions. Shipped final panels count as analysis data. No upstream weather archive or USDA FOIA system required for the raw boundary.",
+          "source": "https://doi.org/10.7910/DVN/5ELEPA",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1093/qje/qjac039",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "moscona2023directed",
+      "row": "analysis_data",
+      "observed": "Partially",
+      "evidence": "data/crop_level_data.dta and county_level_data.dta are imported at crop_level.do:18/county_level.do:18. Counterfactual code requires county_extra_for_counterfactual.csv, CI_summary.xlsx, and fixed-effect spreadsheets not staged (do_counterfactuals_insample.py:80\u2013103; plot_counterfactuals.py:125).",
+      "established_drivers": {
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/crop_level_data.dta and county_level_data.dta are imported at crop_level.do:18/county_level.do:18. Counterfactual code requires county_extra_for_counterfactual.csv, CI_summary.xlsx, and fixed-effect spreadsheets not staged (do_counterfactuals_insample.py:80\u2013103; plot_counterfactuals.py:125). Code/crop_level.do:24\u201348 and county_level.do:24\u201341 estimate Tables 1\u20133; Python scripts calculate and plot counterfactuals. Whole original-paper/appendix coverage unknown."
+      },
+      "blocked_drivers": {
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; Unstaged raw/counterfactual inputs are access/staging gaps rather than asserted archive omissions. Shipped final panels count as analysis data. No upstream weather archive or USDA FOIA system required for the raw boundary.",
+          "source": "https://doi.org/10.7910/DVN/5ELEPA",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1093/qje/qjac039",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "moscona2023directed",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "Code/crop_level.do:24\u201348 and county_level.do:24\u201341 estimate Tables 1\u20133; Python scripts calculate and plot counterfactuals. Whole original-paper/appendix coverage unknown.",
+      "established_drivers": {
+        "scripts_accessibles": "data/Code/crop_level.do:24\u201348 and county_level.do:24\u201341 estimator source inspected.",
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: data/crop_level_data.dta and county_level_data.dta are imported at crop_level.do:18/county_level.do:18. Counterfactual code requires county_extra_for_counterfactual.csv, CI_summary.xlsx, and fixed-effect spreadsheets not staged (do_counterfactuals_insample.py:80\u2013103; plot_counterfactuals.py:125). Code/crop_level.do:24\u201348 and county_level.do:24\u201341 estimate Tables 1\u20133; Python scripts calculate and plot counterfactuals. Whole original-paper/appendix coverage unknown."
+      },
+      "blocked_drivers": {
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; Unstaged raw/counterfactual inputs are access/staging gaps rather than asserted archive omissions. Shipped final panels count as analysis data. No upstream weather archive or USDA FOIA system required for the raw boundary.",
+          "source": "https://doi.org/10.7910/DVN/5ELEPA",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1093/qje/qjac039",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "axbard2024informed",
+      "row": "raw_data",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and direct source inaccessible; unknown provision and execution.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_partielles": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/app.20210386",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "axbard2024informed",
+      "row": "cleaning_code",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and direct source inaccessible; unknown provision and execution.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "chaine_brute_incomplete": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_nettoyage_inaccessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/app.20210386",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "axbard2024informed",
+      "row": "analysis_data",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and direct source inaccessible; unknown provision and execution.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucune_donnee_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/app.20210386",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "axbard2024informed",
+      "row": "analysis_code",
+      "observed": "not yet assessed",
+      "evidence": "No staged original package bytes and direct source inaccessible; unknown provision and execution.",
+      "established_drivers": {},
+      "blocked_drivers": {
+        "analyse_partiellement_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "aucun_code_accessible": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "scripts_accessibles": {
+          "reason": "Whole-paper and package coverage unresolved; No contents inspected; no code/data absence inferred from failed access.",
+          "source": "https://doi.org/10.3886/E174901V1",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1257/app.20210386",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "chaine_brute_incomplete",
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {}
+    },
+    {
+      "citekey": "blair2023peacekeeping",
+      "row": "raw_data",
+      "observed": "Partially",
+      "evidence": "data/Replication Files/data_replication.dta contains multi-source country-year panel before lagging/imputation in replication.do:31\u2013119; author readme labels it dataset needed for analyses but does not establish whether source-level assembly preceded deposit. Raw/analysis boundary unresolved for this assembled panel.",
+      "established_drivers": {
+        "donnees_brutes_partielles": "data/Replication Files/data_replication.dta contains multi-source country-year panel before lagging/imputation in replication.do:31\u2013119; author readme labels it dataset needed for analyses but does not establish whether source-level assembly preceded deposit. Raw/analysis boundary unresolved for this assembled panel."
+      },
+      "blocked_drivers": {
+        "donnees_brutes_completes": {
+          "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+          "source": "https://doi.org/10.7910/DVN/UOYDHN",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "donnees_brutes_inaccessibles": {
+          "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+          "source": "https://doi.org/10.7910/DVN/UOYDHN",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1017/s0003055422001319",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "blair2023peacekeeping",
+      "row": "cleaning_code",
+      "observed": "Partially",
+      "evidence": "data/Replication Files/replication.do:35\u2013119 drops observations, creates lags/scales, and imputes country means; these are cleaning even inside analysis script. Underlying country-year panel assembly source unresolved.",
+      "established_drivers": {
+        "chaine_brute_incomplete": "Partial cleaning code: data/Replication Files/replication.do:35\u2013119 drops observations, creates lags/scales, and imputes country means; these are cleaning even inside analysis script. Underlying country-year panel assembly source unresolved."
+      },
+      "blocked_drivers": {
+        "code_nettoyage_complet": {
+          "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+          "source": "https://doi.org/10.7910/DVN/UOYDHN",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1017/s0003055422001319",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "blair2023peacekeeping",
+      "row": "analysis_data",
+      "observed": "Partially",
+      "evidence": "Both primary and secondary folders contain data_replication.dta loaded at replication.do:31 and replication_secondary_appendix.do:31; inspected paths and data bytes present, original main paper unseen so completeness blocked.",
+      "established_drivers": {
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: Both primary and secondary folders contain data_replication.dta loaded at replication.do:31 and replication_secondary_appendix.do:31; inspected paths and data bytes present, original main paper unseen so completeness blocked. Primary replication.do:436\u2013485 has Figure 1/Tables 2\u20139 and later appendix outputs; secondary script repeats models with all controls. The called program indvar_separate_laggedDV_nofe is defined in programs/indvar_separate_laggedDV_ctrls_nofe.ado:1\u20133 and loaded by replication.do:399; filename/program-name difference is not a provision gap. Original paper coverage remains unknown."
+      },
+      "blocked_drivers": {
+        "donnees_analyse_completes": {
+          "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+          "source": "https://doi.org/10.7910/DVN/UOYDHN",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1017/s0003055422001319",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    },
+    {
+      "citekey": "blair2023peacekeeping",
+      "row": "analysis_code",
+      "observed": "Partially",
+      "evidence": "Primary replication.do:436\u2013485 has Figure 1/Tables 2\u20139 and later appendix outputs; secondary script repeats models with all controls. The called program indvar_separate_laggedDV_nofe is defined in programs/indvar_separate_laggedDV_ctrls_nofe.ado:1\u20133 and loaded by replication.do:399; filename/program-name difference is not a provision gap. Original paper coverage remains unknown.",
+      "established_drivers": {
+        "scripts_accessibles": "data/Replication Files/replication.do:436\u2013485 has Figure 1/Tables 2\u20139 estimator calls.",
+        "analyse_partiellement_accessible": "Partial analysis data and analysis code: Both primary and secondary folders contain data_replication.dta loaded at replication.do:31 and replication_secondary_appendix.do:31; inspected paths and data bytes present, original main paper unseen so completeness blocked. Primary replication.do:436\u2013485 has Figure 1/Tables 2\u20139 and later appendix outputs; secondary script repeats models with all controls. The called program indvar_separate_laggedDV_nofe is defined in programs/indvar_separate_laggedDV_ctrls_nofe.ado:1\u20133 and loaded by replication.do:399; filename/program-name difference is not a provision gap. Original paper coverage remains unknown."
+      },
+      "blocked_drivers": {
+        "code_analyse_complet": {
+          "reason": "Whole-paper and package coverage unresolved; From-raw Partially records an examined boundary ambiguity only; cra_* and crr_* remain a_evaluer. Unknown completeness is never converted to No. Program definitions were checked against calls; no missing-code claim rests on filename/program-name differences.",
+          "source": "https://doi.org/10.7910/DVN/UOYDHN",
+          "next_step": "Supply authoritative original paper/supplements and a complete package file inventory; inspect missing paths."
+        },
+        "paper": {
+          "reason": "Original main paper unavailable in staged files; no authoritative main-result choice.",
+          "source": "https://doi.org/10.1017/s0003055422001319",
+          "next_step": "Supply original main-paper full text."
+        }
+      },
+      "completeness_unexamined": [
+        "code_analyse_complet",
+        "code_nettoyage_complet",
+        "donnees_analyse_completes",
+        "donnees_brutes_completes"
+      ],
+      "criterion_components": {
+        "chaine_brute_incomplete": [
+          "cleaning_code"
+        ],
+        "analyse_partiellement_accessible": [
+          "analysis_data",
+          "analysis_code"
+        ]
+      }
+    }
+  ],
+  "limitation": "Actual outputs of the old downstream comparator, not implementation of the revised contract. Contract-expected walkthrough is separate in README.md. No new assessor run, package execution, label adjudication, or accuracy estimate."
+}
