@@ -2,6 +2,7 @@
 Title: /replicate: ship the I4R templates as references and choose one in context
 Created: 2026-11-25
 Author: claude
+Closed: implemented and verified — PR #2519
 
 --- log ---
 2026-11-25T15:48Z claude created
@@ -12,6 +13,7 @@ Author: claude
 2026-11-26T06:54Z codex note raid Plan: finish pushed t1559-replicate-templates in fresh worktree; verify six source hashes and contextual selection (General/Psych/forensic/assignment/no fit), manifest fields and fallback. No wording tests.
 
 2026-11-26T06:55Z codex note raid feasibility PASS paths and ownership; WARN external validation absent. No cross-cutting registry; shared assessment reference edits serialized. 1559 existing pushed branch reused; 1560 fresh loader check in progress.
+2026-11-26T07:05Z reviewer closed — implemented and verified — PR #2519
 
 --- body ---
 ## Context

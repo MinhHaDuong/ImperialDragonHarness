@@ -1,0 +1,113 @@
+{
+  "checked_at": "2026-11-26T06:58:45.350243+00:00",
+  "records": [
+    {
+      "record": "23214112",
+      "source": "https://zenodo.org/api/records/23214112",
+      "metadata": {
+        "title": "I4R Template: Reproduction Report – Psychological Science Phase 2",
+        "version": "1",
+        "publication_date": "2026-10-07",
+        "creators": [
+          {
+            "name": "Institute for Replication",
+            "affiliation": "University of Ottawa"
+          }
+        ],
+        "license": {
+          "id": "cc-by-4.0"
+        }
+      },
+      "files": [
+        {
+          "path": "skills/replicate/references/templates/23214112/replication-report_psych-science-v2-WORD.docx",
+          "bytes": 336978,
+          "md5": "md5:0f7b29495698098fe68634122c27ff67",
+          "zenodo_bytes": 336978,
+          "zenodo_checksum": "md5:0f7b29495698098fe68634122c27ff67",
+          "match": true
+        },
+        {
+          "path": "skills/replicate/references/templates/23214112/replication-report_psych-science-v2-LATEX.zip",
+          "bytes": 176580,
+          "md5": "md5:a2745ea5ac3e38538abcc8f0c835a193",
+          "zenodo_bytes": 176580,
+          "zenodo_checksum": "md5:a2745ea5ac3e38538abcc8f0c835a193",
+          "match": true
+        }
+      ]
+    },
+    {
+      "record": "23226406",
+      "source": "https://zenodo.org/api/records/23226406",
+      "metadata": {
+        "title": "I4R Template: Reproduction Report – General",
+        "version": "1",
+        "publication_date": "2026-10-08",
+        "creators": [
+          {
+            "name": "Institute for Replication",
+            "affiliation": "University of Ottawa"
+          }
+        ],
+        "license": {
+          "id": "cc-by-4.0"
+        }
+      },
+      "files": [
+        {
+          "path": "skills/replicate/references/templates/23226406/replication-report_general-WORD.docx",
+          "bytes": 523962,
+          "md5": "md5:87d35c722ecb6337c00c7b8db8d97f72",
+          "zenodo_bytes": 523962,
+          "zenodo_checksum": "md5:87d35c722ecb6337c00c7b8db8d97f72",
+          "match": true
+        },
+        {
+          "path": "skills/replicate/references/templates/23226406/replication-report_general-LATEX.zip",
+          "bytes": 175102,
+          "md5": "md5:67ba8c58d6c6c982a23e6c554d393304",
+          "zenodo_bytes": 175102,
+          "zenodo_checksum": "md5:67ba8c58d6c6c982a23e6c554d393304",
+          "match": true
+        }
+      ]
+    },
+    {
+      "record": "23597737",
+      "source": "https://zenodo.org/api/records/23597737",
+      "metadata": {
+        "title": "I4R Template: Commentary from Forensic Report",
+        "version": "1",
+        "publication_date": "2026-10-23",
+        "creators": [
+          {
+            "name": "Institute for Replication",
+            "affiliation": null
+          }
+        ],
+        "license": {
+          "id": "cc-by-4.0"
+        }
+      },
+      "files": [
+        {
+          "path": "skills/replicate/references/templates/23597737/commentary_forensic-report-LATEX.zip",
+          "bytes": 253874,
+          "md5": "md5:56e77a7e808b1a5f2aa187c286c8ea3f",
+          "zenodo_bytes": 253874,
+          "zenodo_checksum": "md5:56e77a7e808b1a5f2aa187c286c8ea3f",
+          "match": true
+        },
+        {
+          "path": "skills/replicate/references/templates/23597737/commentary_forensic-report-WORD.docx",
+          "bytes": 225432,
+          "md5": "md5:8d42a6be5c412d786e2659575c7e6f48",
+          "zenodo_bytes": 225432,
+          "zenodo_checksum": "md5:8d42a6be5c412d786e2659575c7e6f48",
+          "match": true
+        }
+      ]
+    }
+  ]
+}
