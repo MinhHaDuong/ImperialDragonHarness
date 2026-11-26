@@ -2,6 +2,7 @@
 Title: raid_land: merge directly on an ungated base with auto-merge disallowed, as merge step 6 allows
 Created: 2026-11-26
 Author: reviewer
+Closed: autoclosed — PR #2527
 
 --- log ---
 2026-11-26T07:09Z reviewer created
@@ -10,6 +11,7 @@ Author: reviewer
 2026-11-26T08:36Z reviewer Imagine raid 8484af: receiving premise rechecked against e690b9ebc: current helpers still always request auto on ungated GitHub; 1473 only covered molt; harness owns adapter; author now explicitly requests tool fix with settings unchanged. One bounded ticket; per-ticket reimagine skipped. Blind-Spot identified blanket retry hazard and preserved enabled-auto, gated, no-forge boundaries; restrict fallback to definitive auto-disabled refusal, pin captured head, retain unknown-outcome handling. EC unchanged.
 2026-11-26T08:36Z reviewer Plan raid 8484af: code deliverable. Test first definitive auto-disabled ungated refusal then direct pinned merge and MERGED readback; negative controls for unrelated errors, unknown outcome, head movement, enabled-auto, gated and local flows. Prefer narrow adapter refusal over speculative retries; no settings or padme mutations. No overlapping PR: 2516 memory only.
 2026-11-26T08:36Z reviewer Feasibility raid 8484af PASS: land and GhForge.merge signatures checked; existing after_merge enforces exact MERGED head and unknown outcomes. Tests have adapter and land stubs. No extra dependency or shared-registry coordination needed. Behavioral tests, no source phrasing assertions.
+2026-11-26T08:48Z reviewer closed — autoclosed — PR #2527
 
 --- body ---
 ## Context
