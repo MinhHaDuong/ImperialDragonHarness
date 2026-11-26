@@ -17,3 +17,5 @@ The ref-based sweep found the changed adapter as the only matching merge impleme
 Timing: first gaze duration 2m26s (its end epoch was not measured); safer gaze duration not measured because setup stdout was unavailable; gate clock 1795682947.032, cleanup completed 1795683159.094; merge row 2527 merge 1795683182 1795683210. Gate duration in verdict: 1m59s. The merge was 28s. The exact gaze-to-merge duration and slowest step cannot be fully measured from those clocks.
 
 No other project, tracker1552, PR2516, explore-session-roles draft, or unregistered t1527 husk was modified. Cleanup is limited to the trees and branches created for this raid.
+
+The temporary-candidate scan was report-only and partial (2720 of 31080 history files, two unreadable; PR listing hit its 1000-item limit). No temporary candidate was deleted. Close-claim sweep examined 24 merged PRs, eight close claims, zero findings.
