@@ -2,6 +2,7 @@
 Title: /replicate assess: no rule for an unseen package or paper (login/bot wall), MD5-only listings, analysis data built by shipped code
 Created: 2026-11-25
 Author: claude
+Closed: blocked/blind assessment, representation-aware checksums, and generated data readings verified — PR #2523
 
 --- log ---
 2026-11-25T16:07Z claude created
@@ -18,6 +19,7 @@ Author: claude
 2026-11-26T09:01Z codex note Scenario walkthrough (supplied acceptance cases only; external packages/grid unavailable): blocked package => affected criteria a_evaluer + blocked, level a_evaluer if nothing examined, provision/execution unassessed; blocked paper => main_result null, no completeness inferred from package table; blind URL => direct original/package sources only, helper title/old-note searches skipped; MD5 .tab => never validates original, local SHA from original bytes stays distinct; complete producer + inputs/environment/output coverage => Fully provision without run success, missing dictionary => no generated Fully while code provision retained; accessible complete deposited package => Fully provision, complete matched execution => Fully execution. Login download resumes blockers; clarified criteria invalidate stale claims independently of hashes.
 
 2026-11-26T09:02Z codex note Verification: make lint 191 passed; make check-fast 1955 passed; diff whitespace clean. Generic skill-creator quick_validate rejects existing harness custom frontmatter keys; project frontmatter tests pass and keys preserved.
+2026-11-26T07:40Z reviewer closed — blocked/blind assessment, representation-aware checksums, and generated data readings verified — PR #2523
 
 --- body ---
 ## Context
