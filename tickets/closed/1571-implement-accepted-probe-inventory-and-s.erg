@@ -1,0 +1,70 @@
+%erg 0.1
+Title: Implement accepted probe inventory and sourced design menus
+Created: 2026-11-26
+Author: reviewer
+Closed: autoclosed — PR #2541
+
+--- log ---
+2026-11-26T22:42Z reviewer created
+2026-11-26T22:42Z reviewer raid ebfa91 Plan and feasibility PASS with per-item source audit; accepted1570 Imagine/Blind-Spot inherited; person-written signature unchanged
+2026-11-26T22:48Z reviewer implemented inventory-first probe and named-methods candidate menus; source-to-item audit tickets/reviews/1571-probe-source-audit.md; lint191 and fast1966 pass; parent1570 sign-off decision unchanged
+2026-11-26T22:57Z reviewer closed — autoclosed — PR #2541
+
+--- body ---
+
+## Context and boundary
+
+Implementation child of1570's accepted receiving Imagine. The author requested
+receiving Imagine then raid on acceptance. This child partitions the generic
+documentation from the bundled sign-off decision;1570 retains every original
+exit criterion and stays open pending the pilot report and author ruling.
+No person-signature or model-signing authority changes here.
+
+## Relevant files
+
+- skills/replicate/SKILL.md, section probe
+- skills/replicate/references/rules.md
+- New skills/replicate/references/robustness-menus.md
+- Parent1570 receiving Imagine and pinned source evidence ec32d2c in replicator
+
+## Exit criteria
+
+- [ ] Probe requires inventory of the paper's own appendix/code robustness,
+  already-run/excluded checks with reasons, code anomalies as candidate checks,
+  and fair comparisons to the original estimate.
+- [ ] The plan fixes reporting before execution: every planned check receives
+  a completed/failed/blocked/withdrawn disposition with reason; amendments
+  preserve history and require renewed signature; no pass-count verdict.
+- [ ] A design-specific candidate-menu reference exists; each item cites two
+  actual I4R reports from inspected source material or a named methods source
+  supporting that item. RDD entries are explicitly methods-derived; no claims
+  of certified inventory counts or empirical RDD coverage.
+- [ ] Applicability and robustness/heterogeneity/extension scope are explicit;
+  drop-one units follow assignment/clustering/design rather than a universal
+  observation-level rule. Case variables, tuned thresholds, and units stay in
+  the paper folder.
+- [ ] Validation-only blindness accounts for prior exposure and excludes
+  exposed heldout comparisons; ordinary report appraisal is unchanged.
+- [ ] The person-written signature gate, four verbs, computational ACRe/table,
+  and existing1568/1569 guidance remain unchanged. No numerical run occurs.
+
+## Plan and evidence
+
+One generic probe edit plus one attributed reference. Read the original
+source inventory/PROTOCOL only; do not read heldout I4R43/107. Inventory
+categories and approximate frequencies are discovery aids, not validated
+method recommendations. Inspect actual support for every menu item; a named
+methods source is an alternative to two report examples. Validate by a
+source-to-item audit and semantic diff, not wording tests. Run declared lint
+and fast checks, then gaze and verify-gate. A source gap is a blocker for the
+unsupported item, never permission to invent its attribution.
+
+Imagine inherited from1570: four premise checks accepted with qualifications.
+Blind-Spot findings incorporated: complete dispositions and rule5 scope
+classification. Planner requested Luna medium; source access declined by that
+worker, while receiving lead read pinned sources under explicit read-only
+authorization. Observed identities masked; no lineage independence claimed.
+
+Feasibility PASS with source-audit dependency: current probe and rules supply
+signature/fairness contracts, no schema or new verb required. Source literature
+for each menu item must be verified before its wording is committed.

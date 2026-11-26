@@ -7,6 +7,7 @@ Author: claude
 2026-11-26T22:22Z claude created
 2026-11-26T22:23Z reviewer filed from replicator 0003 (ec32d2c) at author request; receiving Imagine pending
 2026-11-26T22:37Z reviewer receiving Imagine accepted planning/menu scope with qualifications; pending sign-off decision must be separated before implementation closure; four premise checks and Blind-Spot findings recorded
+2026-11-26T22:42Z reviewer raid ebfa91 decomposition: child1571 implements accepted documentation; bundled sign-off-modes criterion remains here pending0003 report and author ruling; no original exit criterion removed
 
 --- body ---
 ## Context and authority
@@ -127,3 +128,13 @@ every planned check and design-specific scope classification under rule 5.
 They refine existing reporting/fairness requirements without adding a verb or
 a new empirical deliverable. Requested reviewer Sol6.1 medium, native OpenAI;
 observed model/effort masked. No scientific rerun or paid model call occurred.
+
+## Decomposition (raid ebfa91, 2026-11-26)
+
+This request bundles documentation and a later author decision on signing.
+Child1571 implements the accepted inventory, sourced menus, reporting, and
+validation-blindness scope, with the current person-written signature rule.
+All original exit criteria above remain: the sign-off-modes question stays
+here until the0003 report is available and the author rules. Closing1571
+alone cannot close1570 or integration tracker1552. Integrate the child evidence
+and the eventual ruling before closing this tracker.

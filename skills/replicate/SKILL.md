@@ -258,18 +258,47 @@ it supplies no required dependency or universal validation result.
 
 The goal is to run fair robustness checks, chosen by people.
 
-1. **Draft `robustness/plan.md`** from the rules' robustness menu
-   (`references/rules.md`). For each proposed check give: the original
+Follow these steps sequentially: the inventory precedes selection, and the
+signed plan precedes execution.
+
+1. **Inventory before selecting.** Read the paper's robustness analyses,
+   including appendices and supplied code. In `robustness/plan.md`, map each
+   already-run check to its source and list excluded candidates with reasons
+   (already run, unfair, infeasible, or outside scope). Unavailable appendix or
+   code coverage stays a named gap. Every code anomaly logged by `reproduce`
+   enters the candidate list, with its disposition and evidence; an anomaly
+   does not by itself establish a coding error.
+2. **Draft the plan** using the rules' menu (`references/rules.md`) and the
+   design-specific candidates in `references/robustness-menus.md`. Propose
+   additions the paper does not already run. For each give: the original
    estimate it is compared against, what changes, why that is a fair test,
    and who on the team runs it. Mark heterogeneity analyses and extensions as
-   extras (rule 5).
-2. **Halt.** The plan is signed when it carries a line
+   extras (rule 5). Choose any drop-one unit from the design, assignment, and
+   clustering structure; justify it rather than defaulting to observations.
+   Keep case variables, thresholds, and unit choices in the paper folder.
+3. **Fix reporting before execution.** Give each planned check an identifier
+   and require a reported disposition: completed, failed, blocked, or withdrawn,
+   with a reason and evidence. Report completed results beside the original
+   estimate, including adverse or inconclusive results. A count of passes
+   cannot decide an overall robustness verdict. Preserve the amendment history
+   and reasons for changes, including withdrawals; amendments need renewed
+   signature before execution under the changed plan.
+4. **Halt.** The plan is signed when it carries a line
    `Signed-off-by: <name>, <YYYY-MM-DD>` written by a person. An agent never
    writes that line. Without it, `probe` reports the plan path and stops.
-3. **After signing**, write one script per check under `robustness/`. Each
+5. **After signing**, write one script per check under `robustness/`. Each
    appends rows to `out/robustness.csv` with `stage=robustness` and `spec`
-   naming the alteration. A rerun runs only checks with no rows yet. A
-   change to a signed plan needs a new signature.
+   naming the alteration. A rerun runs only checks with no rows yet; inspect
+   the disposition ledger first so a failure, block, or withdrawal is not
+   mistaken for an unattempted check. Record every planned check's disposition
+   in `robustness/plan.md`, including those that produce no CSV rows.
+
+For a validation run against a heldout replication report, disclose prior
+exposure before starting. The executor and plan signers must not have read
+that report; keep comparison answers from their execution and signing
+contexts until results are frozen. Exposed papers are excluded from
+independent validation claims. This restriction applies to validation, not
+ordinary report appraisal.
 
 ## report
 
