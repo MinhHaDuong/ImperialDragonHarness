@@ -3,7 +3,10 @@
 Copies of the Institute for Replication templates, so `report` works offline
 and reproducibly. Source: Zenodo, licence CC-BY 4.0 (credit "Institute for
 Replication" when a report reuses a template). Retrieved 2026-11-25; every
-checksum matched the Zenodo API on that date. Each LaTeX zip holds `main.tex`,
+checksum matched the Zenodo API on that date. Independently rechecked on
+2026-11-26; metadata and file checks are recorded in
+[`design/1559-template-verification/zenodo.json`](../../../../design/1559-template-verification/zenodo.json).
+Each LaTeX zip holds `main.tex`,
 `main.pdf`, `references.bib` and a `README.md` (LuaLaTeX, biber, biblatex-apa).
 
 | Record | Template | Use it for | Section skeleton |
