@@ -25,8 +25,8 @@ or figure anchors. Distinguish what the authors claim, what critics claim,
 and what the reviewers infer. Unavailable sources remain evidence gaps.
 
 This review runs no new estimates. Put proposed empirical checks, including
-sensitivity analyses or bounds, into the existing `probe` plan for a person's
-signature before execution. Keep causal identification distinct from
+sensitivity analyses or bounds, into the existing `probe` plan for
+[approval](probe-approval.md) before execution. Keep causal identification distinct from
 statistical significance and estimator robustness: a precise estimate or
 stability across specifications alone cannot establish a causal interpretation.
 ACRe and all six Reproducibility Table rows assess computation only; never
@@ -134,7 +134,7 @@ Add design-specific assumptions these prompts do not cover; for example,
 parallel trends in a difference-in-differences design or instrument relevance
 in an instrumental-variables design. Cite any existing sensitivity evidence,
 state what it bounds under which assumptions, and leave a proposed new
-calculation to the signed `probe` plan.
+calculation to the approved `probe` plan.
 
 ## Give an argued reviewer judgment
 

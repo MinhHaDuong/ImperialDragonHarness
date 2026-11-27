@@ -19,12 +19,13 @@ point on one ladder:
 |---|---|---|---|
 | `assess` | yes, batchable | the paper, the package | `manifest.json`, `fetch.sh`, `assessment.json`, `README.md`, preliminary-assessment note |
 | `reproduce` | yes | the above, `data/` | `reproduce/`, comparison/auxiliary/assertion CSVs, run criteria in `assessment.json` |
-| `probe` | no: halts at `robustness/plan.md` until a person signs it | the above | `robustness/`, `out/*.csv` |
+| `probe` | only after plan approval under `references/probe-approval.md` | the above | `robustness/`, `out/*.csv` |
 | `report` | no | everything | `report/`, reproduction-report note |
 
 Autonomy belongs to the verb, not to a mode. Run unattended, `assess` and
-`reproduce` stop at an unsigned `probe` plan. Choosing robustness checks
-without a person is the cherry-picking that rule 4 forbids.
+`reproduce` stop at a `probe` plan awaiting approval. The author approves
+the identified plan or explicitly delegates approval for a bounded campaign
+under `references/probe-approval.md`; rule 4 governs fair selection.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read it before `probe` or `report`. The assessment file and
@@ -87,19 +88,19 @@ skill call or an agent instruction in the folder.
 Before retrieving a worked example, prior replication report, case note, or
 answer-bearing helper output, establish whether the run is ordinary
 reproduction/appraisal, calibration/development, or blind validation. Record
-prior exposure of executors, helpers, and any plan signers, including case
+prior exposure of executors, helpers, and any plan approvers, including case
 answers and evidence used to derive the rules being evaluated, in `README.md`.
 Pass the purpose, exposure record, and excluded sources to helpers before
 retrieval; omit conflicting discovery or existing-note steps. Unknown exposure
 stays disclosed and cannot support a claim of blind validation.
 
-For blind validation, keep answers out of execution and signing contexts until
+For blind validation, keep answers out of execution and approval contexts until
 results are frozen. Exposed or development papers remain usable for ordinary
 reproduction with disclosure, but cannot independently validate rules derived
 from them. This applies across all verbs, not just comparison with a held-out
 report. Follow `references/validation.md` for calibration freezes, unused-table
 evaluation, and fresh-paper/cohort validation. Existing assessment scope,
-printed-digit tolerance, ACRe meanings, and human signing authority still apply.
+printed-digit tolerance, ACRe meanings, and plan-approval authority still apply.
 
 ## Assessment scope
 
@@ -324,10 +325,10 @@ it supplies no required dependency or universal validation result.
 
 ## probe
 
-The goal is to run fair robustness checks, chosen by people.
+The goal is to run fair robustness checks.
 
 Follow these steps sequentially: the inventory precedes selection, and the
-signed plan precedes execution.
+approved plan precedes execution.
 
 1. **Inventory before selecting.** Read the paper's robustness analyses,
    including appendices and supplied code. In `robustness/plan.md`, map each
@@ -341,7 +342,7 @@ signed plan precedes execution.
    additions the paper does not already run. A robustness check asserted in the
    paper without numbers or code is eligible for the plan and cannot be rejected
    as a duplicate on that ground. Propose it when it bears on the main result;
-   the signer may reject it for another explicit reason. Proposal does not
+   the authorized approver may reject it for another explicit reason. Proposal does not
    authorize execution. For each give: the original
    estimate it is compared against, what changes, why that is a fair test,
    and who on the team runs it. Mark heterogeneity analyses and extensions as
@@ -354,11 +355,13 @@ signed plan precedes execution.
    estimate, including adverse or inconclusive results. A count of passes
    cannot decide an overall robustness verdict. Preserve the amendment history
    and reasons for changes, including withdrawals; amendments need renewed
-   signature before execution under the changed plan.
-4. **Halt.** The plan is signed when it carries a line
-   `Signed-off-by: <name>, <YYYY-MM-DD>` written by a person. An agent never
-   writes that line. Without it, `probe` reports the plan path and stops.
-5. **After signing**, write one script per check under `robustness/`. Each
+   approval before execution under the changed plan.
+4. **Check approval.** Follow `references/probe-approval.md`: retain author
+   approval in file or conversation, or panel approval under explicit bounded
+   campaign delegation, for the identified plan/version. Keep actual author
+   signatures distinct from truthful approval transcriptions. Without valid
+   approval or with unmet conditions, report the plan path and blocker and stop.
+5. **After approval**, write one script per check under `robustness/`. Each
    appends rows to `out/robustness.csv` with `stage=robustness` and `spec`
    naming the alteration. A rerun runs only checks with no rows yet; inspect
    the disposition ledger first so a failure, block, or withdrawal is not
@@ -367,7 +370,7 @@ signed plan precedes execution.
 
 For validation against a held-out replication report, apply § Validation
 exposure and calibration before reading it or preparing the plan. The executor
-and plan signers must not have read that report; retain the answer boundary
+and plan approvers must not have read that report; retain the answer boundary
 until results are frozen.
 
 ## report
@@ -429,7 +432,7 @@ economist. Seek a reviewer from another model family through the route skill
 for substantive causal reasoning, and disclose an unavailable perspective.
 
 This source-based appraisal runs no new estimates. Any proposed empirical
-check goes through the existing signed `probe` plan. Keep causal
+check goes through the existing approved `probe` plan. Keep causal
 identification, statistical significance, and estimator robustness distinct;
 the identification judgment changes neither ACRe nor any of the six
 Reproducibility Table rows, all of which assess computation. A favorable or
@@ -463,4 +466,4 @@ after, the table rows that changed, the discrepancy count from comparison
 rows only (excluding auxiliary and assertion rows), separate assertion
 outcomes when present, and the
 next blocker. Name any selected scope ID and its separately labelled changes.
-For `probe`, either the plan path awaiting signature or the checks run.
+For `probe`, either the plan path awaiting approval or the checks run.

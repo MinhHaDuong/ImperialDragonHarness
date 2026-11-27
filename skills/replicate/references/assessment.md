@@ -580,7 +580,7 @@ evidence where relevant, without double-counting them as comparisons.
 
 These rules implement the B6 author relay in ticket 1575 prospectively.
 They authorize no silent reassessment of legacy cases, new estimates, changed
-specification, or unsigned robustness execution.
+specification, or unapproved robustness execution.
 
 ## Auxiliary estimates
 
@@ -623,7 +623,7 @@ Published range/inequality evidence follows § Published assertions separately;
 auxiliary retention does not decide whether qualitative/footnote outputs belong
 in canonical inventory or settle other comparator/tolerance questions. Retain
 only estimates produced under existing authority; this contract authorizes no new model
-specification, translation eligibility, or unsigned robustness execution.
+specification, translation eligibility, or unapproved robustness execution.
 
 ## manifest.json
 
