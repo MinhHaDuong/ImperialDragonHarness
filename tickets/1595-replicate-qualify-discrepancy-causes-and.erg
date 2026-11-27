@@ -1,0 +1,50 @@
+%erg 0.1
+Title: replicate qualify discrepancy causes and negligibility diagnostics (1580)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T20:38Z reviewer created
+
+--- body ---
+## Parent and authority
+
+Child of1580; original supplied remarks W7,W8,W13,W14,A2. Harness generic prospective documentation only. No frozen report edits, estimates, paid API, outward acts, or change to1589 decisions. Preserve1580 source and original ledger.
+
+## Exit criteria
+
+- [ ] Distinguish article internal inconsistency from printed/recomputed difference; qualify evidenced typo, swapped labels, rounding, tested Monte Carlo variation or substantive unresolved.
+- [ ] Prespecify negligibility diagnostic beside unchanged strict article verdict: difference/SE with justified equivalence margin, Monte Carlo difference/MC SE where meaningful, and second-digit count with declared rounding rule; missing evidence stays unavailable.
+- [ ] Identical software/RNG/seed stream expects zero Monte Carlo difference; residual difference needs investigated evidence, not automatic noise attribution.
+- [ ] When a check overturns a key result, discuss estimand, count outcomes/zeros and field practice, paper/preregistration justifications and specification-search question using sourced facts without imputing intent.
+- [ ] Existing-evidence arithmetic supplies no new empirical authority; new diagnostics/simulations only within authorized rerun perimeter or existing challenge approval.
+
+## Relevant files
+
+`skills/replicate/SKILL.md` and its `references/` contracts, especially cumulative-report, assessment, rules, identification-review, robustness-menus and scientific-appraisal.
+
+## Verification
+
+Source-anchored scenario audit of each criterion, existing lint and fast tier; no wording-pin tests. Distinct adherence and review before pinned gate/merge.
+
+
+## Plan — RAID1580
+
+Actions: Add shared discrepancy procedure linked from rerun/assessment/report: two comparison types, qualified causes, prespecified estimate-SE/MC-SE diagnostics, second-significant-digit count denominator, key-result model-selection discussion.
+
+First discriminating scenario: Small strict miss, unknown cause, unavailable MC SE remains miss with cause/diagnostic unknown, no automatic confirmation.
+
+Dependencies/source checks: Existing scientific-impact and tolerance contract. No new estimates outside authorized rerun or approved challenge.
+
+Sequential wave order1594→1595→1596→1597 for shared files, no manufactured
+scientific dependency. Documentation has no new callable signatures. Existing
+lint/fast tier plus source-anchored contrasting scenarios; no prose-pin tests.
+Planner: distinct native context requested gpt-6.1-sol/OpenAI/medium, served
+identity masked; phase3 completed and tautological-test scan rejected wording tests.
+
+## Feasibility — RAID1580
+
+PASS with documented source/design WARNs, no BLOCK. Distinct parent native
+review checked actual paths, source limits, authority and cross-ticket composition.
+See tickets/reviews/t1580/feasibility.md. Shared references require sequential
+waves; no three-editor registry trigger. No change of original exit intent.
