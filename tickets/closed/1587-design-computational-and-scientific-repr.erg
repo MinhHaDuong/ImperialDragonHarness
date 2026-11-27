@@ -2,9 +2,12 @@
 Title: Design computational and scientific reproduction together
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2568
 
 --- log ---
 2026-11-27T11:46Z reviewer created
+2026-11-27T15:21Z reviewer implemented bounded advisor-informed scientific-appraisal reference and parallel workflow/audit links; product 7dc509cbff3326e8463bdbff308f0b240c9078ee, actual distinct parent semantic/integration CLEAN, lint191 and fast1966 passed; scenario and identity evidence tickets/reviews/t1587; caller gaze/gate/merge pending
+2026-11-27T15:24Z reviewer closed — autoclosed — PR #2568
 
 --- body ---
 

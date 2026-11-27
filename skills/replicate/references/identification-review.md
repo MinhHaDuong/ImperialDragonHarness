@@ -32,6 +32,12 @@ stability across specifications alone cannot establish a causal interpretation.
 ACRe and all six Reproducibility Table rows assess computation only; never
 feed these judgments into their categories, criteria, or statuses.
 
+This causal review is one part of `scientific-appraisal.md`, which connects
+argument/model, source facts, and implementation evidence. Descriptive,
+predictive, and meta-analysis claims use that generic appraisal without a forced
+causal DAG or identification label. Preserve any material noncausal premises
+alongside the causal argument.
+
 ## Map the design with a DAG
 
 A directed acyclic graph (DAG) maps the assumed causal relationships. An
