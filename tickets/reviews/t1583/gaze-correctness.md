@@ -40,3 +40,13 @@ native gaze started_epoch=1795782672.3641355 completed_epoch=1795782736.4871182
 ```
 
 The first read-only rational audit command failed with a table-parser ValueError (header row parsed as data). The reviewer corrected the read-only command and reran it; all 11 numeric rows then passed. This was an audit-command error, not a branch/test defect. No test pass is inferred from that failed attempt.
+
+## Official close result
+
+Official gaze_close completed exit0 with `plan check: PASS`, review-tree removal,
+clean containment, and measured duration2m28s. Actual notes review:
+`rv-20261127-pr-2560-f7ed`; answer `20261127T123256206Z-padme-f8340b68`.
+Substantive reviewed head: `775861bfb223104ae7be4de3e0bf9491185953c9`.
+The durable gaze artifact commit and following addressed-criteria/closure commit
+are review evidence and ticket bookkeeping; no substantive source changed
+following that reviewed head. The caller owns gate and merge.

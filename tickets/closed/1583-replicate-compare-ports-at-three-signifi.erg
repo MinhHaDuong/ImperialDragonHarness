@@ -2,10 +2,13 @@
 Title: Replicate compare ports at three significant digits
 Created: 2026-11-27
 Author: reviewer
+Closed: Implemented B7 deterministic cross-reproduction comparison; criteria verified, distinct adherence clean, gaze REVIEWED PR2560; caller gate/merge pending.
 
 --- log ---
 2026-11-27T11:39Z reviewer created
 2026-11-27T12:15Z reviewer note blocker 1582 closed — Blocked-by removed.
+2026-11-27T12:33Z reviewer Verified all three exit criteria: explicit exact decimal nearest/ties-away contract and full ledger in assessment.md; 11 generated arithmetic rows plus unavailable/nonfinite and scope controls in design/reviews/t1583/arithmetic.md; parallel skill/rules preserve article tolerance, display, categories and legacy records. Full lint191/fast1966 pass; distinct semantic reviews clean; gaze REVIEWED on775861bfb223104ae7be4de3e0bf9491185953c9, review rv-20261127-pr-2560-f7ed, answer20261127T123256206Z-padme-f8340b68. Caller-authorized post-gaze bookkeeping only; no merge.
+2026-11-27T12:33Z reviewer closed — Implemented B7 deterministic cross-reproduction comparison; criteria verified, distinct adherence clean, gaze REVIEWED PR2560; caller gate/merge pending.
 
 --- body ---
 
@@ -28,9 +31,9 @@ numerical helper, scientific rerun, or silent legacy rescore is authorized.
 
 ## Exit criteria
 
-- [ ] Cross-reproduction three-significant-digit equality has an explicit common deterministic rounding/tie convention and retains originals and difference.
-- [ ] Boundary examples establish deterministic behavior without treating absent/nonfinite values as numeric agreement; source/protocol and scope remain explicit.
-- [ ] Article half-unit tolerance, canonical categories, required scope, and prior case records remain unchanged; no silent legacy rescore or generic helper is added.
+- [x] Cross-reproduction three-significant-digit equality has an explicit common deterministic rounding/tie convention and retains originals and difference.
+- [x] Boundary examples establish deterministic behavior without treating absent/nonfinite values as numeric agreement; source/protocol and scope remain explicit.
+- [x] Article half-unit tolerance, canonical categories, required scope, and prior case records remain unchanged; no silent legacy rescore or generic helper is added.
 
 ## Plan and first verification
 
