@@ -108,7 +108,9 @@ Whole-paper assessment remains the default, including for Games. An explicit
 caller request may add a **selected-target assessment** for named claims,
 outputs, or estimates. Declare it from the original paper before inspecting
 its dependencies or running code; a package's available files cannot choose
-the target. Follow `references/assessment.md` § Selected-target assessment
+the target. Main-result choice follows `references/main-result.md`; an explicit
+selected target remains a separate caller-defined scope. Follow
+`references/assessment.md` § Selected-target assessment
 for its declaration, separate namespace, and evidence rules. The canonical
 whole-paper dossier, level, and table keep their existing meanings. A selected
 result never substitutes for them or exports as a whole-paper grid criterion.
@@ -161,9 +163,11 @@ no answer exclusions or exposure requirements.
 
 1. **Identify the paper.** Get the full text and the Zotero item by the
    `reading-note` skill's § 1, subject to the blind assessment boundary. Choose the
-   **main result** (one table or figure) from the original paper before any
-   trial, and record its authoritative passage. The CIRED protocol requires
-   the same choice rule across cohorts. If full text and Zotero are unavailable,
+   **main result** by the original abstract/introduction central claim, then
+   its supporting table or figure, before package inspection or execution.
+   Follow `references/main-result.md` for the source record, prospective
+   motivated ties, proportionate advisor support, and optional official
+   Highlights/Key findings under the blind source boundary. If full text and Zotero are unavailable,
    set `main_result` to null and record a paper blocker until an authoritative
    original-paper excerpt permits the choice. A package table cannot choose
    the result. Retain independently verifiable package evidence, but keep

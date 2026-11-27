@@ -85,6 +85,12 @@ level = (next((r["classe"] for r in rules
 
 ## Package coverage and main-result runs
 
+Choose `main_result` under [Main-result choice](main-result.md), using the
+original central claim before inspecting the package or executing code. Retain
+the claim, supporting output, source/version, selection rationale, and any
+advisor disagreement in `README.md`; `main_result` names that chosen output.
+Package feasibility cannot choose or replace it.
+
 The four completeness criteria cover the **whole paper**, including
 applicable appendix and supplementary tables, figures, and published
 robustness outputs. The preselected `main_result` limits the ACRe run
@@ -317,6 +323,8 @@ assessment remains the default, including for Games. The existing
 retain their canonical meanings. Keep the whole-paper table visible, including
 unknown rows; a selected assessment does not require completing that audit
 before proceeding. Do not migrate or rescore old evidence implicitly.
+An explicit selected target need not be the canonical `main_result`; preserve
+both declarations and their reasons under [Main-result choice](main-result.md).
 
 Store the additional result in `assessment.json` under `selected_target`,
 separate from every canonical grid criterion. A minimal declaration is:
