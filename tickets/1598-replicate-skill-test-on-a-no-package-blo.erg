@@ -1,0 +1,82 @@
+%erg 0.1
+Title: /replicate: skill test on a no-package, blocked-rerun paper (replicator, de Soyres IMF WP/26/128)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T21:26Z reviewer created
+2026-11-27T21:26Z reviewer reviewer filed from replicator (de Soyres skill test, PR replicator#8) at author request 2026-11-27; receiving Imagine pending; overlaps 1593
+
+--- body ---
+## Context and authority
+
+Filed from replicator at the author's request, 2026-11-27. The author ran de
+Soyres, Obeng and Tan (2026), IMF WP/26/128, as an extra test of the
+refactored `/replicate` skill (harness `be867012cd42`; skill last changed in
+`8b3d42657`). It is not Toulouse material. The paper has no replication
+package, and the author ruled EM-DAT out of scope, which blocks `rerun` for
+every table. Stages: `inventory` and `identify` done, `rerun` blocked,
+`challenge` not run, `complete` done. The harness owns the skill; replicator
+did not edit it.
+
+Evidence: replicator PR MinhHaDuong/replicator#8, branch `desoyres-report`,
+head c80aa67: `replications/desoyres2026climate/SKILL-TEST.md` (stage-by-stage
+detail and timing), `report/`, `assessment.json`, `manifest.json`. The run
+took about 15 minutes of wall-clock time, most of it spent reading 13
+reference files (about 17,000 words).
+
+## Findings (the receiver decides placement and wording; detail in SKILL-TEST.md)
+
+1. **No path for "package searched, none found".** The executor had to infer
+   that an exhausted search establishes L1. Wanted: one paragraph on
+   establishing absence, keeping the caveat that a private package is not
+   excluded. With no package, the level is final at L1; the skill should say
+   that L4, L5 and L8-L10 no longer "wait for rerun".
+2. **`fetch.sh` with nothing to fetch.** The fetch contract covers public and
+   supplied bytes, not "nothing to fetch". (Replicator's layout now makes
+   `fetch.sh` optional until bytes exist.)
+3. **Manifest has no slot for cited third-party raw inputs** (EM-DAT, WEO,
+   CRS) that the authors do not deposit. For a paper without a package these
+   are the raw data. The executor added a non-schema `third_party_inputs`
+   block.
+4. **`donnees_brutes_inaccessibles` is ambiguous** when raw data are open
+   third-party databases the authors did not deposit. The grid mixes
+   "provided by the authors" with "accessible to anyone".
+5. **"Provision-based impossibility" covers only a package starting at
+   analysis data.** No ruling exists for the no-package case, which arguably
+   makes both execution rows impossible on provision grounds.
+6. **Re-implementation from prose, without author code, has no stage.** Is
+   it `rerun`, `challenge`, or out of scope?
+7. **A blocked rerun writes no `missing_input` rows.** Should it write
+   `out/reproduce.csv` with `status=missing_input` for each printed
+   statistic, or keep that only in prose?
+8. **The identification method assumes one causal claim.** It does not cover
+   a chain of three regressions whose product is the policy claim, nor a
+   paper that disclaims causality ("associations") while using causal verbs.
+   It also does not say whether prior findings should be withheld from the
+   advisor (the executor withheld them, and the advisor independently
+   recomputed the arithmetic) or where advisor provenance should live (the
+   executor used `report/advisor/`).
+9. **Robustness plan when data can never run.** It is unclear whether
+   `challenge` should still draft one. The scope question is also asked
+   before computation even when computation is impossible.
+10. **The desk check has no stage.** Its CSV is labelled `stage=reproduce`
+    although nothing was reproduced. This overlaps IDH1593, lesson 1.
+11. **The signature rule asks for an observed model identity** that an agent
+    cannot observe from inside.
+12. **Templates are I4R-only.** There is no neutral report template for a
+    non-Games case.
+13. **The rereading cost is out of proportion** for blocked or empty stages.
+    The skill could short-circuit them (for example, skip `data-audit.md`,
+    `stata-caveats.md` and `validation.md` when rerun is blocked by inputs).
+    It also lacks a stage-status vocabulary (blocked, not run, no approval)
+    and does not say whether "compile after every stage" applies when the
+    stages run back to back in one sitting.
+
+## Exit criteria
+
+- [ ] Receiving Imagine decides each finding (accept with placement, merge
+  into IDH1593, or reject with a reason).
+- [ ] Accepted findings land in the skill or its references, without
+  paper-specific content.
+- [ ] Replicator is told the landed commit.
