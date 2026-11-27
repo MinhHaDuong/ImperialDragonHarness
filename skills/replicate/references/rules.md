@@ -90,7 +90,11 @@ the same table.
 
 ## 7. The robustness menu
 
-Checks the paper does not already run, for example:
+Checks the paper does not already run belong in the menu. A robustness check
+asserted in the paper without numbers or code is eligible for the plan and
+cannot be rejected as a duplicate on that ground. Propose it when it bears on
+the main result; the signer may reject it for another explicit reason.
+Proposal does not authorize execution. Examples:
 
 - undisclosed deviations from a pre-analysis plan;
 - fixing coding errors (a fix counts as a robustness check);

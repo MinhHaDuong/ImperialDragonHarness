@@ -2,11 +2,13 @@
 Title: Replicate probe propose asserted unsupported checks for main result
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2547
 
 --- log ---
 2026-11-27T08:21Z reviewer created
 2026-11-27T08:21Z reviewer filed as separate probe deliverable under confirmed1572 finding3 ruling; foreign template owner identified, ticket-only handoff pending
 2026-11-27T08:24Z reviewer Plan/feasibility PASS: probe and parallel rule7 reconcile to shared wording; receiver ticket0009 filed, no foreign prompt implementation; sequential after1573
+2026-11-27T08:40Z reviewer closed — autoclosed — PR #2547
 
 --- body ---
 
