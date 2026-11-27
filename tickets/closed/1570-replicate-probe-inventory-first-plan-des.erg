@@ -2,6 +2,7 @@
 Title: /replicate probe: inventory-first plan, design menus in references, sign-off modes
 Created: 2026-11-26
 Author: claude
+Closed: Author ruling implemented by1584/PR2565; original documentation and approval criteria integrated in raid96ff36; wider trackers remain open
 
 --- log ---
 2026-11-26T22:22Z claude created
@@ -14,6 +15,9 @@ Author: claude
 2026-11-27T08:46Z reviewer 1572 finding3 separately ruled and harness1574 merged PR2547; generic signing modes still pending despite pilot report now available
 
 2026-11-27T11:42Z reviewer note author interface /root relayed approval of two generic plan-approval modes; exact reply and child1584 recorded below; implementation/integration pending, other holds unchanged
+
+2026-11-27T16:46Z reviewer note bounded1570 integration complete: pilot source available, author ruling and child1584 delivered; original criteria met; wider trackers remain open
+2026-11-27T16:46Z reviewer closed — Author ruling implemented by1584/PR2565; original documentation and approval criteria integrated in raid96ff36; wider trackers remain open
 
 --- body ---
 ## Context and authority
@@ -83,7 +87,7 @@ threshold or check specific to one paper.
   standing rulings (rule 4: a person signs).
 - [x] If accepted: SKILL.md § probe gains the steps kept; the menus file
   exists with a source per item; no paper-specific item in either.
-- [ ] The sign-off modes question is ruled after replicator 0003 reports.
+- [x] The sign-off modes question is ruled after replicator 0003 reports.
 
 ## Receiving Imagine (2026-11-26)
 
@@ -183,3 +187,21 @@ become proof of general quality. No frozen pilot signature is rewritten.
 
 The ruling is recorded, implementation/integration pending;1552 is not closed.
 Other methodological holds and receiver-owned prompt pickup remain distinct.
+
+## Final integration — raid96ff36, 2026-11-27
+
+Child1584 closed in PR #2565 implements the recorded author ruling. Re-read
+1571/PR2541 and the approval reference plus parallel challenge instructions:
+inventory/exclusions, sourced design menus, complete prospective dispositions,
+blind validation, and both provenance-bearing approval modes compose.
+Delegated panels require explicit bounded author authority; transcription is
+not an impersonated signature. All original criteria are met. The cumulative
+interface in1590/PR2570 preserves these rules. Full main check at183128ce08a9
+passed (parent independent readback 2026-11-27T16:32:42Z). Numerical and approval
+contracts were checked across the child union; current operational old-name
+sweep was empty with a positive old-base control. Closure of this bounded
+tracker does not close1552,1572,1580 or1589, nor authorize receiver execution.
+
+| Child | Project | State and evidence |
+|---|---|---|
+|1584|harness|Closed PR #2565, 2026-11-27; generic approval modes and bounded delegation|

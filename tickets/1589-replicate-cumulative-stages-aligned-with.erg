@@ -112,7 +112,7 @@ its section. 3. Status quo with renamed execution depths. The author chose
 
 - [x] Receiving Imagine records facts, overlap with 1572-1588 (notably 1580),
   ownership and standing rulings.
-- [ ] SKILL.md and references implement Decisions 1-6, without aliases.
+- [x] SKILL.md and references implement Decisions 1-6, without aliases.
 - [ ] One rehearsal run produces a compiled report at each stage; its
   version is recorded for the Brodeur batch.
 
@@ -206,3 +206,23 @@ old-name tickets are open; delete it from current skills/docs when they close,
 with a final search and explicit recorded disposition. Git preserves history;
 frozen replication folders keep historical names. Closing the last child alone
 does not close1589. Existing1552/1572/1575 closure criteria also survive.
+
+## Local implementation integration — raid96ff36, 2026-11-27
+
+1584–1588 closed separately in PRs #2565–#2569,1590 in PR #2570, and
+1591 dispatch in PR #2571. Exact reviewed policy baseline is
+f9c4bfc6b852f3d1e1fcb586ba2627e3a5feaeed;1591 and separate1592 change no
+replicate source/catalog bytes. Decision1–6 implementation is delivered; the
+policy union, all schemas, comparison/approval boundaries and six template
+binaries were reviewed, with byte preservation controls. Current operational
+old-name sweep is empty and its old-base positive control fires. The temporary
+in-flight mapping remains because old-name tickets remain open.
+
+Receiver0010 owner Imagine receipt at local receive-0010-imagine
+c592eb75aa15ff13474f6214e85f7222cce4422e is verified for planning only; no
+receiver-main integration, approved scientific plan, rehearsal or freeze was
+observed. The actual rehearsal criterion above stays unchecked.1580 must have
+explicit implemented/deferred dispositions; W15/W17 remain missing. The
+Brodeur freeze and final scientific integration belong to the receiver. No
+autoresume was implemented or attempted. Full local after-merge checks at
+183128ce08a9 passed; that is software verification, not the scientific trial.

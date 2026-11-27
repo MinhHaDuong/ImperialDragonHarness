@@ -21,6 +21,8 @@ Author: claude
 
 2026-11-27T11:47Z reviewer note author interface /root completed finding5, dual-reproduction, and finding10 rulings; exact replies and children1586–1588 below; dialogue complete, implementation and receiver pickup not complete
 
+2026-11-27T16:46Z reviewer note local ruled children1584–1588 integrated under1590; receiver prompt implementation and separate audit-scoring disposition still pending; tracker remains open
+
 --- body ---
 ## Context and authority
 
@@ -71,7 +73,7 @@ to the skill. These are two papers, not an accuracy estimate.
   touch different verbs.
 - [x] Each accepted finding names the rule it changes in SKILL.md or a
   reference.
-- [ ] Findings 3 and 12 are ruled together with 1570's sign-off modes.
+- [x] Findings 3 and 12 are ruled together with 1570's sign-off modes.
 
 ## Receiving Imagine (2026-11-27)
 
@@ -270,3 +272,25 @@ size-alone harmlessness, or silent legacy rescore. All dialogue decisions for
 findings4/5/10/12 are now received and supersede earlier held annotations
 prospectively. Delivery/integration and receiver0009 pickup remain pending;
 1552 completion is not inferred.
+
+## Current integration — raid96ff36, 2026-11-27
+
+The author dialogue above superseded the earlier holds prospectively. All five
+local ruled children are delivered and reviewed with1590's cumulative interface.
+The computational comparison, exposure, authority and selected/canonical scope
+contracts remain distinct. The full after-merge check at183128ce08a9 passed.
+
+| Child | Project | State and evidence |
+|---|---|---|
+|1584|harness|Closed PR #2565: approval provenance and bounded panels (finding12)|
+|1585|harness|Closed PR #2566: paper-led main claim and optional Highlights (finding4)|
+|1586|harness|Closed PR #2567: applicable empirical footnotes (finding5)|
+|1587|harness|Closed PR #2568: scientific and computational appraisal, argument/model/facts|
+|1588|harness|Closed PR #2569: diagnosed scientific impact separate from frozen discrepancy (finding10)|
+
+Replicator0009 has a recorded receiver reception/deferment, which is not proof
+that the prompt change was implemented. Actual receiver-owned prompt pickup
+and the separately unadopted audit-based scoring proposal keep1572 open.
+Receiver0010's planning receipt is a distinct handoff; neither receipt
+establishes scientific execution or closes1552. Earlier dated observations
+above are retained as historical states.
