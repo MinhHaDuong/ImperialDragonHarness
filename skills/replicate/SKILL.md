@@ -28,9 +28,10 @@ without a person is the cherry-picking that rule 4 forbids.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read it before `probe` or `report`. The assessment file and
-the CSV schema are in `references/assessment.md`. The Gavard Scotch hand
-reproduction, mapped step by step to these verbs, is in
-`references/gavard-scotch-mapping.md`: use it as the worked example.
+the CSV schema are in `references/assessment.md`. Before retrieving worked
+examples or case answers, apply § Validation exposure and calibration. The
+Gavard Scotch hand reproduction is mapped to these verbs in
+`references/gavard-scotch-mapping.md`; it contains exposed development evidence.
 
 For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory. A pre-set `IDH_ROOT` wins.
 
@@ -80,6 +81,25 @@ without it. Put plain Markdown in `README.md` and `robustness/plan.md`, and
 put CSVs in `out/`. Scripts run with the paper's own software (Stata, R,
 Python) from a command written in `README.md`. Never put a harness path, a
 skill call or an agent instruction in the folder.
+
+## Validation exposure and calibration
+
+Before retrieving a worked example, prior replication report, case note, or
+answer-bearing helper output, establish whether the run is ordinary
+reproduction/appraisal, calibration/development, or blind validation. Record
+prior exposure of executors, helpers, and any plan signers, including case
+answers and evidence used to derive the rules being evaluated, in `README.md`.
+Pass the purpose, exposure record, and excluded sources to helpers before
+retrieval; omit conflicting discovery or existing-note steps. Unknown exposure
+stays disclosed and cannot support a claim of blind validation.
+
+For blind validation, keep answers out of execution and signing contexts until
+results are frozen. Exposed or development papers remain usable for ordinary
+reproduction with disclosure, but cannot independently validate rules derived
+from them. This applies across all verbs, not just comparison with a held-out
+report. Follow `references/validation.md` for calibration freezes, unused-table
+evaluation, and fresh-paper/cohort validation. Existing assessment scope,
+printed-digit tolerance, ACRe meanings, and human signing authority still apply.
 
 ## Assessment scope
 
@@ -184,6 +204,9 @@ An inaccessible supplied URL stays blocked; it does not authorize discovery.
 
 The goal is to rerun the authors' code on the authors' data, then compare
 every reported statistic.
+
+Before choosing implicit implementation conventions by matching paper outputs,
+apply the calibration freeze and disclosure in `references/validation.md`.
 
 1. Run `fetch.sh`. Rebuild the authors' environment and lock it: interpreter,
    packages and versions go into `manifest.json` `environment`.
@@ -300,12 +323,10 @@ signed plan precedes execution.
    mistaken for an unattempted check. Record every planned check's disposition
    in `robustness/plan.md`, including those that produce no CSV rows.
 
-For a validation run against a heldout replication report, disclose prior
-exposure before starting. The executor and plan signers must not have read
-that report; keep comparison answers from their execution and signing
-contexts until results are frozen. Exposed papers are excluded from
-independent validation claims. This restriction applies to validation, not
-ordinary report appraisal.
+For validation against a held-out replication report, apply § Validation
+exposure and calibration before reading it or preparing the plan. The executor
+and plan signers must not have read that report; retain the answer boundary
+until results are frozen.
 
 ## report
 

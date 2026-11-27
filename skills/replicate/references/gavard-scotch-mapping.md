@@ -8,6 +8,27 @@ package to Python. Its record is in the author's paper folder (`audit/`
 `reproduction/python/`). Each step it took has a home in a verb below, or a
 recorded reason to stay outside the skill.
 
+## Exposure and historical status
+
+This is an answer-bearing, exposed worked example. Its estimator choices used
+published results for calibration; reading it creates prior exposure for a
+Gavard validation run. Use it for ordinary reproduction or development with
+disclosure under `validation.md`, not as independent validation of rules
+derived from this case. The September findings below remain a dated account,
+not a current adjudication of estimator equivalence or canonical CRA status.
+The routing describes where to retain evidence; it grants no additional
+translation or robustness-execution authority.
+
+The later Replicator transcription separates calibration on Tables 1 and B3
+from evaluation on other tables after those choices were fixed. That is a
+same-paper unused-table check, not fresh-paper validation. Its source is
+`replications/gavard2026climate/reproduce/README.md` at Replicator commit
+`03af9ef6ff3b64230addbae96e8be3403e1cf971`; `COMPARE-PORT.md` there records later
+comparisons with the September port. These later records do not overwrite the
+historical findings in this mapping.
+
+## September 2026 record
+
 | Step taken in September 2026 | Verb | Where it lands |
 |---|---|---|
 | Search for a package matching the published version: Zenodo record and versions API, the journal page, authors' sites and GitHub, a web search; a mismatch found (the script normalises by lagged emissions, the paper by mean GDP) | `assess` | step 2; the places searched, in `README.md`; the version mismatch as evidence in `non_etabli` |
@@ -30,6 +51,7 @@ recorded reason to stay outside the skill.
 What the example teaches. First, `assess` alone found the decisive facts:
 the package did not match the published version and stopped at aggregate
 data. Second, the step that took longest, porting the estimator, sits
-inside `reproduce`. Third, the September work ran no signed robustness plan:
+inside `reproduce` as a record of the translated work, subject to the current
+translation and scoring boundaries. Third, the September work ran no signed robustness plan:
 the CPI sensitivity was chosen by the analyst. The skill would require a
 signature before running it.
