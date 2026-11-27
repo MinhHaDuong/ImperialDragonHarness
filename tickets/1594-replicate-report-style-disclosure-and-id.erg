@@ -1,0 +1,29 @@
+%erg 0.1
+Title: replicate report style, disclosure and identification presentation (1580)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T20:38Z reviewer created
+
+--- body ---
+## Parent and authority
+
+Child of1580; original supplied remarks W1–W6,W9–W12,W16,A1,A3. Harness generic prospective documentation only. No frozen report edits, estimates, paid API, outward acts, or change to1589 decisions. Preserve1580 source and original ledger.
+
+## Exit criteria
+
+- [ ] Caption every table/figure, report tables R1/R2 and article Table n, verified I4R name, contextual wording, substantive effect before numeric comparison.
+- [ ] Preserve verbatim computational-requirements checklist row; add marked ready-to-run environment row and disclose versions. Category hesitation uses ?; unexamined/no-run keeps explicit reason without false categories.
+- [ ] Robustness Reproduction defines same-data alternatives; cross-reference reproduced article/SI checks by label; give signed/run/not-run counts and reasons.
+- [ ] Signature and per-role truthful AI Disclosure include project/harness repositories/commits, models, calls/work shares from collection beginning inventory; unavailable evidence remains unavailable.
+- [ ] Causal identification begins with claim/estimand-captioned graph and threats table (path,status,evidence,what would rule it out), retaining existing verdict scale and noncausal appraisal route.
+
+## Relevant files
+
+`skills/replicate/SKILL.md` and its `references/` contracts, especially cumulative-report, assessment, rules, identification-review, robustness-menus and scientific-appraisal.
+
+## Verification
+
+Source-anchored scenario audit of each criterion, existing lint and fast tier; no wording-pin tests. Distinct adherence and review before pinned gate/merge.
+
