@@ -2,9 +2,12 @@
 Title: replicate independent recomputation evidence without score promotion (1580)
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2578
 
 --- log ---
 2026-11-27T20:38Z reviewer created
+2026-11-27T21:24Z reviewer Implemented prospective independent recomputation sidecar with separate production/strict comparison evidence and reporting counts; no canonical/selected promotion. Product b6c6ed7fbb31f2bcddbc26a14f829039a1c36c20; source-anchored scenario audit and distinct semantic adherence in design/1597-independent-recomputation/. Lint 191 passed; fast 1966 passed after sandbox socket denial rerun; template and assessment-contract byte preservation verified. Ready for caller gaze/gate; no scientific execution.
+2026-11-27T21:28Z reviewer closed — autoclosed — PR #2578
 
 --- body ---
 ## Parent and authority

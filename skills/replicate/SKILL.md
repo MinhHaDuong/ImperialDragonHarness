@@ -357,6 +357,11 @@ required scope and comparisons nor CRR eligibility.
    semantics stay unresolved. Assertion confirmation supplies no exact statistic
    match and cannot alone establish a canonical category. Keep all required
    numeric comparisons and the unchanged article tolerance.
+   For trivial published statistics without author code, use
+   `references/independent-recomputation.md` within this authorized rerun scope.
+   Retain prospective triviality and separate production/strict-comparison
+   evidence, including failed/not-run reasons; missing author code stays recorded.
+   Independent evidence supplies no canonical or selected scoring success.
    When comparing two reproductions, use equality after the common deterministic
    three-significant-digit rounding rule in § Comparing two reproductions of
    that reference. Retain both full originals, rounded values, difference, and
@@ -556,8 +561,9 @@ the names/version that produced them, without migration or rescore.
 
 Print one line per stage processed: the folder, the stage, the ACRe level before and
 after, the table rows that changed, the discrepancy count from comparison
-rows only (excluding auxiliary and assertion rows), separate assertion
-outcomes when present, and the
+rows only (excluding independent, auxiliary, and assertion rows), separate
+independent production and strict-comparison totals and assertion outcomes when
+present under `references/independent-recomputation.md`, and the
 next blocker and local report/note status. State requested and actual execution
 perimeters separately from assessment coverage. Name any selected scope ID and its separately labelled changes.
 For `challenge`, either the plan path awaiting approval or the checks run.

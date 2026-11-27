@@ -52,6 +52,13 @@ counts, and truthful signature/disclosure. Reuse valid computations; a coherence
    rule does not suppress or round the stored auxiliary artifact. Identify
    auxiliary estimates separately with their provenance and lack of numeric
    comparator; exclude them from match/discrepancy totals and score denominators.
+   Report independent recomputations under `independent-recomputation.md`
+   separately from author-code comparisons: production outcomes and strict
+   printed-comparison outcomes, denominators, failed/not-run reasons, and
+   stable target/scope/run provenance. Reconcile linked ledger targets and
+   reruns without double counting; retain required unknown coverage and missing
+   author code. This evidence supplies no canonical/selected scoring success
+   or combined reproduced numerator.
    Report range/inequality assertions separately as confirmed, not confirmed,
    or unresolved, with target, source, boundaries, and coverage evidence. Keep
    their totals separate from numeric comparison counts and category derivation;

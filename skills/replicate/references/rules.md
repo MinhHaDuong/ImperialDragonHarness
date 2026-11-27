@@ -65,6 +65,11 @@ unresolved evidence under `assessment.md` § Published assertions. Preserve
 their actual targets and boundaries; keep them visible separately from the
 detailed statistic list, numeric counts, and canonical categories.
 
+For trivial published statistics without author code, follow
+`independent-recomputation.md`: retain production and strict printed comparison
+separately, with failed/not-run reasons and separate counts. Missing author code
+stays recorded; this evidence supplies no canonical or selected scoring success.
+
 For an explicitly requested selected target, additionally show its separately
 labelled six-row table and scope ID under `assessment.md` § Selected-target
 assessment. The canonical whole-paper table keeps its meaning; selected
