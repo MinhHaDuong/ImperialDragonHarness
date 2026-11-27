@@ -2,9 +2,12 @@
 Title: replicate acquisition replay and out-of-frame check reporting (1580)
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2577
 
 --- log ---
 2026-11-27T20:38Z reviewer created
+2026-11-27T21:14Z reviewer implemented prospective acquisition replay and sourced outside-frame menu/reporting; source scenarios in design/1596-acquisition-outside-frame; distinct semantic review045b3b5d2 no findings; lint191/elevated fast1966 PASS; lead owns gaze/gate/merge
+2026-11-27T21:16Z reviewer closed — autoclosed — PR #2577
 
 --- body ---
 ## Parent and authority

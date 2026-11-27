@@ -29,6 +29,7 @@ what has not run; it cannot claim completion or bypass its prerequisite.
 Follow § Every stage and `references/cumulative-report.md` throughout.
 Apply `references/report-style.md` for report presentation and disclosure.
 Qualify discrepancies under `references/discrepancies.md`, retaining strict outcomes.
+Track acquisition producers and replay evidence under `references/acquisition.md`.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read them before starting the chain. The assessment and
@@ -219,6 +220,9 @@ no answer exclusions or exposure requirements.
    It must not compare an ingested `.tab` checksum with an original file or
    treat listed metadata alone as verified downloaded bytes. Record the local
    SHA-256 when bytes become available, preserving the archive checksum.
+   Inspect and flag scraper/API/download acquisition producers under
+   `references/acquisition.md`; retain their actual replay status separately
+   from package ingestion and any proposed temporal extension.
 4. **Grade.** Account for every grid criterion exactly once as established,
    examined but not established, or unexamined, with blocked reasons where
    applicable (`references/assessment.md`). An empty `criteres` is valid only

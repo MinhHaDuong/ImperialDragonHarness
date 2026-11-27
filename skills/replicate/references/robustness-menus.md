@@ -14,6 +14,28 @@ analysis that changes the estimand must explain the change rather than claim
 like-for-like confirmation. Diagnostic evidence alone does not prove an
 identifying assumption.
 
+## Verify the claim by a model-independent method
+
+“Model-independent” here means independent of the paper's fitted statistical
+model, with the proposed method's own assumptions explicit. It does not mean
+assumption-free or automatically outside the paper's frame. Explain which
+assumption or design feature changes and which claim the check discriminates.
+If the paper already uses that method/frame, the label alone supplies no new
+outside-frame check. Keep the existing fair main-result proposal obligation;
+blocked or inapplicable candidates require reasons and a fair alternative,
+not a claim that the obligation was met. Different designs on the same data
+or derived implications remain possible under the existing challenge contract.
+
+| Candidate | Applicability and limit | Inspected methods support |
+|---|---|---|
+| Randomization-based inference on the main claim | For a justified randomized design, use its actual assignment mechanism and a clearly stated null; respect assignment units, blocks or clusters. Do not permute observational exposure labels merely because a test is called nonparametric. Distinguish a sharp null from a weak average-effect null: the latter needs an appropriate statistic and validity argument. A test of a different null must disclose its relation to the original claim. State whether the randomization distribution is enumerated or approximated, retaining Monte Carlo uncertainty where applicable. | Wu and Ding, *Randomization Tests for Weak Null Hypotheses in Randomized Experiments*, v5, §§1.1,2.2,3.1: sharp-null finite-sample exactness versus studentized weak-null asymptotic control under stated assumptions ([author preprint](https://arxiv.org/html/1809.07419v5), inspected2026-11-27). |
+
+This entry supports a design-specific candidate, not a universal permutation
+recipe for observational data, rank tests, or every randomization structure.
+For another method/design, inspect appropriate primary support before proposing
+its applicability; keep missing assignment/null evidence as an unresolved gap.
+All candidates remain subject to `probe-approval.md`; this menu grants no run.
+
 ## Meta-analysis
 
 | Candidate | Applicability and limit | Inspected methods support |
