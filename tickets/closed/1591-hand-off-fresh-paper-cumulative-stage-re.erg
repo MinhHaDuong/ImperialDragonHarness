@@ -2,12 +2,14 @@
 Title: Hand off fresh-paper cumulative-stage rehearsal and batch freeze to replicator
 Created: 2026-11-27
 Author: receiver
+Closed: autoclosed — PR #2571
 
 --- log ---
 2026-11-27T12:37Z receiver created
 2026-11-27T16:06Z reviewer note blocker 1590 closed — Blocked-by removed.
 
 2026-11-27T16:17Z harness1591 dispatched receiver0010 on pushed handoff-harness1591 at7a7d6aea3e89ae185db3f0e68048beac7f2dc974; full committed payload readback equals parent-reviewed SHA256ed03eac1045777470606b3a6ef6e9d0cc591ef785b37388379612d43d778e2bf. Scope, ownership, checks and outstanding receiver pickup in tickets/reviews/t1591/handoff-evidence.md; no science or acceptance claimed
+2026-11-27T16:23Z reviewer closed — autoclosed — PR #2571
 
 --- body ---
 
