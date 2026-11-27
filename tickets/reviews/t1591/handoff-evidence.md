@@ -24,7 +24,8 @@ edits/add/commit/push/foreign reads or forge mutation for that review.
 
 ## Receiver discovery and durable readback
 
-Receiver primary resolved to `/home/haduong/CNRS/projets/actifs/replicator`.
+Receiver primary resolved to `../CNRS/projets/actifs/replicator`,
+with that portable locator relative to the harness primary.
 Read only ticket conventions/records and necessary Git metadata. Read
 `tickets/AGENTS.md` and `.ergrc`; `tickets/LOCAL.md` is absent. Receiver0004 is
 the deferred benchmark, not this rehearsal. Current0009 already records its
@@ -35,7 +36,7 @@ at the inspected base. Existing handoff-refresh worktree and branch untouched.
 Fresh receiver fetch confirmed base
 `317fb7c26c738838e0cd5954e99acdf471303ce4`. Created a locked own sparse
 worktree containing tickets only:
-`/home/haduong/CNRS/projets/actifs/replicator/.claude/worktrees/handoff1591-266508-10093`.
+`.claude/worktrees/handoff1591-266508-10093` relative to the receiver primary.
 No scientific papers, prompts, data, exposure CSV, source, or frozen folders
 were read. No science, paid endpoint, author contact, or pipeline edit ran.
 

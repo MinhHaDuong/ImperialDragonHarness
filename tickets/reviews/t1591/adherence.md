@@ -1,6 +1,7 @@
 # Adherence verdict
 
-Arguments: `t1591-replicator-dispatch worktree=/home/haduong/.agents/.claude/worktrees/t1591-266508-21774`.
+Arguments (worktree locator normalized relative to the harness primary):
+`t1591-replicator-dispatch worktree=.claude/worktrees/t1591-266508-21774`.
 Declared mechanical runner inspected with `make -n lint`, then executed:
 191 passed,3736 deselected. No manuscript references changed. Diff contains
 only tickets and dispatch evidence; no rule/instruction files or architectural
