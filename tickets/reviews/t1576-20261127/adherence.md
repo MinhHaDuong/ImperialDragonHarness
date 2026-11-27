@@ -34,7 +34,7 @@ separate semantic-review process.
 ```text
 OpenAI Codex v0.172.0
 --------
-workdir: /home/haduong/.agents/.claude/worktrees/t1576-266508-4165
+workdir: [redacted: host-specific worktree path; identity fields preserved]
 model: gpt-6.1-sol
 provider: openai
 approval: never
