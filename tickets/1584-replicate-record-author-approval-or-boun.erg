@@ -1,0 +1,83 @@
+%erg 0.1
+Title: Replicate record author approval or bounded campaign delegation
+Created: 2026-11-27
+Author: reviewer
+Blocked-by: 1583
+
+--- log ---
+2026-11-27T11:40Z reviewer created
+
+--- body ---
+
+## Context and authority
+
+Child of 1572; author ruling relayed by the author’s own interface session
+/root and recorded on the parent at 2026-11-27T11:42Z. Recording is a truthful relay,
+not an agent-written author signature. The author authorized raid delivery
+through review, gates, eligible merge, and roar. No implementation has begun.
+
+## Scope
+
+Implement two generic, reusable probe-plan approval modes. First, the author
+may approve the identified plan in its file or in conversation; preserve the
+actual author signature separately from a truthful, provenance-bearing
+transcription. Second, the author may explicitly delegate plan approval to a
+panel for a defined campaign and fixed perimeter; retain the author’s delegation,
+plan/version, panel opinions/disagreements, conditions, and approval record.
+A driver supplies scope and provenance but cannot self-grant authority. Amendments
+need approval within the authorized perimeter; outside it, return to the author.
+Reconcile agents-never-write-signature statements without impersonating an author
+or granting permanent panel authority. Keep driver, project, cohort, and model
+names out of generic policy. Auto-blog, scientific monitoring, and climate-finance
+meta-analysis are examples of genericity only, not authorized pipelines. Preserve
+outward publication/contact and paid-spend boundaries and existing scope/scoring.
+
+## Exit criteria
+
+- [ ] Author approval in file or conversation is supported with identified plan/version and truthful approval-transcription provenance distinct from an actual author-written signature.
+- [ ] Explicit bounded campaign delegation supports panel approval only within the fixed author-defined perimeter, retaining opinions/disagreements, conditions, and amendment approvals; no driver self-authorization or permanent panel power.
+- [ ] All signature/approval parallel units are reconciled without impersonation or hard-coded driver/project/model names; no new pipeline, publication, contact, spending, or unrelated scoring authority is introduced.
+
+## Plan and first verification
+
+Documentation and contracts, not new estimates or an orchestration service.
+Read current SKILL.md and parallel references as one logical unit, then map
+each change to the author ruling. First verification is a source/scenario
+audit with a positive control, a boundary case, and a counterexample that
+would expose scope or authority drift. Preserve unresolved evidence. Do not
+add tests pinning prose wording. Run required adherence and project hygiene
+checks, distinct semantic review, gaze, and the caller’s gate/merge route.
+
+## Feasibility and dependencies
+
+PASS: current skill/reference paths exist, with no scientific data, licence,
+API key, or paid route needed. Shared contracts require sequential delivery.
+No three-PR concurrent registry edit or coordination PR is needed. No foreign
+project edits or rereads are required.
+
+## Receiving Imagine — fresh lead, 2026-11-27
+
+Disposition: accept the recorded author intent for bounded harness delivery.
+No numerical rerun, foreign implementation, or automatic historical reassessment.
+
+1. Facts against framing: Current person-written signature statements conflict prospectively with the two newly authorized approval modes.
+2. Duplicates/overlap: read current replicate contracts and recent1573–1579
+   deliveries. Open PR2556 files only1580 and PR2516 files prior1552 memory;
+   neither implements this ruling. Locked source reception tree is preserved.
+   All eight new children share contracts and therefore execute sequentially.
+3. Ownership/placement: harness owns generic guidance and evidence contracts;
+   paper-specific execution, cases, and receiver0009 pickup remain external.
+   Reconcile the entire approval unit in skill/rules/references; preserve genuine signatures and label transcriptions truthfully.
+4. Standing rulings/fit: the exact author relay governs this prospective change;
+   unaffected comparison, canonical/selected scope, exposure, fairness, outward
+   acts, and spending boundaries remain. The relay is no author signature.
+
+Plan: documentation/scenario evidence; no wording-pin tests. Existing positive
+controls and boundary/counterexample audit specified above settle semantics.
+Feasibility: local paths exist; no data licence, new API, scientific estimates,
+shared registry, or paid route is needed. Distinct review and live gate follow.
+Combined Blind-Spot and advisor outcomes are pending before phase completion.
+
+Combined Imagine closes with BLIND-SPOT: CLEAN; distinct report at
+`tickets/reviews/rulings1575/blind-spot.md`. No original exit criterion dropped,
+changed in intent, or added by the review. Sequential plans/feasibility accepted.

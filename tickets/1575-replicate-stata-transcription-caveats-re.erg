@@ -2,7 +2,6 @@
 Title: /replicate: Stata-transcription caveats reference and findings from the Gavard Scotch run (replicator 0003)
 Created: 2026-11-27
 Author: reviewer
-Label: needs-human
 
 --- log ---
 2026-11-27T09:14Z reviewer created
@@ -11,6 +10,8 @@ Label: needs-human
 2026-11-27T11:10Z reviewer note receiving Imagine: accepted corrected A and B1/B4/B2/B5 as children 1576-1579; B3/B6/B7 held for author methodology decisions; B8 already covered by draft/review/merge publication gate
 
 2026-11-27T11:23Z reviewer note accepted children delivered: 1577 PR2551, 1576 PR2552, 1578 PR2553, 1579 PR2554; final union integration clean; held B3/B6/B7 remain author decisions
+
+2026-11-27T11:42Z reviewer note author interface session /root relayed independent approvals B3 (reply Oui, oui), B6 (Oui), B7 (Oui); recorded below with provenance; children1581/1582/1583 reserved before implementation
 
 --- body ---
 ## Context and authority
@@ -149,3 +150,164 @@ All accepted child after-merge records passed, including the full check set
 on main `2f103e16e3d5f38df8cfdf35761c7b0d10db1c3d`. Review attribution and
 raid evidence are captured in the single roar bundle. No paid API spending
 or scientific estimates were introduced.
+
+## Author rulings received after accepted delivery
+
+Recorded 2026-11-27T11:42Z from the author’s own interface session `/root`. The
+parent session reports the following questions and actual author replies.
+This is a truthful relay, not an agent-written author signature. The relay
+supersedes the earlier held dispositions for B3/B6/B7; no implementation or
+legacy-case rescore is claimed by recording it.
+
+### B3
+
+Question as relayed:
+
+> une reproduction traduite de Stata vers Python peut-elle compter comme CRA réussie ... recommande oui si modèle, échantillon, erreurs-types et résultats requis vérifiés. Rapport précise reproduction par traduction Python et conventions incertaines. Exécution native distincte.
+
+Author reply:
+
+> Oui, oui
+
+### B6
+
+Question as relayed:
+
+> comment comparer un calcul à une plage ou une borne publiée, par exemple0,05–0,12 ou supérieur à0,24 ? recommande vérifier uniquement l’énoncé publié : appartenance à l’intervalle ou respect de l’inégalité, en conservant bornes ouvertes/fermées. On note énoncé confirmé sans prétendre reproduire une valeur exacte inconnue. D’accord ?
+
+Author reply:
+
+> Oui
+
+### B7
+
+Question as relayed:
+
+> quand deux reproductions comparées entre elles, comment interpréter accord à trois chiffres ? recommande arrondir les deux valeurs à trois chiffres significatifs avec même règle, vérifier égalité; conserver valeurs complètes et écart. Comparaison article garde demi-unité du dernier chiffre publié. D’accord ?
+
+Author reply:
+
+> Oui
+
+B3 authorizes faithful Stata-to-Python canonical CRA eligibility under existing
+required scope, evidence, and comparison rules; it requires actual-method and
+native-run-status disclosure and retains calibration/exposure/uncertainty.
+It neither requires native execution nor promotes a selected subset to the
+main result or whole-paper scope. It does not authorize a CRR extension or
+silent rescoring of old cases.
+
+B6 authorizes confirmation of the published assertion with its actual range,
+inequality, boundary inclusivity, and object/collection/extrema semantics.
+An assertion-confirmed flag remains distinct from an exact statistic match;
+unknown semantics stay unresolved. No midpoint, tolerance expansion, category
+promotion, or legacy rescore is authorized.
+
+B7 authorizes equality of two reproduction values after the same deterministic
+rounding to three significant digits, retaining originals and their difference.
+The rounding/tie policy must be explicit and common; article comparisons keep
+the half-unit of the last printed digit. No scope/category promotion or silent
+legacy rescore follows.
+
+### New children and completion criteria
+
+- Harness 1581: implement B3, then verify method disclosure and existing scope/evidence boundaries.
+- Harness 1582: implement B6 after 1581, preserving assertion versus statistic semantics.
+- Harness 1583: implement B7 after 1582, preserving article tolerance and full values.
+
+- [ ] 1581, 1582, and 1583 are merged with per-criterion review/gate evidence.
+- [ ] Integration verifies the combined rulings, parallel references, and remaining authority boundaries before this tracker closes.
+
+All three 1575 author questions are now ruled; this tracker awaits delivery
+and integration, not another author decision. Do not infer completion of1552
+or unrelated1570/1572 decisions.
+
+## Raid0d9cc6 execution handoff
+
+Fresh raid started after464c70 completed; timed cadence armed. No new
+implementation has begun. Four child IDs1581–1584 were reserved before work.
+The author’s interface supplied B3/B6/B7 and the1570/1572 two-mode approval
+ruling in separate turns; their exact replies and bounded scopes are above
+and on1570/1572/children. Complete receiving Imagine/overlap and one Blind-Spot
+pass over all four, then ticket-only reception. Sequence1581→1582→1583→1584
+in fresh owned worktrees, each through hunt, distinct semantic adherence,
+gaze, gate, pinned merge, and roar. Do not adopt predecessor/sender trees.
+
+Primary baseline c8644ad378580b76da399bc170063c4f21e82858 is clean/passed.
+PR2556 on branchreplicator-report-review is a separate ticket-only1580 filing;
+read current forge/main again for overlap before implementation. The earlier
+accepted1575 children and roar are merged; source PR2549 is superseded/closed
+with complete corrected source content preserved. Source scientific project
+remains read-only; no new scientific estimates or paid API calls.
+
+Native writer model identities are runtime-masked; do not turn requested pins
+into observed identity. Prior required reviews used distinct native subscription
+processes with observed headers, or correctly masked native seats. Raw workdir
+headers must be explicitly redacted before retained evidence, because the
+existing portability guard reproduced a failure on one such header.
+
+Close1575 only after its three new children and final integration; generic
+approval child1584 additionally settles the sign-mode implementation part of
+1570/1572, not their unrelated holds or1552. Do not infer decisions on current
+1572 main-result selection, footnote applicability, noise/typo classification,
+join-audit-as-Fully proposal, or pending receiver0009 pickup. Root continues
+author dialogue; send subsequent rulings to the fresh lead explicitly.
+
+### Expanded handoff as of the next author dialogue
+
+The same authorized continuation now includes child1585 for1572 finding4,
+after1584 for safe shared-contract serialization. Its actual author reply is
+recorded on1572 and1585. A distinct route advisor MUST be consulted for designing
+that main-result guidance before implementation; article-specific optional
+publisher highlights are not a new blind discovery permission. Root continues
+other1572 dialogue; do not infer any unrelayed ruling.
+
+Five reserved children1581–1585 are currently unimplemented. The fresh lead
+must finish Imagine, including a Blind-Spot pass over all rulings and draft
+plans, before ticket-only reception. Treat these as author-approved new scope,
+not an Imagine agent inventing criteria. Parent1575 is still only the three
+B3/B6/B7 children;1584/1585 belong to1570/1572. Parent/child links are in bodies
+and Children sections: current erg rejected a Parent header as outside its v1
+closed set, so no unsupported header was kept. No rule or guard was changed.
+
+### Complete fresh-lead checkpoint
+
+Dialogue is complete as relayed by/root. Children1581–1588 cover B3 canonical
+CRA translation, B6 assertions, B7 cross-port rounding, generic approval modes,
+main-result choice, empirical footnotes, dual computational/scientific design,
+and discrepancy versus scientific impact. No implementation has begun. Actual
+advisor consultation is mandatory for1585 guidance design and1587 scientific
+reproduction design; do it early.1587 must propose bounded decomposition before
+multipart implementation. Reconcile dependency order after advisor/Blind-Spot;
+it is a design task to start early, not a reason to skip the prerequisite.
+
+All exact replies are recorded on owning parents/children. Finish receiving
+Imagine and one Blind-Spot over all eight, then merge ticket-only reception.
+Use fresh owned worktrees on pushed branches, never adopt this writer’s tree.
+Implement bounded accepted children through hunt, distinct semantic adherence,
+gaze, gate, pinned merge, and roar. Native identity masking and raw-workdir
+redaction facts above remain relevant. No foreign writes/estimates/paid API.
+
+Parent1575 closes only after1581–1583 and integration;1570/1572 follow their own
+verified delivery and remaining receiver conditions. Never assume1552 done or
+receiver0009 picked up. Root has finished dialogue and requests immediate fresh
+lead. Parent links live in bodies/Children sections because current erg rejects
+Parent headers; no guard or rule was modified. Baselinec8644ad passed. Separate
+PR2556 is ticket-only1580 reception, not part of this implementation queue.
+
+Automatic approval review rejected a bundled push as destination/disclosure
+unverified. Local capture continued; the existing origin was read back as
+https://github.com/MinhHaDuong/ImperialDragonHarness.git, PUBLIC. The user’s
+instructions explicitly require exact ruling records and normal MR delivery.
+Retry push only with this authorization/destination evidence; do not bypass a
+remaining refusal. If still refused, preserve this local checkpoint and report.
+
+## Fresh reception phase completion
+
+All eight author rulings received with per-child four-premise Imagine checks,
+current-main/open-PR overlap inspection, and completed combined BLIND-SPOT: CLEAN.
+Actual distinct advisor informed1585/1587; report and bounded single-unit1587
+proposal retained in `tickets/reviews/rulings1575/advisor-design.md` and sent
+to/root before implementation. No implementation or receiver0009 pickup claimed.
+Sequential implementation order1581–1586, then coherent1587 and1588; scientific
+design began early. No shared-registry coordination is needed. Original exit
+criteria and scope preserved. Reception lands with Refs only, closing nothing.
