@@ -273,7 +273,11 @@ signed plan precedes execution.
    does not by itself establish a coding error.
 2. **Draft the plan** using the rules' menu (`references/rules.md`) and the
    design-specific candidates in `references/robustness-menus.md`. Propose
-   additions the paper does not already run. For each give: the original
+   additions the paper does not already run. A robustness check asserted in the
+   paper without numbers or code is eligible for the plan and cannot be rejected
+   as a duplicate on that ground. Propose it when it bears on the main result;
+   the signer may reject it for another explicit reason. Proposal does not
+   authorize execution. For each give: the original
    estimate it is compared against, what changes, why that is a fair test,
    and who on the team runs it. Mark heterogeneity analyses and extensions as
    extras (rule 5). Choose any drop-one unit from the design, assignment, and
