@@ -6,6 +6,9 @@ Author: reviewer
 --- log ---
 2026-11-27T08:12Z reviewer created
 2026-11-27T08:13Z reviewer Plan: bounded reproduce audit documentation, inherited accepted1572 premises and Blind-Spot bounds; feasibility PASS, existing reproduction/anomaly/probe contracts available
+2026-11-27T08:18Z reviewer Plan: independent read-only planner confirmed author-stage join diagnostics, construction/sample crosswalk, anomaly evidence; no code/scoring/signing changes; semantic and byte-preservation validation, no wording tests
+2026-11-27T08:18Z reviewer feasibility PASS: reproduce mapping/run and existing anomaly/probe contracts available; comparison evidence read atdf890ef; no new dependency, schema, scientific rerun or source-project write
+2026-11-27T08:21Z reviewer author placement: two binding lines in reproduce, detailed checklist/table in reference; paper cases excluded; canonical audit score proposal not adopted
 
 --- body ---
 
@@ -50,3 +53,14 @@ replicator. Semantic diff and preservation checks fit documentation; do not
 add wording tests. Run lint/fast, distinct semantic adherence, gaze, then gate.
 Receiving Imagine/Blind-Spot inherited from1572; original-key and contradiction
 bounds are load-bearing.
+
+## Author-specified placement (2026-11-27)
+
+Use two binding lines in SKILL.md reproduce, one per audit, linked to a
+reference (assessment.md or new data-audit.md). Put join checklist details
+there: actual keys, stage-specific match rates/denominators, unmatched-key
+sample, encoding/quotes/whitespace/case, many-to-many, duplicate keys, and
+missingness in constructed variables. Give a text-versus-code table format.
+Keep paper cases outside the harness. The proposed score gate for unaudited
+joins is NOT adopted; report audit coverage separately without changing Fully
+or other canonical meanings.
