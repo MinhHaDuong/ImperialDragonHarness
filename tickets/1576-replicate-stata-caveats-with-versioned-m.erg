@@ -1,0 +1,21 @@
+%erg 0.1
+Title: Replicate Stata caveats with versioned manual evidence
+Created: 2026-11-27
+Author: reviewer
+Blocked-by: 1577
+
+--- log ---
+2026-11-27T09:32Z reviewer created
+
+--- body ---
+
+## Draft handoff scope
+
+Child of1575. Provisional receiving disposition; a fresh lead must finish
+the four premise checks and full exit criteria before implementation.
+
+Use references/stata-caveats.md plus a bounded reproduce pointer, conditional on an authorized translation request, never a new translation/scoring mandate. Separate manual-documented facts, documentary inferences, case-calibrated observations, and open/historical uncertainty. Use official Stata manuals with edition/page links. No paper cases or case-fit formulas as generic defaults. Current Release19 manuals qualify generate defaults/set type, egen function-specific behavior, replace automatic promotions, explicit subscripts/division-by-zero, gmm constants/defaults, and Gaussian robust rgf. Historical actual release/settings remain unknown. xtgee pooled-AR/combined cluster factor is not established by matches. Depends on1577 for calibration/validation guidance.
+
+## Validation boundary
+
+Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.

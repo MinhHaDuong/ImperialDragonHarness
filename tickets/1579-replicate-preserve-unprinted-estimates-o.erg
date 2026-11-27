@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Replicate preserve unprinted estimates outside comparison scoring
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T09:32Z reviewer created
+
+--- body ---
+
+## Draft handoff scope
+
+Child of1575. Provisional receiving disposition; a fresh lead must finish
+the four premise checks and full exit criteria before implementation.
+
+Provide an explicit auxiliary CSV/README contract for produced estimates with no authoritative printed numeric comparator, separate from out/reproduce.csv comparison statuses and score denominators. Retain full precision, producer/specification/source-route/scope provenance. Lack of comparator is not missing input or failed execution; unprinted observations are not invented matches. Do not decide whether published qualitative/footnote outputs belong to canonical inventory, or authorize new robustness specs. No canonical schema/status/CRA/tolerance/comparison convention change; B3/B6/B7 remain held.
+
+## Validation boundary
+
+Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.

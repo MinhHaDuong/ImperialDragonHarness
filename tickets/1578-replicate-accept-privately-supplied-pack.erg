@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Replicate accept privately supplied packages without fabricated URLs
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T09:32Z reviewer created
+
+--- body ---
+
+## Draft handoff scope
+
+Child of1575. Provisional receiving disposition; a fresh lead must finish
+the four premise checks and full exit criteria before implementation.
+
+Document package.source_url null rather than a fabricated download URL, acquisition/provenance evidence in existing manifest/README contracts, local exact-representation SHA256/size and unavailable archive checks separately. fetch.sh may accept caller-supplied files, verify/copy their exact bytes and fail clearly when acquisition is missing; no author contact or private redistribution authority. Preserve author files and public download route. Documentation only, no generic fetch helper or source-project edits.
+
+## Validation boundary
+
+Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.

@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Replicate separate calibration and validation exposure
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T09:32Z reviewer created
+
+--- body ---
+
+## Draft handoff scope
+
+Child of1575. Provisional receiving disposition; a fresh lead must finish
+the four premise checks and full exit criteria before implementation.
+
+Guard worked-example/case-answer retrieval before blind validation. Record prior exposure; exposed/development papers cannot validate the derived rules. Separate calibration targets, outputs not used for choosing conventions, and fresh-paper blind validation; table holdout is not paper/cohort independence. Freeze selection/choices before evaluating unused targets, disclose post-hoc choices and exposure, reuse existing author-ruling boundaries without changing tolerance or canonical scoring. Ordinary reproduction remains usable with disclosed exposure. Source dispatch and Replicator0004 explicitly exclude Weschle/Atanasov-derived development evidence from fresh validation. Assess blind-only wording may need a generic validation boundary; inspect the Gavard mapping for affected current/historical routing statements.
+
+## Validation boundary
+
+Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.
