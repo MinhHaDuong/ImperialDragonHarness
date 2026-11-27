@@ -31,12 +31,12 @@ The author asked to keep what decided the matches. Proposed home:
 is Stata and no licence is available. Generic rules only; paper cases stay
 in replicator.
 
-- Documented: `generate`/`egen` create float (float32) by default and
+- Documented (to cite from the manual): `generate`/`egen` create float (float32) by default and
   `replace` keeps the type. Reproduce storage types; all-double computation
   moved six printed values across a rounding boundary in this case.
-- Documented: an expression without a `by` prefix indexes rows of the whole
+- Documented (to cite from the manual): an expression without a `by` prefix indexes rows of the whole
   dataset (`x[17]`); division by zero gives missing.
-- Documented: `gmm` with `{xb: varlist}` adds no constant.
+- To verify against the `gmm` manual (the executor's recollection, not checked): `{xb: varlist}` adds no constant and `instruments()` adds one. The specification difference explained all 177 disagreements.
 - Observed, check per case: `xtgee` working correlation from pooled
   residual-moment sums divided by pooled pair counts, then by SSR/N; robust
   VCE times (N-1)/(N-P) for `rgf` and G/(G-1) for panel clustering.
