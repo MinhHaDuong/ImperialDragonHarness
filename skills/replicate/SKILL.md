@@ -323,6 +323,11 @@ freeze precedes the execution or diagnosis it governs.
    discrepancy classifications under the declared rules. Diagnose residuals
    separately; a corrected run is a separately labelled result and cannot
    rewrite the first outcome or widen its tolerance.
+   For a separate scientific-impact conclusion, establish the cause and its
+   claim-specific consequences from actual evidence under
+   `references/scientific-appraisal.md` § Diagnose a discrepancy and its scientific
+   impact. A documented typo or demonstrated numerical variation may support
+   scientific confirmation beside the retained miss; small size alone cannot.
 4. An optional checker follows the route skill's independence rules. Preserve
    its prompt, supplied information, first output, and any disagreement. State
    independence separately for inputs, bandwidth selection, point estimates,

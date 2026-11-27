@@ -63,6 +63,48 @@ unknown. Matching a pooled result alone cannot settle selection or dependence.
 This appraisal requires neither universal study re-extraction nor new pooled
 estimates; proposed calculations remain subject to existing approval.
 
+## Diagnose a discrepancy and its scientific impact
+
+Preserve the original computational observation before explaining it: authoritative
+printed target and source version, full-precision output, comparison rule, status,
+and code/input/environment identifiers. Keep first-run freezes and their hashes.
+The half-unit-of-the-last-printed-digit tolerance and original classification
+remain fixed. Retain subsequent diagnoses and any corrected runs as separately
+labelled evidence, linked to that observation, without overwriting it. Apply this
+distinction to whole-paper and selected-target work alike.
+
+For each discrepancy material to the appraisal, extend the existing claim-to-evidence
+record with two separate judgments:
+
+| Judgment | Required evidence and limits |
+|---|---|
+| Cause | Name the observed difference, candidate explanation, inspected source/code/output anchors, and evidence that distinguishes that explanation from alternatives. A source correction or erratum can document a typo; retain its version and show which printed entry it corrects. A suspected typo stays inferred. Numerical variation needs evidence tying the difference to the actual implementation/environment or numerical mechanism under comparison; small magnitude or a familiar software difference alone establishes no cause. Record an unestablished cause as unknown. |
+| Scientific impact | Trace the diagnosed difference to the declared claim and its supporting evidence: direction, magnitude or interpretation, uncertainty, decision boundaries, and affected premises as relevant. State what was actually checked, what follows by inference, what remains unknown, and the coverage of the conclusion. A demonstrated cause alone establishes no harmlessness: a documented typo may still change a material conclusion. |
+
+A documented typo or demonstrated numerical variation can support the argued
+conclusion “scientific result confirmed despite computational discrepancy” when
+the evidence establishes the cause and supports the declared scientific claim
+despite that difference. Retain the miss, its counts, and the computational
+classification beside that conclusion. Unexamined material links still limit
+coverage; confirmation of one claim establishes no whole-paper scientific verdict.
+An unexplained small delta remains unexplained, with its scientific effect
+unresolved where the missing diagnosis matters. Size alone supplies no harmlessness
+exemption. A small difference can cross a material decision boundary; conversely,
+a computational match can coexist with a scientific concern.
+
+Use available authorized evidence for this diagnosis. If establishing cause or
+impact needs a new empirical diagnostic, corrected estimate, model, or specification,
+record the proposed check and its approval status under `probe-approval.md` and
+the existing specification rulings. Execute only when existing approval explicitly
+covers it; this reference grants no new run authority. Preserve adverse,
+inconclusive, and conflicting evidence under the same scrutiny as favorable evidence.
+
+Report these judgments in the existing README/report evidence, linked to the
+frozen comparison rows. They introduce no CSV/schema field, tolerance change,
+miss-to-match relabeling, automatic ACRe or six-row category promotion, or silent
+legacy rescore. Historical outputs and classifications stay frozen; a later
+appraisal is a separately dated, sourced conclusion.
+
 ## Carry the two conclusions through the workflow
 
 During `assess`, record the original claim, source-based premises, inspected
