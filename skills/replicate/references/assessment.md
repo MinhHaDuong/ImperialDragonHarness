@@ -6,7 +6,10 @@ Reproducibility Table and ACRe level are derived under the rules below;
 neither is entered by hand. Separate `out/auxiliary.csv` estimates provide
 provenance, never comparison statuses or scoring inputs. Published ranges and
 inequalities have separate assertion evidence under § Published assertions;
-assertion confirmation does not supply an exact statistic match.
+assertion confirmation does not supply an exact statistic match. Independent
+recomputation of trivial published statistics without author code uses the
+separate [production and printed-comparison ledger](independent-recomputation.md);
+its evidence grants no canonical or selected-target scoring success.
 
 ## assessment.json
 
