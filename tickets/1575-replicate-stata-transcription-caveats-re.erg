@@ -2,12 +2,15 @@
 Title: /replicate: Stata-transcription caveats reference and findings from the Gavard Scotch run (replicator 0003)
 Created: 2026-11-27
 Author: reviewer
+Label: needs-human
 
 --- log ---
 2026-11-27T09:14Z reviewer created
 2026-11-27T09:15Z reviewer filed from replicator 0003 (t0003-gavard 03af9ef) at author request; receiving Imagine pending
 
 2026-11-27T11:10Z reviewer note receiving Imagine: accepted corrected A and B1/B4/B2/B5 as children 1576-1579; B3/B6/B7 held for author methodology decisions; B8 already covered by draft/review/merge publication gate
+
+2026-11-27T11:23Z reviewer note accepted children delivered: 1577 PR2551, 1576 PR2552, 1578 PR2553, 1579 PR2554; final union integration clean; held B3/B6/B7 remain author decisions
 
 --- body ---
 ## Context and authority
@@ -65,9 +68,9 @@ update of replicator AGENTS.md/README.md.
 
 ## Exit criteria
 
-- [ ] Receiving Imagine records facts, overlap with 1572-1574, ownership and
+- [x] Receiving Imagine records facts, overlap with 1572-1574, ownership and
   standing rulings, and disposes of Request A and each finding in Request B.
-- [ ] If accepted, the Stata reference states for each item whether it is
+- [x] If accepted, the Stata reference states for each item whether it is
   documented Stata behaviour or a one-case observation.
 
 ## Receiving Imagine — 2026-11-27
@@ -117,3 +120,32 @@ bytes must also compose with blind assessment. Added to 1578. Auxiliary CSV
 exclusions must reach broad output/schema/count guidance in 1579. No other
 material omissions. Requested seat Sol 6.1 medium, actual identity unobserved;
 no independent-review claim.
+
+## Children
+
+- Harness 1577 — closed by PR 2551: exposure/calibration and fresh validation.
+- Harness 1576 — closed by PR 2552: corrected, version-qualified Stata reference.
+- Harness 1578 — closed by PR 2553: private local-package intake, including blind entry.
+- Harness 1579 — closed by PR 2554: auxiliary unprinted estimates outside scoring.
+
+Final integration reviewed the union with earlier 1573/1574: canonical
+criteria/comparison statuses, translation-confirmation boundaries, and human
+signing remained intact; broad output-count/display guidance excludes auxiliary
+rows, and new reference links resolve. Sequential bases leave no pair of
+unmerged child branches to merge-tree together. Required full verification is
+the gated after-merge runner on the final main tip; no skipped documentation
+selector is represented as a test pass.
+
+## Held author decisions
+
+This tracker remains open with needs-human after accepted delivery. B3 asks
+whether translated execution can establish canonical CRA; B6 asks how printed
+ranges/bounds are compared; B7 asks which cross-port precision convention to
+use. Until the author rules, preserve existing meanings and leave these
+questions unresolved. B8 remains covered by the existing draft/review/merge
+publication workflow. No new execution or publication authority is inferred.
+
+All accepted child after-merge records passed, including the full check set
+on main `2f103e16e3d5f38df8cfdf35761c7b0d10db1c3d`. Review attribution and
+raid evidence are captured in the single roar bundle. No paid API spending
+or scientific estimates were introduced.
