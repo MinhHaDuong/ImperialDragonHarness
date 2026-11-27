@@ -472,14 +472,77 @@ an adapted structure adds `"adapted": true`). Each file's `representation`
 identifies the bytes requested (original format or archive-ingested `.tab`).
 `archive_checksum` is nullable; when present it records the listed algorithm
 (`md5` or `sha256`), digest, exact source URL, and representation it describes.
-Top-level `sha256` and `bytes` are observed from the local downloaded file,
+Top-level `sha256` and `bytes` are observed from the local acquired file,
 not copied or inferred from archive metadata; keep them null until inspected
 bytes exist. MD5 metadata alone proves no local download or integrity check.
 Record transformations as separate representations, preserving source metadata.
 
-Generated `fetch.sh` reads `files[]`, requests the recorded representation,
-and checks its applicable archive checksum and any previously observed local
-SHA-256 before accepting the file. A mismatch exits non-zero. A listed `.tab`
+### Caller-supplied private packages
+
+`package.source_url` may be null when no downloadable source exists. A local
+path or privately received attachment does not require a fabricated URL.
+Retain `package.version` when known (otherwise null) and use `retrieved` for
+the receipt date. Add acquisition evidence, for example:
+
+```json
+"package": {
+  "source_url": null, "version": null, "retrieved": "2026-11-27",
+  "language": "Stata",
+  "acquisition": {
+    "method": "caller_supplied",
+    "evidence": "README.md#package-acquisition"
+  }
+}
+```
+
+The README acquisition record identifies who supplied the package, when and
+how it was received, its original filename/representation, and the evidence
+binding it to this paper/version. Mark unknown provenance or version facts
+unknown. Use a provenance identifier permitted by the host's privacy rules;
+receiving a private package grants no right to publish private correspondence.
+The manifest's `files[].path` names the retained project copy; document the
+local-path input interface for `fetch.sh` without requiring a workstation path
+in the shared record.
+
+For every retained file, compute `sha256` and `bytes` from the actual supplied
+bytes and name that exact `representation`. For an archive-path input, record
+the archive itself as a `files[]` representation before unpacking. Retain its
+provenance and record extracted files as distinct representations;
+an archive digest does not validate an extracted member's bytes. Keep
+`archive_checksum` null when no applicable authoritative checksum is
+available. Local hashes establish identity/integrity against those observed
+bytes, not independent archive verification or package authenticity.
+Preserve any known archive metadata separately under its stated representation.
+
+Record licence and redistribution evidence for private bytes as for public
+ones; unknown rights grant no redistribution. Caller supply authorizes local
+intake within the assigned project, not author contact or outward publication.
+Author files remain read-only. A blind assessment may use these explicitly
+supplied bytes under the same source/answer exclusions as a supplied URL;
+missing acquisition stays blocked and supplies no discovery authority.
+
+### fetch.sh: public and local acquisition
+
+Generated `fetch.sh` reads `files[]`. For a public source it requests the
+recorded representation; the existing download route remains available. For
+caller-supplied acquisition, document a local package-path argument or other
+explicit input interface in `README.md`. Verify the supplied file's previously
+recorded SHA-256 and byte count for that exact representation before accepting
+or copying it into `data/`; verify the retained copy as well. Preserve original
+bytes, and never edit the supplied source. Initial intake records the observed
+digest/size before reuse; a mismatch on a later acquisition must not silently
+replace that expected identity with a new hash.
+
+A missing local path/file, unreadable bytes, or mismatch exits non-zero with a
+clear required acquisition step. A later invocation without the original path
+may verify and reuse an already retained exact copy; it cannot claim to have
+reacquired a missing package. Do not fall back to discovery, author contact,
+or a fabricated download URL. Exclude private bytes from redistribution
+unless the recorded rights permit it.
+
+For either route, `fetch.sh`
+checks its applicable archive checksum and any previously observed local
+SHA-256/byte count before accepting the file. A mismatch exits non-zero. A listed `.tab`
 MD5 never validates the original `.dta` (or another original format): retrieve
 the matching representation, obtain its own authoritative checksum, or record
 that the archive check is unavailable for the original. Compute its local

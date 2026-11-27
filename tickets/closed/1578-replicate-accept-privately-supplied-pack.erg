@@ -2,9 +2,12 @@
 Title: Replicate accept privately supplied packages without fabricated URLs
 Created: 2026-11-27
 Author: reviewer
+Closed: Private-byte intake including blind assessment documented with null source_url/provenance and exact representation verification; checks plus distinct semantic adherence passed; PR2553 awaits gaze/orchestrator merge.
 
 --- log ---
 2026-11-27T09:32Z reviewer created
+2026-11-27T10:56Z reviewer implemented caller-supplied private-byte intake including blind assessment, null source_url, provenance, exact-representation hashes and bounded local fetch contract; scenario audit tickets/reviews/t1578-20261127/source-scenario-audit.md
+2026-11-27T10:58Z reviewer closed — Private-byte intake including blind assessment documented with null source_url/provenance and exact representation verification; checks plus distinct semantic adherence passed; PR2553 awaits gaze/orchestrator merge.
 
 --- body ---
 
