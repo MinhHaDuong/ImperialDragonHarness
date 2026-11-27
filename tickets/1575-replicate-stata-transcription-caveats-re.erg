@@ -7,6 +7,8 @@ Author: reviewer
 2026-11-27T09:14Z reviewer created
 2026-11-27T09:15Z reviewer filed from replicator 0003 (t0003-gavard 03af9ef) at author request; receiving Imagine pending
 
+2026-11-27T11:10Z reviewer note receiving Imagine: accepted corrected A and B1/B4/B2/B5 as children 1576-1579; B3/B6/B7 held for author methodology decisions; B8 already covered by draft/review/merge publication gate
+
 --- body ---
 ## Context and authority
 
@@ -67,3 +69,51 @@ update of replicator AGENTS.md/README.md.
   standing rulings, and disposes of Request A and each finding in Request B.
 - [ ] If accepted, the Stata reference states for each item whether it is
   documented Stata behaviour or a one-case observation.
+
+## Receiving Imagine — 2026-11-27
+
+Facts against framing: read the pinned Replicator 03af9ef source, including
+COMPARE-PORT.md and the transcription journal, against current skill contracts.
+The matches are case observations; the historical Stata release, update, and
+settings remain unknown. Official Release 19 manuals correct the proposed
+blanket replace-keeps-type claim (promotion is documented), qualify numeric
+generate defaults with set type, and distinguish documented GMM constants and
+weight options from the unverified historical behavior. No scientific estimates
+were rerun. Primary evidence and page references are in the receiving handoff.
+
+Overlap: 1573 and 1574 are merged (data auditing and asserted robustness checks).
+1572 retains translation/scoring decisions. Existing selected-claim freezes and
+probe validation boundaries supply reusable contracts; they do not yet cover
+all validation exposure, private package intake, or auxiliary unprinted outputs.
+The current Zotero section already keeps drafts pending review and merge;
+B8 needs no new publishing authority or implementation.
+
+Ownership: the harness owns generic skill contracts and references. Replicator
+owns paper cases, scientific outputs, and its benchmark cohort. No edits to its
+source tree are accepted here. A generic reference cannot decide historical
+software semantics from table matches or authorize translation by itself.
+
+Standing rulings: preserve canonical ACRe and whole-paper/selected-target
+meanings, printed-digit tolerance, signed probe execution, and outward gates.
+A join audit supplies evidence, never an additional Fully gate. No subjective
+probabilities, paid API calls, new estimates, or signing authority are introduced.
+
+| Request | Disposition and rationale |
+|---|---|
+| A | Accept corrected/version-qualified manual evidence in 1576, after 1577. Separate documentation, inference, case calibration, and historical uncertainty; no case-fit formula becomes a default. |
+| B1/B4 | Accept 1577. Read worked examples only after checking validation exposure. Same-paper unused tables differ from fresh-paper validation. Freeze calibration choices and preserve post-hoc disclosures. |
+| B2 | Accept 1578. Support caller-supplied private bytes, source_url null, provenance, and representation-specific hashes without implying redistribution or author contact. |
+| B3 | Hold for author: whether translated execution establishes canonical CRA is a methodology decision. No child resolves it. |
+| B5 | Accept 1579. Retain produced unprinted estimates in an auxiliary artifact outside scored comparisons; do not invent a published comparator. |
+| B6/B7 | Hold for author: printed bounds/ranges and cross-port precision conventions require a scoring decision. Preserve existing rules. |
+| B8 | Already covered: assess drafts locally; publication follows the host review/merge gate and can remain pending. |
+
+The accepted children preserve the source intent with narrower documented
+scope. Parent 1575 tracks delivery and the held questions; merging reception
+neither closes it nor grants implementation priority beyond the author's
+explicit raid-on-acceptance instruction. Prior blind-spot review was CLEAN;
+fresh same-family read-only pass found one material omission: private local
+bytes must also compose with blind assessment. Added to 1578. Auxiliary CSV
+exclusions must reach broad output/schema/count guidance in 1579. No other
+material omissions. Requested seat Sol 6.1 medium, actual identity unobserved;
+no independent-review claim.

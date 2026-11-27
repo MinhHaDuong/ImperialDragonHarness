@@ -8,13 +8,36 @@ Author: reviewer
 
 --- body ---
 
-## Draft handoff scope
+## Accepted scope
 
-Child of1575. Provisional receiving disposition; a fresh lead must finish
-the four premise checks and full exit criteria before implementation.
+Child of 1575. Accepted receiving scope; four premise checks and dispositions
+are recorded on the parent. Documentation-only implementation, sequential wave.
 
 Guard worked-example/case-answer retrieval before blind validation. Record prior exposure; exposed/development papers cannot validate the derived rules. Separate calibration targets, outputs not used for choosing conventions, and fresh-paper blind validation; table holdout is not paper/cohort independence. Freeze selection/choices before evaluating unused targets, disclose post-hoc choices and exposure, reuse existing author-ruling boundaries without changing tolerance or canonical scoring. Ordinary reproduction remains usable with disclosed exposure. Source dispatch and Replicator0004 explicitly exclude Weschle/Atanasov-derived development evidence from fresh validation. Assess blind-only wording may need a generic validation boundary; inspect the Gavard mapping for affected current/historical routing statements.
 
 ## Validation boundary
 
 Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.
+
+## Exit criteria
+
+- [ ] Validation exposure is checked before worked-example/answer retrieval and passed to helpers.
+- [ ] Calibration choices/targets and unused-table evaluation are frozen and disclosed; same-paper holdout cannot validate derived rules on fresh papers.
+- [ ] Exposed/development papers stay usable for ordinary reproduction with disclosure but are excluded from independent validation claims for the derived rules.
+- [ ] The Gavard worked example is labeled as exposed/calibrated evidence and preserves its dated historical findings.
+
+## Actions and first verification
+
+Read the current logical unit and parallel references before editing. Update the
+contract and its linked documentation together. First verification is a source
+and scenario audit: compare before/after guidance on the accepted failure case
+and a positive control while preserving canonical schemas and gates. Record
+semantic adherence separately from review. No wording-matching tests or new
+scientific execution. Run required skill/catalog hygiene and project checks.
+
+## Feasibility
+
+PASS: source paths exist under skills/replicate; no API key, data access, or
+scientific environment is needed. Shared SKILL.md/reference edits require
+sequential delivery. 1576 follows 1577; 1578 and 1579 then follow in order. No
+shared registry coordination PR is needed for this sequential wave.

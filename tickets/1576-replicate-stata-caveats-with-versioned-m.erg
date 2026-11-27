@@ -9,13 +9,49 @@ Blocked-by: 1577
 
 --- body ---
 
-## Draft handoff scope
+## Accepted scope
 
-Child of1575. Provisional receiving disposition; a fresh lead must finish
-the four premise checks and full exit criteria before implementation.
+Child of 1575. Accepted receiving scope; four premise checks and dispositions
+are recorded on the parent. Documentation-only implementation, sequential wave.
 
 Use references/stata-caveats.md plus a bounded reproduce pointer, conditional on an authorized translation request, never a new translation/scoring mandate. Separate manual-documented facts, documentary inferences, case-calibrated observations, and open/historical uncertainty. Use official Stata manuals with edition/page links. No paper cases or case-fit formulas as generic defaults. Current Release19 manuals qualify generate defaults/set type, egen function-specific behavior, replace automatic promotions, explicit subscripts/division-by-zero, gmm constants/defaults, and Gaussian robust rgf. Historical actual release/settings remain unknown. xtgee pooled-AR/combined cluster factor is not established by matches. Depends on1577 for calibration/validation guidance.
 
 ## Validation boundary
 
 Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.
+
+## Exit criteria
+
+- [ ] A version-qualified Stata reference cites official edition/page evidence and labels documentary inference and unresolved historical behavior.
+- [ ] It corrects replace promotion, configurable storage defaults, subscripts/missing arithmetic, GMM constants/weights, and the limited Gaussian robust rgf evidence without universalizing case-fitted xtgee rules.
+- [ ] A reproduce pointer applies when translation is authorized; absence of a licence alone supplies no authorization or CRA ruling.
+
+## Actions and first verification
+
+Read the current logical unit and parallel references before editing. Update the
+contract and its linked documentation together. First verification is a source
+and scenario audit: compare before/after guidance on the accepted failure case
+and a positive control while preserving canonical schemas and gates. Record
+semantic adherence separately from review. No wording-matching tests or new
+scientific execution. Run required skill/catalog hygiene and project checks.
+
+## Feasibility
+
+PASS: source paths exist under skills/replicate; no API key, data access, or
+scientific environment is needed. Shared SKILL.md/reference edits require
+sequential delivery. 1576 follows 1577; 1578 and 1579 then follow in order. No
+shared registry coordination PR is needed for this sequential wave.
+
+## Primary-source evidence
+
+Release 19 manuals (copyright 2025), not proof of the authors' historical
+installation/settings: [generate](https://www.stata.com/manuals/dgenerate.pdf),
+pp. 1, 2, 5 (set type and replace promotion);
+[egen](https://www.stata.com/manuals/degen.pdf), p. 15 (std storage example);
+[expressions](https://www.stata.com/manuals/u13.pdf), sections 13.2.1 and 13.7;
+[gmm](https://www.stata.com/manuals/rgmm.pdf), pp. 2, 5–7, 13–15, 65;
+[xtgee](https://www.stata.com/manuals/xtxtgee.pdf), pp. 4, 17–18.
+The Stata 11 divisor FAQ is explicitly historical, not a universal recent
+formula: https://www.stata.com/support/faqs/statistics/xtgee-divisor-stata-11/.
+The prior handoff remains durable on receive1575-own at 75acef48c,
+design/2026-11-27-1575-receiving-handoff.md; the receipt diff is ticket-only.

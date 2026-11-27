@@ -8,13 +8,35 @@ Author: reviewer
 
 --- body ---
 
-## Draft handoff scope
+## Accepted scope
 
-Child of1575. Provisional receiving disposition; a fresh lead must finish
-the four premise checks and full exit criteria before implementation.
+Child of 1575. Accepted receiving scope; four premise checks and dispositions
+are recorded on the parent. Documentation-only implementation, sequential wave.
 
 Provide an explicit auxiliary CSV/README contract for produced estimates with no authoritative printed numeric comparator, separate from out/reproduce.csv comparison statuses and score denominators. Retain full precision, producer/specification/source-route/scope provenance. Lack of comparator is not missing input or failed execution; unprinted observations are not invented matches. Do not decide whether published qualitative/footnote outputs belong to canonical inventory, or authorize new robustness specs. No canonical schema/status/CRA/tolerance/comparison convention change; B3/B6/B7 remain held.
 
 ## Validation boundary
 
 Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.
+
+## Exit criteria
+
+- [ ] An auxiliary CSV/README contract retains produced estimates lacking authoritative printed numeric comparators at full precision with producer/specification/source-route/scope provenance.
+- [ ] Auxiliary rows stay outside out/reproduce.csv scored comparisons and all score denominators, with no invented match or missing_input classification solely for absent comparator.
+- [ ] The change decides neither qualitative-output inventory nor new robustness specifications, and preserves canonical schema/statuses, ACRe, tolerance, and held comparator questions.
+
+## Actions and first verification
+
+Read the current logical unit and parallel references before editing. Update the
+contract and its linked documentation together. First verification is a source
+and scenario audit: compare before/after guidance on the accepted failure case
+and a positive control while preserving canonical schemas and gates. Record
+semantic adherence separately from review. No wording-matching tests or new
+scientific execution. Run required skill/catalog hygiene and project checks.
+
+## Feasibility
+
+PASS: source paths exist under skills/replicate; no API key, data access, or
+scientific environment is needed. Shared SKILL.md/reference edits require
+sequential delivery. 1576 follows 1577; 1578 and 1579 then follow in order. No
+shared registry coordination PR is needed for this sequential wave.

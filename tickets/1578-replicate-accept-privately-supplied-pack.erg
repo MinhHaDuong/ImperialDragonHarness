@@ -8,13 +8,39 @@ Author: reviewer
 
 --- body ---
 
-## Draft handoff scope
+## Accepted scope
 
-Child of1575. Provisional receiving disposition; a fresh lead must finish
-the four premise checks and full exit criteria before implementation.
+Child of 1575. Accepted receiving scope; four premise checks and dispositions
+are recorded on the parent. Documentation-only implementation, sequential wave.
 
 Document package.source_url null rather than a fabricated download URL, acquisition/provenance evidence in existing manifest/README contracts, local exact-representation SHA256/size and unavailable archive checks separately. fetch.sh may accept caller-supplied files, verify/copy their exact bytes and fail clearly when acquisition is missing; no author contact or private redistribution authority. Preserve author files and public download route. Documentation only, no generic fetch helper or source-project edits.
 
 ## Validation boundary
 
 Documentation/source verification and semantic/preservation checks, not numerical reruns or wording tests. No paid API model calls. Keep all existing scoring, signing and held author decisions unchanged.
+
+Blind-spot amendment: the blind assessment entry accepts explicitly supplied
+local bytes with provenance/hashes under the same answer exclusions and no
+discovery. No fabricated package URL is required.
+
+## Exit criteria
+
+- [ ] The manifest and assess/fetch contract accept privately supplied local bytes with source_url null, acquisition provenance, and exact-representation SHA-256/size.
+- [ ] Fetch documents caller-supplied path verification/copy and fails clearly on missing acquisition; unavailable archive checks remain distinct from observed local hashes.
+- [ ] Public download, author-file immutability, contact, and redistribution gates retain their meanings; no generic helper or foreign-project edits are added.
+
+## Actions and first verification
+
+Read the current logical unit and parallel references before editing. Update the
+contract and its linked documentation together. First verification is a source
+and scenario audit: compare before/after guidance on the accepted failure case
+and a positive control while preserving canonical schemas and gates. Record
+semantic adherence separately from review. No wording-matching tests or new
+scientific execution. Run required skill/catalog hygiene and project checks.
+
+## Feasibility
+
+PASS: source paths exist under skills/replicate; no API key, data access, or
+scientific environment is needed. Shared SKILL.md/reference edits require
+sequential delivery. 1576 follows 1577; 1578 and 1579 then follow in order. No
+shared registry coordination PR is needed for this sequential wave.
