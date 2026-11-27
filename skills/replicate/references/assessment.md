@@ -451,7 +451,7 @@ This comparison display rule does not apply to retention of auxiliary rows.
 Retain produced estimates that lack an authoritative printed numeric
 comparator in a separate `out/auxiliary.csv`, at full precision. They are not
 comparison attempts or invented matches. Use this auxiliary contract rather
-than the comparison-column schema above:
+than the [comparison-column schema](#comparison-csvs-outreproducecsv-and-outrobustnesscsv):
 
 | Column | Content |
 |---|---|
