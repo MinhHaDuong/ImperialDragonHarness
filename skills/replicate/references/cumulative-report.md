@@ -81,6 +81,9 @@ counts, and truthful signature/disclosure. Reuse valid computations; a coherence
    missing execution stay visible through complete. Keep computational misses
    beside separately evidenced cause/impact judgments under
    `scientific-appraisal.md`; scientific plausibility never rewrites a frozen row.
+   Apply `discrepancies.md` for the comparison type, prespecified diagnostics,
+   second-digit counts, and sourced specification-selection discussion after
+   a key-result reversal.
 
 Local report order follows the science. Identification is source-based and
 runs no new estimates; its threats lead to approved challenge checks. Deep

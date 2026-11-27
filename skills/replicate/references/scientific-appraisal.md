@@ -65,6 +65,11 @@ estimates; proposed calculations remain subject to existing approval.
 
 ## Diagnose a discrepancy and its scientific impact
 
+Apply `discrepancies.md` for comparison type, evidenced cause qualification,
+prespecified magnitude/MC diagnostics, and specification-selection discussion
+when a check overturns a key result. Diagnostic compatibility and descriptive
+size alone supply no cause or scientific confirmation.
+
 Preserve the original computational observation before explaining it: authoritative
 printed target and source version, full-precision output, comparison rule, status,
 and code/input/environment identifiers. Keep first-run freezes and their hashes.

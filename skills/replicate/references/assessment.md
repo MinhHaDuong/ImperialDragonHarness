@@ -546,6 +546,10 @@ the separate evidence and conclusions. Scientific confirmation despite a retaine
 miss changes neither comparison counts nor the computational criteria/categories;
 it authorizes no widened tolerance, automatic promotion, or legacy rescore.
 
+For prespecified magnitude/MC diagnostics and second-digit descriptive counts,
+follow `discrepancies.md`; these retain the strict article outcomes and counts
+and do not replace the distinct cross-reproduction agreement contract below.
+
 ## Comparing two reproductions
 
 For two reproductions of the same declared statistic, agreement means numeric
