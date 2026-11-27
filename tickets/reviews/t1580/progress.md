@@ -42,3 +42,30 @@ Existing coder context implement1594 explicitly given1596 with live hunt first,
 fresh owned tree from exact WAVE_BASEbe867012cd42c9b792166f5b06f94afe7a2c98c9.
 No1593 pre-data arithmetic implementation, no paid API, no foreign science,
 no timer/auto-resume; immutable product then actual distinct adherence review.
+
+
+## Wave1596 delivery
+
+Product045b3b5d2385c77633debe1b24f0b4ee2592d12a reviewed against exact
+basebe867012cd42c9b792166f5b06f94afe7a2c98c9. Actual distinct semantic review
+CLEAN, evidence head da9711378990ef15ef6ebedcb623083fead133b4. Caller
+lint191/fast1966 PASS with7 existing warnings, no failures/reruns.1595 full
+after-merge record independently read PASS at be867012cd42c9b792166f5b06f94afe7a2c98c9.
+Actual fresh integration1596 CLEAN: elevated merge-tree base/product rc0,
+union789e3e93b6dca4b71263bf9b55fc4a5da3bb220e equals product, ancestor0.
+No union-only gaps; full suite left explicitly to after-merge. Both existing
+1584 approval modes retained by natural report-style clarification.
+
+PR2577, ticket-close head4f817f3b3a34382ffd4107fd4a8f1bdccaecc8b6. Gaze
+rv-20261127-pr-2577-6db1 answer20261127T211620085Z-padme-4db5e6d6 REVIEWED,
+plan PASS, duration1m01s. Actual selector once: selected none/fallback none/
+result skipped(no source/test changes), exit4 not pass; original template byte,
+diff and Markdown destination checks PASS. No scoped map, no full suite claim.
+Gate session2d765355-a3b9-449a-b644-2176716295d5 round1 APPROVED all3 exits,
+verdict20261127T211831684Z-padme-98b579db, duration1m44s. Before-set all PASS,
+lint191, candidate7f14bce4100c73e6272d8e264e942389a8973606. Gate path adjusted
+to exact session suffix before any checks; both clean temporary trees removed
+via preflight, no reused/foreign tree or spent extra round.
+Recipe2577 merge1795814320 1795814357, readback MERGED exact close head.
+New main and next WAVE_BASE9c1faa5a989f6d0197cd1d3a1eb997c26ffbcc87.
+1596 branch/tree handed for final own cleanup; no child roar.
