@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Replicate confirm published ranges and inequalities as assertions
+Created: 2026-11-27
+Author: reviewer
+Blocked-by: 1581
+
+--- log ---
+2026-11-27T11:38Z reviewer created
+
+--- body ---
+
+## Context and authority
+
+Child of 1575; author ruling relayed by the author’s own interface session
+/root and recorded on the parent at 2026-11-27T11:42Z. Recording is a truthful relay,
+not an agent-written author signature. The author authorized raid delivery
+through review, gates, eligible merge, and roar. No implementation has begun.
+
+## Scope
+
+Confirm only the actual published range or inequality assertion, preserving
+open/closed bounds and the target object, collection, or extrema. Distinguish
+assertion confirmation from an exact numerical-statistic match in evidence and
+counts. Unknown inclusivity or source meaning cannot be guessed. A collection
+claim is not established by cherry-picking one member; interval objects and
+reported endpoint statistics must retain the actual source assertion/target.
+Do not fabricate a midpoint, widen tolerance, hide required comparisons, promote
+canonical categories, or silently rescore legacy cases.
+
+## Exit criteria
+
+- [ ] Range/inequality evaluation preserves the authoritative assertion, boundary inclusivity, and target/collection/extrema semantics, with ambiguity unresolved.
+- [ ] Claim-level confirmed/not-confirmed/unresolved evidence is distinct from canonical statistic comparison statuses and cannot alone establish a canonical category.
+- [ ] No invented exact value/midpoint, widened article tolerance, omitted required target, or silent legacy rescore is introduced; parallel schema/report guidance is consistent.
+
+## Plan and first verification
+
+Documentation and contracts, not new estimates or an orchestration service.
+Read current SKILL.md and parallel references as one logical unit, then map
+each change to the author ruling. First verification is a source/scenario
+audit with a positive control, a boundary case, and a counterexample that
+would expose scope or authority drift. Preserve unresolved evidence. Do not
+add tests pinning prose wording. Run required adherence and project hygiene
+checks, distinct semantic review, gaze, and the caller’s gate/merge route.
+
+## Feasibility and dependencies
+
+PASS: current skill/reference paths exist, with no scientific data, licence,
+API key, or paid route needed. Shared contracts require sequential delivery.
+No three-PR concurrent registry edit or coordination PR is needed. No foreign
+project edits or rereads are required.

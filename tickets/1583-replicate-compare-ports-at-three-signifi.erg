@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Replicate compare ports at three significant digits
+Created: 2026-11-27
+Author: reviewer
+Blocked-by: 1582
+
+--- log ---
+2026-11-27T11:39Z reviewer created
+
+--- body ---
+
+## Context and authority
+
+Child of 1575; author ruling relayed by the author’s own interface session
+/root and recorded on the parent at 2026-11-27T11:42Z. Recording is a truthful relay,
+not an agent-written author signature. The author authorized raid delivery
+through review, gates, eligible merge, and roar. No implementation has begun.
+
+## Scope
+
+Compare two reproduction values by equality after rounding both to three
+significant digits under the same explicit deterministic rounding and tie rule.
+Retain full-precision originals, the rounding convention, rounded values, and
+their difference/provenance. Handle signs, zeros, magnitude, and unavailable or
+nonfinite values without inventing agreement. The paper comparison remains the
+half-unit of its last printed digit. No scope/category promotion, new generic
+numerical helper, scientific rerun, or silent legacy rescore is authorized.
+
+## Exit criteria
+
+- [ ] Cross-reproduction three-significant-digit equality has an explicit common deterministic rounding/tie convention and retains originals and difference.
+- [ ] Boundary examples establish deterministic behavior without treating absent/nonfinite values as numeric agreement; source/protocol and scope remain explicit.
+- [ ] Article half-unit tolerance, canonical categories, required scope, and prior case records remain unchanged; no silent legacy rescore or generic helper is added.
+
+## Plan and first verification
+
+Documentation and contracts, not new estimates or an orchestration service.
+Read current SKILL.md and parallel references as one logical unit, then map
+each change to the author ruling. First verification is a source/scenario
+audit with a positive control, a boundary case, and a counterexample that
+would expose scope or authority drift. Preserve unresolved evidence. Do not
+add tests pinning prose wording. Run required adherence and project hygiene
+checks, distinct semantic review, gaze, and the caller’s gate/merge route.
+
+## Feasibility and dependencies
+
+PASS: current skill/reference paths exist, with no scientific data, licence,
+API key, or paid route needed. Shared contracts require sequential delivery.
+No three-PR concurrent registry edit or coordination PR is needed. No foreign
+project edits or rereads are required.

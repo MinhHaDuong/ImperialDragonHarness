@@ -1,0 +1,45 @@
+%erg 0.1
+Title: Replicate separate computational discrepancies from scientific impact
+Created: 2026-11-27
+Author: reviewer
+Blocked-by: 1587
+
+--- log ---
+2026-11-27T11:46Z reviewer created
+
+--- body ---
+
+## Recorded authority
+
+Recorded 2026-11-27T11:47Z from the author’s interface /root; truthful relay, not an
+author signature. Author authorized raid through review/gates/merge/roar.
+
+Child of1572 finding10, following the dual-axis design1587.
+The parent relayed this approved proposal: preserve observed computational
+discrepancy, separately assess scientific impact, and keep assumed cause
+unestablished. A documented typo or demonstrated numerical variation may
+support “scientific result confirmed despite discrepancy” without erasing it.
+Actual author reply:
+
+> D’accord
+
+## Exit criteria
+
+- [ ] Original/frozen computational discrepancies and their classification are preserved under unchanged half-unit tolerance.
+- [ ] Scientific-impact conclusions have separate diagnostic evidence: cause must be established, observed versus inferred stated, and uncertainty retained.
+- [ ] No size-alone harmlessness exemption, widened tolerance, miss-to-match relabeling, automatic category promotion, or silent legacy rescore.
+
+## Plan
+
+After1587 design, check scenarios for demonstrated typo/numerical variation,
+small unexplained delta, and scientifically material discrepancy. Preserve
+frozen outputs and actual evidence. No new scientific rerun/model/specification
+is authorized by this documentation change.
+
+## Verification and feasibility
+
+Documentation/scenario audit with positive and boundary controls; no wording
+pins or scientific estimates. Current skill/reference paths exist, no foreign
+read/edit or paid route required. Finish combined Imagine/Blind-Spot before
+implementation; use distinct semantic adherence, gaze, gate, eligible merge,
+and roar. No implementation has begun.

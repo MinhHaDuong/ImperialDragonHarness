@@ -2,7 +2,6 @@
 Title: /replicate: findings from the blind full-chain pilot (replicator 0003)
 Created: 2026-11-27
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-11-27T01:51Z claude created
@@ -15,6 +14,12 @@ Label: needs-human
 2026-11-27T08:21Z reviewer 08:15 author annotations ingested and parent-confirmed:3 ruled separately,1/2 placement explicit; proposed audit score gate not adopted; original joint criterion superseded by appended override
 2026-11-27T08:24Z reviewer finding3 accepted per confirmed author override; foreign prompt handoff filed as replicator0009 on branchhandoff-harness1572 at0766eb2, receiver pickup remains pending
 2026-11-27T08:46Z reviewer accepted children1573/1574 closed by PR2546/2547; finding3 resolved locally, receiver0009 prompt pickup pending; findings4/5/10/12 and audit-score proposal remain author-held; parent stays open
+
+2026-11-27T11:42Z reviewer note author interface /root relayed approval of two generic plan-approval modes; exact reply and child1584 recorded below; implementation/integration pending, other holds unchanged
+
+2026-11-27T11:43Z reviewer note author interface /root relayed finding4 main-result rule and actual advisor/optional-highlights reply; child1585 reserved before implementation; other findings remain separate
+
+2026-11-27T11:47Z reviewer note author interface /root completed finding5, dual-reproduction, and finding10 rulings; exact replies and children1586–1588 below; dialogue complete, implementation and receiver pickup not complete
 
 --- body ---
 ## Context and authority
@@ -197,3 +202,71 @@ authority remain unchanged. Parent1572 stays needs-human for findings4/5/10/12
 and the separately proposed audit-based scoring condition; finding3 is not
 held. Replicator0009 remains absent from its main at this check; branch
 handoff-harness1572 at0766eb2 retains the filed request for receiver pickup.
+
+## Author ruling: generic approval modes
+
+Recorded 2026-11-27T11:42Z, relayed by the author’s own interface session /root. The
+parent proposed two modes: (1) author approval in the plan file or in
+conversation, with provenance-bearing transcription; (2) explicit author
+delegation to a panel for a defined campaign and fixed perimeter, preserving
+opinions/disagreements, without permanent general panel authority.
+
+Actual author reply as relayed:
+
+> Oui, deux modes. Le skill est générique, replicator est le driver principal à ce jour mais l’année prochaine on pourrait en avoir d’autre. Par exemple un auto-blog, une veille scientifique, une métaanalyse sur la finance climat...
+
+This rules the general signing-mode question prospectively. Child1584 will
+implement the two generic modes and reconcile signature versus transcription
+versus delegated-panel records. Drivers supply explicit delegation/campaign/scope
+and provenance; they cannot self-grant authority. Plan amendments stay within
+the approval perimeter or return to the author. Examples in the reply authorize
+no pipeline creation, publishing, or paid spending. Pilot feasibility does not
+become proof of general quality. No frozen pilot signature is rewritten.
+
+The ruling is recorded, implementation/integration pending;1552 is not closed.
+Other methodological holds and receiver-owned prompt pickup remain distinct.
+
+## Author ruling: main-result choice (finding4)
+
+The author approved the original-paper central-claim rule before package
+inspection/execution: abstract/introduction, then supporting table or figure;
+for equally ranked results, the driver prospectively motivates its choice
+under a consistent cohort rule. The actual reply as relayed by /root was:
+
+> D’accord. Ne pas hésiter à utiliser le advisor model, c’est une étape clé. Elsevier demande des key findings aux articles récents, penser à regarder en ligne si ils y sont.
+
+Child1585 must actually consult a route advisor for guidance design and make
+proportionate advisor use available for pivotal selection judgment. Optional
+article-specific publisher Highlights/Key findings are original-paper evidence
+to crosscheck, not a universal Elsevier requirement or an exception to blind
+source restrictions. Missing/inaccessible highlights stay reported. Package
+availability cannot choose the main result. This rules finding4 prospectively;
+implementation/integration, other held findings, and1552 remain open.
+
+## Author rulings: footnotes, dual reproduction, discrepancy impact
+
+The author approved empirical results supporting the target claim regardless
+of body/footnote location, excluding merely bibliographic remarks. Assertions
+without numbers/code retain the existing probe rule. Actual reply relayed by/root:
+
+> oui. Et de manière générale, tenir à la fois la reproduction computationnelle (implémentation, spécification) et la reproduction scientifique (argumentation, modèle, faits)
+
+Footnote applicability is1586; the distinct broader intent is1587. Actually
+consult an advisor for scientific-reproduction design. Preserve both axes,
+argument/model/facts as well as implementation/specification, not DAG-only
+causal review. No composite ACRe score, every-audit obligation, invented
+subjective probabilities, or autonomous scientific signoff. Existing fairness
+and approval of new empirical variants remain. Proposed checks are not evidence.
+
+For finding10 the parent proposed preserving the observed computational
+miss and separately assessing scientific impact. Assumed cause remains unknown;
+documented typo or demonstrated numerical variation may support “scientific
+result confirmed despite discrepancy” without erasure. Actual author reply:
+
+> D’accord
+
+Child1588 follows1587 design. No tolerance widening, miss-to-match relabeling,
+size-alone harmlessness, or silent legacy rescore. All dialogue decisions for
+findings4/5/10/12 are now received and supersede earlier held annotations
+prospectively. Delivery/integration and receiver0009 pickup remain pending;
+1552 completion is not inferred.

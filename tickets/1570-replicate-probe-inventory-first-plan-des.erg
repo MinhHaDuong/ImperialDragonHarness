@@ -2,7 +2,6 @@
 Title: /replicate probe: inventory-first plan, design menus in references, sign-off modes
 Created: 2026-11-26
 Author: claude
-Label: needs-human
 
 --- log ---
 2026-11-26T22:22Z claude created
@@ -13,6 +12,8 @@ Label: needs-human
 2026-11-27T01:52Z reviewer pilot evidence for sign-off modes: replicator 0003 RESULTS.md, findings 3 and 12 in 1572
 2026-11-27T08:13Z reviewer 1572 source df890ef pilot report now available; findings3/12 held together with this signing-mode decision; no general panel or transcribed-signature authorization inferred
 2026-11-27T08:46Z reviewer 1572 finding3 separately ruled and harness1574 merged PR2547; generic signing modes still pending despite pilot report now available
+
+2026-11-27T11:42Z reviewer note author interface /root relayed approval of two generic plan-approval modes; exact reply and child1584 recorded below; implementation/integration pending, other holds unchanged
 
 --- body ---
 ## Context and authority
@@ -159,3 +160,26 @@ Current author disposition (2026-11-27): finding3 of1572 was ruled separately
 and its harness implementation is closed in1574/PR #2547. This resolves the
 asserted-check eligibility point, not finding12 or this general signing-mode
 question. The existing person-written signature rule remains in force.
+
+## Author ruling: generic approval modes
+
+Recorded 2026-11-27T11:42Z, relayed by the author’s own interface session /root. The
+parent proposed two modes: (1) author approval in the plan file or in
+conversation, with provenance-bearing transcription; (2) explicit author
+delegation to a panel for a defined campaign and fixed perimeter, preserving
+opinions/disagreements, without permanent general panel authority.
+
+Actual author reply as relayed:
+
+> Oui, deux modes. Le skill est générique, replicator est le driver principal à ce jour mais l’année prochaine on pourrait en avoir d’autre. Par exemple un auto-blog, une veille scientifique, une métaanalyse sur la finance climat...
+
+This rules the general signing-mode question prospectively. Child1584 will
+implement the two generic modes and reconcile signature versus transcription
+versus delegated-panel records. Drivers supply explicit delegation/campaign/scope
+and provenance; they cannot self-grant authority. Plan amendments stay within
+the approval perimeter or return to the author. Examples in the reply authorize
+no pipeline creation, publishing, or paid spending. Pilot feasibility does not
+become proof of general quality. No frozen pilot signature is rewritten.
+
+The ruling is recorded, implementation/integration pending;1552 is not closed.
+Other methodological holds and receiver-owned prompt pickup remain distinct.
