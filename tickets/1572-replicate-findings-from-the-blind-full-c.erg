@@ -13,6 +13,7 @@ Label: needs-human
 2026-11-27T08:15Z reviewer author ruling 2026-11-27 (replicator session) on finding 3 only: a check the paper asserts without numbers or code is not 'already in the paper'; it is eligible for the plan and may not be rejected as a duplicate on that ground; not mandatory, the panel or signer may still reject it for another stated reason; probe must propose it when it bears on the main result; the same sentence goes in probe and in the panel prompt template. Findings 12 and 1570 sign-off modes are not ruled by this
 2026-11-27T08:15Z reviewer author-approved placement for findings 1-2: one binding line per audit in SKILL.md reproduce pointing to a reference; the join checklist (keys as coded, match rate, unmatched-key sample, encoding/quotes/whitespace/case, many-to-many, duplicate keys, missingness in constructed variables) and the text-vs-code table format in a reference (assessment.md or a new data-audit.md); paper cases (Atanasov quotes, 4-vs-2 ratings) stay in replicator, not in the skill. Also approved as a proposal, to check against canonical ACRe meanings before adoption: an output whose joins were not audited is not scored Fully
 2026-11-27T08:21Z reviewer 08:15 author annotations ingested and parent-confirmed:3 ruled separately,1/2 placement explicit; proposed audit score gate not adopted; original joint criterion superseded by appended override
+2026-11-27T08:24Z reviewer finding3 accepted per confirmed author override; foreign prompt handoff filed as replicator0009 on branchhandoff-harness1572 at0766eb2, receiver pickup remains pending
 
 --- body ---
 ## Context and authority
@@ -68,8 +69,8 @@ to the skill. These are two papers, not an accuracy estimate.
 
 ## Receiving Imagine (2026-11-27)
 
-Disposition: accept findings1/2 only for documentation implementation in
-child1573. Other findings are held for author decisions or already covered,
+Current disposition: accept findings1/2 for documentation implementation in
+child1573 and author-ruled finding3 in child1574. Other findings are held for author decisions or already covered,
 as the table records. The author's instruction authorizes a raid on accepted
 scope; the pilot-specific panel signature remains a deviation, not general
 authority. This tracker stays open.
@@ -171,3 +172,13 @@ and general signing authority remain held.
 Additional child1574: harness eligibility/proposal wording and ticket-only
 foreign prompt handoff. Parent1572/1552 remain open, and remote prompt pickup
 will be reported as pending until the receiver verifies completion.
+
+## Prompt-owner handoff
+
+Replicator0009 was filed on local branch handoff-harness1572, commit
+0766eb251845e7c031a95af6b2655ad6ca5b262a. Only its ticket and ID claim changed.
+It requests the same shared eligibility wording in future/reusable review
+prompts and preserves the frozen pilot files. Replicator has no remote; the
+branch is durable, but the request is not merged into its main or implemented.
+The parent session was notified for live-owner pickup. Receiver Imagine,
+implementation and completion readback remain pending.
