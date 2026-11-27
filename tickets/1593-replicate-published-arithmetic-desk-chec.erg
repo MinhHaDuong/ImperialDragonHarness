@@ -1,0 +1,66 @@
+%erg 0.1
+Title: /replicate: published-arithmetic desk check before data (replicator, de Soyres IMF WP/26/128)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T18:44Z reviewer created
+2026-11-27T18:45Z reviewer reviewer filed from replicator (step 1.4 de Soyres desk check) at author request 2026-11-27; receiving Imagine pending
+
+--- body ---
+## Context and authority
+
+Filed from replicator (Games timeline step 1.4, `handoff-refresh` branch, PR
+MinhHaDuong/replicator#4) at the author's request, 2026-11-27. The author
+approved sending these five lessons to the harness. The harness owns the
+skill; replicator does not edit it. Evidence:
+`replications/desoyres2026climate/` (README.md, targets.csv,
+reproduce/arithmetic.py, out/arithmetic.csv) at replicator commit a9282a3.
+
+## Observation
+
+An audit of printed numbers only took about 1.5 agent-hours, with no data, no
+code and no paid API calls, on de Soyres, Obeng and Tan (2026), IMF WP/26/128. It found two
+large inconsistencies, including the paper's headline yardstick:
+p.18 reads the Table 1 log-odds coefficient (0.026) as psi = 2.6 pp of default
+probability, about 26 times the logit marginal effect at the 4% sample share.
+The Eq. 4 damage changes are 185-1,350 times what Tables 2-3 imply, and
+rounding cannot explain the gap. One independent reviewer, from the same
+model family, confirmed the result. A grep of
+`skills/replicate/` at 85ff8b30c finds only half-unit numeric matching; no
+step checks derived quantities the paper computes from its own printed
+numbers.
+
+## Request (five lessons; the receiver decides placement and wording)
+
+1. **Desk check of published arithmetic before any data or rerun.** Recompute
+   every printed number derived from other printed numbers: conversions,
+   back-of-envelope chains, magnitudes quoted in the text or abstract. The
+   natural home looks like `inventory` or `identify`. It runs even when no
+   package exists.
+2. **Checklist of common conversion errors.** A log-odds or odds percentage
+   read as percentage points of probability (100*beta taken as pp; the logit
+   effect is beta*p(1-p), capped at beta/4). Unit slips (millions and billions;
+   fraction and percent). A flow scale applied to a stock.
+3. **Model invariants as checks without data.** In a linear model, an effect
+   scales with the increment. Ratios across specifications or evaluation
+   points must match; here this showed the two ODA specifications contradict
+   each other.
+4. **Rounding intervals, not assertions.** To ask whether unrounded inputs
+   explain a gap, evaluate the derived quantity at the corners of the
+   half-unit intervals of its printed inputs. A single unit slip would show as
+   one constant printed-to-recomputed factor across cases.
+5. **Two-phase reviewer prompt.** The reviewer first recomputes from the PDF
+   alone and writes its numbers down. Only then does it read the audit and
+   search for a reading of the paper that rescues the paper. This cost about
+   47k tokens on Sonnet and was cleanly decorrelated from the author of the
+   audit.
+
+## Exit criteria
+
+- [ ] Receiving Imagine records overlap with the five cumulative stages
+  (85ff8b30c) and with PR #2559 (published assertions), and decides
+  placement for each of lessons 1-5 or rejects it with a reason.
+- [ ] The accepted lessons land in the skill or its references, without
+  paper-specific content: de Soyres numbers stay in replicator.
+- [ ] Replicator is told the landed commit.
