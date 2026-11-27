@@ -66,7 +66,7 @@ lowercase:
 ```
 README.md        paper, method, status per check, effort and cost, next blocker
 manifest.json    identity and provenance (fields in references/assessment.md)
-fetch.sh         re-fetches inputs into data/, checks hashes for the selected representation
+fetch.sh         downloads or accepts supplied inputs into data/, checks exact-representation hashes
 assessment.json  ACRe level, per-criterion evidence, grid id
 data/            fetched inputs, git-ignored
 reproduce/  robustness/  report/
@@ -144,14 +144,19 @@ and L8 to L10 wait for `reproduce`. Batchable: for a reading list, or for a team
 choosing among candidate papers, loop over the papers sequentially in one session, one
 folder each.
 
-For a blind assessment, pass `--blind --package-url URL`. Use only the
-supplied original paper and package, their direct source metadata, and
+For a blind assessment, pass `--blind` with either `--package-url URL` or an
+explicitly caller-supplied local package path. Local bytes need acquisition
+provenance and observed hashes under `references/assessment.md`; no package
+URL is fabricated. Use only the supplied original paper and package, their
+direct source metadata, and
 original-paper full-text routes that do not expose replication answers.
 Skip title/web discovery, I4R reports, and prior replication notes, including
 searches or existing-note retrieval through `reading-note` or another helper.
 Pass this boundary to helpers before using them; omit their conflicting
-steps. Record the mode, supplied URL, and excluded sources in `README.md`.
-An inaccessible supplied URL stays blocked; it does not authorize discovery.
+steps. Record the mode, supplied URL or local-byte provenance, and excluded
+sources in `README.md`. An inaccessible URL or unavailable supplied local
+package stays blocked; neither authorizes discovery. Local intake changes
+no answer exclusions or exposure requirements.
 
 1. **Identify the paper.** Get the full text and the Zotero item by the
    `reading-note` skill's § 1, subject to the blind assessment boundary. Choose the
@@ -165,9 +170,11 @@ An inaccessible supplied URL stays blocked; it does not authorize discovery.
    assessment was requested, also declare its exact outputs/statistics and
    numerical or literal-rendering target from authoritative paper evidence;
    unavailable target evidence blocks its declaration.
-2. **Find the package.** In ordinary mode, check the journal supplement, the
+2. **Find the package.** Inspect explicitly caller-supplied local bytes when
+   provided. Otherwise, in ordinary mode, check the journal supplement, the
    data archive the paper cites, the authors' pages and repositories, and a
-   web search. In blind mode, inspect the supplied URL directly. Record every
+   web search. In blind mode, inspect only the supplied URL or local bytes.
+   Record every
    place looked and the access outcome in `README.md`. A login, bot wall, or
    failed download proves blocked inspection, not absent contents. Name the
    next step (for example, a logged-in download into `data/`) and resume when
@@ -175,10 +182,14 @@ An inaccessible supplied URL stays blocked; it does not authorize discovery.
 3. **Write `manifest.json` and `fetch.sh`.** Follow the checksum schema in
    `references/assessment.md`: record archive-listed algorithm, digest,
    source, and representation separately from the observed SHA-256 and byte
-   count of downloaded bytes. MD5-only metadata is allowed; unavailable local
+   count of acquired bytes. For a private local package, set
+   `package.source_url` to null and record acquisition/provenance evidence;
+   never invent a downloadable URL. MD5-only metadata is allowed; unavailable local
    hashes and sizes stay null. Record licence and redistribution rights.
-   Generate `fetch.sh` to download into `data/`, validate only checksums for
-   that exact representation, and exit non-zero on mismatch or blocked access.
+   Generate `fetch.sh` to download or verify/copy explicitly supplied local
+   bytes into `data/`, following the public/local contract in that reference.
+   Validate only checksums for that exact representation, and exit non-zero
+   on missing acquisition, mismatch, or blocked access.
    It must not compare an ingested `.tab` checksum with an original file or
    treat listed metadata alone as verified downloaded bytes. Record the local
    SHA-256 when bytes become available, preserving the archive checksum.
