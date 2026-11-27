@@ -325,7 +325,7 @@ it supplies no required dependency or universal validation result.
 
 ## probe
 
-The goal is to run fair robustness checks, chosen by people.
+The goal is to run fair robustness checks.
 
 Follow these steps sequentially: the inventory precedes selection, and the
 approved plan precedes execution.

@@ -45,3 +45,19 @@ These are synthetic policy readings, not runs or empirical findings.
 No scientific outputs, foreign-project paths, paid API routes, runtime campaign,
 or permanent panel authority were created. The distinct semantic review and
 hunt checks are reported separately; this audit alone certifies none of them.
+
+## Gaze correction
+
+Gaze on source head `a4e6e57048a351230ab5ad27951db1eed289a999` found the
+probe opening still said checks were “chosen by people”. The original keyword
+scan missed this categorical parallel statement. Removed that suffix; the
+sequential approval contract already specifies who may approve the plan.
+
+Additional positive control: an agent drafts fair checks and an author-delegated
+panel approves the exact plan within its fixed perimeter, decision rule, and
+mandate, retaining dissent and fulfilled conditions. The probe opening now
+admits that authorized mode while step 4 still blocks undelegated panel approval.
+Review record: `rv-20261127-pr-2565-5600`, answer
+`20261127T143324258Z-padme-ed5c7362`. The correctness seat was clear; gaze's
+coordinator supplied the surviving one-line inconsistency. No other authority
+or workflow changed in the fix.
