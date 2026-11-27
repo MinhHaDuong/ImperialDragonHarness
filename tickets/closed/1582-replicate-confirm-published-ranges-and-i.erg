@@ -2,10 +2,12 @@
 Title: Replicate confirm published ranges and inequalities as assertions
 Created: 2026-11-27
 Author: reviewer
+Closed: Published assertion contracts and scenario evidence complete; PR2559 live gaze REVIEWED, caller gate and merge pending.
 
 --- log ---
 2026-11-27T11:38Z reviewer created
 2026-11-27T12:01Z reviewer note blocker 1581 closed — Blocked-by removed.
+2026-11-27T12:15Z reviewer closed — Published assertion contracts and scenario evidence complete; PR2559 live gaze REVIEWED, caller gate and merge pending.
 
 --- body ---
 
@@ -29,9 +31,9 @@ canonical categories, or silently rescore legacy cases.
 
 ## Exit criteria
 
-- [ ] Range/inequality evaluation preserves the authoritative assertion, boundary inclusivity, and target/collection/extrema semantics, with ambiguity unresolved.
-- [ ] Claim-level confirmed/not-confirmed/unresolved evidence is distinct from canonical statistic comparison statuses and cannot alone establish a canonical category.
-- [ ] No invented exact value/midpoint, widened article tolerance, omitted required target, or silent legacy rescore is introduced; parallel schema/report guidance is consistent.
+- [x] Range/inequality evaluation preserves the authoritative assertion, boundary inclusivity, and target/collection/extrema semantics, with ambiguity unresolved.
+- [x] Claim-level confirmed/not-confirmed/unresolved evidence is distinct from canonical statistic comparison statuses and cannot alone establish a canonical category.
+- [x] No invented exact value/midpoint, widened article tolerance, omitted required target, or silent legacy rescore is introduced; parallel schema/report guidance is consistent.
 
 ## Plan and first verification
 
@@ -76,3 +78,25 @@ Combined Blind-Spot and advisor outcomes are pending before phase completion.
 Combined Imagine closes with BLIND-SPOT: CLEAN; distinct report at
 `tickets/reviews/rulings1575/blind-spot.md`. No original exit criterion dropped,
 changed in intent, or added by the review. Sequential plans/feasibility accepted.
+
+## Verification and delivery
+
+Documentation and contracts completed with sourced target/object/collection/extrema
+and boundary semantics, separate assertion outcomes and numeric statuses/counts,
+and unchanged canonical/tolerance/legacy boundaries. Synthetic positive control,
+boundary, and counterexample audit: `design/reviews/t1582/scenario-audit.md`.
+Distinct semantic adherence PASS: `tickets/reviews/t1582/adherence-report.md` and
+redacted completed header/report. Lint191 and fast1966 passed; no wording-pin tests.
+Live gaze PR2559 REVIEWED head3fa943caaba714a178b49a483ff254038b9a2b6f,
+notes review `rv-20261127-pr-2559-e19c`, answer
+`20261127T121440682Z-padme-9ca1211b`, plan check PASS. No findings.
+
+Final close flagged the expected newly retained gaze report as an untracked
+session file (exit4), after review cleanup and REVIEWED answer/pointer succeeded.
+The authorized report is now committed with this bookkeeping, resolving that
+containment observation without changing substantive contracts. Gaze tested no
+source code: selected none, fallback none, result skipped (documentation only).
+The selector's exit4 was preserved as skipped, never called a test pass.
+
+Caller requested post-review closure and dependent1583 Blocked-by release.
+This bookkeeping carries gaze; merge/gate remain caller-owned. No merge claimed.

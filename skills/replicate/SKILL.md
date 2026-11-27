@@ -18,7 +18,7 @@ point on one ladder:
 | Verb | Runs unattended | Reads | Writes |
 |---|---|---|---|
 | `assess` | yes, batchable | the paper, the package | `manifest.json`, `fetch.sh`, `assessment.json`, `README.md`, preliminary-assessment note |
-| `reproduce` | yes | the above, `data/` | `reproduce/`, `out/*.csv`, run criteria in `assessment.json` |
+| `reproduce` | yes | the above, `data/` | `reproduce/`, comparison/auxiliary/assertion CSVs, run criteria in `assessment.json` |
 | `probe` | no: halts at `robustness/plan.md` until a person signs it | the above | `robustness/`, `out/*.csv` |
 | `report` | no | everything | `report/`, reproduction-report note |
 
@@ -28,7 +28,7 @@ without a person is the cherry-picking that rule 4 forbids.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read it before `probe` or `report`. The assessment file and
-the comparison and auxiliary CSV contracts are in `references/assessment.md`. Before retrieving worked
+the comparison, auxiliary, and assertion CSV contracts are in `references/assessment.md`. Before retrieving worked
 examples or case answers, apply § Validation exposure and calibration. The
 Gavard Scotch hand reproduction is mapped to these verbs in
 `references/gavard-scotch-mapping.md`; it contains exposed development evidence.
@@ -70,7 +70,7 @@ fetch.sh         downloads or accepts supplied inputs into data/, checks exact-r
 assessment.json  ACRe level, per-criterion evidence, grid id
 data/            fetched inputs, git-ignored
 reproduce/  robustness/  report/
-out/             tracked comparison and separate auxiliary CSVs, full precision
+out/             tracked comparison, auxiliary, and assertion CSVs, full precision
 ```
 
 The `probe` verb writes into `robustness/`. Teammates read the I4R word on
@@ -245,7 +245,13 @@ required scope and comparisons nor CRR eligibility.
    discrepancy into a match. Retain produced estimates without authoritative
    printed numeric comparators in `out/auxiliary.csv`, with provenance in
    `reproduce/README.md`, under `references/assessment.md` § Auxiliary estimates.
-   Auxiliary rows supply no comparison status or scoring evidence.
+   Auxiliary rows supply no comparison status or scoring evidence. For a
+   published range or inequality, evaluate the actual assertion in separate
+   `out/assertions.csv` evidence under § Published assertions in that reference.
+   Preserve target, collection/extrema, and open/closed boundaries; ambiguous
+   semantics stay unresolved. Assertion confirmation supplies no exact statistic
+   match and cannot alone establish a canonical category. Keep all required
+   numeric comparisons and the unchanged article tolerance.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
    `crr_*`, from the main result's rows, with the CSV path as evidence. For a
    faithful Stata-to-Python CRA, verify the model, sample, standard errors, and
@@ -276,7 +282,9 @@ freeze precedes the execution or diagnosis it governs.
 1. Before executing code, commit a dated, hashed freeze of the authoritative
    paper targets, every required statistic and analysis/raw route, tolerance
    under the existing printed-digit rule, and comparison rules (including
-   rounding and exact counts where applicable). Bind the scope ID to the input
+   rounding and exact counts where applicable). Freeze any sourced assertion,
+   target/quantifier, and boundary semantics separately from exact numeric
+   comparisons under the assertion ledger contract. Bind the scope ID to the input
    representations, code, and locked environment. Retain the earlier target
    declaration made before dependency inspection. Record any pre-result crash
    and amendment with its reason and changed hashes before retrying; a changed
@@ -391,7 +399,11 @@ The goal is the I4R report, written as a team.
    rule does not suppress or round the stored auxiliary artifact. Identify
    auxiliary estimates separately with their provenance and lack of numeric
    comparator; exclude them from match/discrepancy totals and score denominators.
-   Put each robustness result beside its original estimate.
+   Report range/inequality assertions separately as confirmed, not confirmed,
+   or unresolved, with target, source, boundaries, and coverage evidence. Keep
+   their totals separate from numeric comparison counts and category derivation;
+   include unresolved assertions even when detailed statistic lists show only
+   discrepancies. Put each robustness result beside its original estimate.
    Disclose AI assistance. If selected-target work was requested, also show its
    separately labelled six-row table and target declaration. Keep any reference
    comparison scoped and distinguish printed categories from inferences under
@@ -442,6 +454,7 @@ Publishing is blocked? Report it pending, and keep the draft.
 
 Print one line per verb run: the folder, the verb, the ACRe level before and
 after, the table rows that changed, the discrepancy count from comparison
-rows only (excluding `out/auxiliary.csv`), and the
+rows only (excluding auxiliary and assertion rows), separate assertion
+outcomes when present, and the
 next blocker. Name any selected scope ID and its separately labelled changes.
 For `probe`, either the plan path awaiting signature or the checks run.

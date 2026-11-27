@@ -4,7 +4,9 @@ The replication's scored state uses `assessment.json`, `manifest.json`, and
 comparison CSVs (`out/reproduce.csv`, `out/robustness.csv`). The six-row
 Reproducibility Table and ACRe level are derived under the rules below;
 neither is entered by hand. Separate `out/auxiliary.csv` estimates provide
-provenance, never comparison statuses or scoring inputs.
+provenance, never comparison statuses or scoring inputs. Published ranges and
+inequalities have separate assertion evidence under § Published assertions;
+assertion confirmation does not supply an exact statistic match.
 
 ## assessment.json
 
@@ -420,8 +422,11 @@ rendering additionally concerns the declared graphics or document output and
 its required assets. Missing rendering-only assets cannot become a numerical
 gap without a dependency link; numerical agreement does not certify rendering.
 Do not invent original printed numerical values from reproduced values for an
-accuracy comparison. If the target has no authoritative numerical comparator,
-retain the obtained numbers as reproduction facts and leave accuracy unassessed.
+accuracy comparison. If the target has no authoritative exact numerical comparator,
+retain the obtained numbers as reproduction facts and leave exact numerical
+accuracy unassessed. An authoritative range or inequality can separately be
+evaluated under § Published assertions; its confirmation cannot establish a
+selected execution category alone.
 No scope declaration changes tolerance or authorizes an adaptation convention.
 
 ### Reference comparison
@@ -474,6 +479,64 @@ shows only discrepancies and rounds to three digits; its six-row status
 table remains complete, with evidence bases and unassessed rows visible.
 This comparison display rule does not apply to retention of auxiliary rows.
 
+## Published assertions
+
+When the paper publishes a range or inequality, evaluate the actual sourced
+assertion separately from exact statistic comparison. Record it in
+`out/assertions.csv`, one row per declared assertion and executed route; bind
+its stable identifier to the required-output inventory. This is an evidence
+ledger, not an extension of the comparison CSV `status` vocabulary.
+
+| Column | Content |
+|---|---|
+| `assertion_key` | Stable assertion identifier linked to the required-output inventory |
+| `run_id`, `source_route`, `scope_id` | Run log, analysis/raw route, and declared scope |
+| `source` | Authoritative paper version, location, and verbatim assertion |
+| `target` | Exact quantity, units, object or collection, and any quantifier or extrema named by the source |
+| `predicate` | Sourced inequality or interval, including each boundary's open/closed status; unresolved parts explicit |
+| `evidence` | Produced full-precision values or artifact, producer, inputs, environment, and complete target-coverage evidence |
+| `claim_status` | `confirmed`, `not_confirmed`, or `unresolved`, with reason |
+
+Resolve the target before evaluating membership. For a scalar asserted to
+lie in an interval, test that scalar against the sourced endpoints and their
+inclusivity. For an inequality, preserve the operator: equality satisfies
+`>=` but not `>`. Unknown inclusivity, units, target, or source meaning stays
+`unresolved`; the typography of a dash alone cannot choose closed bounds.
+Do not expand bounds by the article's half-unit tolerance, invent an exact
+comparator or midpoint, or use reproduced values to fill missing source facts.
+
+Preserve the assertion's quantifier and target kind. A claim about every
+member of a named collection requires coverage of that collection; one
+in-range member cannot confirm it. An existential assertion requires its
+actual sourced existential meaning. An assertion about a minimum, maximum,
+or reported range requires the corresponding extrema and coverage. If the
+paper reports endpoint statistics, retain each required endpoint comparison;
+checking that all reproduced values lie somewhere inside a band does not
+establish those endpoint matches. For an interval object such as a confidence
+interval, preserve the sourced relation (for example, containment or overlap)
+and evaluate the whole object; testing its midpoint or one endpoint changes
+the claim. Do not infer any of these meanings from a bare printed range.
+
+Use `confirmed` only when the produced evidence establishes the complete
+sourced assertion. Use `not_confirmed` when verified evidence contradicts it,
+with the counterexample and coverage limits visible. Use `unresolved` when
+meaning or required evidence is insufficient to decide; a missing input or
+failed attempt retains its separate run/coverage disposition. Preserve all
+three outcomes in the ledger and report, including unresolved required claims.
+
+Report assertion totals separately from numeric `match`/`discrepancy` totals,
+with denominators and unresolved coverage explicit. An assertion row never
+receives a comparison `status` or supplies an exact match, and its confirmation
+alone establishes no canonical ACRe criterion or six-row category. Keep every
+required numeric target and its existing comparison outcome; an unexamined
+required statistic stays unresolved. Produced quantities with no exact
+comparator remain auxiliary under the next section, linked from assertion
+evidence where relevant, without double-counting them as comparisons.
+
+These rules implement the B6 author relay in ticket 1575 prospectively.
+They authorize no silent reassessment of legacy cases, new estimates, changed
+specification, or unsigned robustness execution.
+
 ## Auxiliary estimates
 
 Retain produced estimates that lack an authoritative printed numeric
@@ -511,9 +574,10 @@ coverage/disposition records. A success-only auxiliary file cannot hide them.
 Auxiliary retention does not remove required targets from the declared
 inventory or resolve an unexamined/unavailable comparison. Apply the existing
 scope and completeness rules, leaving unresolved required comparisons visible.
-It decides neither whether qualitative/footnote outputs belong in canonical
-inventory nor the held comparator/tolerance questions. Retain only estimates
-produced under existing authority; this contract authorizes no new model
+Published range/inequality evidence follows § Published assertions separately;
+auxiliary retention does not decide whether qualitative/footnote outputs belong
+in canonical inventory or settle other comparator/tolerance questions. Retain
+only estimates produced under existing authority; this contract authorizes no new model
 specification, translation eligibility, or unsigned robustness execution.
 
 ## manifest.json
