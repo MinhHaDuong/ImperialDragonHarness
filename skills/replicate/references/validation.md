@@ -24,7 +24,7 @@ These records use the existing printed-digit tolerance and scope declarations.
 For faithful Stata-to-Python canonical CRA eligibility, also apply
 [assessment.md](assessment.md#faithful-stata-to-python-cra). Calibration and
 unused-target records alone do not verify model, sample, or standard-error
-equivalence. These records change no comparison rule and authorize no new probes.
+equivalence. These records change no comparison rule and authorize no new challenge checks.
 
 ## Fresh-paper validation
 

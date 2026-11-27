@@ -96,7 +96,9 @@ Use available authorized evidence for this diagnosis. If establishing cause or
 impact needs a new empirical diagnostic, corrected estimate, model, or specification,
 record the proposed check and its approval status under `probe-approval.md` and
 the existing specification rulings. Execute only when existing approval explicitly
-covers it; this reference grants no new run authority. Preserve adverse,
+covers it; this reference grants no new run authority. Ordinary faithful
+path/environment repairs remain under rerun's existing preservation rules;
+appraisal-driven empirical/specification changes require approval. Preserve adverse,
 inconclusive, and conflicting evidence under the same scrutiny as favorable evidence.
 
 Report these judgments in the existing README/report evidence, linked to the
@@ -107,16 +109,21 @@ appraisal is a separately dated, sourced conclusion.
 
 ## Carry the two conclusions through the workflow
 
-During `assess`, record the original claim, source-based premises, inspected
-facts, and gaps; computational run outcomes remain unassessed before execution.
-During `reproduce`, connect executed specification and data-audit evidence to
+During `inventory`, record the original claim, source-based premises, inspected
+facts, and gaps. During `identify`, appraise the argument/model and material
+facts with targeted verified source checks, causal fidelity/credibility where
+applicable, and appropriate noncausal reasoning otherwise. Run no estimates;
+record premises needing literature support before publication. Deep literature
+is separate. Computational outcomes remain unassessed before execution.
+During `rerun`, connect executed specification and data-audit evidence to
 that record, retaining first-run comparisons and subsequent diagnoses separately.
-During `probe`, derive fair proposals from material unresolved premises and
+During `challenge`, derive fair proposals from material unresolved premises and
 anomalies alongside existing candidates. A source-based appraisal runs no new
 estimates: new empirical checks, corrections, and amendments await valid
 approval under `probe-approval.md` and the existing specification rulings.
 
-In `report`, present computational evidence/outcomes separately from scientific
+In every stage's compiled local report, present computational evidence/outcomes
+separately from scientific
 support, limitations, and disagreement, linking both to the claim-to-evidence
 record. State whether the evidence supports the declared scientific claim,
 limits it, contradicts a required premise, or leaves it underdetermined, with

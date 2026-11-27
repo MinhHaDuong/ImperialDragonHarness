@@ -2,37 +2,38 @@
 metadata:
   category: research
 name: replicate
-description: "Replicate an empirical paper, I4R style: assess its package, rerun it, plan robustness checks, report."
+description: "Replicate a paper through inventory, identification, rerun, approved challenges, and a cumulative I4R report."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<assess|reproduce|probe|report> <replication folder> [paper: DOI | citekey | Zotero item]"
+argument-hint: "<inventory|identify|rerun|challenge|complete> <replication folder> [paper: DOI | citekey | Zotero item]"
 ---
 
 # Replicate
 
-`/replicate <verb> <folder> [paper]` works one paper's replication in one
-folder. It follows the Institute for Replication (I4R) report format and
-grades the paper on the ACRe scale. There are four verbs, each a stopping
-point on one ladder:
+`/replicate <stage> <folder> [paper]` works one paper's replication in one
+folder. Requesting stage k performs stages 1..k in this order, reusing valid
+computations while rereading every written section. Only these five command
+names are accepted; historical names are not aliases.
 
-| Verb | Runs unattended | Reads | Writes |
+| # | Stage | Adds to the local report | Execution and stop |
 |---|---|---|---|
-| `assess` | yes, batchable | the paper, the package | `manifest.json`, `fetch.sh`, `assessment.json`, `README.md`, preliminary-assessment note |
-| `reproduce` | yes | the above, `data/` | `reproduce/`, comparison/auxiliary/assertion CSVs, run criteria in `assessment.json` |
-| `probe` | only after plan approval under `references/probe-approval.md` | the above | `robustness/`, `out/*.csv` |
-| `report` | no | everything | `report/`, reproduction-report note |
+| 1 | `inventory` | Opening, original claim, package and four provision rows | No estimates; unattended, batchable |
+| 2 | `identify` | Identification immediately after the opening | No estimates; unattended targeted source appraisal |
+| 3 | `rerun` | Computational Reproducibility and two execution rows | Scope choice before computation unless supplied by caller |
+| 4 | `challenge` | Robustness Reproduction | Only checks approved under `references/probe-approval.md`; no signature timeout |
+| 5 | `complete` | Conclusion, rewritten introduction, AI Disclosure | No new estimates; outward acts remain the author's |
 
-Autonomy belongs to the verb, not to a mode. Run unattended, `assess` and
-`reproduce` stop at a `probe` plan awaiting approval. The author approves
-the identified plan or explicitly delegates approval for a bounded campaign
-under `references/probe-approval.md`; rule 4 governs fair selection.
+Every stage compiles the report through its latest section and updates one
+local Zotero-note draft. A blocked stage compiles available evidence and states
+what has not run; it cannot claim completion or bypass its prerequisite.
+Follow § Every stage and `references/cumulative-report.md` throughout.
 
 The binding rules, written for teammates who are not economists, are in
-`references/rules.md`. Read it before `probe` or `report`. The assessment file and
-the comparison, auxiliary, and assertion CSV contracts are in `references/assessment.md`. Before retrieving worked
-examples or case answers, apply § Validation exposure and calibration. The
-Gavard Scotch hand reproduction is mapped to these verbs in
-`references/gavard-scotch-mapping.md`; it contains exposed development evidence.
+`references/rules.md`. Read them before starting the chain. The assessment and
+comparison/auxiliary/assertion CSV contracts are in `references/assessment.md`.
+Before retrieving worked examples or case answers, apply § Validation exposure
+and calibration. `references/gavard-scotch-mapping.md` routes historical
+exposed development evidence to the current stages without changing its records.
 
 For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory. A pre-set `IDH_ROOT` wins.
 
@@ -74,8 +75,10 @@ reproduce/  robustness/  report/
 out/             tracked comparison, auxiliary, and assertion CSVs, full precision
 ```
 
-The `probe` verb writes into `robustness/`. Teammates read the I4R word on
-disk; the verb keeps the shorter action name.
+The `challenge` stage writes into `robustness/`. Storage paths and literal
+CSV stage labels remain contractual: `reproduce/`, `out/reproduce.csv`,
+`stage=reproduce`, and `stage=robustness` retain their names. These are data
+contracts, not additional commands.
 
 **Teammates do not run this harness.** Every file in the folder must work
 without it. Put plain Markdown in `README.md` and `robustness/plan.md`, and
@@ -97,7 +100,7 @@ stays disclosed and cannot support a claim of blind validation.
 For blind validation, keep answers out of execution and approval contexts until
 results are frozen. Exposed or development papers remain usable for ordinary
 reproduction with disclosure, but cannot independently validate rules derived
-from them. This applies across all verbs, not just comparison with a held-out
+from them. This applies across all stages, not just comparison with a held-out
 report. Follow `references/validation.md` for calibration freezes, unused-table
 evaluation, and fresh-paper/cohort validation. Existing assessment scope,
 printed-digit tolerance, ACRe meanings, and plan-approval authority still apply.
@@ -120,33 +123,46 @@ reference comparison, README, and report. Preserve unresolved whole-paper
 coverage even when the selected result is Fully. Changing scope requires
 rechecking affected evidence before reusing categories or comparisons.
 
-## Every verb
+## Every stage
 
-- **Idempotent and resumable.** Before acting, read what the folder already
-  holds. Redo only what is missing or stale: a step whose inputs changed
-  hash since `manifest.json` recorded them, access has become available, or
-  the governing criteria or declared target have changed. Revisit stale blocked
-  reasons and claims invalidated by clarified criteria, preserving valid evidence. A
-  rerun on a complete, still-valid folder changes nothing and says so.
-- **Evidence or nothing.** Every claim in `assessment.json`, `README.md` and
-  the report points to a file, a line, a URL or a CSV row. A criterion
-  without verified evidence stays unestablished.
-- **Author files are read-only.** Copy the package into `data/` or keep it
-  under its own name. Verify its hashes and never edit it. Fixes live in new
-  scripts.
-- **`README.md` is updated last** in every verb: status per check, hours
-  spent and money spent (compute, data fees), and the next blocker.
-- **Outward acts wait.** Writing to authors, sending a report to I4R and
-  publishing are the author's calls.
+1. **Resume from evidence.** Read the existing folder, input hashes, source
+   versions, target/scope declarations, approval/disposition records, and all
+   written cumulative sections before acting. Perform stages 1..k in order;
+   reuse valid computations rather than executing them again. Revisit missing,
+   stale, blocked, or contradicted evidence when inputs, access, criteria, or
+   declared targets change. Preserve earlier observations and freezes.
+2. **Reread and reconcile.** After each stage, reread every section written
+   so far, including the opening, assessment, and any earlier conclusions.
+   Revise statements contradicted by later findings and record the old claim,
+   new evidence, changed section, reason, and date in the existing README/report
+   revision record. A computational freeze remains intact beside later diagnosis.
+   On an unchanged resume, record the coherence check without duplicate results,
+   another note, or an invented change to the level history.
+3. **Evidence or nothing.** Every claim in `assessment.json`, `README.md`, and
+   the report points to a file/line, URL/passage, or CSV row. Missing evidence
+   stays unknown. Author files remain read-only; verify hashes, put fixes in
+   new scripts, and preserve original outputs before diagnosis.
+4. **Compile and update locally.** Follow `references/cumulative-report.md`
+   after each stage, including at a scope or approval stop: build through the
+   latest written section, with unexecuted rows visibly “not yet assessed — not yet run” and reasons.
+   Update the same `report/<citekey>-replication.html` Zotero-note draft. Record
+   build failure as a blocker, never as a compiled report. Collect AI provenance
+   from inventory onward. The host's review/merge/publication gates still apply.
+5. **Update README last.** Record stage/check status, requested and actual
+   execution scope, elapsed effort/cost, coherence revisions, local build/note
+   paths, and next blocker. Output one line per stage actually processed.
 
-## assess
+Sending author questions, reports, or notes and publication remain outward
+acts under the host's existing gates. Local drafting grants no send authority.
+
+## inventory
 
 The goal is to grade the package from its contents, before running anything,
 while retaining the original claim and source-based scientific premises under
 `references/scientific-appraisal.md`. Scientific appraisal is distinct from
 the computational grade.
 Contents alone settle L1 to L3, L6 and L7; L4, L5
-and L8 to L10 wait for `reproduce`. Batchable: for a reading list, or for a team
+and L8 to L10 wait for `rerun`. Batchable: for a reading list, or for a team
 choosing among candidate papers, loop over the papers sequentially in one session, one
 folder each.
 
@@ -217,17 +233,83 @@ no answer exclusions or exposure requirements.
    Bind inspected inputs to manifest paths and exact representations; existing
    fetch/checksum requirements apply unchanged. Leave selected execution rows
    unassessed until their evidence permits a category.
-5. **Preliminary-assessment note.** Draft
-   `report/<citekey>-preliminary-assessment.html` and publish it as in
-   § Zotero notes.
+5. **Open the report.** Start its introduction with the paper, substantive
+   claim, method, chosen supporting result, package coverage, and unknowns.
+   Select the template and compile under `references/cumulative-report.md`;
+   update the single local note draft. Record source and AI provenance now,
+   including unavailable identity/call/work-share evidence, for final disclosure.
 
-## reproduce
+## identify
+
+Follow the opening with an **Identification** section. Work unattended using
+source-based appraisal in `references/scientific-appraisal.md`: original claim,
+argument/model, material facts, assumptions, and evidence limits. Use a strong
+scientific reasoning advisor through the route skill, with the existing
+causal review's distinct-perspective requirement where applicable; record actual
+advice, disagreements, provenance, and unavailable perspectives. Apply blind
+source exclusions to the advisor's brief and all retrieval before any lookup.
+
+For causal claims, follow `references/identification-review.md`: source the
+DAG and estimand, distinguish estimation fidelity to that graph from the
+scientific credibility of the graph against other studies and common sense,
+and explain material threats. For descriptive, predictive, and meta-analysis
+claims, appraise the appropriate argument, model, and factual links without
+forcing a DAG or causal label. Package/source/code inspection supplies evidence,
+not permission for estimates during this stage.
+
+Perform targeted verified checks of material source claims through permitted
+primary evidence. State sources and passages actually inspected, the reasoned
+judgment, disagreement, contradictions, and remaining gaps; unavailable evidence
+cannot become confirmation. Finish with “Graph points or scientific premises
+to support by a literature review before publication.” Deep literature search
+or saturation is a separate request, outside this chain; no stop-and-offer is
+required for these bounded targeted checks. Run no new estimates. Feed threats
+and unresolved premises into challenge candidates, then reconcile all written
+sections, compile, and update the same local note.
+
+## rerun
 
 The goal is to rerun the authors' code on the authors' data, then compare
-every reported statistic. Connect implementation and data-audit evidence to
+every applicable printed statistic within the chosen execution perimeter. Connect implementation and data-audit evidence to
 the claim, argument/model, and material facts under
 `references/scientific-appraisal.md`; keep computational outcomes and
 scientific conclusions separate.
+
+### Choose execution scope before computation
+
+Keep three distinct records: the canonical whole-paper assessment dossier,
+any separately declared selected-target assessment, and this request's execution
+perimeter. Scope limits execution, not the meaning of either assessment.
+
+If the caller supplied scope, record it and proceed without asking again.
+Otherwise ask in plain words: **main result** (inventory's chosen table/figure),
+**I4R scope** (the assignment's authoritative requested outputs), or **whole
+paper** (all applicable tables/figures, appendices, SI, and empirical footnotes).
+Record the question time and the authorized default: main result after five
+unanswered minutes. Do not compute before the answer or elapsed default.
+
+Automatic continuation is optional. Where the runtime cannot resume on its own,
+disclose that limitation, keep the question pending, compile the local report,
+and wait for explicit resumption. On resume, use the actual answer if supplied;
+otherwise, after verifying that five minutes elapsed, record and use the
+authorized main-result default. Before then the question remains pending.
+Never claim a timer or queued message resumed the session when it did not.
+
+For an explicit I4R choice, resolve the perimeter from primary assignment
+instructions/pre-games slides and the named template: record source/version,
+exact target inventory, and coverage gaps before execution. The committed
+General template defines main claims and reporting/category coverage; it does
+not establish a universal Games table subset. Pilot Tables1–3 are not authority.
+If the assignment-specific perimeter is unavailable or conflicting, report that
+I4R scope remains unresolved and request the missing source/clarification;
+never convert an explicit I4R choice to main-only by timeout. The five-minute
+default applies only to the unanswered generic scope question.
+
+Carry the chosen execution perimeter and source through README, coverage map,
+comparisons, and report. Results outside it remain not yet run; limited execution
+cannot establish unexamined whole-paper rows or a different selected target.
+
+### Execute the chosen perimeter
 
 Before choosing implicit implementation conventions by matching paper outputs,
 apply the calibration freeze and disclosure in `references/validation.md`.
@@ -252,8 +334,10 @@ required scope and comparisons nor CRR eligibility.
    selected execution request.
 3. Run from the analysis data first (CRA), then from the raw data (CRR)
    where the package allows. A broken script is fixed in a new file. The fix
-   and its reason are recorded: a coding error found here is a robustness
-   result (rule 7).
+   and its reason are recorded. Ordinary faithful path/environment repairs may
+   proceed under these preservation rules. A correction changing the empirical
+   specification, sample, or estimate is a challenge proposal under existing
+   approval, not an authorized repair (rule 7).
 4. Write `out/reproduce.csv`: one row per compared statistic, at full
    precision. A statistic matches when it lies within half a unit of the
    paper's last printed digit. Never widen the tolerance to turn a
@@ -274,7 +358,9 @@ required scope and comparisons nor CRR eligibility.
    inputs leave agreement unresolved. This supplies no article match or category
    promotion and does not rescore prior cases.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
-   `crr_*`, from the main result's rows, with the CSV path as evidence. For a
+   `crr_*`, only when the main result's actual run/comparison evidence permits,
+   with the CSV path as evidence. Missing execution stays unassessed; an
+   execution perimeter that omits that result cannot establish its run criteria. For a
    faithful Stata-to-Python CRA, verify the model, sample, standard errors, and
    every required main-result comparison under the assessment evidence contract.
    Then
@@ -296,8 +382,8 @@ required scope and comparisons nor CRR eligibility.
 
 On an explicit caller request, confirm a selected claim using the existing
 `selected_target` declaration and scope ID (`references/assessment.md`).
-Whole-paper reproduction remains the default; this mode leaves its coverage
-and canonical ACRe criteria unchanged. Follow these steps sequentially: each
+Whole-paper assessment remains the default; the execution-scope choice above
+does not replace this selected-target contract or the canonical ACRe criteria. Follow these steps sequentially: each
 freeze precedes the execution or diagnosis it governs.
 
 1. Before executing code, commit a dated, hashed freeze of the authoritative
@@ -342,9 +428,9 @@ Worked example: replicator's
 `reproduce/review.md`. It illustrates the workflow and its checker limits;
 it supplies no required dependency or universal validation result.
 
-## probe
+## challenge
 
-The goal is to run fair robustness checks. Carry material scientific-appraisal
+The goal is to run fair robustness checks derived from identify. Carry material scientific-appraisal
 gaps and anomalies from `references/scientific-appraisal.md` into the candidate
 inventory with evidence and disposition; proposals await the existing approval.
 
@@ -358,12 +444,19 @@ approved plan precedes execution.
    In `robustness/plan.md`, map each
    already-run check to its source and list excluded candidates with reasons
    (already run, unfair, infeasible, or outside scope). Unavailable appendix or
-   code coverage stays a named gap. Every code anomaly logged by `reproduce`
+   code coverage stays a named gap. Every code anomaly logged by `rerun`
    enters the candidate list, with its disposition and evidence; an anomaly
    does not by itself establish a coding error.
-2. **Draft the plan** using the rules' menu (`references/rules.md`) and the
+2. **Draft the plan** from the material identification threats and unresolved
+   scientific premises, using the rules' menu (`references/rules.md`) and the
    design-specific candidates in `references/robustness-menus.md`. Propose
-   additions the paper does not already run. A robustness check asserted in the
+   additions the paper does not already run. Link each to its identify threat
+   or premise and the evidence it would discriminate. Include at least one
+   fair main-result check outside the paper's statistical frame: a justified
+   model-independent comparison, different design on the same data, or derived
+   implication of the same hypothesis. Explain its assumptions and relevance;
+   if unavailable or infeasible, record the blocker and seek a fair alternative
+   rather than claiming the obligation met. A robustness check asserted in the
    paper without numbers or code is eligible for the plan and cannot be rejected
    as a duplicate on that ground. Propose it when it bears on the main result;
    the authorized approver may reject it for another explicit reason. Proposal does not
@@ -384,10 +477,12 @@ approved plan precedes execution.
    approval in file or conversation, or panel approval under explicit bounded
    campaign delegation, for the identified plan/version. Keep actual author
    signatures distinct from truthful approval transcriptions. Without valid
-   approval or with unmet conditions, report the plan path and blocker and stop.
+   approval or with unmet conditions, report the plan path and blocker, compile
+   the local report/update the note, and stop. No timeout or silence supplies
+   approval. Refusal remains a blocker, including on resumed requests for complete.
 5. **After approval**, write one script per check under `robustness/`. Each
    appends rows to `out/robustness.csv` with `stage=robustness` and `spec`
-   naming the alteration. A rerun runs only checks with no rows yet; inspect
+   naming the alteration. A resumed challenge runs only checks with no valid results yet; inspect
    the disposition ledger first so a failure, block, or withdrawal is not
    mistaken for an unattempted check. Record every planned check's disposition
    in `robustness/plan.md`, including those that produce no CSV rows.
@@ -397,105 +492,66 @@ exposure and calibration before reading it or preparing the plan. The executor
 and plan approvers must not have read that report; retain the answer boundary
 until results are frozen.
 
-## report
+## complete
 
-The goal is the I4R report, written as a team, with distinguishable
-computational and scientific evidence/conclusions under
-`references/scientific-appraisal.md`. Cover the declared claim's argument,
-model, and material facts for causal and noncausal work; make coverage and
-unknowns explicit.
+Finish the report using `references/cumulative-report.md` after processing all
+prior stages. Reconcile every written section against the final available
+evidence, revision record, and planned-check dispositions. Rewrite the
+introduction last so its claim, scope, and findings agree with the body;
+write the conclusion with separate computational and scientific judgments,
+limits, unknowns, and questions for original authors (do not send them).
+Finalize AI Disclosure from provenance collected since inventory: host and
+harness repositories/commits, roles, actual model identities, calls, and work
+shares where known; label unavailable evidence rather than inventing it.
 
-1. Choose the I4R template from `references/templates/INDEX.md`, using the
-   context the folder already holds: the template I4R named in the assignment
-   first. Otherwise use the kind of work and the paper's field and journal:
-   choose Commentary from Forensic Report for forensic commentary on specific
-   problems; choose Psychological Science Phase 2 for a reproduction report
-   in that I4R project; use General for other reproduction and robustness
-   reports. Psychology alone does not establish Phase 2 membership. If the
-   context leaves the specific templates equally applicable, use General and
-   explain the uncertainty. Copy the chosen Word or
-   LaTeX files into `report/` if absent and record in `manifest.json`
-   `template{name, record, version, reason}`; the reason is one sentence naming
-   the evidence. The template governs the format. Where it is silent, follow
-   `references/rules.md`.
-   No template fits (a format or field none covers)? Say so, give the reason,
-   and propose an adapted structure for this replication in
-   `report/structure.md`, starting from the closest template and naming each
-   section changed. Record the closest template with `"adapted": true`. Never
-   add a new generic template to the skill. A person confirms the adapted
-   structure before the report is written.
-   Optionally read each record's `links.latest` on Zenodo (needs the network)
-   and report a newer version; do not switch to it.
-2. Write the report in `report/`. Name the paper's method in the summary
-   (rule 8). Include all six rows of the Reproducibility Table, derived from
-   `assessment.json`, with each evidence basis and any "not yet assessed"
-   status visible (`references/assessment.md`). Distinguish provision-based
-   impossibility from observed execution failure. Show only discrepancies
-   in the detailed statistic comparisons, rounding values to three digits
-   from `out/reproduce.csv` and `out/robustness.csv`. This comparison display
-   rule does not suppress or round the stored auxiliary artifact. Identify
-   auxiliary estimates separately with their provenance and lack of numeric
-   comparator; exclude them from match/discrepancy totals and score denominators.
-   Report range/inequality assertions separately as confirmed, not confirmed,
-   or unresolved, with target, source, boundaries, and coverage evidence. Keep
-   their totals separate from numeric comparison counts and category derivation;
-   include unresolved assertions even when detailed statistic lists show only
-   discrepancies. Retain applicable empirical footnote evidence and explain
-   bibliographic exclusions, unquantified assertions, and unresolved coverage
-   under § Empirical footnote applicability in that reference, with declared
-   whole-paper/selected scope visible. Put each robustness result beside its original estimate.
-   Disclose AI assistance. If selected-target work was requested, also show its
-   separately labelled six-row table and target declaration. Keep any reference
-   comparison scoped and distinguish printed categories from inferences under
-   `references/assessment.md`; mismatched or unknown scope supplies no
-   unqualified agreement score.
-3. List the questions for the original authors. Do not send them.
-4. Draft `report/<citekey>-reproduction-report.html` and publish it as in
-   § Zotero notes.
+Compile the final local report and update the same local note draft. If scope,
+execution, approval, or a build remains blocked, disclose the incomplete stages
+and leave their rows unresolved; a request for complete grants no missing
+approval and cannot manufacture computations. Sending or publishing remains
+the author's outward decision under host gates.
 
-### Causal identification review
+## Zotero note
 
-For causal claims, include a separate identification section in the report, following
-`references/identification-review.md`: declare the causal claim, draw a
-sourced DAG, adapt the eleven prompts to the study design, and give an argued
-reviewer judgment with its unresolved assumptions. Write for a non-specialist
-economist. Seek a reviewer from another model family through the route skill
-for substantive causal reasoning, and disclose an unavailable perspective.
+Keep the independent reading note from `reading-note`. This workflow maintains
+one cumulative local replication-note draft,
+`report/<citekey>-replication.html`, with YAML frontmatter carrying `zotero_item`
+under `skills/reading-note/references/template.md`. Every stage updates this
+same file; resume does not create another note or publish intermediate drafts.
+Historical preliminary/reproduction notes and frozen folders stay untouched;
+no automatic migration, deletion, duplicate publication, or rescore.
 
-This source-based appraisal runs no new estimates. Any proposed empirical
-check goes through the existing approved `probe` plan. Keep causal
-identification, statistical significance, and estimator robustness distinct. For descriptive, predictive, and meta-analysis
-claims, use the appropriate appraisal in `references/scientific-appraisal.md`
-without a forced DAG or causal label. The identification judgment changes neither ACRe nor any of the six
-Reproducibility Table rows, all of which assess computation. A favorable or
-adverse judgment earns the same evidential scrutiny (rule 4).
-
-## Zotero notes
-
-The CIRED protocol keeps three child notes under the paper's Zotero item:
-
-- the reading note, written by the `reading-note` skill (which also records
-  the replication-package fields);
-- the preliminary assessment, from `assess`;
-- the reproduction report, from `report`.
-
-Draft each note as HTML with YAML frontmatter carrying `zotero_item` (the
-format of `skills/reading-note/references/template.md`). Name the file per
-paper and note type, as above. After the draft is reviewed and merged by the
-host project's route, publish it:
+After host review and merge, publish only through the existing host route:
 
 ```bash
 python3 "$IDH_ROOT/scripts/zotero.py" publish-notes --project <host project> \
   --collection "<collection>" --dry-run <draft>.html   # then without --dry-run
 ```
 
-Publishing is blocked? Report it pending, and keep the draft.
+Retain an existing child-note identity where the host publisher supports an
+update; unresolved destination/identity stays pending rather than creating
+duplicates. Publishing blocked or not authorized? Keep the local draft and
+report the blocker.
+
+## Temporary historical-name mapping
+
+This table interprets still-open tickets only; it grants no aliases. Delete
+it from current skills/docs once all old-name tickets close, with a final
+search and recorded disposition. Git keeps history; frozen artifacts retain
+the names/version that produced them, without migration or rescore.
+
+| Historical ticket wording | Current stage meaning |
+|---|---|
+| assess | inventory; its scientific identification part is identify |
+| reproduce | rerun |
+| probe | challenge |
+| report | output compiled at every stage; complete finishes it |
 
 ## Output to the user
 
-Print one line per verb run: the folder, the verb, the ACRe level before and
+Print one line per stage processed: the folder, the stage, the ACRe level before and
 after, the table rows that changed, the discrepancy count from comparison
 rows only (excluding auxiliary and assertion rows), separate assertion
 outcomes when present, and the
-next blocker. Name any selected scope ID and its separately labelled changes.
-For `probe`, either the plan path awaiting approval or the checks run.
+next blocker and local report/note status. State requested and actual execution
+perimeters separately from assessment coverage. Name any selected scope ID and its separately labelled changes.
+For `challenge`, either the plan path awaiting approval or the checks run.

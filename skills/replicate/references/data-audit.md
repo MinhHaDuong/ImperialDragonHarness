@@ -72,7 +72,7 @@ and fixes in new files; retain corrected runs as separately labelled results
 with their changes and reasons. They cannot overwrite the original outcome or
 widen its printed-digit comparison tolerance.
 
-Log anomalies for the existing `probe` candidate inventory, with evidence and
+Log anomalies for the existing `challenge` candidate inventory, with evidence and
 unresolved interpretations. Candidate corrections that change a variable,
 sample, or other specification follow the existing author-ruling and
 [plan-approval requirements](probe-approval.md) before execution; the audit grants no new

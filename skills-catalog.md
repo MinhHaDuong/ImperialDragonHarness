@@ -58,7 +58,7 @@
 | [`/critical-lit-review`](skills/critical-lit-review/SKILL.md) | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | [`/reading-note`](skills/reading-note/SKILL.md) | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
 | [`/related-work-note`](skills/related-work-note/SKILL.md) | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited and related-but-not-cited works, methods, verification checklist. |
-| [`/replicate`](skills/replicate/SKILL.md) | Replicate an empirical paper, I4R style: assess its package, rerun it, plan robustness checks, report. |
+| [`/replicate`](skills/replicate/SKILL.md) | Replicate a paper through inventory, identification, rerun, approved challenges, and a cumulative I4R report. |
 | [`/zotero`](skills/zotero/SKILL.md) | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, report duplicate files, or publish merged reading-note drafts as child notes. |
 
 ### Reviewing
