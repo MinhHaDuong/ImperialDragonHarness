@@ -12,6 +12,7 @@ Label: needs-human
 2026-11-26T23:03Z reviewer documentation child1571 closed by PR2541; source-audited menus/reporting delivered, written-person signature unchanged; original post-pilot signing decision remains pending, tracker stays open
 2026-11-27T01:52Z reviewer pilot evidence for sign-off modes: replicator 0003 RESULTS.md, findings 3 and 12 in 1572
 2026-11-27T08:13Z reviewer 1572 source df890ef pilot report now available; findings3/12 held together with this signing-mode decision; no general panel or transcribed-signature authorization inferred
+2026-11-27T08:46Z reviewer 1572 finding3 separately ruled and harness1574 merged PR2547; generic signing modes still pending despite pilot report now available
 
 --- body ---
 ## Context and authority
@@ -150,6 +151,11 @@ and the eventual ruling before closing this tracker.
 | 1571 | harness | Documentation closed by PR #2541, 2026-11-27; probe inventory/reporting and sourced design menus |
 
 Integration check: the documentation criteria are met by1571. The original
-sign-off-modes criterion remains unmet, pending the0003 report and an author
-ruling. The existing person-written signature rule is retained; this tracker
+sign-off-modes criterion remains unmet: the0003 report is now available
+at replicator df890ef, but the general author ruling is still pending. The existing person-written signature rule is retained; this tracker
 and1552 stay open. No panel or transcribed signature mode was adopted.
+
+Current author disposition (2026-11-27): finding3 of1572 was ruled separately
+and its harness implementation is closed in1574/PR #2547. This resolves the
+asserted-check eligibility point, not finding12 or this general signing-mode
+question. The existing person-written signature rule remains in force.

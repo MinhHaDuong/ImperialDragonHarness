@@ -14,6 +14,7 @@ Label: needs-human
 2026-11-27T08:15Z reviewer author-approved placement for findings 1-2: one binding line per audit in SKILL.md reproduce pointing to a reference; the join checklist (keys as coded, match rate, unmatched-key sample, encoding/quotes/whitespace/case, many-to-many, duplicate keys, missingness in constructed variables) and the text-vs-code table format in a reference (assessment.md or a new data-audit.md); paper cases (Atanasov quotes, 4-vs-2 ratings) stay in replicator, not in the skill. Also approved as a proposal, to check against canonical ACRe meanings before adoption: an output whose joins were not audited is not scored Fully
 2026-11-27T08:21Z reviewer 08:15 author annotations ingested and parent-confirmed:3 ruled separately,1/2 placement explicit; proposed audit score gate not adopted; original joint criterion superseded by appended override
 2026-11-27T08:24Z reviewer finding3 accepted per confirmed author override; foreign prompt handoff filed as replicator0009 on branchhandoff-harness1572 at0766eb2, receiver pickup remains pending
+2026-11-27T08:46Z reviewer accepted children1573/1574 closed by PR2546/2547; finding3 resolved locally, receiver0009 prompt pickup pending; findings4/5/10/12 and audit-score proposal remain author-held; parent stays open
 
 --- body ---
 ## Context and authority
@@ -106,9 +107,9 @@ authority. This tracker stays open.
 
 | Finding | Receiving disposition | Rule or owner |
 |---|---|---|
-| 1 Join audit | Accepted in1573, untouched keys/cardinality/unmatchedness before cleaning; denominators and stage explicit | SKILL.md reproduce, original-analysis/raw execution evidence |
-| 2 Construction sweep | Accepted in1573, compare definitions/sample rules across text, notes, code and trace constructed missingness; preserve contradictions | SKILL.md reproduce, anomaly evidence before any correction |
-| 3 Unsupported asserted check | Author ruled at08:15, confirmed by parent fresh read: eligible, propose when bearing on main result, not duplicate on this ground; separate child1574 and receiver-owned prompt handoff | SKILL.md probe; replicator prompt ownership; no general signing authority |
+| 1 Join audit | Delivered in1573, PR #2546; authors' join-stage keys/cardinality/unmatchedness before checker correction, detailed reference | SKILL.md reproduce, original-analysis/raw execution evidence |
+| 2 Construction sweep | Delivered in1573, PR #2546; construction/sample crosswalk and missingness tracing preserve conflicting sources as anomalies | SKILL.md reproduce, anomaly evidence before any correction |
+| 3 Unsupported asserted check | Harness delivered in1574, PR #2547; eligibility/proposal and rejection limits match filed receiver ticket0009. Actual prompt pickup remains pending | SKILL.md probe; replicator prompt ownership; no general signing authority |
 | 4 Main-result choice | Held: current rule requires original-paper choice before execution and a cohort-wide rule, but does not fix that cohort rule | Author methodological choice; assess step1 |
 | 5 Footnote applicability | Held: form alone should not erase an output, but applicability affects canonical completeness/level; no silent expansion or rescore | Author scope/assessment ruling |
 | 6 R image | Existing reproduce step1 already rebuilds/locks authors' environment; concrete image/build repairs stay replicator-owned | Replicator environment; no new harness image or default |
@@ -123,12 +124,14 @@ authority. This tracker stays open.
 
 | Child | Project | Accepted deliverable |
 |---|---|---|
-| 1573 | harness | Generic reproduce audit of joins, constructions, sample rules, and missingness; no scoring/signature change |
+| 1573 | harness | Closed PR #2546, 2026-11-27: two audit lines and data-audit reference, no score/signature change |
+| 1574 | harness | Closed PR #2547, 2026-11-27: probe/rule7 eligibility wording and filed receiver handoff; actual prompt pickup pending |
 
-All original exit criteria remain. Receiving and accepted-rule mapping are
-complete; findings3/12 still await the joint1570 author ruling. Other held
-methodological decisions remain visible above. Closing1573 cannot close1572
-or1552.
+Original exit-criterion text is preserved with the appended author override.
+Receiving and accepted-rule mapping are complete; finding3 is ruled and its
+harness implementation is delivered. Finding12/general signing and other
+held methodological decisions remain open. Receiver prompt pickup is pending.
+Closing1573/1574 cannot close1572 or1552.
 
 Blind-Spot CLEAN on this split, with audit bounds retained: original keys
 before normalization and contradictions as anomalies rather than automatic
@@ -182,3 +185,15 @@ prompts and preserves the frozen pilot files. Replicator has no remote; the
 branch is durable, but the request is not merged into its main or implemented.
 The parent session was notified for live-owner pickup. Receiver Imagine,
 implementation and completion readback remain pending.
+
+## Integration check after accepted children (2026-11-27)
+
+Both local child diffs were reviewed together: exactly two reproduce audit
+lines and the detailed reference, then matching eligibility language in
+probe/rule7. Declared first gates and full after-merge suites passed on
+492c25a7 and266b8ed3. Current-main union sweep found only tracker/status
+references to update; computational categories, tolerance and signer
+authority remain unchanged. Parent1572 stays needs-human for findings4/5/10/12
+and the separately proposed audit-based scoring condition; finding3 is not
+held. Replicator0009 remains absent from its main at this check; branch
+handoff-harness1572 at0766eb2 retains the filed request for receiver pickup.
