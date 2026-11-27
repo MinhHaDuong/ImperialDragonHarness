@@ -2,7 +2,6 @@
 Title: Implement cumulative replicate interface after accepted policy children
 Created: 2026-11-27
 Author: receiver
-Blocked-by: 1584
 Blocked-by: 1585
 Blocked-by: 1586
 Blocked-by: 1587
@@ -10,6 +9,7 @@ Blocked-by: 1588
 
 --- log ---
 2026-11-27T12:37Z receiver created
+2026-11-27T14:44Z reviewer note blocker 1584 closed — Blocked-by removed.
 
 --- body ---
 
