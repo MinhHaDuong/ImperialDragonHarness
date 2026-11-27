@@ -69,3 +69,41 @@ links with evidence and uncertainty. Thus W15's historical-version explanation
 and present generic coverage are supported independently of assistant opinion.
 Disposition: historical question answered, current generic coverage present;
 A3 presentation remains1594. No historical artifact repair or scientific verdict.
+
+## Additional original-source constraints
+
+W4 author `b7383cfd-6812-49ce-9653-23ac73d9efa0`,10:29:19.201Z asks
+for the name Brodeur uses, but supplies no exact caption. All three committed
+I4R template families have uncaptained six-row tables. “Computational
+reproducibility of the main claims” is the caption of a different detailed
+comparison table (General main.tex692; Psychology696; Forensic995). Do not
+claim this is the official six-row caption. Existing rules1 uses “Reproducibility
+Table” with Brodeur pregames provenance; preserve the naming source limitation.
+
+W14 author `ea124a78-c71d-4cf0-9fa9-2885818ffe49`,10:52:01.339Z asks for a
+statistically formal negligibility computation and second-versus-third-digit
+comparison. A0.1SE threshold was proposed by an assistant, not ruled by the
+author. No universal cutoff is authorized. W8 author
+`a8e10d42-69b6-492f-adc6-6f82fe4de9ca`,10:35:59.143Z distinguishes identical
+seed/RNG from a translated implementation whose RNG can differ, and requests
+calculation before qualifying differences as expected variation. A6 author
+`287679a1-0a0c-4abc-a0d9-46e1173113de`,11:12:10.789Z says an easily recomputed
+statistic should not unfairly be called not run just because author code is
+absent. The separate recomputed label/count was proposed in the accepted
+dispatch; production and author-code evidence remain separately reported.
+
+## W17 recovered historical fulfillment
+
+Subsequent historical retrieval supersedes the earlier unavailable-outcome
+statement above. The same session's embedded api-request event sequence6371
+contains the author instruction “Dépot replicator privé, sur GH et audit. Go”;
+this is an embedded source type, not a standalone message with an invented UUID
+or timestamp. Author `53d0de2e-1633-4525-839d-552fc469873f`,11:33:24.986Z says
+“Fait dans un terminal”. Tool readback `e7c28c4e-b63e-4521-9946-7d008b505eeb`,
+11:33:35.340Z reports PRIVATE/empty=true; subsequent readback
+`f21b2e02-8acf-44ad-8270-ff2f490ba094`,11:33:39.512Z shows non-empty
+default main, main/HEADb9f9785 and review notes57b2e4f. Parent verified this
+bounded disposition against the returned source evidence: receiver-owned
+private upstream creation/push historically fulfilled. This proves neither
+public reader access nor independent completion of every history-audit step.
+No remote creation, push, publication or receiver file change occurs here.
