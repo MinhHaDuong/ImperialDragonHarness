@@ -28,7 +28,7 @@ without a person is the cherry-picking that rule 4 forbids.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read it before `probe` or `report`. The assessment file and
-the CSV schema are in `references/assessment.md`. Before retrieving worked
+the comparison and auxiliary CSV contracts are in `references/assessment.md`. Before retrieving worked
 examples or case answers, apply § Validation exposure and calibration. The
 Gavard Scotch hand reproduction is mapped to these verbs in
 `references/gavard-scotch-mapping.md`; it contains exposed development evidence.
@@ -70,7 +70,7 @@ fetch.sh         downloads or accepts supplied inputs into data/, checks exact-r
 assessment.json  ACRe level, per-criterion evidence, grid id
 data/            fetched inputs, git-ignored
 reproduce/  robustness/  report/
-out/             tracked CSVs, full precision
+out/             tracked comparison and separate auxiliary CSVs, full precision
 ```
 
 The `probe` verb writes into `robustness/`. Teammates read the I4R word on
@@ -238,7 +238,10 @@ this reference supplies no canonical CRA eligibility or scoring ruling.
 4. Write `out/reproduce.csv`: one row per compared statistic, at full
    precision. A statistic matches when it lies within half a unit of the
    paper's last printed digit. Never widen the tolerance to turn a
-   discrepancy into a match.
+   discrepancy into a match. Retain produced estimates without authoritative
+   printed numeric comparators in `out/auxiliary.csv`, with provenance in
+   `reproduce/README.md`, under `references/assessment.md` § Auxiliary estimates.
+   Auxiliary rows supply no comparison status or scoring evidence.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
    `crr_*`, from the main result's rows, with the CSV path as evidence. Then
    re-derive the level and the table: ACRe run criteria use the main result;
@@ -248,6 +251,9 @@ this reference supplies no canonical CRA eligibility or scoring ruling.
    canonical run criterion for a different `main_result`.
 6. A result that cannot be produced from the package (an input is missing)
    is recorded as `missing_input`. Never transcribe it from the paper.
+   An absent comparator alone is neither a missing input nor an execution
+   failure. Retain actual failed attempts and missing-input reasons separately
+   in the existing run/coverage records; auxiliary retention does not erase them.
 
 - Audit each relevant join on the authors’ actual keys and inputs at their join stage, before checker normalization or correction, recording cardinality, duplicates, matched/unmatched counts and rates with denominators, as in `references/data-audit.md`.
 - Compare constructed variable definitions and sample rules across text, notes/appendices, and code, tracing constructed missingness into downstream samples and recording sourced anomalies and audit coverage as in `references/data-audit.md`.
@@ -374,7 +380,11 @@ The goal is the I4R report, written as a team.
    status visible (`references/assessment.md`). Distinguish provision-based
    impossibility from observed execution failure. Show only discrepancies
    in the detailed statistic comparisons, rounding values to three digits
-   from `out/*.csv`. Put each robustness result beside its original estimate.
+   from `out/reproduce.csv` and `out/robustness.csv`. This comparison display
+   rule does not suppress or round the stored auxiliary artifact. Identify
+   auxiliary estimates separately with their provenance and lack of numeric
+   comparator; exclude them from match/discrepancy totals and score denominators.
+   Put each robustness result beside its original estimate.
    Disclose AI assistance. If selected-target work was requested, also show its
    separately labelled six-row table and target declaration. Keep any reference
    comparison scoped and distinguish printed categories from inferences under
@@ -424,6 +434,7 @@ Publishing is blocked? Report it pending, and keep the draft.
 ## Output to the user
 
 Print one line per verb run: the folder, the verb, the ACRe level before and
-after, the table rows that changed, the discrepancy count in `out/`, and the
+after, the table rows that changed, the discrepancy count from comparison
+rows only (excluding `out/auxiliary.csv`), and the
 next blocker. Name any selected scope ID and its separately labelled changes.
 For `probe`, either the plan path awaiting signature or the checks run.
