@@ -4,7 +4,7 @@ Runtime observation: model-state=runtime-masked; runtime=codex; observed specifi
 
 This observation concerns the actual plan and execute writer context
 `/root/raid_delivery/hunt1584` on 2026-11-27, reached by the native runtime
-subagent door with inherited context. Its visible system text identifies an
+subagent door with a self-contained brief and no inherited conversation. Its visible system text identifies an
 AI assistant; developer text describes Codex based on GPT-6. Neither supplies
 an observed specific model identifier or reasoning effort for this running
 worker. A requested route or pin does not establish that observation.
