@@ -8,6 +8,7 @@ Label: needs-human
 2026-11-27T01:51Z claude created
 2026-11-27T01:52Z reviewer filed from replicator 0003 (df890ef) at author request; receiving Imagine pending
 2026-11-27T08:13Z reviewer receiving Imagine accepted findings1/2 only in child1573; authority decisions held; four premise checks and every finding disposition recorded
+2026-11-27T08:16Z reviewer source qualification: unticked category columns with explicit status note may comply; stochastic-label discrepancy cause unestablished; no new scoring exception
 
 --- body ---
 ## Context and authority
@@ -108,8 +109,8 @@ authority. This tracker stays open.
 | 6 R image | Existing reproduce step1 already rebuilds/locks authors' environment; concrete image/build repairs stay replicator-owned | Replicator environment; no new harness image or default |
 | 7 Decimal template | Existing rule2/report precision governs; illustrative template formatting cannot override it | Report execution compliance, not vendor-template mutation |
 | 8 Dropped signed check | Already covered by1571's complete disposition ledger and renewed signature; an unmet condition is a block with evidence, not silent omission | Probe steps3/5; paper-folder repair |
-| 9 Blank table row | Existing rules/assessment require explicit not-yet-assessed text and reason; do not substitute an unsupported provisional tick | Report execution compliance; rules1/assessment table |
-| 10 Noise/typo classification | Held: proposed exception changes numerical comparison or row categories; preserve misses and source distinctions pending ruling | Author scoring/tolerance decision |
+| 9 Blank table row | Weschle comparator reports unticked columns with a status note, which can comply with fixed-template rules; explicit not-yet-assessed text/reason remains required, no provisional tick | Report execution compliance; rules1/assessment table |
+| 10 Noise/typo classification | Held: source does not establish the cause of small stochastic-label differences; proposed exceptions change comparison/categories. Preserve misses and distinguish diagnosed typos from unisolated causes | Author scoring/tolerance decision |
 | 11 Cross-family consent | Existing route consent and seek/disclose rules apply; pilot panel consent is not generic spend consent | Route/author authorization, no silent consent expansion |
 | 12 Panel sign-off | Mechanical feasibility reported in two cases, not general authorization or quality proof; held with3 and1570 | Author signing-mode decision |
 
@@ -128,3 +129,11 @@ Blind-Spot CLEAN on this split, with audit bounds retained: original keys
 before normalization and contradictions as anomalies rather than automatic
 errors. Requested Sol6.1 medium, native same-family review; observed identity
 not independently exposed. No source-project writes or scientific reruns.
+
+Source qualification after detailed comparison read: a category column left
+unticked alongside an explicit status note is not an omitted table row. The
+Weschle comparison calls its small stochastic-label differences trivial but
+states that their cause is not established; this reception does not relabel
+them as proven Monte Carlo noise. Audit keys mean the authors' inputs at
+their actual join stage, including their own preceding transformations, before
+any checker-added normalization or correction.

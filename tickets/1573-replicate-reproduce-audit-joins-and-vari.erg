@@ -24,7 +24,8 @@ methodological/signing decisions; this child changes documentation only.
 ## Exit criteria
 
 - [ ] Reproduce guidance audits each relevant join using the authors' actual
-  keys on untouched inputs before normalization/cleaning, recording stage,
+  keys on inputs at the authors' join stage before checker normalization or
+  correction (preserving authors' preceding transformations), recording stage,
   keys, cardinality/duplication, match/unmatched diagnostics and denominators;
   preserve the original result and any separately labelled corrected run.
 - [ ] Compare constructed variable definitions and sample rules in text,
