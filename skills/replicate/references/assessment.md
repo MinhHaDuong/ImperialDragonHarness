@@ -92,8 +92,9 @@ advisor disagreement in `README.md`; `main_result` names that chosen output.
 Package feasibility cannot choose or replace it.
 
 The four completeness criteria cover the **whole paper**, including
-applicable appendix and supplementary tables, figures, and published
-robustness outputs. The preselected `main_result` limits the ACRe run
+applicable appendix and supplementary tables, figures, published robustness
+outputs, and empirical footnote results under the applicability rule below.
+The preselected `main_result` limits the ACRe run
 criteria only. For package assessment, inventory the published outputs in
 `README.md` and map each to its required files and code; carry that map into
 `reproduce/README.md` when running. Identify outputs requiring no data or
@@ -133,6 +134,40 @@ The run criteria refer to the main result. `cra_reussie` holds when every
 statistic of the main result matches from the analysis data, and
 `cra_echouee` when one does not. `crr_*` is the same check from the raw data.
 The evidence is the path of the CSV and its rows' `outcome_key`.
+
+### Empirical footnote applicability
+
+Include applicable empirical results by meaning, regardless of whether they
+appear in the body, a table/figure note, or a footnote. A footnote reporting
+empirical evidence supporting a declared target belongs with that target's
+required evidence; location alone cannot exclude it. For whole-paper coverage,
+inspect such results across the paper. For a selected target, include the
+applicable supporting footnote evidence within its declared perimeter; unrelated
+results remain in the whole-paper inventory without expanding the selected run.
+Retain the original main-result choice and canonical/selected scope distinction.
+
+Record the authoritative version, passage/location, claim-to-target link,
+required statistics or assertion, and computational applicability in the coverage
+map. Trace applicable producers and inputs; distinguish missing code/data from
+an absent numeric comparator and from an output requiring no computation.
+Merely bibliographic remarks are not empirical targets. Record the reason for
+an exclusion or unresolved applicability rather than converting an unexamined
+footnote into complete coverage.
+
+A printed numeric footnote result uses the existing comparison contract and
+article tolerance. A sourced range or inequality uses § Published assertions,
+with required endpoint comparisons retained. An unquantified assertion such as
+“results are similar when these observations are excluded” supplies no numeric
+comparator: retain its source and evidence limits, and apply the existing `probe`
+eligibility and approval rules for a check asserted without numbers or code.
+Do not invent an estimate, numeric match, assertion predicate, or automatic
+category from it. Produced estimates without exact comparators remain auxiliary;
+actual failed/blocked attempts and unresolved coverage remain visible separately.
+
+Carry these distinctions into README, preliminary notes, and the report,
+including scoped omissions and unresolved claims. This prospective rule changes
+no schema, comparison tolerance, or category derivation. Preserve old case
+records; it authorizes no automatic inventory expansion, rerun, or rescore of them.
 
 ### Faithful Stata-to-Python CRA
 
@@ -628,8 +663,9 @@ Auxiliary retention does not remove required targets from the declared
 inventory or resolve an unexamined/unavailable comparison. Apply the existing
 scope and completeness rules, leaving unresolved required comparisons visible.
 Published range/inequality evidence follows § Published assertions separately;
-auxiliary retention does not decide whether qualitative/footnote outputs belong
-in canonical inventory or settle other comparator/tolerance questions. Retain
+footnote inclusion follows § Empirical footnote applicability, independently of
+auxiliary retention. Other qualitative claims retain their existing eligibility
+and evidence boundaries; this contract settles no other comparator/tolerance question. Retain
 only estimates produced under existing authority; this contract authorizes no new model
 specification, translation eligibility, or unapproved robustness execution.
 
