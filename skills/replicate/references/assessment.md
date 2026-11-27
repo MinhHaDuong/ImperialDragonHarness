@@ -1,8 +1,10 @@
 # Assessment, manifest and output schemas
 
-Three files carry the replication's state: `assessment.json`,
-`manifest.json` and `out/*.csv`. The six-row Reproducibility Table and the
-ACRe level are always *derived* from them. Neither is entered by hand.
+The replication's scored state uses `assessment.json`, `manifest.json`, and
+comparison CSVs (`out/reproduce.csv`, `out/robustness.csv`). The six-row
+Reproducibility Table and ACRe level are derived under the rules below;
+neither is entered by hand. Separate `out/auxiliary.csv` estimates provide
+provenance, never comparison statuses or scoring inputs.
 
 ## assessment.json
 
@@ -419,7 +421,7 @@ reports. The canonical table retains whole-paper meanings; the selected table
 names its scope ID and target kind, evidence basis, exclusions, and unknowns.
 Report reference comparisons with those same qualifications.
 
-## out/*.csv
+## Comparison CSVs: out/reproduce.csv and out/robustness.csv
 
 These columns map onto replicator's `replication_results` table. Write one
 row per compared statistic. A coefficient and its SE are two rows: `t1.joint.adapt_l5` and
@@ -442,6 +444,49 @@ paper's last printed digit. The source (`analysis` or `raw`) is the
 row, matches included. The detailed statistic-comparison list in the report
 shows only discrepancies and rounds to three digits; its six-row status
 table remains complete, with evidence bases and unassessed rows visible.
+This comparison display rule does not apply to retention of auxiliary rows.
+
+## Auxiliary estimates
+
+Retain produced estimates that lack an authoritative printed numeric
+comparator in a separate `out/auxiliary.csv`, at full precision. They are not
+comparison attempts or invented matches. Use this auxiliary contract rather
+than the [comparison-column schema](#comparison-csvs-outreproducecsv-and-outrobustnesscsv):
+
+| Column | Content |
+|---|---|
+| `auxiliary_key` | stable identifier for the produced estimate/statistic |
+| `run_id` | identifier linking the row to its run log and provenance record |
+| `producer` | script path and source lines/function producing the value |
+| `spec` | exact specification identifier, resolved in the README |
+| `source_route` | executed analysis/raw route; name any other actual route explicitly |
+| `scope_id` | declared selected scope ID, or explicit whole-paper context |
+| `statistic` | coefficient, SE, p-value, or other produced quantity, with units where relevant |
+| `value` | produced value at full precision |
+
+In `reproduce/README.md`, describe the auxiliary file and bind each run/spec
+identifier to the actual producer/source version, inputs and representations,
+locked environment, execution log, and model/sample/SE choices. Record why no
+authoritative printed numeric comparator was available and the inspected
+paper/source location supporting that statement. Use separate rows for
+separate statistics or executed routes, preserving their scope provenance.
+Do not invent a published comparator or copy comparison `status` labels into
+this artifact. A blank auxiliary value cannot stand for a produced estimate.
+
+Exclude auxiliary rows from `out/reproduce.csv`, match/discrepancy counts,
+all comparison/score denominators, ACRe main-result criteria, and selected-target
+scoring. Never aggregate all `out/*.csv` indiscriminately. An absent comparator
+alone establishes neither `missing_input` nor execution failure; keep actual
+failed or blocked attempts and their reasons in the existing run logs and
+coverage/disposition records. A success-only auxiliary file cannot hide them.
+
+Auxiliary retention does not remove required targets from the declared
+inventory or resolve an unexamined/unavailable comparison. Apply the existing
+scope and completeness rules, leaving unresolved required comparisons visible.
+It decides neither whether qualitative/footnote outputs belong in canonical
+inventory nor the held comparator/tolerance questions. Retain only estimates
+produced under existing authority; this contract authorizes no new model
+specification, translation eligibility, or unsigned robustness execution.
 
 ## manifest.json
 

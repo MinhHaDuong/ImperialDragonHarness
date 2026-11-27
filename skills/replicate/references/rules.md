@@ -46,7 +46,9 @@ first four rows before the Games when their evidence permits; unknown
 coverage remains visible. The six-row table always includes Fully and
 unassessed rows. In the separate detailed statistic comparisons, show only
 the results that did not reproduce; individual matching statistics are not
-listed there.
+listed there. Estimates retained without authoritative printed numeric
+comparators are separate auxiliary evidence under `assessment.md` § Auxiliary
+estimates, outside discrepancy counts and scoring denominators.
 
 For an explicitly requested selected target, additionally show its separately
 labelled six-row table and scope ID under `assessment.md` § Selected-target
@@ -60,6 +62,12 @@ confidence interval. Put each robustness result next to the original
 estimate. If the paper prints no number (only a figure), use the reproduced
 value as the original. A check with no original to compare with is
 probably unfair or unusable: ask I4R.
+
+This is a report-display rule; stored comparison and auxiliary CSV values stay
+at full precision. A reproduced robustness baseline supplies no invented
+printed comparator for reproduction scoring. Preserve produced estimates
+without such a comparator under the separate auxiliary contract in
+`assessment.md`; it grants no new check-selection or execution authority.
 
 ## 3. Table layout
 
