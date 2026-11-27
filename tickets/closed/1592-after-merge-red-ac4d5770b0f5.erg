@@ -1,0 +1,46 @@
+%erg 0.1
+Title: After-merge red on main ac4d5770b0f5: pytest-guard
+Created: 2026-11-27
+Author: merge-gate
+Closed: autoclosed — PR #2572
+
+--- log ---
+2026-11-27T12:50Z merge-gate created
+
+2026-11-27T16:29Z codex note separate triage: original gate note identifies pytest-guard and the Zotero launch test; cause remains unestablished. Verify the named full check on this request candidate before landing.
+2026-11-27T16:29Z reviewer closed — autoclosed — PR #2572
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: ac4d5770b0f5b5a5f21709c05508f3b90ad7d8f3
+Failing checks: pytest-guard
+Last green after-merge tip: 102f8fb3a49263437bbe9dc33e42478e5fc911dc
+Merges since (first parent, newest first):
+- ac4d5770b0f5 Merge pull request #2563 from MinhHaDuong/roar1575-rulings-capture
+
+Failed tests (check, test id):
+- pytest-guard tests/test_zotero_import.py::test_zotero_is_launched_when_not_running
+
+## Exit criteria
+
+- [ ] The checks named above pass on the repairing request's candidate, or the
+      red is shown to be environmental, its cause quoted from the after-merge log.
+
+Monitor, not a criterion: the after-merge record on the tip that lands the repair.
+
+## Verification decision
+
+The original gate note on `ac4d5770b0f5b5a5f21709c05508f3b90ad7d8f3`
+retains `pytest-guard fail(exit 2)` and the failing test identifier. Its causal
+diagnostic is not available in the current after-merge log. Later green tips
+do not establish that the original failure was environmental or a code defect.
+
+Use the first exit condition: execute the declared `make check-tests` on this
+request's final closure candidate and record its actual outcome and candidate
+identity on the merge request before landing. If it fails, preserve the failure
+and investigate rather than close by inference. No product correction or
+established cause is claimed by this ticket-only verification closure.
