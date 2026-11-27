@@ -16,6 +16,8 @@ Label: deferred
 2026-11-27T16:21Z reviewer note portability correction: normalized only newly introduced draft dispatch locators to ../CNRS/projets/actifs/replicator/0010; independent resolution verified the same receiver ticket and branch/head, event timestamp and outcome unchanged; original draft commit retained, no pre-existing landed log entry or author text changed
 2026-11-27T16:25Z reviewer note receiver receipt verified: root independently read receiver0010 ticket at local receive-0010-imagine c592eb75aa15ff13474f6214e85f7222cce4422e; all four Imagine checks and planning-only needs-human disposition recorded, no receiver-main integration, scientific pickup, approved plan, rehearsal or batch freeze; dependency remains parked; source tickets/reviews/t1591/handoff-evidence.md
 
+2026-11-27T21:41Z reviewer note RAID1580 generic report contracts delivered1594-1597 in PR2575-2578; baseline277012304ca6869ddaddfbcf25c9270e3283a3fc fullafterPASS and distinct original24-row integration CLEAN. W15/W17 source gap resolved with bounded historical evidence; no rehearsal/freeze/plan approval inferred. Completion payload reviewed at tickets/reviews/t1580/receiver-completion.md; actual receiver filing waits explicit cross-project branch authorization after auto-review rejection.1589 stays open/deferred on0010.
+
 --- body ---
 ## Context and authority
 

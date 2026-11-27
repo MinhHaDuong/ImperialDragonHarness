@@ -7,8 +7,8 @@ estimates nor scientific findings. No scientific scripts or frozen reports chang
 
 ## Source and authority
 
-- [1597 exits and accepted plan](../../tickets/1597-replicate-independent-recomputation-evid.erg).
-- [1580 A6 source, receiving ledger, and standing boundaries](../../tickets/1580-replicate-author-review-of-the-two-pilot.erg).
+- [1597 exits and accepted plan](../../tickets/closed/1597-replicate-independent-recomputation-evid.erg).
+- [1580 A6 source, receiving ledger, and standing boundaries](../../tickets/closed/1580-replicate-author-review-of-the-two-pilot.erg).
 - [Recovered original A6, author message and dispatch qualification](../../tickets/reviews/t1580/recovered-source.md#additional-original-source-constraints): the author requests useful recomputation despite absent code; the accepted dispatch supplies the separate label/count. No scoring promotion is inferred.
 - [Distinct feasibility](../../tickets/reviews/t1580/feasibility.md): prospective sidecar, production/comparison separation, and unchanged canonical assessment.
 
