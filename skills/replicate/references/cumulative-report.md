@@ -3,7 +3,8 @@
 This procedure runs after every stage, including a scope or approval stop.
 It adds no command or publication authority. Read all written sections, compare
 claims with current evidence, and retain contradiction-driven revisions before
-building. Reuse valid computations; a coherence reread is still required.
+building. Apply `report-style.md` for captions, checklist additions, robustness
+counts, and truthful signature/disclosure. Reuse valid computations; a coherence reread is still required.
 
 1. Choose the I4R template from `templates/INDEX.md`, using the
    context the folder already holds: the template I4R named in the assignment

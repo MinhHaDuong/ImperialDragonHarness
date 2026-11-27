@@ -54,6 +54,21 @@ estimates are authorized by this source appraisal.
 
 ## Map the design with a DAG
 
+Open the causal Identification section with the graph in the report body,
+captioned with the exact claim and estimand (exposure, outcome, population,
+comparison, and horizon), followed by a threats table. Use stable labels for
+both and refer to them throughout the argument. The source-based prose
+supplies the explanation behind the table rather than hiding threats in prose.
+
+| Path or identifying assumption | Status | Source-anchored evidence and limits | What would rule out the threat |
+|---|---|---|---|
+| Name the graph path or absent-arrow assumption | Use the argued findings below | Distinguish author, critic, and reviewer inference; retain unknowns | Specify discriminating evidence and assumptions; if untestable, say so |
+
+Cover every material threat and tie it to the declared claim. A reported test
+alone cannot rule a threat out. Distinguish existing evidence from a proposed
+new check requiring challenge approval. This presentation retains the verdict
+scale below and the separate noncausal scientific-appraisal route.
+
 A directed acyclic graph (DAG) maps the assumed causal relationships. An
 arrow A → B says that A can change B; a missing arrow excludes a direct
 causal effect in this model, while indirect paths may remain.

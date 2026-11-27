@@ -275,6 +275,12 @@ observed failed run.
 
 ## The six-row table, derived
 
+For display-only category hesitation, use `?` in candidate cells with reasons
+under `report-style.md`. This asserts no category and changes no schema.
+Unexamined coverage and missing execution instead retain explicit unassessed
+status and reasons, with category cells unmarked; a question mark never
+substitutes for those missing-evidence states.
+
 The four provision rows use whole-paper package coverage; the two execution
 rows use whole-paper reproduction coverage. Each row comes from the criteria,
 the output inventory, and `out/reproduce.csv`. The grid has
