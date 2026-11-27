@@ -1,0 +1,60 @@
+%erg 0.1
+Title: /replicate: findings from the blind full-chain pilot (replicator 0003)
+Created: 2026-11-27
+Author: claude
+
+--- log ---
+2026-11-27T01:51Z claude created
+2026-11-27T01:52Z reviewer filed from replicator 0003 (df890ef) at author request; receiving Imagine pending
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0003 (branch t0003-full-chain, commit df890ef) at the
+author's request. Integration-review finding for tracker 1552. Related:
+1570 (probe and sign-off modes), 1569 (identification review), 1568
+(independent confirmation). Request for receiving Imagine, not an
+implementation authorization.
+
+## Evidence
+
+A blind full-chain pilot (assess, reproduce, probe, report) ran unattended
+on two I4R papers with R packages, Weschle (2024, AJPS) and Atanasov et
+al. (2024, EJ). The skill ran as installed at harness 04d8cf2 and 2360e75.
+The robustness plan was signed by a two-seat panel (gpt-6-astra and
+claude-fable-5-2) under an author ruling. Each folder was frozen and
+audited for blindness, then compared with the I4R report on criteria
+fixed before any fetch. Protocol, results and comparisons:
+`~/CNRS/projets/actifs/replicator/replications/chain-pilot-0003/` (PROTOCOL.md, RESULTS.md,
+*-comparison.md/json, *-blindness-audit.md). Paper folders:
+`~/CNRS/projets/actifs/replicator/replications/weschle2024politicians/`,
+`~/CNRS/projets/actifs/replicator/replications/atanasov2024taste/` (each has DEVIATIONS.md).
+
+Both main results reproduce to the printed digit. All pilot pass criteria
+are met; Atanasov's "no miss a rule should have caught" criterion is
+borderline. No reproducibility-table disagreement with I4R is attributed
+to the skill. These are two papers, not an accuracy estimate.
+
+## Findings (as numbered in RESULTS.md)
+
+1. Merge audit: check each merge's match rate on the code's own keys before any cleaning, and trace missing values in constructed variables.
+2. Construction sweep: compare each variable definition and sample rule in the text and notes with the code.
+3. Count a result asserted without numbers or code as not "already in the paper", both in `probe` and in the panel prompt.
+4. Main-result selection has no rule; Weschle's executor had to set one.
+5. Whether footnote results count as outputs is open, and the ACRe level depends on it (Atanasov: L5 or `non_etabli`).
+6. Environment: the project's R image cannot build 2022–23 packages. Both executors built a digest-pinned image with the authors' R version.
+7. The I4R General template prints 2 decimals; rule 2 requires 3.
+8. An executor must not drop a signed check. Weschle's executor dropped F-P3 when a seat's condition could not be met.
+9. A final report must never leave a table row blank. Weschle's raw-data row was left empty.
+10. Monte Carlo noise and typos in quoted numbers should not alone make "reproducible from analysis data" Partially.
+11. Consent for a cross-family reviewer of the identification review is unclear. Atanasov's executor added an identification section unprompted and skipped the cross-family review.
+12. Panel sign-off worked mechanically on both papers (two rounds, no unreachable seat). Its rejections cost coverage against I4R in both papers (finding 3).
+
+## Exit criteria
+
+- [ ] Receiving Imagine records facts, duplicates (1568-1570), ownership,
+  standing rulings, and splits the findings into child tickets where they
+  touch different verbs.
+- [ ] Each accepted finding names the rule it changes in SKILL.md or a
+  reference.
+- [ ] Findings 3 and 12 are ruled together with 1570's sign-off modes.
