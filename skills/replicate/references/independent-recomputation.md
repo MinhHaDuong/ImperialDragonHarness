@@ -1,7 +1,7 @@
 # Independent recomputation of published statistics
 
 This prospective evidence route implements A6 in
-[ticket 1580](../../../tickets/1580-replicate-author-review-of-the-two-pilot.erg),
+[ticket 1580](../../../tickets/closed/1580-replicate-author-review-of-the-two-pilot.erg),
 with the original-source qualification in
 [the recovered crosswalk](../../../tickets/reviews/t1580/recovered-source.md#additional-original-source-constraints).
 When author code for a published statistic is missing, an independently written

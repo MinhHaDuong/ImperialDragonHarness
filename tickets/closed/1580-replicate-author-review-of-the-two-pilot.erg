@@ -2,12 +2,14 @@
 Title: /replicate: author review of the two pilot reports — report style, discrepancy qualification, identification and robustness scope (replicator 0003)
 Created: 2026-11-27
 Author: reviewer
+Closed: closed at roar
 
 --- log ---
 2026-11-27T11:30Z reviewer created
 2026-11-27T11:30Z reviewer filed from replicator (post-0003 report review) at author request; receiving Imagine pending; report-style rows wanted before the Toulouse Games 2026-12-08
 
 2026-11-27T12:39Z receiver received complete source dispatch; acceptance, overlap, authority, advisor relay, decomposition and coverage limitations recorded below; no implementation or frozen artifacts changed
+2026-11-27T21:41Z reviewer closed — closed at roar
 
 --- body ---
 ## Context and authority
@@ -58,9 +60,9 @@ remote is a replicator decision.
 
 ## Exit criteria
 
-- [ ] Receiving Imagine records facts, overlap with 1572-1579, ownership and
+- [x] Receiving Imagine records facts, overlap with 1572-1579, ownership and
   standing rulings, and disposes of each row above.
-- [ ] Report-style rows are implemented or explicitly deferred before
+- [x] Report-style rows are implemented or explicitly deferred before
   2026-12-08.
 
 ## Receiving Imagine — harness, 2026-11-27
@@ -151,3 +153,32 @@ W6=article/report table ambiguity; initial dispatch reversed their numbers,
 while1594 preserves both meanings. W11 check counts originated as an assistant
 addition; current explicit raid authorizes the accepted ticket requirement.
 Original source body and receiving ledger above are retained as history.
+
+
+## Final integration disposition — RAID1580
+
+All four separately reviewed children are closed and merged. Actual fresh
+original-row integration is CLEAN on all24 bounded dispositions, with full
+main after-merge PASS at277012304ca6869ddaddfbcf25c9270e3283a3fc. Evidence:
+tickets/reviews/t1580/{coverage,integration,progress}.md and recovered-source.md.
+This disposition supersedes historical pending/source-gap statements above,
+without rewriting the original source, receipt ledger, or append-only logs.
+W15's historical timing/current coverage is verified; W17 has bounded original
+private-upstream creation/push evidence, no public-access or complete-audit claim.
+W4's name/provenance limitation remains explicit; W2/W6 and W11 source origins
+remain preserved. No remark was silently dropped or scope/tolerance loosened.
+
+## Children
+
+| Child | State | Merge | Exact reviewed/landed head |
+|---|---|---|---|
+|1594 report style/disclosure/A3|Closed|PR2575|60dad185c9368f75492492fdd196eab1489386a3|
+|1595 discrepancies|Closed|PR2576|94412beefe9cbe819dd3ef8145a917a1e5c1bd6b|
+|1596 acquisition/A7|Closed|PR2577|4f817f3b3a34382ffd4107fd4a8f1bdccaecc8b6|
+|1597 independent A6 evidence|Closed|PR2578|fe0272d108ab29d4b24c4ae8daac3b040906a7f3|
+
+Parent closes on this actual integrated union, not on the last-child event.
+This is prospective generic-contract delivery only. Frozen reports, estimates,
+selected papers and batch versions remain untouched.1589 and receiver0010 keep
+their actual authorized-rehearsal/freeze/readback criteria. Separate1598 reception
+(PR2580, source2579) grants no implementation;1593 receiving remains pending.
