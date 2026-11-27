@@ -14,6 +14,7 @@ Label: deferred
 
 2026-11-27T16:17Z harness1591 parked on receiver0010 (../CNRS/projets/actifs/replicator/0010), pushed handoff-harness1591 head7a7d6aea3e89ae185db3f0e68048beac7f2dc974. Need actual five compiled stage reports/coherence/reuse/note/scope and valid plan approval,1580 dispositions, batch skill freeze/disclosures and integration readback before closure; filing and notification are not delivery. Exact payload and ownership evidence: tickets/reviews/t1591/handoff-evidence.md
 2026-11-27T16:21Z reviewer note portability correction: normalized only newly introduced draft dispatch locators to ../CNRS/projets/actifs/replicator/0010; independent resolution verified the same receiver ticket and branch/head, event timestamp and outcome unchanged; original draft commit retained, no pre-existing landed log entry or author text changed
+2026-11-27T16:25Z reviewer note receiver receipt verified: root independently read receiver0010 ticket at local receive-0010-imagine c592eb75aa15ff13474f6214e85f7222cce4422e; all four Imagine checks and planning-only needs-human disposition recorded, no receiver-main integration, scientific pickup, approved plan, rehearsal or batch freeze; dependency remains parked; source tickets/reviews/t1591/handoff-evidence.md
 
 --- body ---
 ## Context and authority

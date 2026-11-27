@@ -85,8 +85,9 @@ not this worker's direct observation. Payload named0010/path/branch/head and
 landed skill lineage, requested reception/receiver Imagine only, and explicitly
 granted no science, old raid resumption, execution/plan approval, pipeline,
 freeze, or outward authority. No duplicate or further message was sent.
-Transport delivery is verified by parent; substantive receiver acceptance,
-scientific pickup, rehearsal, and freeze remain unverified. Parent did not read
+At that notification readback, parent verified transport delivery; substantive
+receiver acceptance, scientific pickup, rehearsal, and freeze were unverified.
+The later owner receipt/Imagine is recorded below and grants no science authority. Parent did not read
 scientific message contents. No live owner was inferred from the earlier
 `notLoaded` metadata.
 
@@ -124,3 +125,24 @@ fast tier, and diff hygiene. Skipped: formal gaze and verify-gate under the
 bookkeeping route; no scoped/full scientific gate or receiver acceptance pass
 is claimed. Harness worker tree/branch will be handed by exact path to lead
 for landing and roar; reporter performs neither.
+
+## Completed receiver receipt before harness landing
+
+Parent `/root` subsequently received and independently read back only the
+receiver0010 ticket and branch plumbing. Local receiver branch
+`receive-0010-imagine` resolves to
+`c592eb75aa15ff13474f6214e85f7222cce4422e`. Reading that exact commit's
+`tickets/0010-rehearse-five-cumulative-stages-on-a-fre.erg` confirmed all four
+receiver Imagine checks and disposition “received/relevant for owner planning”,
+with `needs-human`. The exact sender request and its append-only timestamp
+correction remain preserved. This is verified owner receipt/Imagine for planning.
+
+The receiver receipt branch is local only: no push or merge, and no integration
+to receiver main was reported. No paper selection or role-exposure audit,
+scientific execution, approved plan, rehearsal, batch freeze, or old-raid
+resumption was performed. W15/W17 and plan authority remain unresolved. Parent
+read no scientific outputs and made no receiver mutation. Scientific pickup,
+rehearsal/freeze and the1589 integration result therefore remain absent, with
+the existing dependency parked. No second notification or author question was
+sent. This completed receipt advances the earlier notification-only status; it
+does not turn dispatch or planning into scientific delivery.
