@@ -34,7 +34,7 @@ establish independent performance on fresh papers or cohorts. Freeze the
 rules, selection procedure, targets, and comparison protocol before evaluating
 a fresh validation set. Exclude papers and development cohorts that informed
 those rules, and disclose prior exposure and any post-hoc changes. Keep case
-answers from executors, helpers, and plan signers until outputs are frozen.
+answers from executors, helpers, and plan approvers until outputs are frozen.
 Unknown or newly discovered exposure limits the validation claim; preserve the
 results as disclosed reproduction/development evidence instead.
 

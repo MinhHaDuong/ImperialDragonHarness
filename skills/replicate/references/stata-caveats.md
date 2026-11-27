@@ -6,7 +6,7 @@ Faithful Stata-to-Python execution can establish canonical CRA under
 [assessment.md](assessment.md#faithful-stata-to-python-cra), with model, sample,
 standard errors, and all required results verified. Disclose the actual method
 and native execution status separately; native execution is not a prerequisite.
-Preserve the skill's existing scope, comparison, CRR, and human-signing boundaries.
+Preserve the skill's existing scope, comparison, CRR, and [plan-approval boundaries](probe-approval.md).
 
 ## Evidence and version boundary
 

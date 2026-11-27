@@ -1,8 +1,8 @@
 # Design-specific candidate checks
 
 Use after inventorying the paper, appendix, and code. These are candidates for
-judgment, not required execution or permission to bypass the person-written
-signature. Choose only fair additions and explain their applicability in the
+judgment, not required execution or permission to bypass
+[plan approval](probe-approval.md). Choose only fair additions and explain their applicability in the
 paper's plan. Keep case variables, tuned thresholds, and unit choices there.
 The binding scope and fairness rules remain in `rules.md`, especially rules
 4, 5, and 7. Identification questions also enter through `identification-review.md`.
@@ -81,5 +81,5 @@ was inspected and no scientific computation was run for this reference.
 Sources were inspected on 2026-11-26. The Prasad et al. publisher full-text
 route returned an access error; its indexed primary-source §4.5/table 6 text
 was inspected. Its recommendations are candidates here, subject to the skill's
-scope and person-signature rules. Record a source gap in the plan if the
+scope and plan-approval rules. Record a source gap in the plan if the
 selected check requires more specific support than these passages supply.

@@ -89,8 +89,9 @@ say exactly what changed.
 The point is not to break the paper; it is to do good science. Do not hunt
 for the specifications that remove significance or flip a sign. A report
 that finds everything robust is as valuable as one that finds the results
-fragile, as long as the checks are fair. This is why a person, not an
-agent, signs the robustness plan.
+fragile, as long as the checks are fair. Plan approval follows
+[the author or bounded campaign delegation contract](probe-approval.md);
+selection by an executor alone supplies no approval.
 
 ## 5. Stay in scope
 
@@ -110,7 +111,7 @@ the same table.
 Checks the paper does not already run belong in the menu. A robustness check
 asserted in the paper without numbers or code is eligible for the plan and
 cannot be rejected as a duplicate on that ground. Propose it when it bears on
-the main result; the signer may reject it for another explicit reason.
+the main result; the authorized approver may reject it for another explicit reason.
 Proposal does not authorize execution. Examples:
 
 - undisclosed deviations from a pre-analysis plan;

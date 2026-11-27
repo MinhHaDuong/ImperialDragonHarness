@@ -70,8 +70,8 @@ widen its printed-digit comparison tolerance.
 Log anomalies for the existing `probe` candidate inventory, with evidence and
 unresolved interpretations. Candidate corrections that change a variable,
 sample, or other specification follow the existing author-ruling and
-person-signed plan requirements before execution; the audit grants no new
-specification or signing authority.
+[plan-approval requirements](probe-approval.md) before execution; the audit grants no new
+specification or approval authority.
 
 Report completed audits, unexamined joins/constructions, unavailable evidence,
 and unresolved anomalies separately in `reproduce/README.md` and the report.

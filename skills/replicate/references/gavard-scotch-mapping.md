@@ -42,7 +42,7 @@ historical findings in this mapping.
 | Sector tables A2-A3 not producible (no sector inputs) | `assess`, then `reproduce` | partial whole-paper analysis-data coverage, never `donnees_analyse_completes`; step 6 records `status=missing_input`. If other outputs match, the whole-paper analysis execution row is Partially; main-result `cra_*` is assessed separately |
 | Rerun the authors' own extra robustness models (TWFE, GMM from FurtherRobustness.do); three rank failures not estimated | `reproduce` | the authors' published checks are reproduction targets, with `spec=original` |
 | Conditional annual-rate CPI correction as a sensitivity | `probe` | one check in `robustness/plan.md`, compared with the reproduced original |
-| Adaptation-minus-mitigation contrast, p = 0.202 | `probe` | a check on the main model, if the team signs it |
+| Adaptation-minus-mitigation contrast, p = 0.202 | `probe` | a check on the main model, if the plan receives approval |
 | Questions for the authors (CRS extraction, CPI series, full-precision Stata output, GMM logs, A2-A3 inputs) | `report` | step 3: listed, not sent |
 | Request to the authors for the final package, sent 15 September on the author's instruction | none | outward act: the author's call, outside every verb |
 | Causal interpretation: allocation, good and bad controls, alternative DAGs, scale against orientation | none | a scholarly comment, not robustness. It is an extension (rule 5), allowed in the report as an extra at most |
@@ -53,5 +53,5 @@ the package did not match the published version and stopped at aggregate
 data. Second, the step that took longest, porting the estimator, sits
 inside `reproduce` as a record of the translated work, subject to the current
 translation and scoring boundaries. Third, the September work ran no signed robustness plan:
-the CPI sensitivity was chosen by the analyst. The skill would require a
-signature before running it.
+the CPI sensitivity was chosen by the analyst. The current skill would require
+[plan approval](probe-approval.md) before running it.
