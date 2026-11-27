@@ -6,6 +6,8 @@ Author: claude
 --- log ---
 2026-11-27T01:51Z claude created
 2026-11-27T01:52Z reviewer filed from replicator 0003 (df890ef) at author request; receiving Imagine pending
+2026-11-27T08:15Z reviewer author ruling 2026-11-27 (replicator session) on finding 3 only: a check the paper asserts without numbers or code is not 'already in the paper'; it is eligible for the plan and may not be rejected as a duplicate on that ground; not mandatory, the panel or signer may still reject it for another stated reason; probe must propose it when it bears on the main result; the same sentence goes in probe and in the panel prompt template. Findings 12 and 1570 sign-off modes are not ruled by this
+2026-11-27T08:15Z reviewer author-approved placement for findings 1-2: one binding line per audit in SKILL.md reproduce pointing to a reference; the join checklist (keys as coded, match rate, unmatched-key sample, encoding/quotes/whitespace/case, many-to-many, duplicate keys, missingness in constructed variables) and the text-vs-code table format in a reference (assessment.md or a new data-audit.md); paper cases (Atanasov quotes, 4-vs-2 ratings) stay in replicator, not in the skill. Also approved as a proposal, to check against canonical ACRe meanings before adoption: an output whose joins were not audited is not scored Fully
 
 --- body ---
 ## Context and authority
