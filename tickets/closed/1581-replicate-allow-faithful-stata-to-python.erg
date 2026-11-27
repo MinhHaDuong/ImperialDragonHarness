@@ -2,9 +2,11 @@
 Title: Replicate allow faithful Stata-to-Python canonical CRA
 Created: 2026-11-27
 Author: reviewer
+Closed: Implemented B3 in PR2558; semantic adherence and gaze complete; caller gate/merge pending
 
 --- log ---
 2026-11-27T11:38Z reviewer created
+2026-11-27T12:01Z reviewer closed — Implemented B3 in PR2558; semantic adherence and gaze complete; caller gate/merge pending
 
 --- body ---
 
@@ -29,9 +31,9 @@ promotion, CRR eligibility extension, or other scoring/signing change.
 
 ## Exit criteria
 
-- [ ] Faithful Stata-to-Python canonical CRA eligibility and evidence conditions reflect the recorded B3 ruling, with actual method/native status disclosed.
-- [ ] Existing main-result versus selected-target/whole-paper scope, required comparisons, tolerance, calibration/exposure, and unresolved uncertainty remain intact.
-- [ ] Parallel forbid/held-reference statements are reconciled, without a native-run prerequisite, automatic legacy rescore, or unrelated eligibility/signing extension.
+- [x] Faithful Stata-to-Python canonical CRA eligibility and evidence conditions reflect the recorded B3 ruling, with actual method/native status disclosed.
+- [x] Existing main-result versus selected-target/whole-paper scope, required comparisons, tolerance, calibration/exposure, and unresolved uncertainty remain intact.
+- [x] Parallel forbid/held-reference statements are reconciled, without a native-run prerequisite, automatic legacy rescore, or unrelated eligibility/signing extension.
 
 ## Plan and first verification
 
@@ -76,3 +78,16 @@ Combined Blind-Spot and advisor outcomes are pending before phase completion.
 Combined Imagine closes with BLIND-SPOT: CLEAN; distinct report at
 `tickets/reviews/rulings1575/blind-spot.md`. No original exit criterion dropped,
 changed in intent, or added by the review. Sequential plans/feasibility accepted.
+
+## Verification completed
+
+Implemented in PR2558, substantive head67146154627b61aa87b5142e15c15c861a91d3e7.
+Scenario evidence: `design/reviews/t1581/scenario-audit.md`. All three criteria
+passed distinct semantic adherence (native subscription Codex, observed
+gpt-6.1-sol/OpenAI/medium, no findings). Gaze REVIEWED, plan check PASS,
+review `rv-20261127-pr-2558-1f60`, answer
+`20261127T120010368Z-padme-66673c48`, same substantive head.
+`make lint`:191 passed; `make check-fast`:1966 passed. Touched selector
+selected:none, fallback:none, result:skipped(no source or test file changed);
+no scoped gate used and no skipped selector is counted as a test pass.
+Caller retains merge/gate and orchestrator attribution responsibilities.
