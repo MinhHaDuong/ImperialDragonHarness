@@ -1,9 +1,12 @@
 # Stata transcription caveats
 
 Use this reference when the caller has authorized translation of a Stata
-package. Missing access to a Stata licence supplies neither that authorization
-nor a ruling that translated execution establishes canonical CRA. Preserve the
-skill's existing scope, scoring, and human-signing boundaries.
+package. Missing access to a Stata licence supplies no translation authorization.
+Faithful Stata-to-Python execution can establish canonical CRA under
+[assessment.md](assessment.md#faithful-stata-to-python-cra), with model, sample,
+standard errors, and all required results verified. Disclose the actual method
+and native execution status separately; native execution is not a prerequisite.
+Preserve the skill's existing scope, comparison, CRR, and human-signing boundaries.
 
 ## Evidence and version boundary
 

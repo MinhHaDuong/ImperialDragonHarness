@@ -220,8 +220,12 @@ Before choosing implicit implementation conventions by matching paper outputs,
 apply the calibration freeze and disclosure in `references/validation.md`.
 When the caller has authorized translation of a Stata package, consult
 `references/stata-caveats.md` for version-qualified storage, expression, and
-estimator evidence. An unavailable licence alone authorizes no translation;
-this reference supplies no canonical CRA eligibility or scoring ruling.
+estimator evidence. An unavailable licence alone authorizes no translation.
+A faithful Stata-to-Python reproduction can establish canonical CRA under
+[the evidence contract](references/assessment.md#faithful-stata-to-python-cra);
+native Stata execution is not a prerequisite. Disclose the actual method and
+native execution status separately. This eligibility changes neither the
+required scope and comparisons nor CRR eligibility.
 
 1. Run `fetch.sh`. Rebuild the authors' environment and lock it: interpreter,
    packages and versions go into `manifest.json` `environment`.
@@ -243,7 +247,10 @@ this reference supplies no canonical CRA eligibility or scoring ruling.
    `reproduce/README.md`, under `references/assessment.md` § Auxiliary estimates.
    Auxiliary rows supply no comparison status or scoring evidence.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
-   `crr_*`, from the main result's rows, with the CSV path as evidence. Then
+   `crr_*`, from the main result's rows, with the CSV path as evidence. For a
+   faithful Stata-to-Python CRA, verify the model, sample, standard errors, and
+   every required main-result comparison under the assessment evidence contract.
+   Then
    re-derive the level and the table: ACRe run criteria use the main result;
    the six-row table uses whole-paper coverage (`references/assessment.md`).
    Update any selected-target execution rows separately, using only its declared

@@ -21,7 +21,10 @@ before another evaluation. An output used to choose or revise a convention is
 no longer unused for that choice. If choices or targets were fixed only after
 seeing results, disclose that timing; a later freeze cannot make it prospective.
 These records use the existing printed-digit tolerance and scope declarations.
-They do not decide held translation/scoring questions or authorize new probes.
+For faithful Stata-to-Python canonical CRA eligibility, also apply
+[assessment.md](assessment.md#faithful-stata-to-python-cra). Calibration and
+unused-target records alone do not verify model, sample, or standard-error
+equivalence. These records change no comparison rule and authorize no new probes.
 
 ## Fresh-paper validation
 
