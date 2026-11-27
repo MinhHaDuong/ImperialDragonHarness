@@ -1,0 +1,139 @@
+%erg 0.1
+Title: /replicate: findings from the blind full-chain pilot (replicator 0003)
+Created: 2026-11-27
+Author: claude
+Label: needs-human
+
+--- log ---
+2026-11-27T01:51Z claude created
+2026-11-27T01:52Z reviewer filed from replicator 0003 (df890ef) at author request; receiving Imagine pending
+2026-11-27T08:13Z reviewer receiving Imagine accepted findings1/2 only in child1573; authority decisions held; four premise checks and every finding disposition recorded
+2026-11-27T08:16Z reviewer source qualification: unticked category columns with explicit status note may comply; stochastic-label discrepancy cause unestablished; no new scoring exception
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0003 (branch t0003-full-chain, commit df890ef) at the
+author's request. Integration-review finding for tracker 1552. Related:
+1570 (probe and sign-off modes), 1569 (identification review), 1568
+(independent confirmation). Request for receiving Imagine, not an
+implementation authorization.
+
+## Evidence
+
+A blind full-chain pilot (assess, reproduce, probe, report) ran unattended
+on two I4R papers with R packages, Weschle (2024, AJPS) and Atanasov et
+al. (2024, EJ). The skill ran as installed at harness 04d8cf2 and 2360e75.
+The robustness plan was signed by a two-seat panel (gpt-6-astra and
+claude-fable-5-2) under an author ruling. Each folder was frozen and
+audited for blindness, then compared with the I4R report on criteria
+fixed before any fetch. Protocol, results and comparisons:
+`~/CNRS/projets/actifs/replicator/replications/chain-pilot-0003/` (PROTOCOL.md, RESULTS.md,
+*-comparison.md/json, *-blindness-audit.md). Paper folders:
+`~/CNRS/projets/actifs/replicator/replications/weschle2024politicians/`,
+`~/CNRS/projets/actifs/replicator/replications/atanasov2024taste/` (each has DEVIATIONS.md).
+
+Both main results reproduce to the printed digit. All pilot pass criteria
+are met; Atanasov's "no miss a rule should have caught" criterion is
+borderline. No reproducibility-table disagreement with I4R is attributed
+to the skill. These are two papers, not an accuracy estimate.
+
+## Findings (as numbered in RESULTS.md)
+
+1. Merge audit: check each merge's match rate on the code's own keys before any cleaning, and trace missing values in constructed variables.
+2. Construction sweep: compare each variable definition and sample rule in the text and notes with the code.
+3. Count a result asserted without numbers or code as not "already in the paper", both in `probe` and in the panel prompt.
+4. Main-result selection has no rule; Weschle's executor had to set one.
+5. Whether footnote results count as outputs is open, and the ACRe level depends on it (Atanasov: L5 or `non_etabli`).
+6. Environment: the project's R image cannot build 2022–23 packages. Both executors built a digest-pinned image with the authors' R version.
+7. The I4R General template prints 2 decimals; rule 2 requires 3.
+8. An executor must not drop a signed check. Weschle's executor dropped F-P3 when a seat's condition could not be met.
+9. A final report must never leave a table row blank. Weschle's raw-data row was left empty.
+10. Monte Carlo noise and typos in quoted numbers should not alone make "reproducible from analysis data" Partially.
+11. Consent for a cross-family reviewer of the identification review is unclear. Atanasov's executor added an identification section unprompted and skipped the cross-family review.
+12. Panel sign-off worked mechanically on both papers (two rounds, no unreachable seat). Its rejections cost coverage against I4R in both papers (finding 3).
+
+## Exit criteria
+
+- [x] Receiving Imagine records facts, duplicates (1568-1570), ownership,
+  standing rulings, and splits the findings into child tickets where they
+  touch different verbs.
+- [x] Each accepted finding names the rule it changes in SKILL.md or a
+  reference.
+- [ ] Findings 3 and 12 are ruled together with 1570's sign-off modes.
+
+## Receiving Imagine (2026-11-27)
+
+Disposition: accept findings1/2 only for documentation implementation in
+child1573. Other findings are held for author decisions or already covered,
+as the table records. The author's instruction authorizes a raid on accepted
+scope; the pilot-specific panel signature remains a deviation, not general
+authority. This tracker stays open.
+
+1. **Facts against framing.** Read RESULTS.md, PROTOCOL.md, both comparison
+   reports, and the relevant DEVIATIONS sections at replicator df890ef. They
+   report two frozen case runs and post-freeze comparisons, not an accuracy
+   estimate or an independently established general benefit from panel signing.
+   Atanasov's comparison records missed merge/construction problems and a
+   borderline pass assessment. This reception did not rerun estimates, verify
+   every freeze hash, or independently certify the blindness audits.
+2. **Duplicates and overlap.** Read current SKILL.md, assessment.md and rules.md
+   after1568/1569/1571. Current probe already records anomalies as candidates,
+   every planned disposition, and renewed signature for amendments. Report
+   already prints all six rows with explicit unresolved statuses, and rule2
+   already requires three digits. Rebuild/lock the authors' environment is
+   already required. The audit of joins and construction definitions remains
+   an operational gap; it is the sole accepted implementation child.
+3. **Ownership and placement.** Harness owns generic reproduction audit
+   guidance under SKILL.md reproduce and its evidence requirements. Replicator
+   owns numerical reruns, paper-specific corrections, container images and
+   report repairs. Keep package files immutable. Audit the authors' actual
+   keys before normalization; corrections remain separate and labelled. A
+   text/code discrepancy enters an anomaly ledger, not an automatic coding
+   error: the Atanasov Table3 note conflicts with otherwise agreeing text/code.
+4. **Standing rulings and fit.** Preserve person-written signatures, the
+   printed-digit comparison tolerance, canonical ACRe/whole-paper meanings,
+   author control over robustness specifications, and route's consent rules.
+   Different-family review is sought with authorized routes and unavailable
+   perspectives disclosed; no implicit paid spending is granted. The pilot
+   report is now available for1570, but general signing authority still needs
+   an author ruling. Two cases cannot settle that ruling or rescore old runs.
+
+| Finding | Receiving disposition | Rule or owner |
+|---|---|---|
+| 1 Join audit | Accepted in1573, untouched keys/cardinality/unmatchedness before cleaning; denominators and stage explicit | SKILL.md reproduce, original-analysis/raw execution evidence |
+| 2 Construction sweep | Accepted in1573, compare definitions/sample rules across text, notes, code and trace constructed missingness; preserve contradictions | SKILL.md reproduce, anomaly evidence before any correction |
+| 3 Unsupported asserted check | Held together with12 and1570; distinguish a published assertion from a verifiable already-run check without silently changing scope or plan eligibility | Author ruling on probe/signing policy |
+| 4 Main-result choice | Held: current rule requires original-paper choice before execution and a cohort-wide rule, but does not fix that cohort rule | Author methodological choice; assess step1 |
+| 5 Footnote applicability | Held: form alone should not erase an output, but applicability affects canonical completeness/level; no silent expansion or rescore | Author scope/assessment ruling |
+| 6 R image | Existing reproduce step1 already rebuilds/locks authors' environment; concrete image/build repairs stay replicator-owned | Replicator environment; no new harness image or default |
+| 7 Decimal template | Existing rule2/report precision governs; illustrative template formatting cannot override it | Report execution compliance, not vendor-template mutation |
+| 8 Dropped signed check | Already covered by1571's complete disposition ledger and renewed signature; an unmet condition is a block with evidence, not silent omission | Probe steps3/5; paper-folder repair |
+| 9 Blank table row | Weschle comparator reports unticked columns with a status note, which can comply with fixed-template rules; explicit not-yet-assessed text/reason remains required, no provisional tick | Report execution compliance; rules1/assessment table |
+| 10 Noise/typo classification | Held: source does not establish the cause of small stochastic-label differences; proposed exceptions change comparison/categories. Preserve misses and distinguish diagnosed typos from unisolated causes | Author scoring/tolerance decision |
+| 11 Cross-family consent | Existing route consent and seek/disclose rules apply; pilot panel consent is not generic spend consent | Route/author authorization, no silent consent expansion |
+| 12 Panel sign-off | Mechanical feasibility reported in two cases, not general authorization or quality proof; held with3 and1570 | Author signing-mode decision |
+
+## Children
+
+| Child | Project | Accepted deliverable |
+|---|---|---|
+| 1573 | harness | Generic reproduce audit of joins, constructions, sample rules, and missingness; no scoring/signature change |
+
+All original exit criteria remain. Receiving and accepted-rule mapping are
+complete; findings3/12 still await the joint1570 author ruling. Other held
+methodological decisions remain visible above. Closing1573 cannot close1572
+or1552.
+
+Blind-Spot CLEAN on this split, with audit bounds retained: original keys
+before normalization and contradictions as anomalies rather than automatic
+errors. Requested Sol6.1 medium, native same-family review; observed identity
+not independently exposed. No source-project writes or scientific reruns.
+
+Source qualification after detailed comparison read: a category column left
+unticked alongside an explicit status note is not an omitted table row. The
+Weschle comparison calls its small stochastic-label differences trivial but
+states that their cause is not established; this reception does not relabel
+them as proven Monte Carlo noise. Audit keys mean the authors' inputs at
+their actual join stage, including their own preceding transformations, before
+any checker-added normalization or correction.

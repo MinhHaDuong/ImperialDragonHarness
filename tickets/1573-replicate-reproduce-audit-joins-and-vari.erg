@@ -1,0 +1,52 @@
+%erg 0.1
+Title: Replicate reproduce audit joins and variable constructions
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T08:12Z reviewer created
+2026-11-27T08:13Z reviewer Plan: bounded reproduce audit documentation, inherited accepted1572 premises and Blind-Spot bounds; feasibility PASS, existing reproduction/anomaly/probe contracts available
+
+--- body ---
+
+## Context and authority
+
+Implementation child of1572's accepted findings1/2. The author authorized
+receiving Imagine then raid on acceptance. Parent1572 and1570 retain all
+methodological/signing decisions; this child changes documentation only.
+
+## Relevant files
+
+- skills/replicate/SKILL.md, reproduce
+- skills/replicate/references/assessment.md and rules.md for unchanged contracts
+- Parent1572 receiving Imagine and replicator df890ef frozen evidence
+
+## Exit criteria
+
+- [ ] Reproduce guidance audits each relevant join using the authors' actual
+  keys on inputs at the authors' join stage before checker normalization or
+  correction (preserving authors' preceding transformations), recording stage,
+  keys, cardinality/duplication, match/unmatched diagnostics and denominators;
+  preserve the original result and any separately labelled corrected run.
+- [ ] Compare constructed variable definitions and sample rules in text,
+  notes/appendices, and code; trace constructed missingness through operations
+  and downstream samples. Unknown or conflicting evidence is recorded with
+  source anchors as an anomaly, not an automatically established coding error.
+- [ ] Evidence and unresolved audit coverage stay visible; author package
+  files stay read-only. Findings/candidate corrections reuse existing signed
+  probe and author-ruling rules rather than authorizing changed specifications.
+- [ ] Person-written signatures, frozen comparison tolerance, existing
+  selected-target/whole-paper/ACRe meanings, and report contracts stay unchanged.
+  No new scientific run, score exception, default main-result rule, footnote
+  scope ruling, or signing mode is introduced.
+
+## Plan and validation
+
+Add bounded generic reproduce guidance and reuse the anomaly/probe contracts;
+no new verb, schema, dependency, or paper-specific audit implementation.
+Source-read validation checks instructions against the frozen Atanasov
+join/construction evidence; do not rerun the numerical case or modify
+replicator. Semantic diff and preservation checks fit documentation; do not
+add wording tests. Run lint/fast, distinct semantic adherence, gaze, then gate.
+Receiving Imagine/Blind-Spot inherited from1572; original-key and contradiction
+bounds are load-bearing.
