@@ -211,6 +211,9 @@ every reported statistic.
 6. A result that cannot be produced from the package (an input is missing)
    is recorded as `missing_input`. Never transcribe it from the paper.
 
+- Audit each relevant join on the authors’ actual keys and inputs at their join stage, before checker normalization or correction, recording cardinality, duplicates, matched/unmatched counts and rates with denominators, as in `references/data-audit.md`.
+- Compare constructed variable definitions and sample rules across text, notes/appendices, and code, tracing constructed missingness into downstream samples and recording sourced anomalies and audit coverage as in `references/data-audit.md`.
+
 ### Selected-claim confirmation
 
 On an explicit caller request, confirm a selected claim using the existing
