@@ -2,11 +2,13 @@
 Title: Replicate Stata caveats with versioned manual evidence
 Created: 2026-11-27
 Author: reviewer
+Closed: Version-qualified manual reference and authorized translation pointer implemented; source/scenario and preservation checks plus distinct semantic adherence passed; PR2552 awaits gaze and orchestrator merge.
 
 --- log ---
 2026-11-27T09:32Z reviewer created
 2026-11-27T10:13Z reviewer note blocker 1577 closed — Blocked-by removed.
 2026-11-27T10:36Z reviewer implemented version-qualified Stata manual reference and authorized-translation pointer; source/scenario audit in tickets/reviews/t1576-20261127/source-scenario-audit.md; no scientific/scoring/signing changes
+2026-11-27T10:39Z reviewer closed — Version-qualified manual reference and authorized translation pointer implemented; source/scenario and preservation checks plus distinct semantic adherence passed; PR2552 awaits gaze and orchestrator merge.
 
 --- body ---
 
