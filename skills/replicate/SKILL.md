@@ -207,6 +207,10 @@ every reported statistic.
 
 Before choosing implicit implementation conventions by matching paper outputs,
 apply the calibration freeze and disclosure in `references/validation.md`.
+When the caller has authorized translation of a Stata package, consult
+`references/stata-caveats.md` for version-qualified storage, expression, and
+estimator evidence. An unavailable licence alone authorizes no translation;
+this reference supplies no canonical CRA eligibility or scoring ruling.
 
 1. Run `fetch.sh`. Rebuild the authors' environment and lock it: interpreter,
    packages and versions go into `manifest.json` `environment`.
