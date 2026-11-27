@@ -6,6 +6,8 @@ Author: merge-gate
 --- log ---
 2026-11-27T12:50Z merge-gate created
 
+2026-11-27T16:29Z codex note separate triage: original gate note identifies pytest-guard and the Zotero launch test; cause remains unestablished. Verify the named full check on this request candidate before landing.
+
 --- body ---
 ## Context
 
@@ -27,3 +29,16 @@ Failed tests (check, test id):
       red is shown to be environmental, its cause quoted from the after-merge log.
 
 Monitor, not a criterion: the after-merge record on the tip that lands the repair.
+
+## Verification decision
+
+The original gate note on `ac4d5770b0f5b5a5f21709c05508f3b90ad7d8f3`
+retains `pytest-guard fail(exit 2)` and the failing test identifier. Its causal
+diagnostic is not available in the current after-merge log. Later green tips
+do not establish that the original failure was environmental or a code defect.
+
+Use the first exit condition: execute the declared `make check-tests` on this
+request's final closure candidate and record its actual outcome and candidate
+identity on the merge request before landing. If it fails, preserve the failure
+and investigate rather than close by inference. No product correction or
+established cause is claimed by this ticket-only verification closure.
