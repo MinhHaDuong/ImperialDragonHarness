@@ -3,8 +3,8 @@
 2026-11-27. Prospective documentation review only; no paper execution or render.
 Source requirements: child1594; parent1580 retained dispatch; original-source
 crosswalk and phase-4 WARNs in `tickets/reviews/t1580/recovered-source.md` and
-`feasibility.md`. Requested worker model was not exposed in this delegated
-brief; actual served model/effort are unavailable in the runtime identity.
+`feasibility.md`. Requested worker model was gpt-6.1-sol/OpenAI/medium, confirmed by the
+orchestrator; actual served model/effort are unavailable in the runtime identity.
 No independent or cross-family review is claimed by this writer.
 
 | Requirement and source | Contrasting scenario and required result | Contract inspected |
