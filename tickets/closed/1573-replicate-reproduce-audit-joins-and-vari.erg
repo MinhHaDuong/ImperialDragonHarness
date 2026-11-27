@@ -2,6 +2,7 @@
 Title: Replicate reproduce audit joins and variable constructions
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2546
 
 --- log ---
 2026-11-27T08:12Z reviewer created
@@ -9,6 +10,7 @@ Author: reviewer
 2026-11-27T08:18Z reviewer Plan: independent read-only planner confirmed author-stage join diagnostics, construction/sample crosswalk, anomaly evidence; no code/scoring/signing changes; semantic and byte-preservation validation, no wording tests
 2026-11-27T08:18Z reviewer feasibility PASS: reproduce mapping/run and existing anomaly/probe contracts available; comparison evidence read atdf890ef; no new dependency, schema, scientific rerun or source-project write
 2026-11-27T08:21Z reviewer author placement: two binding lines in reproduce, detailed checklist/table in reference; paper cases excluded; canonical audit score proposal not adopted
+2026-11-27T08:31Z reviewer closed — autoclosed — PR #2546
 
 --- body ---
 
