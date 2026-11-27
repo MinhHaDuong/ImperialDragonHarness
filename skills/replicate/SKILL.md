@@ -252,6 +252,12 @@ required scope and comparisons nor CRR eligibility.
    semantics stay unresolved. Assertion confirmation supplies no exact statistic
    match and cannot alone establish a canonical category. Keep all required
    numeric comparisons and the unchanged article tolerance.
+   When comparing two reproductions, use equality after the common deterministic
+   three-significant-digit rounding rule in § Comparing two reproductions of
+   that reference. Retain both full originals, rounded values, difference, and
+   source/protocol/scope evidence in a separate ledger; missing or nonfinite
+   inputs leave agreement unresolved. This supplies no article match or category
+   promotion and does not rescore prior cases.
 5. Update `assessment.json`. Set `cra_reussie` or `cra_echouee`, and
    `crr_*`, from the main result's rows, with the CSV path as evidence. For a
    faithful Stata-to-Python CRA, verify the model, sample, standard errors, and
