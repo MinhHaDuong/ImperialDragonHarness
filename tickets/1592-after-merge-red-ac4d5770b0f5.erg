@@ -1,0 +1,29 @@
+%erg 0.1
+Title: After-merge red on main ac4d5770b0f5: pytest-guard
+Created: 2026-11-27
+Author: merge-gate
+
+--- log ---
+2026-11-27T12:50Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: ac4d5770b0f5b5a5f21709c05508f3b90ad7d8f3
+Failing checks: pytest-guard
+Last green after-merge tip: 102f8fb3a49263437bbe9dc33e42478e5fc911dc
+Merges since (first parent, newest first):
+- ac4d5770b0f5 Merge pull request #2563 from MinhHaDuong/roar1575-rulings-capture
+
+Failed tests (check, test id):
+- pytest-guard tests/test_zotero_import.py::test_zotero_is_launched_when_not_running
+
+## Exit criteria
+
+- [ ] The checks named above pass on the repairing request's candidate, or the
+      red is shown to be environmental, its cause quoted from the after-merge log.
+
+Monitor, not a criterion: the after-merge record on the tip that lands the repair.
