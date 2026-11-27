@@ -48,7 +48,11 @@ unassessed rows. In the separate detailed statistic comparisons, show only
 the results that did not reproduce; individual matching statistics are not
 listed there. Estimates retained without authoritative printed numeric
 comparators are separate auxiliary evidence under `assessment.md` § Auxiliary
-estimates, outside discrepancy counts and scoring denominators.
+estimates, outside discrepancy counts and scoring denominators. Published
+range/inequality assertions have separate confirmed, not-confirmed, or
+unresolved evidence under `assessment.md` § Published assertions. Preserve
+their actual targets and boundaries; keep them visible separately from the
+detailed statistic list, numeric counts, and canonical categories.
 
 For an explicitly requested selected target, additionally show its separately
 labelled six-row table and scope ID under `assessment.md` § Selected-target
@@ -64,8 +68,10 @@ value as the original. A check with no original to compare with is
 probably unfair or unusable: ask I4R.
 
 This is a report-display rule; stored comparison and auxiliary CSV values stay
-at full precision. A reproduced robustness baseline supplies no invented
-printed comparator for reproduction scoring. Preserve produced estimates
+at full precision. Preserve published range/inequality operators and boundary
+semantics in the separate assertion evidence; display rounding never changes
+the predicate or supplies an exact published comparator. A reproduced robustness
+baseline supplies no invented printed comparator for reproduction scoring. Preserve produced estimates
 without such a comparator under the separate auxiliary contract in
 `assessment.md`; it grants no new check-selection or execution authority.
 
