@@ -69,3 +69,31 @@ via preflight, no reused/foreign tree or spent extra round.
 Recipe2577 merge1795814320 1795814357, readback MERGED exact close head.
 New main and next WAVE_BASE9c1faa5a989f6d0197cd1d3a1eb997c26ffbcc87.
 1596 branch/tree handed for final own cleanup; no child roar.
+
+
+## Wave1597 and original-row integration
+
+Fresh coder implement1597 productb6c6ed7fbb31f2bcddbc26a14f829039a1c36c20,
+base9c1faa5a989f6d0197cd1d3a1eb997c26ffbcc87; evidence-only head
+65d628540a91d87e3e21cf4dc8b86242ffdfdf6d. Actual distinct semantic review
+CLEAN and fresh integration1597 CLEAN; merge-tree rc0 union
+7105956e3046e02079c629498ce59aa68fcd4d88 equals product, ancestry0.
+Caller lint191 PASS; fast first sandbox attempt1769pass/197 socket-fixture
+setup errors, unchanged elevated fast1966 PASS with7 existing warnings. Seven
+template artifacts (six binaries plus index) and assessment below intro pointer
+byte-identical; no migration/science or new tests. Records in design/1597-
+independent-recomputation preserve actual outcomes, not silent failure removal.
+
+PR2578 close headfe0272d108ab29d4b24c4ae8daac3b040906a7f3. Gaze
+rv-20261127-pr-2578-4244 answer20261127T212732310Z-padme-8d948fb7 REVIEWED,
+plan PASS, duration1m29s; actual targeted selector skipped(no source/testchange)
+and no full-suite claim. Gate session7d41165d-2619-4989-94ed-8cbccd04a32c
+round1 APPROVED all4, verdict20261127T213158184Z-padme-4232de60,
+duration3m39s (includes author reception/status steering while actual checks
+ran). Before-set PASS/lint191, candidateb847432ca87414be7713d4b9d18ea0c6496b8439.
+Gate own tree removed via preflight. Recipe2578 merge1795815141 1795815172,
+readback MERGED exacthead, newmain277012304ca6869ddaddfbcf25c9270e3283a3fc;
+full after-merge record PASS. No child roar; own branch/tree retained for final
+explicit cleanup. Final fresh original24-row union review and actual readback
+conditions are integration.md; all rows are coverage.md.1580 stays open until
+that checked integration is recorded by final roar/closure, not last-child event.
