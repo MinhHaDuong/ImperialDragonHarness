@@ -68,7 +68,10 @@ value as the original. A check with no original to compare with is
 probably unfair or unusable: ask I4R.
 
 This is a report-display rule; stored comparison and auxiliary CSV values stay
-at full precision. Preserve published range/inequality operators and boundary
+at full precision. Cross-reproduction agreement uses the separate deterministic
+three-significant-digit equality contract in `assessment.md` § Comparing two
+reproductions, retaining originals and difference. Display formatting does not
+establish that agreement or change the article's printed-digit tolerance. Preserve published range/inequality operators and boundary
 semantics in the separate assertion evidence; display rounding never changes
 the predicate or supplies an exact published comparator. A reproduced robustness
 baseline supplies no invented printed comparator for reproduction scoring. Preserve produced estimates
