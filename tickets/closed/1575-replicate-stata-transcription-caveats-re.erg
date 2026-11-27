@@ -2,6 +2,7 @@
 Title: /replicate: Stata-transcription caveats reference and findings from the Gavard Scotch run (replicator 0003)
 Created: 2026-11-27
 Author: reviewer
+Closed: B3/B6/B7 delivered and integrated; other author-ruling trackers and receiver conditions remain separate
 
 --- log ---
 2026-11-27T09:14Z reviewer created
@@ -12,6 +13,8 @@ Author: reviewer
 2026-11-27T11:23Z reviewer note accepted children delivered: 1577 PR2551, 1576 PR2552, 1578 PR2553, 1579 PR2554; final union integration clean; held B3/B6/B7 remain author decisions
 
 2026-11-27T11:42Z reviewer note author interface session /root relayed independent approvals B3 (reply Oui, oui), B6 (Oui), B7 (Oui); recorded below with provenance; children1581/1582/1583 reserved before implementation
+2026-11-27T12:46Z reviewer integration complete: reviewed/gated numerical children2558/2559/2560 merged; full final after-merge pass, bounded interface handoff preserves unstarted1584–1588
+2026-11-27T12:46Z reviewer closed — B3/B6/B7 delivered and integrated; other author-ruling trackers and receiver conditions remain separate
 
 --- body ---
 ## Context and authority
@@ -128,6 +131,9 @@ no independent-review claim.
 - Harness 1576 — closed by PR 2552: corrected, version-qualified Stata reference.
 - Harness 1578 — closed by PR 2553: private local-package intake, including blind entry.
 - Harness 1579 — closed by PR 2554: auxiliary unprinted estimates outside scoring.
+- Harness 1581 — closed by PR 2558: faithful Python CRA under existing evidence/scope.
+- Harness 1582 — closed by PR 2559: sourced assertion evidence separate from exact matches.
+- Harness 1583 — closed by PR 2560: exact three-significant-digit cross-reproduction equality.
 
 Final integration reviewed the union with earlier 1573/1574: canonical
 criteria/comparison statuses, translation-confirmation boundaries, and human
@@ -214,8 +220,8 @@ legacy rescore follows.
 - Harness 1582: implement B6 after 1581, preserving assertion versus statistic semantics.
 - Harness 1583: implement B7 after 1582, preserving article tolerance and full values.
 
-- [ ] 1581, 1582, and 1583 are merged with per-criterion review/gate evidence.
-- [ ] Integration verifies the combined rulings, parallel references, and remaining authority boundaries before this tracker closes.
+- [x] 1581, 1582, and 1583 are merged with per-criterion review/gate evidence.
+- [x] Integration verifies the combined rulings, parallel references, and remaining authority boundaries before this tracker closes.
 
 All three 1575 author questions are now ruled; this tracker awaits delivery
 and integration, not another author decision. Do not infer completion of1552
@@ -311,3 +317,28 @@ to/root before implementation. No implementation or receiver0009 pickup claimed.
 Sequential implementation order1581–1586, then coherent1587 and1588; scientific
 design began early. No shared-registry coordination is needed. Original exit
 criteria and scope preserved. Reception lands with Refs only, closing nothing.
+
+## Completed prospective rulings and integration — 2026-11-27
+
+1581/PR2558,1582/PR2559, and1583/PR2560 are merged with completed distinct
+semantic review, gaze, and per-criterion caller gate evidence. The final source
+repair replaced a forge-specific citation URL with the identical reception
+commit identifier after a reproduced agnostic-guard failure; round2 passed,
+no guard changed. All full after-merge checks passed on final numerical main
+102f8fb3a49263437bbe9dc33e42478e5fc911dc, including pytest-guard and lint.
+
+Combined source/scenario/union audit: `tickets/reviews/rulings1575/integration.md`.
+Canonical/selected/whole-paper scope, article tolerance, native-status disclosure,
+calibration/uncertainty, assertion versus exact match, port equality, required
+targets, and authority boundaries compose without category or legacy promotion.
+All this tracker's delivery criteria are met. Other trackers are not closed.
+
+During1583 verification, the author introduced1589. The parent directed finishing
+these stage-independent numerical contracts and bounded wrap-up, while holding
+new1584–1588 implementation. None of those five began. Their exact preserved
+rulings and existing actual advisor/Blind-Spot reports are handed to the new
+receiver in `tickets/reviews/rulings1575/continuation-handoff.md`; the receiver
+owns new-interface reception/reflection and its subsequent execution route.
+Root reports five-minute auto-resume as nice-to-have, not a runtime prerequisite.
+1570/1572 and1552 retain their own integration/receiver conditions;0009 pickup
+remains unverified. This closure settles1575 only.
