@@ -89,6 +89,10 @@ baseline supplies no invented printed comparator for reproduction scoring. Prese
 without such a comparator under the separate auxiliary contract in
 `assessment.md`; it grants no new check-selection or execution authority.
 
+Use `discrepancies.md` to distinguish internal article inconsistencies from
+printed/recomputed differences and to qualify causes with evidence. Report
+prespecified diagnostics beside the strict verdict; never widen its tolerance.
+
 ## 3. Table layout
 
 The first column is the reproduced original. Then add one column (or one
