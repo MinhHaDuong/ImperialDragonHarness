@@ -9,8 +9,9 @@ authoritative format.
 Written for a team that is not all economists. Two words first:
 
 - **Reproduction** (computational reproducibility) asks whether the
-  authors' data and code give the numbers printed in the paper. Nothing about
-  the method is questioned yet.
+  authors' data and code give the numbers printed in the paper. This narrow
+  computational question leaves parallel appraisal of the scientific argument,
+  model, and facts to `scientific-appraisal.md`, with separate conclusions.
 - **Robustness** asks whether the result survives reasonable changes:
   another way to compute standard errors, without outliers, another
   definition of a variable. A result that survives is *robust*; one that

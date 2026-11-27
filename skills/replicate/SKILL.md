@@ -141,7 +141,10 @@ rechecking affected evidence before reusing categories or comparisons.
 
 ## assess
 
-The goal is to grade the package from its contents, before running anything.
+The goal is to grade the package from its contents, before running anything,
+while retaining the original claim and source-based scientific premises under
+`references/scientific-appraisal.md`. Scientific appraisal is distinct from
+the computational grade.
 Contents alone settle L1 to L3, L6 and L7; L4, L5
 and L8 to L10 wait for `reproduce`. Batchable: for a reading list, or for a team
 choosing among candidate papers, loop over the papers sequentially in one session, one
@@ -221,7 +224,10 @@ no answer exclusions or exposure requirements.
 ## reproduce
 
 The goal is to rerun the authors' code on the authors' data, then compare
-every reported statistic.
+every reported statistic. Connect implementation and data-audit evidence to
+the claim, argument/model, and material facts under
+`references/scientific-appraisal.md`; keep computational outcomes and
+scientific conclusions separate.
 
 Before choosing implicit implementation conventions by matching paper outputs,
 apply the calibration freeze and disclosure in `references/validation.md`.
@@ -333,7 +339,9 @@ it supplies no required dependency or universal validation result.
 
 ## probe
 
-The goal is to run fair robustness checks.
+The goal is to run fair robustness checks. Carry material scientific-appraisal
+gaps and anomalies from `references/scientific-appraisal.md` into the candidate
+inventory with evidence and disposition; proposals await the existing approval.
 
 Follow these steps sequentially: the inventory precedes selection, and the
 approved plan precedes execution.
@@ -386,7 +394,11 @@ until results are frozen.
 
 ## report
 
-The goal is the I4R report, written as a team.
+The goal is the I4R report, written as a team, with distinguishable
+computational and scientific evidence/conclusions under
+`references/scientific-appraisal.md`. Cover the declared claim's argument,
+model, and material facts for causal and noncausal work; make coverage and
+unknowns explicit.
 
 1. Choose the I4R template from `references/templates/INDEX.md`, using the
    context the folder already holds: the template I4R named in the assignment
@@ -438,7 +450,7 @@ The goal is the I4R report, written as a team.
 
 ### Causal identification review
 
-Include a separate identification section in the report, following
+For causal claims, include a separate identification section in the report, following
 `references/identification-review.md`: declare the causal claim, draw a
 sourced DAG, adapt the eleven prompts to the study design, and give an argued
 reviewer judgment with its unresolved assumptions. Write for a non-specialist
@@ -447,8 +459,9 @@ for substantive causal reasoning, and disclose an unavailable perspective.
 
 This source-based appraisal runs no new estimates. Any proposed empirical
 check goes through the existing approved `probe` plan. Keep causal
-identification, statistical significance, and estimator robustness distinct;
-the identification judgment changes neither ACRe nor any of the six
+identification, statistical significance, and estimator robustness distinct. For descriptive, predictive, and meta-analysis
+claims, use the appropriate appraisal in `references/scientific-appraisal.md`
+without a forced DAG or causal label. The identification judgment changes neither ACRe nor any of the six
 Reproducibility Table rows, all of which assess computation. A favorable or
 adverse judgment earns the same evidential scrutiny (rule 4).
 

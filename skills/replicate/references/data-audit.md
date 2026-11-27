@@ -58,6 +58,11 @@ Preserve the competing text, note, and code evidence, distinguish observation
 from a diagnosed cause, and state what remains unresolved. A missing source
 or inaccessible stage stays a named coverage gap rather than agreement.
 
+Connect material anomalies and inspected construction/sample evidence to the
+claim, argument/model, and factual premises under `scientific-appraisal.md`.
+Keep source observation, diagnosed cause, and scientific consequence separate;
+an exact computational match alone cannot settle that appraisal.
+
 ## Preservation, authority, and reporting
 
 Author package files remain read-only under the skill's existing hash rules.
