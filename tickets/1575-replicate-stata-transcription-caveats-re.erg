@@ -1,0 +1,119 @@
+%erg 0.1
+Title: /replicate: Stata-transcription caveats reference and findings from the Gavard Scotch run (replicator 0003)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T09:14Z reviewer created
+2026-11-27T09:15Z reviewer filed from replicator 0003 (t0003-gavard 03af9ef) at author request; receiving Imagine pending
+
+2026-11-27T11:10Z reviewer note receiving Imagine: accepted corrected A and B1/B4/B2/B5 as children 1576-1579; B3/B6/B7 held for author methodology decisions; B8 already covered by draft/review/merge publication gate
+
+--- body ---
+## Context and authority
+
+Filed from replicator 0003 (branch `t0003-gavard`, commit `03af9ef`) at the
+author's request, 2026-11-27. Separate from 1572 because a harness session is
+working on 1572/1573/1574; this ticket touches none of them. One opus
+executor ran `/replicate` assess and reproduce on Gavard and Schoch (2026),
+transcribing the authors' Stata package to Python, then compared it with the
+author's September 2026 Python port. Evidence in replicator:
+`replications/gavard2026climate/` (README.md, reproduce/README.md section
+"Stata semantics", COMPARE-PORT.md) and
+`memory/journal/2026/2026-11-27-gavard-stata-transcription.md`.
+Result: 1,032/1,032 printed table values and 104/104 A1 values match; 177
+disagreements with the port, all in four unprinted `gmm` models (a
+translation error, an added constant). One paper: the observations below
+are evidence, not established Stata behaviour, unless marked documented.
+
+## Request A: a Stata-caveats reference
+
+The author asked to keep what decided the matches. Proposed home:
+`references/stata-caveats.md`, pointed to from `reproduce` when the package
+is Stata and no licence is available. Generic rules only; paper cases stay
+in replicator.
+
+- Documented (to cite from the manual): `generate`/`egen` create float (float32) by default and
+  `replace` keeps the type. Reproduce storage types; all-double computation
+  moved six printed values across a rounding boundary in this case.
+- Documented (to cite from the manual): an expression without a `by` prefix indexes rows of the whole
+  dataset (`x[17]`); division by zero gives missing.
+- To verify against the `gmm` manual (the executor's recollection, not checked): `{xb: varlist}` adds no constant and `instruments()` adds one. The specification difference explained all 177 disagreements.
+- Observed, check per case: `xtgee` working correlation from pooled
+  residual-moment sums divided by pooled pair counts, then by SSR/N; robust
+  VCE times (N-1)/(N-P) for `rgf` and G/(G-1) for panel clustering.
+- Open: the default second-step weight of `gmm ... vce(cluster)`.
+- Method: when an implicit convention is fixed by matching printed tables,
+  name the tables used for the choice and score the held-out tables
+  separately (here Tables 1 and B3 used, seven tables held out).
+
+## Request B: skill findings from the run
+
+| # | Finding | Overlap |
+|---|---|---|
+| 1 | `references/gavard-scotch-mapping.md` carries the port's findings, so it is an answer key for any validation on this paper | new |
+| 2 | `fetch.sh`/manifest assume a downloadable package; a privately e-mailed package has no path (`source_url: null` used) | new |
+| 3 | Translated reproduction is described only under selected-claim confirmation; nothing says whether a translated run supports `cra_reussie` | new |
+| 4 | Fixing implicit estimator conventions by matching published tables needs a used/held-out split (Request A, method item) | new |
+| 5 | `out/*.csv` has no place for estimates the paper does not print (executor added `reproduce-unprinted.csv`, `extras.csv`) | new |
+| 6 | Half-unit rule undefined for printed ranges ("0.05-0.12") and bounds ("more than 0.24") | new |
+| 7 | Three-digit precision undefined when comparing two reproductions (half-unit vs equal rounded strings) | near 1572 finding 7, distinct case |
+| 8 | assess step 5 needs a Zotero publication an unattended run cannot do | new |
+
+Replicator-owned, not requested here: the folder-layout ticket's first-use
+update of replicator AGENTS.md/README.md.
+
+## Exit criteria
+
+- [ ] Receiving Imagine records facts, overlap with 1572-1574, ownership and
+  standing rulings, and disposes of Request A and each finding in Request B.
+- [ ] If accepted, the Stata reference states for each item whether it is
+  documented Stata behaviour or a one-case observation.
+
+## Receiving Imagine — 2026-11-27
+
+Facts against framing: read the pinned Replicator 03af9ef source, including
+COMPARE-PORT.md and the transcription journal, against current skill contracts.
+The matches are case observations; the historical Stata release, update, and
+settings remain unknown. Official Release 19 manuals correct the proposed
+blanket replace-keeps-type claim (promotion is documented), qualify numeric
+generate defaults with set type, and distinguish documented GMM constants and
+weight options from the unverified historical behavior. No scientific estimates
+were rerun. Primary evidence and page references are in the receiving handoff.
+
+Overlap: 1573 and 1574 are merged (data auditing and asserted robustness checks).
+1572 retains translation/scoring decisions. Existing selected-claim freezes and
+probe validation boundaries supply reusable contracts; they do not yet cover
+all validation exposure, private package intake, or auxiliary unprinted outputs.
+The current Zotero section already keeps drafts pending review and merge;
+B8 needs no new publishing authority or implementation.
+
+Ownership: the harness owns generic skill contracts and references. Replicator
+owns paper cases, scientific outputs, and its benchmark cohort. No edits to its
+source tree are accepted here. A generic reference cannot decide historical
+software semantics from table matches or authorize translation by itself.
+
+Standing rulings: preserve canonical ACRe and whole-paper/selected-target
+meanings, printed-digit tolerance, signed probe execution, and outward gates.
+A join audit supplies evidence, never an additional Fully gate. No subjective
+probabilities, paid API calls, new estimates, or signing authority are introduced.
+
+| Request | Disposition and rationale |
+|---|---|
+| A | Accept corrected/version-qualified manual evidence in 1576, after 1577. Separate documentation, inference, case calibration, and historical uncertainty; no case-fit formula becomes a default. |
+| B1/B4 | Accept 1577. Read worked examples only after checking validation exposure. Same-paper unused tables differ from fresh-paper validation. Freeze calibration choices and preserve post-hoc disclosures. |
+| B2 | Accept 1578. Support caller-supplied private bytes, source_url null, provenance, and representation-specific hashes without implying redistribution or author contact. |
+| B3 | Hold for author: whether translated execution establishes canonical CRA is a methodology decision. No child resolves it. |
+| B5 | Accept 1579. Retain produced unprinted estimates in an auxiliary artifact outside scored comparisons; do not invent a published comparator. |
+| B6/B7 | Hold for author: printed bounds/ranges and cross-port precision conventions require a scoring decision. Preserve existing rules. |
+| B8 | Already covered: assess drafts locally; publication follows the host review/merge gate and can remain pending. |
+
+The accepted children preserve the source intent with narrower documented
+scope. Parent 1575 tracks delivery and the held questions; merging reception
+neither closes it nor grants implementation priority beyond the author's
+explicit raid-on-acceptance instruction. Prior blind-spot review was CLEAN;
+fresh same-family read-only pass found one material omission: private local
+bytes must also compose with blind assessment. Added to 1578. Auxiliary CSV
+exclusions must reach broad output/schema/count guidance in 1579. No other
+material omissions. Requested seat Sol 6.1 medium, actual identity unobserved;
+no independent-review claim.
