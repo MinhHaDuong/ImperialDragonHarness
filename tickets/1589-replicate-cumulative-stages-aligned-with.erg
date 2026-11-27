@@ -1,0 +1,202 @@
+%erg 0.1
+Title: /replicate: cumulative stages aligned with report sections (inventory, identify, rerun, challenge, complete) — author design, replicator
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T12:31Z reviewer created
+2026-11-27T12:32Z reviewer filed from replicator at author request (Imagine 2026-11-27); author ruled implement now without aliases; supersedes 1580 remark A4 stop-and-offer
+2026-11-27T12:33Z reviewer author confirmed decision 6 (mapping table), with a limited lifetime: delete it once old-name tickets are closed; git keeps the history
+
+2026-11-27T12:39Z receiver received complete source dispatch; acceptance, overlap, authority, advisor relay, decomposition and coverage limitations recorded below; no implementation or frozen artifacts changed
+
+--- body ---
+## Context and authority
+
+Filed from replicator at the author's request, 2026-11-27, after an Imagine
+session with the author (step 1.5 of the author's Toulouse Games timeline:
+clarify the interface between assessment with and without code execution).
+Every decision below is the author's. Ruled: implement **now, without
+aliases** (the author chose this over aliases-until-the-Games). In-flight
+tickets 1572-1588 keep their text; the mapping below translates them.
+Supersedes IDH1580 remark A4's "stop and offer before deep search" (see
+Decision 4). Data contracts are unchanged.
+
+## 1. Problem
+
+The four verbs (`assess`, `reproduce`, `probe`, `report`) blur two things:
+the author could not tell that "assessment" has a no-run and a run level, and
+`report` is an output, not a stage. `assess` and `probe` are too generic. The
+identification review has no verb, and the robustness plan starts from a
+generic menu rather than from identified threats.
+
+## 2. Situation
+
+Evidence in replicator: the 0003 pilot (`replications/chain-pilot-0003/`),
+the Gavard run (`replications/gavard2026climate/`), and the author's 24
+report remarks (IDH1580). The Games are on 2026-12-08; the skill will run on
+Brodeur's candidate papers in the coming days, so one skill version must
+serve the whole batch.
+
+## 3. State of the art
+
+I4R General template (Zenodo 23226406): sections Introduction, Computational
+Reproducibility, Discrepancies with preregistration, Robustness
+Reproduction/Replication, Conclusion; I4R definitions of computational,
+recreate, robustness, direct and conceptual reproducibility. The
+identification review is our addition (references/identification-review.md).
+
+## 4. Alternatives considered
+
+1. One verb per report section. 2. Verbs stay workflow stops and each writes
+its section. 3. Status quo with renamed execution depths. The author chose
+1 AND 2: verbs are cumulative stages, each adding its section.
+
+## 5. Decisions (author)
+
+1. **Cumulative stages.** Asking for stage k runs stages 1..k. Nothing is
+   skipped: every stage ends with a coherence pass over sections 1..k, which
+   revises an earlier section that a new finding contradicts and records the
+   revision. Valid computations are not recomputed (idempotence), but every
+   section is reread.
+2. **The report is the output of every stage**, compiled each time, cut at
+   the last written section; the I4R table shows "not yet run" where nothing
+   ran. One Zotero note, updated at each stage, replaces the two note types.
+3. **Report order follows the science**, not the I4R template: identification
+   comes right after the introduction (we add the section, so we place it).
+4. **Names are per paper, descriptive:**
+
+| # | Verb | Section | Runs code | Stop |
+|---|---|---|---|---|
+| 1 | `inventory` | Claim and package: main result chosen from the paper, package inventory, the four provision rows | no | none |
+| 2 | `identify` | Identification: causal graph, estimation faithful to the graph, credibility of the graph against other studies and common sense; strong model plus targeted verified checks | no | none: runs unattended by default. Deep literature search is out of the chain; it is a separate request when the author writes a comment or publishes. The section ends with a list "graph points to support by a literature review before publication" |
+| 3 | `rerun` | Reproduction: rerun or transcribe, compare every printed statistic, the two reproduction rows | yes | scope choice at the start, before any computation (below) |
+| 4 | `challenge` | Robustness: plan derived from stage 2 threats, including at least one check outside the paper's statistical frame; signed checks run | yes | plan signature, no timeout |
+| 5 | `complete` | Conclusion, introduction written last, AI Disclosure, final coherence pass | no | sending is an outward act, always the author's |
+
+5. **`rerun` scope stop.** Three options in plain words: *main result* (the
+   table or figure chosen at `inventory`), *I4R scope* (what I4R asks teams
+   to reproduce at the Games), *whole paper* (all tables and figures,
+   appendices and SI). If the caller specified the scope, no question. Else
+   ask the user; with no answer in 5 minutes, continue with the minimal
+   option (main result). Purpose: the author validates scope before long runs.
+6. **Mapping for in-flight tickets and docs:** `assess` -> `inventory` (and
+   the identification part -> `identify`); `reproduce` -> `rerun`; `probe` ->
+   `challenge`; `report` -> written by every stage, assembled by `complete`.
+   Frozen replication folders keep the old names (they record the version
+   that produced them).
+   The mapping has a limited lifetime (author ruling): it lives only while
+   tickets written with the old names are open, then it is deleted from the
+   skill and docs; git history keeps it.
+
+## 6. Implementation notes and open items
+
+- "I4R scope" must be defined from I4R sources (Brodeur's pre-games slides,
+  the templates), not from replicator's one-report observation that I4R
+  scored rows on Tables 1-3.
+- The 5-minute question needs a timed-question mechanism (wake arm or
+  equivalent) with a default, specified per runtime (Claude Code, Codex, Pi).
+- Unchanged: assessment.json, criteres, cra_*/crr_*, out/*.csv contracts,
+  blind mode, scope (whole paper default vs selected target), signing rule.
+- After landing: one rehearsal run on a paper outside replicator's
+  `data/splits/dev-exposed-2026-11-26.csv`, then freeze a skill version for
+  the Brodeur batch, cited in each report's AI Disclosure.
+
+## Exit criteria
+
+- [x] Receiving Imagine records facts, overlap with 1572-1588 (notably 1580),
+  ownership and standing rulings.
+- [ ] SKILL.md and references implement Decisions 1-6, without aliases.
+- [ ] One rehearsal run produces a compiled report at each stage; its
+  version is recorded for the Brodeur batch.
+
+## Receiving Imagine — harness, 2026-11-27
+
+Disposition: accepted for the author-authorized raid, with sequential delivery
+below. This receipt imports the complete source body from PR2561, source head
+16a2dfc7e; it preserves the live sender branch and worktree. Receiving acceptance
+is not delivery, rehearsal, batch freeze, or closure of this tracker.
+
+1. Facts against framing: current SKILL.md has four stopping verbs, separate
+   preliminary/reproduction note publication, and identification nested under
+   report. This confirms the interface mismatch. Pilot results and author
+   preferences are source evidence; this receipt does not rerun science or infer
+   general efficacy from two cases. Read the complete source ticket and1580.
+2. Duplicates and overlap:1573–1579 are delivered;1581/PR2558 and1582/PR2559
+   are merged.1583/PR2560 is in its final gate/fix cycle under its live owner.
+   1584–1588 are accepted but unstarted; their complete criteria remain intact.
+   1572 and1575 remain integration records.1580/PR2556 is received separately
+   with its own remark ledger below its preserved body. Only its A4 stopping
+   behavior is superseded. No source branch/index was altered.
+3. Ownership: harness owns generic interface, stage/report instructions, and
+   contracts. Replicator owns paper choice, scientific rehearsal, frozen folders,
+   and the batch freeze.1591 delivers a ticket-only handoff; it grants no
+   permission for foreign scientific execution. Receiver verification governs
+   pickup and completion.1589 remains the integration delivery until these land.
+4. Standing rulings: no aliases; five cumulative stages; every stage compiles a
+   local report and rereads all written sections; valid computations are reused.
+   Keep assessment.json, criteres, cra_*/crr_*, out/*.csv, blind exclusions,
+   selected-target/canonical meanings, frozen folders, printed tolerance, and
+   outward boundaries. Canonical whole-paper assessment remains distinct from
+   requested execution scope, whose authorized fallback is main result.
+
+## Author clarification after filing
+
+Relayed by the author's interface /root on 2026-11-27 (truthful transcription,
+not an author signature): « Le auto-resume après5mn est un nice-to-have, pas un
+must-have. » Automatic wake/resume is optional and cannot block delivery or
+justify new runtime orchestration. Caller-explicit scope bypasses the question.
+Otherwise record the question and main-result default after five minutes;
+where automatic continuation is unavailable, disclose that limitation, keep
+pending, and on explicit resumption use the actual answer or the authorized
+default as appropriate. Do not pretend a timer or queued message resumed work.
+No runtime implementation child is planned for this optional behavior.
+
+## Advisor-informed reflection
+
+Actual independent-context advisor /root/advisor_1589 completed before this
+receiver began; evidence is relayed by parent /root, not a fresh consultation.
+Requested identity: Sol6.1/OpenAI/medium; observed identity unavailable. Same
+model family, no cross-family decorrelation claimed. Accepted advice:
+
+- Keep execution scope and the canonical whole-paper dossier distinct; no
+  assessment-schema migration follows from the new stage names.
+- Identification uses a sourced causal graph for causal claims; descriptive,
+  predictive, and meta-analysis work uses the appropriate argument, model,
+  facts, and assumptions.1587's dual scientific/computational intent survives.
+- Start the report opening at inventory, rewrite the final introduction at
+  complete, and collect AI provenance from the first stage. Every stage builds
+  locally with one updated local Zotero-note draft; existing host review/merge
+  gates still govern outward note publication.
+- Blind exclusions cover Highlights, advisors, and targeted evidence checks.
+  Deep literature search remains a separate request. Define I4R scope from
+  authoritative I4R sources, never from a pilot's apparent table coverage.
+- Keep one coherent interface child, followed by receiver-owned rehearsal.
+  The initial timing concern was superseded by the author's optional-resume
+  clarification above; there is no mandatory cross-runtime autoresume gate.
+
+## Delivery decomposition and integration criteria
+
+| Unit | Owner and sequence | Definition of done |
+|---|---|---|
+|1583|Existing live lead, finish PR2560 and bounded1575 integration/roar checkpoint first|Pinned source-scope verification and handoff read back; no receiver mutation of their refs|
+|1584|Harness, after1583|Author-file/conversation approval and explicit bounded campaign delegation; actual signatures distinct from truthful transcription; all original criteria preserved|
+|1585|Harness, after1584|Original central claim plus optional official Highlights; actual advisor evidence; blind-safe selection and prospective motivated ties|
+|1586|Harness, after1585|Applicable empirical footnotes included by meaning; bibliography and unquantified assertions distinguished|
+|1587|Harness, after1585 and before1588|Existing advisor-informed bounded dual-axis design; argument/model/facts beyond causal DAGs; computational evidence separate|
+|1588|Harness, after1587|Keep computational misses; diagnose scientific impact separately, no tolerance/category rewrite or size-alone exemption|
+|1590|Harness, after1584–1588|One cumulative-interface implementation; no aliases; local report and note at each stage; full criteria below|
+|1591|Harness ticket-only dispatch after1590; replicator receives and owns scientific delivery|Fresh unexposed-paper rehearsal and batch freeze requested with exact skill commit, receiver evidence, and explicit no frozen-folder edits|
+
+1580 report-style work is a separate delivery scope, not implicitly included in
+1590. Its ledger names overlaps and outstanding work. Before the Brodeur batch
+freeze, verify its report-style rows are implemented or explicitly deferred,
+with reasons. No remark is silently discarded by the interface migration.
+
+Tracker1589 stays open until1590 delivery, actual receiver rehearsal with a
+compiled output at each stage, a recorded batch skill version, and integration
+review verify the union. Retain the temporary old-name mapping only while
+old-name tickets are open; delete it from current skills/docs when they close,
+with a final search and explicit recorded disposition. Git preserves history;
+frozen replication folders keep historical names. Closing the last child alone
+does not close1589. Existing1552/1572/1575 closure criteria also survive.
