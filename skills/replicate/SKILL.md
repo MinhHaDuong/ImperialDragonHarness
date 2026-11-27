@@ -202,7 +202,9 @@ no answer exclusions or exposure requirements.
    examined but not established, or unexamined, with blocked reasons where
    applicable (`references/assessment.md`). An empty `criteres` is valid only
    with that full dossier. Inventory the whole paper, including applicable
-   appendix outputs, for package completeness; an unseen paper blocks this
+   appendix outputs and applicable empirical footnote results, for package
+   completeness under § Empirical footnote applicability in that reference;
+   bibliographic remarks and unquantified assertions remain distinct. An unseen paper blocks this
    coverage. Assess generated analysis inputs only under the inspected
    producer-chain conditions in that reference. Run criteria (`cra_*`,
    `crr_*`) stay `a_evaluer` until execution. Derive the level and six-row
@@ -234,8 +236,10 @@ required scope and comparisons nor CRR eligibility.
 
 1. Run `fetch.sh`. Rebuild the authors' environment and lock it: interpreter,
    packages and versions go into `manifest.json` `environment`.
-2. Map each applicable published table and figure, including appendices, to
-   the source lines and comparison statistics that produce it. Keep the
+2. Map each applicable published result, including tables, figures, appendices,
+   and empirical footnotes supporting the target, to its source passage,
+   producers, and required comparison statistics or assertion evidence under
+   `references/assessment.md` § Empirical footnote applicability. Keep the
    whole-paper coverage map, with gaps, in `reproduce/README.md`. Carry any
    explicit selected scope ID and its required comparison outcomes separately;
    an unexamined whole-paper map stays unresolved, without expanding the
@@ -335,7 +339,10 @@ Follow these steps sequentially: the inventory precedes selection, and the
 approved plan precedes execution.
 
 1. **Inventory before selecting.** Read the paper's robustness analyses,
-   including appendices and supplied code. In `robustness/plan.md`, map each
+   including applicable empirical footnotes, appendices, and supplied code.
+   Apply `references/assessment.md` § Empirical footnote applicability to
+   distinguish printed results from unquantified asserted checks.
+   In `robustness/plan.md`, map each
    already-run check to its source and list excluded candidates with reasons
    (already run, unfair, infeasible, or outside scope). Unavailable appendix or
    code coverage stays a named gap. Every code anomaly logged by `reproduce`
@@ -416,7 +423,10 @@ The goal is the I4R report, written as a team.
    or unresolved, with target, source, boundaries, and coverage evidence. Keep
    their totals separate from numeric comparison counts and category derivation;
    include unresolved assertions even when detailed statistic lists show only
-   discrepancies. Put each robustness result beside its original estimate.
+   discrepancies. Retain applicable empirical footnote evidence and explain
+   bibliographic exclusions, unquantified assertions, and unresolved coverage
+   under § Empirical footnote applicability in that reference, with declared
+   whole-paper/selected scope visible. Put each robustness result beside its original estimate.
    Disclose AI assistance. If selected-target work was requested, also show its
    separately labelled six-row table and target declaration. Keep any reference
    comparison scoped and distinguish printed categories from inferences under

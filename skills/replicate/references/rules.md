@@ -23,6 +23,13 @@ surprising the estimate would be if the true effect were zero.
 
 ## 1. The Reproducibility Table is always present
 
+Coverage follows empirical meaning, including applicable footnote results
+supporting the target, under `assessment.md` § Empirical footnote applicability.
+Distinguish merely bibliographic notes, unquantified asserted checks, and printed
+numeric results. Preserve their sources, computational applicability, and
+whole-paper/selected scope in the inventory and report; an assertion supplies no
+invented numeric match or automatic category.
+
 Retain all six rows. Mark established categories Fully, Partially, or No;
 show unresolved rows as "not yet assessed", with their reason. If the chosen
 template fixes the three category columns, leave them unmarked for an
