@@ -48,3 +48,24 @@ After reception2557 read-back and source ancestry verification, the predecessor
 handed source tree `receive1575-rulings-fresh` and exact source branch/OID were
 removed by roar's explicit-target helper, which returned clean. All source
 content remains on main; no other predecessor worktree was touched.
+
+1583 merged as [PR2560](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/2560),
+with exact decimal common rounding to three significant digits, nearest ties
+away from zero, and separate article comparison. Its first gate reproduced a
+portability failure in the caller-requested forge URL source citation. The
+repair kept the same ticket/reception commit provenance without a forge URL;
+round2 approved, guards unchanged. The final numerical main102f8fb3 passed the
+full after-merge record. Combined arithmetic/source/union audit and measured
+clock limitations are retained in `tickets/reviews/rulings1575/integration.md`.
+The backfill helper appended nothing and reported370 unresolved historical
+records; the current repair was not a past review. No broad repair was attempted.
+
+During1583 verification, the author introduced cumulative-stage interface1589.
+The parent directed finishing the numerical stream and bounded1575 integration,
+with no new1584–1588 implementation. All five remain unstarted and transferred
+to the new receiver; this is no claim that they are complete. The old raid queue
+is zero only for the newly bounded numerical stream. The exact policy/authority
+handoff is `tickets/reviews/rulings1575/continuation-handoff.md`; the new receiver
+owns PR2562 and subsequent interface/rehearsal handoffs. No1589 sender tree was
+adopted, changed, or removed by this lead.1575 closure is bounded;1570/1572/1552
+and foreign0009 pickup conditions remain separate.
