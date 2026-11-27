@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Hand off fresh-paper cumulative-stage rehearsal and batch freeze to replicator
+Created: 2026-11-27
+Author: receiver
+Blocked-by: 1590
+
+--- log ---
+2026-11-27T12:37Z receiver created
+
+--- body ---
+
+## Scope and authority
+
+Child of1589. Deliver a ticket-only cross-project handoff to replicator after
+1590 lands; replicator receives, owns paper selection and execution, and
+records its own Imagine. This harness child does not itself authorize foreign
+scientific work. No frozen pilot folder modification or paid API call.
+
+## Exit criteria
+
+- [ ] File and read back a replicator-owned request, using its own tickets
+  conventions, naming the exact landed harness commit and1589/1590 lineage.
+- [ ] Request a paper outside data/splits/dev-exposed-2026-11-26.csv; exposure
+  exclusions cover executor/advisor/signers and answer-bearing retrieval.
+- [ ] Request retained compiled report at each of the five cumulative stages,
+  coherence/reuse evidence, a single updated note draft, actual scope and
+  signature records, and unchanged assessment/CSV contracts. Preserve misses
+  and unknowns; optional autoresume cannot block the rehearsal.
+- [ ] Request a frozen skill commit/version for the Brodeur batch, cited by
+  each AI Disclosure; report1580 report-style dispositions and mapping lifetime.
+- [ ] Record receiver ticket/branch/head and notify live owner; report pending
+  pickup honestly.1589 stays open until actual rehearsal and freeze evidence
+  are read back and integration verified; handoff filing alone is not success.
+
+Verification is payload/ownership/scope readback, not new estimates in harness.
+Any author scope or signature still required by the paper run remains required.

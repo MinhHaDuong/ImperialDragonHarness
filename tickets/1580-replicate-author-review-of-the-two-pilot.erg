@@ -1,0 +1,130 @@
+%erg 0.1
+Title: /replicate: author review of the two pilot reports — report style, discrepancy qualification, identification and robustness scope (replicator 0003)
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T11:30Z reviewer created
+2026-11-27T11:30Z reviewer filed from replicator (post-0003 report review) at author request; receiving Imagine pending; report-style rows wanted before the Toulouse Games 2026-12-08
+
+2026-11-27T12:39Z receiver received complete source dispatch; acceptance, overlap, authority, advisor relay, decomposition and coverage limitations recorded below; no implementation or frozen artifacts changed
+
+--- body ---
+## Context and authority
+
+Filed from replicator (post-0003) at the author's request, 2026-11-27. The
+author read the two frozen pilot reports
+(`replications/weschle2024politicians/report/weschle2024politicians-report.pdf`,
+`replications/atanasov2024taste/report/main.pdf`) and gave 24 remarks
+(W1-W17 on Weschle, A1-A7 on Atanasov). The author ruled the dispatch below.
+Paper-specific points stay in replicator; the reports are frozen and are not
+edited. Weschle ran at harness `04d8cf2`, before the identification review
+existed; Atanasov at `2360e75`. Overlap to check: 1572-1579 (data audit,
+asserted checks, Stata caveats, calibration split, private packages,
+unprinted estimates). Priority: report-style items before the Toulouse
+Games (8 Dec 2026), because reports go to teammates.
+
+## SKILL.md rules (one binding line each)
+
+| Rule | Remarks |
+|---|---|
+| Every discrepancy says what it compares: an internal inconsistency of the article (text vs its own table) or a reproduction difference (printed vs recomputed) | W7 |
+| Every discrepancy is qualified (typo or swapped labels, rounding, Monte Carlo noise tested against its Monte Carlo SE, substantive unresolved); negligibility is computed, not asserted. Identical software, RNG and seed should give zero Monte Carlo difference; a difference then needs a cause | W8, W14, A2 |
+| A statistic with no author code that is trivial to recompute from the analysis data gets a separate status (e.g. `recomputed`), counted apart from author-code matches; `not_run` only with a stated reason. The analysis-code-provided row still records the missing code | A6 |
+| assess flags data-acquisition code (scraper, API calls, downloads); the report states whether acquisition was replayed; a temporal extension is a direct replication, proposed with cost and terms-of-use limits, never run unsigned (outward act) | A5 |
+| probe proposes for the main result at least one check outside the paper's statistical frame: model-independent (permutation/randomization inference, rank or distribution tests), a different design on the same data (within-unit comparisons, exact matching), or a derived implication of the same hypothesis. Signing rules unchanged; the report separates in-frame and out-of-frame checks | A7 |
+| When a check overturns a key result, the report discusses the model-selection criteria (estimand, count outcome and zeros, field practice) and states the specification-search question explicitly, on verifiable facts (justification in the paper, pre-registration, field norm), without imputing intent | W13 |
+| Identification review asks two separate questions: is the estimation faithful to the causal graph (internal), and is the graph credible against other studies and common sense (scientific). Strong model plus targeted, verified checks; then stop and offer, with a cost, before any deep literature search or saturation | A4 |
+| The run records AI Disclosure data as it goes (see the report-style reference) | W16 |
+
+## References (procedure and format)
+
+| Reference | Content | Remarks |
+|---|---|---|
+| Report style (new reference or template section) | Caption on every table and figure; report tables numbered R1, R2 (`\renewcommand{\thetable}{R\arabic{table}}`), article tables always cited as "article Table n"; the I4R reproducibility table captioned with the name I4R/Brodeur uses; no template-internal phrase ("in the template") without context; the substantive effect restated in plain words before each numeric comparison | W1, W2, W4, W6, A1, W12 |
+| Report style | I4R table: "?" in the cells the assessor hesitates between, never a blank row. The checklist row "Computational requirements: libraries/packages, running time" is verbatim in all three I4R templates: keep it, add below a row marked as an addition, "Provides a ready-to-run environment (container image or lockfile)", and say in the text whether package versions are listed | W3, W5 |
+| Report style | Robustness section: keep the I4R heading "Robustness Reproduction" and open with one sentence defining it (same data, alternative analytical decisions; not an extension); checks excluded because the paper or SI already reports them are said to be reproduced in the reproduction section, cross-referenced by label; counts of signed, run and not-run checks, each not-run with its reason | W9, W10, W11 |
+| Report style | Signature "Auto-generated by <model>, guided by <user>"; AI Disclosure with the project repository and commit, the harness repository and commit, and per role (MOE, team leads, coders, reviewers) the model, number of calls and share of work | W16 |
+| rules.md or a discrepancy reference | Pre-specified negligibility diagnostic reported beside the strict three-digit verdict (the strict verdict and tolerance unchanged): difference as a fraction of the SE with an equivalence margin, difference against the Monte Carlo SE for simulated quantities, count at the second digit | W14, W8 |
+| identification-review.md | Causal graph in the body at the start of the section, caption stating claim and estimand; a threats table (path, status, evidence, what would rule it out) instead of prose; verdict on the scale; a section on the credibility of the graph itself; the stop-and-offer point before deep search | A3, A4 |
+| robustness-menus.md | A category "verify the claim by a model-independent method", with sources | A7 |
+
+## Out of scope here
+
+Paper-specific findings (Weschle Monte Carlo difference under identical R and
+seed, the Poisson discussion, Atanasov swapped values and the 3,382 vs 3,852
+count, the scraper not replayed) stay in replicator's journal. A replicator
+remote is a replicator decision.
+
+## Exit criteria
+
+- [ ] Receiving Imagine records facts, overlap with 1572-1579, ownership and
+  standing rulings, and disposes of each row above.
+- [ ] Report-style rows are implemented or explicitly deferred before
+  2026-12-08.
+
+## Receiving Imagine — harness, 2026-11-27
+
+Disposition: accepted for separate bounded report-contract delivery; no frozen
+report repair or scientific rerun. Full source body imported from PR2556's
+origin/replicator-report-review branch, including all24 remarks.1589 supersedes
+only A4's stop-and-offer behavior; every other requirement survives.
+
+1. Facts against framing: current report guidance requires six rows, evidence,
+   I4R terminology, and citation-ready output, but does not implement all the
+   author's typography, diagnostic, and disclosure requests. The source reports
+   pilot observations; it does not establish causes for stochastic differences.
+2. Duplicates/overlap:1573–1579 implement joins/construction, asserted-check
+   eligibility, Stata/manual evidence, exposure, private packages, and auxiliary
+   estimates.1581–1583 cover translation/assertion/numerical comparison.1584–1588
+   cover approval, central result, footnotes, dual-axis appraisal, and separate
+   scientific impact.1589/1590 replace stage names and cumulative placement,
+   not the rest of this request. See the24-row ledger below.
+3. Ownership: harness owns generic report instructions and evidence boundaries.
+   Replicator owns paper-specific causes, acquisition attempts, frozen artifacts,
+   scientific variants, and historical reports. Those reports remain untouched.
+4. Standing rulings: strict half-unit comparison remains; diagnostics cannot
+   erase misses. No automatic signature, temporal acquisition extension, paid
+   spend, source discovery in blind mode, or outward publication.1589 makes
+   identify unattended with targeted verified checks; deep literature remains
+   separate. AI provenance starts at inventory; final disclosure at complete.
+
+## Remark coverage ledger
+
+Rows below are receiving dispositions, not claims of implementation. Open
+report-style rows must be implemented or explicitly deferred with reasons
+before2026-12-08; separate bounded implementation children must be created
+before that work begins. This receiving PR closes no ticket.
+
+|Remark|Requirement and receiving disposition|Delivery/overlap|
+|---|---|---|
+|W1|Caption every report table/figure; accept, outstanding|1580 report style|
+|W2|Number report tables R1,R2 and cite article tables explicitly; accept, outstanding|1580 report style|
+|W3|Use ? for assessor hesitation, no blank row; accept, distinguish unknown from not-yet-run|1580 report style;1589 cumulative-stage unresolved rows|
+|W4|Caption I4R table with official I4R/Brodeur name; accept, verify primary template|1580 report style|
+|W5|Keep verbatim computational-requirements row; add clearly marked ready-to-run environment row and state version listing; accept|1580 report style; no canonical schema migration|
+|W6|Remove contextless template-internal wording; accept|1580 report style|
+|W7|Label internal article inconsistency versus printed/recomputed discrepancy; accept|1580 discrepancy reference;1588 impact separation|
+|W8|Qualify discrepancy and compute negligibility/Monte Carlo diagnostic with sourced cause, retain strict verdict; accept|1580 diagnostic procedure;1583 precision and1588 evidence boundaries overlap|
+|W9|Keep Robustness Reproduction heading with same-data alternative-decisions definition; accept|1580 style;1590 challenge placement|
+|W10|Cross-reference reproduced article/SI checks by label instead of silently excluding them; accept|1580 report style; existing signed disposition rules preserved|
+|W11|Report signed/run/not-run counts and reasons; accept|1580 style;1571 already requires all dispositions, not proof this formatting landed|
+|W12|Restate substantive effect before numeric comparison; accept|1580 report style|
+|W13|When key result overturns, evidence-based model/estimand/count-zero/field-practice and specification-search discussion without imputing intent; accept|1580 report procedure;1587 scientific argument scope|
+|W14|Prespecified negligibility beside strict verdict, SE fraction/equivalence margin, MC SE, second-digit count; accept without widening tolerance|1580 diagnostics;1588 separate impact does not fulfill diagnostic procedure|
+|W15|Source dispatch does not supply a W15 requirement; preserve unavailable evidence, do not invent|Ask source owner for missing remark before coverage closure; all supplied rules still received|
+|W16|Signature and AI Disclosure with project/harness commits, per-role model/calls/work share; collect evidence from start; accept, no fabricated missing provenance|1580 formatting and attribution;1590 lifecycle placement|
+|W17|Source dispatch does not supply a W17 requirement; preserve unavailable evidence, do not invent|Ask source owner for missing remark before coverage closure|
+|A1|Same report/article table distinction and caption rules; accept|W1/W2/W4/W6 shared style delivery|
+|A2|Qualify typo/swapped-label/rounding/MC/substantive differences; accept, cause must be evidenced|W8/W14 diagnostics;1588 impact separation|
+|A3|Causal graph at identification opening with claim/estimand caption, threats table and verdict scale; accept where causal|1580 reference formatting;1587 generic noncausal scope;1590 placement|
+|A4|Separate estimation fidelity from graph credibility, targeted verified checks; accept. Only stop-and-offer superseded by1589|1590 unattended identify; deep literature separate, no automatic saturation|
+|A5|Flag scraper/API/download acquisition code and whether replayed; temporal extension is direct replication with cost/terms limits, unsigned/outward action prohibited; accept|1580 inventory/report procedure;1590 stage mapping|
+|A6|Trivial independently recomputed statistic gets separate recomputed evidence counted apart; missing code still recorded; not_run requires reason; accept pending assessment-contract design|1580 independent child needed before implementation;1579 auxiliary rows alone do not fulfill|
+|A7|At least one signed main-result check outside statistical frame, separately identified and sourced menu category; accept|1590 challenge obligation;1580 report distinction/menu sources still outstanding|
+
+The source claims W1–W17 but its body references W1–W14 andW16 only. W15/W17
+are unavailable in this dispatch, not silently resolved or counted as supplied.
+Do not close coverage until the receiver has the original remarks or the source
+owner confirms their disposition. This evidence gap does not block accepted
+interface work or justify editing frozen reports.
