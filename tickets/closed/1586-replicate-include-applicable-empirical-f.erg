@@ -9,6 +9,7 @@ Closed: autoclosed — PR #2567
 2026-11-27T14:55Z reviewer note blocker 1585 closed — Blocked-by removed.
 2026-11-27T15:03Z reviewer Implemented prospective empirical-footnote applicability by target meaning; numeric, assertion, auxiliary, bibliographic and unquantified-probe boundaries retained. Scenario audit and actual distinct parent semantic/integration CLEAN on product 67ca68036e7e87dcc1791d39fe514faa41ed3d1b; lint191 and fast1966 passed. Evidence tickets/reviews/t1586/. Final gaze and caller gate/merge remain.
 2026-11-27T15:06Z reviewer closed — autoclosed — PR #2567
+2026-11-27T15:10Z reviewer note verify-reroll — round 1: raw host paths in committed test logs fail agnostic-guard
 
 --- body ---
 
