@@ -2,11 +2,13 @@
 Title: After-merge red on main ac4d5770b0f5: pytest-guard
 Created: 2026-11-27
 Author: merge-gate
+Closed: autoclosed — PR #2572
 
 --- log ---
 2026-11-27T12:50Z merge-gate created
 
 2026-11-27T16:29Z codex note separate triage: original gate note identifies pytest-guard and the Zotero launch test; cause remains unestablished. Verify the named full check on this request candidate before landing.
+2026-11-27T16:29Z reviewer closed — autoclosed — PR #2572
 
 --- body ---
 ## Context
