@@ -2,10 +2,13 @@
 Title: Replicate select main result from original paper with advisor support
 Created: 2026-11-27
 Author: reviewer
+Closed: autoclosed — PR #2566
 
 --- log ---
 2026-11-27T11:43Z reviewer created
 2026-11-27T14:44Z reviewer note blocker 1584 closed — Blocked-by removed.
+2026-11-27T14:52Z reviewer Implemented paper-led main-result contract, optional official Highlights with blind exclusions, pivotal advisor support, and prospective motivated cohort ties. Source/scenario audit and distinct actual parent semantic review retained under tickets/reviews/t1585/. Adherence PASS; lint 191 and fast 1966 passed; no scientific execution or historical rescore.
+2026-11-27T14:55Z reviewer closed — autoclosed — PR #2566
 
 --- body ---
 
