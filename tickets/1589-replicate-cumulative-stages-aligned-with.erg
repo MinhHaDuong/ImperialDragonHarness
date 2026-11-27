@@ -2,6 +2,8 @@
 Title: /replicate: cumulative stages aligned with report sections (inventory, identify, rerun, challenge, complete) — author design, replicator
 Created: 2026-11-27
 Author: reviewer
+Blocked-by: file:///home/haduong/CNRS/projets/actifs/replicator/0010
+Label: deferred
 
 --- log ---
 2026-11-27T12:31Z reviewer created
@@ -9,6 +11,8 @@ Author: reviewer
 2026-11-27T12:33Z reviewer author confirmed decision 6 (mapping table), with a limited lifetime: delete it once old-name tickets are closed; git keeps the history
 
 2026-11-27T12:39Z receiver received complete source dispatch; acceptance, overlap, authority, advisor relay, decomposition and coverage limitations recorded below; no implementation or frozen artifacts changed
+
+2026-11-27T16:17Z harness1591 parked on receiver0010 (file:///home/haduong/CNRS/projets/actifs/replicator/0010), pushed handoff-harness1591 head7a7d6aea3e89ae185db3f0e68048beac7f2dc974. Need actual five compiled stage reports/coherence/reuse/note/scope and valid plan approval,1580 dispositions, batch skill freeze/disclosures and integration readback before closure; filing and notification are not delivery. Exact payload and ownership evidence: tickets/reviews/t1591/handoff-evidence.md
 
 --- body ---
 ## Context and authority
