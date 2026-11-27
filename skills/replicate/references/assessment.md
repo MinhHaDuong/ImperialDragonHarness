@@ -522,6 +522,13 @@ shows only discrepancies and rounds to three digits; its six-row status
 table remains complete, with evidence bases and unassessed rows visible.
 This comparison display rule does not apply to retention of auxiliary rows.
 
+Preserve original/frozen discrepancy rows and their classifications when later
+evidence diagnoses their cause or scientific impact. Follow
+`scientific-appraisal.md` § Diagnose a discrepancy and its scientific impact for
+the separate evidence and conclusions. Scientific confirmation despite a retained
+miss changes neither comparison counts nor the computational criteria/categories;
+it authorizes no widened tolerance, automatic promotion, or legacy rescore.
+
 ## Comparing two reproductions
 
 For two reproductions of the same declared statistic, agreement means numeric
