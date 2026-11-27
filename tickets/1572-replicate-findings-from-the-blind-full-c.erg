@@ -10,6 +10,10 @@ Label: needs-human
 2026-11-27T08:13Z reviewer receiving Imagine accepted findings1/2 only in child1573; authority decisions held; four premise checks and every finding disposition recorded
 2026-11-27T08:16Z reviewer source qualification: unticked category columns with explicit status note may comply; stochastic-label discrepancy cause unestablished; no new scoring exception
 
+2026-11-27T08:15Z reviewer author ruling 2026-11-27 (replicator session) on finding 3 only: a check the paper asserts without numbers or code is not 'already in the paper'; it is eligible for the plan and may not be rejected as a duplicate on that ground; not mandatory, the panel or signer may still reject it for another stated reason; probe must propose it when it bears on the main result; the same sentence goes in probe and in the panel prompt template. Findings 12 and 1570 sign-off modes are not ruled by this
+2026-11-27T08:15Z reviewer author-approved placement for findings 1-2: one binding line per audit in SKILL.md reproduce pointing to a reference; the join checklist (keys as coded, match rate, unmatched-key sample, encoding/quotes/whitespace/case, many-to-many, duplicate keys, missingness in constructed variables) and the text-vs-code table format in a reference (assessment.md or a new data-audit.md); paper cases (Atanasov quotes, 4-vs-2 ratings) stay in replicator, not in the skill. Also approved as a proposal, to check against canonical ACRe meanings before adoption: an output whose joins were not audited is not scored Fully
+2026-11-27T08:21Z reviewer 08:15 author annotations ingested and parent-confirmed:3 ruled separately,1/2 placement explicit; proposed audit score gate not adopted; original joint criterion superseded by appended override
+
 --- body ---
 ## Context and authority
 
@@ -103,7 +107,7 @@ authority. This tracker stays open.
 |---|---|---|
 | 1 Join audit | Accepted in1573, untouched keys/cardinality/unmatchedness before cleaning; denominators and stage explicit | SKILL.md reproduce, original-analysis/raw execution evidence |
 | 2 Construction sweep | Accepted in1573, compare definitions/sample rules across text, notes, code and trace constructed missingness; preserve contradictions | SKILL.md reproduce, anomaly evidence before any correction |
-| 3 Unsupported asserted check | Held together with12 and1570; distinguish a published assertion from a verifiable already-run check without silently changing scope or plan eligibility | Author ruling on probe/signing policy |
+| 3 Unsupported asserted check | Author ruled at08:15, confirmed by parent fresh read: eligible, propose when bearing on main result, not duplicate on this ground; separate child1574 and receiver-owned prompt handoff | SKILL.md probe; replicator prompt ownership; no general signing authority |
 | 4 Main-result choice | Held: current rule requires original-paper choice before execution and a cohort-wide rule, but does not fix that cohort rule | Author methodological choice; assess step1 |
 | 5 Footnote applicability | Held: form alone should not erase an output, but applicability affects canonical completeness/level; no silent expansion or rescore | Author scope/assessment ruling |
 | 6 R image | Existing reproduce step1 already rebuilds/locks authors' environment; concrete image/build repairs stay replicator-owned | Replicator environment; no new harness image or default |
@@ -137,3 +141,33 @@ states that their cause is not established; this reception does not relabel
 them as proven Monte Carlo noise. Audit keys mean the authors' inputs at
 their actual join stage, including their own preceding transformations, before
 any checker-added normalization or correction.
+
+## Author override after reception (2026-11-27, 08:15 annotations)
+
+The author ruled finding3 independently of12/1570. This supersedes the
+historical exit criterion requiring3/12 to be ruled together and the earlier
+held disposition for3; original logs and criterion text remain as history.
+A check asserted without numbers or code is eligible and cannot be rejected
+as a duplicate on that basis; propose it when it bears on the main result.
+The signer may reject it for another explicit reason; proposal is not
+mandatory execution. Child1574 implements the harness probe wording and
+files the same wording to the receiver-owned panel prompt. The actual prompts
+are in replicator's frozen paper folders, not in the harness. Preserve those
+frozen artifacts and request correction in future/reusable prompts.
+
+For1/2, the author specified two binding lines in reproduce (one per audit),
+pointing to a detailed reference. The checklist includes keys as coded, match
+rates/unmatched-key samples, encoding/quotes/whitespace/case, many-to-many,
+duplicate keys, constructed missingness, and a text-versus-code table format.
+Paper cases remain in replicator. Child1573 retains this exact placement.
+
+The clause unaudited joins imply no Fully is expressly a proposal for
+canonical review, not adopted. Current assessment.md defines execution Fully
+through complete required matching comparisons; missing join audit is not
+a separate category condition. Audit evidence will be reported separately;
+no category downgrade is introduced via evidence wording. Findings4/5/10/12
+and general signing authority remain held.
+
+Additional child1574: harness eligibility/proposal wording and ticket-only
+foreign prompt handoff. Parent1572/1552 remain open, and remote prompt pickup
+will be reported as pending until the receiver verifies completion.

@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Replicate probe propose asserted unsupported checks for main result
+Created: 2026-11-27
+Author: reviewer
+
+--- log ---
+2026-11-27T08:21Z reviewer created
+2026-11-27T08:21Z reviewer filed as separate probe deliverable under confirmed1572 finding3 ruling; foreign template owner identified, ticket-only handoff pending
+
+--- body ---
+
+## Context
+
+Implementation child of1572 finding3, author ruling recorded at08:15 on
+sender commit7d092adc4 and confirmed by the parent fresh read. This ruling
+does not decide12 or1570's general signing modes.
+
+## Shared implementation wording
+
+A robustness check asserted in the paper without numbers or code is eligible
+for the plan and cannot be rejected as a duplicate on that ground. Propose
+it when it bears on the main result; the signer may reject it for another
+explicit reason. Proposal does not authorize execution.
+
+This is implementation wording faithful to the ruling, not a verbatim quote
+from the author's conversation. The same wording belongs in probe and in the
+receiver-owned future/reusable panel prompt; preserve frozen pilot prompts.
+
+## Relevant files
+
+- skills/replicate/SKILL.md probe
+- skills/replicate/references/rules.md rule7 for a consistent existing menu
+- Replicator owns actual pilot panel prompts and protocol, ticket-only handoff
+
+## Exit criteria
+
+- [ ] Probe includes the shared wording: eligibility, mandatory proposal for
+  main-result relevance, duplicate-rejection limitation, alternate explicit
+  rejection reason allowed, and no mandatory execution.
+- [ ] Any parallel existing rule about checks not already run is reconciled
+  consistently without changing signing authority or broader scope.
+- [ ] A ticket-only handoff files the same wording to actual prompt owner
+  replicator, names frozen artifacts to preserve, and reports remaining pickup
+  accurately; no new global panel template/signing flow is invented.
+- [ ] Person-written signatures and computational score/tolerance meanings
+  remain unchanged. No new scientific run or general panel consent occurs.
+
+## Validation
+
+Semantic diff against confirmed author ruling, byte preservation of existing
+contracts, and exact equality of shared wording in harness and handoff ticket.
+No wording tests or numerical rerun. Lint/fast, semantic adherence, gaze and
+gate before landing. Parent1572 records foreign pickup as pending, not done.
