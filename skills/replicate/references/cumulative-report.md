@@ -76,7 +76,12 @@ counts, and truthful signature/disclosure. Reuse valid computations; a coherence
    evidence where measurable, source/exposure boundaries, and reviewer limits.
    Requested model pins do not prove served identity. Complete uses these
    records to finalize AI Disclosure; missing historical evidence stays missing.
-5. Preserve all signed-plan dispositions: completed, failed, blocked, withdrawn,
+5. Carry `acquisition.md` producer inventory and actual replay evidence into
+   the report, including unreplayed reasons and separately proposed temporal
+   extensions. Distinguish in-frame/out-of-frame checks and their original
+   estimates, applicability, approval, and actual dispositions under
+   `report-style.md`; unavailable evidence never fulfills the outside-frame
+   proposal obligation. Preserve all signed-plan dispositions: completed, failed, blocked, withdrawn,
    adverse, and inconclusive results, reasons, and amendments. Scope limits and
    missing execution stay visible through complete. Keep computational misses
    beside separately evidenced cause/impact judgments under
