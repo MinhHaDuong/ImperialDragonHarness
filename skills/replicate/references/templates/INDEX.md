@@ -1,6 +1,6 @@
 # I4R report templates
 
-Copies of the Institute for Replication templates, so `report` works offline
+Copies of the Institute for Replication templates, so each stage can compile its cumulative local report offline
 and reproducibly. Source: Zenodo, licence CC-BY 4.0 (credit "Institute for
 Replication" when a report reuses a template). Retrieved 2026-11-25; every
 checksum matched the Zenodo API on that date. Independently rechecked on
@@ -34,3 +34,16 @@ Zenodo records are versioned. To look for one, read
 `https://zenodo.org/api/records/<record>` and follow `links.latest`. Report a
 newer version to the user; never switch to it silently, and add its files here
 only in a change of their own.
+
+## Cumulative use and execution scope
+
+Use these templates from inventory onward under `../cumulative-report.md`,
+adding Identification immediately after the opening and compiling through the
+latest written section. Complete rewrites introduction/conclusion/disclosure.
+Template-specific sections remain where applicable; the staged report order
+follows the science. The General template's main-claim and coverage language
+is not an assignment-specific Games execution whitelist. Resolve an explicit
+I4R execution choice from authoritative assignment instructions/slides and the
+named template with source/version and a target inventory before running it.
+Missing assignment perimeter stays unresolved, never inferred from a pilot.
+The existing assessment, selected-target, and printed-tolerance contracts remain.

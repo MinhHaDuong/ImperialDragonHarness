@@ -12,8 +12,9 @@ another paper.
 
 ## Scope and evidence
 
-Write an **Identification** section within `report/`, alongside the
-computational assessment. Declare the exact causal claim and estimand: the
+Write an **Identification** section within `report/`, immediately after the
+opening, during identify. It precedes Computational Reproducibility and is
+compiled with the cumulative report after every stage. Declare the exact causal claim and estimand: the
 treatment or exposure, outcome, population, comparison, and time horizon.
 Reuse a selected-target scope ID when applicable and state any difference
 between that numerical target and the causal claim reviewed.
@@ -25,7 +26,7 @@ or figure anchors. Distinguish what the authors claim, what critics claim,
 and what the reviewers infer. Unavailable sources remain evidence gaps.
 
 This review runs no new estimates. Put proposed empirical checks, including
-sensitivity analyses or bounds, into the existing `probe` plan for
+sensitivity analyses or bounds, into the existing `challenge` plan for
 [approval](probe-approval.md) before execution. Keep causal identification distinct from
 statistical significance and estimator robustness: a precise estimate or
 stability across specifications alone cannot establish a causal interpretation.
@@ -37,6 +38,19 @@ argument/model, source facts, and implementation evidence. Descriptive,
 predictive, and meta-analysis claims use that generic appraisal without a forced
 causal DAG or identification label. Preserve any material noncausal premises
 alongside the causal argument.
+
+## Fidelity and credibility
+
+Keep two argued judgments distinct: does the reported estimation implement the
+sourced graph/estimand faithfully, and is that graph scientifically credible
+against relevant other studies and common sense? Before rerun, execution remains
+unavailable; inspect the reported specification and source/code evidence without
+claiming it ran. Use targeted verified primary-source checks for material links,
+retaining inspected passages, contradictions, and missing evidence. Work
+unattended within the source boundary; pass blind exclusions to every advisor
+before retrieval. Deep literature review/saturation is a separate request.
+End with graph points needing literature support before publication. No new
+estimates are authorized by this source appraisal.
 
 ## Map the design with a DAG
 
@@ -140,7 +154,7 @@ Add design-specific assumptions these prompts do not cover; for example,
 parallel trends in a difference-in-differences design or instrument relevance
 in an instrumental-variables design. Cite any existing sensitivity evidence,
 state what it bounds under which assumptions, and leave a proposed new
-calculation to the approved `probe` plan.
+calculation to the approved `challenge` plan.
 
 ## Give an argued reviewer judgment
 

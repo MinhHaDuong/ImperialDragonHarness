@@ -1,4 +1,9 @@
-# Probe-plan approval
+# Challenge-plan approval
+
+The current command is challenge; this contractual reference path is retained.
+There is no signature timeout: refusal, silence, or elapsed time never supplies
+approval, including when a later request asks to complete. Compile the available
+local report and retain the pending plan/dispositions while blocked.
 
 Before any robustness execution, retain an approval record in
 `robustness/plan.md` identifying the exact plan path, version or content hash,

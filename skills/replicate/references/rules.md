@@ -32,7 +32,9 @@ whole-paper/selected scope in the inventory and report; an assertion supplies no
 invented numeric match or automatic category.
 
 Retain all six rows. Mark established categories Fully, Partially, or No;
-show unresolved rows as "not yet assessed", with their reason. If the chosen
+show unresolved rows as "not yet assessed", with their reason. For execution
+not attempted, append "not yet run" and its reason; this changes no stored
+status or category. Each stage compiles all six rows in its local report. If the chosen
 template fixes the three category columns, leave them unmarked for an
 unassessed row and place its status beside it. Inspection establishes
 provision; output comparisons establish numerical execution. A verified

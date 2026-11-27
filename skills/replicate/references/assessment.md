@@ -46,7 +46,7 @@ fill them only after computing the level with the grid.
 - **`non_etabli`** maps each criterion that was examined but not established
   to the reason. A missing piece and a failure are both evidence.
 - **`a_evaluer`** lists criteria not yet examined, including run criteria
-  until `reproduce` runs. Every grid criterion belongs to exactly one of
+  until execution evidence exists in `rerun`. Every grid criterion belongs to exactly one of
   `criteres`, `non_etabli`, or `a_evaluer`; enumerate them from the named grid.
   Never use an undocumented empty `criteres` as the assessment.
 - **`blocked`** maps unexamined criterion IDs to an access or evidence reason,
@@ -80,10 +80,19 @@ level = (next((r["classe"] for r in rules
          if examined else "a_evaluer")
 ```
 
-- **`history`** gets one entry per verb run that changed the level.
-  `reproduce` updates this same file. It never writes a second assessment.
+- **`history`** gets one entry per stage run that changed the level.
+  `rerun` updates this same file. It never writes a second assessment.
 
 ## Package coverage and main-result runs
+
+The current command chain is inventory → identify → rerun → challenge → complete.
+Its execution-scope choice is recorded separately in README/report evidence:
+main result, authoritative assignment-specific I4R perimeter, or whole paper.
+It changes no schema, criterion, category, or selected-target contract below.
+A main-only run leaves unexamined whole-paper execution coverage unresolved;
+no-run rows display “not yet assessed — not yet run” with reasons, alongside any independently
+established provision-based impossibility. Literal `stage=reproduce`,
+`stage=robustness`, paths, and historical records remain unchanged.
 
 Choose `main_result` under [Main-result choice](main-result.md), using the
 original central claim before inspecting the package or executing code. Retain
@@ -158,13 +167,13 @@ A printed numeric footnote result uses the existing comparison contract and
 article tolerance. A sourced range or inequality uses § Published assertions,
 with required endpoint comparisons retained. An unquantified assertion such as
 “results are similar when these observations are excluded” supplies no numeric
-comparator: retain its source and evidence limits, and apply the existing `probe`
+comparator: retain its source and evidence limits, and apply the existing `challenge`
 eligibility and approval rules for a check asserted without numbers or code.
 Do not invent an estimate, numeric match, assertion predicate, or automatic
 category from it. Produced estimates without exact comparators remain auxiliary;
 actual failed/blocked attempts and unresolved coverage remain visible separately.
 
-Carry these distinctions into README, preliminary notes, and the report,
+Carry these distinctions into README, the cumulative note draft, and the report,
 including scoped omissions and unresolved claims. This prospective rule changes
 no schema, comparison tolerance, or category derivation. Preserve old case
 records; it authorizes no automatic inventory expansion, rerun, or rescore of them.
@@ -342,9 +351,11 @@ a missing raw-run CSV does not establish impossibility. Do not mark
 `crr_echouee` from this inspection-only basis; run criteria retain their
 main-result execution evidence requirements.
 
-In preliminary notes and reports, show all six derived rows, including
+In the cumulative note draft and reports, show all six derived rows, including
 Fully and not yet assessed, with the evidence basis and unresolved coverage
-visible. Use the literal status "not yet assessed" for an unassessed row;
+visible. Use the status "not yet assessed" for an unassessed row; append "not yet run"
+and its reason when execution has not occurred. This is a display clarification,
+not a new stored status or category. For unknown provision keep "not yet assessed";
 if a fixed template offers only Fully/Partially/No columns, leave those
 columns unmarked for that row and state the unassessed status and reason
 beside it. The instruction to show only discrepancies applies to the
@@ -492,7 +503,7 @@ it as a directly printed selected category. Whole-paper Partially or No alone
 does not locate a gap inside the target. Narrative inference remains distinct
 from the printed label, and unknown reference rows never become agreements.
 
-Show both six-row tables with explicit scope labels in preliminary notes and
+Show both six-row tables with explicit scope labels in the cumulative note draft and
 reports. The canonical table retains whole-paper meanings; the selected table
 names its scope ID and target kind, evidence basis, exclusions, and unknowns.
 Report reference comparisons with those same qualifications.
@@ -700,7 +711,7 @@ The identity and provenance fields are shared with replicator's Phase B
 }
 ```
 
-`template` is added by `report` (chosen from `references/templates/INDEX.md`;
+`template` is added from inventory onward (chosen from `references/templates/INDEX.md`;
 an adapted structure adds `"adapted": true`). Each file's `representation`
 identifies the bytes requested (original format or archive-ingested `.tab`).
 `archive_checksum` is nullable; when present it records the listed algorithm
