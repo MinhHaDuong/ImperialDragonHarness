@@ -1,0 +1,160 @@
+%erg 0.1
+Title: /replicate: skill test on a no-package, blocked-rerun paper (replicator, de Soyres IMF WP/26/128)
+Created: 2026-11-27
+Author: reviewer
+Label: needs-human
+
+--- log ---
+2026-11-27T21:26Z reviewer created
+2026-11-27T21:26Z reviewer reviewer filed from replicator (de Soyres skill test, PR replicator#8) at author request 2026-11-27; receiving Imagine pending; overlaps 1593
+
+2026-11-27T21:33Z receiver received PR2579 source5a550d5a72973d3eb73a421dcb4da60d20163d7a; four premises and all13 dispositions below; ticket-only planning receipt, no implementation/science;1593 overlap recorded but not received or closed here
+
+--- body ---
+## Context and authority
+
+Filed from replicator at the author's request, 2026-11-27. The author ran de
+Soyres, Obeng and Tan (2026), IMF WP/26/128, as an extra test of the
+refactored `/replicate` skill (harness `be867012cd42`; skill last changed in
+`8b3d42657`). It is not Toulouse material. The paper has no replication
+package, and the author ruled EM-DAT out of scope, which blocks `rerun` for
+every table. Stages: `inventory` and `identify` done, `rerun` blocked,
+`challenge` not run, `complete` done. The harness owns the skill; replicator
+did not edit it.
+
+Evidence: replicator PR MinhHaDuong/replicator#8, branch `desoyres-report`,
+head c80aa67: `replications/desoyres2026climate/SKILL-TEST.md` (stage-by-stage
+detail and timing), `report/`, `assessment.json`, `manifest.json`. The run
+took about 15 minutes of wall-clock time, most of it spent reading 13
+reference files (about 17,000 words).
+
+## Findings (the receiver decides placement and wording; detail in SKILL-TEST.md)
+
+1. **No path for "package searched, none found".** The executor had to infer
+   that an exhausted search establishes L1. Wanted: one paragraph on
+   establishing absence, keeping the caveat that a private package is not
+   excluded. With no package, the level is final at L1; the skill should say
+   that L4, L5 and L8-L10 no longer "wait for rerun".
+2. **`fetch.sh` with nothing to fetch.** The fetch contract covers public and
+   supplied bytes, not "nothing to fetch". (Replicator's layout now makes
+   `fetch.sh` optional until bytes exist.)
+3. **Manifest has no slot for cited third-party raw inputs** (EM-DAT, WEO,
+   CRS) that the authors do not deposit. For a paper without a package these
+   are the raw data. The executor added a non-schema `third_party_inputs`
+   block.
+4. **`donnees_brutes_inaccessibles` is ambiguous** when raw data are open
+   third-party databases the authors did not deposit. The grid mixes
+   "provided by the authors" with "accessible to anyone".
+5. **"Provision-based impossibility" covers only a package starting at
+   analysis data.** No ruling exists for the no-package case, which arguably
+   makes both execution rows impossible on provision grounds.
+6. **Re-implementation from prose, without author code, has no stage.** Is
+   it `rerun`, `challenge`, or out of scope?
+7. **A blocked rerun writes no `missing_input` rows.** Should it write
+   `out/reproduce.csv` with `status=missing_input` for each printed
+   statistic, or keep that only in prose?
+8. **The identification method assumes one causal claim.** It does not cover
+   a chain of three regressions whose product is the policy claim, nor a
+   paper that disclaims causality ("associations") while using causal verbs.
+   It also does not say whether prior findings should be withheld from the
+   advisor (the executor withheld them, and the advisor independently
+   recomputed the arithmetic) or where advisor provenance should live (the
+   executor used `report/advisor/`).
+9. **Robustness plan when data can never run.** It is unclear whether
+   `challenge` should still draft one. The scope question is also asked
+   before computation even when computation is impossible.
+10. **The desk check has no stage.** Its CSV is labelled `stage=reproduce`
+    although nothing was reproduced. This overlaps IDH1593, lesson 1.
+11. **The signature rule asks for an observed model identity** that an agent
+    cannot observe from inside.
+12. **Templates are I4R-only.** There is no neutral report template for a
+    non-Games case.
+13. **The rereading cost is out of proportion** for blocked or empty stages.
+    The skill could short-circuit them (for example, skip `data-audit.md`,
+    `stata-caveats.md` and `validation.md` when rerun is blocked by inputs).
+    It also lacks a stage-status vocabulary (blocked, not run, no approval)
+    and does not say whether "compile after every stage" applies when the
+    stages run back to back in one sitting.
+
+## Exit criteria
+
+- [x] Receiving Imagine decides each finding (accept with placement, merge
+  into IDH1593, or reject with a reason).
+- [ ] Accepted findings land in the skill or its references, without
+  paper-specific content.
+- [ ] Replicator is told the landed commit.
+
+
+## Receiving Imagine — harness, 2026-11-27
+
+Disposition: accepted into the request store for bounded future design, with
+all thirteen findings disposed below. This is receipt, not implementation,
+priority, scientific-plan approval, or closure. The original source body and
+sender log remain intact. `needs-human` records unresolved grid/workflow/format
+choices before implementation; an explicit reception request does not authorize
+those changes. No scientific source files, estimates, or receiver artifacts
+were inspected or changed.
+
+1. Facts versus framing: source PR2579 at
+   `5a550d5a72973d3eb73a421dcb4da60d20163d7a` adds only this ticket and its
+   claim. The no-package run, local layout, stage outcomes, readings, timing,
+   and numerical findings are sender reports, not independently verified here.
+   The source explicitly excludes Toulouse material. Reported complete does
+   not establish compliance with every prerequisite or any rehearsal/freeze.
+   Its tested baseline be867 already includes1594's unavailable-model fallback.
+2. Duplicates/overlap:1593/PR2574 separately proposes published-number desk
+   arithmetic; it is only cross-referenced here and its receiving review remains
+   pending.1597 partially addresses trivial missing-code quantities;1594 already
+   addresses unavailable identity; current appraisal, coverage, adaptation and
+   cumulative-stage contracts qualify rows7–9 and12–13. These overlaps are
+   evidence boundaries, not claims that every new finding is implemented.
+3. Ownership: harness owns generic workflow/contracts; replicator owns its
+   paper evidence, local files, scientific execution and source artifacts.
+   The named grid has its own owner/process. Separate sign-off implementation
+   units require an owner plan/decomposition before work; no new implementation
+   children or scientific work are started by this receipt. Sender refs remain
+   untouched; the receiver records this acceptance on its own branch.
+4. Standing rulings: retain assessment/manifest and CSV contracts, criteria,
+   strict comparisons, canonical/selected meanings, blind/exposure limits,
+   approval, acquisition/spend/outward boundaries, cumulative rereading and
+   report-per-stage behavior. Only authorized owner decisions may change them.
+   Independent recomputation, prose reimplementation and pre-data arithmetic
+   remain distinct.1598's delivery and notification exits remain open.
+
+## Finding dispositions
+
+| Finding | Receiving disposition and placement / boundary |
+|---|---|
+|1|Accept future no-package search clarification in inventory/assessment design. Retain searched locations, access outcomes, private-package uncertainty and blind restrictions. Do not adopt final L1 or remove unevaluated criteria without the actual named grid and complete evidence dossier; existing assessment criterion partition/derivation remains binding.|
+|2|Accept future no-bytes intake/fetch design clarification. The sender's optional-file convention does not change the harness contract. No invented fetch, URL, or successful acquisition.|
+|3|Accept cited external-input provenance design in manifest/inventory references. Distinguish cited, located, accessible, acquired and verified inputs and actual raw/analysis boundary. No new third_party_inputs schema block is adopted here.|
+|4|Accept provision-versus-access clarification against the actual grid. No new meaning of donnees_brutes_inaccessibles or grid modification follows from this reception.|
+|5|Accept no-package impossibility as a design question for assessment. The present exception is verified from-raw impossibility under its stated boundary; do not extend it to both rows or invent observed execution failure.|
+|6|Partial1597 overlap only: prospectively defined trivial quantities within authorized rerun scope. General empirical model reimplementation from prose needs separate stage/authority design; no automatic translation, scientific or challenge authorization.|
+|7|Accept coverage/reporting clarification in assessment/rerun references. Existing required-output inventory and missing_input/not_run reasons cover part of the need. Keep unknown scope unresolved; no blanket invented rows, comparator, or failure from nonexecution.|
+|8|Accept composed-claim/advisor-evidence clarification in scientific-appraisal/identification guidance. Correct the premise: current generic appraisal already covers argument/model links, noncausal and mixed claims. Preserve actual advisor inputs, exposure, advice/disagreement and provenance; no universal withholding rule or lineage-independence claim.|
+|9|Accept blocked-path clarity in cumulative/rerun/challenge design. Existing infeasible-check reporting and fair-alternative requirement remain. Changing1589's scope question, prerequisites or mandatory challenge flow requires the author's ruling; no automatic bypass.|
+|10|Cross-reference1593 for shared pre-data arithmetic design; preserve its receiving review as pending. No new stage/CSV ruling, implementation or1593 closure here.|
+|11|Already addressed by1594 report-style Signature/AI Disclosure, including at the reported tested baseline be867: unavailable observed identity is disclosed, requested identity separate. Retain as visibility/application feedback, not a new observability promise or newly missing fallback.|
+|12|Current cumulative-report closest-template adaptation route applies, with named format and person-confirmed adaptation. A generic neutral template is not authorized by this reception; any change to the present no-new-generic-template rule needs its own owner/author decision.|
+|13|Accept future proportionate reference reading and clearer displayed blocked/not-run/no-approval dispositions. Preserve validation/exposure checks without execution. Cumulative section rereading and compilation after every stage remain binding at stops and consecutive stages; relaxing those1589 decisions requires an author ruling.|
+
+Applicable source anchors: skills/replicate/SKILL.md inventory/identify/rerun/
+challenge/Every stage; references/assessment.md criterion dossier, package
+coverage, six-row derivation, comparison and manifest contracts;
+references/scientific-appraisal.md argument/model/facts and noncausal scope;
+references/report-style.md Signature and AI Disclosure;
+references/cumulative-report.md template adaptation and per-stage builds.
+1597 overlap was reviewed against immutable product
+`b6c6ed7fbb31f2bcddbc26a14f829039a1c36c20`, not inferred from its title.
+
+Actual distinct one-shot receiving advisor completed a read-only check of
+source5a550 and current contracts9c1faa, plus pending1597 product. Requested
+route gpt-6.1-sol/OpenAI/medium; served model/effort unavailable, same family,
+no lineage independence claimed. It agreed with the bounded dispositions and
+corrected row11 timing and row13 exposure preservation; both are included.
+No source discovery, paid API, foreign scientific access, or empirical run.
+
+This receipt settles only the first exit criterion. Later implementation and
+the exact resulting commit notification remain outstanding under receiver
+ownership; filing or merging this ticket cannot substitute for their delivery.
