@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-11-27T12:31Z reviewer created
 2026-11-27T12:32Z reviewer filed from replicator at author request (Imagine 2026-11-27); author ruled implement now without aliases; supersedes 1580 remark A4 stop-and-offer
+2026-11-27T12:33Z reviewer author confirmed decision 6 (mapping table), with a limited lifetime: delete it once old-name tickets are closed; git keeps the history
 
 --- body ---
 ## Context and authority
@@ -82,6 +83,9 @@ its section. 3. Status quo with renamed execution depths. The author chose
    `challenge`; `report` -> written by every stage, assembled by `complete`.
    Frozen replication folders keep the old names (they record the version
    that produced them).
+   The mapping has a limited lifetime (author ruling): it lives only while
+   tickets written with the old names are open, then it is deleted from the
+   skill and docs; git history keeps it.
 
 ## 6. Implementation notes and open items
 
