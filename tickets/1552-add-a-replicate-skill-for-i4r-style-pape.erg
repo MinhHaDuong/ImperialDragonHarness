@@ -181,8 +181,10 @@ Replicator ticket paths are under `~/CNRS/projets/actifs/replicator/tickets/`
 | 1567 | harness | Explicit selected-target contract, closed PR #2534 (2026-11-26); whole-paper default retained; downstream selected-scope encoding/validation remains | none |
 | 1568 | harness | Selected-claim confirmation for `reproduce`, closed PR #2537 (2026-11-26); frozen evidence and checker limits, whole-paper default retained | none |
 | 1569 | harness | Identification review beside the computational score, closed PR #2539 (2026-11-26); argued verdicts without subjective probabilities | none |
-| 1570 | harness | `probe` documentation child1571 closed PR #2541 (2026-11-27); inventory/reporting and sourced menus delivered; post-pilot signing decision remains open | none |
-| 1572 | harness | Pilot findings received; accepted children1573/1574 closed PR #2546/#2547 (2026-11-27); held method/signing decisions and foreign prompt pickup remain | none |
+| 1570 | harness | `probe` documentation child1571 closed PR #2541 (2026-11-27); inventory/reporting and sourced menus delivered; author approval-mode ruling recorded; child1584 implementation/integration held for1589 | none |
+| 1572 | harness | Pilot findings received; accepted children1573/1574 closed PR #2546/#2547 (2026-11-27); author-ruled children1584–1588 unstarted under1589 reception; foreign prompt pickup remains | none |
+
+| 1575 | harness | Stata caveats and B3/B6/B7 integrated; children1576–1579 and1581–1583 closed, numerical PRs #2558/#2559/#2560 (2026-11-27); parent closure in bounded roar bundle | none |
 
 Integration review: read the results of 0002 and 0003; a skill fix they
 call for is a new harness ticket. Constraints in every replicator ticket:
