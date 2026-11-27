@@ -27,6 +27,7 @@ Every stage compiles the report through its latest section and updates one
 local Zotero-note draft. A blocked stage compiles available evidence and states
 what has not run; it cannot claim completion or bypass its prerequisite.
 Follow § Every stage and `references/cumulative-report.md` throughout.
+Apply `references/report-style.md` for report presentation and disclosure.
 
 The binding rules, written for teammates who are not economists, are in
 `references/rules.md`. Read them before starting the chain. The assessment and
