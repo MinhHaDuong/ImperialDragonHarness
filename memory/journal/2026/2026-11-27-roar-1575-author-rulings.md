@@ -32,3 +32,19 @@ entries; it established no cleanup candidate and nothing was deleted.
 Parents1570/1572/1575 and integration1552 retain their distinct completion
 conditions. Replicator0009 pickup remains unverified; the continuation did not
 enter or implement in that scientific project.
+
+1582 merged as [PR2559](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/2559),
+with separate published-assertion evidence and unchanged numeric comparison
+statuses. Semantic review and gaze completed; gate admitted bookkeeping after
+the gazed substantive head and addressed all criteria. The initial native
+semantic launch was rejected before execution because transmission authority
+was not verified. Public repository/payload and authorized native-review scope
+were verified; the same CLI retry was approved and completed. The failed
+attempt remains disclosed. Gaze close returned4 after recording REVIEWED when
+an authorized retained report was untracked; the exact diagnostic and committed
+resolution are preserved. The gate confirmed the final clean bookkeeping carry.
+
+After reception2557 read-back and source ancestry verification, the predecessor
+handed source tree `receive1575-rulings-fresh` and exact source branch/OID were
+removed by roar's explicit-target helper, which returned clean. All source
+content remains on main; no other predecessor worktree was touched.
